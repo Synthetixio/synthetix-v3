@@ -7,13 +7,13 @@ import { ethers, Transaction } from 'ethers';
 // Specifying a contract will help the utility decode custom errors manually,
 // when the error is not found in the revert reason.
 export default async function assertRevert(
-  txResponsePromise: Promise<ethers.providers.TransactionResponse>,
+  txResponsePromise: Promise<unknown>,
   expectedMessage?: string,
   contract?: ethers.Contract
 ) {
   let error;
   try {
-    const txResponse = await txResponsePromise;
+    const txResponse = (await txResponsePromise) as ethers.providers.TransactionResponse;
     await txResponse.wait(); // txReceipt.
   } catch (err) {
     error = err as { [k: string]: unknown };

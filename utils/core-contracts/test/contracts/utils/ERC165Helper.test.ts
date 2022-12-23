@@ -1,20 +1,25 @@
-const { ethers } = hre;
-const assert = require('assert/strict');
+import assert from 'node:assert/strict';
+import hre from 'hardhat';
+import { ERC165HelperMock, ERC20, ERC721 } from '../../../typechain-types';
 
 describe('ERC165Helper', function () {
-  let ERC165Helper, ERC20, ERC721;
-  let interfaceIdERC20, interfaceIdERC721;
+  let ERC165Helper: ERC165HelperMock;
+  let ERC20: ERC20;
+  let ERC721: ERC721;
+
+  let interfaceIdERC20: string;
+  let interfaceIdERC721: string;
 
   before('deploy the contracts', async () => {
     let factory;
 
-    factory = await ethers.getContractFactory('ERC165HelperMock');
+    factory = await hre.ethers.getContractFactory('ERC165HelperMock');
     ERC165Helper = await factory.deploy();
 
-    factory = await ethers.getContractFactory('ERC20');
+    factory = await hre.ethers.getContractFactory('ERC20');
     ERC20 = await factory.deploy();
 
-    factory = await ethers.getContractFactory('ERC721');
+    factory = await hre.ethers.getContractFactory('ERC721');
     ERC721 = await factory.deploy();
   });
 

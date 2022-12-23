@@ -1,36 +1,39 @@
-const { ethers } = hre;
-const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { BigNumber, ethers } from 'ethers';
+import hre from 'hardhat';
+import { ERC20PermitMock, VaultMock } from '../../../typechain-types';
 
-describe('ERC20Permit', () => {
-  const totalSupply = ethers.BigNumber.from('1000000');
+describe('ERC20Permit', function () {
+  const totalSupply = BigNumber.from('1000000');
 
-  let token, vault;
+  let token: ERC20PermitMock;
+  let vault: VaultMock;
 
-  let user1;
+  let user1: ethers.VoidSigner;
 
-  before('identify signers', async () => {
-    [user1] = await ethers.getSigners();
+  before('identify signers', async function () {
+    [user1] = (await hre.ethers.getSigners()) as unknown as ethers.VoidSigner[];
   });
 
-  before('deploy token contract', async () => {
-    const factory = await ethers.getContractFactory('ERC20PermitMock');
+  before('deploy token contract', async function () {
+    const factory = await hre.ethers.getContractFactory('ERC20PermitMock');
     token = await factory.deploy();
     const tx = await token.initialize('Synthetix Network Token', 'snx', 18);
     await tx.wait();
   });
 
-  before('deploy vault contract', async () => {
-    const factory = await ethers.getContractFactory('VaultMock');
+  before('deploy vault contract', async function () {
+    const factory = await hre.ethers.getContractFactory('VaultMock');
     vault = await factory.deploy();
     const tx = await vault.initialize(token.address);
     await tx.wait();
   });
 
-  before('mint token to the user', async () => {
+  before('mint token to the user', async function () {
     await token.connect(user1).mint(totalSupply);
   });
 
-  it('depositWithPermit', async () => {
+  it('depositWithPermit', async function () {
     const amount = 1000;
     const deadline = ethers.constants.MaxUint256;
 
@@ -41,9 +44,16 @@ describe('ERC20Permit', () => {
   });
 });
 
-async function getPermitSignature(signer, token, spender, value, deadline) {
+async function getPermitSignature(
+  signer: ethers.VoidSigner,
+  token: ERC20PermitMock,
+  spender: string,
+  value: number,
+  deadline: BigNumber
+) {
+  const signerAddress = await signer.getAddress();
   const [nonce, name, version, chainId] = await Promise.all([
-    token.nonces(signer.address),
+    token.nonces(signerAddress),
     token.name(),
     '1',
     signer.getChainId(),
@@ -82,7 +92,7 @@ async function getPermitSignature(signer, token, spender, value, deadline) {
         ],
       },
       {
-        owner: signer.address,
+        owner: signerAddress,
         spender,
         value,
         nonce,

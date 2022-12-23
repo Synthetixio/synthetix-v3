@@ -1,13 +1,15 @@
-const { ethers } = require('ethers');
-const hre = require('hardhat');
-const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { ethers } from 'ethers';
+import hre from 'hardhat';
+import { HeapUtilMock } from '../../../typechain-types';
 
-async function insertHeapData(heap, count, salt = 'salt') {
+async function insertHeapData(heap: HeapUtilMock, count: number, salt = 'salt') {
   const vals = Array.from({ length: count }, (_, index) =>
     ethers.BigNumber.from(
       '0x' + ethers.utils.solidityKeccak256(['string'], [salt + index]).slice(64)
     )
   );
+
   for (const i in vals) {
     await heap.insert(i, vals[i]);
   }
@@ -16,12 +18,13 @@ async function insertHeapData(heap, count, salt = 'salt') {
 }
 
 describe('HeapUtil', async () => {
-  let heap;
+  let heap: HeapUtilMock;
 
   beforeEach('initialize fresh heap', async () => {
-    heap = (await (await hre.ethers.getContractFactory('HeapUtilMock')).deploy()).connect(
-      (await hre.ethers.getSigners())[0]
-    );
+    const [owner] = await hre.ethers.getSigners();
+    const factory = await hre.ethers.getContractFactory('HeapUtilMock');
+    const HeapUtilMock = (await factory.deploy()) as HeapUtilMock;
+    heap = HeapUtilMock.connect(owner);
   });
 
   it('extractMax()', async () => {

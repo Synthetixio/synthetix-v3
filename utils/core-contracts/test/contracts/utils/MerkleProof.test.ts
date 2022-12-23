@@ -1,22 +1,21 @@
-const { ethers } = hre;
-const assert = require('assert/strict');
-const { default: MerkleTree } = require('@synthetixio/core-utils/utils/merkle-tree/merkle-tree.js');
+import assert from 'node:assert/strict';
+import MerkleTree from '@synthetixio/core-utils/utils/merkle-tree/merkle-tree.js';
+import hre from 'hardhat';
+import { MerkleProofMock } from '../../../typechain-types';
 
 describe('MerkleProof', () => {
-  let MerkleProof;
-
-  let merkleTree;
-
-  let elements = [];
+  let MerkleProof: MerkleProofMock;
+  let merkleTree: MerkleTree;
+  let elements: string[];
 
   before('get some elements', async () => {
-    for (let i = 0; i < 10; i++) {
-      elements.push(ethers.utils.formatBytes32String(`${i}`));
-    }
+    elements = Array.from(Array(10)).map((_, i) => {
+      return hre.ethers.utils.formatBytes32String(`${i}`);
+    });
   });
 
   before('deploy the contract', async () => {
-    const factory = await ethers.getContractFactory('MerkleProofMock');
+    const factory = await hre.ethers.getContractFactory('MerkleProofMock');
     MerkleProof = await factory.deploy();
   });
 
