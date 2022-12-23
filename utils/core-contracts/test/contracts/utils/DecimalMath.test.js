@@ -92,13 +92,13 @@ describe('DecimalMath', () => {
 
     describe('upscale()', function () {
       it('produces the expected results', async function () {
-        await assertUpscale({ x: s(250, 18), y: s(9, 1) }, s(250, 27));
+        await assertUpscale({ x: s(250, 18), y: s(9, 0) }, s(250, 27));
       });
     });
 
     describe('downscale()', function () {
       it('produces the expected results', async function () {
-        await assertDownscale({ x: s(250, 27), y: s(9, 1) }, s(250, 18));
+        await assertDownscale({ x: s(250, 27), y: s(9, 0) }, s(250, 18));
       });
     });
   });
@@ -156,13 +156,13 @@ describe('DecimalMath', () => {
 
     describe('upscale()', function () {
       it('produces the expected results', async function () {
-        await assertUpscale({ x: s(250, 18), y: s(9, 1) }, s(250, 27));
+        await assertUpscale({ x: s(250, 18), y: s(9, 0) }, s(250, 27));
       });
     });
 
     describe('downscale()', function () {
       it('produces the expected results', async function () {
-        await assertDownscale({ x: s(250, 27), y: s(9, 1) }, s(250, 18));
+        await assertDownscale({ x: s(250, 27), y: s(9, 0) }, s(250, 18));
       });
     });
   });
@@ -254,13 +254,13 @@ describe('DecimalMath', () => {
 
     describe('upscale()', function () {
       it('produces the expected results', async function () {
-        await assertUpscale({ x: s(250, 18), y: s(9, 1) }, s(250, 27));
+        await assertUpscale({ x: s(250, 18), y: s(9, 0) }, s(250, 27));
       });
     });
 
     describe('downscale()', function () {
       it('produces the expected results', async function () {
-        await assertDownscale({ x: s(250, 27), y: s(9, 1) }, s(250, 18));
+        await assertDownscale({ x: s(250, 27), y: s(9, 0) }, s(250, 18));
       });
     });
   });
@@ -348,13 +348,13 @@ describe('DecimalMath', () => {
 
     describe('upscale()', function () {
       it('produces the expected results', async function () {
-        await assertUpscale({ x: s(250, 18), y: s(9, 1) }, s(250, 27));
+        await assertUpscale({ x: s(250, 18), y: s(9, 0) }, s(250, 27));
       });
     });
 
     describe('downscale()', function () {
       it('produces the expected results', async function () {
-        await assertDownscale({ x: s(250, 27), y: s(9, 1) }, s(250, 18));
+        await assertDownscale({ x: s(250, 27), y: s(9, 0) }, s(250, 18));
       });
     });
   });
