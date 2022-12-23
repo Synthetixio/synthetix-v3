@@ -30,7 +30,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         IMarketManagerModule(store.synthetix).depositMarketUsd(marketId, msg.sender, amountUsable);
 
         // Collect fees
-        Fee.collectFees(marketId, calculatedFees);
+        Fee.collectFees(marketId, calculatedFees.toUint());
 
         // Exchange amount after fees into synths to buyer
         uint256 synthAmount = Price.usdSynthExchangeRate(
@@ -40,7 +40,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, synthAmount, feesCollected);
+        emit SynthBought(marketId, synthAmount, calculatedFees);
 
         return synthAmount;
     }
@@ -69,7 +69,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         // Withdraw USD amount after fees to seller
         IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, msg.sender, returnAmount);
 
-        if (feesCollected > 0) {
+        if (feesToCollect > 0) {
             // Withdraw fees
             IMarketManagerModule(store.synthetix).withdrawMarketUsd(
                 marketId,
@@ -78,10 +78,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
             );
 
             // Collect fees
-            Fee.collectFees(marketId, feesCollected);
+            Fee.collectFees(marketId, feesToCollect.toUint());
         }
 
-        emit SynthSold(marketId, returnAmount, feesCollected);
+        emit SynthSold(marketId, returnAmount, feesToCollect);
 
         return returnAmount;
     }

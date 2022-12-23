@@ -114,8 +114,8 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
-        if (feesCollected > 0) {
-            Fee.collectFees(marketId, feesCollected.toUint());
+        if (feesToCollect > 0) {
+            Fee.collectFees(marketId, feesToCollect.toUint());
         }
 
         returnCollateralAmount = Price.usdSynthExchangeRate(

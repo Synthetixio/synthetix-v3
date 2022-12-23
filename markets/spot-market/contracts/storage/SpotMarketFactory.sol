@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "./Price.sol";
 import "./Fee.sol";
 import "./Wrapper.sol";

@@ -7,7 +7,7 @@ import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../../interfaces/external/IFeeCollector.sol";
+import "../interfaces/external/IFeeCollector.sol";
 import "./Price.sol";
 import "./Wrapper.sol";
 
@@ -15,6 +15,7 @@ library Fee {
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using Price for Price.Data;
+    using SpotMarketFactory for SpotMarketFactory.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
@@ -215,14 +216,14 @@ library Fee {
         }
     }
 
-    function collectFees(uint128 marketId, uint totalFees) internal {
+    function collectFees(uint128 marketId, uint totalFees) internal returns (uint feesCollected) {
         IFeeCollector feeCollector = load(marketId).feeCollector;
-        if (feeCollector != address(0)) {
+        if (address(feeCollector) != address(0)) {
             SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-            store.usdToken.approve(feeCollector, totalFees);
+            store.usdToken.approve(address(feeCollector), totalFees);
             feesCollected = feeCollector.collectFees(totalFees);
-            store.usdToken.approve(feeCollector, 0);
+            store.usdToken.approve(address(feeCollector), 0);
 
             store.depositToMarketManager(marketId, msg.sender, totalFees - feesCollected);
         }

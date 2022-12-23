@@ -5,6 +5,7 @@ import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol"
 
 import "../interfaces/IFeeConfigurationModule.sol";
 import "../interfaces/ISynthTokenModule.sol";
+import "../interfaces/external/IFeeCollector.sol";
 import "../storage/SpotMarketFactory.sol";
 
 contract FeeConfigurationModule is IFeeConfigurationModule {
@@ -67,7 +68,7 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.feeCollector = feeCollector;
+        fee.feeCollector = IFeeCollector(feeCollector);
 
         emit FeeCollectorSet(synthMarketId, feeCollector);
     }
