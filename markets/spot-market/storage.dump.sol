@@ -123,22 +123,6 @@ library AssociatedSystem {
     }
 }
 
-// @custom:artifact @synthetixio/core-modules/contracts/storage/DecayToken.sol:DecayToken
-library DecayToken {
-    bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.DecayToken"));
-    struct Data {
-        uint256 interestRate;
-        uint256 epochStart;
-        uint256 totalSupplyAtEpochStart;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_DECAY_TOKEN_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
-}
-
 // @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
 library Initialized {
     struct Data {
@@ -171,7 +155,8 @@ library NodeDefinition {
         CHAINLINK,
         PYTH,
         PriceDeviationCircuitBreaker,
-        UNISWAP
+        UNISWAP,
+        StalenessFallbackReducer
     }
     struct Data {
         bytes32[] parents;
@@ -186,20 +171,45 @@ library NodeDefinition {
     }
 }
 
+// @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
+library AsyncOrder {
+    struct Data {
+        mapping(uint256 => AsyncOrderClaim.Data) asyncOrderClaims;
+        uint256 minimumOrderAge;
+        uint256 settlementWindowDuration;
+        uint256 livePriceSettlementWindowDuration;
+        mapping(address => uint256) escrowedSynthShares;
+        uint256 totalEscrowedSynthShares;
+    }
+    function load(uint128 marketId) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrder", marketId));
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/AsyncOrderClaim.sol:AsyncOrderClaim
+library AsyncOrderClaim {
+    struct Data {
+        SpotMarketFactory.TransactionType orderType;
+        uint256 synthAmountEscrowed;
+        uint256 usdAmountEscrowed;
+        uint256 blockNumber;
+        uint256 timestamp;
+    }
+}
+
 // @custom:artifact contracts/storage/Fee.sol:Fee
 library Fee {
-    enum TransactionType {
-        BUY,
-        SELL,
-        WRAP,
-        UNWRAP
-    }
     struct Data {
+        mapping(address => uint) atomicFixedFeeOverrides;
         uint atomicFixedFee;
-        uint skewScale;
+        uint asyncFixedFee;
         uint utilizationFeeRate;
-        uint wrapFee;
-        uint unwrapFee;
+        int wrapFixedFee;
+        int unwrapFixedFee;
+        uint skewScale;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
@@ -214,6 +224,7 @@ library Price {
     struct Data {
         bytes32 buyFeedId;
         bytes32 sellFeedId;
+        uint skewScale;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
@@ -226,13 +237,20 @@ library Price {
 // @custom:artifact contracts/storage/SpotMarketFactory.sol:SpotMarketFactory
 library SpotMarketFactory {
     bytes32 private constant _SLOT_SPOT_MARKET_FACTORY = keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
+    enum TransactionType {
+        BUY,
+        SELL,
+        ASYNC_BUY,
+        ASYNC_SELL,
+        WRAP,
+        UNWRAP
+    }
     struct Data {
         address usdToken;
         address oracle;
         address synthetix;
         address initialSynthImplementation;
         mapping(uint128 => address) synthOwners;
-        mapping(uint128 => int256) synthFeesCollected;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_SPOT_MARKET_FACTORY;

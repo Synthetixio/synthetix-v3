@@ -6,7 +6,7 @@ import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 /**
  * @title Module with custom NFT logic for the async order claim token
  */
-interface IAsyncOrderClaimToken is INftModule {
+interface IAsyncOrderClaimTokenModule is INftModule {
     /**
      * @notice Emitted when `tokenId` token is minted.
      * @param owner The owner of the newly minted token.

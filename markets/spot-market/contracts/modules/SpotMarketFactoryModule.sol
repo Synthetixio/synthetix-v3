@@ -11,6 +11,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../utils/SynthUtil.sol";
+import "../utils/AsyncOrderClaimTokenUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
@@ -38,13 +39,15 @@ contract SpotMarketFactoryModule is
         address snxAddress,
         address usdTokenAddress,
         address oracleManager,
-        address initialSynthImplementation
+        address initialSynthImplementation,
+        address initialAsyncOrderClaimImplementation
     ) external override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         store.synthetix = snxAddress;
         store.initialSynthImplementation = initialSynthImplementation;
+        store.initialAsyncOrderClaimImplementation = initialAsyncOrderClaimImplementation;
         store.usdToken = ITokenModule(usdTokenAddress);
         store.oracle = IOracleManagerModule(oracleManager);
     }
@@ -67,6 +70,14 @@ contract SpotMarketFactoryModule is
             factory.initialSynthImplementation
         );
 
+        _initOrUpgradeNft(
+            AsyncOrderClaimTokenUtil.getSystemId(synthMarketId),
+            tokenName,
+            tokenSymbol,
+            "",
+            factory.initialAsyncOrderClaimImplementation
+        );
+
         factory.synthOwners[synthMarketId] = synthOwner;
 
         emit SynthRegistered(synthMarketId);
@@ -79,9 +90,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.load(marketId).getCurrentPrice(
-            SpotMarketFactory.TransactionType.REPORTED_DEBT
-        );
+        uint256 price = Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -92,7 +101,7 @@ contract SpotMarketFactoryModule is
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint totalValue = totalBalance.mulDecimal(
-            Price.load(marketId).getCurrentPrice(SpotMarketFactory.TransactionType.REPORTED_DEBT)
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY)
         );
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }
@@ -102,6 +111,16 @@ contract SpotMarketFactoryModule is
 
         bytes32 synthId = SynthUtil.getSystemId(marketId);
         _upgradeToken(synthId, synthImpl);
+    }
+
+    function upgradeAsyncOrderTokenImpl(
+        uint128 marketId,
+        address asyncOrderImpl
+    ) external override {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
+
+        bytes32 asyncOrderClaimTokenId = AsyncOrderClaimTokenUtil.getSystemId(marketId);
+        _upgradeNft(asyncOrderClaimTokenId, asyncOrderImpl);
     }
 
     function updatePriceData(

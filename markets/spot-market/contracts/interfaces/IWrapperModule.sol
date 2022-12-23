@@ -7,8 +7,8 @@ interface IWrapperModule {
     error InsufficientAllowance(uint expected, uint current);
 
     event WrapperInitialized(uint indexed synthMarketId, address collateralType);
-    event SynthWrapped(uint indexed synthMarketId, uint amountWrapped, uint feesCollected);
-    event SynthUnwrapped(uint indexed synthMarketId, uint amountUnwrapped, uint feesCollected);
+    event SynthWrapped(uint indexed synthMarketId, uint amountWrapped, int feesCollected);
+    event SynthUnwrapped(uint indexed synthMarketId, uint amountUnwrapped, int feesCollected);
 
     function initializeWrapper(uint128 marketId, address collateralType) external;
 

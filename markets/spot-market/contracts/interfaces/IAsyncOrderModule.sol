@@ -7,14 +7,14 @@ interface IAsyncOrderModule {
     event AsyncOrderCommitted(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
-        AsyncOrder.AsyncOrderClaim asyncOrderClaim,
+        AsyncOrderClaim.Data asyncOrderClaim,
         address indexed sender
     );
 
     event AsyncOrderSettled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
-        AsyncOrder.AsyncOrderClaim asyncOrderClaim,
+        AsyncOrderClaim.Data asyncOrderClaim,
         uint256 finalOrderAmount,
         address indexed sender
     );
@@ -22,7 +22,7 @@ interface IAsyncOrderModule {
     event AsyncOrderCancelled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
-        AsyncOrder.AsyncOrderClaim asyncOrderClaim,
+        AsyncOrderClaim.Data asyncOrderClaim,
         address indexed sender
     );
 
@@ -47,12 +47,12 @@ interface IAsyncOrderModule {
     function commitBuyOrder(
         uint128 marketId,
         uint usdAmount
-    ) external returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim);
+    ) external returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim);
 
     function commitSellOrder(
         uint128 marketId,
         uint256 synthAmount
-    ) external returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim);
+    ) external returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim);
 
     function settleOrder(
         uint128 marketId,

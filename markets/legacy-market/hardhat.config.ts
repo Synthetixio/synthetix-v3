@@ -1,6 +1,3 @@
-//import '@typechain/hardhat'
-
-import '@nomiclabs/hardhat-ethers';
 import 'solidity-docgen';
 
 import commonConfig from '@synthetixio/common-config/hardhat.config';
