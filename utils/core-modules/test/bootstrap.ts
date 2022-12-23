@@ -20,6 +20,8 @@ import {
   TokenModule,
   TokenModuleRouter,
   UpgradeModule,
+  DecayTokenModule,
+  DecayTokenModuleRouter,
 } from '../typechain-types';
 
 interface Contracts {
@@ -41,6 +43,8 @@ interface Contracts {
   TokenModule: TokenModule;
   TokenModuleRouter: TokenModuleRouter;
   UpgradeModule: UpgradeModule;
+  DecayTokenModule: DecayTokenModule;
+  DecayTokenModuleRouter: DecayTokenModuleRouter;
 }
 
 type Implementation =
@@ -49,7 +53,8 @@ type Implementation =
   | 'TokenModuleRouter'
   | 'NftModuleRouter'
   | 'SampleRouter'
-  | 'FeatureFlagModuleRouter';
+  | 'FeatureFlagModuleRouter'
+  | 'DecayTokenModuleRouter';
 
 const r = coreBootstrap<Contracts>({
   cannonfile: 'cannonfile.test.toml',

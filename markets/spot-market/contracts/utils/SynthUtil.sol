@@ -19,6 +19,10 @@ library SynthUtil {
         return keccak256(abi.encodePacked("synth", marketId));
     }
 
+    function getSynthTokenAddress(uint128 marketId) internal view returns (address) {
+        return AssociatedSystem.load(SynthUtil.getSystemId(marketId)).proxy;
+    }
+
     /**
      * Because synths may decay, we track shares of synths held in escrow for async orderers and the market.
      * - When synths are minted by the market or transferred in, the market or the orderer is credited shares.

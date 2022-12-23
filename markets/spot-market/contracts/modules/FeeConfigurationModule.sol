@@ -1,11 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
+
 import "../interfaces/IFeeConfigurationModule.sol";
+import "../interfaces/ISynthTokenModule.sol";
 import "../storage/SpotMarketFactory.sol";
 
 contract FeeConfigurationModule is IFeeConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
+    using AssociatedSystem for AssociatedSystem.Data;
 
     function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
@@ -35,6 +39,17 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         fee.utilizationFeeRate = utilizationFeeRate;
 
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
+    }
+
+    function setInterestRate(uint128 marketId, uint256 interestRate) public {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
+
+        ISynthTokenModule synthTokenModule = ISynthTokenModule(
+            SynthUtil.getSynthTokenAddress(marketId)
+        );
+        synthTokenModule.setInterestRate(interestRate);
+
+        emit InterestRateSet(marketId, interestRate);
     }
 
     function setCustomTransactorFees(

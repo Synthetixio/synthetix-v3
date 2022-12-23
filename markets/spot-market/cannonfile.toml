@@ -26,11 +26,14 @@ artifact = "SpotMarketFactoryModule"
 [contract.AtomicOrderModule]
 artifact = "AtomicOrderModule"
 
+[contract.AsyncOrderModule]
+artifact = "AsyncOrderModule"
+
 [contract.WrapperModule]
 artifact = "WrapperModule"
 
-[contract.Synth]
-artifact = "Synth"
+[contract.SynthTokenModule]
+artifact = "SynthTokenModule"
 
 [contract.AsyncOrderClaimTokenModule]
 artifact = "AsyncOrderClaimTokenModule"
@@ -61,6 +64,7 @@ args = [
     CoreModule: contracts.CoreModule,
     SpotMarketFactoryModule: contracts.SpotMarketFactoryModule,
     AtomicOrderModule: contracts.AtomicOrderModule,
+    AsyncOrderModule: contracts.AsyncOrderModule,
     WrapperModule: contracts.WrapperModule,
   }) %>'''
 ]
@@ -69,6 +73,7 @@ depends = [
   "contract.CoreModule",
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
+  "contract.AsyncOrderModule",
   "contract.WrapperModule"
 ]
 
@@ -78,6 +83,7 @@ abiOf = [
   "CoreModule",
   "SpotMarketFactoryModule",
   "AtomicOrderModule",
+  "AsyncOrderModule",
   "WrapperModule"
 ]
 depends = ["run.generate_router"]
@@ -98,23 +104,23 @@ depends = ["contract.Router"]
 exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
-  "contracts/routers/chain-<%= chainId %>/SynthRouter.sol:SynthRouter",
+  "contracts/routers/chain-<%= chainId %>/SynthTokenModuleRouter.sol:SynthTokenModuleRouter",
   '''<%= JSON.stringify({
     CoreModule: contracts.CoreModule,
-    Synth: contracts.Synth
+    SynthTokenModule: contracts.SynthTokenModule
   }) %>'''
 ]
 modified = ["contracts"]
 depends = [
   "contract.CoreModule",
-  "contract.Synth"
+  "contract.SynthTokenModule"
 ]
 
 [contract.SynthRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/SynthRouter.sol:SynthRouter"
+artifact = "contracts/routers/chain-<%= chainId %>/SynthTokenModuleRouter.sol:SynthTokenModuleRouter"
 abiOf = [
   "CoreModule",
-  "Synth"
+  "SynthTokenModule"
 ]
 depends = ["run.generate_synth_router"]
 
