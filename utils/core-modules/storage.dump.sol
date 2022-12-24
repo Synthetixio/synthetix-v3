@@ -139,7 +139,7 @@ library AssociatedSystem {
 
 // @custom:artifact contracts/storage/DecayToken.sol:DecayToken
 library DecayToken {
-    bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.DecayToken"));
+    bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
     struct Data {
         uint256 interestRate;
         uint256 epochStart;

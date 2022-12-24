@@ -236,3 +236,30 @@ abiOf = [
   "SampleFeatureFlagModule"
 ]
 depends = ["run.generate_feature_flag_module_router"]
+
+# ReceiveModule Router
+
+[run.generate_receive_module_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/ReceiveModuleRouter.sol:ReceiveModuleRouter",
+  '''<%= JSON.stringify({
+    CoreModule: contracts.CoreModule,
+    ReceiveModule: contracts.ReceiveModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.CoreModule",
+  "contract.ReceiveModule",
+]
+
+[contract.ReceiveModuleRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/ReceiveModuleRouter.sol:ReceiveModuleRouter"
+abiOf = [
+  "CoreModule",
+  "ReceiveModule",
+]
+depends = ["run.generate_receive_module_router"]
+
