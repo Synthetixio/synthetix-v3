@@ -1,17 +1,33 @@
-const { ethers } = hre;
-const assert = require('node:assert');
-const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
-const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+import assert from 'node:assert/strict';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { BigNumberish } from 'ethers';
+import hre from 'hardhat';
+import { AddressSetMock, Bytes32SetMock, UintSetMock } from '../../../typechain-types';
 
-describe('SetUtil', () => {
-  const repeater = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+type SetType = 'Bytes32Set' | 'AddressSet' | 'UintSet';
+
+interface SetContractMap {
+  Bytes32Set: Bytes32SetMock;
+  AddressSet: AddressSetMock;
+  UintSet: UintSetMock;
+}
+
+interface SetValueMap {
+  Bytes32Set: string;
+  AddressSet: string;
+  UintSet: BigNumberish;
+}
+
+describe('SetUtil', function () {
+  const repeater = Array.from(Array(10));
 
   // -----------------------------------------
   // Specific type tests
   // -----------------------------------------
 
   describe('Bytes32Set', function () {
-    const randomBytes32 = () => ethers.Wallet.createRandom().privateKey;
+    const randomBytes32 = () => hre.ethers.Wallet.createRandom().privateKey;
 
     itSupportsType(
       'Bytes32Set',
@@ -21,7 +37,7 @@ describe('SetUtil', () => {
   });
 
   describe('AddressSet', function () {
-    const randomAddress = () => ethers.Wallet.createRandom().address;
+    const randomAddress = () => hre.ethers.Wallet.createRandom().address;
 
     itSupportsType(
       'AddressSet',
@@ -31,7 +47,8 @@ describe('SetUtil', () => {
   });
 
   describe('UintSet', function () {
-    const randomUint = () => ethers.utils.parseEther(`${Math.floor(1000000000 * Math.random())}`);
+    const randomUint = () =>
+      hre.ethers.utils.parseEther(`${Math.floor(1000000000 * Math.random())}`);
 
     itSupportsType(
       'UintSet',
@@ -44,18 +61,21 @@ describe('SetUtil', () => {
   // Behaviors
   // -----------------------------------------
 
-  function itSupportsType(typeName, sampleValues, notContainedValue) {
-    let SampleSet;
+  function itSupportsType<T extends SetType, V extends SetValueMap[T]>(
+    typeName: T,
+    sampleValues: V[],
+    notContainedValue: V
+  ) {
+    let SampleSet: SetContractMap[T];
 
-    const expectedValues = [];
+    const expectedValues: V[] = [];
 
-    const addValue = async (value) => {
+    const addValue = async (value: V) => {
       expectedValues.push(value);
-
       await SampleSet.add(value);
     };
 
-    const removeValue = async (value) => {
+    const removeValue = async (value: V) => {
       const index = expectedValues.indexOf(value);
 
       if (index !== expectedValues.length - 1) {
@@ -69,12 +89,12 @@ describe('SetUtil', () => {
       await SampleSet.remove(value);
     };
 
-    const replaceValue = async (value, newValue) => {
+    const replaceValue = async (value: V, newValue: V) => {
       const index = expectedValues.indexOf(value);
 
       expectedValues[index] = newValue;
 
-      await SampleSet.replace(value, newValue);
+      await SampleSet.replace(value as string, newValue as string);
     };
 
     function itBehavesAsAValidSet() {
@@ -87,7 +107,7 @@ describe('SetUtil', () => {
       });
 
       it('contains all values', async function () {
-        for (let value of expectedValues) {
+        for (const value of expectedValues) {
           assert.equal(await SampleSet.contains(value), true);
         }
       });
@@ -134,9 +154,9 @@ describe('SetUtil', () => {
       });
     }
 
-    before('deploy the contract', async () => {
-      const factory = await ethers.getContractFactory(`${typeName}Mock`);
-      SampleSet = await factory.deploy();
+    before('deploy the contract', async function () {
+      const factory = await hre.ethers.getContractFactory(`${typeName}Mock`);
+      SampleSet = (await factory.deploy()) as SetContractMap[T];
     });
 
     describe('before any values are added to the set', function () {

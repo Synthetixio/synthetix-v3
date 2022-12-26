@@ -19,5 +19,8 @@
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
+  },
+  "devDependencies": {
+    "@synthetixio/common-config": "*"
   }
 }
