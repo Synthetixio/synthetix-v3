@@ -73,9 +73,10 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.WRAP
         );
 
-        if (feesToCollect > 0) {
-            Fee.collectFees(marketId, feesToCollect.toUint());
-        }
+        // TODO: collecting fees will fail because there is no USD here, just synth/collateral.  so should wrappers collect fees?
+        // if (feesToCollect > 0) {
+        //     Fee.collectFees(marketId, feesToCollect.toUint());
+        // }
 
         amountToMint = Price.usdSynthExchangeRate(
             marketId,
@@ -102,6 +103,9 @@ contract WrapperModule is IWrapperModule {
         uint256 allowance = synth.allowance(msg.sender, address(this));
         if (allowance < unwrapAmount) revert InsufficientAllowance(unwrapAmount, allowance);
 
+        // transfer from seller
+        synth.transferFrom(msg.sender, address(this), unwrapAmount);
+
         uint256 unwrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             unwrapAmount,
@@ -114,9 +118,10 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
-        if (feesToCollect > 0) {
-            Fee.collectFees(marketId, feesToCollect.toUint());
-        }
+        // TODO: collecting fees will fail because there is no USD here, just synth/collateral.  so should wrappers collect fees?
+        // if (feesToCollect > 0) {
+        //     Fee.collectFees(marketId, feesToCollect.toUint());
+        // }
 
         returnCollateralAmount = Price.usdSynthExchangeRate(
             marketId,
@@ -124,6 +129,7 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
+        // TODO: would be nice to combine withdrawing market collateral and transferring collateral to seller
         IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
             marketId,
             wrapperStore.collateralType,

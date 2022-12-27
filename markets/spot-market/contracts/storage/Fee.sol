@@ -47,6 +47,20 @@ library Fee {
         load(marketId).atomicFixedFeeOverrides[transactor] = fixedFee;
     }
 
+    function processFees(
+        uint128 marketId,
+        address transactor,
+        uint256 usdAmount,
+        SpotMarketFactory.TransactionType transactionType
+    ) internal returns (uint256 amountUsable, int256 fees) {
+        (amountUsable, fees) = calculateFees(marketId, transactor, usdAmount, transactionType);
+
+        // TODO: negative fees are ignored.  Verify this.
+        if (fees > 0) {
+            collectFees(marketId, fees.toUint());
+        }
+    }
+
     function calculateFees(
         uint128 marketId,
         address transactor,
@@ -216,17 +230,22 @@ library Fee {
         }
     }
 
-    function collectFees(uint128 marketId, uint totalFees) internal returns (uint feesCollected) {
+    function collectFees(
+        uint128 marketId,
+        uint totalFees
+    ) internal returns (uint leftoverFees, uint feesCollected) {
         IFeeCollector feeCollector = load(marketId).feeCollector;
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+        leftoverFees = totalFees;
         if (address(feeCollector) != address(0)) {
-            SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
             store.usdToken.approve(address(feeCollector), totalFees);
-            feesCollected = feeCollector.collectFees(totalFees);
+            feesCollected = feeCollector.collectFees(marketId, totalFees);
+            leftoverFees = totalFees - feesCollected;
             store.usdToken.approve(address(feeCollector), 0);
-
-            store.depositToMarketManager(marketId, msg.sender, totalFees - feesCollected);
         }
+
+        store.depositToMarketManager(marketId, msg.sender, leftoverFees);
     }
 
     function _applyFees(

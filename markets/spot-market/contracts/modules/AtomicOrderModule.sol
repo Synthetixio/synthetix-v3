@@ -19,18 +19,24 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
+        // transfer usd from buyer
+        store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
+
         // Calculate fees
-        (uint256 amountUsable, int256 calculatedFees) = Fee.calculateFees(
+        (uint256 amountUsable, int256 calculatedFees) = Fee.processFees(
             marketId,
             msg.sender,
             usdAmount,
             SpotMarketFactory.TransactionType.BUY
         );
 
-        IMarketManagerModule(store.synthetix).depositMarketUsd(marketId, msg.sender, amountUsable);
-
-        // Collect fees
-        Fee.collectFees(marketId, calculatedFees.toUint());
+        // TODO: processFees deposits fees into the market manager
+        // and so does this, should we consolidate?
+        IMarketManagerModule(store.synthetix).depositMarketUsd(
+            marketId,
+            address(this),
+            amountUsable
+        );
 
         // Exchange amount after fees into synths to buyer
         uint256 synthAmount = Price.usdSynthExchangeRate(
@@ -58,30 +64,21 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.SELL
         );
 
+        // Withdraw USD amount
+        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, address(this), usdAmount);
+
         // Calculate fees
-        (uint256 returnAmount, int256 feesToCollect) = Fee.calculateFees(
+        (uint256 returnAmount, int256 collectedFees) = Fee.processFees(
             marketId,
             msg.sender,
             usdAmount,
             SpotMarketFactory.TransactionType.SELL
         );
 
-        // Withdraw USD amount after fees to seller
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, msg.sender, returnAmount);
+        // transfer USD amount to user
+        ITokenModule(store.usdToken).transfer(msg.sender, returnAmount);
 
-        if (feesToCollect > 0) {
-            // Withdraw fees
-            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
-                marketId,
-                address(this),
-                feesToCollect.toUint()
-            );
-
-            // Collect fees
-            Fee.collectFees(marketId, feesToCollect.toUint());
-        }
-
-        emit SynthSold(marketId, returnAmount, feesToCollect);
+        emit SynthSold(marketId, returnAmount, collectedFees);
 
         return returnAmount;
     }
