@@ -44,18 +44,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
         store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
-        // Calculate fees
-        (uint256 amountUsable, ) = Fee.calculateFees(
-            marketId,
-            msg.sender,
-            usdAmount,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
-        );
-
         // Get estimated exchange amount
         uint256 amountSynth = Price.usdSynthExchangeRate(
             marketId,
-            amountUsable,
+            usdAmount,
             SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
