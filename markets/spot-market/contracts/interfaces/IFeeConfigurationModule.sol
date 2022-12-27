@@ -16,6 +16,8 @@ interface IFeeConfigurationModule {
     );
     event FeeCollectorSet(uint indexed synthMarketId, address feeCollector);
 
+    error InvalidFeeCollectorInterface(address invalidFeeCollector);
+
     function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external;
 
     function setMarketSkewScale(uint128 synthMarketId, uint skewScale) external;
