@@ -86,7 +86,8 @@ contract SpotMarketFactoryModule is
     }
 
     function name(uint128 marketId) external view returns (string memory) {
-        return "Spot Market";
+        string memory tokenName = SynthUtil.getToken(marketId).name();
+        return string.concat(tokenName, " Spot Market");
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
