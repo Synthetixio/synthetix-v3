@@ -16,7 +16,7 @@ import type {
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
-interface Proxies {
+export interface Proxies {
   AccountProxy: AccountProxy;
   CoreProxy: CoreProxy;
   USDProxy: USDProxy;
@@ -38,7 +38,7 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<P
 
 const restoreSnapshot = createSnapshot();
 
-let systems: Systems;
+export let systems: Systems;
 
 before('load system proxies', function () {
   systems = {
@@ -72,7 +72,7 @@ export function bootstrapWithStakedPool() {
 
   let aggregator: ethers.Contract;
 
-  let oracleNodeId: string;
+  let oracleNodeId = '';
   const accountId = 1;
   const poolId = 1;
   let collateralAddress: string;
