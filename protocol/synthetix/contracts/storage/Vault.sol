@@ -72,7 +72,7 @@ library Vault {
      * @dev Updates the vault's credit capacity as the value of its collateral minus its debt.
      *
      * Called as a ticker when users interact with pools, allowing pools to set
-     * vaults' credit capacity shares within the them.
+     * vaults' credit capacity shares within them.
      *
      * Returns the amount of collateral that this vault is providing in net USD terms.
      */

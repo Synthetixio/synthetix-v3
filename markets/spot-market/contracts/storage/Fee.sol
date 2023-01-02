@@ -213,6 +213,20 @@ library Fee {
         }
     }
 
+    // Maybe this function goes somewhere else
+    function collectFees(uint128 marketId, uint amount) {
+        uint initialContractUsdBalance = snxUsd.balanceOf(address(this));
+        if (customFeeCollector) {
+            // save initialFeeCollectorAllowance
+            // approve amount of sUSD to Fee Collector
+            // call ICustomFeeCollector().collectFees(amount);
+            // set allowance back to initialFeeCollectorAllowance
+        }
+        uint amountCustomCollected = initialContractUsdBalance - snxUsd.balanceOf(address(this));
+        // synthetix.depositMarketUsd(marketId, amount - amountCustomCollected);
+        // emit FeesCollected(uint amountDeposited, uint amountCustomCollected, customFeeCollector, msg.sender)
+    }
+
     function _applyFees(
         uint amount,
         int fees // bips
