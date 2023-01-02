@@ -43,17 +43,6 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
     }
 
-    function setInterestRate(uint128 marketId, uint256 interestRate) public {
-        SpotMarketFactory.load().onlyMarketOwner(marketId);
-
-        ISynthTokenModule synthTokenModule = ISynthTokenModule(
-            SynthUtil.getSynthTokenAddress(marketId)
-        );
-        synthTokenModule.setInterestRate(interestRate);
-
-        emit InterestRateSet(marketId, interestRate);
-    }
-
     function setCustomTransactorFees(
         uint128 synthMarketId,
         address transactor,

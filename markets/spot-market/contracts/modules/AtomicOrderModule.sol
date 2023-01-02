@@ -9,6 +9,8 @@ import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 
+import "hardhat/console.sol";
+
 contract AtomicOrderModule is IAtomicOrderModule {
     using SafeCastI256 for int256;
     using DecimalMath for uint256;
@@ -18,6 +20,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
     function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        store.isValidMarket(marketId);
 
         // transfer usd from buyer
         store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
@@ -32,11 +35,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         // TODO: processFees deposits fees into the market manager
         // and so does this, should we consolidate?
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
-            marketId,
-            address(this),
-            amountUsable
-        );
+        store.depositToMarketManager(marketId, amountUsable);
 
         // Exchange amount after fees into synths to buyer
         uint256 synthAmount = Price.usdSynthExchangeRate(
@@ -53,6 +52,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
     function sell(uint128 marketId, uint256 synthAmount) external override returns (uint256) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        store.isValidMarket(marketId);
 
         // Burn synths provided
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);

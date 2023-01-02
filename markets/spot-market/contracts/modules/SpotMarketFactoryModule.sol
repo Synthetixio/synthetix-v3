@@ -107,6 +107,10 @@ contract SpotMarketFactoryModule is
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }
 
+    function getSynth(uint128 marketId) external view override returns (address) {
+        return address(SynthUtil.getToken(marketId));
+    }
+
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 

@@ -10,6 +10,7 @@ import {
   SynthetixUSDProxy,
   SynthetixCollateralMock,
   Oracle_managerProxy,
+  SynthRouter,
 } from '../generated/typechain';
 
 type Proxies = {
@@ -18,14 +19,16 @@ type Proxies = {
   ['synthetix.CollateralMock']: SynthetixCollateralMock;
   ['oracle_manager.Proxy']: Oracle_managerProxy;
   SpotMarketProxy: SpotMarketProxy;
+  SynthRouter: SynthRouter;
 };
 
-type Systems = {
+export type Systems = {
   SpotMarket: SpotMarketProxy;
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: Oracle_managerProxy;
+  Synth: (address: string) => SynthRouter;
 };
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>();
@@ -40,6 +43,7 @@ before('load contracts', () => {
     SpotMarket: getContract('SpotMarketProxy'),
     OracleManager: getContract('oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
+    Synth: (address: string) => getContract('SynthRouter', address),
   };
 });
 
@@ -130,7 +134,7 @@ export function bootstrapWithStakedPool() {
 
   before('stake', async function () {
     const [, staker] = r.signers();
-    await stake(r.systems, poolId, accountId, staker);
+    await stake(r.systems, poolId, accountId, staker, depositAmount.div(10));
   });
 
   const restore = snapshotCheckpoint(r.provider);
@@ -158,7 +162,7 @@ export function bootstrapWithSynth(name: string, token: string) {
   });
 
   before('register synth', async () => {
-    marketId = r
+    marketId = await r
       .systems()
       .SpotMarket.callStatic.registerSynth(name, token, marketOwner.getAddress());
     await r.systems().SpotMarket.registerSynth(name, token, marketOwner.getAddress());
@@ -203,10 +207,8 @@ export function bootstrapWithSynth(name: string, token: string) {
   4. mint max USD
   5. traders now have USD to trade with
 */
-export function bootstrapTraders({
-  signers,
-  systems,
-}: Pick<ReturnType<typeof bootstrapWithSynth>, 'systems' | 'signers'>) {
+export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
+  const { signers, systems, provider } = r;
   // separate pool so doesn't mess with existing pool accounting
   before('create separate pool', async () => {
     const [owner] = signers();
@@ -231,13 +233,21 @@ export function bootstrapTraders({
       .Core.connect(trader2)
       .mintUsd(1001, 2, collateralAddress, depositAmount.mul(200));
   });
+
+  const restore = snapshotCheckpoint(provider);
+
+  return {
+    ...r,
+    restore,
+  };
 }
 
 const stake = async (
   systems: () => Systems,
   poolId: number,
   accountId: number,
-  user: ethers.Signer
+  user: ethers.Signer,
+  delegateAmount: ethers.BigNumber = depositAmount
 ) => {
   await systems().CollateralMock.mint(await user.getAddress(), depositAmount.mul(1000));
 
@@ -261,7 +271,7 @@ const stake = async (
       accountId,
       poolId,
       systems().CollateralMock.address,
-      depositAmount,
+      delegateAmount,
       ethers.utils.parseEther('1')
     );
 };
