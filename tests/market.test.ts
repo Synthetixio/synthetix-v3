@@ -5,7 +5,7 @@ import {
   describe,
   beforeEach,
   createMockedFunction,
-} from 'matchstick-as/assembly/index';
+} from 'matchstick-as';
 import { Address, ethereum, BigInt, store } from '@graphprotocol/graph-ts';
 import { address, address2, defaultGraphContractAddress } from './constants';
 import {

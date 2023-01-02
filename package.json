@@ -1,13 +1,16 @@
 {
-  "name": "@snx-v3/subgraph-goerli",
+  "name": "@snx-v3/subgraphs",
   "license": "MIT",
   "private": true,
   "scripts": {
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
-    "codegen": "graph codegen && prettier --write .",
-    "build": "yarn codegen && graph build",
-    "deploy": "graph deploy --product hosted-service snx-v3/goerli",
-    "test": "graph test",
+    "prepare": "cp ./subgraph.base.yaml ./subgraph.yaml",
+    "codegen": "yarn prepare && graph codegen && prettier --write .",
+    "build:goerli": "yarn codegen && graph build --output-dir ./build/goerli --network goerli",
+    "deploy:goerli": "graph deploy --output-dir ./build/goerli --network goerli --product hosted-service snx-v3/goerli",
+    "build:optimism-goerli": "yarn codegen && graph build --output-dir ./build/optimism-goerli --network optimism-goerli",
+    "deploy:optimism-goerli": "graph deploy --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service snx-v3/optimism-goerli",
+    "test": "yarn prepare && graph test",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
     "remove-local": "graph remove --node http://localhost:8020/ snx-v3/goerli",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"

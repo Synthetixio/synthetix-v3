@@ -1,4 +1,4 @@
-import { test, assert, clearStore, describe, beforeEach } from 'matchstick-as/assembly/index';
+import { test, assert, clearStore, describe, beforeEach } from 'matchstick-as';
 import { ethereum, store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
 import { handlePoolConfigurationSet, handlePoolCreated } from '../src/core';
