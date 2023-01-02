@@ -145,6 +145,13 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @inheritdoc IMarketCollateralModule
      */
+    function getMarketCollateralValue(uint128 marketId) {
+        return Market.load(marketId).getDepositedCollateralValue();
+    }
+
+    /**
+     * @inheritdoc IMarketCollateralModule
+     */
     function getMaximumMarketCollateral(
         uint128 marketId,
         address collateralType
