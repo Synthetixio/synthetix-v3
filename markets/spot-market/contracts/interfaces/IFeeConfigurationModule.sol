@@ -6,7 +6,6 @@ interface IFeeConfigurationModule {
     event MarketUtilizationFeesSet(uint indexed synthMarketId, uint utilizationFeeRate);
     event MarketSkewFeesSet(uint indexed synthMarketId, uint skewScale);
     event FixedFeeSet(uint indexed synthMarketId, uint fixedFee);
-    event InterestRateSet(uint indexed synthMarketId, uint interestRate);
     event MarketSkewScaleSet(uint indexed marketId, uint skewScale);
     event AtomicFixedFeeSet(uint indexed synthMarketId, uint atomicFixedFee);
     event AtomicTransactorFixedFeeSet(

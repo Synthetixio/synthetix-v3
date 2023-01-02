@@ -32,6 +32,9 @@ artifact = "AsyncOrderModule"
 [contract.WrapperModule]
 artifact = "WrapperModule"
 
+[contract.FeeConfigurationModule]
+artifact = "FeeConfigurationModule"
+
 [contract.SynthTokenModule]
 artifact = "SynthTokenModule"
 
@@ -66,6 +69,7 @@ args = [
     AtomicOrderModule: contracts.AtomicOrderModule,
     AsyncOrderModule: contracts.AsyncOrderModule,
     WrapperModule: contracts.WrapperModule,
+    FeeConfigurationModule: contracts.FeeConfigurationModule
   }) %>'''
 ]
 modified = ["contracts"]
@@ -74,7 +78,8 @@ depends = [
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
-  "contract.WrapperModule"
+  "contract.WrapperModule",
+  "contract.FeeConfigurationModule"
 ]
 
 [contract.SpotMarketRouter]
@@ -84,7 +89,8 @@ abiOf = [
   "SpotMarketFactoryModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
-  "WrapperModule"
+  "WrapperModule",
+  "FeeConfigurationModule"
 ]
 depends = ["run.generate_spot_market_router"]
 

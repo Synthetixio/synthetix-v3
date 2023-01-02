@@ -35,6 +35,8 @@ interface ISpotMarketFactoryModule is IMarket {
         address synthOwner
     ) external returns (uint128 synthMarketId);
 
+    function getSynth(uint128 marketId) external view returns (address);
+
     function updatePriceData(uint128 synthMarketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
 
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
