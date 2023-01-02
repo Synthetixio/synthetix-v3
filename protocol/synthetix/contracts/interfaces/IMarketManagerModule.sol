@@ -84,7 +84,7 @@ interface IMarketManagerModule {
     function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
     /**
-     * @notice Returns the total withdrawable snxUSD amount for the specified market, as of the last call to `delegateCollateral` related to this market
+     * @notice Returns the total withdrawable snxUSD amount for the specified market.
      * @param marketId The id of the market whose withdrawable USD amount is being queried.
      * @return The total amount of snxUSD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
      */
@@ -112,7 +112,7 @@ interface IMarketManagerModule {
     function getMarketTotalDebt(uint128 marketId) external view returns (int256);
 
     /**
-     * @notice Returns the total snxUSD value of the collateral for the specified market, as of the last call to `delegateCollateral` related to this market
+     * @notice Returns the total snxUSD value of the collateral for the specified market.
      * @param marketId The id of the market whose collateral is being queried.
      * @return The market's total snxUSD value of collateral, denominated with 18 decimals of precision.
      */
