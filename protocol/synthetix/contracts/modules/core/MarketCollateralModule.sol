@@ -146,7 +146,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @inheritdoc IMarketCollateralModule
      */
-    function getMarketCollateralValue(uint128 marketId) {
+    function getMarketCollateralValue(uint128 marketId) external view override returns (uint256) {
         return Market.load(marketId).getDepositedCollateralValue();
     }
 
