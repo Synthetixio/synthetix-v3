@@ -7,6 +7,8 @@ import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
 import "synthetix/contracts/interfaces/IIssuer.sol";
 import "synthetix/contracts/interfaces/ISynthetixDebtShare.sol";
 
+import { UUPSImplementation } from "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
+
 import "./interfaces/ISynthetix.sol";
 import "./interfaces/IRewardEscrowV2.sol";
 import "./interfaces/IV3CoreProxy.sol";
@@ -20,7 +22,7 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "hardhat/console.sol";
 
-contract LegacyMarket is Ownable, IMarket {
+contract LegacyMarket is Ownable, UUPSImplementation, IMarket {
     using DecimalMath for uint256;
 
     uint128 public marketId;
@@ -205,5 +207,9 @@ contract LegacyMarket is Ownable, IMarket {
         return
             interfaceId == type(IMarket).interfaceId ||
             interfaceId == this.supportsInterface.selector;
+    }
+
+    function upgradeTo(address to) external onlyOwner {
+        _upgradeTo(to);
     }
 }
