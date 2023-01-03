@@ -81,26 +81,16 @@ export function bootstrapWithStakedPool() {
   const poolId = 1;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
-  const abi = ethers.utils.defaultAbiCoder;
-
-  before('deploy mock aggregator', async () => {
-    const [owner] = r.signers();
-
-    const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
-    aggregator = await factory.connect(owner).deploy();
-
-    await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1000'));
-  });
 
   before('setup oracle manager node', async () => {
-    const [owner] = r.signers();
+    const results = await createOracleNode(
+      r.signers()[0],
+      ethers.utils.parseEther('1000'),
+      r.systems().OracleManager
+    );
 
-    const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 18]);
-    await r.systems().OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
-    oracleNodeId = await r
-      .systems()
-      .OracleManager.connect(owner)
-      .getNodeId([], NodeTypes.CHAINLINK, params1);
+    oracleNodeId = results.oracleNodeId;
+    aggregator = results.aggregator;
   });
 
   before('configure collateral', async () => {
@@ -169,10 +159,15 @@ export function bootstrapWithSynth(name: string, token: string) {
   });
 
   before('setup buy and sell feeds', async () => {
+    const { oracleNodeId: sellNodeId } = await createOracleNode(
+      r.signers()[0],
+      ethers.utils.parseEther('900'),
+      r.systems().OracleManager
+    );
     await r
       .systems()
       .SpotMarket.connect(marketOwner)
-      .updatePriceData(marketId, r.oracleNodeId(), r.oracleNodeId());
+      .updatePriceData(marketId, r.oracleNodeId(), sellNodeId);
   });
 
   // add weight to market from pool
@@ -274,4 +269,29 @@ const stake = async (
       delegateAmount,
       ethers.utils.parseEther('1')
     );
+};
+
+const createOracleNode = async (
+  owner: ethers.Signer,
+  price: ethers.BigNumber,
+  OracleManager: Oracle_managerProxy
+) => {
+  const abi = ethers.utils.defaultAbiCoder;
+  const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
+  const aggregator = await factory.connect(owner).deploy();
+
+  await aggregator.mockSetCurrentPrice(price);
+
+  const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 18]);
+  await OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+  const oracleNodeId = await OracleManager.connect(owner).getNodeId(
+    [],
+    NodeTypes.CHAINLINK,
+    params1
+  );
+
+  return {
+    oracleNodeId,
+    aggregator,
+  };
 };

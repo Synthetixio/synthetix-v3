@@ -54,9 +54,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         store.isValidMarket(marketId);
 
-        // Burn synths provided
-        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
-
         // Exchange synths provided into dollar amount
         uint256 usdAmount = Price.synthUsdExchangeRate(
             marketId,
@@ -75,8 +72,20 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        // transfer USD amount to user
-        ITokenModule(store.usdToken).transfer(msg.sender, returnAmount);
+        // Burn synths provided
+        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
+
+        if (returnAmount > usdAmount) {
+            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+                marketId,
+                msg.sender,
+                returnAmount - usdAmount
+            );
+
+            ITokenModule(store.usdToken).transfer(msg.sender, usdAmount);
+        } else {
+            ITokenModule(store.usdToken).transfer(msg.sender, returnAmount);
+        }
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees);
 
