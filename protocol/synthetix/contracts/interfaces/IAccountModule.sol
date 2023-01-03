@@ -39,10 +39,10 @@ interface IAccountModule {
 
     /**
      * @notice Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
-     * @param accountId The Id of the account that granted the permission.
+     * @param accountId The id of the account that has had the permission revoked.
      * @param permission The bytes32 identifier of the permission.
-     * @param user The target address to whom the permission was granted.
-     * @param sender The address that granted the permission.
+     * @param user The target address for which the permission was revoked.
+     * @param sender The address that revoked the permission.
      */
     event PermissionRevoked(
         uint128 indexed accountId,

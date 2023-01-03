@@ -213,7 +213,7 @@ describe('PoolModule Admin', function () {
 
           it('market still has withdrawable usd', async () => {
             assertBn.equal(
-              await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+              await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
               depositAmount.div(4)
             );
           });
@@ -283,7 +283,7 @@ describe('PoolModule Admin', function () {
               // marketId() gets to keep its available liquidity because when
               // the market exited when it did it "committed"
               assertBn.equal(
-                await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+                await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
                 debtAmount
               );
 
@@ -343,7 +343,7 @@ describe('PoolModule Admin', function () {
               // marketId() gets to keep its available liquidity because when
               // the market exited when it did it "committed"
               assertBn.equal(
-                await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+                await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
                 debtAmount
               );
 
@@ -401,7 +401,7 @@ describe('PoolModule Admin', function () {
 
       it('has only second pool market withdrawable usd', async () => {
         assertBn.equal(
-          await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+          await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
           One.mul(2)
         );
       });
@@ -439,7 +439,7 @@ describe('PoolModule Admin', function () {
 
         it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
           assertBn.equal(
-            await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+            await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
             One.mul(2).add(Hundred)
           );
 
@@ -465,7 +465,7 @@ describe('PoolModule Admin', function () {
             // (market1 assumes no new debt as a result of balance going down,
             // but accounts/can pool can withdraw at a profit)
             assertBn.equal(
-              await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+              await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
               Hundred.add(One.mul(2))
             );
           });
@@ -484,7 +484,7 @@ describe('PoolModule Admin', function () {
 
             it('has same amount of withdrawable usd', async () => {
               assertBn.equal(
-                await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+                await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
                 Hundred.add(One.mul(2))
               );
             });
@@ -507,7 +507,7 @@ describe('PoolModule Admin', function () {
 
               it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
                 assertBn.equal(
-                  await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+                  await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
                   Hundred.add(One.mul(2))
                 );
               });
@@ -546,7 +546,7 @@ describe('PoolModule Admin', function () {
 
               it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
                 assertBn.equal(
-                  await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+                  await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
                   Hundred.add(One.mul(2))
                 );
               });
@@ -597,7 +597,7 @@ describe('PoolModule Admin', function () {
 
       it('withdrawable usd reflects minLiquidityRatio', async () => {
         assertBn.equal(
-          await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+          await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
           depositAmount.div(2)
         );
       });
@@ -612,7 +612,7 @@ describe('PoolModule Admin', function () {
 
         it('withdrawable usd reflects configured by pool', async () => {
           assertBn.equal(
-            await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+            await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
             depositAmount
           );
         });

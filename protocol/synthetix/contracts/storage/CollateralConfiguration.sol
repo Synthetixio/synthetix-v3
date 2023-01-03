@@ -152,7 +152,7 @@ library CollateralConfiguration {
     }
 
     /**
-     * @dev Reverts if the amount being delegated is sufficient for the system.
+     * @dev Reverts if the amount being delegated is insufficient for the system.
      * @param token The address of the collateral type.
      * @param amountD18 The amount being checked for sufficient delegation.
      */
