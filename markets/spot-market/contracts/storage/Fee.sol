@@ -264,13 +264,13 @@ library Fee {
             store.usdToken.approve(address(feeCollector), 0);
         }
 
-        store.depositToMarketManager(marketId, msg.sender, totalFees - collectedFees);
+        store.depositToMarketManager(marketId, totalFees - collectedFees);
     }
 
     function _applyFees(
         uint amount,
         int fees // bips 18 decimals
-    ) private view returns (uint amountUsable, int feesCollected) {
+    ) private pure returns (uint amountUsable, int feesCollected) {
         // bips are 18 decimals precision
         feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000e18);
         amountUsable = (amount.toInt() - feesCollected).toUint();

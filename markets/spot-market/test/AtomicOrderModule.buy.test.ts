@@ -57,7 +57,7 @@ describe('Atomic Order Module buy()', () => {
     });
 
     it('emits SynthBought event', async () => {
-      await assertEvent(txn, `SynthBought(${marketId()}, ${bn(1)}, 0)`, systems().SpotMarket);
+      await assertEvent(txn, `SynthBought(${marketId()}, ${bn(1)}, 0, 0)`, systems().SpotMarket);
     });
   });
 
@@ -91,7 +91,7 @@ describe('Atomic Order Module buy()', () => {
     it('emits SynthBought event', async () => {
       await assertEvent(
         txn,
-        `SynthBought(${marketId()}, ${bn(0.99)}, ${bn(10)})`,
+        `SynthBought(${marketId()}, ${bn(0.99)}, ${bn(10)}), 0, 0`,
         systems().SpotMarket
       );
     });
