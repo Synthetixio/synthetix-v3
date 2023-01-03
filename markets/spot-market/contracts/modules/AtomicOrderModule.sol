@@ -4,11 +4,13 @@ pragma solidity ^0.8.0;
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 
 contract AtomicOrderModule is IAtomicOrderModule {
+    using SafeCastI256 for int256;
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
@@ -17,16 +19,23 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        // Deposit USD from buyer
-        store.usdToken.approve(address(this), usdAmount);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(marketId, msg.sender, usdAmount);
+        // transfer usd from buyer
+        store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, int256 feesCollected) = Fee.calculateFees(
+        (uint256 amountUsable, int256 totalFees, uint collectedFees) = Fee.processFees(
             marketId,
             msg.sender,
             usdAmount,
             SpotMarketFactory.TransactionType.BUY
+        );
+
+        // TODO: processFees deposits fees into the market manager
+        // and so does this, should we consolidate?
+        IMarketManagerModule(store.synthetix).depositMarketUsd(
+            marketId,
+            address(this),
+            amountUsable
         );
 
         // Exchange amount after fees into synths to buyer
@@ -37,7 +46,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, synthAmount, feesCollected);
+        emit SynthBought(marketId, synthAmount, totalFees, collectedFees);
 
         return synthAmount;
     }
@@ -55,18 +64,21 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.SELL
         );
 
+        // Withdraw USD amount
+        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, address(this), usdAmount);
+
         // Calculate fees
-        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, int256 totalFees, uint collectedFees) = Fee.processFees(
             marketId,
             msg.sender,
             usdAmount,
             SpotMarketFactory.TransactionType.SELL
         );
 
-        // Withdraw USD amount after fees to seller
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, msg.sender, returnAmount);
+        // transfer USD amount to user
+        ITokenModule(store.usdToken).transfer(msg.sender, returnAmount);
 
-        emit SynthSold(marketId, returnAmount, feesCollected);
+        emit SynthSold(marketId, returnAmount, totalFees, collectedFees);
 
         return returnAmount;
     }

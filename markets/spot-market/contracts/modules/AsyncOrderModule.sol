@@ -44,18 +44,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
         store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
-        // Calculate fees
-        (uint256 amountUsable, ) = Fee.calculateFees(
-            marketId,
-            msg.sender,
-            usdAmount,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
-        );
-
         // Get estimated exchange amount
         uint256 amountSynth = Price.usdSynthExchangeRate(
             marketId,
-            amountUsable,
+            usdAmount,
             SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
@@ -103,15 +95,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 synthAmountEscrowedUsd = Price.usdSynthExchangeRate(
             marketId,
             synthAmount,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
-        );
-
-        // Calculate fees
-        // TODO: use `amountUsable` instead of `synthAmountEscrowedUsd`?
-        (, int256 feesQuoted) = Fee.calculateFees(
-            marketId,
-            msg.sender,
-            synthAmountEscrowedUsd,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
@@ -368,15 +351,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // Burn the synths escrowed
         SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.synthAmountEscrowed);
 
-        // fees should not be negative when buying
-        uint finalFeesUint = finalFees.toUint();
-        // Deposit the quoted fees
-        store.usdToken.approve(address(this), finalFeesUint);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
-            marketId,
-            address(this),
-            finalFeesUint
-        );
+        if (finalFees > 0) {
+            Fee.collectFees(marketId, finalFees.toUint());
+        }
     }
 
     function _returnSellOrderEscrow(

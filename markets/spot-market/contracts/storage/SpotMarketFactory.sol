@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "./Price.sol";
 import "./Fee.sol";
 import "./Wrapper.sol";
@@ -46,5 +47,15 @@ library SpotMarketFactory {
         if (marketOwner != msg.sender) {
             revert OnlyMarketOwner(marketOwner, msg.sender);
         }
+    }
+
+    function depositToMarketManager(
+        Data storage self,
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) internal {
+        self.usdToken.approve(address(this), amount);
+        IMarketManagerModule(self.synthetix).depositMarketUsd(marketId, target, amount);
     }
 }

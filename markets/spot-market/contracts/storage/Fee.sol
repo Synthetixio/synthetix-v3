@@ -7,6 +7,7 @@ import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../interfaces/external/IFeeCollector.sol";
 import "./Price.sol";
 import "./Wrapper.sol";
 
@@ -14,6 +15,7 @@ library Fee {
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using Price for Price.Data;
+    using SpotMarketFactory for SpotMarketFactory.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
@@ -27,6 +29,7 @@ library Fee {
         int wrapFixedFee;
         int unwrapFixedFee;
         uint skewScale;
+        IFeeCollector feeCollector;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -42,6 +45,20 @@ library Fee {
         uint fixedFee
     ) internal {
         load(marketId).atomicFixedFeeOverrides[transactor] = fixedFee;
+    }
+
+    function processFees(
+        uint128 marketId,
+        address transactor,
+        uint256 usdAmount,
+        SpotMarketFactory.TransactionType transactionType
+    ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
+        (amountUsable, totalFees) = calculateFees(marketId, transactor, usdAmount, transactionType);
+
+        // TODO: negative fees are ignored.  Verify this.
+        if (totalFees > 0) {
+            collectedFees = collectFees(marketId, totalFees.toUint());
+        }
     }
 
     function calculateFees(
@@ -213,10 +230,29 @@ library Fee {
         }
     }
 
+    // TODO: should this live here?  What's a better place? FeeConfigurationModule
+    function collectFees(uint128 marketId, uint totalFees) internal returns (uint collectedFees) {
+        IFeeCollector feeCollector = load(marketId).feeCollector;
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+        if (address(feeCollector) != address(0)) {
+            store.usdToken.approve(address(feeCollector), totalFees);
+
+            uint previousUsdBalance = store.usdToken.balanceOf(address(this));
+            feeCollector.collectFees(marketId, totalFees);
+            uint currentUsdBalance = store.usdToken.balanceOf(address(this));
+            collectedFees = currentUsdBalance - previousUsdBalance;
+
+            store.usdToken.approve(address(feeCollector), 0);
+        }
+
+        store.depositToMarketManager(marketId, msg.sender, totalFees - collectedFees);
+    }
+
     function _applyFees(
         uint amount,
         int fees // bips
-    ) private view returns (uint amountUsable, int feesCollected) {
+    ) private pure returns (uint amountUsable, int feesCollected) {
         feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000);
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }

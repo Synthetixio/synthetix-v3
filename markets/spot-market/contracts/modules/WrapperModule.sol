@@ -55,42 +55,53 @@ contract WrapperModule is IWrapperModule {
 
         // safe transfer?
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
+        IMarketCollateralModule(store.synthetix).depositMarketCollateral(
+            marketId,
+            address(this),
+            wrapAmount
+        );
 
         uint256 wrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             wrapAmount,
             SpotMarketFactory.TransactionType.WRAP
         );
-        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+
+        (uint256 returnAmountUsd, int256 totalFees) = Fee.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
             SpotMarketFactory.TransactionType.WRAP
         );
 
-        // TODO: check int256
+        if (totalFees > 0) {
+            // TODO: potential gas consideration:
+            // currently we withdraw fees amount from market to send to fee collector
+            // whatever is leftover gets re-deposited into the market manager.
+            // we should consolidate this and only withdraw the amount required
+            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+                marketId,
+                address(this),
+                totalFees
+            );
+            uint collectedFees = Fee.collectFees(marketId, totalFees.toUint());
+        }
+
         amountToMint = Price.usdSynthExchangeRate(
             marketId,
-            returnAmount,
+            returnAmountUsd,
             SpotMarketFactory.TransactionType.WRAP
-        );
-
-        store.usdToken.approve(store.synthetix, amountToMint);
-        IMarketCollateralModule(store.synthetix).depositMarketCollateral(
-            marketId,
-            address(this),
-            amountToMint
         );
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
-        emit SynthWrapped(marketId, amountToMint, feesCollected);
+        emit SynthWrapped(marketId, amountToMint, totalFees, collectedFees);
     }
 
     function unwrap(
         uint128 marketId,
         uint256 unwrapAmount
-    ) external override returns (uint256 amountToWithdraw) {
+    ) external override returns (uint256 returnCollateralAmount) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         wrapperStore.onlyEnabledWrapper();
@@ -101,33 +112,46 @@ contract WrapperModule is IWrapperModule {
         uint256 allowance = synth.allowance(msg.sender, address(this));
         if (allowance < unwrapAmount) revert InsufficientAllowance(unwrapAmount, allowance);
 
+        // transfer from seller
+        synth.transferFrom(msg.sender, address(this), unwrapAmount);
+
         uint256 unwrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             unwrapAmount,
             SpotMarketFactory.TransactionType.UNWRAP
         );
-        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, int256 feesToCollect) = Fee.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
-        // TODO: check int256
-        amountToWithdraw = Price.usdSynthExchangeRate(
+        if (feesToCollect > 0) {
+            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+                marketId,
+                address(this),
+                feesToCollect
+            );
+            uint collectedFees = Fee.collectFees(marketId, feesToCollect.toUint());
+        }
+
+        returnCollateralAmount = Price.usdSynthExchangeRate(
             marketId,
             returnAmount,
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
+        // TODO: would be nice to combine withdrawing market collateral and transferring collateral to seller
         IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
             marketId,
             wrapperStore.collateralType,
-            amountToWithdraw
+            returnCollateralAmount
         );
-        ITokenModule(wrapperStore.collateralType).transfer(msg.sender, amountToWithdraw);
+
+        ITokenModule(wrapperStore.collateralType).transfer(msg.sender, returnCollateralAmount);
         synth.burn(msg.sender, unwrapAmount);
 
-        emit SynthUnwrapped(marketId, amountToWithdraw, feesCollected);
+        emit SynthUnwrapped(marketId, returnCollateralAmount, feesToCollect);
     }
 }
