@@ -32,17 +32,57 @@ source = "<%= settings.v3_package %>"
 [import.fakeOracle]
 source = "<%= settings.oracle_package %>"
 
+[contract.InitialModuleBundle]
+artifact = "InitialModuleBundle"
+
+args = []
+
+[contract.InitialProxy]
+artifact = "Proxy"
+
+args = ["<%= contracts.InitialModuleBundle.address %>"]
+abiOf = ["InitialModuleBundle"]
+
+depends = ["contract.InitialModuleBundle"]
+
 # deploy the legacy market
 [contract.Market]
 artifact = "LegacyMarket"
 
+depends = ["import.v2x", "import.v3"]
+
+[invoke.acquireOwnership]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+
+depends = ["contract.InitialProxy"]
+
+[invoke.upgradeProxy]
+target = ["InitialProxy"]
+abi = "UpgradeModule"
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.Market.address %>"]
+
+factory.Proxy.abiOf = ["Market"]
+factory.Proxy.event = "Upgraded"
+factory.Proxy.arg = 0
+
+depends = ["contract.Market", "invoke.acquireOwnership"]
+
+[invoke.setSystemAddresses]
+target = ["Proxy"]
+from = "<%= settings.owner %>"
+func = "setSystemAddresses"
+
 args = [
-    "<%= settings.owner %>",
     "<%= imports.v2x.contracts.AddressResolver.address %>",
     "<%= imports.v3.contracts.CoreProxy.address %>"
 ]
 
-depends = ["import.v2x", "import.v3"]
+depends = ["invoke.upgradeProxy"]
 
 # add pool owner to pool feature flag allow list
 [invoke.setFeatureFlagPool]
@@ -55,24 +95,24 @@ depends = ["import.v3"]
 [invoke.setFeatureFlagMarket]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.Market.address %>"] # formatBytes32String("registerMarket")
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("registerMarket")
 fromCall.func = "owner"
-depends = ["contract.Market"]
+depends = ["invoke.upgradeProxy"]
 
 [invoke.setFeatureFlagAssociateDebt]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-args = ["0x6173736f63696174654465627400000000000000000000000000000000000000", "<%= contracts.Market.address %>"] # formatBytes32String("associateDebt")
+args = ["0x6173736f63696174654465627400000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("associateDebt")
 fromCall.func = "owner"
-depends = ["contract.Market"]
+depends = ["invoke.upgradeProxy"]
 
 [invoke.registerMarket]
-target = ["Market"]
+target = ["Proxy"]
 from = "<%= settings.owner %>"
 func = "registerMarket"
 args = []
 
-depends = ["invoke.setFeatureFlagMarket"]
+depends = ["invoke.setFeatureFlagMarket", "invoke.setSystemAddresses"]
 
 [invoke.registerOracleManager]
 target = ["v3.oracle_manager.Proxy"]
@@ -80,7 +120,7 @@ func = "registerNode"
 args = [
     [],
     3,
-    "0x000000000000000000000000<%= imports.fakeOracle.contracts.aggregator.address.slice(2) %>0000000000000000000000000000000000000000000000000000000000000000"
+    "0x000000000000000000000000<%= imports.fakeOracle.contracts.aggregator.address.slice(2) %>00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012"
 ]
 
 extra.snx_oracle_id.event = "NodeRegistered"
@@ -107,22 +147,22 @@ func = "importAddresses"
 args = [
     ["0x4c65676163794d61726b65740000000000000000000000000000000000000000"],
     # TODO nested interpolation
-    ["<%= contracts.Market.address %>"]
+    ["<%= contracts.Proxy.address %>"]
     #["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
 ]
 
 fromCall.func = "owner"
 
-depends = ["contract.Market"]
+depends = ["invoke.upgradeProxy"]
 
 [invoke.authorizedBroker]
 target = ["v2x.SynthetixDebtShare"]
 func = "addAuthorizedBroker"
-args = ["<%= contracts.Market.address %>"]
+args = ["<%= contracts.Proxy.address %>"]
 
 fromCall.func = "owner"
 
-depends = ["contract.Market"]
+depends = ["invoke.upgradeProxy"]
 
 # create spartan council pool
 [invoke.createPool]
