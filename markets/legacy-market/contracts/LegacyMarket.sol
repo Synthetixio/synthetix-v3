@@ -42,17 +42,16 @@ contract LegacyMarket is Ownable, UUPSImplementation, IMarket {
     event AccountMigrated(address indexed account, uint indexed accountId, uint collateralAmount, uint debtAmount);
     event ConvertedUSD(address indexed account, uint amount);
 
-    constructor(
-        address owner,
+    function setSystemAddresses(
         IAddressResolver v2xResolverAddress,
         IV3CoreProxy v3SystemAddress
-    ) {
+    ) external onlyOwner returns (bool didInitialize) {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
 
         IERC20(v2xResolverAddress.getAddress("ProxySynthetix")).approve(address(v3SystemAddress), type(uint).max);
 
-        OwnableStorage.load().owner = owner;
+        return true;
     }
 
     function registerMarket() external onlyOwner returns (uint128 newMarketId) {

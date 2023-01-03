@@ -41,6 +41,7 @@ args = []
 artifact = "Proxy"
 
 args = ["<%= contracts.InitialModuleBundle.address %>"]
+abiOf = ["InitialModuleBundle"]
 
 depends = ["contract.InitialModuleBundle"]
 
@@ -48,25 +49,40 @@ depends = ["contract.InitialModuleBundle"]
 [contract.Market]
 artifact = "LegacyMarket"
 
-args = [
-    "<%= settings.owner %>",
-    "<%= imports.v2x.contracts.AddressResolver.address %>",
-    "<%= imports.v3.contracts.CoreProxy.address %>"
-]
-
 depends = ["import.v2x", "import.v3"]
+
+[invoke.acquireOwnership]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+
+depends = ["contract.InitialProxy"]
 
 [invoke.upgradeProxy]
 target = ["InitialProxy"]
+abi = "UpgradeModule"
+from = "<%= settings.owner %>"
 func = "upgradeTo"
-fromCall.func = "owner"
 args = ["<%= contracts.Market.address %>"]
 
 factory.Proxy.abiOf = ["Market"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 
-depends = ["contract.Market", "contract.InitialProxy"]
+depends = ["contract.Market", "invoke.acquireOwnership"]
+
+[invoke.setSystemAddresses]
+target = ["Proxy"]
+from = "<%= settings.owner %>"
+func = "setSystemAddresses"
+
+args = [
+    "<%= imports.v2x.contracts.AddressResolver.address %>",
+    "<%= imports.v3.contracts.CoreProxy.address %>"
+]
+
+depends = ["invoke.upgradeProxy"]
 
 # add pool owner to pool feature flag allow list
 [invoke.setFeatureFlagPool]
@@ -79,16 +95,16 @@ depends = ["import.v3"]
 [invoke.setFeatureFlagMarket]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.InitialProxy.address %>"] # formatBytes32String("registerMarket")
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("registerMarket")
 fromCall.func = "owner"
-depends = ["contract.InitialProxy", "import.v3"]
+depends = ["invoke.upgradeProxy"]
 
 [invoke.setFeatureFlagAssociateDebt]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-args = ["0x6173736f63696174654465627400000000000000000000000000000000000000", "<%= contracts.InitialProxy.address %>"] # formatBytes32String("associateDebt")
+args = ["0x6173736f63696174654465627400000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("associateDebt")
 fromCall.func = "owner"
-depends = ["contract.InitialProxy", "import.v3"]
+depends = ["invoke.upgradeProxy"]
 
 [invoke.registerMarket]
 target = ["Proxy"]
@@ -96,7 +112,7 @@ from = "<%= settings.owner %>"
 func = "registerMarket"
 args = []
 
-depends = ["invoke.setFeatureFlagMarket", "invoke.upgradeProxy"]
+depends = ["invoke.setFeatureFlagMarket", "invoke.setSystemAddresses"]
 
 [invoke.registerOracleManager]
 target = ["v3.oracle_manager.Proxy"]
@@ -104,7 +120,7 @@ func = "registerNode"
 args = [
     [],
     3,
-    "0x000000000000000000000000<%= imports.fakeOracle.contracts.aggregator.address.slice(2) %>0000000000000000000000000000000000000000000000000000000000000000"
+    "0x000000000000000000000000<%= imports.fakeOracle.contracts.aggregator.address.slice(2) %>00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012"
 ]
 
 extra.snx_oracle_id.event = "NodeRegistered"
@@ -131,22 +147,22 @@ func = "importAddresses"
 args = [
     ["0x4c65676163794d61726b65740000000000000000000000000000000000000000"],
     # TODO nested interpolation
-    ["<%= contracts.InitialProxy.address %>"]
+    ["<%= contracts.Proxy.address %>"]
     #["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
 ]
 
 fromCall.func = "owner"
 
-depends = ["contract.InitialProxy", "import.v2x"]
+depends = ["invoke.upgradeProxy"]
 
 [invoke.authorizedBroker]
 target = ["v2x.SynthetixDebtShare"]
 func = "addAuthorizedBroker"
-args = ["<%= contracts.InitialProxy.address %>"]
+args = ["<%= contracts.Proxy.address %>"]
 
 fromCall.func = "owner"
 
-depends = ["contract.InitialProxy", "import.v2x"]
+depends = ["invoke.upgradeProxy"]
 
 # create spartan council pool
 [invoke.createPool]

@@ -57,7 +57,7 @@ describe('LegacyMarket', () => {
     snxStakerAddress = '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9';
     snxStaker = await getImpersonatedSigner(provider, snxStakerAddress);
 
-    market = LegacyMarket__factory.connect(outputs.contracts.Market.address, snxStaker);
+    market = LegacyMarket__factory.connect(outputs.contracts.Proxy.address, snxStaker);
 
     addressResolver = new ethers.Contract(
       outputs.imports.v2x.contracts.AddressResolver.address,
@@ -124,7 +124,7 @@ describe('LegacyMarket', () => {
     it('fails when insufficient migrated collateral', async () => {
       await assertRevert(
         market.connect(snxStaker).convertUSD(wei(1).toBN()),
-        'InsufficientCollateralMigrated(1000000000000000000, 0)',
+        'InsufficientCollateralMigrated("1000000000000000000", "0")',
         market
       );
     });
@@ -133,10 +133,8 @@ describe('LegacyMarket', () => {
       const convertedAmount = wei(1);
 
       before('do migration', async () => {
-        console.log('prep', wei(await snxToken.balanceOf(snxStakerAddress)).toString());
         await snxToken.connect(snxStaker).approve(market.address, ethers.constants.MaxUint256);
         await market.connect(snxStaker).migrate(migratedAccountId);
-        console.log('post', wei(await snxToken.balanceOf(snxStakerAddress)).toString());
 
         // sanity
         console.log(
@@ -164,7 +162,10 @@ describe('LegacyMarket', () => {
       it('fails when insufficient source balance', async () => {
         // transfer away some of the sUSD so that we can see what happens when there is not balance
         await susdToken.connect(snxStaker).transfer(await owner.getAddress(), wei(500).toBN());
-        await assertRevert(market.connect(snxStaker).convertUSD(wei(501).toBN()));
+        await assertRevert(
+          market.connect(snxStaker).convertUSD(wei(501).toBN()),
+          `Error("Insufficient balance after any settlement owing")`
+        );
       });
 
       describe('when invoked', async () => {
