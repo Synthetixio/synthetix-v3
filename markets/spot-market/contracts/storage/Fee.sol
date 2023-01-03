@@ -230,6 +230,7 @@ library Fee {
         }
     }
 
+    // TODO: should this live here?  What's a better place? FeeConfigurationModule
     function collectFees(uint128 marketId, uint totalFees) internal returns (uint collectedFees) {
         IFeeCollector feeCollector = load(marketId).feeCollector;
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();

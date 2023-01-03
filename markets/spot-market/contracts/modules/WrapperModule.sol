@@ -75,6 +75,10 @@ contract WrapperModule is IWrapperModule {
         );
 
         if (totalFees > 0) {
+            // TODO: potential gas consideration:
+            // currently we withdraw fees amount from market to send to fee collector
+            // whatever is leftover gets re-deposited into the market manager.
+            // we should consolidate this and only withdraw the amount required
             IMarketManagerModule(store.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
