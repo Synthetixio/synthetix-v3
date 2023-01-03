@@ -141,12 +141,6 @@ library Fee {
 
         int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
 
-        console.log("VAMOS");
-        console.log(fixedFee);
-        console.log(skewFee.toUint());
-        console.log(utilizationFee);
-        console.log("DONE");
-
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
     }
 
@@ -165,6 +159,8 @@ library Fee {
 
         uint fixedFee = async ? self.asyncFixedFee : self.atomicFixedFee;
         int totalFees = skewFee + fixedFee.toInt();
+
+        console.logInt(skewFee);
 
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
     }
@@ -207,6 +203,8 @@ library Fee {
         uint initialSkew = totalSynthValue - wrappedMarketCollateral;
         uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
+        console.log("INIT", initialSkew);
+
         uint skewAfterFill = initialSkew;
         // TODO: when the Adjustment after fill is calculated, does it take into account the Adjustments collected for the trade?
         if (isBuyTrade) {
@@ -214,6 +212,8 @@ library Fee {
         } else if (isSellTrade) {
             skewAfterFill -= amount;
         }
+
+        console.log("AFTER", skewAfterFill);
 
         uint skewAfterFillAdjustment = skewAfterFill.divDecimal(skewScaleValue);
         int skewAdjustmentAveragePercentage = (skewAfterFillAdjustment.toInt() +
