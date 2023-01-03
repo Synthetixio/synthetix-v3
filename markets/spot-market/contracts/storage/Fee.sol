@@ -264,7 +264,7 @@ library Fee {
             store.usdToken.approve(address(feeCollector), 0);
         }
 
-        store.depositToMarketManager(marketId, leftoverFees);
+        store.depositToMarketManager(marketId, msg.sender, totalFees - collectedFees);
     }
 
     function _applyFees(
