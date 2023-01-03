@@ -88,6 +88,7 @@ library Fee {
         ) {
             (amountUsable, feesCollected) = calculateSellFees(
                 self,
+                transactor,
                 marketId,
                 usdAmount,
                 transactionType == SpotMarketFactory.TransactionType.ASYNC_SELL
@@ -146,6 +147,7 @@ library Fee {
 
     function calculateSellFees(
         Data storage self,
+        address transactor,
         uint128 marketId,
         uint256 amount,
         bool async
@@ -157,10 +159,8 @@ library Fee {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        uint fixedFee = async ? self.asyncFixedFee : self.atomicFixedFee;
+        uint fixedFee = async ? self.asyncFixedFee : _getAtomicFixedFee(self, transactor);
         int totalFees = skewFee + fixedFee.toInt();
-
-        console.logInt(skewFee);
 
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
     }
@@ -203,8 +203,6 @@ library Fee {
         uint initialSkew = totalSynthValue - wrappedMarketCollateral;
         uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
-        console.log("INIT", initialSkew);
-
         uint skewAfterFill = initialSkew;
         // TODO: when the Adjustment after fill is calculated, does it take into account the Adjustments collected for the trade?
         if (isBuyTrade) {
@@ -212,8 +210,6 @@ library Fee {
         } else if (isSellTrade) {
             skewAfterFill -= amount;
         }
-
-        console.log("AFTER", skewAfterFill);
 
         uint skewAfterFillAdjustment = skewAfterFill.divDecimal(skewScaleValue);
         int skewAdjustmentAveragePercentage = (skewAfterFillAdjustment.toInt() +

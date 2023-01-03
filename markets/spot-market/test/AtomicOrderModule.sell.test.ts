@@ -29,10 +29,10 @@ describe.only('Atomic Order Module sell()', () => {
   });
 
   before('setup traders', async () => {
-    await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(100_000));
-    await systems().SpotMarket.connect(trader1).buy(marketId(), bn(100_000));
-    await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(100_000));
-    await systems().SpotMarket.connect(trader2).buy(marketId(), bn(100_000));
+    await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(10_000));
+    await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000));
+    await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
+    await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000));
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -139,6 +139,26 @@ describe.only('Atomic Order Module sell()', () => {
         systems().SpotMarket
       );
     });
+
+    describe('custom transactor fee', async () => {
+      before('set transactor fee to 10 bps', async () => {
+        await systems()
+          .SpotMarket.connect(marketOwner)
+          .setCustomTransactorFees(marketId(), trader2.getAddress(), bn(10));
+      });
+
+      before('sell 1 snxETH', async () => {
+        await synth.connect(trader2).approve(systems().SpotMarket.address, bn(1));
+        await systems().SpotMarket.connect(trader2).sell(marketId(), bn(1));
+      });
+
+      it('only charges custom transactor fees', async () => {
+        assertBn.equal(
+          await systems().USD.balanceOf(await trader2.getAddress()),
+          initialTrader2Balance.add(bn(899.1)) // sell feed $900 price per eth
+        );
+      });
+    });
   });
 
   describe('all fees', () => {
@@ -154,40 +174,23 @@ describe.only('Atomic Order Module sell()', () => {
       await systems().SpotMarket.connect(marketOwner).setMarketSkewScale(marketId(), bn(100));
     });
 
-    describe('first trader sell', () => {
-      before('buy 5 snxETH', async () => {
-        await synth.connect(trader1).approve(systems().SpotMarket.address, bn(5));
-        await systems().SpotMarket.connect(trader1).sell(marketId(), bn(5));
-      });
-
-      it('trader1 gets 9.5 snxETH', async () => {
-        // before fill value = 20 eth * 900 usd/eth = 18_000 usd
-        // after fill value = 18_000 - 5 * 900 = 13_500 usd
-        // -17.5% fee (average before/after fill 20 + 15 / 2)
-        // 1% fixed fee
-        // $900 eth price * 5 eth skew * 16.5% fee =
-        assertBn.equal(
-          await systems().USD.balanceOf(await trader1.getAddress()),
-          initialTrader1Balance.add(bn(3847.5))
-        );
-      });
+    before('buy 5 snxETH', async () => {
+      await synth.connect(trader1).approve(systems().SpotMarket.address, bn(5));
+      await systems().SpotMarket.connect(trader1).sell(marketId(), bn(5));
     });
 
-    // describe('next trader buy', () => {
-    //   before('buy 10 more snxETH', async () => {
-    //     await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-    //     await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000));
-    //   });
-
-    //   it('trader2 gets 8.55 snxETH', async () => {
-    //     // from 9.5 eth skew to 19.5 eth skew
-    //     // 14.5% fee (average before/after fill 9.5 + 19.5 / 2)
-    //     assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(8.55));
-    //   });
-    // });
+    it('trader1 gets 9.5 snxETH', async () => {
+      // before fill value = 20 eth * 900 usd/eth = 18_000 usd
+      // after fill value = 18_000 - 5 * 900 = 13_500 usd
+      // -17.5% fee (average before/after fill 20 + 15 / 2)
+      // 1% fixed fee
+      // $900 eth price * 5 eth skew * 16.5% fee =
+      assertBn.equal(
+        await systems().USD.balanceOf(await trader1.getAddress()),
+        initialTrader1Balance.add(bn(5242.5))
+      );
+    });
   });
-
-  // describe('all fees set', () => {
   //   before(restore);
 
   //   before('set all fees', async () => {
