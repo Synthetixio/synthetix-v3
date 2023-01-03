@@ -164,7 +164,7 @@ describe('LegacyMarket', () => {
         await susdToken.connect(snxStaker).transfer(await owner.getAddress(), wei(500).toBN());
         await assertRevert(
           market.connect(snxStaker).convertUSD(wei(501).toBN()),
-          `Error("Insufficient balance after any settlement owing")`
+          'Error("Insufficient balance after any settlement owing")'
         );
       });
 
