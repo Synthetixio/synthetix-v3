@@ -57,7 +57,7 @@ library Fee {
 
         // TODO: negative fees are ignored.  Verify this.
         if (fees > 0) {
-            collectFees(marketId, fees.toUint());
+            _collectFees(marketId, fees.toUint());
         }
     }
 
@@ -230,18 +230,19 @@ library Fee {
         }
     }
 
-    function collectFees(
-        uint128 marketId,
-        uint totalFees
-    ) internal returns (uint leftoverFees, uint feesCollected) {
+    function _collectFees(uint128 marketId, uint totalFees) private returns (uint leftoverFees) {
         IFeeCollector feeCollector = load(marketId).feeCollector;
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         leftoverFees = totalFees;
         if (address(feeCollector) != address(0)) {
             store.usdToken.approve(address(feeCollector), totalFees);
-            feesCollected = feeCollector.collectFees(marketId, totalFees);
-            leftoverFees = totalFees - feesCollected;
+
+            uint previousUsdBalance = store.usdToken.balanceOf(address(this));
+            feeCollector.collectFees(marketId, totalFees);
+            uint currentUsdBalance = store.usdToken.balanceOf(address(this));
+
+            leftoverFees = currentUsdBalance - previousUsdBalance;
             store.usdToken.approve(address(feeCollector), 0);
         }
 
