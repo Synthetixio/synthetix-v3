@@ -2,12 +2,21 @@
 pragma solidity ^0.8.0;
 
 import "synthetix/contracts/interfaces/IAddressResolver.sol";
-import "./IV3CoreProxy.sol";
+import "./external/IV3CoreProxy.sol";
 
 /**
- * @title Market for the migration of v2x to v3. Acts as a single large "staker" on the v2x system.
+ * @title Market enabling the V3 system to back debt issued by the V2 system, migrate positions from V2 to V3, and convert stablecoins issued from V2 into stablecoins issued by V3.
+ * @dev This market effectively acts as a single large "staker" in the V2 system.
  */
 interface ILegacyMarket {
+    event AccountMigrated(
+        address indexed staker,
+        uint indexed accountId,
+        uint collateralAmount,
+        uint debtAmount
+    );
+
+    event ConvertedUSD(address indexed account, uint amount);
 
     /**
      * @notice Called by anyone with {amount} sUSD to convert {amount} sUSD to {amount} snxUSD.
@@ -36,7 +45,7 @@ interface ILegacyMarket {
     function migrateOnBehalf(address staker, uint128 accountId) external;
 
     /**
-     * called by the owner to register this market with v3. This is an initialization call only.
+     * @notice called by the owner to register this market with v3. This is an initialization call only.
      */
     function registerMarket() external returns (uint128 newMarketId);
 
