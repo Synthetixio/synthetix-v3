@@ -122,4 +122,11 @@ interface IMarketCollateralModule {
         uint128 marketId,
         address collateralType
     ) external returns (uint256);
+
+    /**
+     * @notice Return the total value of collateral that a specified market has deposited.
+     * @param marketId The id of the market for which the directly deposited collateral amount is being queried.
+     * @return The total value of collateral deposited by the market, denominated with 18 decimals of precision.
+     */
+    function getMarketCollateralValue(uint128 marketId) external returns (uint256);
 }
