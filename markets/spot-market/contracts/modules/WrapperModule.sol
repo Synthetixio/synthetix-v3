@@ -66,17 +66,22 @@ contract WrapperModule is IWrapperModule {
             wrapAmount,
             SpotMarketFactory.TransactionType.WRAP
         );
-        (uint256 returnAmountUsd, int256 feesToCollect) = Fee.calculateFees(
+
+        (uint256 returnAmountUsd, int256 totalFees) = Fee.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
             SpotMarketFactory.TransactionType.WRAP
         );
 
-        // TODO: collecting fees will fail because there is no USD here, just synth/collateral.  so should wrappers collect fees?
-        // if (feesToCollect > 0) {
-        //     Fee.collectFees(marketId, feesToCollect.toUint());
-        // }
+        if (totalFees > 0) {
+            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+                marketId,
+                address(this),
+                totalFees
+            );
+            uint collectedFees = Fee.collectFees(marketId, totalFees.toUint());
+        }
 
         amountToMint = Price.usdSynthExchangeRate(
             marketId,
@@ -86,7 +91,7 @@ contract WrapperModule is IWrapperModule {
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
-        emit SynthWrapped(marketId, amountToMint, feesToCollect);
+        emit SynthWrapped(marketId, amountToMint, totalFees, collectedFees);
     }
 
     function unwrap(
@@ -118,10 +123,14 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
-        // TODO: collecting fees will fail because there is no USD here, just synth/collateral.  so should wrappers collect fees?
-        // if (feesToCollect > 0) {
-        //     Fee.collectFees(marketId, feesToCollect.toUint());
-        // }
+        if (feesToCollect > 0) {
+            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+                marketId,
+                address(this),
+                feesToCollect
+            );
+            uint collectedFees = Fee.collectFees(marketId, feesToCollect.toUint());
+        }
 
         returnCollateralAmount = Price.usdSynthExchangeRate(
             marketId,

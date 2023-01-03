@@ -52,12 +52,12 @@ library Fee {
         address transactor,
         uint256 usdAmount,
         SpotMarketFactory.TransactionType transactionType
-    ) internal returns (uint256 amountUsable, int256 fees) {
-        (amountUsable, fees) = calculateFees(marketId, transactor, usdAmount, transactionType);
+    ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
+        (amountUsable, totalFees) = calculateFees(marketId, transactor, usdAmount, transactionType);
 
         // TODO: negative fees are ignored.  Verify this.
-        if (fees > 0) {
-            collectFees(marketId, fees.toUint());
+        if (totalFees > 0) {
+            collectedFees = collectFees(marketId, totalFees.toUint());
         }
     }
 
@@ -230,23 +230,22 @@ library Fee {
         }
     }
 
-    function collectFees(uint128 marketId, uint totalFees) internal returns (uint leftoverFees) {
+    function collectFees(uint128 marketId, uint totalFees) internal returns (uint collectedFees) {
         IFeeCollector feeCollector = load(marketId).feeCollector;
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        leftoverFees = totalFees;
         if (address(feeCollector) != address(0)) {
             store.usdToken.approve(address(feeCollector), totalFees);
 
             uint previousUsdBalance = store.usdToken.balanceOf(address(this));
             feeCollector.collectFees(marketId, totalFees);
             uint currentUsdBalance = store.usdToken.balanceOf(address(this));
+            collectedFees = currentUsdBalance - previousUsdBalance;
 
-            leftoverFees = currentUsdBalance - previousUsdBalance;
             store.usdToken.approve(address(feeCollector), 0);
         }
 
-        store.depositToMarketManager(marketId, msg.sender, leftoverFees);
+        store.depositToMarketManager(marketId, msg.sender, totalFees - collectedFees);
     }
 
     function _applyFees(
