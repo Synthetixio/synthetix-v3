@@ -15,6 +15,10 @@ import "../utils/AsyncOrderClaimTokenUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
+/**
+ * @title Module for registering synths.  The factory tracks all synths in the system and consolidates implementation for all synths.
+ * @dev See ISpotMarketFactoryModule.
+ */
 contract SpotMarketFactoryModule is
     ISpotMarketFactoryModule,
     AssociatedSystemsModule,
@@ -30,11 +34,16 @@ contract SpotMarketFactoryModule is
         return store.synthetix != address(0) && store.usdToken != ITokenModule(address(0));
     }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function isInitialized() external view returns (bool) {
         return _isInitialized();
     }
 
-    // specify oracle manager address
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function initialize(
         address snxAddress,
         address usdTokenAddress,
@@ -52,6 +61,9 @@ contract SpotMarketFactoryModule is
         store.oracle = IOracleManagerModule(oracleManager);
     }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function registerSynth(
         string memory tokenName,
         string memory tokenSymbol,
@@ -107,17 +119,32 @@ contract SpotMarketFactoryModule is
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function getSynth(uint128 marketId) external view override returns (address) {
         return address(SynthUtil.getToken(marketId));
     }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         bytes32 synthId = SynthUtil.getSystemId(marketId);
         _upgradeToken(synthId, synthImpl);
+
+        emit SynthImplementationUpgraded(
+            marketId,
+            address(SynthUtil.getToken(marketId)),
+            synthImpl
+        );
     }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function upgradeAsyncOrderTokenImpl(
         uint128 marketId,
         address asyncOrderImpl
@@ -128,6 +155,9 @@ contract SpotMarketFactoryModule is
         _upgradeNft(asyncOrderClaimTokenId, asyncOrderImpl);
     }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function updatePriceData(
         uint128 synthMarketId,
         bytes32 buyFeedId,

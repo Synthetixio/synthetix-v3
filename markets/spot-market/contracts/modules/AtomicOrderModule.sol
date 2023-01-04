@@ -9,8 +9,10 @@ import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 
-import "hardhat/console.sol";
-
+/**
+ * @title Module for buying and selling atomically registered synths.
+ * @dev See IAtomicOrderModule.
+ */
 contract AtomicOrderModule is IAtomicOrderModule {
     using SafeCastI256 for int256;
     using DecimalMath for uint256;
@@ -18,6 +20,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
     using Price for Price.Data;
     using Fee for Fee.Data;
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         store.isValidMarket(marketId);
@@ -34,7 +39,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         // TODO: processFees deposits fees into the market manager
-        // and so does this, should we consolidate?
+        // and so does this, need to consolidate for effeciency
         store.depositToMarketManager(marketId, amountUsable);
 
         // Exchange amount after fees into synths to buyer
@@ -50,6 +55,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         return synthAmount;
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function sell(uint128 marketId, uint256 synthAmount) external override returns (uint256) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         store.isValidMarket(marketId);
