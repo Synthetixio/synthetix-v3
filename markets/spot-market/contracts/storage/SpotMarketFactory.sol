@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
+import "../interfaces/ISpotMarketFactoryModule.sol";
 import "./Price.sol";
 import "./Fee.sol";
 import "./Wrapper.sol";
@@ -15,6 +16,7 @@ library SpotMarketFactory {
     using Price for Price.Data;
 
     error OnlyMarketOwner(address marketOwner, address sender);
+    error InvalidMarket(uint128 marketId);
 
     struct Data {
         ITokenModule usdToken;
@@ -49,13 +51,14 @@ library SpotMarketFactory {
         }
     }
 
-    function depositToMarketManager(
-        Data storage self,
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) internal {
+    function isValidMarket(Data storage self, uint128 marketId) internal view returns (bool) {
+        if (self.synthOwners[marketId] == address(0)) {
+            revert InvalidMarket(marketId);
+        }
+    }
+
+    function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {
         self.usdToken.approve(address(this), amount);
-        IMarketManagerModule(self.synthetix).depositMarketUsd(marketId, target, amount);
+        IMarketManagerModule(self.synthetix).depositMarketUsd(marketId, address(this), amount);
     }
 }

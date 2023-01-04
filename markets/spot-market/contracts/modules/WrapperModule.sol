@@ -74,6 +74,7 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.WRAP
         );
 
+        uint collectedFees = 0;
         if (totalFees > 0) {
             // TODO: potential gas consideration:
             // currently we withdraw fees amount from market to send to fee collector
@@ -82,9 +83,9 @@ contract WrapperModule is IWrapperModule {
             IMarketManagerModule(store.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
-                totalFees
+                totalFees.toUint()
             );
-            uint collectedFees = Fee.collectFees(marketId, totalFees.toUint());
+            collectedFees = Fee.collectFees(marketId, totalFees.toUint());
         }
 
         amountToMint = Price.usdSynthExchangeRate(
@@ -120,20 +121,21 @@ contract WrapperModule is IWrapperModule {
             unwrapAmount,
             SpotMarketFactory.TransactionType.UNWRAP
         );
-        (uint256 returnAmount, int256 feesToCollect) = Fee.calculateFees(
+        (uint256 returnAmount, int256 totalFees) = Fee.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
-        if (feesToCollect > 0) {
+        uint collectedFees = 0;
+        if (totalFees > 0) {
             IMarketManagerModule(store.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
-                feesToCollect
+                totalFees.toUint()
             );
-            uint collectedFees = Fee.collectFees(marketId, feesToCollect.toUint());
+            collectedFees = Fee.collectFees(marketId, totalFees.toUint());
         }
 
         returnCollateralAmount = Price.usdSynthExchangeRate(
@@ -152,6 +154,6 @@ contract WrapperModule is IWrapperModule {
         ITokenModule(wrapperStore.collateralType).transfer(msg.sender, returnCollateralAmount);
         synth.burn(msg.sender, unwrapAmount);
 
-        emit SynthUnwrapped(marketId, returnCollateralAmount, feesToCollect);
+        emit SynthUnwrapped(marketId, returnCollateralAmount, totalFees, collectedFees);
     }
 }

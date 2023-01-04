@@ -11,6 +11,8 @@ import "../interfaces/external/IFeeCollector.sol";
 import "./Price.sol";
 import "./Wrapper.sol";
 
+import "hardhat/console.sol";
+
 library Fee {
     using DecimalMath for uint256;
     using DecimalMath for int256;
@@ -86,6 +88,7 @@ library Fee {
         ) {
             (amountUsable, feesCollected) = calculateSellFees(
                 self,
+                transactor,
                 marketId,
                 usdAmount,
                 transactionType == SpotMarketFactory.TransactionType.ASYNC_SELL
@@ -124,6 +127,7 @@ library Fee {
         uint utilizationFee = calculateUtilizationRateFee(
             self,
             marketId,
+            amount,
             SpotMarketFactory.TransactionType.BUY
         );
 
@@ -143,6 +147,7 @@ library Fee {
 
     function calculateSellFees(
         Data storage self,
+        address transactor,
         uint128 marketId,
         uint256 amount,
         bool async
@@ -154,7 +159,7 @@ library Fee {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        uint fixedFee = async ? self.asyncFixedFee : self.atomicFixedFee;
+        uint fixedFee = async ? self.asyncFixedFee : _getAtomicFixedFee(self, transactor);
         int totalFees = skewFee + fixedFee.toInt();
 
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
@@ -179,16 +184,24 @@ library Fee {
             return 0;
         }
 
-        uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
-            Price.getCurrentPrice(marketId, transactionType)
+        uint collateralPrice = Price.getCurrentPrice(marketId, transactionType);
+
+        uint skewScaleValue = self.skewScale.mulDecimal(collateralPrice);
+
+        uint totalSynthValue = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
+            collateralPrice
         );
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
-        uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
-            .getMarketCollateralAmount(marketId, wrapper.collateralType);
+        uint wrappedMarketCollateral = 0;
+        if (wrapper.wrappingEnabled) {
+            wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
+                .getMarketCollateralAmount(marketId, wrapper.collateralType)
+                .mulDecimal(collateralPrice);
+        }
 
-        uint initialSkew = totalBalance - wrappedMarketCollateral;
-        uint initialSkewAdjustment = initialSkew.divDecimal(self.skewScale);
+        uint initialSkew = totalSynthValue - wrappedMarketCollateral;
+        uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
         uint skewAfterFill = initialSkew;
         // TODO: when the Adjustment after fill is calculated, does it take into account the Adjustments collected for the trade?
@@ -197,17 +210,20 @@ library Fee {
         } else if (isSellTrade) {
             skewAfterFill -= amount;
         }
-        uint skewAfterFillAdjustment = skewAfterFill.divDecimal(self.skewScale);
 
-        int skewAdjustmentAverage = (skewAfterFillAdjustment.toInt() +
-            initialSkewAdjustment.toInt()).divDecimal(2);
+        uint skewAfterFillAdjustment = skewAfterFill.divDecimal(skewScaleValue);
+        int skewAdjustmentAveragePercentage = (skewAfterFillAdjustment.toInt() +
+            initialSkewAdjustment.toInt()) / 2;
 
-        skewFee = isSellTrade ? skewAdjustmentAverage * -1 : skewAdjustmentAverage;
+        // convert to basis points
+        int skewFeeInBips = skewAdjustmentAveragePercentage.mulDecimal(10_000e18);
+        skewFee = isSellTrade ? skewFeeInBips * -1 : skewFeeInBips;
     }
 
     function calculateUtilizationRateFee(
         Data storage self,
         uint128 marketId,
+        uint amount,
         SpotMarketFactory.TransactionType transactionType
     ) internal view returns (uint utilFee) {
         if (self.utilizationFeeRate == 0) {
@@ -218,13 +234,15 @@ library Fee {
             .getMarketCollateral(marketId);
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
-        uint totalValue = totalBalance.mulDecimal(Price.getCurrentPrice(marketId, transactionType));
+        uint totalValue = totalBalance.mulDecimal(
+            Price.getCurrentPrice(marketId, transactionType)
+        ) + amount;
 
         // utilization is below 100%
         if (delegatedCollateral > totalValue) {
             return 0;
         } else {
-            uint utilization = delegatedCollateral.divDecimal(totalValue);
+            uint utilization = totalValue.divDecimal(delegatedCollateral);
 
             utilFee = utilization.mulDecimal(self.utilizationFeeRate);
         }
@@ -246,14 +264,15 @@ library Fee {
             store.usdToken.approve(address(feeCollector), 0);
         }
 
-        store.depositToMarketManager(marketId, msg.sender, totalFees - collectedFees);
+        store.depositToMarketManager(marketId, totalFees - collectedFees);
     }
 
     function _applyFees(
         uint amount,
-        int fees // bips
+        int fees // bips 18 decimals
     ) private pure returns (uint amountUsable, int feesCollected) {
-        feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000);
+        // bips are 18 decimals precision
+        feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000e18);
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }
 

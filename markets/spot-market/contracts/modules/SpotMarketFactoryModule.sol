@@ -86,7 +86,8 @@ contract SpotMarketFactoryModule is
     }
 
     function name(uint128 marketId) external view returns (string memory) {
-        return "Spot Market";
+        string memory tokenName = SynthUtil.getToken(marketId).name();
+        return string.concat(tokenName, " Spot Market");
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
@@ -104,6 +105,10 @@ contract SpotMarketFactoryModule is
             Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY)
         );
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
+    }
+
+    function getSynth(uint128 marketId) external view override returns (address) {
+        return address(SynthUtil.getToken(marketId));
     }
 
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
