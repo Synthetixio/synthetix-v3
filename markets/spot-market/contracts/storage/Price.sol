@@ -11,6 +11,9 @@ import "../utils/SynthUtil.sol";
 import "./Fee.sol";
 import "./Wrapper.sol";
 
+/**
+ * @title Price storage for a specific synth market.
+ */
 library Price {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -18,7 +21,14 @@ library Price {
     using SafeCastU256 for uint256;
 
     struct Data {
+        /**
+         * @dev The oracle manager node id used for buy transactions.
+         * currently used for calculating reported debt as well.
+         */
         bytes32 buyFeedId;
+        /**
+         * @dev The oracle manager node id used for all non-buy transactions.
+         */
         bytes32 sellFeedId;
     }
 
@@ -29,7 +39,10 @@ library Price {
         }
     }
 
-    // TODO: Let's just make this a mapping of overrides for transaction types
+    /**
+     * @dev Returns the current price data for the given transaction type.
+     * Node.Data is a struct from oracle manager containing the price, timestamp among others.
+     */
     function getCurrentPriceData(
         uint128 marketId,
         SpotMarketFactory.TransactionType transactionType
@@ -43,6 +56,9 @@ library Price {
         }
     }
 
+    /**
+     * @dev Same as getCurrentPriceData but returns only the price.
+     */
     function getCurrentPrice(
         uint128 marketId,
         SpotMarketFactory.TransactionType transactionType
@@ -50,11 +66,19 @@ library Price {
         return getCurrentPriceData(marketId, transactionType).price.toUint();
     }
 
+    /**
+     * @dev Updates price feeds.  Function resides in SpotMarketFactory to update these values.
+     * Only market owner can update these values.
+     */
     function update(Data storage self, bytes32 buyFeedId, bytes32 sellFeedId) internal {
         self.buyFeedId = buyFeedId;
         self.sellFeedId = sellFeedId;
     }
 
+    /**
+     * @dev Utility function that returns the amount of synth to be received for a given amount of usd.
+     * Based on the transaction type, either the buy or sell feed node id is used.
+     */
     function usdSynthExchangeRate(
         uint128 marketId,
         uint amountUsd,
@@ -65,6 +89,10 @@ library Price {
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
+    /**
+     * @dev Utility function that returns the amount of usd to be received for a given amount of synth.
+     * Based on the transaction type, either the buy or sell feed node id is used.
+     */
     function synthUsdExchangeRate(
         uint128 marketId,
         uint sellAmount,

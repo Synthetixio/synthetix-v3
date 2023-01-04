@@ -12,6 +12,10 @@ import "../storage/Wrapper.sol";
 import "../storage/Price.sol";
 import "../utils/SynthUtil.sol";
 
+/**
+ * @title Module for wrapping and unwrapping collateral for synths.
+ * @dev See IWrapperModule.
+ */
 contract WrapperModule is IWrapperModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
@@ -21,6 +25,9 @@ contract WrapperModule is IWrapperModule {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
+    /**
+     * @inheritdoc IWrapperModule
+     */
     function initializeWrapper(uint128 marketId, address collateralType) external override {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         store.onlyMarketOwner(marketId);
@@ -36,6 +43,9 @@ contract WrapperModule is IWrapperModule {
         emit WrapperInitialized(marketId, collateralType);
     }
 
+    /**
+     * @inheritdoc IWrapperModule
+     */
     function wrap(
         uint128 marketId,
         uint256 wrapAmount
@@ -99,6 +109,9 @@ contract WrapperModule is IWrapperModule {
         emit SynthWrapped(marketId, amountToMint, totalFees, collectedFees);
     }
 
+    /**
+     * @inheritdoc IWrapperModule
+     */
     function unwrap(
         uint128 marketId,
         uint256 unwrapAmount

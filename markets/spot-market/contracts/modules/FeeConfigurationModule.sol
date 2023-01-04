@@ -9,10 +9,17 @@ import "../interfaces/ISynthTokenModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
 import "../storage/SpotMarketFactory.sol";
 
+/**
+ * @title Module for configuring fees for registered synth markets.
+ * @dev See IFeeConfigurationModule.
+ */
 contract FeeConfigurationModule is IFeeConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -22,6 +29,9 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit AtomicFixedFeeSet(synthMarketId, atomicFixedFee);
     }
 
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setMarketSkewScale(uint128 synthMarketId, uint skewScale) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -31,6 +41,9 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit MarketSkewScaleSet(synthMarketId, skewScale);
     }
 
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setMarketUtilizationFees(
         uint128 synthMarketId,
         uint utilizationFeeRate
@@ -43,6 +56,9 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
     }
 
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setCustomTransactorFees(
         uint128 synthMarketId,
         address transactor,
@@ -54,6 +70,9 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit AtomicTransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
     }
 
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setFeeCollector(uint128 synthMarketId, address feeCollector) external override {
         if (feeCollector != address(0)) {
             if (

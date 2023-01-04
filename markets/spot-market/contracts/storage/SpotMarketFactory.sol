@@ -9,6 +9,9 @@ import "./Price.sol";
 import "./Fee.sol";
 import "./Wrapper.sol";
 
+/**
+ * @title Main factory library that registers synths.  Also houses global configuration for all synths.
+ */
 library SpotMarketFactory {
     bytes32 private constant _SLOT_SPOT_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
@@ -19,11 +22,26 @@ library SpotMarketFactory {
     error InvalidMarket(uint128 marketId);
 
     struct Data {
+        /**
+         * @dev snxUSD token address
+         */
         ITokenModule usdToken;
+        /**
+         * @dev oracle manager address used for price feeds
+         */
         IOracleManagerModule oracle;
+        /**
+         * @dev Synthetix core v3 proxy address
+         */
         address synthetix;
+        /**
+         * @dev when synth is registered, this is the initial implementation address the proxy services.
+         */
         address initialSynthImplementation;
         address initialAsyncOrderClaimImplementation;
+        /**
+         * @dev mapping of marketId to marketOwner
+         */
         mapping(uint128 => address) synthOwners;
     }
 
@@ -57,6 +75,9 @@ library SpotMarketFactory {
         }
     }
 
+    /**
+     * @dev first creates an allowance entry in usdToken for market manager, then deposits snxUSD amount into mm.
+     */
     function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {
         self.usdToken.approve(address(this), amount);
         IMarketManagerModule(self.synthetix).depositMarketUsd(marketId, address(this), amount);
