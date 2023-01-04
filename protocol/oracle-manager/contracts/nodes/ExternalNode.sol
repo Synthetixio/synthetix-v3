@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../storage/Node.sol";
 import "../interfaces/external/IExternalNode.sol";
 
-library ExternalNodeLibrary {
+library ExternalNode {
     function process(
         Node.Data[] memory prices,
         bytes memory parameters

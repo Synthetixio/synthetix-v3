@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
+    bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
         bool initialized;
         address owner;
         address nominatedOwner;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Ownable"));
+        bytes32 s = _SLOT_OWNABLE_STORAGE;
         assembly {
             store.slot := s
         }
@@ -18,13 +19,15 @@ library OwnableStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol:ProxyStorage
 contract ProxyStorage {
+    bytes32 private constant _SLOT_PROXY_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Proxy"));
     struct ProxyStore {
         address implementation;
         bool simulatingUpgrade;
     }
     function _proxyStore() internal pure returns (ProxyStore storage store) {
+        bytes32 s = _SLOT_PROXY_STORAGE;
         assembly {
-            store.slot := 0x32402780481dd8149e50baad867f01da72e2f7d02639a6fe378dbd80b6bb446e
+            store.slot := s
         }
     }
 }
@@ -41,6 +44,22 @@ contract PythStructs {
         bytes32 id;
         Price price;
         Price emaPrice;
+    }
+}
+
+// @custom:artifact contracts/nodes/ChainlinkNode.sol:ChainlinkNode
+library ChainlinkNode {
+    uint256 public constant PRECISION = 18;
+}
+
+// @custom:artifact contracts/nodes/ReducerNode.sol:ReducerNode
+library ReducerNode {
+    enum Operations {
+        MAX,
+        MIN,
+        MEAN,
+        MEDIAN,
+        RECENT
     }
 }
 
@@ -61,7 +80,10 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH
+        PYTH,
+        PriceDeviationCircuitBreaker,
+        UNISWAP,
+        StalenessCircuitBreaker
     }
     struct Data {
         bytes32[] parents;
@@ -69,25 +91,17 @@ library NodeDefinition {
         bytes parameters;
     }
     function load(bytes32 id) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("Node", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
             data.slot := s
         }
     }
 }
 
-// @custom:artifact contracts/utils/ChainlinkNodeLibrary.sol:ChainlinkNodeLibrary
-library ChainlinkNodeLibrary {
-    uint256 public constant PRECISION = 18;
-}
-
-// @custom:artifact contracts/utils/ReducerNodeLibrary.sol:ReducerNodeLibrary
-library ReducerNodeLibrary {
-    enum Operations {
-        MAX,
-        MIN,
-        MEAN,
-        MEDIAN,
-        RECENT
-    }
+// @custom:artifact contracts/utils/TickMath.sol:TickMath
+library TickMath {
+    int24 internal constant MIN_TICK = -887272;
+    int24 internal constant MAX_TICK = -MIN_TICK;
+    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
+    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }

@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/Node.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
-library ChainlinkNodeLibrary {
+library ChainlinkNode {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 

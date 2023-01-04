@@ -3,13 +3,13 @@ pragma solidity >=0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "./FullMath.sol";
-import "./TickMath.sol";
+import "../utils/FullMath.sol";
+import "../utils/TickMath.sol";
 
 import "../storage/Node.sol";
 import "../interfaces/external/IUniswapV3Pool.sol";
 
-library UniswapNodeLibrary {
+library UniswapNode {
     using SafeCastU256 for uint256;
     using SafeCastU160 for uint160;
     using SafeCastU56 for uint56;

@@ -5,7 +5,7 @@ import "../storage/Node.sol";
 
 // This can be used as a staleness circuit breaker if no fallback is provided
 // Use cases includes using Uniswap if fresh prices are otherwise unavailable.
-library StalenessFallbackReducer {
+library StalenessCircuitBreakerNode {
     error NoFallbackProvided();
 
     function process(

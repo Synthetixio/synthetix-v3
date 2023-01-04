@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IOracleManagerModule.sol";
-import "../utils/ReducerNodeLibrary.sol";
-import "../utils/ExternalNodeLibrary.sol";
-import "../utils/PythNodeLibrary.sol";
-import "../utils/ChainlinkNodeLibrary.sol";
-import "../utils/PriceDeviationCircuitBreaker.sol";
-import "../utils/StalenessFallbackReducer.sol";
-import "../utils/UniswapNodeLibrary.sol";
+import "../nodes/ReducerNode.sol";
+import "../nodes/ExternalNode.sol";
+import "../nodes/PythNode.sol";
+import "../nodes/ChainlinkNode.sol";
+import "../nodes/PriceDeviationCircuitBreakerNode.sol";
+import "../nodes/StalenessCircuitBreakerNode.sol";
+import "../nodes/UniswapNode.sol";
 
 import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
@@ -127,21 +127,21 @@ contract OracleManagerModule is IOracleManagerModule {
         }
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
-            return ReducerNodeLibrary.process(prices, nodeDefinition.parameters);
+            return ReducerNode.process(prices, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
-            return ExternalNodeLibrary.process(prices, nodeDefinition.parameters);
+            return ExternalNode.process(prices, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
-            return ChainlinkNodeLibrary.process(nodeDefinition.parameters);
+            return ChainlinkNode.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
-            return PythNodeLibrary.process(nodeDefinition.parameters);
+            return PythNode.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
-            return UniswapNodeLibrary.process(nodeDefinition.parameters);
+            return UniswapNode.process(nodeDefinition.parameters);
         } else if (
             nodeDefinition.nodeType == NodeDefinition.NodeType.PriceDeviationCircuitBreaker
         ) {
-            return PriceDeviationCircuitBreaker.process(prices, nodeDefinition.parameters);
-        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.StalenessFallbackReducer) {
-            return PriceDeviationCircuitBreaker.process(prices, nodeDefinition.parameters);
+            return PriceDeviationCircuitBreakerNode.process(prices, nodeDefinition.parameters);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.StalenessCircuitBreaker) {
+            return PriceDeviationCircuitBreakerNode.process(prices, nodeDefinition.parameters);
         } else {
             revert UnsupportedNodeType(nodeDefinition.nodeType);
         }

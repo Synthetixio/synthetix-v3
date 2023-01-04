@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../storage/Node.sol";
 
-library PriceDeviationCircuitBreaker {
+library PriceDeviationCircuitBreakerNode {
     using SafeCastU256 for uint256;
 
     error InvalidPrice();
@@ -17,17 +17,21 @@ library PriceDeviationCircuitBreaker {
     ) internal pure returns (Node.Data memory) {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
-        int256 price1 = prices[0].price;
-        int256 price2 = prices[1].price;
+        int256 primaryPrice = prices[0].price;
+        int256 fallbackPrice = prices[1].price;
 
-        if (price1 == 0) {
+        if (primaryPrice == 0) {
             revert InvalidPrice();
         }
 
-        if (price1 != price2) {
-            int256 difference = abs(price1 - price2);
-            if (deviationTolerance.toInt() < ((difference * 100) / price1)) {
-                revert DeviationToleranceExceeded(difference / price1);
+        if (primaryPrice != fallbackPrice) {
+            int256 difference = abs(primaryPrice - fallbackPrice);
+            if (deviationTolerance.toInt() < ((difference * 100) / primaryPrice)) {
+                if (prices[2].price != 0) {
+                    return prices[2];
+                } else {
+                    revert DeviationToleranceExceeded(difference / primaryPrice);
+                }
             }
         }
 

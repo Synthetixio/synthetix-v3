@@ -5,7 +5,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../storage/Node.sol";
 
-library ReducerNodeLibrary {
+// TODO: Look at combining the unused values
+library ReducerNode {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 

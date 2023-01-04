@@ -172,7 +172,7 @@ library NodeDefinition {
         PYTH,
         PriceDeviationCircuitBreaker,
         UNISWAP,
-        StalenessFallbackReducer
+        StalenessCircuitBreaker
     }
     struct Data {
         bytes32[] parents;
