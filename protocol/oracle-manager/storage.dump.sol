@@ -55,21 +55,13 @@ library ChainlinkNode {
 // @custom:artifact contracts/nodes/ReducerNode.sol:ReducerNode
 library ReducerNode {
     enum Operations {
-        MAX,
+        RECENT,
         MIN,
+        MAX,
         MEAN,
         MEDIAN,
-        RECENT
-    }
-}
-
-// @custom:artifact contracts/storage/Node.sol:Node
-library Node {
-    struct Data {
-        int256 price;
-        uint timestamp;
-        uint volatilityScore;
-        uint liquidityScore;
+        MUL,
+        DIV
     }
 }
 
@@ -80,9 +72,9 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
+        UNISWAP,
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
-        UNISWAP,
         STALENESS_CIRCUIT_BREAKER
     }
     struct Data {
@@ -95,6 +87,16 @@ library NodeDefinition {
         assembly {
             data.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/NodeOutput.sol:NodeOutput
+library NodeOutput {
+    struct Data {
+        int256 price;
+        uint256 timestamp;
+        uint256 _unused_1;
+        uint256 _unused_2;
     }
 }
 

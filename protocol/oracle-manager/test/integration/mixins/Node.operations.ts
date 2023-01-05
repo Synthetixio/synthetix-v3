@@ -1,7 +1,9 @@
 export default {
-  MAX: 0,
+  RECENT: 0,
   MIN: 1,
-  MEAN: 2,
-  MEDIAN: 3,
-  RECENT: 4,
+  MAX: 2,
+  MEAN: 3,
+  MEDIAN: 4,
+  MUL: 5,
+  DIV: 6,
 };

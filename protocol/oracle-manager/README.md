@@ -2,7 +2,6 @@
 
 - Can we get the decimals off the chainlink contract directly?
 - Use SafeMath, SafeDecimalMath, etc.
-- remove getNodeId function?
 - fix cannonfiles given any breaking interface changes
 
 # Oracle Manager

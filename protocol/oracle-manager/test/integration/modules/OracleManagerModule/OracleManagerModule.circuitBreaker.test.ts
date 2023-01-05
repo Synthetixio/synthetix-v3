@@ -9,11 +9,11 @@ describe('PRICE_DEVIATION_CIRCUIT_BREAKER', function () {
   const { getContract, nodeId1, nodeId3, nodeId4 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;
-  let OracleManagerModule: ethers.Contract;
+  let NodeModule: ethers.Contract;
   let parents: string[] = [];
 
   before('prepare environment', async () => {
-    OracleManagerModule = getContract('OracleManagerModule');
+    NodeModule = getContract('NodeModule');
     //price = [1, 0.5]
     parents = [nodeId1(), nodeId3()];
   });
@@ -25,43 +25,29 @@ describe('PRICE_DEVIATION_CIRCUIT_BREAKER', function () {
       const deviationTolerance = 40;
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
-      await OracleManagerModule.registerNode(
-        parents,
+      await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
+      node1 = await NodeModule.getNodeId(
         NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
-      );
-      node1 = await OracleManagerModule.getNodeId(
-        parents,
-        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
+        params,
+        parents
       );
 
-      await OracleManagerModule.registerNode(
-        [nodeId1(), nodeId4()],
-        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
-      );
-      node2 = await OracleManagerModule.getNodeId(
-        [nodeId1(), nodeId4()],
-        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
-      );
+      await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, [
+        nodeId1(),
+        nodeId4(),
+      ]);
+      node2 = await NodeModule.getNodeId(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, [
+        nodeId1(),
+        nodeId4(),
+      ]);
     });
 
     it('expect process to revert for prices = [1, 0.5]', async () => {
-      await assertRevert(
-        OracleManagerModule.process(node1),
-        'DeviationToleranceExceeded',
-        OracleManagerModule
-      );
+      await assertRevert(NodeModule.process(node1), 'DeviationToleranceExceeded', NodeModule);
     });
 
     it('expect process to revert for prices = [1, 1.5]', async () => {
-      await assertRevert(
-        OracleManagerModule.process(node2),
-        'DeviationToleranceExceeded',
-        OracleManagerModule
-      );
+      await assertRevert(NodeModule.process(node2), 'DeviationToleranceExceeded', NodeModule);
     });
   });
 
@@ -72,20 +58,16 @@ describe('PRICE_DEVIATION_CIRCUIT_BREAKER', function () {
       const deviationTolerance = 50;
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
-      await OracleManagerModule.registerNode(
-        parents,
+      await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
+      nodeId = await NodeModule.getNodeId(
         NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
-      );
-      nodeId = await OracleManagerModule.getNodeId(
-        parents,
-        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
+        params,
+        parents
       );
     });
 
     it('expect process to return first node price since prices are 50% different', async () => {
-      const priceData = await OracleManagerModule.process(nodeId);
+      const priceData = await NodeModule.process(nodeId);
       assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
     });
   });
@@ -97,20 +79,16 @@ describe('PRICE_DEVIATION_CIRCUIT_BREAKER', function () {
       const deviationTolerance = 60;
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
-      await OracleManagerModule.registerNode(
-        parents,
+      await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
+      nodeId = await NodeModule.getNodeId(
         NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
-      );
-      nodeId = await OracleManagerModule.getNodeId(
-        parents,
-        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
-        params
+        params,
+        parents
       );
     });
 
     it('expect process to return first node price since prices are 50% different', async () => {
-      const priceData = await OracleManagerModule.process(nodeId);
+      const priceData = await NodeModule.process(nodeId);
       assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
     });
   });

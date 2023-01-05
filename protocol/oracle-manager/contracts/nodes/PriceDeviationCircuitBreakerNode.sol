@@ -12,13 +12,13 @@ library PRICE_DEVIATION_CIRCUIT_BREAKERNode {
     error DeviationToleranceExceeded(int256 deviation);
 
     function process(
-        NodeOutput.Data[] memory prices,
+        NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
     ) internal pure returns (NodeOutput.Data memory) {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
-        int256 primaryPrice = prices[0].price;
-        int256 fallbackPrice = prices[1].price;
+        int256 primaryPrice = parentNodeOutputs[0].price;
+        int256 fallbackPrice = parentNodeOutputs[1].price;
 
         if (primaryPrice == 0) {
             revert InvalidPrice();
@@ -27,15 +27,15 @@ library PRICE_DEVIATION_CIRCUIT_BREAKERNode {
         if (primaryPrice != fallbackPrice) {
             int256 difference = abs(primaryPrice - fallbackPrice);
             if (deviationTolerance.toInt() < ((difference * 100) / primaryPrice)) {
-                if (prices[2].price != 0) {
-                    return prices[2];
+                if (parentNodeOutputs.length > 2 && parentNodeOutputs[2].price != 0) {
+                    return parentNodeOutputs[2];
                 } else {
                     revert DeviationToleranceExceeded(difference / primaryPrice);
                 }
             }
         }
 
-        return prices[0];
+        return parentNodeOutputs[0];
     }
 
     function abs(int256 x) private pure returns (int256) {

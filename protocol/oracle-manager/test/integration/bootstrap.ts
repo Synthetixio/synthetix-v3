@@ -1,13 +1,13 @@
 import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { OracleManagerModule } from '../generated/typechain';
+import { NodeModule } from '../generated/typechain';
 import NodeTypes from './mixins/Node.types';
 
 const abi = ethers.utils.defaultAbiCoder;
 
 interface Contracts {
-  OracleManagerModule: OracleManagerModule;
+  NodeModule: NodeModule;
 }
 
 const r = coreBootstrap<Contracts>();
@@ -50,7 +50,7 @@ export function bootstrapWithNodes() {
   });
 
   before('register leaf nodes', async function () {
-    const OracleManagerModule = r.getContract('OracleManagerModule');
+    const NodeModule = r.getContract('NodeModule');
 
     const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 6]);
     const params2 = abi.encode(['address', 'uint256', 'uint8'], [aggregator2.address, 0, 6]);
@@ -58,9 +58,9 @@ export function bootstrapWithNodes() {
     const params4 = abi.encode(['address', 'uint256', 'uint8'], [aggregator4.address, 0, 6]);
 
     const registerNode = async (params: string) => {
-      const tx = await OracleManagerModule.registerNode([], NodeTypes.CHAINLINK, params);
+      const tx = await NodeModule.registerNode(NodeTypes.CHAINLINK, params, []);
       await tx.wait();
-      return await OracleManagerModule.getNodeId([], NodeTypes.CHAINLINK, params);
+      return await NodeModule.getNodeId(NodeTypes.CHAINLINK, params, []);
     };
 
     nodeId1 = await registerNode(params1);

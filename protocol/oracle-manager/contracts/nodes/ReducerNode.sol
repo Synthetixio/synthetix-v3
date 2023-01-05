@@ -22,95 +22,95 @@ library ReducerNode {
     }
 
     function process(
-        NodeOutput.Data[] memory nodeOutput,
+        NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
     ) internal pure returns (NodeOutput.Data memory) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.RECENT) {
-            return recent(nodeOutput);
+            return recent(parentNodeOutputs);
         }
         if (operation == Operations.MIN) {
-            return min(nodeOutput);
+            return min(parentNodeOutputs);
         }
         if (operation == Operations.MAX) {
-            return max(nodeOutput);
+            return max(parentNodeOutputs);
         }
         if (operation == Operations.MEAN) {
-            return mean(nodeOutput);
+            return mean(parentNodeOutputs);
         }
         if (operation == Operations.MEDIAN) {
-            return median(nodeOutput);
+            return median(parentNodeOutputs);
         }
         if (operation == Operations.MUL) {
-            return mul(nodeOutput);
+            return mul(parentNodeOutputs);
         }
         if (operation == Operations.DIV) {
-            return div(nodeOutput);
+            return div(parentNodeOutputs);
         }
 
         revert UnsupportedOperation(operation);
     }
 
     function median(
-        NodeOutput.Data[] memory nodeOutput
+        NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory medianPrice) {
         // Should MEAN the two in the middle if uneven
-        quickSort(nodeOutput, SafeCastI256.zero(), (nodeOutput.length - 1).toInt());
-        return nodeOutput[nodeOutput.length / 2];
+        quickSort(parentNodeOutputs, SafeCastI256.zero(), (parentNodeOutputs.length - 1).toInt());
+        return parentNodeOutputs[parentNodeOutputs.length / 2];
     }
 
     function mean(
-        NodeOutput.Data[] memory nodeOutput
+        NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory meanPrice) {
-        for (uint256 i = 0; i < nodeOutput.length; i++) {
-            meanPrice.price += nodeOutput[i].price;
-            meanPrice.timestamp += nodeOutput[i].timestamp;
+        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+            meanPrice.price += parentNodeOutputs[i].price;
+            meanPrice.timestamp += parentNodeOutputs[i].timestamp;
         }
 
-        meanPrice.price = meanPrice.price / nodeOutput.length.toInt();
-        meanPrice.timestamp = meanPrice.timestamp / nodeOutput.length;
+        meanPrice.price = meanPrice.price / parentNodeOutputs.length.toInt();
+        meanPrice.timestamp = meanPrice.timestamp / parentNodeOutputs.length;
     }
 
     function recent(
-        NodeOutput.Data[] memory nodeOutput
+        NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory recentPrice) {
-        for (uint256 i = 0; i < nodeOutput.length; i++) {
-            if (nodeOutput[i].timestamp > recentPrice.timestamp) {
-                recentPrice = nodeOutput[i];
+        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+            if (parentNodeOutputs[i].timestamp > recentPrice.timestamp) {
+                recentPrice = parentNodeOutputs[i];
             }
         }
     }
 
     function max(
-        NodeOutput.Data[] memory nodeOutput
+        NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory maxPrice) {
-        for (uint256 i = 0; i < nodeOutput.length; i++) {
-            if (nodeOutput[i].price > maxPrice.price) {
-                maxPrice = nodeOutput[i];
+        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+            if (parentNodeOutputs[i].price > maxPrice.price) {
+                maxPrice = parentNodeOutputs[i];
             }
         }
     }
 
     function min(
-        NodeOutput.Data[] memory nodeOutput
+        NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory minPrice) {
-        minPrice = nodeOutput[0];
-        for (uint256 i = 0; i < nodeOutput.length; i++) {
-            if (nodeOutput[i].price < minPrice.price) {
-                minPrice = nodeOutput[i];
+        minPrice = parentNodeOutputs[0];
+        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+            if (parentNodeOutputs[i].price < minPrice.price) {
+                minPrice = parentNodeOutputs[i];
             }
         }
     }
 
     function mul(
-        NodeOutput.Data[] memory nodeOutput
+        NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory mulPrice) {
         // TODO
     }
 
     function div(
-        NodeOutput.Data[] memory nodeOutput
+        NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory divPrice) {
         // TODO
     }
