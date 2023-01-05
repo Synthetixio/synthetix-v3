@@ -81,9 +81,9 @@ library NodeDefinition {
         EXTERNAL,
         CHAINLINK,
         PYTH,
-        PriceDeviationCircuitBreaker,
+        PRICE_DEVIATION_CIRCUIT_BREAKER,
         UNISWAP,
-        StalenessCircuitBreaker
+        STALENESS_CIRCUIT_BREAKER
     }
     struct Data {
         bytes32[] parents;

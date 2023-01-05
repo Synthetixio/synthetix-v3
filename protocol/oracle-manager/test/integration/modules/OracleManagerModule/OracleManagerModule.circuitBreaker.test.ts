@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { bootstrapWithNodes } from '../../bootstrap';
 import NodeTypes from '../../mixins/Node.types';
 
-describe('PriceDeviationCircuitBreaker', function () {
+describe('PRICE_DEVIATION_CIRCUIT_BREAKER', function () {
   const { getContract, nodeId1, nodeId3, nodeId4 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;
@@ -27,23 +27,23 @@ describe('PriceDeviationCircuitBreaker', function () {
 
       await OracleManagerModule.registerNode(
         parents,
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
       node1 = await OracleManagerModule.getNodeId(
         parents,
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
 
       await OracleManagerModule.registerNode(
         [nodeId1(), nodeId4()],
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
       node2 = await OracleManagerModule.getNodeId(
         [nodeId1(), nodeId4()],
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
     });
@@ -74,12 +74,12 @@ describe('PriceDeviationCircuitBreaker', function () {
 
       await OracleManagerModule.registerNode(
         parents,
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
       nodeId = await OracleManagerModule.getNodeId(
         parents,
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
     });
@@ -99,12 +99,12 @@ describe('PriceDeviationCircuitBreaker', function () {
 
       await OracleManagerModule.registerNode(
         parents,
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
       nodeId = await OracleManagerModule.getNodeId(
         parents,
-        NodeTypes.PriceDeviationCircuitBreaker,
+        NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER,
         params
       );
     });
