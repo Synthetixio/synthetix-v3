@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/NodeOutput.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
+// TODO: Add safemath here, etc.
 library ChainlinkNode {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
@@ -13,18 +14,18 @@ library ChainlinkNode {
     uint256 public constant PRECISION = 18;
 
     function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
-        (address chainlinkAggr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
+        (address chainlinkAddr, uint256 twapTimeInterval) = abi.decode(
             parameters,
-            (address, uint256, uint8)
+            (address, uint256)
         );
+        IAggregatorV3Interface chainlink = IAggregatorV3Interface(chainlinkAddr);
 
-        (uint80 roundId, int256 price, , uint256 updatedAt, ) = IAggregatorV3Interface(
-            chainlinkAggr
-        ).latestRoundData();
+        (uint80 roundId, int256 price, , uint256 updatedAt, ) = chainlink.latestRoundData();
+        uint8 decimals = chainlink.decimals();
 
         int256 finalPrice = twapTimeInterval == 0
             ? price
-            : getTwapPrice(chainlinkAggr, roundId, price, twapTimeInterval);
+            : getTwapPrice(chainlink, roundId, price, twapTimeInterval);
 
         finalPrice = decimals > PRECISION
             ? (downscale(finalPrice.toUint(), decimals - PRECISION)).toInt()
@@ -34,7 +35,7 @@ library ChainlinkNode {
     }
 
     function getTwapPrice(
-        address chainlinkAggr,
+        IAggregatorV3Interface chainlink,
         uint80 latestRoundId,
         int256 latestPrice,
         uint256 twapTimeInterval
@@ -45,7 +46,7 @@ library ChainlinkNode {
         uint256 startTime = block.timestamp - twapTimeInterval;
 
         while (latestRoundId > 0) {
-            try IAggregatorV3Interface(chainlinkAggr).getRoundData(--latestRoundId) returns (
+            try chainlink.getRoundData(--latestRoundId) returns (
                 uint80,
                 int256 answer,
                 uint256,

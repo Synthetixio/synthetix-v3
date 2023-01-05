@@ -1,11 +1,11 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
-import { bootstrapWithNodes } from '../../bootstrap';
-import NodeTypes from '../../mixins/Node.types';
-import NodeOperations from '../../mixins/Node.operations';
+import { bootstrapWithNodes } from '../bootstrap';
+import NodeTypes from '../mixins/Node.types';
+import NodeOperations from '../mixins/Node.operations';
 
-describe('NodeModule', function () {
+describe('ReducerNode', function () {
   const { getContract, nodeId1, nodeId2, nodeId3 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;

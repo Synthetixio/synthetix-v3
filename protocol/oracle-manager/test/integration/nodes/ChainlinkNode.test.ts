@@ -3,7 +3,7 @@ import { BigNumber, ethers, utils } from 'ethers';
 import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
 
-describe('ChainlinkNodeLibrary', () => {
+describe('ChainlinkNode', () => {
   const { getSigners } = bootstrap();
 
   let aggregator: ethers.Contract;

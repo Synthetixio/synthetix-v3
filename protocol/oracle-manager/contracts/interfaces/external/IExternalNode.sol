@@ -8,7 +8,7 @@ import "../../storage/NodeOutput.sol";
 /// @title Interface for an external node
 interface IExternalNode is IERC165 {
     function process(
-        NodeOutput.Data[] memory prices,
+        NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
     ) external view returns (NodeOutput.Data memory);
 }

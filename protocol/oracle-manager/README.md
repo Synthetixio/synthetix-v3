@@ -1,9 +1,3 @@
-### WIP Clean-up Notes
-
-- Can we get the decimals off the chainlink contract directly?
-- Use SafeMath, SafeDecimalMath, etc.
-- fix cannonfiles given any breaking interface changes
-
 # Oracle Manager
 
 The oracle manager is a stateless system which allows price data from multiple sources to be combined using a variety of strategies and reverts to be triggered (i.e. "circuit breaking") under various conditions.
@@ -37,7 +31,6 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 - Parameters:
   - `address chainlinkAddress` - The address of the Chainlink price feed contract.
   - `uint256 twapTimeInterval` - The the duration (in seconds) of the lookback window for price reports to be incorporated in a time-weighted average price calculation. Use `0` to retrieve only the latest price report.
-  - `uint8 decimals` - TODO: REVISIT THIS
 - Expected Parents: 0
 
 ### Uniswap Node

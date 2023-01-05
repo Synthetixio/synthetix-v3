@@ -2,10 +2,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithNodes } from '../../bootstrap';
-import NodeTypes from '../../mixins/Node.types';
+import { bootstrapWithNodes } from '../bootstrap';
+import NodeTypes from '../mixins/Node.types';
 
-describe('PRICE_DEVIATION_CIRCUIT_BREAKER', function () {
+describe('PriceDeviationCircuitBreakerNode', function () {
   const { getContract, nodeId1, nodeId3, nodeId4 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;
@@ -14,7 +14,6 @@ describe('PRICE_DEVIATION_CIRCUIT_BREAKER', function () {
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');
-    //price = [1, 0.5]
     parents = [nodeId1(), nodeId3()];
   });
 
