@@ -44,7 +44,7 @@ library NodeDefinition {
                 abi.encode(
                     nodeDefinition.nodeType,
                     nodeDefinition.parameters,
-                    nodeDefinition.parents,
+                    nodeDefinition.parents
                 )
             );
     }
