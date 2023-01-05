@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "../storage/Node.sol";
+import "../storage/NodeOutput.sol";
 
 library PriceDeviationCircuitBreakerNode {
     using SafeCastU256 for uint256;
@@ -12,9 +12,9 @@ library PriceDeviationCircuitBreakerNode {
     error DeviationToleranceExceeded(int256 deviation);
 
     function process(
-        Node.Data[] memory prices,
+        NodeOutput.Data[] memory prices,
         bytes memory parameters
-    ) internal pure returns (Node.Data memory) {
+    ) internal pure returns (NodeOutput.Data memory) {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
         int256 primaryPrice = prices[0].price;

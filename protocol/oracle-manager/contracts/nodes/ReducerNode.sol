@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "../storage/Node.sol";
+import "../storage/NodeOutput.sol";
 
-// TODO: Look at combining the unused values
 library ReducerNode {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
@@ -13,83 +12,110 @@ library ReducerNode {
     error UnsupportedOperation(Operations operation);
 
     enum Operations {
-        MAX,
+        RECENT,
         MIN,
+        MAX,
         MEAN,
         MEDIAN,
-        RECENT
+        MUL,
+        DIV
     }
 
     function process(
-        Node.Data[] memory prices,
+        NodeOutput.Data[] memory nodeOutput,
         bytes memory parameters
-    ) internal pure returns (Node.Data memory) {
+    ) internal pure returns (NodeOutput.Data memory) {
         Operations operation = abi.decode(parameters, (Operations));
 
-        if (operation == Operations.MAX) {
-            return max(prices);
+        if (operation == Operations.RECENT) {
+            return recent(nodeOutput);
         }
         if (operation == Operations.MIN) {
-            return min(prices);
+            return min(nodeOutput);
+        }
+        if (operation == Operations.MAX) {
+            return max(nodeOutput);
         }
         if (operation == Operations.MEAN) {
-            return mean(prices);
+            return mean(nodeOutput);
         }
         if (operation == Operations.MEDIAN) {
-            return median(prices);
+            return median(nodeOutput);
         }
-        if (operation == Operations.RECENT) {
-            return recent(prices);
+        if (operation == Operations.MUL) {
+            return mul(nodeOutput);
+        }
+        if (operation == Operations.DIV) {
+            return div(nodeOutput);
         }
 
         revert UnsupportedOperation(operation);
     }
 
     function median(
-        Node.Data[] memory prices
-    ) internal pure returns (Node.Data memory medianPrice) {
-        quickSort(prices, SafeCastI256.zero(), (prices.length - 1).toInt());
-        return prices[prices.length / 2];
+        NodeOutput.Data[] memory nodeOutput
+    ) internal pure returns (NodeOutput.Data memory medianPrice) {
+        // Should MEAN the two in the middle if uneven
+        quickSort(nodeOutput, SafeCastI256.zero(), (nodeOutput.length - 1).toInt());
+        return nodeOutput[nodeOutput.length / 2];
     }
 
-    function mean(Node.Data[] memory prices) internal pure returns (Node.Data memory meanPrice) {
-        for (uint256 i = 0; i < prices.length; i++) {
-            meanPrice.price += prices[i].price;
-            meanPrice.timestamp += prices[i].timestamp;
+    function mean(
+        NodeOutput.Data[] memory nodeOutput
+    ) internal pure returns (NodeOutput.Data memory meanPrice) {
+        for (uint256 i = 0; i < nodeOutput.length; i++) {
+            meanPrice.price += nodeOutput[i].price;
+            meanPrice.timestamp += nodeOutput[i].timestamp;
         }
 
-        meanPrice.price = meanPrice.price / prices.length.toInt();
-        meanPrice.timestamp = meanPrice.timestamp / prices.length;
+        meanPrice.price = meanPrice.price / nodeOutput.length.toInt();
+        meanPrice.timestamp = meanPrice.timestamp / nodeOutput.length;
     }
 
     function recent(
-        Node.Data[] memory prices
-    ) internal pure returns (Node.Data memory recentPrice) {
-        for (uint256 i = 0; i < prices.length; i++) {
-            if (prices[i].timestamp > recentPrice.timestamp) {
-                recentPrice = prices[i];
+        NodeOutput.Data[] memory nodeOutput
+    ) internal pure returns (NodeOutput.Data memory recentPrice) {
+        for (uint256 i = 0; i < nodeOutput.length; i++) {
+            if (nodeOutput[i].timestamp > recentPrice.timestamp) {
+                recentPrice = nodeOutput[i];
             }
         }
     }
 
-    function max(Node.Data[] memory prices) internal pure returns (Node.Data memory maxPrice) {
-        for (uint256 i = 0; i < prices.length; i++) {
-            if (prices[i].price > maxPrice.price) {
-                maxPrice = prices[i];
+    function max(
+        NodeOutput.Data[] memory nodeOutput
+    ) internal pure returns (NodeOutput.Data memory maxPrice) {
+        for (uint256 i = 0; i < nodeOutput.length; i++) {
+            if (nodeOutput[i].price > maxPrice.price) {
+                maxPrice = nodeOutput[i];
             }
         }
     }
 
-    function min(Node.Data[] memory prices) internal pure returns (Node.Data memory minPrice) {
-        minPrice = prices[0];
-        for (uint256 i = 0; i < prices.length; i++) {
-            if (prices[i].price < minPrice.price) {
-                minPrice = prices[i];
+    function min(
+        NodeOutput.Data[] memory nodeOutput
+    ) internal pure returns (NodeOutput.Data memory minPrice) {
+        minPrice = nodeOutput[0];
+        for (uint256 i = 0; i < nodeOutput.length; i++) {
+            if (nodeOutput[i].price < minPrice.price) {
+                minPrice = nodeOutput[i];
             }
         }
     }
 
-    function quickSort(Node.Data[] memory arr, int left, int right) internal pure {
+    function mul(
+        NodeOutput.Data[] memory nodeOutput
+    ) internal pure returns (NodeOutput.Data memory mulPrice) {
+        // TODO
+    }
+
+    function div(
+        NodeOutput.Data[] memory nodeOutput
+    ) internal pure returns (NodeOutput.Data memory divPrice) {
+        // TODO
+    }
+
+    function quickSort(NodeOutput.Data[] memory arr, int left, int right) internal pure {
         int i = left;
         int j = right;
         if (i == j) return;

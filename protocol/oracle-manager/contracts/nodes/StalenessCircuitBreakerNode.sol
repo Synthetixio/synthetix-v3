@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/Node.sol";
+import "../storage/NodeOutput.sol";
 
 // This can be used as a staleness circuit breaker if no fallback is provided
 // Use cases includes using Uniswap if fresh prices are otherwise unavailable.
@@ -9,9 +9,9 @@ library StalenessCircuitBreakerNode {
     error NoFallbackProvided();
 
     function process(
-        Node.Data[] memory prices,
+        NodeOutput.Data[] memory prices,
         bytes memory parameters
-    ) internal view returns (Node.Data memory) {
+    ) internal view returns (NodeOutput.Data memory) {
         uint256 stalenessTolerance = abi.decode(parameters, (uint256));
 
         if (prices[0].timestamp + stalenessTolerance < block.timestamp) {

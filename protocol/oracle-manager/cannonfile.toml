@@ -11,8 +11,8 @@ defaultValue = "oracle-manager"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[contract.OracleManagerModule]
-artifact = "contracts/modules/OracleManagerModule.sol:OracleManagerModule"
+[contract.NodeModule]
+artifact = "contracts/modules/NodeModule.sol:NodeModule"
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
@@ -38,20 +38,20 @@ args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
   '''<%= JSON.stringify({
     CoreModule: contracts.CoreModule,
-    OracleManagerModule: contracts.OracleManagerModule,
+    NodeModule: contracts.NodeModule,
   }) %>'''
 ]
 modified = ["contracts"]
 depends = [
   "contract.CoreModule",
-  "contract.OracleManagerModule"
+  "contract.NodeModule"
 ]
 
 [contract.Router]
 artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
 abiOf = [
   "CoreModule",
-  "OracleManagerModule"
+  "NodeModule"
 ]
 depends = ["run.generate_router"]
 

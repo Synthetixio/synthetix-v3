@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../utils/FullMath.sol";
 import "../utils/TickMath.sol";
 
-import "../storage/Node.sol";
+import "../storage/NodeOutput.sol";
 import "../interfaces/external/IUniswapV3Pool.sol";
 
 library UniswapNode {
@@ -16,7 +16,7 @@ library UniswapNode {
     using SafeCastU32 for uint32;
     using SafeCastI56 for int56;
 
-    function process(bytes memory parameters) internal view returns (Node.Data memory) {
+    function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
         (address token0, address token1, address pool, uint32 secondsAgo) = abi.decode(
             parameters,
             (address, address, address, uint32)
@@ -38,7 +38,7 @@ library UniswapNode {
 
         int256 price = getQuoteAtTick(tick, 1e6, token0, token1).toInt();
 
-        return Node.Data(price, 0, 0, 0);
+        return NodeOutput.Data(price, 0, 0, 0);
     }
 
     function getQuoteAtTick(

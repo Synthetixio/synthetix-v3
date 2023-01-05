@@ -1,14 +1,8 @@
 ### WIP Clean-up Notes
 
-- Keep volatility/liquidity? switch to bytes? rename to \_unused?
-- Switch param order in register to nodeType, params, parents?
 - Can we get the decimals off the chainlink contract directly?
 - Use SafeMath, SafeDecimalMath, etc.
-- Add IERC165 on IExternalNode
-- Why chainlink int? Should we make it a uint?
-- Reorder node type enum to match the readme
-- add division and multiplication to reducer? reorder reducer enum?
-- how does reducer handle non price values
+- remove getNodeId function?
 
 # Oracle Manager
 
@@ -16,18 +10,18 @@ The oracle manager is a stateless system which allows price data from multiple s
 
 The system consists of nodes which can registered by anyone using the `registerNode()` function. This returns a `bytes32` identifier for the node, determined by the parameters passed to the function:
 
-- `bytes32[] parents` - The IDs of the parent nodes, if any.
 - `uint256 nodeType` - The ID corresponding to the desired the node type. (See below for a comprehensive list.)
 - `bytes parameters` - The parameter data for the selected node type. (This can be generated using `abi.encode()`.)
+- `bytes32[] parents` - The IDs of the parent nodes, if any.
 
 A struct of price data can be retrieved for a given node ID by passing it to the `process()` function. The struct consists of:
 
 ```
-struct NodeData {
-  int256 price; // 18 decimal denominated
-  uint256 timestamp;
-  uint256 volatility;placeholder?
-  uint256 liquidity;
+struct NodeOutput {
+  uint256 price; // Denominated in dollars with 18 decimal places
+  uint256 timestamp; // Denominated as Unix epoch time
+  uint256 _unused_1; // Placeholder for additional data in future upgrades, such as volatility or liquidity measurements
+  uint256 _unused_2; // Placeholder for additional data in future upgrades, such as volatility or liquidity measurements
 }
 ```
 
@@ -48,9 +42,9 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 
 ### Uniswap Node
 
-The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). Note that the timestamp returned by this node is always 0.
+The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). **Note that the timestamp returned by this node is always 0.**
 
-- `nodeType` Value: 6
+- `nodeType` Value: 4
 - Parameters:
   - `address tokenAddress` - The address of the token
   - `address stablecoinAddress` - The address of the stablecoin
@@ -62,7 +56,7 @@ The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org
 
 The Pyth Node retrieves data from a [Pyth Oracle](https://docs.pyth.network/pythnet-price-feeds/evm).
 
-- `nodeType` Value: 4
+- `nodeType` Value: 5
 - Parameters:
   - `address pythAddress` - The address of the Pyth smart contract.
   - `bytes32 priceFeedId` - The ID of the price feed to query.
@@ -75,30 +69,32 @@ The Reducer Node combines the data from multiple parents using the specified ope
 - `nodeType` Value: 1
 - Parameters:
   - `uint256 operation` - The type of operation to use when combining the parent's data.
-    - 0 - `MAX`: Return the data of the parent with the highest price.
+    - 0 - `RECENT`: Return the data of the parent that has the greatest timestamp.
     - 1 - `MIN`: Return the data of the parent with the lowest price.
-    - 2 - `MEAN`: Return the mean average of all the values in the parents' data.
-    - 3 - `MEDIAN`: Return the data of the parent that has the median price.
-    - 4 - `RECENT`: Return the data of the parent that has the greatest timestamp.
+    - 2 - `MAX`: Return the data of the parent with the highest price.
+    - 3 - `MEAN`: Return the mean average of all the values in the parents' data.
+    - 4 - `MEDIAN`: Return the data of the parent that has the median price.
+    - 5 - `MUL`: Return the price of the parents after multiplying them. The timestamp is averaged.
+    - 6 - `DIV`: Return the price of the parents after dividing them. The timestamp is averaged.
 - Expected Parents: >1
-
-### Staleness Circuit Breaker Node
-
-The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolernace. Otherwise, it returns the second parent if specified or reverts with `NoFallbackProvided`.
-
-- `nodeType` Value: 7
-- Parameters:
-  - `uint256 stalenessTolerance` - The number of seconds in the past that determines whether the first parent's data is considered stale. If it's stale, the node will provide the fallback parents node's data or revert.
-- Expected Parents: 1-2
 
 ### Price Deviation Circuit Breaker Node
 
 The Price Deviation Circuit Breaker Node passes through value of the first parent if the prices between the first two parents are within the deviation tolerance. Otherwise, it returns the third parent if specified or reverts with `DeviationToleranceExceeded`.
 
-- `nodeType` Value: 5
+- `nodeType` Value: 6
 - Parameters:
   - `uint256 deviationTolerance` - The percentage difference (denominated with 18 decimals) between the two parents' prices over which the node will provide the fallback parent node's data or revert.
 - Expected Parents: 2-3
+
+### Staleness Circuit Breaker Node
+
+The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolerance. Otherwise, it returns the second parent if specified or reverts with `NoFallbackProvided`.
+
+- `nodeType` Value: 7
+- Parameters:
+  - `uint256 stalenessTolerance` - The number of seconds in the past that determines whether the first parent's data is considered stale. If it's stale, the node will provide the fallback parents node's data or revert.
+- Expected Parents: 1-2
 
 ### External Node
 
@@ -123,7 +119,7 @@ To run the tests:
 
 1.  Add the new node type to NodeType enum in `/storage/NodeDefinition.sol`.
 2.  Add a new library in `/nodes`. It must have the following function interface:
-    ` function process(Node.Data[] memory prices, bytes memory parameters) internal view returns (Node.Data memory)`
+    ` function process(NodeOutput.Data[] memory prices, bytes memory parameters) internal view returns (NodeOutput.Data memory)`
 3.  Add the new node type into `_validateNodeType()` in `/modules/OracleManagerModule.sol`
 4.  Add a condition for new node type in `_process` in `modules/OracleManagerModule.sol` that calls the node library from step 2.
 5.  Add appropriate tests and documentation.

@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IOracleManagerModule.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+
+import "../interfaces/INodeModule.sol";
 import "../nodes/ReducerNode.sol";
 import "../nodes/ExternalNode.sol";
 import "../nodes/PythNode.sol";
@@ -10,24 +12,21 @@ import "../nodes/PriceDeviationCircuitBreakerNode.sol";
 import "../nodes/StalenessCircuitBreakerNode.sol";
 import "../nodes/UniswapNode.sol";
 
-import "../storage/Node.sol";
+import "../storage/NodeOutput.sol";
 import "../storage/NodeDefinition.sol";
 
-contract OracleManagerModule is IOracleManagerModule {
-    error UnsupportedNodeType(NodeDefinition.NodeType nodeType);
-
-    event NodeRegistered(
-        bytes32 nodeId,
-        bytes32[] parents,
-        NodeDefinition.NodeType nodeType,
-        bytes parameters
-    );
-
-    /// @notice registers a new node
+/**
+ * @title Module for managing nodes
+ * @dev See INodeModule.
+ */
+contract NodeModule is INodeModule {
+    /**
+     * @inheritdoc INodeModule
+     */
     function registerNode(
-        bytes32[] memory parents,
         NodeDefinition.NodeType nodeType,
-        bytes memory parameters
+        bytes memory parameters,
+        bytes32[] memory parents
     ) external returns (bytes32) {
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.Data({
             parents: parents,
@@ -38,11 +37,13 @@ contract OracleManagerModule is IOracleManagerModule {
         return _registerNode(nodeDefinition);
     }
 
-    /// @notice get the node Id by passing nodeDefinition
+    /**
+     * @inheritdoc INodeModule
+     */
     function getNodeId(
-        bytes32[] memory parents,
         NodeDefinition.NodeType nodeType,
-        bytes memory parameters
+        bytes memory parameters,
+        bytes32[] memory parents
     ) external pure returns (bytes32) {
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.Data({
             parents: parents,
@@ -53,13 +54,17 @@ contract OracleManagerModule is IOracleManagerModule {
         return _getNodeId(nodeDefinition);
     }
 
-    /// @notice get a node by nodeId
+    /**
+     * @inheritdoc INodeModule
+     */
     function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory) {
         return _getNode(nodeId);
     }
 
-    /// @notice the function to process the prices based on the node's type
-    function process(bytes32 nodeId) external view returns (Node.Data memory) {
+    /**
+     * @inheritdoc INodeModule
+     */
+    function process(bytes32 nodeId) external view returns (NodeOutput.Data memory) {
         return _process(nodeId);
     }
 
@@ -103,13 +108,23 @@ contract OracleManagerModule is IOracleManagerModule {
             }
         }
 
+        // If the node's type is external, confirm it supports the necessary interface.
+        if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
+            address externalNode = abi.decode(nodeDefinition.parameters, (address));
+            if (
+                !ERC165Helper.safeSupportsInterface(externalNode, type(IExternalNode).interfaceId)
+            ) {
+                revert IncorrectExternalNodeInterface(externalNode);
+            }
+        }
+
         (, nodeId) = NodeDefinition.create(nodeDefinition);
 
         emit NodeRegistered(
             nodeId,
-            nodeDefinition.parents,
             nodeDefinition.nodeType,
-            nodeDefinition.parameters
+            nodeDefinition.parameters,
+            nodeDefinition.parents
         );
     }
 
@@ -118,10 +133,10 @@ contract OracleManagerModule is IOracleManagerModule {
         return (nodeDefinition.nodeType != NodeDefinition.NodeType.NONE);
     }
 
-    function _process(bytes32 nodeId) internal view returns (Node.Data memory price) {
+    function _process(bytes32 nodeId) internal view returns (NodeOutput.Data memory price) {
         NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
 
-        Node.Data[] memory prices = new Node.Data[](nodeDefinition.parents.length);
+        NodeOutput.Data[] memory prices = new NodeOutput.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
             prices[i] = this.process(nodeDefinition.parents[i]);
         }

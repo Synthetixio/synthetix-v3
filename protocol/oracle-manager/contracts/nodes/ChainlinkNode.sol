@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "../storage/Node.sol";
+import "../storage/NodeOutput.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library ChainlinkNode {
@@ -12,7 +12,7 @@ library ChainlinkNode {
 
     uint256 public constant PRECISION = 18;
 
-    function process(bytes memory parameters) internal view returns (Node.Data memory) {
+    function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
         (address chainlinkAggr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
             parameters,
             (address, uint256, uint8)
@@ -21,6 +21,7 @@ library ChainlinkNode {
         (uint80 roundId, int256 price, , uint256 updatedAt, ) = IAggregatorV3Interface(
             chainlinkAggr
         ).latestRoundData();
+
         int256 finalPrice = twapTimeInterval == 0
             ? price
             : getTwapPrice(chainlinkAggr, roundId, price, twapTimeInterval);
@@ -29,7 +30,7 @@ library ChainlinkNode {
             ? (downscale(finalPrice.toUint(), decimals - PRECISION)).toInt()
             : upscale(finalPrice, PRECISION - decimals);
 
-        return Node.Data(finalPrice, updatedAt, 0, 0);
+        return NodeOutput.Data(finalPrice, updatedAt, 0, 0);
     }
 
     function getTwapPrice(

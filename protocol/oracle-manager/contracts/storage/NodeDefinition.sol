@@ -7,9 +7,9 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
+        UNISWAP,
         PYTH,
         PriceDeviationCircuitBreaker,
-        UNISWAP,
         StalenessCircuitBreaker
     }
 
