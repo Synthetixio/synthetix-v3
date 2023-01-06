@@ -1,19 +1,37 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
-import { bootstrapWithNodes } from '../bootstrap';
+import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
-import NodeOperations from '../mixins/Node.operations';
 
 describe('UniswapNode', function () {
-  const { getContract, nodeId1, nodeId2, nodeId3 } = bootstrapWithNodes();
+  const { getContract, getSigners } = bootstrap();
 
   const abi = ethers.utils.defaultAbiCoder;
-  let parents: string[];
   let NodeModule: ethers.Contract;
+  let UniswapMock: ethers.Contract;
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');
-    parents = [nodeId1(), nodeId2(), nodeId3()];
+    const [owner] = getSigners();
+
+    // Deploy the mock
+    const factory = await hre.ethers.getContractFactory('MockUniswapV3Pool');
+    UniswapMock = await factory.connect(owner).deploy(100, 100, 100);
+  });
+
+  it('retrieves the latest price', async () => {
+    // Register the mock
+    const NodeParameters = abi.encode(
+      ['address', 'address', 'address', 'uint32'],
+      [UniswapMock.address, UniswapMock.address, UniswapMock.address, 10] // using the mock's address for the token addresses because the mock doesn't take them into account
+    );
+    await NodeModule.registerNode(NodeTypes.PYTH, NodeParameters, []);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.PYTH, NodeParameters, []);
+
+    // Verify the node processes output as expected
+    const output = await NodeModule.process(nodeId);
+    assertBn.equal(output.price, 100);
+    assertBn.equal(output.timestamp, 0);
   });
 });

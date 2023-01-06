@@ -47,12 +47,13 @@ The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org
 
 ### Pyth Node
 
-The Pyth Node retrieves data from a [Pyth Oracle](https://docs.pyth.network/pythnet-price-feeds/evm).
+The Pyth Node retrieves data from a [Pyth Oracle](https://docs.pyth.network/pythnet-price-feeds/evm). **Note that this returns the latest price, even if it's older than the valid time period associated with the price feed.** Use a _Staleness Circuit Breaker Node_ if this is a concern.
 
 - `nodeType` Value: 5
 - Parameters:
   - `address pythAddress` - The address of the Pyth smart contract.
   - `bytes32 priceFeedId` - The ID of the price feed to query.
+  - `bool useEma` - Use the exponentially-weighted moving average price rather than the latest price.
 - Expected Parents: 0
 
 ### Reducer Node
@@ -113,6 +114,6 @@ To run the tests:
 1.  Add the new node type to NodeType enum in `/storage/NodeDefinition.sol`.
 2.  Add a new library in `/nodes`. It must have the following function interface:
     ` function process(NodeOutput.Data[] memory prices, bytes memory parameters) internal view returns (NodeOutput.Data memory)`
-3.  Add the new node type into `_validateNodeType()` in `/modules/OracleManagerModule.sol`
-4.  Add a condition for new node type in `_process` in `modules/OracleManagerModule.sol` that calls the node library from step 2.
+3.  Add the new node type into `_validateNodeType()` in `/modules/NodeModule.sol`
+4.  Add a condition for new node type in `_process` in `modules/NodeModule.sol` that calls the node library from step 2.
 5.  Add appropriate tests and documentation.

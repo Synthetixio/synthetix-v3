@@ -5,7 +5,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../storage/NodeOutput.sol";
 
-// TODO: Add SafeMath
 library ReducerNode {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
@@ -56,9 +55,15 @@ library ReducerNode {
     function median(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory medianPrice) {
-        // Should MEAN the two in the middle if uneven
         quickSort(parentNodeOutputs, SafeCastI256.zero(), (parentNodeOutputs.length - 1).toInt());
-        return parentNodeOutputs[parentNodeOutputs.length / 2];
+        if (parentNodeOutputs.length % 2 == 0) {
+            NodeOutput.Data[] memory middleSet = new NodeOutput.Data[](2);
+            middleSet[0] = parentNodeOutputs[(parentNodeOutputs.length / 2) - 1];
+            middleSet[1] = parentNodeOutputs[(parentNodeOutputs.length / 2)];
+            return mean(middleSet);
+        } else {
+            return parentNodeOutputs[parentNodeOutputs.length / 2];
+        }
     }
 
     function mean(

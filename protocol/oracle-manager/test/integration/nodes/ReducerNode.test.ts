@@ -1,97 +1,198 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
-import { bootstrapWithNodes } from '../bootstrap';
+import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 import NodeOperations from '../mixins/Node.operations';
 
 describe('ReducerNode', function () {
-  const { getContract, nodeId1, nodeId2, nodeId3 } = bootstrapWithNodes();
+  const { getContract, getSigners } = bootstrap();
 
   const abi = ethers.utils.defaultAbiCoder;
-  let parents: string[];
   let NodeModule: ethers.Contract;
+  let owner;
+  let Node10000, Node100, Node10, Node1;
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');
-    parents = [nodeId1(), nodeId2(), nodeId3()];
+    owner = getSigners()[0];
+
+    Node10000 = await deployAndRegisterExternalNode(10000, 1);
+    Node100 = await deployAndRegisterExternalNode(100, 10);
+    Node10 = await deployAndRegisterExternalNode(10, 100);
+    Node1 = await deployAndRegisterExternalNode(1, 10000);
   });
 
-  // TODO: Use external nodes and demonstrate that these all process correctly.
-  it('register a max reducer', async () => {
-    const params = abi.encode(['int'], [NodeOperations.MAX]);
+  it('successfully reduces with the RECENT operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.RECENT]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
-
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
-
-    const priceData = await NodeModule.process(nodeId);
-    assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
+    assertBn.equal(nodeOutput.price, 1);
+    assertBn.equal(nodeOutput.timestamp, 10000);
   });
 
-  it('register a min reducer', async () => {
-    const params = abi.encode(['int'], [NodeOperations.MIN]);
+  it('successfully reduces with the MIN operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.MIN]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
-
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
-
-    const priceData = await NodeModule.process(nodeId);
-    assertBn.equal(priceData.price, ethers.utils.parseEther('0.5'));
+    assertBn.equal(nodeOutput.price, 1);
+    assertBn.equal(nodeOutput.timestamp, 10000);
   });
 
-  it('register a mean reducer', async () => {
-    const params = abi.encode(['int'], [NodeOperations.MEAN]);
+  it('successfully reduces with the MAX operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.MAX]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
-
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
-
-    const priceData = await NodeModule.process(nodeId);
-    assertBn.equal(priceData.price, ethers.utils.parseEther('0.8'));
+    assertBn.equal(nodeOutput.price, 10000);
+    assertBn.equal(nodeOutput.timestamp, 1);
   });
 
-  it('register a median reducer', async () => {
-    const params = abi.encode(['int'], [NodeOperations.MEDIAN]);
+  it('successfully reduces with the MAX operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.MAX]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
-
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
-
-    const priceData = await NodeModule.process(nodeId);
-    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+    assertBn.equal(nodeOutput.price, 10000);
+    assertBn.equal(nodeOutput.timestamp, 1);
   });
 
-  it('register a recent reducer', async () => {
-    const params = abi.encode(['int'], [NodeOperations.RECENT]);
+  it('successfully reduces with the MEAN operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.MEAN]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
-
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
-
-    const priceData = await NodeModule.process(nodeId);
-    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+    assertBn.equal(nodeOutput.price, 2527.75);
+    assertBn.equal(nodeOutput.timestamp, 2527.75);
   });
 
-  it('register a division reducer', async () => {
-    const params = abi.encode(['int'], [NodeOperations.DIV]);
+  it('successfully reduces with the MEDIAN operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.MEDIAN]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
-
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
-
-    const priceData = await NodeModule.process(nodeId);
-    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+    assertBn.equal(nodeOutput.price, 55);
+    assertBn.equal(nodeOutput.timestamp, 55);
   });
 
-  it('register a multiply reducer', async () => {
-    const params = abi.encode(['int'], [NodeOperations.MUL]);
+  it('successfully reduces with the MUL operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.MUL]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
-
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
-
-    const priceData = await NodeModule.process(nodeId);
-    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+    assertBn.equal(nodeOutput.price, 10000000);
+    assertBn.equal(nodeOutput.timestamp, 2527.75);
   });
+
+  it('successfully reduces with the DIV operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.DIV]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
+
+    assertBn.equal(nodeOutput.price, 10);
+    assertBn.equal(nodeOutput.timestamp, 2527.75);
+  });
+
+  async function deployAndRegisterExternalNode(price, timestamp) {
+    // Deploy the mock
+    const factory = await hre.ethers.getContractFactory('MockExternalNode');
+    const externalNode = await factory.connect(owner).deploy(price, timestamp);
+
+    // Register the external node referencing the mock
+    const NodeParameters = abi.encode(['address'], [externalNode.address]);
+    await NodeModule.registerNode(NodeTypes.EXTERNAL, NodeParameters, []);
+
+    // Return the ID
+    return await NodeModule.getNodeId(NodeTypes.EXTERNAL, NodeParameters, []);
+  }
 });

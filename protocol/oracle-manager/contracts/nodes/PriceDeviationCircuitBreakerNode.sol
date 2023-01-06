@@ -5,7 +5,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../storage/NodeOutput.sol";
 
-// TODO: Add SafeMath
 library PriceDeviationCircuitBreakerRNode {
     using SafeCastU256 for uint256;
 

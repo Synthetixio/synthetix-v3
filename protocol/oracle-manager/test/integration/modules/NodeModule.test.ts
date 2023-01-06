@@ -10,6 +10,7 @@ import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 const abi = ethers.utils.defaultAbiCoder;
 
+// TODO
 describe('NodeModule', function () {
   const { getContract, nodeId1, nodeId2 } = bootstrapWithNodes();
 

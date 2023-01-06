@@ -4,10 +4,11 @@ pragma solidity >=0.8.0;
 import "../interfaces/external/IExternalNode.sol";
 
 contract MockExternalNode is IExternalNode {
-    NodeOutput.Data output;
+    NodeOutput.Data private output;
 
-    constructor(NodeOutput.Data memory _output) {
-        output = _output;
+    constructor(int256 price, uint256 timestamp) {
+        output.price = price;
+        output.timestamp = timestamp;
     }
 
     function process(

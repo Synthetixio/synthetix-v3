@@ -6,9 +6,14 @@ import "../interfaces/external/IPyth.sol";
 
 library PythNode {
     function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
-        (IPyth pyth, bytes32 priceFeedId) = abi.decode(parameters, (IPyth, bytes32));
-        PythStructs.Price memory pythPrice = pyth.getPrice(priceFeedId);
-
-        return NodeOutput.Data(pythPrice.price, pythPrice.publishTime, 0, 0);
+        (address pythAddress, bytes32 priceFeedId, bool useEma) = abi.decode(
+            parameters,
+            (address, bytes32, bool)
+        );
+        IPyth pyth = IPyth(pythAddress);
+        PythStructs.Price memory pythData = useEma
+            ? pyth.getPriceUnsafe(priceFeedId)
+            : pyth.getEmaPriceUnsafe(priceFeedId);
+        return NodeOutput.Data(pythData.price, pythData.publishTime, 0, 0);
     }
 }

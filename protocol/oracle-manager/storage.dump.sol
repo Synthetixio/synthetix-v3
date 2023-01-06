@@ -32,6 +32,18 @@ contract ProxyStorage {
     }
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/DecimalMath.sol:DecimalMath
+library DecimalMath {
+    uint256 public constant UNIT = 1e18;
+    int256 public constant UNIT_INT = int256(UNIT);
+    uint128 public constant UNIT_UINT128 = uint128(UNIT);
+    int128 public constant UNIT_INT128 = int128(UNIT_INT);
+    uint256 public constant UNIT_PRECISE = 1e27;
+    int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
+    int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
+    uint256 public constant PRECISION_FACTOR = 9;
+}
+
 // @custom:artifact contracts/interfaces/external/IPyth.sol:PythStructs
 contract PythStructs {
     struct Price {

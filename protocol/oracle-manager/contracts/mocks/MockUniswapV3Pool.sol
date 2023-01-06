@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import "../interfaces/external/IUniswapV3Pool.sol";
 
+// See https://github.com/Uniswap/v3-periphery/blob/main/contracts/test/MockObservable.sol
 contract MockUniswapV3Pool is IUniswapV3Pool {
     uint256 public liquidity;
     uint256 public tickSize;
