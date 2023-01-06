@@ -83,7 +83,7 @@ The Price Deviation Circuit Breaker Node passes through value of the first paren
 
 ### Staleness Circuit Breaker Node
 
-The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolerance. Otherwise, it returns the second parent if specified or reverts with `NoFallbackProvided`.
+The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolerance. Otherwise, it returns the second parent if specified or reverts with `StalenessToleranceExceeded`.
 
 - `nodeType` Value: 7
 - Parameters:

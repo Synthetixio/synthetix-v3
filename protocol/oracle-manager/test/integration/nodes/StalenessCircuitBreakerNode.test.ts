@@ -71,7 +71,7 @@ describe('StalenessCircuitBreakerNode', function () {
     ]);
 
     // Verify that the staleness circuit breaker node throws
-    await assertRevert(NodeModule.process(nodeId), `NoFallbackProvided()`, NodeModule);
+    await assertRevert(NodeModule.process(nodeId), `StalenessToleranceExceeded()`, NodeModule);
   });
 
   async function deployAndRegisterExternalNode(price, timestamp) {
