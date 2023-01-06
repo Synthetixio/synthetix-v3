@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../storage/NodeOutput.sol";
 
-// This can be used as a staleness circuit breaker if no fallback is provided
-// Use cases includes using Uniswap if fresh parentNodeOutputs are otherwise unavailable.
-library STALENESS_CIRCUIT_BREAKERNode {
+library StalenessCircuitBreakerNode {
     error NoFallbackProvided();
 
     function process(

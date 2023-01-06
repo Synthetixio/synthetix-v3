@@ -78,9 +78,9 @@ library NodeDefinition {
         STALENESS_CIRCUIT_BREAKER
     }
     struct Data {
-        bytes32[] parents;
         NodeType nodeType;
         bytes parameters;
+        bytes32[] parents;
     }
     function load(bytes32 id) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
@@ -95,8 +95,8 @@ library NodeOutput {
     struct Data {
         int256 price;
         uint256 timestamp;
-        uint256 _unused_1;
-        uint256 _unused_2;
+        uint256 __slotAvailableForFutureUse_1;
+        uint256 __slotAvailableForFutureUse_2;
     }
 }
 

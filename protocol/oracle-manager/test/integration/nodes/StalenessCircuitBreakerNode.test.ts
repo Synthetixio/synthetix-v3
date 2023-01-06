@@ -16,4 +16,9 @@ describe('StalenessCircuitBreakerNode', function () {
     NodeModule = getContract('NodeModule');
     parents = [nodeId1(), nodeId2(), nodeId3()];
   });
+
+  // TODO: use external nodes throughout
+  describe('provides the output of the first parent if not stale', async () => {});
+  describe('provides the output of the second parent if stale', async () => {});
+  describe('throws if stale and no second parent', async () => {});
 });

@@ -5,7 +5,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../storage/NodeOutput.sol";
 
-library PRICE_DEVIATION_CIRCUIT_BREAKERNode {
+// TODO: Add SafeMath
+library PriceDeviationCircuitBreakerRNode {
     using SafeCastU256 for uint256;
 
     error InvalidPrice();

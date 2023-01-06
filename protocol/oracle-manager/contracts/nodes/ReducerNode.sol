@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../storage/NodeOutput.sol";
 
+// TODO: Add SafeMath
 library ReducerNode {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
@@ -106,13 +107,21 @@ library ReducerNode {
     function mul(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory mulPrice) {
-        // TODO
+        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+            mulPrice.price *= parentNodeOutputs[i].price;
+            mulPrice.timestamp += parentNodeOutputs[i].timestamp;
+        }
+        mulPrice.timestamp = mulPrice.timestamp / parentNodeOutputs.length;
     }
 
     function div(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory divPrice) {
-        // TODO
+        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+            divPrice.price /= parentNodeOutputs[i].price;
+            divPrice.timestamp += parentNodeOutputs[i].timestamp;
+        }
+        divPrice.timestamp = divPrice.timestamp / parentNodeOutputs.length;
     }
 
     function quickSort(NodeOutput.Data[] memory arr, int left, int right) internal pure {

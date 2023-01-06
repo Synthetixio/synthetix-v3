@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/NodeOutput.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
-// TODO: Add safemath here, etc.
+// TODO: Add SafeMath
 library ChainlinkNode {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;

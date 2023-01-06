@@ -176,16 +176,13 @@ contract NodeModule is INodeModule {
             nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
         ) {
             return
-                PRICE_DEVIATION_CIRCUIT_BREAKERNode.process(
+                PriceDeviationCircuitBreakerRNode.process(
                     parentNodeOutputs,
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
             return
-                PRICE_DEVIATION_CIRCUIT_BREAKERNode.process(
-                    parentNodeOutputs,
-                    nodeDefinition.parameters
-                );
+                StalenessCircuitBreakerNode.process(parentNodeOutputs, nodeDefinition.parameters);
         } else {
             revert UnsupportedNodeType(nodeDefinition.nodeType);
         }

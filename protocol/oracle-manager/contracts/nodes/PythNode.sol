@@ -9,7 +9,6 @@ library PythNode {
         (IPyth pyth, bytes32 priceFeedId) = abi.decode(parameters, (IPyth, bytes32));
         PythStructs.Price memory pythPrice = pyth.getPrice(priceFeedId);
 
-        // TODO: use confidence score to determine volatility and liquidity scores
         return NodeOutput.Data(pythPrice.price, pythPrice.publishTime, 0, 0);
     }
 }

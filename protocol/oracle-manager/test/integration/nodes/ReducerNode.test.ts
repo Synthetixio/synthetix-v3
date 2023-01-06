@@ -17,6 +17,7 @@ describe('ReducerNode', function () {
     parents = [nodeId1(), nodeId2(), nodeId3()];
   });
 
+  // TODO: Use external nodes and demonstrate that these all process correctly.
   it('register a max reducer', async () => {
     const params = abi.encode(['int'], [NodeOperations.MAX]);
 
@@ -63,6 +64,28 @@ describe('ReducerNode', function () {
 
   it('register a recent reducer', async () => {
     const params = abi.encode(['int'], [NodeOperations.RECENT]);
+
+    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
+
+    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
+
+    const priceData = await NodeModule.process(nodeId);
+    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+  });
+
+  it('register a division reducer', async () => {
+    const params = abi.encode(['int'], [NodeOperations.DIV]);
+
+    await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
+
+    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, parents);
+
+    const priceData = await NodeModule.process(nodeId);
+    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+  });
+
+  it('register a multiply reducer', async () => {
+    const params = abi.encode(['int'], [NodeOperations.MUL]);
 
     await NodeModule.registerNode(NodeTypes.REDUCER, params, parents);
 
