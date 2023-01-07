@@ -7,8 +7,7 @@ import "./Fee.sol";
 library AsyncOrderClaim {
     struct Data {
         SpotMarketFactory.TransactionType orderType;
-        uint256 synthAmountEscrowed; // traderAmountEscrowed
-        uint256 usdAmountEscrowed; // marketAmountEscrowed
+        uint256 amountEscrowed; // Amount escrowed from trader. (USD denominated on buy. Synth denominated on sell.)
         uint256 blockNumber;
         uint256 timestamp;
     }

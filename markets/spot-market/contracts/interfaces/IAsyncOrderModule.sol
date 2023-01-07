@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/AsyncOrder.sol";
+import "../storage/AsyncOrderConfiguration.sol";
 
 interface IAsyncOrderModule {
     event AsyncOrderCommitted(

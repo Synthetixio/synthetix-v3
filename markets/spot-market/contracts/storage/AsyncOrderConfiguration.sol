@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import "./Fee.sol";
 import "./AsyncOrderClaim.sol";
 
-// Not sure this is the correct name for this, more like AsyncOrderManager
-library AsyncOrder {
+library AsyncOrderConfiguration {
     struct Data {
         mapping(uint256 => AsyncOrderClaim.Data) asyncOrderClaims;
         uint256 minimumOrderAge;

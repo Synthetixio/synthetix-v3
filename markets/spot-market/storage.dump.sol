@@ -187,7 +187,7 @@ library NodeDefinition {
     }
 }
 
-// @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
+// @custom:artifact contracts/storage/AsyncOrderConfiguration.sol:AsyncOrder
 library AsyncOrder {
     struct Data {
         mapping(uint256 => AsyncOrderClaim.Data) asyncOrderClaims;
