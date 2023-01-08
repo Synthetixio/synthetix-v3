@@ -1,0 +1,46 @@
+name = "synthetix-collateral-weth"
+version = "0.0.0"
+description = "Creates the spartan council pool"
+
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.snx_package]
+defaultValue = "synthetix:3"
+
+[setting.weth_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.weth_aggregator_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[import.system]
+source = "<%= settings.snx_package %>"
+
+[invoke.registerOracleManager]
+target = ["system.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    [],
+    3,
+    "0x000000000000000000000000<%= settings.weth_aggregator_address.slice(2) %>00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008"
+]
+
+extra.weth_oracle_id.event = "NodeRegistered"
+extra.weth_oracle_id.arg = 0
+
+depends = [
+  "import.system"
+]
+
+[invoke.configure_collateral]
+target = ["system.CoreProxy"]
+fromCall.func = "owner"
+func = "configureCollateral"
+args = [
+  { tokenAddress = "<%= settings.weth_address %>", oracleNodeId = "<%= extras.weth_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "1500000000000000000", liquidationRewardD18 = "10000000000000000", minDelegationD18 = "10000000000000000", depositingEnabled = true }
+]
+
+depends = [
+  "invoke.registerOracleManager"
+]

@@ -49,9 +49,11 @@ describe('MarketManagerModule', function () {
     });
 
     describe('successful', async () => {
-      const expectedMarketId = marketId().add(1);
+      let expectedMarketId: ethers.BigNumber;
 
       before('register', async () => {
+        expectedMarketId = marketId().add(1);
+
         // user1 has access to register market from bootstrapWithMockMarketAndPool
         txn = await systems()
           .Core.connect(owner)
