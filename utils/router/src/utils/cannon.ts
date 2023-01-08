@@ -103,21 +103,25 @@ const routerAction = {
 
     const solidityInfo = await compileRouter(contractName, sourceCode);
 
+    const deployTxn = await ethers.ContractFactory.fromSolidity(solidityInfo).getDeployTransaction();
+
     const signer = config.from ? 
       await runtime.getSigner(config.from) : 
-      await runtime.getDefaultSigner!({ data: solidityInfo.bytecode });
+      await runtime.getDefaultSigner!(deployTxn);
+    
+    console.log('using deploy signer with address', await signer.getAddress());
 
-    const deployedRouterContract = await ethers.ContractFactory.fromSolidity(solidityInfo).connect(signer).deploy();
+    const deployedRouterContractTxn = await signer.sendTransaction(deployTxn);
 
-    await deployedRouterContract.deployed();
+    const receipt = await deployedRouterContractTxn.wait();
 
     return {
       contracts: {
         [contractName]: {
-          address: deployedRouterContract.address,
+          address: receipt.contractAddress,
           abi: getMergedAbiFromContractPaths(ctx, config.contracts), // the abi is entirely basedon the fallback call so we have to generate ABI here
           deployedOn: currentLabel,
-          deployTxnHash: deployedRouterContract.deployTransaction.hash,
+          deployTxnHash: deployedRouterContractTxn.hash,
           contractName,
           sourceName: contractName + '.sol',
         }

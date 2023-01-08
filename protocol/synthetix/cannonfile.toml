@@ -121,6 +121,7 @@ depends = [
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.InitialModuleBundle.address %>"]
 abiOf = ["InitialModuleBundle"]
+salt = "<%= settings.salt %>"
 depends = ["contract.InitialModuleBundle"]
 
 [invoke.acquire_ownership]
