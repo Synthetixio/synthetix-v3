@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -123,6 +123,22 @@ library AssociatedSystem {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/storage/DecayToken.sol:DecayToken
+library DecayToken {
+    bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
+    struct Data {
+        uint256 interestRate;
+        uint256 epochStart;
+        uint256 totalSupplyAtEpochStart;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = _SLOT_DECAY_TOKEN_STORAGE;
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
 library Initialized {
     struct Data {
@@ -210,6 +226,7 @@ library Fee {
         int wrapFixedFee;
         int unwrapFixedFee;
         uint skewScale;
+        address feeCollector;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
@@ -224,7 +241,6 @@ library Price {
     struct Data {
         bytes32 buyFeedId;
         bytes32 sellFeedId;
-        uint skewScale;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
@@ -250,6 +266,7 @@ library SpotMarketFactory {
         address oracle;
         address synthetix;
         address initialSynthImplementation;
+        address initialAsyncOrderClaimImplementation;
         mapping(uint128 => address) synthOwners;
     }
     function load() internal pure returns (Data storage store) {
@@ -272,4 +289,9 @@ library Wrapper {
             store.slot := s
         }
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

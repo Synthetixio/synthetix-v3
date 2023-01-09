@@ -52,7 +52,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getWithdrawableUsd(uint128 marketId) public view override returns (uint256) {
+    function getWithdrawableMarketUsd(uint128 marketId) public view override returns (uint256) {
         return
             Market.load(marketId).creditCapacityD18 +
             Market.load(marketId).getDepositedCollateralValue();
@@ -139,7 +139,8 @@ contract MarketManagerModule is IMarketManagerModule {
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // Ensure that the market's balance allows for this withdrawal.
-        if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
+        if (amount > getWithdrawableMarketUsd(marketId))
+            revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting.
         marketData.creditCapacityD18 -= amount.to128();

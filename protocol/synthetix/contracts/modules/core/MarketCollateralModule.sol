@@ -14,6 +14,7 @@ import "../../storage/Market.sol";
 contract MarketCollateralModule is IMarketCollateralModule {
     using ERC20Helper for address;
     using CollateralConfiguration for CollateralConfiguration.Data;
+    using Market for Market.Data;
 
     /**
      * @inheritdoc IMarketCollateralModule
@@ -140,6 +141,13 @@ contract MarketCollateralModule is IMarketCollateralModule {
                 return depositedCollateralEntry.amountD18;
             }
         }
+    }
+
+    /**
+     * @inheritdoc IMarketCollateralModule
+     */
+    function getMarketCollateralValue(uint128 marketId) external view override returns (uint256) {
+        return Market.load(marketId).getDepositedCollateralValue();
     }
 
     /**

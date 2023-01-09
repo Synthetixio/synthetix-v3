@@ -3,11 +3,21 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 
+/**
+ * @title Wrapper library servicing the wrapper module
+ */
 library Wrapper {
     error WrappingNotInitialized();
 
     struct Data {
+        /**
+         * @dev tracks the type of collateral used for wrapping
+         * helpful for checking balances and allowances
+         */
         address collateralType;
+        /**
+         * @dev sets if wrapping is enabled for given market id
+         */
         bool wrappingEnabled;
     }
 

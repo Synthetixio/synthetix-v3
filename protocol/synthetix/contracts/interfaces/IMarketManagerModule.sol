@@ -88,7 +88,7 @@ interface IMarketManagerModule {
      * @param marketId The id of the market whose withdrawable USD amount is being queried.
      * @return The total amount of snxUSD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
      */
-    function getWithdrawableUsd(uint128 marketId) external view returns (uint256);
+    function getWithdrawableMarketUsd(uint128 marketId) external view returns (uint256);
 
     /**
      * @notice Returns the net issuance of the specified market (snxUSD withdrawn - snxUSD deposited).

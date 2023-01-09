@@ -105,7 +105,7 @@ describe('MarketManagerModule', function () {
 
       it('increases withdrawableUsd', async () => {
         assertBn.equal(
-          await systems().Core.connect(user1).getWithdrawableUsd(marketId()),
+          await systems().Core.connect(user1).getWithdrawableMarketUsd(marketId()),
           depositAmount.add(One)
         );
       });
@@ -153,7 +153,7 @@ describe('MarketManagerModule', function () {
         });
 
         it('decreased withdrawable usd', async () => {
-          const liquidity = await systems().Core.getWithdrawableUsd(marketId());
+          const liquidity = await systems().Core.getWithdrawableMarketUsd(marketId());
           assertBn.equal(liquidity, depositAmount.add(One.div(2)));
         });
 
@@ -171,7 +171,7 @@ describe('MarketManagerModule', function () {
           });
 
           it('decreased withdrawable usd', async () => {
-            const liquidity = await systems().Core.getWithdrawableUsd(marketId());
+            const liquidity = await systems().Core.getWithdrawableMarketUsd(marketId());
             assertBn.equal(liquidity, depositAmount);
           });
 
