@@ -8,9 +8,11 @@ interface Params {
   contracts: DeployedContractData[];
 }
 
-export async function generateRouter (
-  { contractName = 'Router', template = undefined, contracts = [] }: Params
-) {
+export async function generateRouter({
+  contractName = 'Router',
+  template = undefined,
+  contracts = [],
+}: Params) {
   for (const c of contracts) debug(`${c.contractName}: ${c.deployedAddress}`);
 
   const sourceCode = renderRouter({

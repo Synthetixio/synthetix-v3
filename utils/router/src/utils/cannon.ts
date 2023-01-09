@@ -4,13 +4,17 @@ import Debug from 'debug';
 import { JTDDataType } from 'ajv/dist/core';
 
 import {
-  ChainBuilderContext, 
-  ChainBuilderRuntimeInfo, 
-  ChainArtifacts, 
-  registerAction 
+  ChainBuilderContext,
+  ChainBuilderRuntimeInfo,
+  ChainArtifacts,
+  registerAction,
 } from '@usecannon/builder';
 
-import { getContractDefinitionFromPath, getContractFromPath, getMergedAbiFromContractPaths } from '@usecannon/builder/dist/util';
+import {
+  getContractDefinitionFromPath,
+  getContractFromPath,
+  getMergedAbiFromContractPaths,
+} from '@usecannon/builder/dist/util';
 
 import { generateRouter } from '../generate';
 import { DeployedContractData } from '../types';
@@ -31,7 +35,8 @@ const config = {
 export type Config = JTDDataType<typeof config>;
 
 // ensure the specified contract is already deployed
-// if not deployed, deploy the specified hardhat contract with specfied options, export address, abi, etc.
+// if not deployed, deploy the specified hardhat contract with specfied options, export
+// address, abi, etc.
 // if already deployed, reexport deployment options for usage downstream and exit with no changes
 const routerAction = {
   validate: config,
@@ -49,10 +54,8 @@ const routerAction = {
     for (const n of newConfig.contracts) {
       const contract = getContractFromPath(ctx, n);
       if (!contract) {
-        throw new Error(`contract not found: ${n}`)
+        throw new Error(`contract not found: ${n}`);
       }
-
-      
     }
 
     return {
@@ -73,14 +76,18 @@ const routerAction = {
     return config;
   },
 
-  async exec(runtime: ChainBuilderRuntimeInfo, ctx: ChainBuilderContext, config: Config, currentLabel: string): Promise<ChainArtifacts> {
+  async exec(
+    runtime: ChainBuilderRuntimeInfo,
+    ctx: ChainBuilderContext,
+    config: Config,
+    currentLabel: string
+  ): Promise<ChainArtifacts> {
     debug('exec', config);
 
-    const contracts: DeployedContractData[] = config.contracts.map(n => {
-
+    const contracts: DeployedContractData[] = config.contracts.map((n) => {
       const contract = getContractDefinitionFromPath(ctx, n);
       if (!contract) {
-        throw new Error(`contract not found: ${n}`)
+        throw new Error(`contract not found: ${n}`);
       }
 
       return {
@@ -91,24 +98,26 @@ const routerAction = {
         contractName: contract.contractName,
         sourceName: contract.sourceName,
         contractFullyQualifiedName: `${contract.sourceName}:${contract.contractName}`,
-      }
+      };
     });
 
     const contractName = currentLabel.slice('router.'.length);
 
     const sourceCode = await generateRouter({
       contractName,
-      contracts
+      contracts,
     });
 
     const solidityInfo = await compileRouter(contractName, sourceCode);
 
-    const deployTxn = await ethers.ContractFactory.fromSolidity(solidityInfo).getDeployTransaction();
+    const deployTxn = await ethers.ContractFactory.fromSolidity(
+      solidityInfo
+    ).getDeployTransaction();
 
-    const signer = config.from ? 
-      await runtime.getSigner(config.from) : 
-      await runtime.getDefaultSigner!(deployTxn);
-    
+    const signer = config.from
+      ? await runtime.getSigner(config.from)
+      : await runtime.getDefaultSigner!(deployTxn);
+
     console.log('using deploy signer with address', await signer.getAddress());
 
     const deployedRouterContractTxn = await signer.sendTransaction(deployTxn);
@@ -124,8 +133,8 @@ const routerAction = {
           deployTxnHash: deployedRouterContractTxn.hash,
           contractName,
           sourceName: contractName + '.sol',
-        }
-      }
+        },
+      },
     };
   },
 };

@@ -158,8 +158,6 @@ function _buildBinaryData(selectors: FunctionSelector[]) {
   return finalData;
 }
 
-
-
 export function getSelectors(
   contractAbi: ethers.ContractInterface,
   functionFilter: (fnName: string) => boolean = () => true

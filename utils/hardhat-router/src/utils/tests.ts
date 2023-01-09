@@ -29,9 +29,10 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     const typechainFolder = path.resolve(generatedPath, 'typechain');
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
-    const cannonOpts = hre.network.name === 'cannon' ? { cannonfile } : { cannonfile, noVerify: true };
+    const cannonOpts =
+      hre.network.name === 'cannon' ? { cannonfile } : { cannonfile, noVerify: true };
 
-    const cannonInfo = await hre.run(`cannon:build`, {
+    const cannonInfo = await hre.run('cannon:build', {
       writeDeployments,
       ...cannonOpts,
     });
@@ -51,7 +52,12 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     signers = cannonInfo.signers as ethers.Signer[];
 
     for (const signer of signers) {
-      console.log('have signer', await signer.getAddress(), 'with balance', (await signer.getBalance()).toString())
+      console.log(
+        'have signer',
+        await signer.getAddress(),
+        'with balance',
+        (await signer.getBalance()).toString()
+      );
     }
 
     try {
