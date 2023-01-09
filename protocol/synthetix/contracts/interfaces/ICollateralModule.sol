@@ -14,8 +14,8 @@ interface ICollateralModule {
     error InsufficientAccountCollateral(uint256 amount);
 
     /**
-     * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
-     * @param accountId The if of the account that deposited collateral.
+     * @notice Emitted when `tokenAmount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
+     * @param accountId The id of the account that deposited collateral.
      * @param collateralType The address of the collateral that was deposited.
      * @param tokenAmount The amount of collateral that was deposited, denominated in the token's native decimal representation.
      * @param sender The address of the account that triggered the deposit.
@@ -28,7 +28,7 @@ interface ICollateralModule {
     );
 
     /**
-     * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
+     * @notice Emitted when `tokenAmount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      * @param accountId The id of the account that withdrew collateral.
      * @param collateralType The address of the collateral that was withdrawn.
      * @param tokenAmount The amount of collateral that was withdrawn, denominated in the token's native decimal representation.
@@ -42,18 +42,18 @@ interface ICollateralModule {
     );
 
     /**
-     * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.
+     * @notice Deposits `tokenAmount` of collateral of type `collateralType` into account `accountId`.
      * @dev Anyone can deposit into anyone's active account without restriction.
      * @param accountId The id of the account that is making the deposit.
      * @param collateralType The address of the token to be deposited.
      * @param tokenAmount The amount being deposited, denominated in the token's native decimal representation.
      *
-     * Emits a {CollateralDeposited} event.
+     * Emits a {Deposited} event.
      */
     function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external;
 
     /**
-     * @notice Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
+     * @notice Withdraws `tokenAmount` of collateral of type `collateralType` from account `accountId`.
      * @param accountId The id of the account that is making the withdrawal.
      * @param collateralType The address of the token to be withdrawn.
      * @param tokenAmount The amount being withdrawn, denominated in the token's native decimal representation.
@@ -62,7 +62,7 @@ interface ICollateralModule {
      *
      * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
      *
-     * Emits a {CollateralWithdrawn} event.
+     * Emits a {Withdrawn} event.
      *
      */
     function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external;

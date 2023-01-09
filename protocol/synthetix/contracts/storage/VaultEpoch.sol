@@ -82,6 +82,9 @@ library VaultEpoch {
         self.unconsolidatedDebtD18 += debtChangeD18.to128();
     }
 
+    /**
+     * @dev Adjusts the debt associated with `accountId` by `amountD18`.
+     */
     function assignDebtToAccount(
         Data storage self,
         uint128 accountId,

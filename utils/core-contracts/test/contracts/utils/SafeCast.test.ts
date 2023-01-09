@@ -1,18 +1,19 @@
-const { ethers } = hre;
-const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
-const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+import assert from 'node:assert/strict';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { BigNumber, ethers } from 'ethers';
+import hre from 'hardhat';
 
-describe('SafeCast', () => {
+describe('SafeCast', function () {
   let SafeCast;
   let castFunction;
 
   function exp(base, exp) {
-    return ethers.BigNumber.from(base).mul(ethers.BigNumber.from(10).pow(exp));
+    return BigNumber.from(base).mul(BigNumber.from(10).pow(exp));
   }
 
   function pow(base, exp) {
-    return ethers.BigNumber.from(base).pow(exp);
+    return BigNumber.from(base).pow(exp);
   }
 
   async function assertCast(value) {
@@ -28,7 +29,7 @@ describe('SafeCast', () => {
   async function assertCastBytes(value) {
     assert.equal(
       await SafeCast.callStatic[castFunction](value),
-      ethers.utils.hexZeroPad(ethers.BigNumber.from(value).toHexString(), 32)
+      ethers.utils.hexZeroPad(BigNumber.from(value).toHexString(), 32)
     );
   }
 
@@ -44,8 +45,8 @@ describe('SafeCast', () => {
     return pow(2, type).div(2).mul(-1);
   }
 
-  before('deploy the contract', async () => {
-    const factory = await ethers.getContractFactory('SafeCastMock');
+  before('deploy the contract', async function () {
+    const factory = await hre.ethers.getContractFactory('SafeCastMock');
     SafeCast = await factory.deploy();
   });
 
