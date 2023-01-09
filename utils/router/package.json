@@ -17,7 +17,7 @@
   "author": "Synthetix",
   "license": "MIT",
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.json && cp -r templates dist/",
     "watch": "npm run build -- --watch",
     "test": "TS_NODE_PROJECT='test/tsconfig.json' mocha -r ts-node/register -r tsconfig-paths/register -r source-map-support/register",
     "coverage": "nyc npm run test",
