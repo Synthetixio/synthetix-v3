@@ -32,6 +32,7 @@ exports.generate = async function generate(
   );
   const contractFqNames = contractsValues.map((c) => `${c.sourceName}:${c.contractName}`);
   const contracts = Object.values(contractsValues).map(_parseCannonContract);
+  console.log('*** contracts:', JSON.stringify(contracts, null, 2));
 
   await hre.run(SUBTASK_VALIDATE_SELECTORS, { contracts: contractFqNames });
 

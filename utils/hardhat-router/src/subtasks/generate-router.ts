@@ -34,6 +34,7 @@ subtask(
     logger.log(`Including ${contracts.length} modules:`);
     for (const c of contracts) logger.info(`${c.contractName}: ${c.deployedAddress}`);
 
+    // console.log('>>> contracts:', JSON.stringify(contracts, null, 2));
     const sourceCode = renderRouter({
       routerName: contractName,
       template,

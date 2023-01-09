@@ -23,10 +23,12 @@ export function getSelectors(
   contractAbi: ethers.ContractInterface,
   functionFilter: (fnName: string) => boolean = () => true
 ) {
+  // console.log('abi:', JSON.stringify(contractAbi, null, 2));
   const contract = new ethers.Contract('0x0000000000000000000000000000000000000001', contractAbi);
 
   return contract.interface.fragments.reduce((selectors, fragment) => {
-    if (fragment.type === 'function' && functionFilter(fragment.name)) {
+    // console.log(fragment.type);
+    if (fragment.type === 'function' || fragment.type === 'receive' && functionFilter(fragment.name)) {
       selectors.push({
         name: fragment.name,
         selector: contract.interface.getSighash(fragment),

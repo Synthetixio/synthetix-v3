@@ -42,6 +42,7 @@ export function renderRouter({
   }
 
   const selectors = _getAllSelectors(contracts, functionFilter);
+  // console.log('>', JSON.stringify(selectors, null, 2));
   const binaryData = _buildBinaryData(selectors);
 
   return renderTemplate(template, {

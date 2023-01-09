@@ -37,6 +37,9 @@ artifact = "contracts/modules/DecayTokenModule.sol:DecayTokenModule"
 [contract.NftModule]
 artifact = "contracts/modules/NftModule.sol:NftModule"
 
+[contract.ReceiveModule]
+artifact = "contracts/modules/ReceiveModule.sol:ReceiveModule"
+
 # Mocks
 
 [contract.SampleFeatureFlagModule]

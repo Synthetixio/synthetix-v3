@@ -5,7 +5,7 @@ import { bootstrap } from '../../bootstrap';
 
 describe.only('ReceiveModule', function () {
   const { getContractBehindProxy, getSigners, getProvider } = bootstrap({
-    implementation: 'SampleRouter',
+    implementation: 'ReceiveModuleRouter',
   });
 
   let ReceiveModule: ReceiveModule;
@@ -21,25 +21,29 @@ describe.only('ReceiveModule', function () {
     ReceiveModule = getContractBehindProxy('ReceiveModule');
   });
 
-  describe('when sending ETH to the system', function () {
-    const amount = ethers.utils.parseEther('24');
+  before('record balances', async function () {
+    userBalanceBefore = await getProvider().getBalance(await user.getAddress());
+    systemBalanceBefore = await getProvider().getBalance(ReceiveModule.address);
+  });
 
-    before('record balances', async function () {
-      userBalanceBefore = await getProvider().getBalance(await user.getAddress());
-      systemBalanceBefore = await getProvider().getBalance(ReceiveModule.address);
+  describe('when sending ETH to the system', function () {
+    const value = ethers.utils.parseEther('24');
+
+    before('send eth', async function () {
+      await (await user.sendTransaction({ value, to: ReceiveModule.address })).wait();
     });
 
     it('decreases the senders balance', async function () {
       assertBn.equal(
         await getProvider().getBalance(await user.getAddress()),
-        userBalanceBefore.sub(amount)
+        userBalanceBefore.sub(value)
       );
     });
 
     it('increases the systems balance', async function () {
       assertBn.equal(
         await getProvider().getBalance(ReceiveModule.address),
-        systemBalanceBefore.add(amount)
+        systemBalanceBefore.add(value)
       );
     });
   });
