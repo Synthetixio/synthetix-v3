@@ -12,7 +12,7 @@ A struct of price data can be retrieved for a given node ID by passing it to the
 
 ```
 struct NodeOutput {
-  uint256 price; // Denominated in dollars with 18 decimal places
+  int256 price; // Denominated in dollars with 18 decimal places
   uint256 timestamp; // Denominated as Unix epoch time
   uint256 _unused_1; // Placeholder for additional data in future upgrades, such as volatility or liquidity measurements
   uint256 _unused_2; // Placeholder for additional data in future upgrades, such as volatility or liquidity measurements
