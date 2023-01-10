@@ -23,13 +23,6 @@ describe('AssociatedSystemsModule', function () {
   let owner: ethers.Signer;
   let user: ethers.Signer;
 
-  const deployRouter = async (contractName: string) => {
-    const { chainId } = hre.network.config;
-    const fqName = `contracts/routers/chain-${chainId}/${contractName}.sol:${contractName}`;
-    const Factory = await hre.ethers.getContractFactory(fqName);
-    return Factory.deploy();
-  };
-
   before('initialize', function () {
     [owner, user] = getSigners();
     AssociatedSystemsModule = getContractBehindProxy('AssociatedSystemsModule');
