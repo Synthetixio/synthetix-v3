@@ -12,7 +12,7 @@ interface IAsyncOrderModule {
         address indexed sender
     );
 
-    event AsyncOrderSettled(
+    event OrderSettled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
         AsyncOrderClaim.Data asyncOrderClaim,
@@ -20,7 +20,7 @@ interface IAsyncOrderModule {
         address indexed sender
     );
 
-    event AsyncOrderCancelled(
+    event OrderCancelled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
         AsyncOrderClaim.Data asyncOrderClaim,
