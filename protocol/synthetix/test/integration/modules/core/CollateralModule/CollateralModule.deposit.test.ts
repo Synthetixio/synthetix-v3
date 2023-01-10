@@ -3,12 +3,13 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import { bootstrap } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
-  const { signers, systems } = bootstrap();
+  const { signers, systems, provider } = bootstrap();
 
   let Collateral: Ethers.Contract, oracleNodeId: string;
 
@@ -144,6 +145,32 @@ describe('CollateralModule', function () {
                   `InsufficientAccountCollateral("${errorAmount}")`,
                   systems().Core
                 );
+              });
+            });
+
+            describe('when attempting to withdraw locked collateral', () => {
+              var lockedTill;
+              it('get current time', async () => {
+                const currentTime = await getTime(provider());
+                lockedTill = currentTime + 60 * 60 * 24 * 30;
+              });
+              it('reverts', async () => {
+                await systems()
+                  .Core.connect(user1)
+                  .createLock(1, Collateral.address, depositAmount, lockedTill);
+
+                // Collateral uses 6 decimals and system operates with 18,
+                // so scale up the expected amount.
+                const errorAmount = depositAmount.mul(ethers.BigNumber.from(10).pow(12));
+
+                await assertRevert(
+                  systems().Core.connect(user1).withdraw(1, Collateral.address, depositAmount),
+                  `InsufficientAccountCollateral("${errorAmount}")`,
+                  systems().Core
+                );
+              });
+              it('unlock collateral', async () => {
+                await fastForwardTo(lockedTill, provider());
               });
             });
 
