@@ -12,7 +12,7 @@ import "../utils/AsyncOrderClaimTokenUtil.sol";
 
 /**
  * @title Module to process asyncronous orders
- * @notice TODO: Explain commit/settle pattern
+ * @notice See README.md for an overview of asyncronous orders
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
@@ -24,76 +24,114 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using Fee for Fee.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
 
-    function commitBuyOrder(
+    function commitOrder(
         uint128 marketId,
-        uint256 usdAmount
+        SpotMarketFactory.TransactionType orderType,
+        uint256 amountProvided,
+        uint256 settlementStrategyId
     )
         external
         override
         returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
 
-        // Accept USD
-        uint256 allowance = store.usdToken.allowance(msg.sender, address(this));
-        if (store.usdToken.balanceOf(msg.sender) < usdAmount) {
-            revert InsufficientFunds();
+        require(
+            settlementStrategyId < asyncOrderConfiguration.settlementStrategies.length(),
+            "Invalid settlement strategy ID"
+        );
+
+        int256 utilizationDelta;
+        uint256 cancellationFee;
+        if (orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            // Accept USD (amountProvided is usd)
+            uint256 allowance = store.usdToken.allowance(msg.sender, address(this));
+            if (store.usdToken.balanceOf(msg.sender) < amountProvided) {
+                revert InsufficientFunds();
+            }
+            if (allowance < amountProvided) {
+                revert InsufficientAllowance(amountProvided, allowance);
+            }
+            store.usdToken.transferFrom(msg.sender, address(this), amountProvided);
+
+            // Calculate fees
+            (uint256 amountUsableUsd, uint256 estimatedFees) = Fee.calculateFees(
+                marketId,
+                msg.sender,
+                amountProvided,
+                SpotMarketFactory.TransactionType.ASYNC_BUY
+            );
+            cancellationFee = estimatedFees;
+
+            // The utilization increases based on the estimated fill
+            utilizationDelta = Price.usdSynthExchangeRate(
+                marketId,
+                amountUsableUsd,
+                SpotMarketFactory.TransactionType.ASYNC_BUY
+            );
         }
-        if (allowance < usdAmount) {
-            revert InsufficientAllowance(usdAmount, allowance);
+
+        if (orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            // Accept Synths (amountProvided is synths)
+            uint256 allowance = SynthUtil.getToken(marketId).allowance(msg.sender, address(this));
+            if (SynthUtil.getToken(marketId).balanceOf(msg.sender) < amountProvided) {
+                revert InsufficientFunds();
+            }
+            if (allowance < amountProvided) {
+                revert InsufficientAllowance(amountProvided, allowance);
+            }
+            SynthUtil.transferIntoEscrow(marketId, msg.sender, amountProvided);
+
+            // Get the dollar value of the provided synths
+            uint256 usdAmount = Price.synthUsdExchangeRate(
+                marketId,
+                amountProvided,
+                SpotMarketFactory.TransactionType.SELL
+            );
+
+            // Set cancellation fee based on estimation
+            (uint256 estimatedFill, uint256 estimatedFees) = Fee.calculateFees(
+                marketId,
+                msg.sender,
+                usdAmount,
+                SpotMarketFactory.TransactionType.ASYNC_SELL
+            );
+            cancellationFee = estimatedFees;
+
+            // Decrease the utilization based on the amount remaining after fees
+            uint256 synthAmount = Price.usdSynthExchangeRate(
+                marketId,
+                estimatedFill,
+                SpotMarketFactory.TransactionType.SELL
+            );
+            utilizationDelta = -synthAmount;
         }
-        store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Issue an async order claim NFT
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
         // Set up order data
-        asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
-        asyncOrderClaim.blockNumber = block.number;
-        asyncOrderClaim.timestamp = block.timestamp;
-        asyncOrderClaim.amountEscrowed = usdAmount;
+        asyncOrderClaim.orderType = orderType;
+        asyncOrderClaim.amountEscrowed = amountProvided;
+        asyncOrderClaim.settlementStrategyId = settlementStrategyId;
+        asyncOrderClaim.settlementTime =
+            block.timestamp +
+            asyncOrderConfiguration.settlementStrategies[settlementStrategyId].settlementDelay;
+        asyncOrderClaim.utilizationDelta = utilizationDelta;
+        asyncOrderClaim.cancellationFee = cancellationFee;
+
+        // Accumulate utilization delta for use in fee calculation
+        asyncOrderConfiguration.asyncUtilizationDelta += utilizationDelta;
+        // TODO: remember to undo this on cancel + settle
 
         // Store order data
         AsyncOrderConfiguration.create(marketId, asyncOrderId, asyncOrderClaim);
 
         // Emit event
-        emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
-    }
-
-    function commitSellOrder(
-        uint128 marketId,
-        uint256 synthAmount
-    )
-        external
-        override
-        returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
-    {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
-        // Accept Synths
-        uint256 allowance = SynthUtil.getToken(marketId).allowance(msg.sender, address(this));
-        if (store.usdToken.balanceOf(msg.sender) < synthAmount) {
-            revert InsufficientFunds();
-        }
-        if (allowance < synthAmount) {
-            revert InsufficientAllowance(synthAmount, allowance);
-        }
-        SynthUtil.transferIntoEscrow(marketId, msg.sender, synthAmount);
-
-        // Issue an async order claim NFT
-        asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
-
-        // Set up order data
-        asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
-        asyncOrderClaim.blockNumber = block.number;
-        asyncOrderClaim.timestamp = block.timestamp;
-        asyncOrderClaim.amountEscrowed = synthAmount;
-
-        // Store order data
-        AsyncOrderConfiguration.create(marketId, asyncOrderId, asyncOrderClaim);
-
-        // Emit event
-        emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
+        emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderId, msg.sender);
     }
 
     function settleOrder(

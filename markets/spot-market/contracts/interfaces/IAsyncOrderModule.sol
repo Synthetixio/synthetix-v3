@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 import "../storage/AsyncOrderConfiguration.sol";
 
 interface IAsyncOrderModule {
-    event AsyncOrderCommitted(
+    event OrderCommitted(
         uint128 indexed marketId,
-        uint128 indexed asyncOrderId,
-        AsyncOrderClaim.Data asyncOrderClaim,
+        SpotMarketFactory.TransactionType indexed orderType,
+        uint256 amountProvided,
+        uint128 asyncOrderId,
         address indexed sender
     );
 
@@ -44,14 +45,11 @@ interface IAsyncOrderModule {
         uint256 settlementWindowDuration
     );
 
-    function commitBuyOrder(
+    function commitOrder(
         uint128 marketId,
-        uint usdAmount
-    ) external returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim);
-
-    function commitSellOrder(
-        uint128 marketId,
-        uint256 synthAmount
+        SpotMarketFactory.TransactionType orderType,
+        uint256 amountProvided,
+        uint256 settlementStrategyId
     ) external returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim);
 
     function settleOrder(
