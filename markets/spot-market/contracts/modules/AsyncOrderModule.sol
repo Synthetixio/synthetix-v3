@@ -287,7 +287,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
             AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
         ) = _prepareSettlement(marketId, asyncOrderId);
 
-        IPythVerifier(settlementStrategy.priceVerificationContract).updatePriceFeeds(priceData);
+        IPythVerifier(settlementStrategy.priceVerificationContract).parsePriceFeedUpdates(
+            priceData
+        );
 
         // TODO
         // confirm that priceData is for asyncOrderClaim.settlementTime
