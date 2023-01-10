@@ -69,6 +69,7 @@ describe('SetUtil', function () {
     let SampleSet: SetContractMap[T];
 
     const expectedValues: V[] = [];
+    const replacedValues: V[] = [];
 
     const addValue = async (value: V) => {
       expectedValues.push(value);
@@ -90,6 +91,8 @@ describe('SetUtil', function () {
     };
 
     const replaceValue = async (value: V, newValue: V) => {
+      replacedValues.push(value);
+
       const index = expectedValues.indexOf(value);
 
       expectedValues[index] = newValue;
@@ -109,6 +112,12 @@ describe('SetUtil', function () {
       it('contains all values', async function () {
         for (const value of expectedValues) {
           assert.equal(await SampleSet.contains(value), true);
+        }
+      });
+
+      it('does not contain replaced values', async function () {
+        for (const value of replacedValues) {
+          assert.equal(await SampleSet.contains(value), false);
         }
       });
 
