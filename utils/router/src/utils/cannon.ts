@@ -28,6 +28,7 @@ const config = {
   },
   optionalProperties: {
     from: { type: 'string' },
+    salt: { type: 'string' },
     depends: { elements: { type: 'string' } },
   },
 } as const;
@@ -73,6 +74,10 @@ const routerAction = {
       config.from = _.template(config.from)(ctx);
     }
 
+    if (config.salt) {
+      config.salt = _.template(config.salt)(ctx);
+    }
+
     return config;
   },
 
@@ -108,6 +113,8 @@ const routerAction = {
       contracts,
     });
 
+    debug('router source code', sourceCode);
+
     const solidityInfo = await compileRouter(contractName, sourceCode);
 
     const deployTxn = await ethers.ContractFactory.fromSolidity(
@@ -116,9 +123,9 @@ const routerAction = {
 
     const signer = config.from
       ? await runtime.getSigner(config.from)
-      : await runtime.getDefaultSigner!(deployTxn);
+      : await runtime.getDefaultSigner!(deployTxn, config.salt);
 
-    console.log('using deploy signer with address', await signer.getAddress());
+    debug('using deploy signer with address', await signer.getAddress());
 
     const deployedRouterContractTxn = await signer.sendTransaction(deployTxn);
 
@@ -133,6 +140,7 @@ const routerAction = {
           deployTxnHash: deployedRouterContractTxn.hash,
           contractName,
           sourceName: contractName + '.sol',
+          //sourceCode
         },
       },
     };

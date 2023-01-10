@@ -14,7 +14,7 @@ import { bootstrap } from '../../bootstrap';
 const toBytes32 = ethers.utils.formatBytes32String;
 
 // tmp skip to allow for verifying the whole rest of the tests
-describe.skip('AssociatedSystemsModule', function () {
+describe('AssociatedSystemsModule', function () {
   const { getContractBehindProxy, getContract, getSigners } = bootstrap({
     implementation: 'AssociatedSystemsModuleRouter',
   });
@@ -28,16 +28,6 @@ describe.skip('AssociatedSystemsModule', function () {
     const fqName = `contracts/routers/chain-${chainId}/${contractName}.sol:${contractName}`;
     const Factory = await hre.ethers.getContractFactory(fqName);
     return Factory.deploy();
-  };
-
-  const deployNftModule = async () => {
-    const Router = await deployRouter('NftModuleRouter');
-    return getContract('NftModule', Router.address);
-  };
-
-  const deployTokenModule = async () => {
-    const Router = await deployRouter('TokenModuleRouter');
-    return getContract('TokenModule', Router.address);
   };
 
   before('initialize', function () {
@@ -127,8 +117,8 @@ describe.skip('AssociatedSystemsModule', function () {
       const registeredName = toBytes32('Token');
 
       before('identify modules', async function () {
-        NftModule = await deployNftModule();
-        TokenModule = await deployTokenModule();
+        NftModule = getContract('NftModuleRouter');
+        TokenModule = getContract('TokenModuleRouter');
       });
 
       before('registration', async function () {
@@ -203,7 +193,7 @@ describe.skip('AssociatedSystemsModule', function () {
         let NewTokenModule: TokenModule;
 
         before('reinit', async function () {
-          NewTokenModule = await deployTokenModule();
+          NewTokenModule = getContract('TokenModuleRouter2');
 
           receipt = await (
             await AssociatedSystemsModule.initOrUpgradeToken(
@@ -262,7 +252,7 @@ describe.skip('AssociatedSystemsModule', function () {
       const registeredName = toBytes32('NftToken');
 
       before('identify modules', async function () {
-        NftModule = await deployNftModule();
+        NftModule = await getContract('NftModuleRouter2');
       });
 
       before('registration', async function () {
@@ -313,7 +303,7 @@ describe.skip('AssociatedSystemsModule', function () {
         const invalidRegisteredName = toBytes32('InvalidKind');
 
         before('prepare modules', async function () {
-          NewTokenModule = await deployTokenModule();
+          NewTokenModule = await getContract('TokenModuleRouter3');
 
           await AssociatedSystemsModule.initOrUpgradeToken(
             invalidRegisteredName,
@@ -342,7 +332,7 @@ describe.skip('AssociatedSystemsModule', function () {
         let NewNftModule: NftModule;
 
         before('reinit', async function () {
-          NewNftModule = await deployNftModule();
+          NewNftModule = await getContract('NftModuleRouter3');
 
           receipt = await (
             await AssociatedSystemsModule.initOrUpgradeNft(

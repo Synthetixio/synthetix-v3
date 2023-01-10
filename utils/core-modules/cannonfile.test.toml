@@ -100,6 +100,29 @@ depends = [
   "contract.TokenModule"
 ]
 
+
+[router.TokenModuleRouter2]
+contracts = [
+    "CoreModule",
+    "TokenModule",
+]
+salt = "second"
+depends = [
+  "contract.CoreModule",
+  "contract.TokenModule"
+]
+
+[router.TokenModuleRouter3]
+contracts = [
+    "CoreModule",
+    "TokenModule",
+]
+salt = "third"
+depends = [
+  "contract.CoreModule",
+  "contract.TokenModule"
+]
+
 # DecayTokenModule Router
 
 [router.DecayTokenModuleRouter]
@@ -128,13 +151,29 @@ depends = [
   "contract.SampleModuleB"
 ]
 
-# NftModule Router
+# NftModule Router ( we need multiple for tests)
 
 [router.NftModuleRouter]
 contracts = [
   "CoreModule",
   "NftModule",
 ]
+depends = ["contract.CoreModule", "contract.NftModule"]
+
+[router.NftModuleRouter2]
+contracts = [
+  "CoreModule",
+  "NftModule",
+]
+salt = "second"
+depends = ["contract.CoreModule", "contract.NftModule"]
+
+[router.NftModuleRouter3]
+contracts = [
+  "CoreModule",
+  "NftModule",
+]
+salt = "third"
 depends = ["contract.CoreModule", "contract.NftModule"]
 
 # FeatureFlagModule Router
