@@ -22,7 +22,7 @@ export default async function assertEvent(
 
       seenEvents.push(text);
 
-      if (text.match(expectedMatch) || text.toLowerCase().includes(expectedMatch.toLowerCase())) {
+      if (text.toLowerCase().includes(expectedMatch.toLowerCase()) || text.match(expectedMatch)) {
         return;
       }
     } catch {
