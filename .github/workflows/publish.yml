@@ -13,7 +13,9 @@ jobs:
       INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
       INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
       INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
+      CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
     steps:
+      - run: mkdir -p ~/.local/share/cannon && echo "$CANNON_SETTINGS" > ~/.local/share/cannon/settings.json
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -32,26 +34,6 @@ jobs:
         run: npx hardhat cannon:build
         working-directory: ./protocol/synthetix
 
-      # pull in all the active networks (TODO)
-      # these are needed mostly for convenience but also becuase it most accurately represents the state of the chain if
-      # we include the unreleased changes in this built package
-      #- name: cannon:upgrade
-      #  run: |
-      #    npx hardhat cannon:
-
-      # push to registry
-      - id: publish
-        name: cannon:publish
-        env:
-          INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
-          INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
-        # run the publish and extract the Qm... string
-        run: |
-          export result=$(npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json))
-          echo "$result" >> $GITHUB_STEP_SUMMARY
-          echo "cannon_package=@ipfs:$(echo "$result" | sed -n 's/.* \(Qm[^ ]*\).*/\1/p')" >> $GITHUB_OUTPUT
-        working-directory: ./protocol/synthetix
-
       # put a note on any PRs that includes the IPFS download information
       - if: github.event.pull_request.base.ref == 'main'
         uses: actions/github-script@v6
@@ -61,5 +43,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 Core system deployment now available `npx @usecannon/cli ${{steps.publish.outputs.cannon_package}}` 🚀'
+              body: '🚀 Core system deployment now available.` 🚀'
             })
