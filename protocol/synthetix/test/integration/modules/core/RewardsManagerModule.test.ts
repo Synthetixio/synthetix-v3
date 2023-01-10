@@ -563,7 +563,7 @@ describe('RewardsManagerModule', function () {
     });
   });
 
-  describe.only('removeRewardsDistributor()', async () => {
+  describe('removeRewardsDistributor()', async () => {
     before(restore);
 
     it('only works with owner', async () => {
