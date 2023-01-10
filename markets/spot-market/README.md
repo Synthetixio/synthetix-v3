@@ -60,7 +60,7 @@ The following actions are involved with asyncronous orders:
   - The trader is issued an async order NFT that tracks: the order type (buy or sell), the amount escrowed, the settlement strategy to use, the settlement time, the estimated fill (to be factored into the utilization fee), and the estimated fee (to be used during cancellation).
 - **Settle**
   - While in the settlement window, anyone can settle the order. Upon settlement, the holder of the async order NFT receives the assets in the exchange and the escrowed assets are burned (if synths) or deposited (if stablecoins). The price is determined differently based on the settlement strategy associated with the order:
-    - On-chain: The price provided by the oracle manager at the time of the settle transaction is used, assuming that the timestamp associated with the price is greater than or equal to the settlement time.
+    - On-chain: The price provided by the oracle manager at the time of the settle transaction is used, assuming that the timestamp associated with the price is greater than the settlement time.
     - Chainlink: The off-chain price data for the settlement time is used, assuming it is successfully verified by Chainlink and passes any configured circuit breaking checks.
     - Pyth: The off-chain price data for the settlement time is used, assuming it is successfully verified by Pyth and passes any configured circuit breaking checks.
 - **Cancel**

@@ -170,16 +170,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
             settlementStrategy.strategyType ==
             AsyncOrderConfiguration.SettlementStrategyType.ONCHAIN
         ) {
-            _fillOnChain();
+            _fillOnChain(marketId, asyncOrderId, asyncOrderClaim);
         } else if (
             settlementStrategy.strategyType ==
             AsyncOrderConfiguration.SettlementStrategyType.CHAINLINK
         ) {
-            _fillChainlink();
+            _fillChainlink(marketId, asyncOrderId, asyncOrderClaim);
         } else if (
             settlementStrategy.strategyType == AsyncOrderConfiguration.SettlementStrategyType.PYTH
         ) {
-            _fillPyth();
+            _fillPyth(marketId, asyncOrderId, asyncOrderClaim);
         }
 
         // Adjust utilization delta for use in fee calculation
@@ -221,61 +221,70 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
     }
 
-    function _fillOnChain() private;
+    function _fillOnChain(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) private returns (uint finalOrderAmount) {
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            finalOrderAmount = Price.usdSynthExchangeRate(
+                marketId,
+                asyncOrderClaim.amountEscrowed,
+                SpotMarketFactory.TransactionType.ASYNC_BUY
+            );
 
-    function _fillChainlink() private;
+            require(
+                Price
+                    .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_BUY)
+                    .timestamp > asyncOrderClaim.settlementTime,
+                "Needs more recent price report"
+            );
 
-    function _fillPyth() private;
+            ITokenModule token = SynthUtil.getToken(marketId);
+            token.mint(
+                AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+                finalOrderAmount
+            );
+        }
 
-    /*
-old buy-related logic
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            finalOrderAmount = Price.synthUsdExchangeRate(
+                marketId,
+                asyncOrderClaim.amountEscrowed,
+                SpotMarketFactory.TransactionType.ASYNC_SELL
+            );
 
-        // Calculate fees
-        (uint256 amountUsable, ) = Fee.calculateFees(
-            marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            asyncOrderClaim.amountEscrowed,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
-        );
+            require(
+                Price
+                    .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_SELL)
+                    .timestamp > asyncOrderClaim.settlementTime,
+                "Needs more recent price report"
+            );
 
-        // Get the final synth amount
-        finalSynthAmount = Price.usdSynthExchangeRate(
-            marketId,
-            amountUsable,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
-        );
+            SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+                marketId,
+                AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+                finalOrderAmount
+            );
+        }
+    }
 
-        // Mint final synth amount to claimant
-        ITokenModule token = SynthUtil.getToken(marketId);
-        token.mint(address(this), finalSynthAmount);
-*/
+    function _fillChainlink(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) private returns (uint finalOrderAmount) {
+        //TODO
+    }
 
-    /*
-old sell-related logic
-
-        // Exchange synths provided into dollar amount
-        uint256 usdAmount = Price.synthUsdExchangeRate(
-            marketId,
-            asyncOrderClaim.amountEscrowed,
-            SpotMarketFactory.TransactionType.SELL
-        );
-
-        // Calculate fees
-        (finalUsdAmount, ) = Fee.calculateFees(
-            marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            usdAmount,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
-        );
-
-        // Disperse usd
-        // TODO: What about fee collector?
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(
-            marketId,
-            address(this),
-            finalUsdAmount
-        );
-        */
+    function _fillPyth(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) private returns (uint finalOrderAmount) {
+        //TODO
+    }
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderConfiguration.Data memory asyncOrderConfiguration = AsyncOrderConfiguration.load(
