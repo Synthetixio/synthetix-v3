@@ -112,10 +112,9 @@ library ReducerNode {
     function mul(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory mulPrice) {
-        if (parentNodeOutputs.length > 0) {
-            mulPrice.price = 1;
-        }
-        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+        mulPrice.price = parentNodeOutputs[0].price;
+        mulPrice.timestamp = parentNodeOutputs[0].timestamp;
+        for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
             mulPrice.price *= parentNodeOutputs[i].price;
             mulPrice.timestamp += parentNodeOutputs[i].timestamp;
         }
