@@ -72,7 +72,12 @@ contract CollateralModule is ICollateralModule {
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
 
-        if (account.collaterals[collateralType].availableAmountD18 < systemAmount) {
+        (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked) = account
+            .getCollateralTotals(collateralType);
+        if (
+            totalDeposited - totalAssigned < systemAmount ||
+            totalDeposited - totalLocked < systemAmount
+        ) {
             revert InsufficientAccountCollateral(systemAmount);
         }
 
@@ -86,14 +91,15 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function getAccountCollateral(
-        uint128 accountId,
-        address collateralType
-    )
+    function getAccountCollateral(uint128 accountId, address collateralType)
         external
         view
         override
-        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
+        returns (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked
+        )
     {
         return Account.load(accountId).getCollateralTotals(collateralType);
     }
@@ -101,10 +107,12 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function getAccountAvailableCollateral(
-        uint128 accountId,
-        address collateralType
-    ) public view override returns (uint256) {
+    function getAccountAvailableCollateral(uint128 accountId, address collateralType)
+        public
+        view
+        override
+        returns (uint256)
+    {
         return Account.load(accountId).collaterals[collateralType].availableAmountD18;
     }
 
@@ -156,7 +164,9 @@ contract CollateralModule is ICollateralModule {
 
         Account.Data storage account = Account.load(accountId);
 
-        (uint totalDeposited, , uint256 totalLocked) = account.getCollateralTotals(collateralType);
+        (uint256 totalDeposited, , uint256 totalLocked) = account.getCollateralTotals(
+            collateralType
+        );
 
         if (totalDeposited - totalLocked < amount) {
             revert InsufficientAccountCollateral(amount);
