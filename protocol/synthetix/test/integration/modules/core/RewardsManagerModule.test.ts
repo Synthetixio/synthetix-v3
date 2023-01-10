@@ -563,7 +563,7 @@ describe('RewardsManagerModule', function () {
     });
   });
 
-  describe('removeRewardsDistributor()', async () => {
+  describe.only('removeRewardsDistributor()', async () => {
     before(restore);
 
     it('only works with owner', async () => {
@@ -584,7 +584,7 @@ describe('RewardsManagerModule', function () {
 
     it('make sure distributor is removed', async () => {
       await assertRevert(
-        await RewardDistributor.connect(owner).distributeRewards(
+        RewardDistributor.connect(owner).distributeRewards(
           poolId,
           collateralAddress(),
           rewardAmount,
