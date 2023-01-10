@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { ethers } from 'ethers';
-import hre from 'hardhat';
 import {
   AssociatedSystemsModule,
   NftModule,
