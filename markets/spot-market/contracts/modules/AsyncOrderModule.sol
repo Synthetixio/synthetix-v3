@@ -9,6 +9,8 @@ import "../storage/SpotMarketFactory.sol";
 import "../storage/AsyncOrderConfiguration.sol";
 import "../interfaces/IAsyncOrderModule.sol";
 import "../utils/AsyncOrderClaimTokenUtil.sol";
+import "../interfaces/external/IChainlinkVerifier.sol";
+import "../interfaces/external/IPythVerifier.sol";
 
 /**
  * @title Module to process asyncronous orders
@@ -175,11 +177,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
             settlementStrategy.strategyType ==
             AsyncOrderConfiguration.SettlementStrategyType.CHAINLINK
         ) {
-            _fillChainlink(marketId, asyncOrderId, asyncOrderClaim);
+            // revert OffchainData(sender, urls, callData, callbackFunction, extraData)
+            // request at asyncOrderClaim.settlementTime
+            // callbackFunction = settleChainlinkOrder
         } else if (
             settlementStrategy.strategyType == AsyncOrderConfiguration.SettlementStrategyType.PYTH
         ) {
-            _fillPyth(marketId, asyncOrderId, asyncOrderClaim);
+            // revert OffchainData(sender, urls, callData, callbackFunction, extraData)
+            // request at asyncOrderClaim.settlementTime
+            // callbackFunction = settlePythOrder
         }
 
         // Adjust utilization delta for use in fee calculation
@@ -270,20 +276,62 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
     }
 
-    function _fillChainlink(
+    function settleChainlinkOrder(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private returns (uint finalOrderAmount) {
-        //TODO
+        bytes memory priceData
+    ) external {
+        // Needs code/DRY up stuff from settle() function
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
+        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
+            asyncOrderId
+        ];
+        AsyncOrderConfiguration.SettlementStrategy
+            memory settlementStrategy = asyncOrderConfiguration.settlementStrategies[
+                asyncOrderClaim.settlementStrategyId
+            ];
+
+        bytes memory verifierResponse = IChainlinkVerifier(
+            settlementStrategy.priceVerificationContract
+        ).verify(priceData);
+
+        (
+            bytes32 feedID,
+            uint32 observationsTimestamp,
+            uint64 observationsBlocknumber,
+            int192 median
+        ) = abi.decode(verifierResponse, (bytes32, uint32, uint64, int192));
+
+        // confirm that observationsTimestamp == asyncOrderClaim.settlementTime
+        // need to confirm feedID?
+
+        // price deviation check?
     }
 
-    function _fillPyth(
+    function settlePythOrder(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private returns (uint finalOrderAmount) {
-        //TODO
+        bytes memory priceData
+    ) external {
+        // Needs code/DRY up stuff from settle() function
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
+        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
+            asyncOrderId
+        ];
+        AsyncOrderConfiguration.SettlementStrategy
+            memory settlementStrategy = asyncOrderConfiguration.settlementStrategies[
+                asyncOrderClaim.settlementStrategyId
+            ];
+
+        IPythVerifier(settlementStrategy.priceVerificationContract).updatePriceFeeds([priceData]);
+        // confirm that priceData is for asyncOrderClaim.settlementTime
+        // confirm the price is for what we want
+
+        // price deviation check?
     }
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {

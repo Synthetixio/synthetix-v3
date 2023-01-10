@@ -24,8 +24,8 @@ library AsyncOrderConfiguration {
         uint256 fixedFee;
         uint256 settlementDelay;
         uint256 settlementWindowDuration;
+        address priceVerificationContract; // For Chainlink and Pyth settlement strategies
         /*
-            - **Price Verification Contract**: For Chainlink and Pyth settlement strategies. _t.b.d._
             - **Price Deviation Circuit Breaker Node ID** - For Chainlink and Pyth settlement strategies. _t.b.d._
             - **Price Deviation Circuit Breaker Tolerance** - For Chainlink and Pyth settlement strategies. _t.b.d._
         */
