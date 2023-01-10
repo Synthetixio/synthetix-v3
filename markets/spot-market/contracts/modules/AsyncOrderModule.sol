@@ -26,6 +26,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using Fee for Fee.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
 
+    // ************
+    // COMMITMENT
+    // ************
+
     function commitOrder(
         uint128 marketId,
         SpotMarketFactory.TransactionType orderType,
@@ -42,7 +46,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
 
         require(
-            settlementStrategyId < asyncOrderConfiguration.settlementStrategies.length(),
+            settlementStrategyId < asyncOrderConfiguration.settlementStrategies.length,
             "Invalid settlement strategy ID"
         );
 
@@ -109,7 +113,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 estimatedFill,
                 SpotMarketFactory.TransactionType.SELL
             );
-            utilizationDelta = -synthAmount;
+            utilizationDelta = -1 * synthAmount.toInt();
         }
 
         // Issue an async order claim NFT
@@ -135,10 +139,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
         emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderId, msg.sender);
     }
 
-    function settleOrder(
-        uint128 marketId,
-        uint128 asyncOrderId
-    ) external override returns (uint finalOrderAmount) {
+    // ************
+    // SETTLEMENT
+    // ************
+
+    function settleOrder(uint128 marketId, uint128 asyncOrderId) external override returns (uint) {
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
@@ -150,88 +155,39 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 asyncOrderClaim.settlementStrategyId
             ];
 
-        // Confirm we're in the settlement window
-        require(block.timestamp > asyncOrderClaim.settlementTime, "too soon");
-        if (settlementStrategy.settlementWindowDuration > 0) {
-            require(
-                asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration <
-                    block.timestamp,
-                "too late"
-            );
-        }
-
-        // Collect what's held in escrow
-        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            _collectBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            _collectSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        }
-
-        // Fill the order with the specified settlement strategy
         if (
             settlementStrategy.strategyType ==
             AsyncOrderConfiguration.SettlementStrategyType.ONCHAIN
         ) {
-            _fillOnChain(marketId, asyncOrderId, asyncOrderClaim);
+            return settleOnChainOrder(marketId, asyncOrderId);
         } else if (
             settlementStrategy.strategyType ==
             AsyncOrderConfiguration.SettlementStrategyType.CHAINLINK
         ) {
+            // TODO
             // revert OffchainData(sender, urls, callData, callbackFunction, extraData)
             // request at asyncOrderClaim.settlementTime
             // callbackFunction = settleChainlinkOrder
         } else if (
             settlementStrategy.strategyType == AsyncOrderConfiguration.SettlementStrategyType.PYTH
         ) {
+            // TODO
             // revert OffchainData(sender, urls, callData, callbackFunction, extraData)
             // request at asyncOrderClaim.settlementTime
             // callbackFunction = settlePythOrder
         }
-
-        // Adjust utilization delta for use in fee calculation
-        asyncOrderConfiguration.asyncUtilizationDelta -= asyncOrderClaim.utilizationDelta;
-
-        // Burn NFT
-        AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
-
-        // Emit event
-        emit OrderSettled(marketId, asyncOrderId, asyncOrderClaim, finalOrderAmount, msg.sender);
     }
 
-    function _collectBuyOrderEscrow(
+    function settleOnChainOrder(
         uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        uint128 asyncOrderId
+    ) public returns (uint finalOrderAmount) {
+        (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        ) = _prepareSettlement(marketId, asyncOrderId);
 
-        // Deposit USD
-        // TODO: Add fee collector logic
-        store.usdToken.approve(address(this), asyncOrderClaim.amountEscrowed);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
-            marketId,
-            address(this),
-            asyncOrderClaim.amountEscrowed
-        );
-    }
-
-    function _collectSellOrderEscrow(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
-        // Burn Synths
-        // TODO: Add fee collector logic
-        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
-    }
-
-    function _fillOnChain(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private returns (uint finalOrderAmount) {
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
             finalOrderAmount = Price.usdSynthExchangeRate(
                 marketId,
@@ -274,24 +230,26 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 finalOrderAmount
             );
         }
+
+        _finalizeSettlement(
+            marketId,
+            asyncOrderId,
+            finalOrderAmount,
+            asyncOrderConfiguration,
+            asyncOrderClaim
+        );
     }
 
     function settleChainlinkOrder(
         uint128 marketId,
         uint128 asyncOrderId,
         bytes memory priceData
-    ) external {
-        // Needs code/DRY up stuff from settle() function
-        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
-            marketId
-        );
-        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
-            asyncOrderId
-        ];
-        AsyncOrderConfiguration.SettlementStrategy
-            memory settlementStrategy = asyncOrderConfiguration.settlementStrategies[
-                asyncOrderClaim.settlementStrategyId
-            ];
+    ) external returns (uint finalOrderAmount) {
+        (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        ) = _prepareSettlement(marketId, asyncOrderId);
 
         bytes memory verifierResponse = IChainlinkVerifier(
             settlementStrategy.priceVerificationContract
@@ -304,38 +262,134 @@ contract AsyncOrderModule is IAsyncOrderModule {
             int192 median
         ) = abi.decode(verifierResponse, (bytes32, uint32, uint64, int192));
 
+        // TODO
         // confirm that observationsTimestamp == asyncOrderClaim.settlementTime
         // need to confirm feedID?
-
         // price deviation check?
+
+        _finalizeSettlement(
+            marketId,
+            asyncOrderId,
+            finalOrderAmount,
+            asyncOrderConfiguration,
+            asyncOrderClaim
+        );
     }
 
     function settlePythOrder(
         uint128 marketId,
         uint128 asyncOrderId,
         bytes memory priceData
-    ) external {
-        // Needs code/DRY up stuff from settle() function
-        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
-            marketId
-        );
-        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
-            asyncOrderId
-        ];
-        AsyncOrderConfiguration.SettlementStrategy
-            memory settlementStrategy = asyncOrderConfiguration.settlementStrategies[
-                asyncOrderClaim.settlementStrategyId
-            ];
+    ) external returns (uint finalOrderAmount) {
+        (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        ) = _prepareSettlement(marketId, asyncOrderId);
 
-        IPythVerifier(settlementStrategy.priceVerificationContract).updatePriceFeeds([priceData]);
+        IPythVerifier(settlementStrategy.priceVerificationContract).updatePriceFeeds(priceData);
+
+        // TODO
         // confirm that priceData is for asyncOrderClaim.settlementTime
         // confirm the price is for what we want
-
         // price deviation check?
+
+        _finalizeSettlement(
+            marketId,
+            asyncOrderId,
+            finalOrderAmount,
+            asyncOrderConfiguration,
+            asyncOrderClaim
+        );
     }
 
+    function _prepareSettlement(
+        uint128 marketId,
+        uint128 asyncOrderId
+    )
+        internal
+        returns (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        )
+    {
+        asyncOrderConfiguration = AsyncOrderConfiguration.load(marketId);
+        asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[asyncOrderId];
+        settlementStrategy = asyncOrderConfiguration.settlementStrategies[
+            asyncOrderClaim.settlementStrategyId
+        ];
+
+        // Confirm we're in the settlement window
+        require(block.timestamp > asyncOrderClaim.settlementTime, "too soon");
+        if (settlementStrategy.settlementWindowDuration > 0) {
+            require(
+                asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration <
+                    block.timestamp,
+                "too late"
+            );
+        }
+
+        // Collect what's held in escrow
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            _collectBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
+        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            _collectSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
+        }
+    }
+
+    function _finalizeSettlement(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        uint finalOrderAmount,
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) internal {
+        // Adjust utilization delta for use in fee calculation
+        asyncOrderConfiguration.asyncUtilizationDelta -= asyncOrderClaim.utilizationDelta;
+
+        // Burn NFT
+        AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
+
+        // Emit event
+        emit OrderSettled(marketId, asyncOrderId, asyncOrderClaim, finalOrderAmount, msg.sender);
+    }
+
+    function _collectBuyOrderEscrow(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) private {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+        // Deposit USD
+        // TODO: Add fee collector logic
+        store.usdToken.approve(address(this), asyncOrderClaim.amountEscrowed);
+        IMarketManagerModule(store.synthetix).depositMarketUsd(
+            marketId,
+            address(this),
+            asyncOrderClaim.amountEscrowed
+        );
+    }
+
+    function _collectSellOrderEscrow(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) private {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+        // Burn Synths
+        // TODO: Add fee collector logic
+        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
+    }
+
+    // ************
+    // CANCELLATION
+    // ************
+
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
-        AsyncOrderConfiguration.Data memory asyncOrderConfiguration = AsyncOrderConfiguration.load(
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
         AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
