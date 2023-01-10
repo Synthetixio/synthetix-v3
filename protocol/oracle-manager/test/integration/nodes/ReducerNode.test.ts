@@ -163,25 +163,25 @@ describe('ReducerNode', function () {
     assertBn.equal(nodeOutput.timestamp, 2527);
   });
 
-  // it('successfully reduces with the DIV operation', async () => {
-  //   const NodeParameters = abi.encode(['uint'], [NodeOperations.DIV]);
-  //   await NodeModule.registerNode(NodeTypes.REDUCER, NodeParameters, [
-  //     Node10000,
-  //     Node100,
-  //     Node10,
-  //     Node1,
-  //   ]);
-  //   const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, NodeParameters, [
-  //     Node10000,
-  //     Node100,
-  //     Node10,
-  //     Node1,
-  //   ]);
-  //   const nodeOutput = await NodeModule.process(nodeId);
+  it('successfully reduces with the DIV operation', async () => {
+    const NodeParameters = abi.encode(['uint'], [NodeOperations.DIV]);
+    await NodeModule.registerNode(NodeTypes.REDUCER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, NodeParameters, [
+      Node10000,
+      Node100,
+      Node10,
+      Node1,
+    ]);
+    const nodeOutput = await NodeModule.process(nodeId);
 
-  //   assertBn.equal(nodeOutput.price, 10);
-  //   assertBn.equal(nodeOutput.timestamp, 2527);
-  // });
+    assertBn.equal(nodeOutput.price, 10);
+    assertBn.equal(nodeOutput.timestamp, 2527);
+  });
 
   async function deployAndRegisterExternalNode(price, timestamp) {
     // Deploy the mock
