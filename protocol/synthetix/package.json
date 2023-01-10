@@ -6,9 +6,9 @@
   "scripts": {
     "build": "rm -rf contracts/generated && hardhat generate-testable",
     "test": "npm run build -- --quiet && hardhat test",
-    "coverage": "npm run build -- --quiet && hardhat test",
+    "coverage": "npm run build -- --quiet && hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "keywords": [],
   "author": "",

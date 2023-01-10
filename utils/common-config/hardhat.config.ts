@@ -9,7 +9,11 @@ import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
+
 import 'hardhat-ignore-warnings';
+
+// cannon builder plugin
+import '@synthetixio/router/utils/cannon';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });

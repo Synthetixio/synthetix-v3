@@ -61,7 +61,7 @@ artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreRouter.address %>"]
 abiOf = ["CoreRouter"]
 salt = "<%= settings.salt %>"
-depends = ["contract.CoreRouter"]
+depends = ["router.CoreRouter"]
 
 [invoke.acquire_ownership]
 target = ["Proxy"]
@@ -72,105 +72,78 @@ depends = ["contract.Proxy"]
 
 # Core Router
 
-[run.generate_core_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter",
-  '''<%= JSON.stringify({ CoreModule: contracts.CoreModule }) %>'''
-]
-modified = ["contracts"]
+[router.CoreRouter]
+contracts = ["CoreModule"]
 depends = ["contract.CoreModule"]
-
-[contract.CoreRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter"
-abiOf = ["CoreModule"]
-depends = ["run.generate_core_router"]
 
 # AssociatedSystemsModule Router
 
-[run.generate_associated_systems_module_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/AssociatedSystemsModuleRouter.sol:AssociatedSystemsModuleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
-  }) %>'''
+[router.AssociatedSystemsModuleRouter]
+contracts = [
+    "CoreModule",
+    "AssociatedSystemsModule",
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.AssociatedSystemsModule"
 ]
 
-[contract.AssociatedSystemsModuleRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/AssociatedSystemsModuleRouter.sol:AssociatedSystemsModuleRouter"
-abiOf = ["CoreModule", "AssociatedSystemsModule"]
-depends = ["run.generate_associated_systems_module_router"]
-
 # TokenModule Router
 
-[run.generate_token_module_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenModuleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    TokenModule: contracts.TokenModule,
-  }) %>'''
+[router.TokenModuleRouter]
+contracts = [
+    "CoreModule",
+    "TokenModule",
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.TokenModule"
 ]
 
-[contract.TokenModuleRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenModuleRouter"
-abiOf = ["CoreModule", "TokenModule"]
-depends = ["run.generate_token_module_router"]
+
+[router.TokenModuleRouter2]
+contracts = [
+    "CoreModule",
+    "TokenModule",
+]
+salt = "second"
+depends = [
+  "contract.CoreModule",
+  "contract.TokenModule"
+]
+
+[router.TokenModuleRouter3]
+contracts = [
+    "CoreModule",
+    "TokenModule",
+]
+salt = "third"
+depends = [
+  "contract.CoreModule",
+  "contract.TokenModule"
+]
 
 # DecayTokenModule Router
 
-[run.generate_decay_token_module_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/DecayTokenModuleRouter.sol:DecayTokenModuleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    DecayTokenModule: contracts.DecayTokenModule,
-  }) %>'''
+[router.DecayTokenModuleRouter]
+contracts = [
+  "CoreModule",
+  "DecayTokenModule",
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.DecayTokenModule"
 ]
 
-[contract.DecayTokenModuleRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/DecayTokenModuleRouter.sol:DecayTokenModuleRouter"
-abiOf = ["CoreModule", "DecayTokenModule"]
-depends = ["run.generate_decay_token_module_router"]
-
 # Sample Router
 
-[run.generate_sample_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/SampleRouter.sol:SampleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    SampleOwnedModule: contracts.SampleOwnedModule,
-    SampleModuleA: contracts.SampleModuleA,
-    SampleModuleB: contracts.SampleModuleB,
-  }) %>'''
+[router.SampleRouter]
+contracts = [
+    "CoreModule",
+    "SampleOwnedModule",
+    "SampleModuleA",
+    "SampleModuleB",
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.SampleOwnedModule",
@@ -178,61 +151,41 @@ depends = [
   "contract.SampleModuleB"
 ]
 
-[contract.SampleRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/SampleRouter.sol:SampleRouter"
-abiOf = [
+# NftModule Router ( we need multiple for tests)
+
+[router.NftModuleRouter]
+contracts = [
   "CoreModule",
-  "SampleOwnedModule",
-  "SampleModuleA",
-  "SampleModuleB"
+  "NftModule",
 ]
-depends = ["run.generate_sample_router"]
-
-# NftModule Router
-
-[run.generate_nft_module_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/NftModuleRouter.sol:NftModuleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    NftModule: contracts.NftModule,
-  }) %>'''
-]
-modified = ["contracts"]
 depends = ["contract.CoreModule", "contract.NftModule"]
 
-[contract.NftModuleRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/NftModuleRouter.sol:NftModuleRouter"
-abiOf = ["CoreModule", "NftModule"]
-depends = ["run.generate_nft_module_router"]
+[router.NftModuleRouter2]
+contracts = [
+  "CoreModule",
+  "NftModule",
+]
+salt = "second"
+depends = ["contract.CoreModule", "contract.NftModule"]
+
+[router.NftModuleRouter3]
+contracts = [
+  "CoreModule",
+  "NftModule",
+]
+salt = "third"
+depends = ["contract.CoreModule", "contract.NftModule"]
 
 # FeatureFlagModule Router
 
-[run.generate_feature_flag_module_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/FeatureFlagModuleRouter.sol:FeatureFlagModuleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    FeatureFlagModule: contracts.FeatureFlagModule,
-    SampleFeatureFlagModule: contracts.SampleFeatureFlagModule,
-  }) %>'''
+[router.FeatureFlagModuleRouter]
+contracts = [
+  "CoreModule",
+  "FeatureFlagModule",
+  "SampleFeatureFlagModule",
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.FeatureFlagModule",
   "contract.SampleFeatureFlagModule"
 ]
-
-[contract.FeatureFlagModuleRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/FeatureFlagModuleRouter.sol:FeatureFlagModuleRouter"
-abiOf = [
-  "CoreModule",
-  "FeatureFlagModule",
-  "SampleFeatureFlagModule"
-]
-depends = ["run.generate_feature_flag_module_router"]
