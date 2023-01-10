@@ -34,19 +34,19 @@ export function bootstrapWithNodes() {
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.getSigners();
-    const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
+    const factory = await hre.ethers.getContractFactory('MockV3Aggregator');
 
     aggregator = await factory.connect(owner).deploy();
-    await aggregator.mockSetCurrentPrice(ethers.utils.parseUnits('1', 6));
+    await aggregator.mockSetCurrentPrice(ethers.utils.parseUnits('1', 6), 6);
 
     aggregator3 = await factory.connect(owner).deploy();
-    await aggregator3.mockSetCurrentPrice(ethers.utils.parseUnits('0.5', 6));
+    await aggregator3.mockSetCurrentPrice(ethers.utils.parseUnits('0.5', 6), 6);
 
     aggregator2 = await factory.connect(owner).deploy();
-    await aggregator2.mockSetCurrentPrice(ethers.utils.parseUnits('0.9', 6));
+    await aggregator2.mockSetCurrentPrice(ethers.utils.parseUnits('0.9', 6), 6);
 
     aggregator4 = await factory.connect(owner).deploy();
-    await aggregator4.mockSetCurrentPrice(ethers.utils.parseUnits('1.6', 6));
+    await aggregator4.mockSetCurrentPrice(ethers.utils.parseUnits('1.6', 6), 6);
   });
 
   before('register leaf nodes', async function () {

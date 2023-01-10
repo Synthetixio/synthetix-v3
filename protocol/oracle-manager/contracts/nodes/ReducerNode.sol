@@ -45,9 +45,9 @@ library ReducerNode {
         if (operation == Operations.MUL) {
             return mul(parentNodeOutputs);
         }
-        if (operation == Operations.DIV) {
-            return div(parentNodeOutputs);
-        }
+        // if (operation == Operations.DIV) {
+        //     return div(parentNodeOutputs);
+        // }
 
         revert UnsupportedOperation(operation);
     }
@@ -112,6 +112,9 @@ library ReducerNode {
     function mul(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory mulPrice) {
+        if (parentNodeOutputs.length > 0) {
+            mulPrice.price = 1;
+        }
         for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
             mulPrice.price *= parentNodeOutputs[i].price;
             mulPrice.timestamp += parentNodeOutputs[i].timestamp;
@@ -119,15 +122,16 @@ library ReducerNode {
         mulPrice.timestamp = mulPrice.timestamp / parentNodeOutputs.length;
     }
 
-    function div(
-        NodeOutput.Data[] memory parentNodeOutputs
-    ) internal pure returns (NodeOutput.Data memory divPrice) {
-        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
-            divPrice.price /= parentNodeOutputs[i].price;
-            divPrice.timestamp += parentNodeOutputs[i].timestamp;
-        }
-        divPrice.timestamp = divPrice.timestamp / parentNodeOutputs.length;
-    }
+    // function div(
+    //     NodeOutput.Data[] memory parentNodeOutputs
+    // ) internal pure returns (NodeOutput.Data memory divPrice) {
+    //     divPrice.price = 1;
+    //     for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+    //         divPrice.price /= parentNodeOutputs[i].price;
+    //         divPrice.timestamp += parentNodeOutputs[i].timestamp;
+    //     }
+    //     divPrice.timestamp = divPrice.timestamp / parentNodeOutputs.length;
+    // }
 
     function quickSort(NodeOutput.Data[] memory arr, int left, int right) internal pure {
         int i = left;

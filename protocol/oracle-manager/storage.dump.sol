@@ -77,6 +77,16 @@ library ReducerNode {
     }
 }
 
+// @custom:artifact contracts/storage/Node.sol:Node
+library Node {
+    struct Data {
+        int256 price;
+        uint timestamp;
+        uint volatilityScore;
+        uint liquidityScore;
+    }
+}
+
 // @custom:artifact contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -84,15 +94,14 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        UNISWAP,
         PYTH,
-        PRICE_DEVIATION_CIRCUIT_BREAKER,
-        STALENESS_CIRCUIT_BREAKER
+        PriceDeviationCircuitBreaker,
+        UNISWAP
     }
     struct Data {
+        bytes32[] parents;
         NodeType nodeType;
         bytes parameters;
-        bytes32[] parents;
     }
     function load(bytes32 id) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));

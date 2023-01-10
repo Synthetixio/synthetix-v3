@@ -35,13 +35,14 @@ describe('PythNode', function () {
       1,
       timestamp
     );
-    await PythMock.updatePriceFeeds([resp]);
+    const fee = await PythMock.getUpdateFee([resp]);
+    await PythMock.updatePriceFeeds([resp], { value: fee });
   });
 
   it('retrieves the latest price', async () => {
     // Register the mock
     const NodeParameters = abi.encode(
-      ['address', 'string', 'bool'],
+      ['address', 'bytes32', 'bool'],
       [PythMock.address, priceFeedId, false]
     );
     await NodeModule.registerNode(NodeTypes.PYTH, NodeParameters, []);
@@ -56,7 +57,7 @@ describe('PythNode', function () {
   it('retrieves the ema price', async () => {
     // Register the mock
     const NodeParameters = abi.encode(
-      ['address', 'string', 'bool'],
+      ['address', 'bytes32', 'bool'],
       [PythMock.address, priceFeedId, true]
     );
     await NodeModule.registerNode(NodeTypes.PYTH, NodeParameters, []);

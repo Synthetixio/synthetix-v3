@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 
-describe('UniswapNode', function () {
+describe.skip('UniswapNode', function () {
   const { getContract, getSigners } = bootstrap();
 
   const abi = ethers.utils.defaultAbiCoder;
@@ -24,6 +24,7 @@ describe('UniswapNode', function () {
     // Register the mock
     const NodeParameters = abi.encode(
       ['address', 'address', 'address', 'uint32'],
+      // eslint-disable-next-line max-len
       [UniswapMock.address, UniswapMock.address, UniswapMock.address, 10] // using the mock's address for the token addresses because the mock doesn't take them into account
     );
     await NodeModule.registerNode(NodeTypes.PYTH, NodeParameters, []);

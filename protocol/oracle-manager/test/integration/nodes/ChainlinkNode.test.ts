@@ -2,27 +2,30 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { BigNumber, ethers, utils } from 'ethers';
 import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
+import NodeTypes from '../mixins/Node.types';
 
 describe('ChainlinkNode', () => {
-  const { getSigners } = bootstrap();
+  const { getSigners, getContract } = bootstrap();
 
   let aggregator: ethers.Contract;
-  let node: ethers.Contract;
 
   const abi = utils.defaultAbiCoder;
 
   let owner: ethers.Signer;
+
+  let NodeModule: ethers.Contract;
+
+  before('prepare environment', async () => {
+    NodeModule = getContract('NodeModule');
+  });
+
   before('identify owner', async () => {
     [owner] = await getSigners();
   });
 
-  before('identify chainlink node', async () => {
-    node = await (await hre.ethers.getContractFactory('MockChainlinkNode')).connect(owner).deploy();
-  });
-
   before('deploy mock aggregator', async () => {
     const factory = await hre.ethers.getContractFactory('MockChainlinkAggregator');
-    aggregator = await factory.connect(owner).deploy([100, 200, 300, 400, 500]); // mock round prices
+    aggregator = await factory.connect(owner).deploy([100, 200, 300, 400, 500]); // mock round prices with 6 decimals
   });
 
   describe('process()', () => {
@@ -32,8 +35,10 @@ describe('ChainlinkNode', () => {
           ['address', 'uint256', 'uint8'],
           [aggregator.address, BigNumber.from(0), 18]
         );
-        const [price] = await node.process(encodedParams);
-        assertBn.equal(price, BigNumber.from(500));
+
+        const nodeId = await registerNode(encodedParams);
+        const [price] = await NodeModule.process(nodeId);
+        assertBn.equal(price, ethers.utils.parseUnits('500', 12));
       });
     });
 
@@ -43,8 +48,10 @@ describe('ChainlinkNode', () => {
           ['address', 'uint256', 'uint8'],
           [aggregator.address, BigNumber.from(35 * 60), 18] // 25 minutes in seconds
         );
-        const [price] = await node.process(encodedParams);
-        assertBn.equal(price, BigNumber.from(400)); // 500 + 400 + 300 / 3
+
+        const nodeId = await registerNode(encodedParams);
+        const [price] = await NodeModule.process(nodeId);
+        assertBn.equal(price, ethers.utils.parseUnits('400', 12)); // 500 + 400 + 300 / 3
       });
     });
 
@@ -54,8 +61,10 @@ describe('ChainlinkNode', () => {
           ['address', 'uint256', 'uint8'],
           [aggregator.address, BigNumber.from(80 * 60), 18] // 25 minutes in seconds
         );
-        const [price] = await node.process(encodedParams);
-        assertBn.equal(price, BigNumber.from(300)); // 500 + 400 + 300 + 200 + 100 / 5
+
+        const nodeId = await registerNode(encodedParams);
+        const [price] = await NodeModule.process(nodeId);
+        assertBn.equal(price, ethers.utils.parseUnits('300', 12)); // 500 + 400 + 300 + 200 + 100 / 5
       });
     });
 
@@ -65,9 +74,17 @@ describe('ChainlinkNode', () => {
           ['address', 'uint256', 'uint8'],
           [aggregator.address, BigNumber.from(0), 20]
         );
-        const [price] = await node.process(encodedParams);
-        assertBn.equal(price, 5);
+
+        const nodeId = await registerNode(encodedParams);
+        const [price] = await NodeModule.process(nodeId);
+        assertBn.equal(price, ethers.utils.parseUnits('500', 12));
       });
     });
   });
+
+  const registerNode = async (params: string) => {
+    const tx = await NodeModule.registerNode(NodeTypes.CHAINLINK, params, []);
+    await tx.wait();
+    return await NodeModule.getNodeId(NodeTypes.CHAINLINK, params, []);
+  };
 });

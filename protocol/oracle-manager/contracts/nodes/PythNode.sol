@@ -12,8 +12,8 @@ library PythNode {
         );
         IPyth pyth = IPyth(pythAddress);
         PythStructs.Price memory pythData = useEma
-            ? pyth.getPriceUnsafe(priceFeedId)
-            : pyth.getEmaPriceUnsafe(priceFeedId);
+            ? pyth.getEmaPriceUnsafe(priceFeedId)
+            : pyth.getPriceUnsafe(priceFeedId);
         return NodeOutput.Data(pythData.price, pythData.publishTime, 0, 0);
     }
 }
