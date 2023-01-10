@@ -8,7 +8,7 @@
     "coverage": "npx hardhat cannon:build && hardhat --network hardhat coverage",
     "build": "hardhat cannon:build",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat size-contracts",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol"
   },
