@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
+import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
@@ -15,13 +16,12 @@ library ChainlinkNode {
     uint256 public constant PRECISION = 18;
 
     function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
-        (address chainlinkAddr, uint256 twapTimeInterval) = abi.decode(
+        (address chainlinkAddr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
             parameters,
-            (address, uint256)
+            (address, uint256, uint8)
         );
         IAggregatorV3Interface chainlink = IAggregatorV3Interface(chainlinkAddr);
         (uint80 roundId, int256 price, , uint256 updatedAt, ) = chainlink.latestRoundData();
-        uint8 decimals = chainlink.decimals();
 
         int256 finalPrice = twapTimeInterval == 0
             ? price
@@ -64,5 +64,33 @@ library ChainlinkNode {
         }
 
         return priceSum / priceCount.toInt();
+    }
+
+    function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+        // Must have no parents
+        if (nodeDefinition.parents.length > 0) {
+            return false;
+        }
+
+        // Must have correct length of parameters data
+        if (nodeDefinition.parameters.length != 32 * 3) {
+            return false;
+        }
+
+        (address chainlinkAddr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
+            nodeDefinition.parameters,
+            (address, uint256, uint8)
+        );
+        IAggregatorV3Interface chainlink = IAggregatorV3Interface(chainlinkAddr);
+
+        // Must return latestRoundData without error
+        chainlink.latestRoundData();
+
+        // Must return decimals that match the definition
+        if (decimals != chainlink.decimals()) {
+            return false;
+        }
+
+        return true;
     }
 }

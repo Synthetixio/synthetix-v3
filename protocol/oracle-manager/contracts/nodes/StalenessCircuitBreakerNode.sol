@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 
 library StalenessCircuitBreakerNode {
@@ -18,5 +19,19 @@ library StalenessCircuitBreakerNode {
             revert StalenessToleranceExceeded();
         }
         return parentNodeOutputs[1];
+    }
+
+    function validate(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool) {
+        // Must have 1-2 parents
+        if (!(nodeDefinition.parents.length == 1 || nodeDefinition.parents.length == 2)) {
+            return false;
+        }
+
+        // Must have correct length of parameters data
+        if (nodeDefinition.parameters.length != 32) {
+            return false;
+        }
+
+        return true;
     }
 }

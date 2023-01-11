@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 
 library ReducerNode {
@@ -149,5 +150,25 @@ library ReducerNode {
         }
         if (left < j) quickSort(arr, left, j);
         if (i < right) quickSort(arr, i, right);
+    }
+
+    function validate(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool) {
+        // Must have at least 2 parents
+        if (nodeDefinition.parents.length < 2) {
+            return false;
+        }
+
+        // Must have correct length of parameters data
+        if (nodeDefinition.parameters.length != 32) {
+            return false;
+        }
+
+        // Must have valid operation
+        uint operationId = abi.decode(nodeDefinition.parameters, (uint));
+        if (operationId >= 6) {
+            return false;
+        }
+
+        return true;
     }
 }

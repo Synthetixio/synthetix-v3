@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
-
 import "../interfaces/INodeModule.sol";
 import "../nodes/ReducerNode.sol";
 import "../nodes/ExternalNode.sol";
@@ -76,19 +74,6 @@ contract NodeModule is INodeModule {
     }
 
     /**
-     * @dev Returns whether the specified node type is recognized by the system.
-     */
-    function _validateNodeType(NodeDefinition.NodeType nodeType) internal pure returns (bool) {
-        return (NodeDefinition.NodeType.REDUCER == nodeType ||
-            NodeDefinition.NodeType.EXTERNAL == nodeType ||
-            NodeDefinition.NodeType.CHAINLINK == nodeType ||
-            NodeDefinition.NodeType.UNISWAP == nodeType ||
-            NodeDefinition.NodeType.PYTH == nodeType ||
-            NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER == nodeType ||
-            NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER == nodeType);
-    }
-
-    /**
      * @dev Returns the ID of a node, whether or not it has been registered.
      */
     function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32) {
@@ -101,31 +86,21 @@ contract NodeModule is INodeModule {
     function _registerNode(
         NodeDefinition.Data memory nodeDefinition
     ) internal returns (bytes32 nodeId) {
-        // Validate the requested node type exists.
-        if (!_validateNodeType(nodeDefinition.nodeType)) {
-            revert UnsupportedNodeType(nodeDefinition.nodeType);
-        }
-
         // If the node has already been registered with the system, return its ID.
         nodeId = _getNodeId(nodeDefinition);
         if (_isNodeRegistered(nodeId)) {
             return nodeId;
         }
 
+        // Validate that the node definition
+        if (!_validateNodeDefinition(nodeDefinition)) {
+            revert InvalidNodeDefinition(nodeDefinition);
+        }
+
         // Confirm that all of the parent node IDs have been registered.
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
             if (!_isNodeRegistered(nodeDefinition.parents[i])) {
                 revert NodeNotRegistered(nodeDefinition.parents[i]);
-            }
-        }
-
-        // If the node's type is external, confirm it supports the necessary interface.
-        if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
-            address externalNode = abi.decode(nodeDefinition.parameters, (address));
-            if (
-                !ERC165Helper.safeSupportsInterface(externalNode, type(IExternalNode).interfaceId)
-            ) {
-                revert IncorrectExternalNodeInterface(externalNode);
             }
         }
 
@@ -176,15 +151,40 @@ contract NodeModule is INodeModule {
             nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
         ) {
             return
-                PriceDeviationCircuitBreakerRNode.process(
+                PriceDeviationCircuitBreakerNode.process(
                     parentNodeOutputs,
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
             return
                 StalenessCircuitBreakerNode.process(parentNodeOutputs, nodeDefinition.parameters);
-        } else {
-            revert UnsupportedNodeType(nodeDefinition.nodeType);
         }
+        revert UnprocessableNode(nodeId);
+    }
+
+    /**
+     * @dev Returns the output of a specified node.
+     */
+    function _validateNodeDefinition(
+        NodeDefinition.Data memory nodeDefinition
+    ) internal returns (bool) {
+        if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
+            return ReducerNode.validate(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
+            return ExternalNode.validate(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
+            return ChainlinkNode.validate(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
+            return UniswapNode.validate(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
+            return PythNode.validate(nodeDefinition);
+        } else if (
+            nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
+        ) {
+            return PriceDeviationCircuitBreakerNode.validate(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
+            return StalenessCircuitBreakerNode.validate(nodeDefinition);
+        }
+        return false;
     }
 }

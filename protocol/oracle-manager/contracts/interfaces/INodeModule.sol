@@ -12,9 +12,14 @@ interface INodeModule {
     error NodeNotRegistered(bytes32 nodeId);
 
     /**
-     * @notice Thrown when a node is registered without a valid node type.
+     * @notice Thrown when a node is registered without a valid definition.
      */
-    error UnsupportedNodeType(NodeDefinition.NodeType nodeType);
+    error InvalidNodeDefinition(NodeDefinition.Data nodeType);
+
+    /**
+     * @notice Thrown when a node cannot be processed
+     */
+    error UnprocessableNode(bytes32 nodeId);
 
     /**
      * @notice Thrown when a node is registered with an invalid external node

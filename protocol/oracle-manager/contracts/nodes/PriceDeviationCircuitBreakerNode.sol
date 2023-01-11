@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 
-library PriceDeviationCircuitBreakerRNode {
+library PriceDeviationCircuitBreakerNode {
     using SafeCastU256 for uint256;
 
     error InvalidPrice();
@@ -40,5 +41,19 @@ library PriceDeviationCircuitBreakerRNode {
 
     function abs(int256 x) private pure returns (int256) {
         return x >= 0 ? x : -x;
+    }
+
+    function validate(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool) {
+        // Must have 2-3 parents
+        if (!(nodeDefinition.parents.length == 2 || nodeDefinition.parents.length == 3)) {
+            return false;
+        }
+
+        // Must have correct length of parameters data
+        if (nodeDefinition.parameters.length != 32) {
+            return false;
+        }
+
+        return true;
     }
 }

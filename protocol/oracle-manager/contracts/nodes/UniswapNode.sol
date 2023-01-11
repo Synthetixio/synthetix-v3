@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../utils/FullMath.sol";
 import "../utils/TickMath.sol";
 
+import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 import "../interfaces/external/IUniswapV3Pool.sol";
 
@@ -61,5 +62,30 @@ library UniswapNode {
                 ? FullMath.mulDiv(ratioX128, baseAmount, 1 << 128)
                 : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
         }
+    }
+
+    function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+        // Must have no parents
+        if (nodeDefinition.parents.length > 0) {
+            return false;
+        }
+
+        // Must have correct length of parameters data
+        if (nodeDefinition.parameters.length != 32 * 4) {
+            return false;
+        }
+
+        (address token0, address token1, address pool, uint32 secondsAgo) = abi.decode(
+            nodeDefinition.parameters,
+            (address, address, address, uint32)
+        );
+
+        // Must return relevant function without error
+        uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = secondsAgo;
+        secondsAgos[1] = 0;
+        IUniswapV3Pool(pool).observe(secondsAgos);
+
+        return true;
     }
 }

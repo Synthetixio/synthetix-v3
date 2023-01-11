@@ -31,6 +31,7 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 - Parameters:
   - `address chainlinkAddress` - The address of the Chainlink price feed contract.
   - `uint256 twapTimeInterval` - The the duration (in seconds) of the lookback window for price reports to be incorporated in a time-weighted average price calculation. Use `0` to retrieve only the latest price report.
+  - `uint8 decimals` - The number of decimals places used by the Chainlink price feed contract. _This must match what is provided by the price feed contract's `decimals()` function_.
 - Expected Parents: 0
 
 ### Uniswap Node
@@ -115,5 +116,5 @@ To run the tests:
 2.  Add a new library in `/nodes`. It must have the following function interface:
     ` function process(NodeOutput.Data[] memory prices, bytes memory parameters) internal view returns (NodeOutput.Data memory)`
 3.  Add the new node type into `_validateNodeType()` in `/modules/NodeModule.sol`
-4.  Add a condition for new node type in `_process` in `modules/NodeModule.sol` that calls the node library from step 2.
+4.  Add a condition for new node type in `_validateNodeDefinition` in `modules/NodeModule.sol` that calls the node library from step 2.
 5.  Add appropriate tests and documentation.
