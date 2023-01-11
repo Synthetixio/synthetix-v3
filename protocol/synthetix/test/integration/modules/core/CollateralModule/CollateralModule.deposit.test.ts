@@ -188,7 +188,6 @@ describe('CollateralModule', function () {
             });
 
             describe('when locking collateral', () => {
-              const depositAmount = ethers.utils.parseUnits('1', 6);
               const secondsInMonth = 60 * 60 * 24 * 30;
               var lockedUntil: number;
 
