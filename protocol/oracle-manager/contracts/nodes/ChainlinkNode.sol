@@ -77,7 +77,7 @@ library ChainlinkNode {
             return false;
         }
 
-        (address chainlinkAddr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
+        (address chainlinkAddr, , uint8 decimals) = abi.decode(
             nodeDefinition.parameters,
             (address, uint256, uint8)
         );

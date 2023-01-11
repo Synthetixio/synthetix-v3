@@ -6,8 +6,8 @@ library NodeOutput {
         int256 price;
         uint256 timestamp;
         // solhint-disable-next-line private-vars-leading-underscore
-        uint256 __slotAvailableForFutureUse_1;
+        uint256 __slotAvailableForFutureUse1;
         // solhint-disable-next-line private-vars-leading-underscore
-        uint256 __slotAvailableForFutureUse_2;
+        uint256 __slotAvailableForFutureUse2;
     }
 }

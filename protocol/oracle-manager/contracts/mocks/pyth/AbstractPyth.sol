@@ -15,16 +15,9 @@ abstract contract AbstractPyth is IPyth {
 
     /// @notice Returns true if a price feed with the given id exists.
     /// @param id The Pyth Price Feed ID of which to check its existence.
-    function priceFeedExists(
-        bytes32 id
-    ) public view virtual returns (bool exists);
+    function priceFeedExists(bytes32 id) public view virtual returns (bool exists);
 
-    function getValidTimePeriod()
-        public
-        view
-        virtual
-        override
-        returns (uint validTimePeriod);
+    function getValidTimePeriod() public view virtual override returns (uint validTimePeriod);
 
     function getPrice(
         bytes32 id
@@ -51,8 +44,7 @@ abstract contract AbstractPyth is IPyth {
     ) public view virtual override returns (PythStructs.Price memory price) {
         price = getPriceUnsafe(id);
 
-        if (diff(block.timestamp, price.publishTime) > age)
-            revert PythErrors.StalePrice();
+        if (diff(block.timestamp, price.publishTime) > age) revert PythErrors.StalePrice();
 
         return price;
     }
@@ -70,8 +62,7 @@ abstract contract AbstractPyth is IPyth {
     ) public view virtual override returns (PythStructs.Price memory price) {
         price = getEmaPriceUnsafe(id);
 
-        if (diff(block.timestamp, price.publishTime) > age)
-            revert PythErrors.StalePrice();
+        if (diff(block.timestamp, price.publishTime) > age) revert PythErrors.StalePrice();
 
         return price;
     }
@@ -85,17 +76,14 @@ abstract contract AbstractPyth is IPyth {
     }
 
     // Access modifier is overridden to public to be able to call it locally.
-    function updatePriceFeeds(
-        bytes[] calldata updateData
-    ) public payable virtual override;
+    function updatePriceFeeds(bytes[] calldata updateData) public payable virtual override;
 
     function updatePriceFeedsIfNecessary(
         bytes[] calldata updateData,
         bytes32[] calldata priceIds,
         uint64[] calldata publishTimes
     ) external payable virtual override {
-        if (priceIds.length != publishTimes.length)
-            revert PythErrors.InvalidArgument();
+        if (priceIds.length != publishTimes.length) revert PythErrors.InvalidArgument();
 
         for (uint i = 0; i < priceIds.length; i++) {
             if (
@@ -115,10 +103,5 @@ abstract contract AbstractPyth is IPyth {
         bytes32[] calldata priceIds,
         uint64 minPublishTime,
         uint64 maxPublishTime
-    )
-        external
-        payable
-        virtual
-        override
-        returns (PythStructs.PriceFeed[] memory priceFeeds);
+    ) external payable virtual override returns (PythStructs.PriceFeed[] memory priceFeeds);
 }

@@ -75,7 +75,7 @@ library UniswapNode {
             return false;
         }
 
-        (address token0, address token1, address pool, uint32 secondsAgo) = abi.decode(
+        (, , address pool, uint32 secondsAgo) = abi.decode(
             nodeDefinition.parameters,
             (address, address, address, uint32)
         );

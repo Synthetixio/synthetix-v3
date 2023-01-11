@@ -35,9 +35,7 @@ contract MockPyth is AbstractPyth {
     // Takes an array of encoded price feeds and stores them.
     // You can create this data either by calling createPriceFeedData or
     // by using web3.js or ethers abi utilities.
-    function updatePriceFeeds(
-        bytes[] calldata updateData
-    ) public payable override {
+    function updatePriceFeeds(bytes[] calldata updateData) public payable override {
         uint requiredFee = getUpdateFee(updateData);
         if (msg.value < requiredFee) revert PythErrors.InsufficientFee();
 
@@ -95,10 +93,7 @@ contract MockPyth is AbstractPyth {
 
                 if (feeds[i].id == priceIds[i]) {
                     uint publishTime = feeds[i].price.publishTime;
-                    if (
-                        minPublishTime <= publishTime &&
-                        publishTime <= maxPublishTime
-                    ) {
+                    if (minPublishTime <= publishTime && publishTime <= maxPublishTime) {
                         break;
                     } else {
                         feeds[i].id = 0;
@@ -106,8 +101,7 @@ contract MockPyth is AbstractPyth {
                 }
             }
 
-            if (feeds[i].id != priceIds[i])
-                revert PythErrors.PriceFeedNotFoundWithinRange();
+            if (feeds[i].id != priceIds[i]) revert PythErrors.PriceFeedNotFoundWithinRange();
         }
     }
 
