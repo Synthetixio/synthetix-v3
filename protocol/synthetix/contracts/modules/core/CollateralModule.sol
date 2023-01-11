@@ -72,10 +72,12 @@ contract CollateralModule is ICollateralModule {
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
 
-        (uint256 totalDeposited, , uint256 totalLocked) = account.getCollateralTotals(
-            collateralType
-        );
-        if (totalDeposited - totalLocked < systemAmount) {
+        (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked) = account
+            .getCollateralTotals(collateralType);
+
+        // neither totalAssigned collateral nor totalLocked is available to be withdrawn
+        uint256 unavailableCollateral = totalAssigned > totalLocked ? totalAssigned : totalLocked;
+        if (totalDeposited - unavailableCollateral < systemAmount) {
             revert InsufficientAccountCollateral(systemAmount);
         }
 
