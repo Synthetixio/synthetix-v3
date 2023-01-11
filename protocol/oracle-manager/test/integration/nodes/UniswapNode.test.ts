@@ -16,8 +16,8 @@ describe.skip('UniswapNode', function () {
     const [owner] = getSigners();
 
     // Deploy the mock
-    const factory = await hre.ethers.getContractFactory('MockUniswapV3Pool');
-    UniswapMock = await factory.connect(owner).deploy(100, 100, 100);
+    const factory = await hre.ethers.getContractFactory('MockObservable');
+    UniswapMock = await factory.connect(owner).deploy([], [], []);
   });
 
   it('retrieves the latest price', async () => {
