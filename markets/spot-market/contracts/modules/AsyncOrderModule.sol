@@ -119,13 +119,18 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // Issue an async order claim NFT
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
+        uint settlementDelay = asyncOrderConfiguration
+            .settlementStrategies[settlementStrategyId]
+            .settlementDelay;
+        if (settlementDelay == 0) {
+            settlementDelay++;
+        }
+
         // Set up order data
         asyncOrderClaim.orderType = orderType;
         asyncOrderClaim.amountEscrowed = amountProvided;
         asyncOrderClaim.settlementStrategyId = settlementStrategyId;
-        asyncOrderClaim.settlementTime =
-            block.timestamp +
-            asyncOrderConfiguration.settlementStrategies[settlementStrategyId].settlementDelay;
+        asyncOrderClaim.settlementTime = block.timestamp + settlementDelay;
         asyncOrderClaim.utilizationDelta = utilizationDelta;
         asyncOrderClaim.cancellationFee = cancellationFee;
 
@@ -198,7 +203,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             require(
                 Price
                     .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_BUY)
-                    .timestamp > asyncOrderClaim.settlementTime,
+                    .timestamp >= asyncOrderClaim.settlementTime,
                 "Needs more recent price report"
             );
 
@@ -219,7 +224,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             require(
                 Price
                     .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_SELL)
-                    .timestamp > asyncOrderClaim.settlementTime,
+                    .timestamp >= asyncOrderClaim.settlementTime,
                 "Needs more recent price report"
             );
 
@@ -265,6 +270,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // TODO
         // confirm that observationsTimestamp == asyncOrderClaim.settlementTime
         // need to confirm feedID?
+
         // price deviation check?
 
         _finalizeSettlement(
@@ -294,6 +300,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // TODO
         // confirm that priceData is for asyncOrderClaim.settlementTime
         // confirm the price is for what we want
+
         // price deviation check?
 
         _finalizeSettlement(
@@ -323,7 +330,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         ];
 
         // Confirm we're in the settlement window
-        require(block.timestamp > asyncOrderClaim.settlementTime, "too soon");
+        require(block.timestamp >= asyncOrderClaim.settlementTime, "too soon");
         if (settlementStrategy.settlementWindowDuration > 0) {
             require(
                 asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration <
@@ -412,18 +419,19 @@ contract AsyncOrderModule is IAsyncOrderModule {
             block.timestamp;
 
         // Prevent cancellation if this is invoked by the public and the confirmation window hasn't passed
-        if (!canAlwaysCancel && confirmationWindowExists) {
+        if (!canAlwaysCancel && confirmationWindowExists && !confirmationWindowClosed) {
+            // TODO: switch to revert here
             require(confirmationWindowClosed, "cannot cancel yet");
         }
 
         // Return the fee if the market owner is cancelling
-        bool returnFee = msg.sender == marketOwner;
+        bool shouldReturnFee = msg.sender == marketOwner;
 
         // Return escrowed funds after keeping the fee
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            _returnBuyOrderEscrow(marketId, asyncOrderId, returnFee, asyncOrderClaim);
+            _returnBuyOrderEscrow(marketId, asyncOrderId, shouldReturnFee, asyncOrderClaim);
         } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            _returnSellOrderEscrow(marketId, asyncOrderId, returnFee, asyncOrderClaim);
+            _returnSellOrderEscrow(marketId, asyncOrderId, shouldReturnFee, asyncOrderClaim);
         }
 
         // Burn NFT
@@ -439,7 +447,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _returnBuyOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        bool returnFee,
+        bool shouldReturnFee,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
@@ -451,14 +459,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
         ];
 
         // TODO: Confirm negative fee situation
-        int feesToCollect = returnFee ? 0 : asyncOrderClaim.cancellationFee;
-        int feesToReturn = asyncOrderClaim.amountEscrowed - feesToCollect;
+        // TODO: Move feesToCollect into cancelOrder and pass it instead of shouldReturnFee
+        int feesToCollect = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
+        int amountToReturn = asyncOrderClaim.amountEscrowed - feesToCollect;
 
         // Return the USD
         store.usdToken.transferFrom(
             address(this),
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            feesToReturn
+            amountToReturn
         );
 
         // Collect the fees
@@ -470,7 +479,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _returnSellOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        bool returnFee,
+        bool shouldReturnFee,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
         AsyncOrderConfiguration.Data memory asyncOrderConfiguration = AsyncOrderConfiguration.load(
@@ -481,7 +490,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         ];
 
         // TODO: Confirm negative fee situation
-        int feesInUsd = returnFee ? 0 : asyncOrderClaim.cancellationFee;
+        // TODO: Move feesToCollect into cancelOrder and pass it instead of shouldReturnFee
+        int feesInUsd = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
 
         if (feesInUsd > 0) {
             // Calculate the value of the fees in synths
