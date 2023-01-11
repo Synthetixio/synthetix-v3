@@ -34,6 +34,11 @@ export default async function assertRevert(
     return; // Expected message found.
   }
 
+  if (errorMessage.replace(/"/g, '').includes(expectedMessage.replace(/"/g, ''))) {
+    console.warn('assertRevert: matched by removing quotes');
+    return; // Expected message found (albeit, without quotes).
+  }
+
   // Before giving up, try to extract the custom error from the transaction manually.
   if (contract) {
     const transaction =

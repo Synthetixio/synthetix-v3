@@ -1,0 +1,34 @@
+name = "synthetix-ccip"
+version = "0.0.0"
+description = "Adds CCIP support to snxUSD"
+
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.snx_package]
+defaultValue = "synthetix:3"
+
+[setting.ccip_send_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.ccip_recv_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[setting.ccip_token_pool_address]
+defaultValue = "0x0000000000000000000000000000000000000000"
+
+[import.system]
+source = "<%= settings.snx_package %>"
+
+[invoke.register_ccip]
+target = ["system.CoreProxy"]
+from = "<%= settings.owner %>"
+func = "registerCcip"
+args = [
+  "<%= settings.ccip_send_address %>",
+  "<%= settings.ccip_recv_address %>",
+  "<%= settings.ccip_token_pool_address %>"
+]
+depends = [
+  "import.system"
+]

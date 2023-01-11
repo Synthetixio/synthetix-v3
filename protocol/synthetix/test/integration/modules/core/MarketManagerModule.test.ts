@@ -4,6 +4,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { MockMarket__factory } from '../../../../typechain-types/index';
 
 describe('MarketManagerModule', function () {
   const {
@@ -23,7 +24,7 @@ describe('MarketManagerModule', function () {
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
-  let txn: ethers.providers.TransactionResponse;
+  let txn: Parameters<typeof assertEvent>[0];
 
   before('identify signers', async () => {
     [owner, user1, user2] = signers();
@@ -49,19 +50,23 @@ describe('MarketManagerModule', function () {
     });
 
     describe('successful', async () => {
-      const expectedMarketId = marketId().add(1);
+      let expectedMarketId: ethers.BigNumber;
+      let deployedMarket: ethers.Contract;
 
       before('register', async () => {
-        // user1 has access to register market from bootstrapWithMockMarketAndPool
-        txn = await systems()
-          .Core.connect(owner)
-          .registerMarket(await user1.getAddress());
+        expectedMarketId = marketId().add(1);
+
+        // deploy the mock market (it will register itself)
+        deployedMarket = await new MockMarket__factory(user1).deploy();
+        await deployedMarket.deployed();
+
+        txn = await (await systems().Core.registerMarket(deployedMarket.address)).wait();
       });
 
       it('emits correct event', async () => {
         await assertEvent(
           txn,
-          `MarketRegistered("${await user1.getAddress()}", "${expectedMarketId}")`,
+          `MarketRegistered("${deployedMarket.address}", ${expectedMarketId}`,
           systems().Core
         );
       });

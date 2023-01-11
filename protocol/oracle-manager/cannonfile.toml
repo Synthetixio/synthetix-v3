@@ -31,36 +31,19 @@ func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
 depends = ["contract.InitialProxy"]
 
-[run.generate_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    NodeModule: contracts.NodeModule,
-  }) %>'''
-]
-modified = ["contracts"]
+[router.OracleRouter]
+contracts = ["CoreModule", "NodeModule"]
 depends = [
   "contract.CoreModule",
   "contract.NodeModule"
 ]
 
-[contract.Router]
-artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
-abiOf = [
-  "CoreModule",
-  "NodeModule"
-]
-depends = ["run.generate_router"]
-
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]
 from = "<%= settings.owner %>"
 func = "upgradeTo"
-args = ["<%= contracts.Router.address %>"]
-factory.Proxy.abiOf = ["Router"]
+args = ["<%= contracts.OracleRouter.address %>"]
+factory.Proxy.abiOf = ["OracleRouter"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["invoke.acquire_ownership", "contract.Router"]
+depends = ["invoke.acquire_ownership", "router.OracleRouter"]
