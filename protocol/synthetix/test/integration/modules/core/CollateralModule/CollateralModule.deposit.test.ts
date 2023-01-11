@@ -234,6 +234,21 @@ describe('CollateralModule', function () {
                   // expect involved account balances are correct
                   assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), mintAmount);
                 });
+
+                it('shows that the registered collateral has been updated accordingly', async function () {
+                  const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(
+                    2,
+                    Collateral.address
+                  );
+                  const totalAvailable = await systems().Core.getAccountAvailableCollateral(
+                    2,
+                    Collateral.address
+                  );
+  
+                  assertBn.equal(totalStaked, 0);
+                  assertBn.equal(totalAssigned, 0);
+                  assertBn.equal(totalAvailable, 0);
+                });
               });
             });
 
