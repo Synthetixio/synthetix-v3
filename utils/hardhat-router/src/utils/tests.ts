@@ -51,6 +51,13 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     provider = cannonInfo.provider as ethers.providers.JsonRpcProvider;
     signers = cannonInfo.signers as ethers.Signer[];
 
+    for (const signer of signers) {
+      await provider.send('hardhat_setBalance', [
+        await signer.getAddress(),
+        `0x${(1e22).toString(16)}`,
+      ]);
+    }
+
     try {
       await provider.send('anvil_setBlockTimestampInterval', [1]);
     } catch (err) {

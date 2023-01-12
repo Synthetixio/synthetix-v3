@@ -1,12 +1,14 @@
 name: Test
 
-on: [push]
+on:
+  pull_request: {}
+  push:
+    branches:
+      - "main"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
     strategy:
       matrix:
         package:
@@ -39,7 +41,7 @@ jobs:
             workspace: "@synthetixio/main"
             size-contracts: true
     steps:
-      - run: mkdir -p ~/.local/share/cannon && echo "$CANNON_SETTINGS" > ~/.local/share/cannon/settings.json
+      - run: mkdir -p ~/.local/share/cannon && echo '{"ipfsUrl":"http://localhost:5001"}' > ~/.local/share/cannon/settings.json
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -50,6 +52,9 @@ jobs:
         with:
           node-version: "16.16.0"
           cache: "npm"
+      - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
+        with:
+          run_daemon: true
       - run: npm ci
       - run: npm run build
       - if: ${{ matrix.size-contracts }}
