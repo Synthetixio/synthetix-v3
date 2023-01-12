@@ -10,6 +10,7 @@ import "../storage/SpotMarketFactory.sol";
 import "../interfaces/external/IFeeCollector.sol";
 import "./Price.sol";
 import "./Wrapper.sol";
+import "./AsyncOrderConfiguration.sol";
 
 /**
  * @title Fee storage that tracks all fees for a given market Id.
@@ -313,11 +314,15 @@ library Fee {
         if (self.utilizationFeeRate == 0) {
             return 0;
         }
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
 
         uint delegatedCollateral = IMarketManagerModule(SpotMarketFactory.load().synthetix)
             .getMarketCollateral(marketId);
 
-        uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
+        uint totalBalance = (SynthUtil.getToken(marketId).totalSupply().toInt() +
+            asyncOrderConfiguration.asyncUtilizationDelta).toUint();
         uint totalValue = totalBalance.mulDecimal(
             Price.getCurrentPrice(marketId, transactionType)
         ) + amount;

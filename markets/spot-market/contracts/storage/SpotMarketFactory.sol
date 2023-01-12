@@ -42,7 +42,7 @@ library SpotMarketFactory {
         /**
          * @dev mapping of marketId to marketOwner
          */
-        mapping(uint128 => address) synthOwners;
+        mapping(uint128 => address) marketOwners;
     }
 
     enum TransactionType {
@@ -62,7 +62,7 @@ library SpotMarketFactory {
     }
 
     function onlyMarketOwner(Data storage self, uint128 marketId) internal view {
-        address marketOwner = self.synthOwners[marketId];
+        address marketOwner = self.marketOwners[marketId];
 
         if (marketOwner != msg.sender) {
             revert OnlyMarketOwner(marketOwner, msg.sender);
@@ -70,7 +70,7 @@ library SpotMarketFactory {
     }
 
     function isValidMarket(Data storage self, uint128 marketId) internal view returns (bool) {
-        if (self.synthOwners[marketId] == address(0)) {
+        if (self.marketOwners[marketId] == address(0)) {
             revert InvalidMarket(marketId);
         }
     }

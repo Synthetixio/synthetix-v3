@@ -69,6 +69,7 @@ contract SpotMarketFactoryModule is
         string memory tokenSymbol,
         address synthOwner
     ) external override onlyIfInitialized returns (uint128) {
+        // TODO: Add permissions here
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(
             address(this)
@@ -103,7 +104,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY);
+        uint256 price = Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.SELL);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
