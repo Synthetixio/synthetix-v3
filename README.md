@@ -22,7 +22,6 @@ This is a monorepo with the following folder structure and packages:
 .
 ├── markets                      // Standalone projects that extend the core Synthetix protocol with markets.
 │   ├── legacy-market            // Market that connects Synthetix's v2 and v3 versions.
-│   ├── sample-markets           // Example market extensions.
 │   └── spot-market              // Market extension for spot synths.
 │
 ├── protocol                     // Core Synthetix protocol projects.
