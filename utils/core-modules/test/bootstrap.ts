@@ -13,8 +13,6 @@ import {
   OwnerModule,
   Proxy,
   SampleFeatureFlagModule,
-  SampleModuleA,
-  SampleModuleB,
   SampleOwnedModule,
   SampleRouter,
   TokenModule,
@@ -38,8 +36,6 @@ interface Contracts {
   OwnerModule: OwnerModule;
   Proxy: Proxy;
   SampleFeatureFlagModule: SampleFeatureFlagModule;
-  SampleModuleA: SampleModuleA;
-  SampleModuleB: SampleModuleB;
   SampleOwnedModule: SampleOwnedModule;
   SampleRouter: SampleRouter;
   TokenModule: TokenModule;

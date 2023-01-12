@@ -157,6 +157,8 @@ library SetUtil {
         }
 
         uint position = set._positions[value];
+        delete set._positions[value];
+
         uint index = position - 1;
 
         set._values[index] = newValue;
