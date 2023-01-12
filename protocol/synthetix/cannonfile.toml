@@ -20,6 +20,7 @@ options.owner = "<%= settings.owner %>"
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
+create2 = true
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
@@ -119,17 +120,11 @@ depends = [
 
 [contract.InitialCoreProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.InitialModuleBundle.address %>"]
+args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
 salt = "<%= settings.salt %>"
+create2 = true
 depends = ["contract.InitialModuleBundle"]
-
-[invoke.acquire_ownership]
-target = ["InitialCoreProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["contract.InitialCoreProxy"]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialCoreProxy"]
@@ -143,7 +138,7 @@ factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
 
 depends = [
-  "invoke.acquire_ownership",
+  "contract.InitialCoreProxy",
   "router.CoreRouter"
 ]
 

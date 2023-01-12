@@ -16,12 +16,15 @@ artifact = "contracts/modules/OracleManagerModule.sol:OracleManagerModule"
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
+create2 = true
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.CoreModule.address %>"]
-abiOf = ["CoreModule"]
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
+abiOf = ["CoreModule"]
+create2 = true
+
 depends = ["contract.CoreModule"]
 
 [invoke.acquire_ownership]
