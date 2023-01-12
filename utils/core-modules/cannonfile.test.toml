@@ -42,12 +42,6 @@ artifact = "contracts/modules/NftModule.sol:NftModule"
 [contract.SampleFeatureFlagModule]
 artifact = "contracts/modules/mocks/SampleFeatureFlagModule.sol:SampleFeatureFlagModule"
 
-[contract.SampleModuleA]
-artifact = "contracts/modules/mocks/SampleModuleA.sol:SampleModuleA"
-
-[contract.SampleModuleB]
-artifact = "contracts/modules/mocks/SampleModuleB.sol:SampleModuleB"
-
 [contract.SampleOwnedModule]
 artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
 
@@ -140,15 +134,11 @@ depends = [
 [router.SampleRouter]
 contracts = [
     "CoreModule",
-    "SampleOwnedModule",
-    "SampleModuleA",
-    "SampleModuleB",
+    "SampleOwnedModule"
 ]
 depends = [
   "contract.CoreModule",
-  "contract.SampleOwnedModule",
-  "contract.SampleModuleA",
-  "contract.SampleModuleB"
+  "contract.SampleOwnedModule"
 ]
 
 # NftModule Router ( we need multiple for tests)
