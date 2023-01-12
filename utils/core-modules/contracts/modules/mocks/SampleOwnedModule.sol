@@ -6,7 +6,7 @@ import "../../storage/SampleStorage.sol";
 import "../../interfaces/ISampleOwnedModule.sol";
 
 contract SampleOwnedModule is ISampleOwnedModule {
-    function setProtectedValue(uint newProtectedValue) public override {
+    function setProtectedValue(uint newProtectedValue) public payable override {
         OwnableStorage.onlyOwner();
 
         SampleStorage.load().protectedValue = newProtectedValue;
