@@ -191,5 +191,6 @@ contracts = [
   "ReceiveModule"
 ]
 depends = [
-  "contract.CoreModule"
+  "contract.CoreModule",
+  "contract.ReceiveModule"
 ]

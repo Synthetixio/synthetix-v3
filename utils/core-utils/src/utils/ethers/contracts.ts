@@ -23,7 +23,7 @@ export function getSelectors(
   contractAbi: ethers.ContractInterface,
   functionFilter: (fnName: string) => boolean = () => true
 ) {
-  // console.log('abi:', JSON.stringify(contractAbi, null, 2));
+  console.log('abi:', JSON.stringify(contractAbi, null, 2));
   const contract = new ethers.Contract('0x0000000000000000000000000000000000000001', contractAbi);
 
   return contract.interface.fragments.reduce((selectors, fragment) => {

@@ -14,5 +14,5 @@ contract ReceiveModule is IReceiveModule {
     // solhint-disable-next-line no-empty-blocks
     receive() external payable {}
 
-    function forcer123456789abcdefghijk() public {}
+    function forcer123() public {}
 }
