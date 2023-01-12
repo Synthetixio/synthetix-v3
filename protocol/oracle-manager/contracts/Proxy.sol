@@ -6,5 +6,8 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 
 contract Proxy is UUPSProxyWithOwner {
     // solhint-disable-next-line no-empty-blocks
-    constructor(address firstImplementation, address initialOwner) UUPSProxyWithOwner(firstImplementation, initialOwner) {}
+    constructor(
+        address firstImplementation,
+        address initialOwner
+    ) UUPSProxyWithOwner(firstImplementation, initialOwner) {}
 }

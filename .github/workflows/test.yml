@@ -41,7 +41,7 @@ jobs:
             workspace: "@synthetixio/main"
             size-contracts: true
     steps:
-      - run: mkdir -p ~/.local/share/cannon && echo "{"ipfsUrl":"http://localhost:5001"}" > ~/.local/share/cannon/settings.json
+      - run: mkdir -p ~/.local/share/cannon && echo '{"ipfsUrl":"http://localhost:5001"}' > ~/.local/share/cannon/settings.json
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:
