@@ -50,17 +50,22 @@ const routerAction = {
 
     const newConfig = this.configInject(ctx, config);
 
-    const contractAbis = {};
+    const contractAbis: any = {};
+    const contractAddresses: any = {};
 
     for (const n of newConfig.contracts) {
-      const contract = getContractFromPath(ctx, n);
+      const contract = getContractDefinitionFromPath(ctx, n);
       if (!contract) {
         throw new Error(`contract not found: ${n}`);
       }
+
+      contractAbis[n] = contract.abi;
+      contractAddresses[n] = contract.address;
     }
 
     return {
       contractAbis,
+      contractAddresses,
       config: newConfig,
     };
   },
