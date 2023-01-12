@@ -152,7 +152,7 @@ library Initialized {
     }
 }
 
-// @custom:artifact @synthetixio/oracle-manager/contracts/storage/Node.sol:Node
+// @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeOutput.sol:Node
 library Node {
     struct Data {
         int256 price;
@@ -172,7 +172,7 @@ library NodeDefinition {
         PYTH,
         PriceDeviationCircuitBreaker,
         UNISWAP,
-        StalenessFallbackReducer
+        StalenessCircuitBreaker
     }
     struct Data {
         bytes32[] parents;

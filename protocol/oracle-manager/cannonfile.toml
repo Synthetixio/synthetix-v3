@@ -11,8 +11,8 @@ defaultValue = "oracle-manager"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[contract.OracleManagerModule]
-artifact = "contracts/modules/OracleManagerModule.sol:OracleManagerModule"
+[contract.NodeModule]
+artifact = "contracts/modules/NodeModule.sol:NodeModule"
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
@@ -35,10 +35,10 @@ args = ["<%= settings.owner %>"]
 depends = ["contract.InitialProxy"]
 
 [router.OracleRouter]
-contracts = ["CoreModule", "OracleManagerModule"]
+contracts = ["CoreModule", "NodeModule"]
 depends = [
   "contract.CoreModule",
-  "contract.OracleManagerModule"
+  "contract.NodeModule"
 ]
 
 [invoke.upgrade_proxy]

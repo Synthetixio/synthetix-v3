@@ -29,10 +29,10 @@ export async function addCollateral(
     ['address', 'uint256', 'uint8'],
     [aggregator.address, 0, 18]
   );
-  await oracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+  await oracleManager.connect(owner).registerNode(NodeTypes.CHAINLINK, params1, []);
   const oracleNodeId = await oracleManager
     .connect(owner)
-    .getNodeId([], NodeTypes.CHAINLINK, params1);
+    .getNodeId(NodeTypes.CHAINLINK, params1, []);
 
   await (
     await core.connect(owner).configureCollateral({

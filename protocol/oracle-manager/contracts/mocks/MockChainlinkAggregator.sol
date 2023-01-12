@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract MockChainlinkAggregator {
+import "../interfaces/external/IAggregatorV3Interface.sol";
+
+contract MockChainlinkAggregator is IAggregatorV3Interface {
     int256[5] private _prices;
     uint256[5] private _updatedAt;
 
@@ -30,5 +32,13 @@ contract MockChainlinkAggregator {
 
     function decimals() external pure returns (uint8) {
         return 6;
+    }
+
+    function description() external pure returns (string memory) {
+        return "Mock Chainlink Aggregator";
+    }
+
+    function version() external pure returns (uint256) {
+        return 1;
     }
 }

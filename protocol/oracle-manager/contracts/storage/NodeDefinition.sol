@@ -7,16 +7,16 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH,
-        PriceDeviationCircuitBreaker,
         UNISWAP,
-        StalenessFallbackReducer
+        PYTH,
+        PRICE_DEVIATION_CIRCUIT_BREAKER,
+        STALENESS_CIRCUIT_BREAKER
     }
 
     struct Data {
-        bytes32[] parents;
         NodeType nodeType;
         bytes parameters;
+        bytes32[] parents;
     }
 
     function load(bytes32 id) internal pure returns (Data storage data) {
@@ -33,18 +33,18 @@ library NodeDefinition {
 
         self = load(id);
 
-        self.parents = nodeDefinition.parents;
         self.nodeType = nodeDefinition.nodeType;
         self.parameters = nodeDefinition.parameters;
+        self.parents = nodeDefinition.parents;
     }
 
     function getId(Data memory nodeDefinition) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    nodeDefinition.parents,
                     nodeDefinition.nodeType,
-                    nodeDefinition.parameters
+                    nodeDefinition.parameters,
+                    nodeDefinition.parents
                 )
             );
     }

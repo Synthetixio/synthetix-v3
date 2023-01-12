@@ -1,12 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../storage/Node.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 
-/// @title interface for external node
-interface IExternalNode {
+import "../../storage/NodeOutput.sol";
+
+/// @title Interface for an external node
+interface IExternalNode is IERC165 {
     function process(
-        Node.Data[] memory prices,
+        NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) external view returns (Node.Data memory);
+    ) external view returns (NodeOutput.Data memory);
 }

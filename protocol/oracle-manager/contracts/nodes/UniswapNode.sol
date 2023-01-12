@@ -3,20 +3,21 @@ pragma solidity >=0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "./FullMath.sol";
-import "./TickMath.sol";
+import "../utils/FullMath.sol";
+import "../utils/TickMath.sol";
 
-import "../storage/Node.sol";
+import "../storage/NodeDefinition.sol";
+import "../storage/NodeOutput.sol";
 import "../interfaces/external/IUniswapV3Pool.sol";
 
-library UniswapNodeLibrary {
+library UniswapNode {
     using SafeCastU256 for uint256;
     using SafeCastU160 for uint160;
     using SafeCastU56 for uint56;
     using SafeCastU32 for uint32;
     using SafeCastI56 for int56;
 
-    function process(bytes memory parameters) internal view returns (Node.Data memory) {
+    function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
         (address token0, address token1, address pool, uint32 secondsAgo) = abi.decode(
             parameters,
             (address, address, address, uint32)
@@ -38,7 +39,7 @@ library UniswapNodeLibrary {
 
         int256 price = getQuoteAtTick(tick, 1e6, token0, token1).toInt();
 
-        return Node.Data(price, 0, 0, 0);
+        return NodeOutput.Data(price, 0, 0, 0);
     }
 
     function getQuoteAtTick(
@@ -61,5 +62,30 @@ library UniswapNodeLibrary {
                 ? FullMath.mulDiv(ratioX128, baseAmount, 1 << 128)
                 : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
         }
+    }
+
+    function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+        // Must have no parents
+        if (nodeDefinition.parents.length > 0) {
+            return false;
+        }
+
+        // Must have correct length of parameters data
+        if (nodeDefinition.parameters.length != 32 * 4) {
+            return false;
+        }
+
+        (, , address pool, uint32 secondsAgo) = abi.decode(
+            nodeDefinition.parameters,
+            (address, address, address, uint32)
+        );
+
+        // Must return relevant function without error
+        uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = secondsAgo;
+        secondsAgos[1] = 0;
+        IUniswapV3Pool(pool).observe(secondsAgos);
+
+        return true;
     }
 }

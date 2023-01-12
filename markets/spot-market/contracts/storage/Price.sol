@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
-import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
@@ -41,18 +41,18 @@ library Price {
 
     /**
      * @dev Returns the current price data for the given transaction type.
-     * Node.Data is a struct from oracle manager containing the price, timestamp among others.
+     * NodeOutput.Data is a struct from oracle manager containing the price, timestamp among others.
      */
     function getCurrentPriceData(
         uint128 marketId,
         SpotMarketFactory.TransactionType transactionType
-    ) internal view returns (Node.Data memory price) {
+    ) internal view returns (NodeOutput.Data memory price) {
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         if (transactionType == SpotMarketFactory.TransactionType.BUY) {
-            price = IOracleManagerModule(factory.oracle).process(self.buyFeedId);
+            price = INodeModule(factory.oracle).process(self.buyFeedId);
         } else {
-            price = IOracleManagerModule(factory.oracle).process(self.sellFeedId);
+            price = INodeModule(factory.oracle).process(self.sellFeedId);
         }
     }
 

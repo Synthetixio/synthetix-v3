@@ -92,11 +92,11 @@ export function bootstrapWithStakedPool() {
     const [owner] = r.signers();
 
     const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 18]);
-    await r.systems().OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+    await r.systems().OracleManager.connect(owner).registerNode(NodeTypes.CHAINLINK, params1, []);
     oracleNodeId = await r
       .systems()
       .OracleManager.connect(owner)
-      .getNodeId([], NodeTypes.CHAINLINK, params1);
+      .getNodeId(NodeTypes.CHAINLINK, params1, []);
   });
 
   before('delegate collateral', async function () {
