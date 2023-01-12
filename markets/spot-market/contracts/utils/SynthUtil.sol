@@ -5,7 +5,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 
-import "../storage/AsyncOrder.sol";
+import "../storage/AsyncOrderConfiguration.sol";
 
 library SynthUtil {
     using AssociatedSystem for AssociatedSystem.Data;
@@ -33,7 +33,9 @@ library SynthUtil {
     // Mint synths to escrow and add shares, tracked as owned by the market
     function mintToEscrow(uint128 marketId, uint256 synthAmount) internal {
         ITokenModule token = getToken(marketId);
-        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        AsyncOrderConfiguration.Data storage asyncOrderData = AsyncOrderConfiguration.load(
+            marketId
+        );
 
         token.mint(address(this), synthAmount);
 
@@ -48,7 +50,9 @@ library SynthUtil {
     // Convert synth amount to shares, remove these shares from the market, and burn the shares amount
     function burnFromEscrow(uint128 marketId, uint256 synthAmount) internal {
         ITokenModule token = getToken(marketId);
-        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        AsyncOrderConfiguration.Data storage asyncOrderData = AsyncOrderConfiguration.load(
+            marketId
+        );
 
         uint256 sharesAmount = (synthAmount * asyncOrderData.totalEscrowedSynthShares) /
             token.balanceOf(address(this));
@@ -61,7 +65,9 @@ library SynthUtil {
     // Transfer synths into escrow and add shares, tracked as owned by the sender
     function transferIntoEscrow(uint128 marketId, address from, uint256 synthAmount) internal {
         ITokenModule token = getToken(marketId);
-        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        AsyncOrderConfiguration.Data storage asyncOrderData = AsyncOrderConfiguration.load(
+            marketId
+        );
 
         token.transferFrom(from, address(this), synthAmount);
 
@@ -76,7 +82,9 @@ library SynthUtil {
     // Convert synth amount to shares, remove these shares from the market, and transfer the shares amount out of escrow
     function transferOutOfEscrow(uint128 marketId, address to, uint256 synthAmount) internal {
         ITokenModule token = getToken(marketId);
-        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        AsyncOrderConfiguration.Data storage asyncOrderData = AsyncOrderConfiguration.load(
+            marketId
+        );
 
         uint256 sharesAmount = (synthAmount * asyncOrderData.totalEscrowedSynthShares) /
             token.balanceOf(address(this));

@@ -6,13 +6,15 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../storage/AsyncOrder.sol";
+import "../storage/AsyncOrderConfiguration.sol";
 import "../interfaces/IAsyncOrderModule.sol";
 import "../utils/AsyncOrderClaimTokenUtil.sol";
+import "../interfaces/external/IChainlinkVerifier.sol";
+import "../interfaces/external/IPythVerifier.sol";
 
 /**
- * @title Module with custom NFT logic for the async order claim token
- * @notice TODO
+ * @title Module to process asyncronous orders
+ * @notice See README.md for an overview of asyncronous orders
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
@@ -22,383 +24,501 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
     using Fee for Fee.Data;
-    using AsyncOrder for AsyncOrder.Data;
+    using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
 
-    function commitBuyOrder(
+    // ************
+    // COMMITMENT
+    // ************
+
+    function commitOrder(
         uint128 marketId,
-        uint256 usdAmount
+        SpotMarketFactory.TransactionType orderType,
+        uint256 amountProvided,
+        uint256 settlementStrategyId
     )
         external
         override
         returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
-        // Accept USD
-        uint256 allowance = store.usdToken.allowance(msg.sender, address(this));
-        if (store.usdToken.balanceOf(msg.sender) < usdAmount) {
-            revert InsufficientFunds();
-        }
-        if (allowance < usdAmount) {
-            revert InsufficientAllowance(usdAmount, allowance);
-        }
-        store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
-
-        // Get estimated exchange amount
-        uint256 amountSynth = Price.usdSynthExchangeRate(
-            marketId,
-            usdAmount,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
         );
 
-        // Mint synths and hold them in this contract as escrow
-        SynthUtil.mintToEscrow(marketId, amountSynth);
+        require(
+            settlementStrategyId < asyncOrderConfiguration.settlementStrategies.length,
+            "Invalid settlement strategy ID"
+        );
+
+        int256 utilizationDelta;
+        uint256 cancellationFee;
+        if (orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            // Accept USD (amountProvided is usd)
+            uint256 allowance = store.usdToken.allowance(msg.sender, address(this));
+            if (store.usdToken.balanceOf(msg.sender) < amountProvided) {
+                revert InsufficientFunds();
+            }
+            if (allowance < amountProvided) {
+                revert InsufficientAllowance(amountProvided, allowance);
+            }
+            store.usdToken.transferFrom(msg.sender, address(this), amountProvided);
+
+            // Calculate fees
+            (uint256 amountUsableUsd, uint256 estimatedFees) = Fee.calculateFees(
+                marketId,
+                msg.sender,
+                amountProvided,
+                SpotMarketFactory.TransactionType.ASYNC_BUY
+            );
+            cancellationFee = estimatedFees;
+
+            // The utilization increases based on the estimated fill
+            utilizationDelta = Price.usdSynthExchangeRate(
+                marketId,
+                amountUsableUsd,
+                SpotMarketFactory.TransactionType.ASYNC_BUY
+            );
+        }
+
+        if (orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            // Accept Synths (amountProvided is synths)
+            uint256 allowance = SynthUtil.getToken(marketId).allowance(msg.sender, address(this));
+            if (SynthUtil.getToken(marketId).balanceOf(msg.sender) < amountProvided) {
+                revert InsufficientFunds();
+            }
+            if (allowance < amountProvided) {
+                revert InsufficientAllowance(amountProvided, allowance);
+            }
+            SynthUtil.transferIntoEscrow(marketId, msg.sender, amountProvided);
+
+            // Get the dollar value of the provided synths
+            uint256 usdAmount = Price.synthUsdExchangeRate(
+                marketId,
+                amountProvided,
+                SpotMarketFactory.TransactionType.SELL
+            );
+
+            // Set cancellation fee based on estimation
+            (uint256 estimatedFill, uint256 estimatedFees) = Fee.calculateFees(
+                marketId,
+                msg.sender,
+                usdAmount,
+                SpotMarketFactory.TransactionType.ASYNC_SELL
+            );
+            cancellationFee = estimatedFees;
+
+            // Decrease the utilization based on the amount remaining after fees
+            uint256 synthAmount = Price.usdSynthExchangeRate(
+                marketId,
+                estimatedFill,
+                SpotMarketFactory.TransactionType.SELL
+            );
+            utilizationDelta = -1 * synthAmount.toInt();
+        }
 
         // Issue an async order claim NFT
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
-        // Set up order data
-        asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
-        asyncOrderClaim.blockNumber = block.number;
-        asyncOrderClaim.timestamp = block.timestamp;
-        asyncOrderClaim.synthAmountEscrowed = amountSynth;
-        asyncOrderClaim.usdAmountEscrowed = usdAmount;
-
-        // Store order data
-        AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
-
-        // Emit event
-        emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
-    }
-
-    function commitSellOrder(
-        uint128 marketId,
-        uint256 synthAmount
-    )
-        external
-        override
-        returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
-    {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
-        // Accept Synths
-        uint256 allowance = SynthUtil.getToken(marketId).allowance(msg.sender, address(this));
-        if (store.usdToken.balanceOf(msg.sender) < synthAmount) {
-            revert InsufficientFunds();
+        uint settlementDelay = asyncOrderConfiguration
+            .settlementStrategies[settlementStrategyId]
+            .settlementDelay;
+        if (settlementDelay == 0) {
+            settlementDelay++;
         }
-        if (allowance < synthAmount) {
-            revert InsufficientAllowance(synthAmount, allowance);
-        }
-        SynthUtil.transferIntoEscrow(marketId, msg.sender, synthAmount);
-
-        // Get estimated exchange amount
-        uint256 synthAmountEscrowedUsd = Price.usdSynthExchangeRate(
-            marketId,
-            synthAmount,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
-        );
-
-        // Withdraw USD and hold in this contract as escrow
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(
-            marketId,
-            address(this),
-            synthAmountEscrowedUsd
-        );
-
-        // Issue an async order claim NFT
-        asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
         // Set up order data
-        asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
-        asyncOrderClaim.blockNumber = block.number;
-        asyncOrderClaim.timestamp = block.timestamp;
-        asyncOrderClaim.synthAmountEscrowed = synthAmount;
-        asyncOrderClaim.usdAmountEscrowed = synthAmountEscrowedUsd;
+        asyncOrderClaim.orderType = orderType;
+        asyncOrderClaim.amountEscrowed = amountProvided;
+        asyncOrderClaim.settlementStrategyId = settlementStrategyId;
+        asyncOrderClaim.settlementTime = block.timestamp + settlementDelay;
+        asyncOrderClaim.utilizationDelta = utilizationDelta;
+        asyncOrderClaim.cancellationFee = cancellationFee;
+
+        // Accumulate utilization delta for use in fee calculation
+        asyncOrderConfiguration.asyncUtilizationDelta += utilizationDelta;
 
         // Store order data
-        AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
+        AsyncOrderConfiguration.create(marketId, asyncOrderId, asyncOrderClaim);
 
         // Emit event
-        emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
+        emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderId, msg.sender);
     }
 
-    function settleOrder(
+    // ************
+    // SETTLEMENT
+    // ************
+
+    function settleOrder(uint128 marketId, uint128 asyncOrderId) external override returns (uint) {
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
+        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
+            asyncOrderId
+        ];
+        AsyncOrderConfiguration.SettlementStrategy
+            memory settlementStrategy = asyncOrderConfiguration.settlementStrategies[
+                asyncOrderClaim.settlementStrategyId
+            ];
+
+        if (
+            settlementStrategy.strategyType ==
+            AsyncOrderConfiguration.SettlementStrategyType.ONCHAIN
+        ) {
+            return settleOnChainOrder(marketId, asyncOrderId);
+        } else if (
+            settlementStrategy.strategyType ==
+            AsyncOrderConfiguration.SettlementStrategyType.CHAINLINK
+        ) {
+            // TODO
+            // revert OffchainData(sender, urls, callData, callbackFunction, extraData)
+            // request at asyncOrderClaim.settlementTime
+            // callbackFunction = settleChainlinkOrder
+        } else if (
+            settlementStrategy.strategyType == AsyncOrderConfiguration.SettlementStrategyType.PYTH
+        ) {
+            // TODO
+            // revert OffchainData(sender, urls, callData, callbackFunction, extraData)
+            // request at asyncOrderClaim.settlementTime
+            // callbackFunction = settlePythOrder
+        }
+    }
+
+    function settleOnChainOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external override returns (uint finalOrderAmount) {
-        AsyncOrder.Data storage marketAsyncOrderData = AsyncOrder.load(marketId);
-        AsyncOrderClaim.Data memory asyncOrderClaim = marketAsyncOrderData.asyncOrderClaims[
-            asyncOrderId
-        ];
+    ) public returns (uint finalOrderAmount) {
+        (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        ) = _prepareSettlement(marketId, asyncOrderId);
 
-        uint priceTimestamp = Price
-            .getCurrentPriceData(marketId, asyncOrderClaim.orderType)
-            .timestamp;
-        bool minimumOrderAgeHasElapsed = asyncOrderClaim.timestamp +
-            marketAsyncOrderData.minimumOrderAge <
-            priceTimestamp;
-        bool confirmationWindowHasElapsed = asyncOrderClaim.timestamp +
-            marketAsyncOrderData.minimumOrderAge +
-            marketAsyncOrderData.settlementWindowDuration <
-            priceTimestamp;
-        bool livePriceSettlement = priceTimestamp == 0 &&
-            asyncOrderClaim.timestamp + marketAsyncOrderData.minimumOrderAge < block.timestamp &&
-            block.timestamp <
-            asyncOrderClaim.timestamp +
-                marketAsyncOrderData.minimumOrderAge +
-                marketAsyncOrderData.settlementWindowDuration -
-                marketAsyncOrderData.livePriceSettlementWindowDuration;
-
-        bool canSettle = livePriceSettlement ||
-            (minimumOrderAgeHasElapsed && !confirmationWindowHasElapsed);
-
-        // Ensure we are in the confirmation window
-        if (!canSettle) {
-            revert OutsideOfConfirmationWindow(
-                priceTimestamp,
-                asyncOrderClaim.timestamp,
-                marketAsyncOrderData.minimumOrderAge,
-                marketAsyncOrderData.settlementWindowDuration
-            );
-        }
-
-        // Finalize the order using the provided price data
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            finalOrderAmount = _disburseBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            finalOrderAmount = _disburseSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        }
-
-        // Burn NFT
-        AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
-
-        // Emit event
-        emit AsyncOrderSettled(
-            marketId,
-            asyncOrderId,
-            asyncOrderClaim,
-            finalOrderAmount,
-            msg.sender
-        );
-    }
-
-    function _disburseBuyOrderEscrow(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private returns (uint finalSynthAmount) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
-        // Calculate fees
-        (uint256 amountUsable, ) = Fee.calculateFees(
-            marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            asyncOrderClaim.usdAmountEscrowed,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
-        );
-
-        // Get the final synth amount
-        finalSynthAmount = Price.usdSynthExchangeRate(
-            marketId,
-            amountUsable,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
-        );
-
-        // Deposit USD
-        store.usdToken.approve(address(this), asyncOrderClaim.usdAmountEscrowed);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
-            marketId,
-            address(this),
-            asyncOrderClaim.usdAmountEscrowed
-        );
-
-        // Mint additional synths into escrow if necessary
-        if (finalSynthAmount > asyncOrderClaim.synthAmountEscrowed) {
-            SynthUtil.mintToEscrow(
+            finalOrderAmount = Price.usdSynthExchangeRate(
                 marketId,
-                finalSynthAmount - asyncOrderClaim.synthAmountEscrowed
+                asyncOrderClaim.amountEscrowed,
+                SpotMarketFactory.TransactionType.ASYNC_BUY
+            );
+
+            require(
+                Price
+                    .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_BUY)
+                    .timestamp >= asyncOrderClaim.settlementTime,
+                "Needs more recent price report"
+            );
+
+            ITokenModule token = SynthUtil.getToken(marketId);
+            token.mint(
+                AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+                finalOrderAmount
             );
         }
 
-        // Burn additional synths in escrow if necessary
-        if (finalSynthAmount < asyncOrderClaim.synthAmountEscrowed) {
-            SynthUtil.burnFromEscrow(
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            finalOrderAmount = Price.synthUsdExchangeRate(
                 marketId,
-                asyncOrderClaim.synthAmountEscrowed - finalSynthAmount
+                asyncOrderClaim.amountEscrowed,
+                SpotMarketFactory.TransactionType.ASYNC_SELL
             );
-        }
 
-        // Transfer final synth amount to claimant
-        SynthUtil.transferOutOfEscrow(
-            marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            finalSynthAmount
-        );
-    }
+            require(
+                Price
+                    .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_SELL)
+                    .timestamp >= asyncOrderClaim.settlementTime,
+                "Needs more recent price report"
+            );
 
-    function _disburseSellOrderEscrow(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private returns (uint finalUsdAmount) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
-        // Get the amount of usd worth the amount of synths provided
-        uint256 synthAmountEscrowedUsd = Price.usdSynthExchangeRate(
-            marketId,
-            asyncOrderClaim.synthAmountEscrowed,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
-        );
-
-        // Calculate fees
-        (finalUsdAmount, ) = Fee.calculateFees(
-            marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            synthAmountEscrowedUsd,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
-        );
-
-        // Burn Synths
-        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.synthAmountEscrowed);
-
-        // Withdraw more USD if necessary
-        // TODO: Special revert if withdrawMarketUsd will revert due to insufficient credit?
-        if (finalUsdAmount > asyncOrderClaim.synthAmountEscrowed) {
+            SpotMarketFactory.Data storage store = SpotMarketFactory.load();
             IMarketManagerModule(store.synthetix).withdrawMarketUsd(
                 marketId,
-                address(this),
-                finalUsdAmount - asyncOrderClaim.synthAmountEscrowed
+                AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+                finalOrderAmount
             );
         }
 
-        // Deposit extra USD in escrow if necessary
-        if (finalUsdAmount < asyncOrderClaim.synthAmountEscrowed) {
-            store.usdToken.approve(
-                address(this),
-                asyncOrderClaim.synthAmountEscrowed - finalUsdAmount
-            );
-            IMarketManagerModule(store.synthetix).depositMarketUsd(
-                marketId,
-                address(this),
-                asyncOrderClaim.synthAmountEscrowed - finalUsdAmount
-            );
-        }
-
-        // Transfer final USD amount to claimant
-        store.usdToken.transferFrom(
-            address(this),
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            finalUsdAmount
+        _finalizeSettlement(
+            marketId,
+            asyncOrderId,
+            finalOrderAmount,
+            asyncOrderConfiguration,
+            asyncOrderClaim
         );
     }
 
-    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
-        AsyncOrderClaim.Data memory asyncOrderClaim = AsyncOrder.load(marketId).asyncOrderClaims[
-            asyncOrderId
+    function settleChainlinkOrder(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        bytes memory priceData
+    ) external returns (uint finalOrderAmount) {
+        (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        ) = _prepareSettlement(marketId, asyncOrderId);
+
+        bytes memory verifierResponse = IChainlinkVerifier(
+            settlementStrategy.priceVerificationContract
+        ).verify(priceData);
+
+        (
+            bytes32 feedID,
+            uint32 observationsTimestamp,
+            uint64 observationsBlocknumber,
+            int192 median
+        ) = abi.decode(verifierResponse, (bytes32, uint32, uint64, int192));
+
+        // TODO
+        // confirm that observationsTimestamp == asyncOrderClaim.settlementTime
+        // need to confirm feedID?
+
+        // price deviation check?
+
+        _finalizeSettlement(
+            marketId,
+            asyncOrderId,
+            finalOrderAmount,
+            asyncOrderConfiguration,
+            asyncOrderClaim
+        );
+    }
+
+    function settlePythOrder(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        bytes memory priceData
+    ) external returns (uint finalOrderAmount) {
+        (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        ) = _prepareSettlement(marketId, asyncOrderId);
+
+        IPythVerifier(settlementStrategy.priceVerificationContract).parsePriceFeedUpdates(
+            priceData
+        );
+
+        // TODO
+        // confirm that priceData is for asyncOrderClaim.settlementTime
+        // confirm the price is for what we want
+
+        // price deviation check?
+
+        _finalizeSettlement(
+            marketId,
+            asyncOrderId,
+            finalOrderAmount,
+            asyncOrderConfiguration,
+            asyncOrderClaim
+        );
+    }
+
+    function _prepareSettlement(
+        uint128 marketId,
+        uint128 asyncOrderId
+    )
+        internal
+        returns (
+            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+            AsyncOrderClaim.Data memory asyncOrderClaim,
+            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
+        )
+    {
+        asyncOrderConfiguration = AsyncOrderConfiguration.load(marketId);
+        asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[asyncOrderId];
+        settlementStrategy = asyncOrderConfiguration.settlementStrategies[
+            asyncOrderClaim.settlementStrategyId
         ];
 
-        // Prevent cancellation if this is invoked by someone other than the claimant and the confirmation window hasn't passed
-        if (
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId) != msg.sender &&
-            block.timestamp <
-            asyncOrderClaim.timestamp +
-                AsyncOrder.load(marketId).minimumOrderAge +
-                AsyncOrder.load(marketId).settlementWindowDuration
-        ) {
-            revert InsufficientCancellationTimeElapsed(
-                block.timestamp,
-                asyncOrderClaim.timestamp,
-                AsyncOrder.load(marketId).minimumOrderAge,
-                AsyncOrder.load(marketId).settlementWindowDuration
+        // Confirm we're in the settlement window
+        require(block.timestamp >= asyncOrderClaim.settlementTime, "too soon");
+        if (settlementStrategy.settlementWindowDuration > 0) {
+            require(
+                asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration <
+                    block.timestamp,
+                "too late"
             );
         }
 
-        // Return escrowed funds
+        // Collect what's held in escrow
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            _returnBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
+            _collectBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
         } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            _returnSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
+            _collectSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
         }
+    }
+
+    function _finalizeSettlement(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        uint finalOrderAmount,
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) internal {
+        // Adjust utilization delta for use in fee calculation
+        asyncOrderConfiguration.asyncUtilizationDelta -= asyncOrderClaim.utilizationDelta;
 
         // Burn NFT
         AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
 
         // Emit event
-        emit AsyncOrderCancelled(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
+        emit OrderSettled(marketId, asyncOrderId, asyncOrderClaim, finalOrderAmount, msg.sender);
     }
 
-    function _returnBuyOrderEscrow(
+    function _collectBuyOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        (uint returnAmountUsd, int finalFees) = Fee.calculateFees(
+        // Deposit USD
+        // TODO: Add fee collector logic
+        store.usdToken.approve(address(this), asyncOrderClaim.amountEscrowed);
+        IMarketManagerModule(store.synthetix).depositMarketUsd(
             marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            asyncOrderClaim.usdAmountEscrowed,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
+            address(this),
+            asyncOrderClaim.amountEscrowed
         );
+    }
 
-        // Return the USD provided, minus the quoted fees
+    function _collectSellOrderEscrow(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) private {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+        // Burn Synths
+        // TODO: Add fee collector logic
+        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
+    }
+
+    // ************
+    // CANCELLATION
+    // ************
+
+    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
+        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
+            asyncOrderId
+        ];
+        AsyncOrderConfiguration.SettlementStrategy
+            memory settlementStrategy = asyncOrderConfiguration.settlementStrategies[
+                asyncOrderClaim.settlementStrategyId
+            ];
+        address marketOwner = SpotMarketFactory.load().marketOwners[marketId];
+
+        bool canAlwaysCancel = AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId) ==
+            msg.sender ||
+            msg.sender == marketOwner;
+        bool confirmationWindowExists = settlementStrategy.settlementWindowDuration > 0;
+        bool confirmationWindowClosed = asyncOrderClaim.settlementTime +
+            settlementStrategy.settlementWindowDuration <
+            block.timestamp;
+
+        // Prevent cancellation if this is invoked by the public and the confirmation window hasn't passed
+        if (!canAlwaysCancel && confirmationWindowExists && !confirmationWindowClosed) {
+            // TODO: switch to revert here
+            require(confirmationWindowClosed, "cannot cancel yet");
+        }
+
+        // Return the fee if the market owner is cancelling
+        bool shouldReturnFee = msg.sender == marketOwner;
+
+        // Return escrowed funds after keeping the fee
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            _returnBuyOrderEscrow(marketId, asyncOrderId, shouldReturnFee, asyncOrderClaim);
+        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            _returnSellOrderEscrow(marketId, asyncOrderId, shouldReturnFee, asyncOrderClaim);
+        }
+
+        // Burn NFT
+        AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
+
+        // Adjust utilization delta for use in fee calculation
+        asyncOrderConfiguration.asyncUtilizationDelta -= asyncOrderClaim.utilizationDelta;
+
+        // Emit event
+        emit OrderCancelled(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
+    }
+
+    function _returnBuyOrderEscrow(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        bool shouldReturnFee,
+        AsyncOrderClaim.Data memory asyncOrderClaim
+    ) private {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        AsyncOrderConfiguration.Data memory asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
+        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
+            asyncOrderId
+        ];
+
+        // TODO: Confirm negative fee situation
+        // TODO: Move feesToCollect into cancelOrder and pass it instead of shouldReturnFee
+        int feesToCollect = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
+        int amountToReturn = asyncOrderClaim.amountEscrowed - feesToCollect;
+
+        // Return the USD
         store.usdToken.transferFrom(
             address(this),
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            returnAmountUsd
+            amountToReturn
         );
 
-        // Burn the synths escrowed
-        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.synthAmountEscrowed);
-
-        if (finalFees > 0) {
-            Fee.collectFees(marketId, finalFees.toUint());
+        // Collect the fees
+        if (feesToCollect > 0) {
+            Fee.collectFees(marketId, feesToCollect.toUint());
         }
     }
 
     function _returnSellOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
+        bool shouldReturnFee,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-
-        (, int finalFees) = Fee.calculateFees(
-            marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            asyncOrderClaim.usdAmountEscrowed,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
+        AsyncOrderConfiguration.Data memory asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
         );
+        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
+            asyncOrderId
+        ];
 
-        // TODO: should there be additional fees applied if the fee amount is negative so seller
-        // isn't getting free call option?
-        uint finalFeesUint = finalFees > 0 ? finalFees.toUint() : 0;
+        // TODO: Confirm negative fee situation
+        // TODO: Move feesToCollect into cancelOrder and pass it instead of shouldReturnFee
+        int feesInUsd = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
 
-        uint finalFeesSynths = Price.usdSynthExchangeRate(
-            marketId,
-            finalFeesUint,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
-        );
-        uint transferableAmount = asyncOrderClaim.usdAmountEscrowed - finalFeesSynths;
+        if (feesInUsd > 0) {
+            // Calculate the value of the fees in synths
+            uint feesInSynths = Price.synthUsdExchangeRate(
+                marketId,
+                feesInUsd,
+                SpotMarketFactory.TransactionType.ASYNC_SELL
+            );
 
-        // Return the synths provided, minus the quoted fees
-        SynthUtil.transferOutOfEscrow(
-            marketId,
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            transferableAmount
-        );
+            // Return the synths minus this amount
+            SynthUtil.transferOutOfEscrow(
+                marketId,
+                AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+                asyncOrderClaim.amountEscrowed - feesInSynths
+            );
 
-        // Deposit the escrowed USD
-        store.usdToken.approve(address(this), asyncOrderClaim.usdAmountEscrowed);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
-            marketId,
-            address(this),
-            asyncOrderClaim.usdAmountEscrowed
-        );
+            // Burn the fees
+            SynthUtil.burnFromEscrow(marketId, feesInSynths);
 
-        if (finalFeesSynths > 0) {
-            // Burn quoted fees of synths
-            SynthUtil.burnFromEscrow(marketId, finalFeesSynths);
+            // TODO: If there's a fee collector, pull out feesInUsd, run them through the fee collector, and deposit the remainder
+        } else {
+            // If we're not collecting fees, return them all
+            SynthUtil.transferOutOfEscrow(
+                marketId,
+                AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+                asyncOrderClaim.amountEscrowed
+            );
         }
     }
 }

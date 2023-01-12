@@ -4,15 +4,31 @@ pragma solidity ^0.8.0;
 import "./Fee.sol";
 import "./AsyncOrderClaim.sol";
 
-// Not sure this is the correct name for this, more like AsyncOrderManager
-library AsyncOrder {
+library AsyncOrderConfiguration {
     struct Data {
         mapping(uint256 => AsyncOrderClaim.Data) asyncOrderClaims;
-        uint256 minimumOrderAge;
-        uint256 settlementWindowDuration;
-        uint256 livePriceSettlementWindowDuration; // This is an options duration at the end fo the settleWindowDuration where a price with timestamp == 0 will be accepted
         mapping(address => uint256) escrowedSynthShares;
         uint256 totalEscrowedSynthShares;
+        SettlementStrategy[] settlementStrategies;
+        int256 asyncUtilizationDelta;
+    }
+
+    enum SettlementStrategyType {
+        ONCHAIN,
+        CHAINLINK,
+        PYTH
+    }
+
+    struct SettlementStrategy {
+        SettlementStrategyType strategyType;
+        uint256 fixedFee;
+        uint256 settlementDelay;
+        uint256 settlementWindowDuration;
+        address priceVerificationContract; // For Chainlink and Pyth settlement strategies
+        /*
+            - **Price Deviation Circuit Breaker Node ID** - For Chainlink and Pyth settlement strategies. _t.b.d._
+            - **Price Deviation Circuit Breaker Tolerance** - For Chainlink and Pyth settlement strategies. _t.b.d._
+        */
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
