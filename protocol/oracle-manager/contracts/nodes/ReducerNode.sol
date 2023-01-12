@@ -165,7 +165,7 @@ library ReducerNode {
 
         // Must have valid operation
         uint operationId = abi.decode(nodeDefinition.parameters, (uint));
-        if (operationId >= 6) {
+        if (operationId > 6) {
             return false;
         }
 

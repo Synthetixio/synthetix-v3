@@ -4,12 +4,12 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 
-describe.skip('UniswapNode', function () {
+describe('UniswapNode', function () {
   const { getContract, getSigners } = bootstrap();
 
   const abi = ethers.utils.defaultAbiCoder;
   let NodeModule: ethers.Contract;
-  let UniswapMock: ethers.Contract;
+  let MockObservable: ethers.Contract;
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');
@@ -17,7 +17,7 @@ describe.skip('UniswapNode', function () {
 
     // Deploy the mock
     const factory = await hre.ethers.getContractFactory('MockObservable');
-    UniswapMock = await factory.connect(owner).deploy([], [], []);
+    MockObservable = await factory.connect(owner).deploy([4, 0], [12, 12], [10, 20]);
   });
 
   it('retrieves the latest price', async () => {
@@ -25,14 +25,14 @@ describe.skip('UniswapNode', function () {
     const NodeParameters = abi.encode(
       ['address', 'address', 'address', 'uint32'],
       // eslint-disable-next-line max-len
-      [UniswapMock.address, UniswapMock.address, UniswapMock.address, 10] // using the mock's address for the token addresses because the mock doesn't take them into account
+      [ethers.constants.AddressZero, ethers.constants.AddressZero, MockObservable.address, 4] // using the mock's address for the token addresses because the mock doesn't take them into account
     );
-    await NodeModule.registerNode(NodeTypes.PYTH, NodeParameters, []);
-    const nodeId = await NodeModule.getNodeId(NodeTypes.PYTH, NodeParameters, []);
+    await NodeModule.registerNode(NodeTypes.UNISWAP, NodeParameters, []);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.UNISWAP, NodeParameters, []);
 
     // Verify the node processes output as expected
     const output = await NodeModule.process(nodeId);
-    assertBn.equal(output.price, 100);
+    assertBn.equal(output.price, 1000000);
     assertBn.equal(output.timestamp, 0);
   });
 });

@@ -39,7 +39,7 @@ describe('NodeModule', function () {
       NodeModule.registerNode(NodeTypes.REDUCER, abi.encode(['int'], [NodeOperations.MAX]), [
         invalidNode,
       ]),
-      `NodeNotRegistered("${invalidNode}")`,
+      'InvalidNodeDefinition',
       NodeModule
     );
   });
@@ -47,14 +47,14 @@ describe('NodeModule', function () {
   it('emits an event on registering a new node', async () => {
     const params = abi.encode(['int'], [NodeOperations.MAX]);
 
-    const tx = await NodeModule.registerNode(NodeTypes.REDUCER, params, []);
+    const tx = await NodeModule.registerNode(NodeTypes.REDUCER, params, [nodeId1(), nodeId2()]);
     const receipt = await tx.wait();
 
     const event = findSingleEvent({
       receipt,
       eventName: 'NodeRegistered',
     });
-    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, []);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.REDUCER, params, [nodeId1(), nodeId2()]);
 
     assert.equal(event.args.nodeId, nodeId);
     assert.equal(event.args.nodeType, NodeTypes.REDUCER);

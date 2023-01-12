@@ -33,7 +33,7 @@ describe('ChainlinkNode', () => {
       it('returns latest price', async () => {
         const encodedParams = abi.encode(
           ['address', 'uint256', 'uint8'],
-          [aggregator.address, BigNumber.from(0), 18]
+          [aggregator.address, BigNumber.from(0), 6]
         );
 
         const nodeId = await registerNode(encodedParams);
@@ -46,7 +46,7 @@ describe('ChainlinkNode', () => {
       it('returns avg price correctly', async () => {
         const encodedParams = abi.encode(
           ['address', 'uint256', 'uint8'],
-          [aggregator.address, BigNumber.from(35 * 60), 18] // 25 minutes in seconds
+          [aggregator.address, BigNumber.from(35 * 60), 6] // 25 minutes in seconds
         );
 
         const nodeId = await registerNode(encodedParams);
@@ -59,7 +59,7 @@ describe('ChainlinkNode', () => {
       it('returns avg price correctly', async () => {
         const encodedParams = abi.encode(
           ['address', 'uint256', 'uint8'],
-          [aggregator.address, BigNumber.from(80 * 60), 18] // 25 minutes in seconds
+          [aggregator.address, BigNumber.from(80 * 60), 6] // 25 minutes in seconds
         );
 
         const nodeId = await registerNode(encodedParams);
@@ -72,7 +72,7 @@ describe('ChainlinkNode', () => {
       it('returns price with 18 decimlas', async () => {
         const encodedParams = abi.encode(
           ['address', 'uint256', 'uint8'],
-          [aggregator.address, BigNumber.from(0), 20]
+          [aggregator.address, BigNumber.from(0), 6]
         );
 
         const nodeId = await registerNode(encodedParams);

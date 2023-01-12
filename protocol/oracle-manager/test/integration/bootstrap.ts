@@ -52,10 +52,10 @@ export function bootstrapWithNodes() {
   before('register leaf nodes', async function () {
     const NodeModule = r.getContract('NodeModule');
 
-    const params1 = abi.encode(['address', 'uint256'], [aggregator.address, 0]);
-    const params2 = abi.encode(['address', 'uint256'], [aggregator2.address, 0]);
-    const params3 = abi.encode(['address', 'uint256'], [aggregator3.address, 0]);
-    const params4 = abi.encode(['address', 'uint256'], [aggregator4.address, 0]);
+    const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 6]);
+    const params2 = abi.encode(['address', 'uint256', 'uint8'], [aggregator2.address, 0, 6]);
+    const params3 = abi.encode(['address', 'uint256', 'uint8'], [aggregator3.address, 0, 6]);
+    const params4 = abi.encode(['address', 'uint256', 'uint8'], [aggregator4.address, 0, 6]);
 
     const registerNode = async (params: string) => {
       const tx = await NodeModule.registerNode(NodeTypes.CHAINLINK, params, []);

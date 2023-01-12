@@ -54,7 +54,7 @@ describe('ExternalNode', function () {
 
     await assertRevert(
       NodeModule.registerNode(NodeTypes.EXTERNAL, invalidNodeParameters, []),
-      `IncorrectExternalNodeInterface("${InvalidExternalNode.address}")`,
+      'InvalidNodeDefinition',
       NodeModule
     );
   });
