@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -177,7 +177,7 @@ library CollateralConfiguration {
      */
     function getCollateralPrice(Data storage self) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();
-        Node.Data memory node = IOracleManagerModule(oracleManager.oracleManagerAddress).process(
+        Node.Data memory node = INodeModule(oracleManager.oracleManagerAddress).process(
             self.oracleNodeId
         );
 

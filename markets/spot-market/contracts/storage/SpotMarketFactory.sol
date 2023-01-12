@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 import "./Price.sol";
@@ -29,7 +29,7 @@ library SpotMarketFactory {
         /**
          * @dev oracle manager address used for price feeds
          */
-        IOracleManagerModule oracle;
+        INodeModule oracle;
         /**
          * @dev Synthetix core v3 proxy address
          */

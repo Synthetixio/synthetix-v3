@@ -8,7 +8,7 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../utils/SynthUtil.sol";
 import "../utils/AsyncOrderClaimTokenUtil.sol";
@@ -58,7 +58,7 @@ contract SpotMarketFactoryModule is
         store.initialSynthImplementation = initialSynthImplementation;
         store.initialAsyncOrderClaimImplementation = initialAsyncOrderClaimImplementation;
         store.usdToken = ITokenModule(usdTokenAddress);
-        store.oracle = IOracleManagerModule(oracleManager);
+        store.oracle = INodeModule(oracleManager);
     }
 
     /**

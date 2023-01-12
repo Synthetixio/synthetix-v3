@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -50,9 +50,9 @@ library Price {
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         if (transactionType == SpotMarketFactory.TransactionType.BUY) {
-            price = IOracleManagerModule(factory.oracle).process(self.buyFeedId);
+            price = INodeModule(factory.oracle).process(self.buyFeedId);
         } else {
-            price = IOracleManagerModule(factory.oracle).process(self.sellFeedId);
+            price = INodeModule(factory.oracle).process(self.sellFeedId);
         }
     }
 
