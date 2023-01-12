@@ -177,7 +177,7 @@ library CollateralConfiguration {
      */
     function getCollateralPrice(Data storage self) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();
-        Node.Data memory node = INodeModule(oracleManager.oracleManagerAddress).process(
+        NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress).process(
             self.oracleNodeId
         );
 

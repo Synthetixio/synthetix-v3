@@ -41,12 +41,12 @@ library Price {
 
     /**
      * @dev Returns the current price data for the given transaction type.
-     * Node.Data is a struct from oracle manager containing the price, timestamp among others.
+     * NodeOutput.Data is a struct from oracle manager containing the price, timestamp among others.
      */
     function getCurrentPriceData(
         uint128 marketId,
         SpotMarketFactory.TransactionType transactionType
-    ) internal view returns (Node.Data memory price) {
+    ) internal view returns (NodeOutput.Data memory price) {
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         if (transactionType == SpotMarketFactory.TransactionType.BUY) {
