@@ -25,16 +25,14 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
   before(async function prepareNode() {
     this.timeout(90000);
 
-    const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
-
     const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
     const typechainFolder = path.resolve(generatedPath, 'typechain');
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
     const cannonOpts =
-      cmd === 'build' ? { cannonfile } : { noVerify: true, overrideManifest: cannonfile };
+      hre.network.name === 'cannon' ? { cannonfile } : { cannonfile, noVerify: true };
 
-    const cannonInfo = await hre.run(`cannon:${cmd}`, {
+    const cannonInfo = await hre.run('cannon:build', {
       writeDeployments,
       ...cannonOpts,
     });

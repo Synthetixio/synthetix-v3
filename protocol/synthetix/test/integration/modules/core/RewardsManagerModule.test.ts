@@ -584,7 +584,7 @@ describe('RewardsManagerModule', function () {
 
     it('make sure distributor is removed', async () => {
       await assertRevert(
-        await RewardDistributor.connect(owner).distributeRewards(
+        RewardDistributor.connect(owner).distributeRewards(
           poolId,
           collateralAddress(),
           rewardAmount,

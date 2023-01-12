@@ -5,6 +5,8 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
     strategy:
       matrix:
         package:
@@ -37,6 +39,7 @@ jobs:
             workspace: "@synthetixio/main"
             size-contracts: true
     steps:
+      - run: mkdir -p ~/.local/share/cannon && echo "$CANNON_SETTINGS" > ~/.local/share/cannon/settings.json
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -49,6 +52,9 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
+      - if: ${{ matrix.size-contracts }}
+        name: Execute size command
+        run: npm run --workspace=${{ matrix.workspace }} size-contracts
       - name: Execute tests
         run: REPORT_GAS=true npm run --workspace=${{ matrix.workspace }} coverage
       - if: ${{ matrix.coverage-file }}
@@ -57,6 +63,3 @@ jobs:
         with:
           files: ${{ matrix.coverage-file }}
           flags: ${{ matrix.package }}
-      - if: ${{ matrix.size-contracts }}
-        name: Execute size command
-        run: npm run --workspace=${{ matrix.workspace }} size-contracts

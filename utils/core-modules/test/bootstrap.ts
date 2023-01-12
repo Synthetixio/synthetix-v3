@@ -13,8 +13,6 @@ import {
   OwnerModule,
   Proxy,
   SampleFeatureFlagModule,
-  SampleModuleA,
-  SampleModuleB,
   SampleOwnedModule,
   SampleRouter,
   TokenModule,
@@ -35,15 +33,17 @@ interface Contracts {
   GenericModule: GenericModule;
   NftModule: NftModule;
   NftModuleRouter: NftModuleRouter;
+  NftModuleRouter2: NftModuleRouter;
+  NftModuleRouter3: NftModuleRouter;
   OwnerModule: OwnerModule;
   Proxy: Proxy;
   SampleFeatureFlagModule: SampleFeatureFlagModule;
-  SampleModuleA: SampleModuleA;
-  SampleModuleB: SampleModuleB;
   SampleOwnedModule: SampleOwnedModule;
   SampleRouter: SampleRouter;
   TokenModule: TokenModule;
   TokenModuleRouter: TokenModuleRouter;
+  TokenModuleRouter2: TokenModuleRouter;
+  TokenModuleRouter3: TokenModuleRouter;
   UpgradeModule: UpgradeModule;
   DecayTokenModule: DecayTokenModule;
   DecayTokenModuleRouter: DecayTokenModuleRouter;
@@ -55,7 +55,11 @@ type Implementation =
   | 'CoreRouter'
   | 'AssociatedSystemsModuleRouter'
   | 'TokenModuleRouter'
+  | 'TokenModuleRouter2'
+  | 'TokenModuleRouter3'
   | 'NftModuleRouter'
+  | 'NftModuleRouter2'
+  | 'NftModuleRouter3'
   | 'SampleRouter'
   | 'FeatureFlagModuleRouter'
   | 'DecayTokenModuleRouter'

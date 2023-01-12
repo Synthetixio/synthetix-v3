@@ -7,7 +7,7 @@
     "test": "hardhat test",
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "keywords": [],
   "author": "",

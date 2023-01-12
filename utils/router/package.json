@@ -1,0 +1,56 @@
+{
+  "name": "@synthetixio/router",
+  "version": "1.0.5",
+  "description": "Synthetix Router Proxy Architecture Manager",
+  "main": "dist/src/index.js",
+  "source": "src/index.ts",
+  "types": "dist/src/index.d.ts",
+  "keywords": [
+    "deploy",
+    "solidity"
+  ],
+  "files": [
+    "dist",
+    "templates",
+    "utils"
+  ],
+  "author": "Synthetix",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --project tsconfig.json && cp -r templates dist/",
+    "watch": "npm run build -- --watch",
+    "test": "TS_NODE_PROJECT='test/tsconfig.json' mocha -r ts-node/register -r tsconfig-paths/register -r source-map-support/register",
+    "coverage": "nyc npm run test",
+    "test:watch": "npm run test -- --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@usecannon/builder": "^2.0.0-alpha.0"
+  },
+  "devDependencies": {
+    "@types/debug": "4.1.7",
+    "@types/jsonpath": "0.2.0",
+    "@types/lodash": "4.14.191",
+    "@types/mustache": "4.2.1",
+    "@usecannon/builder": "^2.0.0-alpha.0",
+    "mocha": "9.1.1",
+    "nyc": "15.1.0",
+    "source-map-support": "0.5.21",
+    "tsconfig-paths": "4.1.0",
+    "typechain": "8.1.1"
+  },
+  "dependencies": {
+    "ajv": "^8.11.0",
+    "axios": "1.2.0",
+    "debug": "4.3.4",
+    "lodash": "4.17.21",
+    "mustache": "4.2.0",
+    "solc": "^0.8.17",
+    "solidity-ast": "0.4.26"
+  },
+  "peerDependenciesMeta": {
+    "@usecannon/builder": {
+      "optional": true
+    }
+  }
+}
