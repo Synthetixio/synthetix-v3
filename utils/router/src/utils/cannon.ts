@@ -12,7 +12,6 @@ import {
 
 import {
   getContractDefinitionFromPath,
-  getContractFromPath,
   getMergedAbiFromContractPaths,
 } from '@usecannon/builder/dist/util';
 
@@ -50,7 +49,9 @@ const routerAction = {
 
     const newConfig = this.configInject(ctx, config);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contractAbis: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contractAddresses: any = {};
 
     for (const n of newConfig.contracts) {
