@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
+import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";

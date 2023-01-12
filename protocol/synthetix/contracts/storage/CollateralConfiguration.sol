@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
+import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 

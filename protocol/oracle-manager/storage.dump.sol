@@ -77,7 +77,7 @@ library ReducerNode {
     }
 }
 
-// @custom:artifact contracts/storage/Node.sol:Node
+// @custom:artifact contracts/storage/NodeOutput.sol:Node
 library Node {
     struct Data {
         int256 price;
