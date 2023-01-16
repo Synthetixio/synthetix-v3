@@ -29,6 +29,15 @@ describe('ScalableMapping', () => {
   describe('set()', async () => {
     before(restore);
 
+    describe('scale (with no shares)', function () {
+      it('reverts', async function () {
+        await assertRevert(
+          FakeScalableMapping.ScalableMapping_scale(wei(2, 27).toBN()),
+          'CannotScaleEmptyMapping()'
+        );
+      });
+    });
+
     describe('actors enter', async () => {
       before('add value', async () => {
         await FakeScalableMapping.ScalableMapping_set(actor1, bn(50));
