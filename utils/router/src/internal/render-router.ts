@@ -71,7 +71,7 @@ function _getAllSelectors(
     });
 }
 
-function _renderReceive(canReceivePlainETH: Boolean) {
+function _renderReceive(canReceivePlainETH: boolean) {
   let receiveStr = '';
 
   if (canReceivePlainETH) {

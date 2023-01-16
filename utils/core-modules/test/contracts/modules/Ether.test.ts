@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
@@ -59,7 +58,7 @@ describe('ETH transfer', function () {
 
   describe('when interacting with the system with ETH value', function () {
     it('does not revert', async function () {
-      System.setProtectedValue(1337, { from: await owner.getAddress(), value });
+      await System.setProtectedValue(1337, { from: await owner.getAddress(), value });
     });
   });
 });
