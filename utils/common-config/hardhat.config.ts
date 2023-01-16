@@ -13,7 +13,7 @@ import 'hardhat-cannon';
 import 'hardhat-ignore-warnings';
 
 // cannon builder plugin
-import '@synthetixio/router/utils/cannon';
+import '@synthetixio/router/src/utils/cannon';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
