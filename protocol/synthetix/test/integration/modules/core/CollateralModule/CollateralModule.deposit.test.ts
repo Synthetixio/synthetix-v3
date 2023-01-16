@@ -3,12 +3,13 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import { bootstrap } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
-  const { signers, systems } = bootstrap();
+  const { signers, systems, provider } = bootstrap();
 
   let Collateral: Ethers.Contract, oracleNodeId: string;
 
@@ -183,6 +184,70 @@ describe('CollateralModule', function () {
                 assertBn.equal(totalStaked, 0);
                 assertBn.equal(totalAssigned, 0);
                 assertBn.equal(totalAvailable, 0);
+              });
+            });
+
+            describe('when locking collateral', () => {
+              const secondsInMonth = 60 * 60 * 24 * 30;
+              var lockedUntil: number;
+
+              before('deposit and lock some collateral', async () => {
+                const tx = await systems()
+                  .Core.connect(user2)
+                  .deposit(2, Collateral.address, depositAmount);
+                receipt = await tx.wait();
+
+                // establish time when collateral is expected to be unlocked
+                const currentTime = await getTime(provider());
+                lockedUntil = currentTime + secondsInMonth;
+
+                // lock collateral until specified time
+                await systems()
+                  .Core.connect(user2)
+                  .createLock(2, Collateral.address, depositAmount, lockedUntil);
+              });
+
+              it('reverts when attempting to withdraw locked collateral', async () => {
+                // Collateral uses 6 decimals and system operates with 18,
+                // so scale up the expected amount.
+                const errorAmount = depositAmount.mul(ethers.BigNumber.from(10).pow(12));
+
+                // expect revert during attempt to withdraw locked collateral before specified time
+                await assertRevert(
+                  systems().Core.connect(user2).withdraw(2, Collateral.address, depositAmount),
+                  `InsufficientAccountCollateral("${errorAmount}")`,
+                  systems().Core
+                );
+              });
+
+              describe('when withdrawing unlocked collateral', () => {
+                before('fastforward and withdraw unlocked collateral', async () => {
+                  await fastForwardTo(lockedUntil, provider());
+                  const tx = await systems()
+                    .Core.connect(user2)
+                    .withdraw(2, Collateral.address, depositAmount);
+                  receipt = await tx.wait();
+                });
+
+                it('shows unlocked collateral can be withdrawn', async () => {
+                  // expect involved account balances are correct
+                  assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), mintAmount);
+                });
+
+                it('shows that the registered collateral has been updated accordingly', async function () {
+                  const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(
+                    2,
+                    Collateral.address
+                  );
+                  const totalAvailable = await systems().Core.getAccountAvailableCollateral(
+                    2,
+                    Collateral.address
+                  );
+  
+                  assertBn.equal(totalStaked, 0);
+                  assertBn.equal(totalAssigned, 0);
+                  assertBn.equal(totalAvailable, 0);
+                });
               });
             });
 
