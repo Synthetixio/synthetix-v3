@@ -68,20 +68,23 @@ contract CollateralModule is ICollateralModule {
 
         Account.Data storage account = Account.load(accountId);
 
-        uint256 systemAmount = CollateralConfiguration
+        uint256 tokenAmountD18 = CollateralConfiguration
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
 
         (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked) = account
             .getCollateralTotals(collateralType);
 
-        // neither totalAssigned collateral nor totalLocked is available to be withdrawn
-        uint256 unavailableCollateral = totalAssigned > totalLocked ? totalAssigned : totalLocked;
-        if (totalDeposited - unavailableCollateral < systemAmount) {
-            revert InsufficientAccountCollateral(systemAmount);
+        // The amount that cannot be withdrawn from the protocol is the max of either
+        // locked collateral or delegated collateral.
+        uint256 unavailableCollateral = totalLocked > totalAssigned ? totalLocked : totalAssigned;
+
+        uint256 availableForWithdrawal = totalDeposited - unavailableCollateral;
+        if (tokenAmountD18 > availableForWithdrawal) {
+            revert InsufficientAccountCollateral(tokenAmountD18);
         }
 
-        account.collaterals[collateralType].decreaseAvailableCollateral(systemAmount);
+        account.collaterals[collateralType].decreaseAvailableCollateral(tokenAmountD18);
 
         collateralType.safeTransfer(msg.sender, tokenAmount);
 
