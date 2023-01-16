@@ -189,7 +189,7 @@ describe('CollateralModule', function () {
 
             describe('when locking collateral', () => {
               const secondsInMonth = 60 * 60 * 24 * 30;
-              var lockedUntil: number;
+              let lockedUntil: number;
 
               before('deposit and lock some collateral', async () => {
                 const tx = await systems()
@@ -243,7 +243,7 @@ describe('CollateralModule', function () {
                     2,
                     Collateral.address
                   );
-  
+
                   assertBn.equal(totalStaked, 0);
                   assertBn.equal(totalAssigned, 0);
                   assertBn.equal(totalAvailable, 0);
