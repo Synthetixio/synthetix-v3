@@ -15,9 +15,7 @@ contract {{{moduleName}}} {
     fallback() external payable {
         _forward();
     }
-
     {{{receive}}}
-
     function _forward() internal {
         // Lookup table: Function selector => implementation contract
         bytes4 sig4 = msg.sig;

@@ -48,6 +48,9 @@ export function renderRouter({
     moduleName: routerName,
     modules: _renderModules(contracts),
     selectors: _renderSelectors(binaryData),
+    // Note: Plain ETH transfers are disabled by default. Set this to true to
+    // enable them. If there is ever a use case for this, it might be a good
+    // idea to expose the boolean in the router tool's interface.
     receive: _renderReceive(false),
   });
 }
@@ -72,7 +75,7 @@ function _renderReceive(canReceivePlainETH: Boolean) {
   let receiveStr = '';
 
   if (canReceivePlainETH) {
-    receiveStr += 'receive() external payable {}\n';
+    receiveStr += '\n    receive() external payable {}\n';
   }
 
   return receiveStr;
