@@ -5,7 +5,7 @@ description = "Core synthetix oracle manager"
 # `salt` here only affects proxy contract
 [setting.salt]
 description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
-defaultValue = "oracle-manager"
+defaultValue = "oracle-manager-official"
 
 [setting.owner]
 description = "Admin user for the system"
@@ -16,6 +16,7 @@ artifact = "contracts/modules/NodeModule.sol:NodeModule"
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
+salt = "<%= settings.salt %>"
 create2 = true
 
 [contract.InitialProxy]

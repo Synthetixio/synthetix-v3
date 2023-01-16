@@ -12,14 +12,16 @@ description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.oracle_manager_source]
-defaultValue = "oracle-manager:1.0.1"
+defaultValue = "oracle-manager:1.2.1"
 
-[import.oracle_manager]
+[provision.oracle_manager]
 source = "<%= settings.oracle_manager_source %>"
 options.owner = "<%= settings.owner %>"
+options.salt = "<%= settings.salt %>-oracle"
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
+salt = "<%= settings.salt %>"
 create2 = true
 
 [contract.FeatureFlagModule]
@@ -213,4 +215,4 @@ func = "configureOracleManager"
 args = [
   "<%= imports.oracle_manager.contracts.Proxy.address %>",
 ]
-depends = ["invoke.upgrade_core_proxy", "import.oracle_manager"]
+depends = ["invoke.upgrade_core_proxy", "provision.oracle_manager"]
