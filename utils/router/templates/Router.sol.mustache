@@ -16,9 +16,7 @@ contract {{{moduleName}}} {
         _forward();
     }
 
-    receive() external payable {
-        _forward();
-    }
+    {{{receive}}}
 
     function _forward() internal {
         // Lookup table: Function selector => implementation contract

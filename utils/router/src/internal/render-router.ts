@@ -48,6 +48,7 @@ export function renderRouter({
     moduleName: routerName,
     modules: _renderModules(contracts),
     selectors: _renderSelectors(binaryData),
+    receive: _renderReceive(false),
   });
 }
 
@@ -65,6 +66,16 @@ function _getAllSelectors(
     .sort((a, b) => {
       return Number.parseInt(a.selector, 16) - Number.parseInt(b.selector, 16);
     });
+}
+
+function _renderReceive(canReceivePlainETH: Boolean) {
+  let receiveStr = '';
+
+  if (canReceivePlainETH) {
+    receiveStr += 'receive() external payable {}\n';
+  }
+
+  return receiveStr;
 }
 
 function _renderSelectors(binaryData: BinaryData) {
