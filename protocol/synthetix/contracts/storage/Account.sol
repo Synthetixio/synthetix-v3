@@ -106,7 +106,7 @@ library Account {
             self.collaterals[collateralType].amountAvailableForDelegationD18;
         totalLockedD18 = self.collaterals[collateralType].getTotalLocked();
 
-        return (totalDepositedD18, totalAssignedD18, totalLockedD18); //, totalEscrowed);
+        return (totalDepositedD18, totalAssignedD18, totalLockedD18);
     }
 
     /**
