@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import { SampleOwnedModule } from '../../../typechain-types';
 
-describe.only('ETH transfer', function () {
+describe('ETH transfer', function () {
   const { getContractBehindProxy, getSigners } = bootstrap({
     implementation: 'SampleRouter',
   });
