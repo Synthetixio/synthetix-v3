@@ -60,7 +60,7 @@ interface IPoolModule {
      * @param name The new name of the pool.
      * @param sender The address that triggered the rename of the pool.
      */
-    event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
+    event PoolNameUpdated(uint128 indexed poolId, string name, address indexed sender);
 
     /**
      * @notice Gets fired when pool gets configured.
@@ -98,9 +98,10 @@ interface IPoolModule {
      * @param poolId The id of the pool whose configuration is being queried.
      * @return markets The array of MarketConfiguration objects that describe the pool's configuration.
      */
-    function getPoolConfiguration(
-        uint128 poolId
-    ) external view returns (MarketConfiguration.Data[] memory markets);
+    function getPoolConfiguration(uint128 poolId)
+        external
+        view
+        returns (MarketConfiguration.Data[] memory markets);
 
     /**
      * @notice Allows the owner of the pool to set the pool's name.
