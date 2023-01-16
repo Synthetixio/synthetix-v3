@@ -83,7 +83,7 @@ library RewardDistribution {
             );
         }
 
-        int256 curTime = block.timestamp.toInt().to128();
+        uint curTime = block.timestamp;
 
         // Unlocks the entry's distributed amount into its value per share.
         diffD18 += updateEntry(entry, dist.totalSharesD18);
@@ -91,7 +91,7 @@ library RewardDistribution {
         // If the current time is past the end of the entry's duration,
         // update any rewards which may have accrued since last run.
         // (instant distribution--immediately disperse amount).
-        if (start + duration <= curTime.toUint()) {
+        if (start + duration <= curTime) {
             diffD18 += amountD18.divDecimal(totalSharesD18.toInt());
 
             entry.lastUpdate = 0;
@@ -126,12 +126,12 @@ library RewardDistribution {
             return 0;
         }
 
-        int128 curTime = block.timestamp.toInt().to128();
+        uint curTime = block.timestamp;
 
         int256 valuePerShareChangeD18 = 0;
 
         // Cannot update an entry whose start date has not being reached.
-        if (curTime < entry.start.toInt()) {
+        if (curTime < entry.start) {
             return 0;
         }
 
@@ -155,10 +155,9 @@ library RewardDistribution {
             // If the current time is beyond the duration, then consider all scheduled value to be distributed.
             // Else, the amount distributed is proportional to the elapsed time.
             int256 curUpdateDistributedD18 = entry.scheduledValueD18;
-            if (curTime < (entry.start + entry.duration).toInt()) {
-                curUpdateDistributedD18 =
-                    (curUpdateDistributedD18 * (curTime - entry.start.toInt())) /
-                    entry.duration.toInt();
+            if (curTime < entry.start + entry.duration) {
+                uint timeRatio = (curTime - entry.start) / entry.duration;
+                curUpdateDistributedD18 = curUpdateDistributedD18 * timeRatio.toInt();
             }
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
@@ -166,7 +165,7 @@ library RewardDistribution {
                 .divDecimal(totalSharesAmountD18.toInt());
         }
 
-        entry.lastUpdate = curTime.to32().toUint();
+        entry.lastUpdate = curTime.to32();
 
         return valuePerShareChangeD18;
     }
