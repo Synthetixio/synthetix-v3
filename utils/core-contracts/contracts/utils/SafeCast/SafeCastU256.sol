@@ -8,6 +8,7 @@ library SafeCastU256 {
     error OverflowUint256ToUint128();
     error OverflowUint256ToInt256();
     error OverflowUint256ToUint64();
+    error OverflowUint256ToUint32();
     error OverflowUint256ToUint160();
 
     function to128(uint256 x) internal pure returns (uint128) {
@@ -28,6 +29,16 @@ library SafeCastU256 {
         }
 
         return uint64(x);
+    }
+
+    function to32(uint256 x) internal pure returns (uint32) {
+        // -------------------------------o===============================>
+        // -------------------------------o===>xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        if (x > type(uint32).max) {
+            revert OverflowUint256ToUint32();
+        }
+
+        return uint32(x);
     }
 
     function to160(uint256 x) internal pure returns (uint160) {
