@@ -156,8 +156,11 @@ library RewardDistribution {
             // Else, the amount distributed is proportional to the elapsed time.
             int256 curUpdateDistributedD18 = entry.scheduledValueD18;
             if (curTime < entry.start + entry.duration) {
-                uint timeRatio = (curTime - entry.start) / entry.duration;
-                curUpdateDistributedD18 = curUpdateDistributedD18 * timeRatio.toInt();
+                // Note: Not using an intermediate time ratio variable
+                // in the following calculation to maintain precision.
+                curUpdateDistributedD18 =
+                    (curUpdateDistributedD18 * (curTime - entry.start).toInt()) /
+                    entry.duration.toInt();
             }
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
