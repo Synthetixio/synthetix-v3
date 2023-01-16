@@ -40,7 +40,7 @@ library Collateral {
     /**
      * @dev Increments the entry's availableCollateral.
      */
-    function deposit(Data storage self, uint amountD18) internal {
+    function increaseAvailableCollateral(Data storage self, uint amountD18) internal {
         if (!self.isSet) {
             self.isSet = true;
             self.amountAvailableForDelegationD18 = amountD18;
@@ -52,7 +52,7 @@ library Collateral {
     /**
      * @dev Decrements the entry's availableCollateral.
      */
-    function deductCollateral(Data storage self, uint amountD18) internal {
+    function decreaseAvailableCollateral(Data storage self, uint amountD18) internal {
         self.amountAvailableForDelegationD18 -= amountD18;
     }
 

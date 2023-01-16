@@ -238,9 +238,9 @@ contract VaultModule is IVaultModule {
 
         // Adjust collateral depending on increase/decrease of amount.
         if (newCollateralAmount > oldCollateralAmount) {
-            collateral.deductCollateral(newCollateralAmount - oldCollateralAmount);
+            collateral.decreaseAvailableCollateral(newCollateralAmount - oldCollateralAmount);
         } else {
-            collateral.deposit(oldCollateralAmount - newCollateralAmount);
+            collateral.increaseAvailableCollateral(oldCollateralAmount - newCollateralAmount);
         }
 
         // If the collateral amount is positive, make sure that the pool exists

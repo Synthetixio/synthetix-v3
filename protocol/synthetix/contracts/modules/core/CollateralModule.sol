@@ -49,7 +49,7 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransferFrom(depositFrom, self, tokenAmount);
 
-        account.collaterals[collateralType].deposit(
+        account.collaterals[collateralType].increaseAvailableCollateral(
             CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount)
         );
 
@@ -81,7 +81,7 @@ contract CollateralModule is ICollateralModule {
             revert InsufficientAccountCollateral(systemAmount);
         }
 
-        account.collaterals[collateralType].deductCollateral(systemAmount);
+        account.collaterals[collateralType].decreaseAvailableCollateral(systemAmount);
 
         collateralType.safeTransfer(msg.sender, tokenAmount);
 
