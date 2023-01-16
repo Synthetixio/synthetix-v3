@@ -91,15 +91,14 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function getAccountCollateral(uint128 accountId, address collateralType)
+    function getAccountCollateral(
+        uint128 accountId,
+        address collateralType
+    )
         external
         view
         override
-        returns (
-            uint256 totalDeposited,
-            uint256 totalAssigned,
-            uint256 totalLocked
-        )
+        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
     {
         return Account.load(accountId).getCollateralTotals(collateralType);
     }
@@ -107,13 +106,11 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function getAccountAvailableCollateral(uint128 accountId, address collateralType)
-        public
-        view
-        override
-        returns (uint256)
-    {
-        return Account.load(accountId).collaterals[collateralType].availableAmountD18;
+    function getAccountAvailableCollateral(
+        uint128 accountId,
+        address collateralType
+    ) public view override returns (uint256) {
+        return Account.load(accountId).collaterals[collateralType].amountAvailableForDelegationD18;
     }
 
     /**
