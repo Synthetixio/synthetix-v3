@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
-
 /**
  * @title Module for associating debt with the system.
  * @notice Allows a market to associate debt to a user's existing position.

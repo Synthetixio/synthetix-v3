@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/MarketConfiguration.sol";
-
 /**
  * @title Module for the creation and management of pools.
  * @dev The pool owner can be specified during creation, can be transferred, and has credentials for configuring the pool.
