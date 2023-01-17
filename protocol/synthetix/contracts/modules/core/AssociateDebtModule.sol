@@ -10,9 +10,7 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
-import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
-import "../../storage/Market.sol";
 
 /**
  * @title Module for associating debt with the system.

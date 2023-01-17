@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/ILiquidationModule.sol";
 
-import "../../storage/Collateral.sol";
-import "../../storage/Pool.sol";
 import "../../storage/Account.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
