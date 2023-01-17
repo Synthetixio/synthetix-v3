@@ -43,6 +43,7 @@ describe('ETH transfer', function () {
         owner.sendTransaction({
           to: System.address,
           value,
+          gasLimit: 12000000, // Avoid gas estimation in coverage, in order to identify custom error in assert-revert
         }),
         'UnknownSelector("0x00000000")',
         Router
