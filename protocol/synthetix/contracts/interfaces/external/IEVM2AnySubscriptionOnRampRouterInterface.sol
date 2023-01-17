@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+
 /**
  * @notice Application contracts that intend to send messages via CCIP
  * will interact with this interface.

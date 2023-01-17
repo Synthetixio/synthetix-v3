@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./VaultEpoch.sol";
 import "./RewardDistribution.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**

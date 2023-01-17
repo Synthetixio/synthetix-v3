@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../storage/CollateralConfiguration.sol";
+
 /**
  * @title Module for configuring system wide collateral.
  * @notice Allows the owner to configure collaterals at a system wide level.

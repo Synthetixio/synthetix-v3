@@ -35,11 +35,6 @@ library Account {
      */
     error InsufficientAccountCollateral(uint256 requestedAmount);
 
-    /**
-     * @dev Thrown when a permission specified by a user does not exist or is invalid.
-     */
-    error InvalidPermission(bytes32 permission);
-
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
@@ -158,5 +153,9 @@ library Account {
         ) {
             revert InsufficientAccountCollateral(amountD18);
         }
+    }
+
+    function throwInvalidPermissionError(bytes32 permission) internal pure {
+        revert AccountRBAC.InvalidPermission(permission);
     }
 }
