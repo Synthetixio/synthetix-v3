@@ -48,6 +48,10 @@ export function renderRouter({
     moduleName: routerName,
     modules: _renderModules(contracts),
     selectors: _renderSelectors(binaryData),
+    // Note: Plain ETH transfers are disabled by default. Set this to true to
+    // enable them. If there is ever a use case for this, it might be a good
+    // idea to expose the boolean in the router tool's interface.
+    receive: _renderReceive(false),
   });
 }
 
@@ -65,6 +69,16 @@ function _getAllSelectors(
     .sort((a, b) => {
       return Number.parseInt(a.selector, 16) - Number.parseInt(b.selector, 16);
     });
+}
+
+function _renderReceive(canReceivePlainETH: boolean) {
+  let receiveStr = '';
+
+  if (canReceivePlainETH) {
+    receiveStr += '\n    receive() external payable {}\n';
+  }
+
+  return receiveStr;
 }
 
 function _renderSelectors(binaryData: BinaryData) {
