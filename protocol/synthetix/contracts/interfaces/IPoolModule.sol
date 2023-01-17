@@ -60,7 +60,7 @@ interface IPoolModule {
      * @param name The new name of the pool.
      * @param sender The address that triggered the rename of the pool.
      */
-    event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
+    event PoolNameUpdated(uint128 indexed poolId, string name, address indexed sender);
 
     /**
      * @notice Gets fired when pool gets configured.

@@ -343,7 +343,7 @@ library AccountRBAC {
 library Collateral {
     struct Data {
         bool isSet;
-        uint256 availableAmountD18;
+        uint256 amountAvailableForDelegationD18;
         SetUtil.UintSet pools;
         CollateralLock.Data[] locks;
     }

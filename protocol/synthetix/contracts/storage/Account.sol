@@ -101,10 +101,12 @@ library Account {
         returns (uint256 totalDepositedD18, uint256 totalAssignedD18, uint256 totalLockedD18)
     {
         totalAssignedD18 = getAssignedCollateral(self, collateralType);
-        totalDepositedD18 = totalAssignedD18 + self.collaterals[collateralType].availableAmountD18;
+        totalDepositedD18 =
+            totalAssignedD18 +
+            self.collaterals[collateralType].amountAvailableForDelegationD18;
         totalLockedD18 = self.collaterals[collateralType].getTotalLocked();
 
-        return (totalDepositedD18, totalAssignedD18, totalLockedD18); //, totalEscrowed);
+        return (totalDepositedD18, totalAssignedD18, totalLockedD18);
     }
 
     /**
@@ -150,7 +152,10 @@ library Account {
         address collateralType,
         uint256 amountD18
     ) internal view {
-        if (Account.load(accountId).collaterals[collateralType].availableAmountD18 < amountD18) {
+        if (
+            Account.load(accountId).collaterals[collateralType].amountAvailableForDelegationD18 <
+            amountD18
+        ) {
             revert InsufficientAccountCollateral(amountD18);
         }
     }

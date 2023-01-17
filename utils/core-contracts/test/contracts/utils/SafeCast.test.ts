@@ -474,6 +474,26 @@ describe('SafeCast', function () {
       });
     });
 
+    describe('to32()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'uint256toUint32(uint256)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 4));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxUint(32));
+      });
+
+      it('throws on overflows', async function () {
+        await assertRevert(SafeCast[castFunction](maxUint(32).add(1)), 'OverflowUint256ToUint32()');
+      });
+    });
+
     describe('toBytes32()', function () {
       before('set the target cast function', async function () {
         castFunction = 'uint256toBytes32(uint256)';

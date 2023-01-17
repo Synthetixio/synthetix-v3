@@ -107,8 +107,8 @@ interface ICollateralModule {
 
     /**
      * @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
-     * @dev A collateral lock does not affect delegation. It only prevents withdrawals.
-     * @dev There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
+     * @dev Collateral can be withdrawn from the system if it is not assigned or delegated to a pool. Collateral locks are an additional restriction that applies on top of that. I.e. if collateral is not assigned to a pool, but has a lock, it cannot be withdrawn.
+     * @dev Collateral locks are initially intended for the Synthetix v2 to v3 migration, but may be used in the future by the Spartan Council, for example, to create and hand off accounts whose withdrawals from the system are locked for a given amount of time.
      * @param accountId The id of the account for which a lock is to be created.
      * @param collateralType The address of the collateral type for which the lock will be created.
      * @param amount The amount of collateral tokens to wrap in the lock being created, denominated with 18 decimals of precision.
