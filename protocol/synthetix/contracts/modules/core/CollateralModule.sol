@@ -113,7 +113,7 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType
     ) public view override returns (uint256) {
-        return Account.load(accountId).collaterals[collateralType].availableAmountD18;
+        return Account.load(accountId).collaterals[collateralType].amountAvailableForDelegationD18;
     }
 
     /**
