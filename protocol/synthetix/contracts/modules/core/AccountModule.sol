@@ -166,7 +166,7 @@ contract AccountModule is IAccountModule {
             permission != AccountRBAC._MINT_PERMISSION &&
             permission != AccountRBAC._ADMIN_PERMISSION
         ) {
-            revert InvalidPermission(permission);
+            revert Account.InvalidPermission(permission);
         }
     }
 }
