@@ -105,7 +105,7 @@ contract LiquidationModule is ILiquidationModule {
         pool.recalculateVaultCollateral(collateralType);
 
         // Send amountRewarded to the specified account
-        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(
+        Account.load(liquidateAsAccountId).collaterals[collateralType].increaseAvailableCollateral(
             liquidationData.amountRewarded
         );
 
@@ -195,7 +195,7 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         // Send liquidationData.collateralLiquidated to the specified account
-        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(
+        Account.load(liquidateAsAccountId).collaterals[collateralType].increaseAvailableCollateral(
             liquidationData.collateralLiquidated
         );
         liquidationData.amountRewarded = liquidationData.debtLiquidated;

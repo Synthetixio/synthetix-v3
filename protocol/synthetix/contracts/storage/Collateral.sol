@@ -23,7 +23,7 @@ library Collateral {
         /**
          * @dev The amount that can be withdrawn or delegated in this collateral.
          */
-        uint256 availableAmountD18;
+        uint256 amountAvailableForDelegationD18;
         /**
          * @dev The pools to which this collateral delegates to.
          */
@@ -40,20 +40,20 @@ library Collateral {
     /**
      * @dev Increments the entry's availableCollateral.
      */
-    function deposit(Data storage self, uint amountD18) internal {
+    function increaseAvailableCollateral(Data storage self, uint amountD18) internal {
         if (!self.isSet) {
             self.isSet = true;
-            self.availableAmountD18 = amountD18;
+            self.amountAvailableForDelegationD18 = amountD18;
         } else {
-            self.availableAmountD18 += amountD18;
+            self.amountAvailableForDelegationD18 += amountD18;
         }
     }
 
     /**
      * @dev Decrements the entry's availableCollateral.
      */
-    function deductCollateral(Data storage self, uint amountD18) internal {
-        self.availableAmountD18 -= amountD18;
+    function decreaseAvailableCollateral(Data storage self, uint amountD18) internal {
+        self.amountAvailableForDelegationD18 -= amountD18;
     }
 
     /**
