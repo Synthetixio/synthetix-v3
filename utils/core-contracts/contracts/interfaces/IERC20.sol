@@ -91,6 +91,36 @@ interface IERC20 {
     function approve(address spender, uint amount) external returns (bool);
 
     /**
+     * @notice Atomically increases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
+
+    /**
+     * @notice Atomically decreases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `spender` must have allowance for the caller of at least
+     * `subtractedValue`.
+     */
+    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
+
+    /**
      * @notice Allows a user who has been given allowance to transfer tokens on another user's behalf.
      * @param from The address that owns the tokens that are being transferred.
      * @param to The address that will receive the tokens.
