@@ -244,6 +244,7 @@ library FeeUtil {
      *  Fee calculation = (1100 + 100) / 1000 = 1.2 * 100 = 120 bips
      *
      * TODO: verify this calculation with the team
+     * TODO: utilization fee should be average of before and after fill
      */
     function calculateUtilizationRateFee(
         FeeConfiguration.Data storage feeConfiguration,
@@ -296,6 +297,8 @@ library FeeUtil {
             uint currentUsdBalance = store.usdToken.balanceOf(address(this));
             collectedFees = currentUsdBalance - previousUsdBalance;
 
+            // TODO: event for fees collected?
+
             store.usdToken.approve(address(feeCollector), 0);
         }
 
@@ -315,6 +318,8 @@ library FeeUtil {
         FeeConfiguration.Data storage feeConfiguration,
         address transactor
     ) private view returns (uint) {
+        // TODO: add to readme, can't set transactor's value to zero
+        // talk to afif
         return
             feeConfiguration.atomicFixedFeeOverrides[transactor] > 0
                 ? feeConfiguration.atomicFixedFeeOverrides[transactor]

@@ -283,11 +283,11 @@ const createOracleNode = async (
   await aggregator.mockSetCurrentPrice(price);
 
   const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 18]);
-  await OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+  await OracleManager.connect(owner).registerNode(NodeTypes.CHAINLINK, params1, []);
   const oracleNodeId = await OracleManager.connect(owner).getNodeId(
-    [],
     NodeTypes.CHAINLINK,
-    params1
+    params1,
+    []
   );
 
   return {
