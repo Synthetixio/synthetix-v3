@@ -17,6 +17,11 @@ import "../interfaces/external/IAggregatorV3Interface.sol";
  * @title Tracks system-wide settings for each collateral type, as well as helper functions for it, such as retrieving its current price from the oracle manager.
  */
 library CollateralConfiguration {
+    bytes32 private constant _SLOT_AVAILABLE_COLLATERALS =
+        keccak256(
+            abi.encode("io.synthetix.synthetix.CollateralConfiguration_availableCollaterals")
+        );
+
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
@@ -104,9 +109,7 @@ library CollateralConfiguration {
      * @return data An array of addresses, one for each collateral type supported by the system.
      */
     function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
-        bytes32 s = keccak256(
-            abi.encode("io.synthetix.synthetix.CollateralConfiguration_availableCollaterals")
-        );
+        bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
             data.slot := s
         }

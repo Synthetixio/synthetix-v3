@@ -17,10 +17,6 @@ library Collateral {
 
     struct Data {
         /**
-         * @dev Indicates if the collateral is set, i.e. not empty.
-         */
-        bool isSet;
-        /**
          * @dev The amount that can be withdrawn or delegated in this collateral.
          */
         uint256 amountAvailableForDelegationD18;
@@ -41,12 +37,7 @@ library Collateral {
      * @dev Increments the entry's availableCollateral.
      */
     function increaseAvailableCollateral(Data storage self, uint amountD18) internal {
-        if (!self.isSet) {
-            self.isSet = true;
-            self.amountAvailableForDelegationD18 = amountD18;
-        } else {
-            self.amountAvailableForDelegationD18 += amountD18;
-        }
+        self.amountAvailableForDelegationD18 += amountD18;
     }
 
     /**
