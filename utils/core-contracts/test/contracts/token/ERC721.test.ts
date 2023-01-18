@@ -125,7 +125,7 @@ describe('ERC721', function () {
       it('gets the right token URI', async function () {
         assert.equal(await ERC721.tokenURI(token42), '');
       });
-    
+
       it('reverts if tokenURI called with nonexistant NFT id', async () => {
         await assertRevert(ERC721.tokenURI(24), 'TokenDoesNotExist(24)', ERC721);
       });

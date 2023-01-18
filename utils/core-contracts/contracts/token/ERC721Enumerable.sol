@@ -21,7 +21,7 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         uint256 index
     ) public view virtual override returns (uint256) {
         if (ERC721.balanceOf(owner) <= index) {
-            return 0;
+            revert IndexOverrun(index, ERC721.balanceOf(owner));
         }
         return ERC721EnumerableStorage.load().ownedTokens[owner][index];
     }
@@ -38,7 +38,7 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
      */
     function tokenByIndex(uint256 index) public view virtual override returns (uint256) {
         if (index >= ERC721Enumerable.totalSupply()) {
-            return 0;
+            revert IndexOverrun(index, ERC721Enumerable.totalSupply());
         }
         return ERC721EnumerableStorage.load().allTokens[index];
     }

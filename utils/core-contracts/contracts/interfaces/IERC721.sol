@@ -51,6 +51,10 @@ interface IERC721 {
 
     /**
      * @notice Returns the number of tokens in ``owner``'s account.
+     *
+     * Requirements:
+     *
+     * - `owner` must be a valid address
      */
     function balanceOf(address owner) external view returns (uint256 balance);
 
