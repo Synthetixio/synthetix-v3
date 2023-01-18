@@ -137,19 +137,11 @@ library Account {
 
     /**
      * @dev Requires that the given account has the specified permission.
-     * @dev Additionally returns the Account object because often the account is required after the check. This saves a storage load in many use cases.
      */
-    function onlyWithPermission(
-        uint128 accountId,
-        bytes32 permission
-    ) internal view returns (Data storage account) {
-        account = Account.load(accountId);
-
-        if (!account.rbac.authorized(permission, msg.sender)) {
+    function onlyWithPermission(uint128 accountId, bytes32 permission) internal view {
+        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
-
-        return account;
     }
 
     /**
