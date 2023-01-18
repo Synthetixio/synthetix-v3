@@ -69,8 +69,8 @@ describe('ERC721', function () {
       assertBn.equal(await ERC721.balanceOf(await user1.getAddress()), 0);
     });
 
-    it('returns default 0 for balance of 0x0 address', async function () {
-      assertBn.equal(await ERC721.balanceOf(ethers.constants.AddressZero), 0);
+    it('reverts if balanceOf called with an invalid owner', async () => {
+      await assertRevert(ERC721.balanceOf(ethers.constants.AddressZero), 'InvalidOwner');
     });
   });
 
@@ -102,8 +102,8 @@ describe('ERC721', function () {
       assert.equal(await ERC721.ownerOf(token42), await user1.getAddress());
     });
 
-    it('returns default address zero for owner of a wrong NFT Id', async function () {
-      assert.equal(await ERC721.ownerOf(24), ethers.constants.AddressZero);
+    it('reverts for owner of a non-existant NFT Id', async function () {
+      await assertRevert(ERC721.ownerOf(24), 'TokenDoesNotExist(24)', ERC721);
     });
 
     describe('when attempting to mint again an existent Token', async function () {
@@ -125,9 +125,9 @@ describe('ERC721', function () {
       it('gets the right token URI', async function () {
         assert.equal(await ERC721.tokenURI(token42), '');
       });
-
-      it('returns default "" for an invalid tokenID', async function () {
-        assert.equal(await ERC721.tokenURI(24), '');
+    
+      it('reverts if tokenURI called with nonexistant NFT id', async () => {
+        await assertRevert(ERC721.tokenURI(24), 'TokenDoesNotExist(24)', ERC721);
       });
     });
 

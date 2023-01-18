@@ -18,6 +18,11 @@ interface IERC721 {
     error InvalidTransferRecipient(address addr);
 
     /**
+     * @notice Thrown when attempting to specify an owner which is not valid (ex. the 0x00000... address)
+     */
+    error InvalidOwner(address addr);
+
+    /**
      * @notice Thrown when attempting to operate on a token id that does not exist.
      * @param id The token id that does not exist.
      */
