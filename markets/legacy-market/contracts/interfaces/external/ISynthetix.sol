@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 // https://docs.synthetix.io/contracts/source/interfaces/isynthetix
 interface ISynthetix {
@@ -20,20 +20,17 @@ interface ISynthetix {
 
     function maxIssuableSynths(address issuer) external view returns (uint maxIssuable);
 
-    function remainingIssuableSynths(address issuer)
-        external
-        view
-        returns (
-            uint maxIssuable,
-            uint alreadyIssued,
-            uint totalSystemDebt
-        );
+    function remainingIssuableSynths(
+        address issuer
+    ) external view returns (uint maxIssuable, uint alreadyIssued, uint totalSystemDebt);
 
     function synthsByAddress(address synthAddress) external view returns (bytes32);
 
     function totalIssuedSynths(bytes32 currencyKey) external view returns (uint);
 
-    function totalIssuedSynthsExcludeOtherCollateral(bytes32 currencyKey) external view returns (uint);
+    function totalIssuedSynthsExcludeOtherCollateral(
+        bytes32 currencyKey
+    ) external view returns (uint);
 
     function transferableSynthetix(address account) external view returns (uint transferable);
 
@@ -104,18 +101,17 @@ interface ISynthetix {
 
     function mint() external returns (bool);
 
-    function settle(bytes32 currencyKey)
-        external
-        returns (
-            uint reclaimed,
-            uint refunded,
-            uint numEntries
-        );
+    function settle(
+        bytes32 currencyKey
+    ) external returns (uint reclaimed, uint refunded, uint numEntries);
 
     // Liquidations
     function liquidateDelinquentAccount(address account) external returns (bool);
 
-    function liquidateDelinquentAccountEscrowIndex(address account, uint escrowStartIndex) external returns (bool);
+    function liquidateDelinquentAccountEscrowIndex(
+        address account,
+        uint escrowStartIndex
+    ) external returns (bool);
 
     function liquidateSelf() external returns (bool);
 

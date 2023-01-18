@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 /**
  * @title Module for liquidated positions and vaults that are below the liquidation ratio.

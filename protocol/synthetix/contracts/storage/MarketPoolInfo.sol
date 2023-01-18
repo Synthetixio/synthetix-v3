@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 /**
  * @title Stores information regarding a pool's relationship to a market, such that it can be added or removed from a distribution
