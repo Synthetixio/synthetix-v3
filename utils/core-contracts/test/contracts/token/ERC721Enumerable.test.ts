@@ -28,6 +28,10 @@ describe('ERC721Enumerable', function () {
       assert.equal(await ERC721Enumerable.supportsInterface(0x80ac58cd as unknown as string), true);
     });
 
+    it('implements ERC721Enumerable', async function () {
+      assert.equal(await ERC721Enumerable.supportsInterface(0x780e9d63 as unknown as string), true);
+    });
+
     it('does not implement a random interface', async function () {
       assert.equal(
         await ERC721Enumerable.supportsInterface(0x11223344 as unknown as string),

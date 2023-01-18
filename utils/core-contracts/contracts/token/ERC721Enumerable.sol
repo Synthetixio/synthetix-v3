@@ -14,6 +14,15 @@ import "../interfaces/IERC721Enumerable.sol";
  */
 abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     /**
+     * @inheritdoc IERC165
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return
+            super.supportsInterface(interfaceId) ||
+            interfaceId == type(IERC721Enumerable).interfaceId;
+    }
+
+    /**
      * @inheritdoc IERC721Enumerable
      */
     function tokenOfOwnerByIndex(
