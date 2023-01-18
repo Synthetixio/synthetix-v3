@@ -70,7 +70,10 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(
+        address spender,
+        uint256 addedValue
+    ) public virtual override returns (bool) {
         uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
         _approve(msg.sender, spender, currentAllowance + addedValue);
 
@@ -83,7 +86,7 @@ contract ERC20 is IERC20 {
     function decreaseAllowance(
         address spender,
         uint256 subtractedValue
-    ) public virtual returns (bool) {
+    ) public virtual override returns (bool) {
         uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
         _approve(msg.sender, spender, currentAllowance - subtractedValue);
 
