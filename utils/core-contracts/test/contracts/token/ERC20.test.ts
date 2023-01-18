@@ -188,6 +188,88 @@ describe('ERC20', function () {
         assertBn.equal(evt.args.amount, approvalAmount);
       });
 
+      describe('increaseAllowance()', async () => {
+        it('reverts when overflowing', async () => {
+          await assertRevert(
+            ERC20.connect(user1).increaseAllowance(
+              await user2.getAddress(),
+              ethers.constants.MaxUint256
+            ),
+            'overflow',
+            ERC20
+          );
+        });
+
+        describe('successful invocation', async () => {
+          before('invoke', async () => {
+            receipt = await (
+              await ERC20.connect(user1).increaseAllowance(await user2.getAddress(), approvalAmount)
+            ).wait();
+          });
+
+          it('increases allowance', async () => {
+            assertBn.equal(
+              await ERC20.allowance(await user1.getAddress(), await user2.getAddress()),
+              approvalAmount.mul(2)
+            );
+          });
+
+          it('emits event', async () => {
+            const evt = findEvent({ receipt, eventName: 'Approval' });
+
+            assert(!Array.isArray(evt) && evt?.args);
+            assert.equal(evt.args.owner, await user1.getAddress());
+            assert.equal(evt.args.spender, await user2.getAddress());
+            assertBn.equal(evt.args.amount, approvalAmount.mul(2));
+          });
+        });
+
+        after('reset approval', async () => {
+          await ERC20.connect(user1).approve(await user2.getAddress(), approvalAmount);
+        });
+      });
+
+      describe('decreaseAllowance()', async () => {
+        it('reverts when underflowing', async () => {
+          await assertRevert(
+            ERC20.connect(user1).decreaseAllowance(await user2.getAddress(), approvalAmount.add(1)),
+            'overflow',
+            ERC20
+          );
+        });
+
+        describe('successful invocation', async () => {
+          before('invoke', async () => {
+            receipt = await (
+              await ERC20.connect(user1).decreaseAllowance(
+                await user2.getAddress(),
+                approvalAmount.sub(1)
+              )
+            ).wait();
+          });
+
+          it('decreases allowance', async () => {
+            assertBn.equal(
+              await ERC20.allowance(await user1.getAddress(), await user2.getAddress()),
+              1
+            );
+          });
+
+          it('emits event', async () => {
+            const evt = findEvent({ receipt, eventName: 'Approval' });
+
+            assert(!Array.isArray(evt) && evt?.args);
+            assert.equal(evt.args.owner, await user1.getAddress());
+            assert.equal(evt.args.spender, await user2.getAddress());
+            assertBn.equal(evt.args.amount, 1);
+          });
+        });
+
+        after('reset approval', async () => {
+          await ERC20.connect(user1).approve(await user2.getAddress(), approvalAmount);
+        });
+      });
+
       describe('when trying to transfer more than the amount approved', function () {
         it('reverts ', async function () {
           const amount = approvalAmount.add(1);

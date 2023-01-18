@@ -63,9 +63,32 @@ contract ERC20 is IERC20 {
      * @inheritdoc IERC20
      */
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        ERC20Storage.load().allowance[msg.sender][spender] = amount;
+        _approve(msg.sender, spender, amount);
+        return true;
+    }
 
-        emit Approval(msg.sender, spender, amount);
+    /**
+     * @inheritdoc IERC20
+     */
+    function increaseAllowance(
+        address spender,
+        uint256 addedValue
+    ) public virtual override returns (bool) {
+        uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
+        _approve(msg.sender, spender, currentAllowance + addedValue);
+
+        return true;
+    }
+
+    /**
+     * @inheritdoc IERC20
+     */
+    function decreaseAllowance(
+        address spender,
+        uint256 subtractedValue
+    ) public virtual override returns (bool) {
+        uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
+        _approve(msg.sender, spender, currentAllowance - subtractedValue);
 
         return true;
     }
@@ -129,6 +152,11 @@ contract ERC20 is IERC20 {
         }
 
         emit Transfer(from, to, amount);
+    }
+
+    function _approve(address owner, address spender, uint256 amount) internal virtual {
+        ERC20Storage.load().allowance[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
     }
 
     function _mint(address to, uint256 amount) internal virtual {
