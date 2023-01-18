@@ -172,6 +172,36 @@ contract SpotMarketFactoryModule is
     }
 
     /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function nominateNewOwner(uint128 synthMarketId, address newNominatedOwner) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        if (newNominatedOwner == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        SpotMarketFactory.load().marketNominatedOwners[synthMarketId] = newNominatedOwner;
+        emit OwnerNominated(newNominatedOwner, synthMarketId);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function acceptOwnership(uint128 synthMarketId) public override {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        address currentNominatedOwner = store.marketNominatedOwners[synthMarketId];
+        if (msg.sender != currentNominatedOwner) {
+            revert NotNominated(msg.sender);
+        }
+
+        emit OwnerChanged(store.marketOwners[synthMarketId], currentNominatedOwner, synthMarketId);
+
+        store.marketOwners[synthMarketId] = currentNominatedOwner;
+        store.marketNominatedOwners[synthMarketId] = address(0);
+    }
+
+    /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(

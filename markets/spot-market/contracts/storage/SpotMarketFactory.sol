@@ -42,6 +42,10 @@ library SpotMarketFactory {
          * @dev mapping of marketId to marketOwner
          */
         mapping(uint128 => address) marketOwners;
+        /**
+         * @dev mapping of marketId to marketNominatedOwner
+         */
+        mapping(uint128 => address) marketNominatedOwners;
     }
 
     enum TransactionType {
