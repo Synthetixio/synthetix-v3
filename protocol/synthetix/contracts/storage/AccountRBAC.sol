@@ -41,14 +41,18 @@ library AccountRBAC {
     /**
      * @dev Sets the owner of the account.
      */
-    function setOwner(Data storage self, address owner) internal {
-        self.owner = owner;
+    function setOwner(Data storage accountRBAC, address owner) internal {
+        accountRBAC.owner = owner;
     }
 
     /**
      * @dev Grants a particular permission to the specified target address.
      */
-    function grantPermission(Data storage self, bytes32 permission, address target) internal {
+    function grantPermission(
+        Data storage accountRBAC,
+        bytes32 permission,
+        address target
+    ) internal {
         if (target == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -57,32 +61,36 @@ library AccountRBAC {
             revert Account.InvalidPermission("");
         }
 
-        if (!self.permissionAddresses.contains(target)) {
-            self.permissionAddresses.add(target);
+        if (!accountRBAC.permissionAddresses.contains(target)) {
+            accountRBAC.permissionAddresses.add(target);
         }
 
-        self.permissions[target].add(permission);
+        accountRBAC.permissions[target].add(permission);
     }
 
     /**
      * @dev Revokes a particular permission from the specified target address.
      */
-    function revokePermission(Data storage self, bytes32 permission, address target) internal {
-        self.permissions[target].remove(permission);
+    function revokePermission(
+        Data storage accountRBAC,
+        bytes32 permission,
+        address target
+    ) internal {
+        accountRBAC.permissions[target].remove(permission);
 
-        if (self.permissions[target].length() == 0) {
-            self.permissionAddresses.remove(target);
+        if (accountRBAC.permissions[target].length() == 0) {
+            accountRBAC.permissionAddresses.remove(target);
         }
     }
 
     /**
      * @dev Revokes all permissions for the specified target address.
      */
-    function revokeAllPermissions(Data storage self, address target) internal {
-        bytes32[] memory permissions = self.permissions[target].values();
+    function revokeAllPermissions(Data storage accountRBAC, address target) internal {
+        bytes32[] memory permissions = accountRBAC.permissions[target].values();
 
         for (uint256 i = 1; i <= permissions.length; i++) {
-            revokePermission(self, permissions[i - 1], target);
+            revokePermission(accountRBAC, permissions[i - 1], target);
         }
     }
 
@@ -90,23 +98,23 @@ library AccountRBAC {
      * @dev Returns wether the specified address has the given permission.
      */
     function hasPermission(
-        Data storage self,
+        Data storage accountRBAC,
         bytes32 permission,
         address target
     ) internal view returns (bool) {
-        return target != address(0) && self.permissions[target].contains(permission);
+        return target != address(0) && accountRBAC.permissions[target].contains(permission);
     }
 
     /**
      * @dev Returns wether the specified target address has the given permission, or has the high level admin permission.
      */
     function authorized(
-        Data storage self,
+        Data storage accountRBAC,
         bytes32 permission,
         address target
     ) internal view returns (bool) {
-        return ((target == self.owner) ||
-            hasPermission(self, _ADMIN_PERMISSION, target) ||
-            hasPermission(self, permission, target));
+        return ((target == accountRBAC.owner) ||
+            hasPermission(accountRBAC, _ADMIN_PERMISSION, target) ||
+            hasPermission(accountRBAC, permission, target));
     }
 }

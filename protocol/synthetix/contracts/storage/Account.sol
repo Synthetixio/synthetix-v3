@@ -61,10 +61,10 @@ library Account {
     /**
      * @dev Returns the account stored at the specified account id.
      */
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
-            data.slot := s
+            account.slot := s
         }
     }
 
@@ -73,11 +73,11 @@ library Account {
      *
      * Note: Will not fail if the account already exists, and if so, will overwrite the existing owner. Whatever calls this internal function must first check that the account doesn't exist before re-creating it.
      */
-    function create(uint128 id, address owner) internal returns (Data storage self) {
-        self = load(id);
+    function create(uint128 id, address owner) internal returns (Data storage account) {
+        account = load(id);
 
-        self.id = id;
-        self.rbac.owner = owner;
+        account.id = id;
+        account.rbac.owner = owner;
     }
 
     /**
@@ -93,18 +93,18 @@ library Account {
      * @dev Returns information about the total collateral assigned, deposited, and locked by the account, and the given collateral type.
      */
     function getCollateralTotals(
-        Data storage self,
+        Data storage account,
         address collateralType
     )
         internal
         view
         returns (uint256 totalDepositedD18, uint256 totalAssignedD18, uint256 totalLockedD18)
     {
-        totalAssignedD18 = getAssignedCollateral(self, collateralType);
+        totalAssignedD18 = getAssignedCollateral(account, collateralType);
         totalDepositedD18 =
             totalAssignedD18 +
-            self.collaterals[collateralType].amountAvailableForDelegationD18;
-        totalLockedD18 = self.collaterals[collateralType].getTotalLocked();
+            account.collaterals[collateralType].amountAvailableForDelegationD18;
+        totalLockedD18 = account.collaterals[collateralType].getTotalLocked();
 
         return (totalDepositedD18, totalAssignedD18, totalLockedD18);
     }
@@ -113,12 +113,12 @@ library Account {
      * @dev Returns the total amount of collateral that has been delegated to pools by the account, for the given collateral type.
      */
     function getAssignedCollateral(
-        Data storage self,
+        Data storage account,
         address collateralType
     ) internal view returns (uint256) {
         uint256 totalAssignedD18 = 0;
 
-        SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;
+        SetUtil.UintSet storage pools = account.collaterals[collateralType].pools;
 
         for (uint256 i = 1; i <= pools.length(); i++) {
             uint128 poolIdx = pools.valueAt(i).to128();
@@ -127,7 +127,7 @@ library Account {
 
             (uint256 collateralAmountD18, ) = pool.currentAccountCollateral(
                 collateralType,
-                self.id
+                account.id
             );
             totalAssignedD18 += collateralAmountD18;
         }
