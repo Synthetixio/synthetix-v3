@@ -105,9 +105,12 @@ contract AccountModule is IAccountModule {
     ) external override {
         _isPermissionValid(permission);
 
-        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+        Account.Data storage account = Account.onlyWithPermission(
+            accountId,
+            AccountRBAC._ADMIN_PERMISSION
+        );
 
-        Account.load(accountId).rbac.grantPermission(permission, user);
+        account.rbac.grantPermission(permission, user);
 
         emit PermissionGranted(accountId, permission, user, msg.sender);
     }
