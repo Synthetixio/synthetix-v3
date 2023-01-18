@@ -342,7 +342,6 @@ library AccountRBAC {
 // @custom:artifact contracts/storage/Collateral.sol:Collateral
 library Collateral {
     struct Data {
-        bool isSet;
         uint256 amountAvailableForDelegationD18;
         SetUtil.UintSet pools;
         CollateralLock.Data[] locks;
