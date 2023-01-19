@@ -13,19 +13,19 @@ describe('Market', () => {
   });
 
   describe('transfering market ownership', () => {
-    it('nominateNewMarketOwner reverts if is not called by the market owner', async () => {
+    it('nominateMarketOwner reverts if is not called by the market owner', async () => {
       await assertRevert(
         systems()
           .SpotMarket.connect(user1)
-          .nominateNewMarketOwner(1, await user2.getAddress()),
+          .nominateMarketOwner(1, await user2.getAddress()),
         'OnlyMarketOwner'
       );
     });
 
-    it('nominateNewMarketOwner nominate a new owner for the pool', async () => {
+    it('nominateMarketOwner nominate a new owner for the pool', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .nominateNewMarketOwner(1, await user2.getAddress()),
+        .nominateMarketOwner(1, await user2.getAddress()),
         'OnlyMarketOwner';
     });
 
