@@ -139,7 +139,7 @@ library Account {
      * @dev Requires that the given account has the specified permission.
      * @dev Additionally returns the Account object because often the account is required after the check. This saves a storage load in many use cases.
      */
-    function onlyWithPermission(
+    function loadAccountAndValidatePermission(
         uint128 accountId,
         bytes32 permission
     ) internal view returns (Data storage account) {

@@ -64,7 +64,7 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 tokenAmount
     ) public override {
-        Account.Data storage account = Account.onlyWithPermission(
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
             AccountRBAC._WITHDRAW_PERMISSION
         );
@@ -161,7 +161,7 @@ contract CollateralModule is ICollateralModule {
         uint256 amount,
         uint64 expireTimestamp
     ) external override {
-        Account.Data storage account = Account.onlyWithPermission(
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
             AccountRBAC._ADMIN_PERMISSION
         );

@@ -105,7 +105,7 @@ contract AccountModule is IAccountModule {
     ) external override {
         _isPermissionValid(permission);
 
-        Account.Data storage account = Account.onlyWithPermission(
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
             AccountRBAC._ADMIN_PERMISSION
         );
@@ -123,9 +123,12 @@ contract AccountModule is IAccountModule {
         bytes32 permission,
         address user
     ) external override {
-        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._ADMIN_PERMISSION
+        );
 
-        Account.load(accountId).rbac.revokePermission(permission, user);
+        account.rbac.revokePermission(permission, user);
 
         emit PermissionRevoked(accountId, permission, user, msg.sender);
     }
