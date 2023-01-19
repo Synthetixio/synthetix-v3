@@ -39,10 +39,11 @@ jobs:
         run_daemon: true
     - run: npm ci
     - run: npm run build
-    - run: cd ${{ matrix.project }} && \
+    - run: |
+        cd ${{ matrix.project }}
         npx hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
-        --network ${{ matrix.network }} --dry-run \
-        --impersonate ${{ matrix.impersonate}}
+          --network ${{ matrix.network }} --dry-run \
+          --impersonate ${{ matrix.impersonate}}
     
 
         
