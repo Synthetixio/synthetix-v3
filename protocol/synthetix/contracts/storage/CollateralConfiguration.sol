@@ -95,23 +95,23 @@ library CollateralConfiguration {
     /**
      * @dev Loads the CollateralConfiguration object for the given collateral type.
      * @param token The address of the collateral type.
-     * @return data The CollateralConfiguration object.
+     * @return collateralConfiguration The CollateralConfiguration object.
      */
-    function load(address token) internal pure returns (Data storage data) {
+    function load(address token) internal pure returns (Data storage collateralConfiguration) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration", token));
         assembly {
-            data.slot := s
+            collateralConfiguration.slot := s
         }
     }
 
     /**
      * @dev Loads all available collateral types configured in the system.
-     * @return data An array of addresses, one for each collateral type supported by the system.
+     * @return collateralConfiguration An array of addresses, one for each collateral type supported by the system.
      */
-    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
+    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage collateralConfiguration) {
         bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
-            data.slot := s
+            collateralConfiguration.slot := s
         }
     }
 
@@ -175,13 +175,13 @@ library CollateralConfiguration {
 
     /**
      * @dev Returns the price of this collateral configuration object.
-     * @param self The CollateralConfiguration object.
+     * @param collateralConfiguration The CollateralConfiguration object.
      * @return The price of the collateral with 18 decimals of precision.
      */
-    function getCollateralPrice(Data storage self) internal view returns (uint256) {
+    function getCollateralPrice(Data storage collateralConfiguration) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();
         NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress).process(
-            self.oracleNodeId
+            collateralConfiguration.oracleNodeId
         );
 
         return node.price.toUint();
@@ -189,21 +189,21 @@ library CollateralConfiguration {
 
     /**
      * @dev Reverts if the specified collateral and debt values produce a collateralization ratio which is below the amount required for new issuance of snxUSD.
-     * @param self The CollateralConfiguration object whose collateral and settings are being queried.
+     * @param collateralConfiguration The CollateralConfiguration object whose collateral and settings are being queried.
      * @param debtD18 The debt component of the ratio.
      * @param collateralValueD18 The collateral component of the ratio.
      */
     function verifyIssuanceRatio(
-        Data storage self,
+        Data storage collateralConfiguration,
         uint256 debtD18,
         uint256 collateralValueD18
     ) internal view {
-        if (debtD18 != 0 && collateralValueD18.divDecimal(debtD18) < self.issuanceRatioD18) {
+        if (debtD18 != 0 && collateralValueD18.divDecimal(debtD18) < collateralConfiguration.issuanceRatioD18) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,
                 debtD18,
                 collateralValueD18.divDecimal(debtD18),
-                self.issuanceRatioD18
+                collateralConfiguration.issuanceRatioD18
             );
         }
     }
@@ -211,16 +211,16 @@ library CollateralConfiguration {
     /**
      * @dev Converts token amounts with non-system decimal precisions, to 18 decimals of precision.
      * E.g: USDC uses 6 decimals of precision, so this would upscale it by 12 decimals.
-     * @param self The CollateralConfiguration object corresponding to the collateral type being converted.
+     * @param collateralConfiguration The CollateralConfiguration object corresponding to the collateral type being converted.
      * @param tokenAmount The token amount, denominated in its native decimal precision.
      * @return The converted amount, denominated in the system's 18 decimal precision.
      */
     function convertTokenToSystemAmount(
-        Data storage self,
+        Data storage collateralConfiguration,
         uint256 tokenAmount
     ) internal view returns (uint256) {
         // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
-        if (self.tokenAddress == address(0)) {
+        if (collateralConfiguration.tokenAddress == address(0)) {
             revert CollateralNotFound();
         }
 
