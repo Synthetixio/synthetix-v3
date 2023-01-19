@@ -1,0 +1,49 @@
+name: Simulate Release
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - "main"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
+      INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
+    strategy:
+      matrix:
+        network: [goerli, optimistic-goerli]
+        project: [protocol/oracle-manager, protocol/synthetix]
+        include:
+        - project: protocol/oracle-manager
+          cannonPackage: oracle-manager:latest
+          impersonate: '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9'
+        - project: protocol/synthetix
+          cannonPackage: synthetix:latest
+          impersonate: '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9'
+    steps:
+    - name: Install Foundry (Cannon)
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+    - run: anvil -V
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: "16.16.0"
+        cache: "npm"
+    - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
+      with:
+        run_daemon: true
+    - run: npm ci
+    - run: npm run build
+    - run: |
+        cd ${{ matrix.project }}
+        npx hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
+          --network ${{ matrix.network }} --dry-run \
+          --impersonate ${{ matrix.impersonate}}
+    
+
+        
