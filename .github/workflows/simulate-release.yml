@@ -32,14 +32,13 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: "16.16.0"
-      cache: "npm"
+        cache: "npm"
     - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
       with:
         run_daemon: true
     - run: npm ci
     - run: npm run build
-    - run: npx hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} --network ${{ matrix.network }} --dry-run
-      cwd: ${{ matrix.project }}
+    - run: cd ${{ matrix.project }} && npx hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} --network ${{ matrix.network }} --dry-run
     
 
         
