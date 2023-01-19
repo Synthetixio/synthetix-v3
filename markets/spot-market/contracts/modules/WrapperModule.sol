@@ -7,10 +7,12 @@ import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../storage/FeeConfiguration.sol";
 import "../interfaces/IWrapperModule.sol";
 import "../storage/Wrapper.sol";
 import "../storage/Price.sol";
 import "../utils/SynthUtil.sol";
+import "../utils/FeeUtil.sol";
 
 /**
  * @title Module for wrapping and unwrapping collateral for synths.
@@ -20,7 +22,6 @@ contract WrapperModule is IWrapperModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
-    using Fee for Fee.Data;
     using Wrapper for Wrapper.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
@@ -77,7 +78,7 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.WRAP
         );
 
-        (uint256 returnAmountUsd, int256 totalFees) = Fee.calculateFees(
+        (uint256 returnAmountUsd, int256 totalFees) = FeeUtil.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
@@ -95,7 +96,7 @@ contract WrapperModule is IWrapperModule {
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = Fee.collectFees(marketId, totalFees.toUint());
+            collectedFees = FeeUtil.collectFees(marketId, totalFees.toUint());
         }
 
         amountToMint = Price.usdSynthExchangeRate(
@@ -134,7 +135,7 @@ contract WrapperModule is IWrapperModule {
             unwrapAmount,
             SpotMarketFactory.TransactionType.UNWRAP
         );
-        (uint256 returnAmount, int256 totalFees) = Fee.calculateFees(
+        (uint256 returnAmount, int256 totalFees) = FeeUtil.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
@@ -148,7 +149,7 @@ contract WrapperModule is IWrapperModule {
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = Fee.collectFees(marketId, totalFees.toUint());
+            collectedFees = FeeUtil.collectFees(marketId, totalFees.toUint());
         }
 
         returnCollateralAmount = Price.usdSynthExchangeRate(

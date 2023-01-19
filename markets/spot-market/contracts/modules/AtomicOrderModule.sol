@@ -8,6 +8,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
+import "../utils/FeeUtil.sol";
 
 /**
  * @title Module for buying and selling atomically registered synths.
@@ -18,7 +19,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
-    using Fee for Fee.Data;
 
     /**
      * @inheritdoc IAtomicOrderModule
@@ -31,7 +31,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, int256 totalFees, uint collectedFees) = Fee.processFees(
+        (uint256 amountUsable, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -73,7 +73,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 returnAmount, int256 totalFees, uint collectedFees) = Fee.processFees(
+        (uint256 returnAmount, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
             marketId,
             msg.sender,
             usdAmount,

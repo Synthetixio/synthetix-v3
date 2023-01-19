@@ -91,7 +91,7 @@ contract SpotMarketFactoryModule is
             factory.initialAsyncOrderClaimImplementation
         );
 
-        factory.synthOwners[synthMarketId] = synthOwner;
+        factory.marketOwners[synthMarketId] = synthOwner;
 
         emit SynthRegistered(synthMarketId);
 
