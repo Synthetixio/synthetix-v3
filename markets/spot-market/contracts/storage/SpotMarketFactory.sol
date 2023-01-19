@@ -6,7 +6,6 @@ import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 import "./Price.sol";
-import "./Fee.sol";
 import "./Wrapper.sol";
 
 /**

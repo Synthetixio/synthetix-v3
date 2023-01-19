@@ -40,7 +40,7 @@ describe('Atomic Order Module buy()', () => {
     let withdrawableUsd: Ethers.BigNumber;
     let txn: Ethers.providers.TransactionResponse;
     before('buy 1 snxETH', async () => {
-      withdrawableUsd = await systems().Core.getWithdrawableUsd(marketId());
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000));
     });
@@ -51,7 +51,7 @@ describe('Atomic Order Module buy()', () => {
 
     it('deposited 1000 usd to MM', async () => {
       assertBn.equal(
-        await systems().Core.getWithdrawableUsd(marketId()),
+        await systems().Core.getWithdrawableMarketUsd(marketId()),
         withdrawableUsd.add(bn(1000))
       );
     });
@@ -71,7 +71,7 @@ describe('Atomic Order Module buy()', () => {
     });
 
     before('buy 1 snxETH', async () => {
-      withdrawableUsd = await systems().Core.getWithdrawableUsd(marketId());
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000));
     });
@@ -83,7 +83,7 @@ describe('Atomic Order Module buy()', () => {
     // no fee collector so everything gets deposited to MM
     it('deposited 1000 usd to MM', async () => {
       assertBn.equal(
-        await systems().Core.getWithdrawableUsd(marketId()),
+        await systems().Core.getWithdrawableMarketUsd(marketId()),
         withdrawableUsd.add(bn(1000))
       );
     });
@@ -91,7 +91,7 @@ describe('Atomic Order Module buy()', () => {
     it('emits SynthBought event', async () => {
       await assertEvent(
         txn,
-        `SynthBought(${marketId()}, ${bn(0.99)}, ${bn(10)}), 0, 0`,
+        `SynthBought(${marketId()}, ${bn(0.99)}, ${bn(10)}, 0)`,
         systems().SpotMarket
       );
     });
@@ -104,7 +104,7 @@ describe('Atomic Order Module buy()', () => {
 
     let withdrawableUsd: Ethers.BigNumber;
     before('set utilization fee to 100 bps', async () => {
-      withdrawableUsd = await systems().Core.getWithdrawableUsd(marketId());
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems().SpotMarket.connect(marketOwner).setMarketUtilizationFees(marketId(), bn(100));
     });
 
@@ -134,7 +134,7 @@ describe('Atomic Order Module buy()', () => {
 
       it('deposited all usd to MM', async () => {
         assertBn.equal(
-          await systems().Core.getWithdrawableUsd(marketId()),
+          await systems().Core.getWithdrawableMarketUsd(marketId()),
           withdrawableUsd.add(bn(150_000))
         );
       });
