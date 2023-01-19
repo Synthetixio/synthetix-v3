@@ -136,8 +136,7 @@ library Account {
     }
 
     /**
-     * @dev Requires that the given account has the specified permission.
-     * @dev Additionally returns the Account object because often the account is required after the check. This saves a storage load in many use cases.
+     * @dev Loads the Account object for the specified accountId, and validates that sender has the specified permission. These are two different actions but they are merged in a single function because loading an account and checking for a permission is a very common use case in other parts of the code.
      */
     function loadAccountAndValidatePermission(
         uint128 accountId,
