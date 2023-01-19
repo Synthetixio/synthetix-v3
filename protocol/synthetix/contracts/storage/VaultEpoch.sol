@@ -74,25 +74,25 @@ library VaultEpoch {
      * - LiquidationModule.liquidate
      * - Pool.recalculateVaultCollateral (ticker)
      */
-    function distributeDebtToAccounts(Data storage self, int256 debtChangeD18) internal {
-        self.accountsDebtDistribution.distributeValue(debtChangeD18);
+    function distributeDebtToAccounts(Data storage vaultEpoch, int256 debtChangeD18) internal {
+        vaultEpoch.accountsDebtDistribution.distributeValue(debtChangeD18);
 
         // Cache total debt here.
         // Will roll over to individual users as they interact with the system.
-        self.unconsolidatedDebtD18 += debtChangeD18.to128();
+        vaultEpoch.unconsolidatedDebtD18 += debtChangeD18.to128();
     }
 
     /**
      * @dev Adjusts the debt associated with `accountId` by `amountD18`.
      */
     function assignDebtToAccount(
-        Data storage self,
+        Data storage vaultEpoch,
         uint128 accountId,
         int256 amountD18
     ) internal returns (int256 newDebtD18) {
-        int256 currentDebtD18 = self.consolidatedDebtAmountsD18[accountId];
-        self.consolidatedDebtAmountsD18[accountId] += amountD18.to128();
-        self.totalConsolidatedDebtD18 += amountD18.to128();
+        int256 currentDebtD18 = vaultEpoch.consolidatedDebtAmountsD18[accountId];
+        vaultEpoch.consolidatedDebtAmountsD18[accountId] += amountD18.to128();
+        vaultEpoch.totalConsolidatedDebtD18 += amountD18.to128();
         return currentDebtD18 + amountD18;
     }
 
@@ -105,13 +105,15 @@ library VaultEpoch {
      * real debt of a user needs to be known.
      */
     function consolidateAccountDebt(
-        Data storage self,
+        Data storage vaultEpoch,
         uint128 accountId
     ) internal returns (int256 currentDebtD18) {
-        int256 newDebtD18 = self.accountsDebtDistribution.accumulateActor(accountId.toBytes32());
+        int256 newDebtD18 = vaultEpoch.accountsDebtDistribution.accumulateActor(
+            accountId.toBytes32()
+        );
 
-        currentDebtD18 = assignDebtToAccount(self, accountId, newDebtD18);
-        self.unconsolidatedDebtD18 -= newDebtD18.to128();
+        currentDebtD18 = assignDebtToAccount(vaultEpoch, accountId, newDebtD18);
+        vaultEpoch.unconsolidatedDebtD18 -= newDebtD18.to128();
     }
 
     /**
@@ -121,7 +123,7 @@ library VaultEpoch {
      * Called whenever a user's collateral changes.
      */
     function updateAccountPosition(
-        Data storage self,
+        Data storage vaultEpoch,
         uint128 accountId,
         uint256 collateralAmountD18,
         uint256 leverageD18
@@ -129,12 +131,12 @@ library VaultEpoch {
         bytes32 actorId = accountId.toBytes32();
 
         // Ensure account debt is consolidated before we do next things.
-        consolidateAccountDebt(self, accountId);
+        consolidateAccountDebt(vaultEpoch, accountId);
 
-        self.collateralAmounts.set(actorId, collateralAmountD18);
-        self.accountsDebtDistribution.setActorShares(
+        vaultEpoch.collateralAmounts.set(actorId, collateralAmountD18);
+        vaultEpoch.accountsDebtDistribution.setActorShares(
             actorId,
-            self.collateralAmounts.sharesD18[actorId].mulDecimal(leverageD18)
+            vaultEpoch.collateralAmounts.sharesD18[actorId].mulDecimal(leverageD18)
         );
     }
 
@@ -142,17 +144,17 @@ library VaultEpoch {
      * @dev Returns the vault's total debt in this epoch, including the debt
      * that hasn't yet been consolidated into individual accounts.
      */
-    function totalDebt(Data storage self) internal view returns (int256) {
-        return self.unconsolidatedDebtD18 + self.totalConsolidatedDebtD18;
+    function totalDebt(Data storage vaultEpoch) internal view returns (int256) {
+        return vaultEpoch.unconsolidatedDebtD18 + vaultEpoch.totalConsolidatedDebtD18;
     }
 
     /**
      * @dev Returns an account's value in the Vault's collateral distribution.
      */
     function getAccountCollateral(
-        Data storage self,
+        Data storage vaultEpoch,
         uint128 accountId
     ) internal view returns (uint256 amountD18) {
-        return self.collateralAmounts.get(accountId.toBytes32());
+        return vaultEpoch.collateralAmounts.get(accountId.toBytes32());
     }
 }
