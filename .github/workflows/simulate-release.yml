@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    environment:
+    env:
       CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
       INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
     strategy:
