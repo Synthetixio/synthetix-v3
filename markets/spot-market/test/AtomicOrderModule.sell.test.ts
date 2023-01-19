@@ -83,7 +83,7 @@ describe.only('Atomic Order Module sell()', () => {
   describe('utilization rate fees', async () => {
     before(restore);
 
-    before('set utilization fee to 0.01%', async () => {
+    before('set utilization fee to 1%', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
         .setMarketUtilizationFees(marketId(), bn(0.01));
@@ -108,7 +108,7 @@ describe.only('Atomic Order Module sell()', () => {
 
     let withdrawableUsd: Ethers.BigNumber;
     let txn: Ethers.providers.TransactionResponse;
-    before('set fixed fee to 0.01%', async () => {
+    before('set fixed fee to 1%', async () => {
       await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
@@ -143,7 +143,7 @@ describe.only('Atomic Order Module sell()', () => {
     });
 
     describe('custom transactor fee', async () => {
-      before('set transactor fee to 0.001%', async () => {
+      before('set transactor fee to 0.1%', async () => {
         await systems()
           .SpotMarket.connect(marketOwner)
           .setCustomTransactorFees(marketId(), trader2.getAddress(), bn(0.001));
@@ -163,12 +163,12 @@ describe.only('Atomic Order Module sell()', () => {
     });
   });
 
-  describe('all fees', () => {
+  describe.only('all fees', () => {
     before(restore);
 
     // 20 snxETH outstanding from initial trader purchases
 
-    before('set fixed fee to 0.01%', async () => {
+    before('set fixed fee to 1%', async () => {
       await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 

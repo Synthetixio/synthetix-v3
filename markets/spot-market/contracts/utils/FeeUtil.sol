@@ -306,10 +306,9 @@ library FeeUtil {
 
     function _applyFees(
         uint amount,
-        int fees // bips 18 decimals
-    ) private pure returns (uint amountUsable, int feesCollected) {
-        // bips are 18 decimals precision
-        feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000e18);
+        int fees // 18 decimals
+    ) private view returns (uint amountUsable, int feesCollected) {
+        feesCollected = fees.mulDecimal(amount.toInt());
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }
 
