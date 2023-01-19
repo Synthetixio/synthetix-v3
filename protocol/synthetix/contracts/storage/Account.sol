@@ -148,8 +148,6 @@ library Account {
         if (!account.rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
-
-        return account;
     }
 
     /**
