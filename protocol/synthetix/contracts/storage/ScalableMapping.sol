@@ -63,12 +63,12 @@ library ScalableMapping {
      *
      * The value being distributed ultimately modifies the distribution's scaleModifier.
      */
-    function scale(Data storage self, int256 valueD18) internal {
+    function scale(Data storage scalableMapping, int256 valueD18) internal {
         if (valueD18 == 0) {
             return;
         }
 
-        uint256 totalSharesD18 = self.totalSharesD18;
+        uint256 totalSharesD18 = scalableMapping.totalSharesD18;
         if (totalSharesD18 == 0) {
             revert CannotScaleEmptyMapping();
         }
@@ -76,9 +76,9 @@ library ScalableMapping {
         int256 valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
         int256 deltaScaleModifierD27 = valueD45 / totalSharesD18.toInt();
 
-        self.scaleModifierD27 += deltaScaleModifierD27.to128();
+        scalableMapping.scaleModifierD27 += deltaScaleModifierD27.to128();
 
-        if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
+        if (scalableMapping.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
             revert InsufficientMappedAmount();
         }
     }
@@ -91,20 +91,20 @@ library ScalableMapping {
      * Returns the resulting amount of shares that the actor has after this change in value.
      */
     function set(
-        Data storage self,
+        Data storage scalableMapping,
         bytes32 actorId,
         uint256 newActorValueD18
     ) internal returns (uint256 resultingSharesD18) {
         // Represent the actor's change in value by changing the actor's number of shares,
         // and keeping the distribution's scaleModifier constant.
 
-        resultingSharesD18 = getSharesForAmount(self, newActorValueD18);
+        resultingSharesD18 = getSharesForAmount(scalableMapping, newActorValueD18);
 
         // Modify the total shares with the actor's change in shares.
-        self.totalSharesD18 = (self.totalSharesD18 + resultingSharesD18 - self.sharesD18[actorId])
+        scalableMapping.totalSharesD18 = (scalableMapping.totalSharesD18 + resultingSharesD18 - scalableMapping.sharesD18[actorId])
             .to128();
 
-        self.sharesD18[actorId] = resultingSharesD18.to128();
+        scalableMapping.sharesD18[actorId] = resultingSharesD18.to128();
     }
 
     /**
@@ -112,13 +112,13 @@ library ScalableMapping {
      *
      * i.e. actor.shares * scaleModifier
      */
-    function get(Data storage self, bytes32 actorId) internal view returns (uint256 valueD18) {
-        uint256 totalSharesD18 = self.totalSharesD18;
-        if (self.totalSharesD18 == 0) {
+    function get(Data storage scalableMapping, bytes32 actorId) internal view returns (uint256 valueD18) {
+        uint256 totalSharesD18 = scalableMapping.totalSharesD18;
+        if (scalableMapping.totalSharesD18 == 0) {
             return 0;
         }
 
-        return (self.sharesD18[actorId] * totalAmount(self)) / totalSharesD18;
+        return (scalableMapping.sharesD18[actorId] * totalAmount(scalableMapping)) / totalSharesD18;
     }
 
     /**
@@ -126,18 +126,18 @@ library ScalableMapping {
      *
      * i.e. totalShares * scaleModifier
      */
-    function totalAmount(Data storage self) internal view returns (uint256 valueD18) {
+    function totalAmount(Data storage scalableMapping) internal view returns (uint256 valueD18) {
         return
-            ((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT).toUint() *
-                self.totalSharesD18) / DecimalMath.UNIT_PRECISE;
+            ((scalableMapping.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT).toUint() *
+                scalableMapping.totalSharesD18) / DecimalMath.UNIT_PRECISE;
     }
 
     function getSharesForAmount(
-        Data storage self,
+        Data storage scalableMapping,
         uint256 amountD18
     ) internal view returns (uint256 sharesD18) {
         sharesD18 =
             (amountD18 * DecimalMath.UNIT_PRECISE) /
-            (self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128).toUint();
+            (scalableMapping.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128).toUint();
     }
 }

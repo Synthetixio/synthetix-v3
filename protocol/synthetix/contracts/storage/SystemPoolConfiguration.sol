@@ -30,10 +30,10 @@ library SystemPoolConfiguration {
     /**
      * @dev Returns the configuration singleton.
      */
-    function load() internal pure returns (Data storage data) {
+    function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
         assembly {
-            data.slot := s
+            systemPoolConfiguration.slot := s
         }
     }
 }
