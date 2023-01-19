@@ -240,4 +240,61 @@ describe('Atomic Order Module buy()', () => {
       });
     });
   });
+
+  describe('custom fee collector', () => {
+    before(restore);
+
+    let feeCollectorMock: string,
+      withdrawableUsd: Ethers.BigNumber,
+      txn: Ethers.providers.TransactionResponse;
+
+    before('identify initial withdrawal usd from market manager', async () => {
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
+    });
+
+    before('identify fee collector', () => {
+      feeCollectorMock = systems().FeeCollectorMock.address;
+    });
+
+    before('set custom fee collector', async () => {
+      await systems().SpotMarket.connect(marketOwner).setFeeCollector(marketId(), feeCollectorMock);
+    });
+
+    before('set fixed fee', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
+    });
+
+    before('trader buys snxETH', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(100_000));
+      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(100_000)); // 90 eth
+    });
+
+    const expectedFee = bn(100_000 * 0.01);
+
+    it('returned correct amount to trader', async () => {
+      assertBn.equal(
+        await synth.balanceOf(await trader1.getAddress()),
+        bn(99) // 99 eth, 1% fee
+      );
+    });
+
+    it('collected correct amount by fee collector', async () => {
+      assertBn.equal(await systems().USD.balanceOf(feeCollectorMock), expectedFee.div(2));
+    });
+
+    it('deposited correct amount into market manager', async () => {
+      assertBn.equal(
+        await systems().Core.getWithdrawableMarketUsd(marketId()),
+        withdrawableUsd.add(bn(99_500)) // 99_000 usd + 500 usd (half of 1% fee)
+      );
+    });
+
+    it('emitted SynthBought event with correct params', async () => {
+      await assertEvent(
+        txn,
+        `SynthBought(${marketId()}, ${bn(99)}, ${expectedFee}, ${expectedFee.div(2)})`,
+        systems().SpotMarket
+      );
+    });
+  });
 });
