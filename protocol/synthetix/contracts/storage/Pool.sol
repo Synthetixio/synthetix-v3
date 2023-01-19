@@ -105,10 +105,10 @@ library Pool {
     /**
      * @dev Returns the pool stored at the specified pool id.
      */
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
-            data.slot := s
+            pool.slot := s
         }
     }
 

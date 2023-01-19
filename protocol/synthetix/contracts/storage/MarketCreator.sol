@@ -25,10 +25,10 @@ library MarketCreator {
     /**
      * @dev Returns the singleton market store of the system.
      */
-    function getMarketStore() internal pure returns (Data storage data) {
+    function getMarketStore() internal pure returns (Data storage marketStore) {
         bytes32 s = _SLOT_MARKET_CREATOR;
         assembly {
-            data.slot := s
+            marketStore.slot := s
         }
     }
 
