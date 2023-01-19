@@ -132,12 +132,18 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param marketId id of the market
      * @param newNominatedOwner The address that is to become nominated.
      */
-    function nominateNewOwner(uint128 marketId, address newNominatedOwner) external;
+    function nominateNewMarketOwner(uint128 marketId, address newNominatedOwner) external;
 
     /**
      * @notice Allows a nominated address to accept ownership of the market.
      * @dev Reverts if the caller is not nominated.
      * @param marketId id of the market
      */
-    function acceptOwnership(uint128 marketId) external;
+    function acceptMarketOwnership(uint128 marketId) external;
+
+    /**
+     * @notice Returns market owner.
+     * @param marketId id of the market
+     */
+    function getMarketOwner(uint128 marketId) external view returns (address);
 }
