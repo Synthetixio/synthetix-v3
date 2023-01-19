@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "main"
+      - "add-simulate-release-job"
 
 jobs:
   test:
