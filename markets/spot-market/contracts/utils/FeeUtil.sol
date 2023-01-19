@@ -295,14 +295,13 @@ library FeeUtil {
             uint previousUsdBalance = store.usdToken.balanceOf(address(this));
             feeCollector.collectFees(marketId, totalFees);
             uint currentUsdBalance = store.usdToken.balanceOf(address(this));
-            collectedFees = currentUsdBalance - previousUsdBalance;
-
-            // TODO: event for fees collected?
+            collectedFees = previousUsdBalance - currentUsdBalance;
 
             store.usdToken.approve(address(feeCollector), 0);
         }
 
-        store.depositToMarketManager(marketId, totalFees - collectedFees);
+        uint feesToDeposit = totalFees - collectedFees;
+        store.depositToMarketManager(marketId, feesToDeposit);
     }
 
     function _applyFees(

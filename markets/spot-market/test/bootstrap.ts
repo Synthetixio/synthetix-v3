@@ -11,6 +11,7 @@ import {
   SynthetixCollateralMock,
   Oracle_managerProxy,
   SynthRouter,
+  FeeCollectorMock,
 } from '../generated/typechain';
 
 type Proxies = {
@@ -20,6 +21,7 @@ type Proxies = {
   ['oracle_manager.Proxy']: Oracle_managerProxy;
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
+  FeeCollectorMock: FeeCollectorMock;
 };
 
 export type Systems = {
@@ -28,6 +30,7 @@ export type Systems = {
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: Oracle_managerProxy;
+  FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
 
@@ -45,6 +48,7 @@ before('load contracts', () => {
     SpotMarket: getContract('SpotMarketProxy'),
     OracleManager: getContract('oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
+    FeeCollectorMock: getContract('FeeCollectorMock'),
     Synth: (address: string) => getContract('SynthRouter', address),
   };
 });
