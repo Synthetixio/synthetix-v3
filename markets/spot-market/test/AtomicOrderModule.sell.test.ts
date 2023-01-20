@@ -83,8 +83,10 @@ describe('Atomic Order Module sell()', () => {
   describe('utilization rate fees', async () => {
     before(restore);
 
-    before('set utilization fee to 100 bps', async () => {
-      await systems().SpotMarket.connect(marketOwner).setMarketUtilizationFees(marketId(), bn(100));
+    before('set utilization fee to 1%', async () => {
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .setMarketUtilizationFees(marketId(), bn(0.01));
     });
 
     before('sell 1 snxETH', async () => {
@@ -106,8 +108,8 @@ describe('Atomic Order Module sell()', () => {
 
     let withdrawableUsd: Ethers.BigNumber;
     let txn: Ethers.providers.TransactionResponse;
-    before('set fixed fee to 100 bps', async () => {
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
+    before('set fixed fee to 1%', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
     before('sell 1 snxETH', async () => {
@@ -141,10 +143,10 @@ describe('Atomic Order Module sell()', () => {
     });
 
     describe('custom transactor fee', async () => {
-      before('set transactor fee to 10 bps', async () => {
+      before('set transactor fee to 0.1%', async () => {
         await systems()
           .SpotMarket.connect(marketOwner)
-          .setCustomTransactorFees(marketId(), trader2.getAddress(), bn(10));
+          .setCustomTransactorFees(marketId(), trader2.getAddress(), bn(0.001));
       });
 
       before('sell 1 snxETH', async () => {
@@ -166,8 +168,8 @@ describe('Atomic Order Module sell()', () => {
 
     // 20 snxETH outstanding from initial trader purchases
 
-    before('set fixed fee to 100 bps', async () => {
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
+    before('set fixed fee to 1%', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
     before('set skew scale to 100 snxETH', async () => {

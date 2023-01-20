@@ -226,9 +226,9 @@ library FeeUtil {
         int skewAdjustmentAveragePercentage = (skewAfterFillAdjustment.toInt() +
             initialSkewAdjustment.toInt()) / 2;
 
-        // convert to basis points
-        int skewFeeInBips = skewAdjustmentAveragePercentage.mulDecimal(10_000e18);
-        skewFee = isSellTrade ? skewFeeInBips * -1 : skewFeeInBips;
+        skewFee = isSellTrade
+            ? skewAdjustmentAveragePercentage * -1
+            : skewAdjustmentAveragePercentage;
     }
 
     /**
@@ -306,10 +306,9 @@ library FeeUtil {
 
     function _applyFees(
         uint amount,
-        int fees // bips 18 decimals
+        int fees // 18 decimals
     ) private pure returns (uint amountUsable, int feesCollected) {
-        // bips are 18 decimals precision
-        feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000e18);
+        feesCollected = fees.mulDecimal(amount.toInt());
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }
 

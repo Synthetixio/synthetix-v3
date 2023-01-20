@@ -66,8 +66,8 @@ describe('Atomic Order Module buy()', () => {
 
     let withdrawableUsd: Ethers.BigNumber;
     let txn: Ethers.providers.TransactionResponse;
-    before('set fixed fee to 100 bps', async () => {
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
+    before('set fixed fee to 1%', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
     before('buy 1 snxETH', async () => {
@@ -103,9 +103,11 @@ describe('Atomic Order Module buy()', () => {
     // market provided collateral = $100,000 snxUSD
 
     let withdrawableUsd: Ethers.BigNumber;
-    before('set utilization fee to 100 bps', async () => {
+    before('set utilization fee to 1%', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
-      await systems().SpotMarket.connect(marketOwner).setMarketUtilizationFees(marketId(), bn(100));
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .setMarketUtilizationFees(marketId(), bn(0.01));
     });
 
     describe('when utilization is under 100%', () => {
@@ -128,7 +130,7 @@ describe('Atomic Order Module buy()', () => {
 
       it('applies utilization fee', async () => {
         // 150_000 / 100_000 = 150% utilization
-        // 100 bps * 1.5 = 150 bps fee
+        // 1 % * 1.5 = 1.5% fee
         assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(98.5));
       });
 
@@ -183,8 +185,10 @@ describe('Atomic Order Module buy()', () => {
           NOTE: very unlikely both utilization and skew fees would be set at the same time
           but we test that the fees are additive and is supported.
         */
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
-      await systems().SpotMarket.connect(marketOwner).setMarketUtilizationFees(marketId(), bn(100));
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .setMarketUtilizationFees(marketId(), bn(0.01));
       await systems().SpotMarket.connect(marketOwner).setMarketSkewScale(marketId(), bn(1000));
     });
 
@@ -213,10 +217,10 @@ describe('Atomic Order Module buy()', () => {
     });
 
     describe('custom transactor fees', () => {
-      before('set trader1 atomic fee to 10 bps', async () => {
+      before('set trader1 atomic fee to 0.1% bps', async () => {
         await systems()
           .SpotMarket.connect(marketOwner)
-          .setCustomTransactorFees(marketId(), trader1.getAddress(), bn(10));
+          .setCustomTransactorFees(marketId(), trader1.getAddress(), bn(0.001));
       });
 
       let previousTrader1Balance: Ethers.BigNumber;
@@ -261,7 +265,7 @@ describe('Atomic Order Module buy()', () => {
     });
 
     before('set fixed fee', async () => {
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
     before('trader buys snxETH', async () => {
