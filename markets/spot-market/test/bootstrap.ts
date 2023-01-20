@@ -3,6 +3,7 @@ import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import hre from 'hardhat';
+import { wei } from '@synthetixio/wei';
 
 import {
   SpotMarketProxy,
@@ -13,6 +14,7 @@ import {
   SynthRouter,
   FeeCollectorMock,
 } from '../generated/typechain';
+import { AggregatorV3Mock } from '../typechain-types/index';
 
 type Proxies = {
   ['synthetix.CoreProxy']: SynthetixCoreProxy;
@@ -152,6 +154,7 @@ export function bootstrapWithSynth(name: string, token: string) {
   const r = bootstrapWithStakedPool();
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
   let marketId: string;
+  let aggregator: AggregatorV3Mock;
 
   before('identify market owner', async () => {
     [coreOwner, , marketOwner] = r.signers();
@@ -160,20 +163,21 @@ export function bootstrapWithSynth(name: string, token: string) {
   before('register synth', async () => {
     marketId = await r
       .systems()
-      .SpotMarket.callStatic.registerSynth(name, token, marketOwner.getAddress());
-    await r.systems().SpotMarket.registerSynth(name, token, marketOwner.getAddress());
+      .SpotMarket.callStatic.createSynth(name, token, marketOwner.getAddress());
+    await r.systems().SpotMarket.createSynth(name, token, marketOwner.getAddress());
   });
 
   before('setup buy and sell feeds', async () => {
-    const { oracleNodeId: sellNodeId } = await createOracleNode(
+    const result = await createOracleNode(
       r.signers()[0],
       ethers.utils.parseEther('900'),
       r.systems().OracleManager
     );
+    aggregator = result.aggregator;
     await r
       .systems()
       .SpotMarket.connect(marketOwner)
-      .updatePriceData(marketId, r.oracleNodeId(), sellNodeId);
+      .updatePriceData(marketId, r.oracleNodeId(), result.oracleNodeId);
   });
 
   // add weight to market from pool
@@ -197,6 +201,7 @@ export function bootstrapWithSynth(name: string, token: string) {
     ...r,
     marketId: () => marketId,
     marketOwner: () => marketOwner,
+    aggregator: () => aggregator,
     restore,
   };
 }
@@ -210,6 +215,7 @@ export function bootstrapWithSynth(name: string, token: string) {
 */
 export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
   const { signers, systems, provider } = r;
+
   // separate pool so doesn't mess with existing pool accounting
   before('create separate pool', async () => {
     const [owner] = signers();
@@ -301,3 +307,5 @@ const createOracleNode = async (
     aggregator,
   };
 };
+
+export const bn = (n: number) => wei(n).toBN();
