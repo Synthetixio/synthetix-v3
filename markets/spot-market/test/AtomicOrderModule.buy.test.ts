@@ -104,15 +104,15 @@ describe('Atomic Order Module buy()', () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems()
         .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.01));
+        .setMarketUtilizationFees(marketId(), bn(0.001)); // 0.1% charged for each % above utilization
+    });
+
+    before('buy 50 snxETH', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(50_000));
+      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(50_000));
     });
 
     describe('when utilization is under 100%', () => {
-      before('buy 50 snxETH', async () => {
-        await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(50_000));
-        await systems().SpotMarket.connect(trader1).buy(marketId(), bn(50_000));
-      });
-
       // no fees if utilization is under 100%
       it('mints all synths without fees', async () => {
         assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(50));
@@ -126,9 +126,11 @@ describe('Atomic Order Module buy()', () => {
       });
 
       it('applies utilization fee', async () => {
-        // 150_000 / 100_000 = 150% utilization
-        // 1 % * 1.5 = 1.5% fee
-        assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(98.5));
+        // 100% before utilization since we were under 100% utilization prior to fill
+        // 150_000 / 100_000 = 150% after utilization
+        // (150% (post) + 100% (pre)) / 2 = 125% average utilization
+        // 25 * 0.1% = 2.5% fee
+        assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(97.5));
       });
 
       it('deposited all usd to MM', async () => {
@@ -185,7 +187,7 @@ describe('Atomic Order Module buy()', () => {
       await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
       await systems()
         .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.01));
+        .setMarketUtilizationFees(marketId(), bn(0.001));
       await systems().SpotMarket.connect(marketOwner).setMarketSkewScale(marketId(), bn(1000));
     });
 
@@ -207,10 +209,10 @@ describe('Atomic Order Module buy()', () => {
       // current synth amount after fees from trader1 = 85.05 eth
       // total synth after trader2 buy = 110.05 eth
       // fixed fee = 1%
-      // utilfee = 1.1005%  (percent above utilization)
+      // utilfee = (10.05 / 2) = 5.025 * 0.1% = 0.5025%
       // skew fee = (85.05 + 110.05 / 2) = 9.755%
-      // total fees = 11.8555%
-      assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(22.036125));
+      // total fees = 11.2575%
+      assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(22.185625));
     });
 
     describe('custom transactor fees', () => {
@@ -228,15 +230,15 @@ describe('Atomic Order Module buy()', () => {
       });
 
       it('trader1 gets lower atomic fixed fee', async () => {
-        // current synth amount from previous trades = 107.086125 eth
-        // total synth after trader2 buy = 108.086125 eth
+        // current synth amount from previous trades = 107.235625 eth
+        // total synth after trader2 buy = 108.235625 eth
         // fixed fee = 0.1%
-        // utilfee = 1.08086125%  (percent above utilization)
-        // skew fee = 10.7586125%
-        // total fees = 10.7586125% + 1.08086125% + 0.1% = 11.93947375%
+        // utilfee = 7.735625 (utilization) * 0.1 (utilization rate) = 0.7735625
+        // skew fee = 10.7735625%
+        // total fees = 10.7735625% + 0.7735625% + 0.1% = 11.647125%
         assertBn.equal(
           await synth.balanceOf(await trader1.getAddress()),
-          previousTrader1Balance.add(bn(0.8806052625))
+          previousTrader1Balance.add(bn(0.88352875))
         );
       });
     });
