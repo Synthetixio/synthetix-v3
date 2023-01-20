@@ -13,7 +13,7 @@ describe('WrapperModule', () => {
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
 
-  let marketOwner: ethers.Signer, trader1: ethers.Signer, trader2: ethers.Signer;
+  let marketOwner: ethers.Signer, trader1: ethers.Signer;
   let synth: SynthRouter;
 
   before('identify actors', async () => {
@@ -93,10 +93,10 @@ describe('WrapperModule', () => {
           .approve(systems().SpotMarket.address, bn(1));
       });
 
-      let txn: ethers.providers.TransactionResponse, previousWithdrwableUsd: ethers.BigNumber;
+      let txn: ethers.providers.TransactionResponse, previousWithdrawableUsd: ethers.BigNumber;
 
       before('identify withdrawable usd', async () => {
-        previousWithdrwableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
+        previousWithdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       });
 
       before('wrap using collateral', async () => {
@@ -135,7 +135,7 @@ describe('WrapperModule', () => {
         // withdrawable usd = $1000 - $9 + $4.5 = $995.5
         assertBn.equal(
           await systems().Core.getWithdrawableMarketUsd(marketId()),
-          previousWithdrwableUsd.add(bn(995.5))
+          previousWithdrawableUsd.add(bn(995.5))
         );
       });
 
@@ -174,13 +174,13 @@ describe('WrapperModule', () => {
       });
 
       let txn: ethers.providers.TransactionResponse,
-        previousWithdrwableUsd: ethers.BigNumber,
+        previousWithdrawableUsd: ethers.BigNumber,
         previousTrader1CollateralAmount: ethers.BigNumber,
         previousFeeCollectorUsdBalance: ethers.BigNumber,
         previousMarketCollateralAmount: ethers.BigNumber;
 
       before('identify previous balances', async () => {
-        previousWithdrwableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
+        previousWithdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
         previousTrader1CollateralAmount = await systems().CollateralMock.balanceOf(
           await trader1.getAddress()
         );
@@ -232,7 +232,7 @@ describe('WrapperModule', () => {
         // withdrew 0.4975 ETH to return to user = $497.5
         assertBn.equal(
           await systems().Core.getWithdrawableMarketUsd(marketId()),
-          previousWithdrwableUsd.sub(bn(497.5).add(bn(1.125)))
+          previousWithdrawableUsd.sub(bn(497.5).add(bn(1.125)))
         );
       });
 
@@ -258,8 +258,7 @@ describe('WrapperModule', () => {
       await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1));
     });
 
-    let previousWithdrwableUsd: ethers.BigNumber,
-      previousTrader1CollateralAmount: ethers.BigNumber,
+    let previousTrader1CollateralAmount: ethers.BigNumber,
       previousFeeCollectorBalance: ethers.BigNumber;
 
     before('identify previous values', async () => {
