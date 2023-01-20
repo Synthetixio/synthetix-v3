@@ -31,6 +31,8 @@ contract SpotMarketFactoryModule is
     using AssociatedSystem for AssociatedSystem.Data;
     using Price for Price.Data;
 
+    bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
+
     function _isInitialized() internal view override returns (bool) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         return store.synthetix != address(0) && store.usdToken != ITokenModule(address(0));
@@ -71,6 +73,8 @@ contract SpotMarketFactoryModule is
         string memory tokenSymbol,
         address synthOwner
     ) external override onlyIfInitialized returns (uint128) {
+        FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
+
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(
             address(this)
