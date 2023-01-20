@@ -99,10 +99,6 @@ If the utilization rate exceeds 100%, the market can apply a supply target fee o
 
 For instance, if a buy order would move the utilization rate from 90% to 120%, the average utilization rate resulting from the order would be 105%. This is a 5% excess. If the fee rate is set to 100%, a 5% fee is applied. If the fee rate is set to 50%, a 2.5% fee would be applied, etc.
 
-### Simulated Slippage Fee
-
-_t.c._
-
 ### Auto-Rebalancing Skew Fee
 
 An auto-rebalancing skew fee allows a market to use wrapping functionality in such a way that reduces protocol risk. A (positive or negative) fee can be applied to buy and sell orders as a function of _market skew_, defined as the total supply of synths minus the amount of wrapped collateral. This creates an arbitrage opportunity that should reduce the skew.
