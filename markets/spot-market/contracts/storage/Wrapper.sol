@@ -7,7 +7,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
  * @title Wrapper library servicing the wrapper module
  */
 library Wrapper {
-    error WrappingNotInitialized();
+    error InvalidCollateralType();
 
     struct Data {
         /**
@@ -16,9 +16,9 @@ library Wrapper {
          */
         address collateralType;
         /**
-         * @dev sets if wrapping is enabled for given market id
+         * @dev amount of collateral that can be wrapped
          */
-        bool wrappingEnabled;
+        uint256 supplyCap;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -28,18 +28,15 @@ library Wrapper {
         }
     }
 
-    function create(uint128 marketId, address collateralType) internal {
-        update(load(marketId), true, collateralType);
-    }
-
-    function update(Data storage self, bool wrappingEnabled, address collateralType) internal {
+    function update(uint128 marketId, address collateralType, uint256 supplyCap) internal {
+        Data storage self = load(marketId);
         self.collateralType = collateralType;
-        self.wrappingEnabled = wrappingEnabled;
+        self.supplyCap = supplyCap;
     }
 
-    function onlyEnabledWrapper(Wrapper.Data storage self) internal view {
-        if (self.wrappingEnabled) {
-            revert WrappingNotInitialized();
+    function isValidWrapper(Data storage self) internal view {
+        if (self.collateralType == address(0)) {
+            revert InvalidCollateralType();
         }
     }
 }

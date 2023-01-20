@@ -102,13 +102,10 @@ export function bootstrapWithStakedPool() {
   before('configure collateral', async () => {
     const [owner] = r.signers();
 
-    // deploy an aggregator
-    collateralAddress = r.systems().CollateralMock.address;
-
-    // add collateral,
+    // add collateral
     await (
       await r.systems().Core.connect(owner).configureCollateral({
-        tokenAddress: collateralAddress,
+        tokenAddress: r.systems().CollateralMock.address,
         oracleNodeId,
         issuanceRatioD18: '5000000000000000000',
         liquidationRatioD18: '1500000000000000000',
@@ -162,6 +159,17 @@ export function bootstrapWithSynth(name: string, token: string) {
       .systems()
       .SpotMarket.callStatic.registerSynth(name, token, marketOwner.getAddress());
     await r.systems().SpotMarket.registerSynth(name, token, marketOwner.getAddress());
+  });
+
+  before('configure market collateral supply cap', async () => {
+    await r
+      .systems()
+      .Core.connect(coreOwner)
+      .configureMaximumMarketCollateral(
+        marketId,
+        r.systems().CollateralMock.address,
+        ethers.constants.MaxUint256
+      );
   });
 
   before('setup buy and sell feeds', async () => {

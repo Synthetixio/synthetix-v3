@@ -46,6 +46,14 @@ interface IFeeConfigurationModule {
     event FeeCollectorSet(uint indexed synthMarketId, address feeCollector);
 
     /**
+     * @notice emitted when wrapper fees are set for a given market
+     * @param synthMarketId Id of the market to set the wrapper fees.
+     * @param wrapFee wrapping fee in %, 18 decimals. Can be negative.
+     * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
+     */
+    event WrapperFeesSet(uint indexed synthMarketId, int wrapFee, int unwrapFee);
+
+    /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
      */
     error InvalidFeeCollectorInterface(address invalidFeeCollector);
@@ -98,4 +106,14 @@ interface IFeeConfigurationModule {
      * @param feeCollector address of the fee collector inheriting the IFeeCollector interface.
      */
     function setFeeCollector(uint128 synthMarketId, address feeCollector) external;
+
+    /**
+     * @notice sets wrapper related fees.
+     * @dev only marketOwner can set the wrapper fees
+     * @dev fees can be negative.  this is a way to unwind the wrapper if needed by providing incentives.
+     * @param synthMarketId Id of the market the wrapper fees apply to.
+     * @param wrapFee wrapping fee in %, 18 decimals. Can be negative.
+     * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
+     */
+    function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external;
 }
