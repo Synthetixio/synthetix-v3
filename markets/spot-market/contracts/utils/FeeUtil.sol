@@ -237,11 +237,14 @@ library FeeUtil {
      * If no utilizationFeeRate is set, then the fee is 0
      * The utilization rate fee is determined based on the ratio of outstanding synth value to the delegated collateral to the market.
      * Example:
-     *  Utilization fee rate set to 100 bips
+     *  Utilization fee rate set to 0.1%
      *  Total delegated collateral value: $1000
      *  Total outstanding synth value = $1100
      *  User buys $100 worth of synths
-     *  Fee calculation = (1100 + 100) / 1000 = 1.2 * 100 = 120 bips
+     *  Before fill utilization rate: 1100 / 1000 = 110%
+     *  After fill utilization rate: 1200 / 1000 = 120%
+     *  Utilization Rate Delta = 120 - 110 = 10% delta
+     *  Fee charged = 10 * 0.001 (0.1%)  = 1%
      *
      * TODO: verify this calculation with the team
      * TODO: utilization fee should be average of before and after fill
@@ -264,15 +267,25 @@ library FeeUtil {
 
         uint totalBalance = (SynthUtil.getToken(marketId).totalSupply().toInt() +
             asyncOrderConfiguration.asyncUtilizationDelta).toUint();
-        uint totalValue = totalBalance.mulDecimal(
+
+        uint totalValueBeforeFill = totalBalance.mulDecimal(
             Price.getCurrentPrice(marketId, transactionType)
-        ) + amount;
+        );
+        uint totalValueAfterFill = totalValueBeforeFill + amount;
 
         // utilization is below 100%
-        if (delegatedCollateral > totalValue) {
+        if (delegatedCollateral > totalValueAfterFill) {
             return 0;
         } else {
-            uint utilization = totalValue.divDecimal(delegatedCollateral);
+            uint preUtilization = totalValueBeforeFill.divDecimal(delegatedCollateral);
+            // use 100% utilization if pre-fill utilization was less than 100%
+            // no fees charged below 100% utilization
+            uint preUtilizationDelta = preUtilization > 1e18 ? preUtilization - 1e18 : 0;
+            uint postUtilization = totalValueAfterFill.divDecimal(delegatedCollateral);
+            uint postUtilizationDelta = postUtilization - 1e18;
+
+            // utilization is represented as the # of percentage points above 100%
+            uint utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(100e18) / 2;
 
             utilFee = utilization.mulDecimal(feeConfiguration.utilizationFeeRate);
         }
