@@ -318,7 +318,7 @@ library FeeUtil {
     function _applyFees(
         uint amount,
         int fees // 18 decimals
-    ) private view returns (uint amountUsable, int feesCollected) {
+    ) private pure returns (uint amountUsable, int feesCollected) {
         feesCollected = fees.mulDecimal(amount.toInt());
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }
