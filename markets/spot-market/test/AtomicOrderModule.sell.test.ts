@@ -1,13 +1,10 @@
 import { ethers as Ethers } from 'ethers';
-import { wei } from '@synthetixio/wei';
-import { bootstrapTraders, bootstrapWithSynth } from './bootstrap';
+import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { SynthRouter } from '../generated/typechain';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-
-const bn = (n: number) => wei(n).toBN();
 
 describe('Atomic Order Module sell()', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(

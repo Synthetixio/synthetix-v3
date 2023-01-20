@@ -83,7 +83,7 @@ interface ISpotMarketFactoryModule is IMarket {
     ) external;
 
     /**
-     * @notice Registers a new synth market with synthetix v3 core system via market manager
+     * @notice Creates a new synth market with synthetix v3 core system via market manager
      * @dev The synth is created using the initial synth implementation and creates a proxy for future upgrades of the synth implementation.
      * @dev Sets up the market owner who can update configuration for the synth.
      * @param tokenName name of synth (i.e Synthetix ETH)
@@ -91,7 +91,7 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param synthOwner owner of the market that's created.
      * @return synthMarketId id of the synth market that was created
      */
-    function registerSynth(
+    function createSynth(
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner

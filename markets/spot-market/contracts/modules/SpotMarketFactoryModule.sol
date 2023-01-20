@@ -10,6 +10,8 @@ import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 import "../utils/SynthUtil.sol";
 import "../utils/AsyncOrderClaimTokenUtil.sol";
 import "../storage/SpotMarketFactory.sol";
@@ -64,12 +66,11 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function registerSynth(
+    function createSynth(
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
     ) external override onlyIfInitialized returns (uint128) {
-        // TODO: Add permissions here
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(
             address(this)

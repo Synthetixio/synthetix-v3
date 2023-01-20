@@ -6,7 +6,7 @@ To execute orders, the markets withdraw or deposit stablecoins with Synthetix (n
 
 ## Creating Synths
 
-To create a new synth and a corresponding market, call `registerSynth(string memory tokenName, string memory tokenSymbol, address marketOwner)`. This function returns a market ID, which can be used in a pool's configuration within Synthetix to provide
+To create a new synth and a corresponding market, call `createSynth(string memory tokenName, string memory tokenSymbol, address marketOwner)`. This function returns a market ID, which can be used in a pool's configuration within Synthetix to provide
 it with liquidity. The `getSynth(uint128 marketId)` function returns the address of the synth deployed for the specified market. The `marketOwner` address has the ability to configure price feeds and fees used by the market.
 
 ### Configuring Prices
