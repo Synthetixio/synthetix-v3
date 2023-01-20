@@ -245,4 +245,49 @@ describe.only('WrapperModule', () => {
       });
     });
   });
+
+  describe('negative fees', () => {
+    before('set negative fee for unwrap', async () => {
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .setWrapperFees(marketId(), bn(0.01), bn(-0.01));
+    });
+
+    before('trader1 wraps 1 eth', async () => {
+      await systems().CollateralMock.connect(trader1).approve(systems().SpotMarket.address, bn(1));
+      await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1));
+    });
+
+    let previousWithdrwableUsd: ethers.BigNumber,
+      previousTrader1CollateralAmount: ethers.BigNumber,
+      previousFeeCollectorBalance: ethers.BigNumber;
+
+    before('identify previous values', async () => {
+      previousTrader1CollateralAmount = await systems().CollateralMock.balanceOf(
+        await trader1.getAddress()
+      );
+      previousFeeCollectorBalance = await systems().USD.balanceOf(
+        systems().FeeCollectorMock.address
+      );
+    });
+
+    before('trader1 unwraps 0.5 eth', async () => {
+      await synth.connect(trader1).approve(systems().SpotMarket.address, bn(0.5));
+      await systems().SpotMarket.connect(trader1).unwrap(marketId(), bn(0.5));
+    });
+
+    it('trader1 should receive more collateral back', async () => {
+      assertBn.equal(
+        await systems().CollateralMock.balanceOf(await trader1.getAddress()),
+        previousTrader1CollateralAmount.add(bn(0.505))
+      );
+    });
+
+    it('did not change fee collector balance', async () => {
+      assertBn.equal(
+        await systems().USD.balanceOf(systems().FeeCollectorMock.address),
+        previousFeeCollectorBalance
+      );
+    });
+  });
 });
