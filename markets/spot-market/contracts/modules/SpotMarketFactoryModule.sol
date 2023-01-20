@@ -174,10 +174,7 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function nominateMarketOwner(
-        uint128 synthMarketId,
-        address newNominatedOwner
-    ) public override {
+    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) public override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         if (newNominatedOwner == address(0)) {
@@ -185,7 +182,7 @@ contract SpotMarketFactoryModule is
         }
 
         SpotMarketFactory.load().nominatedMarketOwners[synthMarketId] = newNominatedOwner;
-        emit OwnerNominated(newNominatedOwner, synthMarketId);
+        emit MarketOwnerNominated(synthMarketId, newNominatedOwner);
     }
 
     /**
@@ -198,7 +195,11 @@ contract SpotMarketFactoryModule is
             revert NotNominated(msg.sender);
         }
 
-        emit OwnerChanged(store.marketOwners[synthMarketId], currentNominatedOwner, synthMarketId);
+        emit MarketOwnerChanged(
+            synthMarketId,
+            store.marketOwners[synthMarketId],
+            currentNominatedOwner
+        );
 
         store.marketOwners[synthMarketId] = currentNominatedOwner;
         store.nominatedMarketOwners[synthMarketId] = address(0);

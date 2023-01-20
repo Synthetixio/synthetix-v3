@@ -9,7 +9,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 const bn = (n: number) => wei(n).toBN();
 
-describe.only('Atomic Order Module sell()', () => {
+describe('Atomic Order Module sell()', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -163,7 +163,7 @@ describe.only('Atomic Order Module sell()', () => {
     });
   });
 
-  describe.only('all fees', () => {
+  describe('all fees', () => {
     before(restore);
 
     // 20 snxETH outstanding from initial trader purchases

@@ -43,18 +43,18 @@ interface ISpotMarketFactoryModule is IMarket {
 
     /**
      * @notice Emitted when an address has been nominated.
-     * @param newOwner The address that has been nominated.
      * @param marketId id of the market
+     * @param newOwner The address that has been nominated.
      */
-    event OwnerNominated(address newOwner, uint128 marketId);
+    event MarketOwnerNominated(uint128 indexed marketId, address newOwner);
 
     /**
      * @notice Emitted when the owner of the market has changed.
+     * @param marketId id of the market
      * @param oldOwner The previous owner of the market.
      * @param newOwner The new owner of the market.
-     * @param marketId id of the market
      */
-    event OwnerChanged(address oldOwner, address newOwner, uint128 marketId);
+    event MarketOwnerChanged(uint128 indexed marketId, address oldOwner, address newOwner);
 
     /**
      * @notice Returns whether the factory has been initialized

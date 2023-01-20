@@ -11,10 +11,10 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [import.synthetix]
-source = "synthetix:3.0.0-alpha.7"
+source = "synthetix:3.0.0-alpha.8"
 
 [setting.oracle_manager_version]
-defaultValue = "1.2.1"
+defaultValue = "1.2.2"
 
 [import.oracle_manager]
 source = "oracle-manager:<%= settings.oracle_manager_version %>"

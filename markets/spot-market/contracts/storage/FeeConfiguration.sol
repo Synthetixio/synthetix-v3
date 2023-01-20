@@ -13,21 +13,21 @@ library FeeConfiguration {
          */
         mapping(address => uint) atomicFixedFeeOverrides;
         /**
-         * @dev atomic buy/sell fixed fee that's applied on all trades. In Bips, 18 decimals
+         * @dev atomic buy/sell fixed fee that's applied on all trades. Percentage, 18 decimals
          */
         uint atomicFixedFee;
         uint asyncFixedFee;
         /**
-         * @dev utilization fee rate in Bips is the rate of fees applied based on the ratio of delegated collateral to total outstanding synth exposure. 18 decimals
+         * @dev utilization fee rate (in percentage) is the rate of fees applied based on the ratio of delegated collateral to total outstanding synth exposure. 18 decimals
          * applied on buy trades only.
          */
         uint utilizationFeeRate;
         /**
-         * @dev wrapping fee rate in bips, 18 decimals
+         * @dev wrapping fee rate represented as a percent, 18 decimals
          */
         int wrapFixedFee;
         /**
-         * @dev unwrapping fee rate in bips, 18 decimals
+         * @dev unwrapping fee rate represented as a percent, 18 decimals
          */
         int unwrapFixedFee;
         /**
