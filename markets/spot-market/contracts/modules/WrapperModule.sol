@@ -32,13 +32,13 @@ contract WrapperModule is IWrapperModule {
     function setWrapper(
         uint128 marketId,
         address wrapCollateralType,
-        uint256 supplyCap
+        uint256 maxWrappableAmount
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
-        Wrapper.update(marketId, wrapCollateralType, supplyCap);
+        Wrapper.update(marketId, wrapCollateralType, maxWrappableAmount);
 
-        emit WrapperSet(marketId, wrapCollateralType, supplyCap);
+        emit WrapperSet(marketId, wrapCollateralType, maxWrappableAmount);
     }
 
     /**
@@ -66,9 +66,9 @@ contract WrapperModule is IWrapperModule {
             .getMarketCollateralAmount(marketId, wrapperStore.wrapCollateralType);
 
         // revert when wrapping more than the supply cap
-        if (currentDepositedCollateral + wrapAmount > wrapperStore.supplyCap) {
-            revert WrapperExceedsSupplyCap(
-                wrapperStore.supplyCap,
+        if (currentDepositedCollateral + wrapAmount > wrapperStore.maxWrappableAmount) {
+            revert WrapperExceedsMaxAmount(
+                wrapperStore.maxWrappableAmount,
                 currentDepositedCollateral,
                 wrapAmount
             );

@@ -18,7 +18,7 @@ library Wrapper {
         /**
          * @dev amount of collateral that can be wrapped
          */
-        uint256 supplyCap;
+        uint256 maxWrappableAmount;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -28,10 +28,14 @@ library Wrapper {
         }
     }
 
-    function update(uint128 marketId, address wrapCollateralType, uint256 supplyCap) internal {
+    function update(
+        uint128 marketId,
+        address wrapCollateralType,
+        uint256 maxWrappableAmount
+    ) internal {
         Data storage self = load(marketId);
         self.wrapCollateralType = wrapCollateralType;
-        self.supplyCap = supplyCap;
+        self.maxWrappableAmount = maxWrappableAmount;
     }
 
     function isValidWrapper(Data storage self) internal view {

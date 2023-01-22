@@ -87,64 +87,81 @@ describe('WrapperModule', () => {
     });
 
     describe('with proper funds and allowance', () => {
-      before('set allowance', async () => {
-        await systems()
-          .CollateralMock.connect(trader1)
-          .approve(systems().SpotMarket.address, bn(1));
+      describe('when attempting to wrap above maxWrappableAmount', () => {
+        before('set allowance', async () => {
+          await systems()
+            .CollateralMock.connect(trader1)
+            .approve(systems().SpotMarket.address, bn(501));
+        });
+
+        it('reverts', async () => {
+          await assertRevert(
+            systems().SpotMarket.connect(trader1).wrap(marketId(), bn(501)),
+            'WrapperExceedsMaxAmount'
+          );
+        });
       });
 
-      let txn: ethers.providers.TransactionResponse, previousWithdrawableUsd: ethers.BigNumber;
+      describe('when wrapping below maxWrappableAmount', () => {
+        before('set allowance', async () => {
+          await systems()
+            .CollateralMock.connect(trader1)
+            .approve(systems().SpotMarket.address, bn(1));
+        });
 
-      before('identify withdrawable usd', async () => {
-        previousWithdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
-      });
+        let txn: ethers.providers.TransactionResponse, previousWithdrawableUsd: ethers.BigNumber;
 
-      before('wrap using collateral', async () => {
-        txn = await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1));
-      });
+        before('identify withdrawable usd', async () => {
+          previousWithdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
+        });
 
-      it('returns correct amount of synth to trader', async () => {
-        assertBn.equal(
-          await synth.balanceOf(await trader1.getAddress()),
-          bn(1).sub(bn(0.01)) // 1 - 0.01% fee
-        );
-      });
+        before('wrap using collateral', async () => {
+          txn = await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1));
+        });
 
-      it('collected half fees to fee collector', async () => {
-        assertBn.equal(
-          await systems().USD.balanceOf(systems().FeeCollectorMock.address),
-          bn(4.5) // assuming price of 1 eth = $900 (sell feed id)
-        );
-      });
+        it('returns correct amount of synth to trader', async () => {
+          assertBn.equal(
+            await synth.balanceOf(await trader1.getAddress()),
+            bn(1).sub(bn(0.01)) // 1 - 0.01% fee
+          );
+        });
 
-      it('deposited correct amount into market collateral', async () => {
-        assertBn.equal(
-          await systems().Core.getMarketCollateralAmount(
-            marketId(),
-            systems().CollateralMock.address
-          ),
-          bn(1)
-        );
-      });
+        it('collected half fees to fee collector', async () => {
+          assertBn.equal(
+            await systems().USD.balanceOf(systems().FeeCollectorMock.address),
+            bn(4.5) // assuming price of 1 eth = $900 (sell feed id)
+          );
+        });
 
-      it('properly reflects withdrawable usd', async () => {
-        // collateral price in core = $1000/eth
-        // fees withdrawn from core = $9
-        // fees collected by fee collector = $4.5
-        // fees re-deposited into core = $4.5
-        // withdrawable usd = $1000 - $9 + $4.5 = $995.5
-        assertBn.equal(
-          await systems().Core.getWithdrawableMarketUsd(marketId()),
-          previousWithdrawableUsd.add(bn(995.5))
-        );
-      });
+        it('deposited correct amount into market collateral', async () => {
+          assertBn.equal(
+            await systems().Core.getMarketCollateralAmount(
+              marketId(),
+              systems().CollateralMock.address
+            ),
+            bn(1)
+          );
+        });
 
-      it('emits wrap event', async () => {
-        await assertEvent(
-          txn,
-          `SynthWrapped(${marketId()}, ${bn(0.99)}, ${bn(9)}, ${bn(4.5)})`,
-          systems().SpotMarket
-        );
+        it('properly reflects withdrawable usd', async () => {
+          // collateral price in core = $1000/eth
+          // fees withdrawn from core = $9
+          // fees collected by fee collector = $4.5
+          // fees re-deposited into core = $4.5
+          // withdrawable usd = $1000 - $9 + $4.5 = $995.5
+          assertBn.equal(
+            await systems().Core.getWithdrawableMarketUsd(marketId()),
+            previousWithdrawableUsd.add(bn(995.5))
+          );
+        });
+
+        it('emits wrap event', async () => {
+          await assertEvent(
+            txn,
+            `SynthWrapped(${marketId()}, ${bn(0.99)}, ${bn(9)}, ${bn(4.5)})`,
+            systems().SpotMarket
+          );
+        });
       });
     });
   });
