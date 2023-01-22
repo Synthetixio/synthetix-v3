@@ -5,5 +5,5 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 
 /// @title Spot Market Interface
 interface IFeeCollector is IERC165 {
-    function collectFees(uint128 marketId, uint256 feeAmount) external;
+    function collectFees(uint128 marketId, address transactor, uint256 feeAmount) external;
 }
