@@ -14,7 +14,7 @@ library Wrapper {
          * @dev tracks the type of collateral used for wrapping
          * helpful for checking balances and allowances
          */
-        address collateralType;
+        address wrapCollateralType;
         /**
          * @dev amount of collateral that can be wrapped
          */
@@ -28,14 +28,14 @@ library Wrapper {
         }
     }
 
-    function update(uint128 marketId, address collateralType, uint256 supplyCap) internal {
+    function update(uint128 marketId, address wrapCollateralType, uint256 supplyCap) internal {
         Data storage self = load(marketId);
-        self.collateralType = collateralType;
+        self.wrapCollateralType = wrapCollateralType;
         self.supplyCap = supplyCap;
     }
 
     function isValidWrapper(Data storage self) internal view {
-        if (self.collateralType == address(0)) {
+        if (self.wrapCollateralType == address(0)) {
             revert InvalidCollateralType();
         }
     }

@@ -31,14 +31,14 @@ contract WrapperModule is IWrapperModule {
      */
     function setWrapper(
         uint128 marketId,
-        address collateralType,
+        address wrapCollateralType,
         uint256 supplyCap
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
-        Wrapper.update(marketId, collateralType, supplyCap);
+        Wrapper.update(marketId, wrapCollateralType, supplyCap);
 
-        emit WrapperSet(marketId, collateralType, supplyCap);
+        emit WrapperSet(marketId, wrapCollateralType, supplyCap);
     }
 
     /**
@@ -53,7 +53,7 @@ contract WrapperModule is IWrapperModule {
         store.isValidMarket(marketId);
         wrapperStore.isValidWrapper();
 
-        IERC20 wrappingCollateral = IERC20(wrapperStore.collateralType);
+        IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
 
         if (wrappingCollateral.balanceOf(msg.sender) < wrapAmount) revert InsufficientFunds();
         if (wrappingCollateral.allowance(msg.sender, address(this)) < wrapAmount)
@@ -63,7 +63,7 @@ contract WrapperModule is IWrapperModule {
             );
 
         uint currentDepositedCollateral = IMarketCollateralModule(store.synthetix)
-            .getMarketCollateralAmount(marketId, wrapperStore.collateralType);
+            .getMarketCollateralAmount(marketId, wrapperStore.wrapCollateralType);
 
         // revert when wrapping more than the supply cap
         if (currentDepositedCollateral + wrapAmount > wrapperStore.supplyCap) {
@@ -79,7 +79,7 @@ contract WrapperModule is IWrapperModule {
         wrappingCollateral.approve(store.synthetix, wrapAmount);
         IMarketCollateralModule(store.synthetix).depositMarketCollateral(
             marketId,
-            wrapperStore.collateralType,
+            wrapperStore.wrapCollateralType,
             wrapAmount
         );
 
@@ -172,11 +172,11 @@ contract WrapperModule is IWrapperModule {
 
         IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
             marketId,
-            wrapperStore.collateralType,
+            wrapperStore.wrapCollateralType,
             returnCollateralAmount
         );
 
-        ITokenModule(wrapperStore.collateralType).transfer(msg.sender, returnCollateralAmount);
+        ITokenModule(wrapperStore.wrapCollateralType).transfer(msg.sender, returnCollateralAmount);
         synth.burn(address(this), unwrapAmount);
 
         emit SynthUnwrapped(marketId, returnCollateralAmount, totalFees, collectedFees);

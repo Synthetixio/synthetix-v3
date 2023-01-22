@@ -205,7 +205,7 @@ library FeeUtil {
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
         uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
-            .getMarketCollateralAmount(marketId, wrapper.collateralType)
+            .getMarketCollateralAmount(marketId, wrapper.wrapCollateralType)
             .mulDecimal(collateralPrice);
 
         uint initialSkew = totalSynthValue - wrappedMarketCollateral;

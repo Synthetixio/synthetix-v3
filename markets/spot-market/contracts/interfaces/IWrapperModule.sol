@@ -23,10 +23,10 @@ interface IWrapperModule {
     /**
      * @notice Gets fired when wrapper supply is set for a given market, collateral type.
      * @param synthMarketId Id of the market the wrapper is initialized for.
-     * @param collateralType the collateral used to wrap the synth.
+     * @param wrapCollateralType the collateral used to wrap the synth.
      * @param supplyCap the local supply cap for the wrapper.
      */
-    event WrapperSet(uint indexed synthMarketId, address collateralType, uint256 supplyCap);
+    event WrapperSet(uint indexed synthMarketId, address wrapCollateralType, uint256 supplyCap);
 
     /**
      * @notice Gets fired after user wraps synth
@@ -61,10 +61,10 @@ interface IWrapperModule {
      * @dev If the supply cap is set to 0 or lower than the current outstanding supply, then the wrapper is disabled.
      * @dev There is a synthetix v3 core system supply cap also set. If the current supply becomes higher than either the core system supply cap or the local market supply cap, wrapping will be disabled.
      * @param marketId Id of the market to enable wrapping for.
-     * @param collateralType The collateral being used to wrap the synth.
+     * @param wrapCollateralType The collateral being used to wrap the synth.
      * @param supplyCap The maximum amount of collateral that can be wrapped.  This value is registered with the Market Manager
      */
-    function setWrapper(uint128 marketId, address collateralType, uint256 supplyCap) external;
+    function setWrapper(uint128 marketId, address wrapCollateralType, uint256 supplyCap) external;
 
     /**
      * @notice Wraps the specified amount and returns similar value of synth minus the fees.

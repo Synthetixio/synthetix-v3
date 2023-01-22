@@ -17,7 +17,7 @@ describe('WrapperModule', () => {
   let synth: SynthRouter;
 
   before('identify actors', async () => {
-    [, , marketOwner, trader1, trader2] = signers();
+    [, , marketOwner, trader1] = signers();
   });
 
   before('identify synth', async () => {
