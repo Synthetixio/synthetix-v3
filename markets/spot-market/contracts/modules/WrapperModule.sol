@@ -107,7 +107,12 @@ contract WrapperModule is IWrapperModule {
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeUtil.collectFees(marketId, totalFees.toUint());
+            collectedFees = FeeUtil.collectFees(
+                marketId,
+                msg.sender,
+                totalFees.toUint(),
+                SpotMarketFactory.TransactionType.WRAP
+            );
         }
 
         amountToMint = Price.usdSynthExchangeRate(
@@ -161,7 +166,12 @@ contract WrapperModule is IWrapperModule {
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeUtil.collectFees(marketId, totalFees.toUint());
+            collectedFees = FeeUtil.collectFees(
+                marketId,
+                msg.sender,
+                totalFees.toUint(),
+                SpotMarketFactory.TransactionType.UNWRAP
+            );
         }
 
         returnCollateralAmount = Price.usdSynthExchangeRate(

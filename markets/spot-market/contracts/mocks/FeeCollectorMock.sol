@@ -12,7 +12,12 @@ contract FeeCollectorMock is IFeeCollector {
     }
 
     // collects 50% of the fees
-    function collectFees(uint128 marketId, uint256 feeAmount) external override {
+    function collectFees(
+        uint128 marketId,
+        address sender,
+        uint256 feeAmount,
+        uint8 tradeType
+    ) external override {
         uint feeToCollect = feeAmount / 2;
 
         usdToken.transferFrom(msg.sender, address(this), feeToCollect);

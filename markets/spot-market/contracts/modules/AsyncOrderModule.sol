@@ -470,7 +470,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
             amountToReturn
         );
 
-        FeeUtil.collectFees(marketId, feesToCollect);
+        FeeUtil.collectFees(
+            marketId,
+            msg.sender,
+            feesToCollect,
+            SpotMarketFactory.TransactionType.ASYNC_BUY
+        );
     }
 
     function _returnSellOrderEscrow(
