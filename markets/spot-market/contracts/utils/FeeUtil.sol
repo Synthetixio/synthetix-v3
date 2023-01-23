@@ -204,12 +204,9 @@ library FeeUtil {
         );
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
-        uint wrappedMarketCollateral = 0;
-        if (wrapper.wrappingEnabled) {
-            wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
-                .getMarketCollateralAmount(marketId, wrapper.collateralType)
-                .mulDecimal(collateralPrice);
-        }
+        uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
+            .getMarketCollateralAmount(marketId, wrapper.wrapCollateralType)
+            .mulDecimal(collateralPrice);
 
         uint initialSkew = totalSynthValue - wrappedMarketCollateral;
         uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
@@ -303,10 +300,11 @@ library FeeUtil {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         if (address(feeCollector) != address(0)) {
-            store.usdToken.approve(address(feeCollector), totalFees);
-
             uint previousUsdBalance = store.usdToken.balanceOf(address(this));
+
+            store.usdToken.approve(address(feeCollector), totalFees);
             feeCollector.collectFees(marketId, totalFees);
+
             uint currentUsdBalance = store.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;
 

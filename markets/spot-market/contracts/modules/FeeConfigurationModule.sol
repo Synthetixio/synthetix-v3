@@ -90,4 +90,14 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
 
         emit FeeCollectorSet(synthMarketId, feeCollector);
     }
+
+    function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.wrapFixedFee = wrapFee;
+        feeConfiguration.unwrapFixedFee = unwrapFee;
+
+        emit WrapperFeesSet(synthMarketId, wrapFee, unwrapFee);
+    }
 }
