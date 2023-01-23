@@ -11,10 +11,10 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [import.synthetix]
-source = "synthetix:3.0.0-alpha.5"
+source = "synthetix:3.0.0-alpha.8"
 
 [setting.oracle_manager_version]
-defaultValue = "1.0.1"
+defaultValue = "1.2.2"
 
 [import.oracle_manager]
 source = "oracle-manager:<%= settings.oracle_manager_version %>"
@@ -44,6 +44,9 @@ artifact = "AsyncOrderClaimTokenModule"
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+
 [contract.InitialSpotMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>"]
@@ -53,46 +56,31 @@ depends = ["contract.CoreModule"]
 
 [invoke.acquire_ownership]
 target = ["InitialSpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
+from = "<%= settings.marketOwner %>"
 func = "initializeOwnerModule"
-args = ["<%= settings.coreProxyOwner %>"]
+args = ["<%= settings.marketOwner %>"]
 depends = ["contract.InitialSpotMarketProxy"]
 
-[run.generate_spot_market_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/SpotMarketRouter.sol:SpotMarketRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    SpotMarketFactoryModule: contracts.SpotMarketFactoryModule,
-    AtomicOrderModule: contracts.AtomicOrderModule,
-    AsyncOrderModule: contracts.AsyncOrderModule,
-    WrapperModule: contracts.WrapperModule,
-    FeeConfigurationModule: contracts.FeeConfigurationModule
-  }) %>'''
+# Core
+[router.SpotMarketRouter]
+contracts = [
+  "CoreModule",
+  "SpotMarketFactoryModule",
+  "AtomicOrderModule",
+  "AsyncOrderModule",
+  "WrapperModule",
+  "FeeConfigurationModule",
+  "FeatureFlagModule"
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
   "contract.WrapperModule",
-  "contract.FeeConfigurationModule"
+  "contract.FeeConfigurationModule",
+  "contract.FeatureFlagModule",
 ]
-
-[contract.SpotMarketRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/SpotMarketRouter.sol:SpotMarketRouter"
-abiOf = [
-  "CoreModule",
-  "SpotMarketFactoryModule",
-  "AtomicOrderModule",
-  "AsyncOrderModule",
-  "WrapperModule",
-  "FeeConfigurationModule"
-]
-depends = ["run.generate_spot_market_router"]
 
 [invoke.upgrade_spot_market_proxy]
 target = ["InitialSpotMarketProxy"]
@@ -102,58 +90,30 @@ args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.SpotMarketProxy.event = "Upgraded"
 factory.SpotMarketProxy.arg = 0
-depends = ["invoke.acquire_ownership", "contract.SpotMarketRouter"]
+depends = ["invoke.acquire_ownership", "router.SpotMarketRouter"]
 
 # create synth router
-
-[run.generate_synth_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/SynthTokenModuleRouter.sol:SynthTokenModuleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    SynthTokenModule: contracts.SynthTokenModule
-  }) %>'''
+[router.SynthRouter]
+contracts = [
+  "CoreModule",
+  "SynthTokenModule"
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.SynthTokenModule"
 ]
 
-[contract.SynthRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/SynthTokenModuleRouter.sol:SynthTokenModuleRouter"
-abiOf = [
-  "CoreModule",
-  "SynthTokenModule"
-]
-depends = ["run.generate_synth_router"]
-
 # create async order claim token router
-[run.generate_async_order_claim_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/AsyncOrderClaimTokenModuleRouter.sol:AsyncOrderClaimTokenModuleRouter",
-  '''<%= JSON.stringify({
-    CoreModule: contracts.CoreModule,
-    AsyncOrderClaimTokenModule: contracts.AsyncOrderClaimTokenModule
-  }) %>'''
+
+[router.AsyncOrderClaimRouter]
+contracts = [
+  "CoreModule",
+  "AsyncOrderClaimTokenModule"
 ]
-modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.AsyncOrderClaimTokenModule"
 ]
-
-[contract.AsyncOrderClaimRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/AsyncOrderClaimTokenModuleRouter.sol:AsyncOrderClaimTokenModuleRouter"
-abiOf = [
-  "CoreModule",
-  "AsyncOrderClaimTokenModule"
-]
-depends = ["run.generate_async_order_claim_router"]
 
 
 [invoke.initialize_spot_market_factory]
@@ -167,7 +127,7 @@ args = [
   "<%= contracts.SynthRouter.address %>",
   "<%= contracts.AsyncOrderClaimRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "import.oracle_manager", "run.generate_synth_router", "run.generate_async_order_claim_router"]
+depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "import.oracle_manager", "router.SynthRouter", "router.AsyncOrderClaimRouter"]
 
 # add pool owner to feature flag allow list (owner must be pdao for this to be successful)
 [invoke.addSpotMarketToFeatureFlag]
@@ -176,3 +136,10 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
 depends = ['import.synthetix', 'invoke.upgrade_spot_market_proxy']
+
+[invoke.addCreateSynthToFeatureFlag]
+target = ["SpotMarketProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.marketOwner %>"
+args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.marketOwner %>"] # formatBytes32String("createSynth")
+depends = ['invoke.initialize_spot_market_factory']

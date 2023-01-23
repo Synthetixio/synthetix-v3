@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./Fee.sol";
 import "./AsyncOrderConfiguration.sol";
+import "./SpotMarketFactory.sol";
 
 library AsyncOrderClaim {
     struct Data {

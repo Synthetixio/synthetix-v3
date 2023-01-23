@@ -8,7 +8,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "./SpotMarketFactory.sol";
 import "../utils/SynthUtil.sol";
-import "./Fee.sol";
 import "./Wrapper.sol";
 
 /**

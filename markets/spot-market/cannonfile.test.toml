@@ -1,0 +1,17 @@
+version = "<%= package.version %>-testable"
+
+include = [
+  "cannonfile.toml"
+]
+
+[import.synthetix]
+source = "synthetix:3.0.0-alpha.8-testable"
+
+[contract.FeeCollectorMock]
+artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+
+[invoke.set_usd_token_for_fee_collector]
+target = ["FeeCollectorMock"]
+func = "setUsdToken"
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+depends = ["contract.FeeCollectorMock", "import.synthetix"]
