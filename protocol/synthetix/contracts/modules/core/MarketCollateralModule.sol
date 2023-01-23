@@ -46,9 +46,9 @@ contract MarketCollateralModule is IMarketCollateralModule {
         if (collateralEntry.amountD18 + systemAmount > maxDepositable)
             revert InsufficientMarketCollateralDepositable(marketId, collateralType, tokenAmount);
 
-        // Transfer the collateral into the system and account for it
-        collateralType.safeTransferFrom(marketData.marketAddress, address(this), tokenAmount);
+        // Account for the collateral and transfer it into the system.
         collateralEntry.amountD18 += systemAmount;
+        collateralType.safeTransferFrom(marketData.marketAddress, address(this), tokenAmount);
 
         emit MarketCollateralDeposited(marketId, collateralType, tokenAmount, msg.sender);
     }
