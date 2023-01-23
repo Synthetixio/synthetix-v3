@@ -108,7 +108,11 @@ library CollateralConfiguration {
      * @dev Loads all available collateral types configured in the system.
      * @return collateralConfiguration An array of addresses, one for each collateral type supported by the system.
      */
-    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage collateralConfiguration) {
+    function loadAvailableCollaterals()
+        internal
+        pure
+        returns (SetUtil.AddressSet storage collateralConfiguration)
+    {
         bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
             collateralConfiguration.slot := s
@@ -178,7 +182,9 @@ library CollateralConfiguration {
      * @param collateralConfiguration The CollateralConfiguration object.
      * @return The price of the collateral with 18 decimals of precision.
      */
-    function getCollateralPrice(Data storage collateralConfiguration) internal view returns (uint256) {
+    function getCollateralPrice(
+        Data storage collateralConfiguration
+    ) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();
         NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress).process(
             collateralConfiguration.oracleNodeId
@@ -198,7 +204,10 @@ library CollateralConfiguration {
         uint256 debtD18,
         uint256 collateralValueD18
     ) internal view {
-        if (debtD18 != 0 && collateralValueD18.divDecimal(debtD18) < collateralConfiguration.issuanceRatioD18) {
+        if (
+            debtD18 != 0 &&
+            collateralValueD18.divDecimal(debtD18) < collateralConfiguration.issuanceRatioD18
+        ) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,
                 debtD18,

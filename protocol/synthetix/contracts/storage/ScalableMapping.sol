@@ -101,8 +101,9 @@ library ScalableMapping {
         resultingSharesD18 = getSharesForAmount(scalableMapping, newActorValueD18);
 
         // Modify the total shares with the actor's change in shares.
-        scalableMapping.totalSharesD18 = (scalableMapping.totalSharesD18 + resultingSharesD18 - scalableMapping.sharesD18[actorId])
-            .to128();
+        scalableMapping.totalSharesD18 = (scalableMapping.totalSharesD18 +
+            resultingSharesD18 -
+            scalableMapping.sharesD18[actorId]).to128();
 
         scalableMapping.sharesD18[actorId] = resultingSharesD18.to128();
     }
@@ -112,7 +113,10 @@ library ScalableMapping {
      *
      * i.e. actor.shares * scaleModifier
      */
-    function get(Data storage scalableMapping, bytes32 actorId) internal view returns (uint256 valueD18) {
+    function get(
+        Data storage scalableMapping,
+        bytes32 actorId
+    ) internal view returns (uint256 valueD18) {
         uint256 totalSharesD18 = scalableMapping.totalSharesD18;
         if (scalableMapping.totalSharesD18 == 0) {
             return 0;
