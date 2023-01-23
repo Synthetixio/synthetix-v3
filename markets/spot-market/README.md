@@ -6,7 +6,7 @@ To execute orders, the markets withdraw or deposit stablecoins with Synthetix (n
 
 ## Creating Synths
 
-To create a new synth and a corresponding market, call `registerSynth(string memory tokenName, string memory tokenSymbol, address marketOwner)`. This function returns a market ID, which can be used in a pool's configuration within Synthetix to provide
+To create a new synth and a corresponding market, call `createSynth(string memory tokenName, string memory tokenSymbol, address marketOwner)`. This function returns a market ID, which can be used in a pool's configuration within Synthetix to provide
 it with liquidity. The `getSynth(uint128 marketId)` function returns the address of the synth deployed for the specified market. The `marketOwner` address has the ability to configure price feeds and fees used by the market.
 
 ### Configuring Prices
@@ -98,10 +98,6 @@ A supply target fee helps limit liquidity providers' exposure to price fluctuati
 If the utilization rate exceeds 100%, the market can apply a supply target fee on buy orders for atomic and asyncronous orders. The fee rate (configured as a percentage by the market owner with the `setMarketUtilizationFees()` function) is taken of the percentage by which the utilization rate exceeds 100% and applied to the order.
 
 For instance, if a buy order would move the utilization rate from 90% to 120%, the average utilization rate resulting from the order would be 105%. This is a 5% excess. If the fee rate is set to 100%, a 5% fee is applied. If the fee rate is set to 50%, a 2.5% fee would be applied, etc.
-
-### Simulated Slippage Fee
-
-_t.c._
 
 ### Auto-Rebalancing Skew Fee
 

@@ -1,13 +1,10 @@
 import { ethers as Ethers } from 'ethers';
-import { wei } from '@synthetixio/wei';
-import { bootstrapTraders, bootstrapWithSynth } from './bootstrap';
+import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { SynthRouter } from '../generated/typechain';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-
-const bn = (n: number) => wei(n).toBN();
 
 describe('Atomic Order Module sell()', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -56,7 +53,7 @@ describe('Atomic Order Module sell()', () => {
   describe('no fees', () => {
     let withdrawableUsd: Ethers.BigNumber, txn: Ethers.providers.TransactionResponse;
     before('sell 1 snxETH', async () => {
-      withdrawableUsd = await systems().Core.getWithdrawableUsd(marketId());
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
       txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1));
     });
@@ -70,7 +67,7 @@ describe('Atomic Order Module sell()', () => {
 
     it('withdrew 900 usd from MM', async () => {
       assertBn.equal(
-        await systems().Core.getWithdrawableUsd(marketId()),
+        await systems().Core.getWithdrawableMarketUsd(marketId()),
         withdrawableUsd.sub(bn(900))
       );
     });
@@ -83,8 +80,10 @@ describe('Atomic Order Module sell()', () => {
   describe('utilization rate fees', async () => {
     before(restore);
 
-    before('set utilization fee to 100 bps', async () => {
-      await systems().SpotMarket.connect(marketOwner).setMarketUtilizationFees(marketId(), bn(100));
+    before('set utilization fee to 1%', async () => {
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .setMarketUtilizationFees(marketId(), bn(0.01));
     });
 
     before('sell 1 snxETH', async () => {
@@ -106,12 +105,12 @@ describe('Atomic Order Module sell()', () => {
 
     let withdrawableUsd: Ethers.BigNumber;
     let txn: Ethers.providers.TransactionResponse;
-    before('set fixed fee to 100 bps', async () => {
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
+    before('set fixed fee to 1%', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
     before('sell 1 snxETH', async () => {
-      withdrawableUsd = await systems().Core.getWithdrawableUsd(marketId());
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
       txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1));
     });
@@ -127,7 +126,7 @@ describe('Atomic Order Module sell()', () => {
     // no fee collector so everything gets deposited to MM
     it('withdrew 891 usd to MM', async () => {
       assertBn.equal(
-        await systems().Core.getWithdrawableUsd(marketId()),
+        await systems().Core.getWithdrawableMarketUsd(marketId()),
         withdrawableUsd.sub(bn(891))
       );
     });
@@ -141,10 +140,10 @@ describe('Atomic Order Module sell()', () => {
     });
 
     describe('custom transactor fee', async () => {
-      before('set transactor fee to 10 bps', async () => {
+      before('set transactor fee to 0.1%', async () => {
         await systems()
           .SpotMarket.connect(marketOwner)
-          .setCustomTransactorFees(marketId(), trader2.getAddress(), bn(10));
+          .setCustomTransactorFees(marketId(), trader2.getAddress(), bn(0.001));
       });
 
       before('sell 1 snxETH', async () => {
@@ -166,8 +165,8 @@ describe('Atomic Order Module sell()', () => {
 
     // 20 snxETH outstanding from initial trader purchases
 
-    before('set fixed fee to 100 bps', async () => {
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(100));
+    before('set fixed fee to 1%', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
     before('set skew scale to 100 snxETH', async () => {
