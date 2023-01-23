@@ -6,9 +6,9 @@
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "prepare": "cp ./subgraph.base.yaml ./subgraph.yaml",
     "codegen": "yarn prepare && graph codegen && prettier --write .",
-    "build:goerli": "yarn codegen && graph build --output-dir ./build/goerli --network goerli",
+    "build:goerli": "node ./codegen goerli && yarn codegen && graph build --output-dir ./build/goerli --network goerli",
     "deploy:goerli": "graph deploy --output-dir ./build/goerli --network goerli --product hosted-service snx-v3/goerli",
-    "build:optimism-goerli": "yarn codegen && graph build --output-dir ./build/optimism-goerli --network optimism-goerli",
+    "build:optimism-goerli": "node ./codegen optimism-goerli && yarn codegen && graph build --output-dir ./build/optimism-goerli --network optimism-goerli",
     "deploy:optimism-goerli": "graph deploy --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service snx-v3/optimism-goerli",
     "test": "yarn prepare && graph test",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
@@ -21,6 +21,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.35.0",
     "@graphprotocol/graph-ts": "^0.28.1",
+    "ethers": "^5.7.2",
     "matchstick-as": "^0.5.0",
     "prettier": "^2.8.1"
   },

@@ -2061,6 +2061,29 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  getMarketCollateralValue(marketId: BigInt): BigInt {
+    let result = super.call(
+      'getMarketCollateralValue',
+      'getMarketCollateralValue(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getMarketCollateralValue(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getMarketCollateralValue',
+      'getMarketCollateralValue(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getMaximumMarketCollateral(marketId: BigInt, collateralType: Address): BigInt {
     let result = super.call(
       'getMaximumMarketCollateral',
@@ -2184,18 +2207,22 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getWithdrawableUsd(marketId: BigInt): BigInt {
-    let result = super.call('getWithdrawableUsd', 'getWithdrawableUsd(uint128):(uint256)', [
-      ethereum.Value.fromUnsignedBigInt(marketId),
-    ]);
+  getWithdrawableMarketUsd(marketId: BigInt): BigInt {
+    let result = super.call(
+      'getWithdrawableMarketUsd',
+      'getWithdrawableMarketUsd(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
 
     return result[0].toBigInt();
   }
 
-  try_getWithdrawableUsd(marketId: BigInt): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('getWithdrawableUsd', 'getWithdrawableUsd(uint128):(uint256)', [
-      ethereum.Value.fromUnsignedBigInt(marketId),
-    ]);
+  try_getWithdrawableMarketUsd(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getWithdrawableMarketUsd',
+      'getWithdrawableMarketUsd(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }

@@ -1,14 +1,14 @@
 {
   "goerli": {
     "CoreProxy": {
-      "address": "0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED",
-      "startBlock": 8068892
+      "address": "0xF2CE6299806462Ad101136428b696eD06fBa1E48",
+      "startBlock": 8319997
     }
   },
   "optimism-goerli": {
     "CoreProxy": {
-      "address": "0xbcE929b1f28E17133Ce7bD5f3477EfF34727E1b6",
-      "startBlock": 3170509
+      "address": "0xF2CE6299806462Ad101136428b696eD06fBa1E48",
+      "startBlock": 4212917
     }
   }
 }
