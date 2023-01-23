@@ -136,10 +136,15 @@ library Account {
     }
 
     /**
-     * @dev Requires that the given account has the specified permission.
+     * @dev Loads the Account object for the specified accountId, and validates that sender has the specified permission. These are two different actions but they are merged in a single function because loading an account and checking for a permission is a very common use case in other parts of the code.
      */
-    function onlyWithPermission(uint128 accountId, bytes32 permission) internal view {
-        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
+    function loadAccountAndValidatePermission(
+        uint128 accountId,
+        bytes32 permission
+    ) internal view returns (Data storage account) {
+        account = Account.load(accountId);
+
+        if (!account.rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
     }

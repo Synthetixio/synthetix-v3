@@ -46,7 +46,7 @@ contract VaultModule is IVaultModule {
         uint256 leverage
     ) external override {
         Pool.requireExists(poolId);
-        Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
