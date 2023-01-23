@@ -10,6 +10,8 @@ import "./MarketPoolInfo.sol";
 
 import "../interfaces/external/IMarket.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Connects external contracts that implement the `IMarket` interface to the system.
  *
@@ -373,7 +375,10 @@ library Market {
      *
      * Note: The parameter `maxIter` is used as an escape hatch to discourage griefing.
      */
-    function distributeDebtToPools(Data storage self, uint256 maxIter) internal {
+    function distributeDebtToPools(
+        Data storage self,
+        uint256 maxIter
+    ) internal returns (bool fullyDistributed) {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
         int256 targetBalanceD18 = totalDebt(self);
@@ -389,6 +394,8 @@ library Market {
             );
             self.lastDistributedMarketBalanceD18 = targetBalanceD18.to128();
         }
+
+        return !exhausted;
     }
 
     /**

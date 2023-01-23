@@ -28,13 +28,6 @@ create2 = true
 
 depends = ["contract.CoreModule"]
 
-[invoke.acquire_ownership]
-target = ["InitialProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["contract.InitialProxy"]
-
 [router.OracleRouter]
 contracts = ["CoreModule", "NodeModule"]
 depends = [
@@ -50,4 +43,4 @@ args = ["<%= contracts.OracleRouter.address %>"]
 factory.Proxy.abiOf = ["OracleRouter"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["invoke.acquire_ownership", "router.OracleRouter"]
+depends = ["contract.InitialProxy", "router.OracleRouter"]

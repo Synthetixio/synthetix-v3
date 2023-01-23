@@ -151,4 +151,14 @@ contract MarketManagerModule is IMarketManagerModule {
 
         emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
     }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function distributeDebtToPools(
+        uint128 marketId,
+        uint maxIter
+    ) external override returns (bool) {
+        return Market.load(marketId).distributeDebtToPools(maxIter);
+    }
 }
