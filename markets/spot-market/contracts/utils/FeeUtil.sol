@@ -26,7 +26,7 @@ library FeeUtil {
 
         // TODO: negative fees are ignored.  Verify this.
         if (totalFees > 0) {
-            collectedFees = collectFees(marketId, totalFees.toUint());
+            collectedFees = collectFees(marketId, totalFees.toUint(), transactor, transactionType);
         }
     }
 
@@ -295,7 +295,12 @@ library FeeUtil {
      * If no fee collector is specified, all fees are deposited into the market manager to help staker c-ratios.
      *
      */
-    function collectFees(uint128 marketId, uint totalFees) internal returns (uint collectedFees) {
+    function collectFees(
+        uint128 marketId,
+        uint totalFees,
+        address transactor,
+        SpotMarketFactory.TransactionType transactionType
+    ) internal returns (uint collectedFees) {
         IFeeCollector feeCollector = FeeConfiguration.load(marketId).feeCollector;
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
@@ -303,7 +308,7 @@ library FeeUtil {
             uint previousUsdBalance = store.usdToken.balanceOf(address(this));
 
             store.usdToken.approve(address(feeCollector), totalFees);
-            feeCollector.collectFees(marketId, totalFees);
+            feeCollector.collectFees(marketId, totalFees, transactor, uint8(transactionType));
 
             uint currentUsdBalance = store.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;
