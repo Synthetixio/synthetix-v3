@@ -7,8 +7,8 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 interface IFeeCollector is IERC165 {
     function collectFees(
         uint128 marketId,
-        address transactor,
         uint256 feeAmount,
+        address transactor,
         uint8 tradeType
     ) external;
 }

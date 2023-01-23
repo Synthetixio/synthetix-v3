@@ -472,8 +472,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         FeeUtil.collectFees(
             marketId,
-            msg.sender,
             feesToCollect,
+            msg.sender,
             SpotMarketFactory.TransactionType.ASYNC_BUY
         );
     }

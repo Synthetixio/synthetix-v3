@@ -14,8 +14,8 @@ contract FeeCollectorMock is IFeeCollector {
     // collects 50% of the fees
     function collectFees(
         uint128 marketId,
-        address sender,
         uint256 feeAmount,
+        address sender,
         uint8 tradeType
     ) external override {
         uint feeToCollect = feeAmount / 2;

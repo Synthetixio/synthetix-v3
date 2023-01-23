@@ -109,8 +109,8 @@ contract WrapperModule is IWrapperModule {
             );
             collectedFees = FeeUtil.collectFees(
                 marketId,
-                msg.sender,
                 totalFees.toUint(),
+                msg.sender,
                 SpotMarketFactory.TransactionType.WRAP
             );
         }
@@ -168,8 +168,8 @@ contract WrapperModule is IWrapperModule {
             );
             collectedFees = FeeUtil.collectFees(
                 marketId,
-                msg.sender,
                 totalFees.toUint(),
+                msg.sender,
                 SpotMarketFactory.TransactionType.UNWRAP
             );
         }
