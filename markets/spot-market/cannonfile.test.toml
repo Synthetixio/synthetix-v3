@@ -1,133 +1,17 @@
-name = "spot-market"
-version = "<%= package.version %>"
-description = "Spot market implementation"
+version = "<%= package.version %>-testable"
 
-[setting.coreProxyOwner]
-description = "owner of v3 core proxy"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.marketOwner]
-description = "spot market owner"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+include = [
+  "cannonfile.toml"
+]
 
 [import.synthetix]
-source = "synthetix:3.0.0-alpha.7-testable"
+source = "synthetix:3.0.0-alpha.8-testable"
 
-[setting.oracle_manager_version]
-defaultValue = "1.2.1"
+[contract.FeeCollectorMock]
+artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
 
-[import.oracle_manager]
-source = "oracle-manager:<%= settings.oracle_manager_version %>"
-options.owner = "<%= settings.owner %>"
-
-[contract.SpotMarketFactoryModule]
-artifact = "SpotMarketFactoryModule"
-
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
-
-[contract.AsyncOrderModule]
-artifact = "AsyncOrderModule"
-
-[contract.WrapperModule]
-artifact = "WrapperModule"
-
-[contract.FeeConfigurationModule]
-artifact = "FeeConfigurationModule"
-
-[contract.SynthTokenModule]
-artifact = "SynthTokenModule"
-
-[contract.AsyncOrderClaimTokenModule]
-artifact = "AsyncOrderClaimTokenModule"
-
-[contract.CoreModule]
-artifact = "contracts/modules/CoreModule.sol:CoreModule"
-
-[contract.InitialSpotMarketProxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.CoreModule.address %>"]
-abiOf = ["CoreModule"]
-salt = "<%= settings.salt %>"
-depends = ["contract.CoreModule"]
-
-[invoke.acquire_ownership]
-target = ["InitialSpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.coreProxyOwner %>"]
-depends = ["contract.InitialSpotMarketProxy"]
-
-# Core
-[router.SpotMarketRouter]
-contracts = [
-  "CoreModule",
-  "SpotMarketFactoryModule",
-  "AtomicOrderModule",
-  "AsyncOrderModule",
-  "WrapperModule",
-  "FeeConfigurationModule"
-]
-depends = [
-  "contract.CoreModule",
-  "contract.SpotMarketFactoryModule",
-  "contract.AtomicOrderModule",
-  "contract.AsyncOrderModule",
-  "contract.WrapperModule",
-  "contract.FeeConfigurationModule"
-]
-
-[invoke.upgrade_spot_market_proxy]
-target = ["InitialSpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "upgradeTo"
-args = ["<%= contracts.SpotMarketRouter.address %>"]
-factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
-factory.SpotMarketProxy.event = "Upgraded"
-factory.SpotMarketProxy.arg = 0
-depends = ["invoke.acquire_ownership", "router.SpotMarketRouter"]
-
-# create synth router
-[router.SynthRouter]
-contracts = [
-  "CoreModule",
-  "SynthTokenModule"
-]
-depends = [
-  "contract.CoreModule",
-  "contract.SynthTokenModule"
-]
-
-# create async order claim token router
-
-[router.AsyncOrderClaimRouter]
-contracts = [
-  "CoreModule",
-  "AsyncOrderClaimTokenModule"
-]
-depends = [
-  "contract.CoreModule",
-  "contract.AsyncOrderClaimTokenModule"
-]
-
-
-[invoke.initialize_spot_market_factory]
-target = ["SpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "initialize"
-args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>",
-  "<%= imports.synthetix.contracts.USDProxy.address %>",
-  "<%= imports.oracle_manager.contracts.Proxy.address %>",
-  "<%= contracts.SynthRouter.address %>",
-  "<%= contracts.AsyncOrderClaimRouter.address %>"
-]
-depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "import.oracle_manager", "router.SynthRouter", "router.AsyncOrderClaimRouter"]
-
-# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
-[invoke.addSpotMarketToFeatureFlag]
-target = ["synthetix.CoreProxy"]
-func = "addToFeatureFlagAllowlist"
-from = "<%= settings.coreProxyOwner %>"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
-depends = ['import.synthetix', 'invoke.upgrade_spot_market_proxy']
+[invoke.set_usd_token_for_fee_collector]
+target = ["FeeCollectorMock"]
+func = "setUsdToken"
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+depends = ["contract.FeeCollectorMock", "import.synthetix"]

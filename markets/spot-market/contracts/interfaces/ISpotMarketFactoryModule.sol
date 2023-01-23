@@ -10,6 +10,12 @@ import "../storage/SpotMarketFactory.sol";
  */
 interface ISpotMarketFactoryModule is IMarket {
     /**
+     * @notice Thrown when an address tries to accept market ownership but has not been nominated.
+     * @param addr The address that is trying to accept ownership.
+     */
+    error NotNominated(address addr);
+
+    /**
      * @notice Gets fired when the synth is registered as a market.
      * @param synthMarketId Id of the synth market that was created
      */
@@ -34,6 +40,21 @@ interface ISpotMarketFactoryModule is IMarket {
         bytes32 buyFeedId,
         bytes32 sellFeedId
     );
+
+    /**
+     * @notice Emitted when an address has been nominated.
+     * @param marketId id of the market
+     * @param newOwner The address that has been nominated.
+     */
+    event MarketOwnerNominated(uint128 indexed marketId, address newOwner);
+
+    /**
+     * @notice Emitted when the owner of the market has changed.
+     * @param marketId id of the market
+     * @param oldOwner The previous owner of the market.
+     * @param newOwner The new owner of the market.
+     */
+    event MarketOwnerChanged(uint128 indexed marketId, address oldOwner, address newOwner);
 
     /**
      * @notice Returns whether the factory has been initialized
@@ -62,7 +83,7 @@ interface ISpotMarketFactoryModule is IMarket {
     ) external;
 
     /**
-     * @notice Registers a new synth market with synthetix v3 core system via market manager
+     * @notice Creates a new synth market with synthetix v3 core system via market manager
      * @dev The synth is created using the initial synth implementation and creates a proxy for future upgrades of the synth implementation.
      * @dev Sets up the market owner who can update configuration for the synth.
      * @param tokenName name of synth (i.e Synthetix ETH)
@@ -70,7 +91,7 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param synthOwner owner of the market that's created.
      * @return synthMarketId id of the synth market that was created
      */
-    function registerSynth(
+    function createSynth(
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
@@ -104,4 +125,25 @@ interface ISpotMarketFactoryModule is IMarket {
 
     /* tbd */
     function upgradeAsyncOrderTokenImpl(uint128 marketId, address asyncOrderImpl) external;
+
+    /**
+     * @notice Allows the current market owner to nominate a new owner.
+     * @dev The nominated owner will have to call `acceptOwnership` in a separate transaction in order to finalize the action and become the new contract owner.
+     * @param marketId id of the market
+     * @param newNominatedOwner The address that is to become nominated.
+     */
+    function nominateMarketOwner(uint128 marketId, address newNominatedOwner) external;
+
+    /**
+     * @notice Allows a nominated address to accept ownership of the market.
+     * @dev Reverts if the caller is not nominated.
+     * @param marketId id of the market
+     */
+    function acceptMarketOwnership(uint128 marketId) external;
+
+    /**
+     * @notice Returns market owner.
+     * @param marketId id of the market
+     */
+    function getMarketOwner(uint128 marketId) external view returns (address);
 }

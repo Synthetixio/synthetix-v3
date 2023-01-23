@@ -10,6 +10,8 @@ import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 import "../utils/SynthUtil.sol";
 import "../utils/AsyncOrderClaimTokenUtil.sol";
 import "../storage/SpotMarketFactory.sol";
@@ -28,6 +30,8 @@ contract SpotMarketFactoryModule is
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using Price for Price.Data;
+
+    bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
 
     function _isInitialized() internal view override returns (bool) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
@@ -64,12 +68,13 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function registerSynth(
+    function createSynth(
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
     ) external override onlyIfInitialized returns (uint128) {
-        // TODO: Add permissions here
+        FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
+
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(
             address(this)
@@ -169,6 +174,48 @@ contract SpotMarketFactoryModule is
         Price.load(synthMarketId).update(buyFeedId, sellFeedId);
 
         emit SynthPriceDataUpdated(synthMarketId, buyFeedId, sellFeedId);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) public override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        if (newNominatedOwner == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        SpotMarketFactory.load().nominatedMarketOwners[synthMarketId] = newNominatedOwner;
+        emit MarketOwnerNominated(synthMarketId, newNominatedOwner);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function acceptMarketOwnership(uint128 synthMarketId) public override {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        address currentNominatedOwner = store.nominatedMarketOwners[synthMarketId];
+        if (msg.sender != currentNominatedOwner) {
+            revert NotNominated(msg.sender);
+        }
+
+        emit MarketOwnerChanged(
+            synthMarketId,
+            store.marketOwners[synthMarketId],
+            currentNominatedOwner
+        );
+
+        store.marketOwners[synthMarketId] = currentNominatedOwner;
+        store.nominatedMarketOwners[synthMarketId] = address(0);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function getMarketOwner(uint128 synthMarketId) public view override returns (address) {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        return store.marketOwners[synthMarketId];
     }
 
     /**
