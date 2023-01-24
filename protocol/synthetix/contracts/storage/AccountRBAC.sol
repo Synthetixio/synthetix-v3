@@ -76,7 +76,7 @@ library AccountRBAC {
         }
 
         if (permission == "") {
-            revert Account.InvalidPermission("");
+            revert InvalidPermission("");
         }
 
         if (!self.permissionAddresses.contains(target)) {
