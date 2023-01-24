@@ -60,12 +60,15 @@ const config = {
       chainId: 10,
     },
     goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url:
+        process.env.NETWORK_ENDPOINT || `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 5,
     },
     ['avalanche-fuji']: {
-      url: `https://avalanche-fuji.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://avalanche-fuji.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 43113,
     },

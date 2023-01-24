@@ -1,3 +1,4 @@
+import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
@@ -185,6 +186,109 @@ describe('MarketManagerModule', function () {
           it('makes USD', async () => {
             assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One);
           });
+        });
+      });
+    });
+  });
+
+  describe('distributeDebtToPools()', async () => {
+    before(restore);
+    before('add more staked pools', async () => {
+      // want a total of 3 staked pools
+      // create
+      await systems()
+        .Core.connect(owner)
+        .createPool(poolId + 1, await owner.getAddress());
+      await systems()
+        .Core.connect(owner)
+        .createPool(poolId + 2, await owner.getAddress());
+
+      // configure
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('0.1'),
+          },
+        ]);
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId + 1, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('0.2'),
+          },
+        ]);
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId + 2, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('0.3'),
+          },
+        ]);
+
+      // delegate
+      await systems()
+        .Core.connect(user1)
+        .delegateCollateral(
+          accountId,
+          poolId + 1,
+          collateralAddress(),
+          depositAmount,
+          ethers.utils.parseEther('1')
+        );
+
+      await systems()
+        .Core.connect(user1)
+        .delegateCollateral(
+          accountId,
+          poolId + 2,
+          collateralAddress(),
+          depositAmount,
+          ethers.utils.parseEther('1')
+        );
+    });
+
+    before('accumulate debt', async () => {
+      await MockMarket().setReportedDebt(ethers.utils.parseEther('12341234123412341234'));
+    });
+
+    it('calling distribute debt to pools says its incomplete', async () => {
+      assert.equal(await systems().Core.callStatic.distributeDebtToPools(marketId(), '1'), false);
+    });
+
+    describe('call first time', async () => {
+      before('first time called', async () => {
+        await systems().Core.distributeDebtToPools(marketId(), 2);
+      });
+
+      it('has not fully restored the debt', async () => {
+        assertBn.equal(
+          await systems().Core.callStatic.Market_getDebtPerShare(marketId()),
+          ethers.utils.parseEther('0.2')
+        );
+      });
+
+      it('calling distribute debt to pools says its now complete', async () => {
+        assert.equal(await systems().Core.callStatic.distributeDebtToPools(marketId(), '2'), true);
+      });
+
+      describe('call second time', async () => {
+        before('second time called', async () => {
+          await systems().Core.distributeDebtToPools(marketId(), 2);
+        });
+
+        it('has fully restored the debt', async () => {
+          // last pool has a limit of 3 ether
+          assertBn.equal(
+            await systems().Core.callStatic.Market_getDebtPerShare(marketId()),
+            ethers.utils.parseEther('0.3')
+          );
         });
       });
     });
