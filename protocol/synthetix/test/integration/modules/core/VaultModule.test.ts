@@ -92,19 +92,27 @@ describe('VaultModule', function () {
     });
 
     it('returns 0 debt', async () => {
-      assertBn.equal(await systems().Core.callStatic.getVaultDebt(fakeFreshVaultId, collateralAddress()), 0);
+      assertBn.equal(
+        await systems().Core.callStatic.getVaultDebt(fakeFreshVaultId, collateralAddress()),
+        0
+      );
     });
 
     it('returns 0 collateral', async () => {
       assertBn.equal(
-        (await systems().Core.callStatic.getVaultCollateral(fakeFreshVaultId, collateralAddress()))[0],
+        (
+          await systems().Core.callStatic.getVaultCollateral(fakeFreshVaultId, collateralAddress())
+        )[0],
         0
       );
     });
 
     it('returns 0 collateral ratio', async () => {
       assertBn.equal(
-        await systems().Core.callStatic.getVaultCollateralRatio(fakeFreshVaultId, collateralAddress()),
+        await systems().Core.callStatic.getVaultCollateralRatio(
+          fakeFreshVaultId,
+          collateralAddress()
+        ),
         0
       );
     });

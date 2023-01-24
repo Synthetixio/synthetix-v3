@@ -213,6 +213,7 @@ library Pool {
         uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
+        // solhint-disable-next-line numcast/safe-cast
         int256 debtPerShareD18 = debtD18 > 0 ? debtD18.divDecimal(totalSharesD18.toInt()) : int(0);
 
         if (minLiquidityRatioD18 == 0) {
@@ -416,10 +417,10 @@ library Pool {
         );
         int256 getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
-        return getPositionDebtD18 > 0 ? 
-            getPositionCollateralValueD18.divDecimal(
-                getPositionDebtD18.toUint()
-            ) : 1e20;
+        return
+            getPositionDebtD18 > 0
+                ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
+                : 1e20;
     }
 
     /**

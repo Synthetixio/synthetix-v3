@@ -183,7 +183,7 @@ describe('IssueUSDModule', function () {
     });
   });
 
-  describe('edge case: verify debt is excluded from available mint', async() => {
+  describe('edge case: verify debt is excluded from available mint', async () => {
     before(restore);
     afterEach(restore);
 
@@ -191,36 +191,30 @@ describe('IssueUSDModule', function () {
       return async () => {
         // Initial capacity
         const capacity = await systems().Core.connect(user1).getWithdrawableMarketUsd(marketId);
-        
+
         // Mint USD against collateral
-        await systems().Core.connect(user1).mintUsd(
-          accountId,
-          poolId,
-          collateralAddress(),
-          depositAmount.div(10).div(ratio)
-        );
-    
+        await systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10).div(ratio));
+
         // Bypass MockMarket internal accounting
         await MockMarket.setReportedDebt(depositAmount);
 
         // Issue max capacity, which has not been reduced
-        await MockMarket.connect(user1).sellSynth(
-          capacity
-        );
+        await MockMarket.connect(user1).sellSynth(capacity);
 
         // Should not have been allowed to mint more than the system limit
         assertBn.equal(
           await systems().USD.balanceOf(user1.getAddress()),
           depositAmount.div(10).div(ratio)
         );
-        
 
         // cratio is exactly equal to 1 because that is what the system allows.
         assertBn.equal(
           await systems().Core.callStatic.getVaultCollateralRatio(poolId, collateralAddress()),
           ethers.utils.parseEther('1').div(ratio)
         );
-      }
+      };
     }
 
     // thanks to iosiro for the below test
@@ -233,6 +227,6 @@ describe('IssueUSDModule', function () {
       });
 
       it('try to create debt beyond system max c ratio', exploit(2));
-    })
+    });
   });
 });

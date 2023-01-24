@@ -154,17 +154,17 @@ export function bootstrapWithStakedPool() {
         ethers.utils.parseEther('1')
       );
 
-      // also for convenience invest in the 0 pool
-      await r
-        .systems()
-        .Core.connect(user1)
-        .delegateCollateral(
-          accountId,
-          0,
-          collateralAddress,
-          depositAmount,
-          ethers.utils.parseEther('1')
-        );
+    // also for convenience invest in the 0 pool
+    await r
+      .systems()
+      .Core.connect(user1)
+      .delegateCollateral(
+        accountId,
+        0,
+        collateralAddress,
+        depositAmount,
+        ethers.utils.parseEther('1')
+      );
   });
 
   const restore = snapshotCheckpoint(r.provider);
