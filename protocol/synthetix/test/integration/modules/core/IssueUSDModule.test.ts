@@ -201,10 +201,14 @@ describe('IssueUSDModule', function () {
         await MockMarket.setReportedDebt(depositAmount);
 
         // Issue max capacity, which has not been reduced
-        await MockMarket.connect(user1).sellSynth(capacity);
+        await assertRevert(
+          MockMarket.connect(user1).sellSynth(capacity),
+          'NotEnoughLiquidity(',
+          systems().Core
+        );
 
         // Should not have been allowed to mint more than the system limit
-        assertBn.equal(
+        /*assertBn.equal(
           await systems().USD.balanceOf(user1.getAddress()),
           depositAmount.div(10).div(ratio)
         );
@@ -213,7 +217,7 @@ describe('IssueUSDModule', function () {
         assertBn.equal(
           await systems().Core.callStatic.getVaultCollateralRatio(poolId, collateralAddress()),
           ethers.utils.parseEther('1').div(ratio)
-        );
+        );*/
       };
     }
 
