@@ -85,7 +85,7 @@ describe('MarketManagerModule', function () {
     before(restore);
 
     before('acquire USD', async () => {
-      await systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), One);
+      await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
     });
 
     it('should not work if user has not approved', async () => {
@@ -121,7 +121,7 @@ describe('MarketManagerModule', function () {
         // should only have the one USD minted earlier
         assertBn.equal(
           await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
-          One
+          0
         );
       });
     });
@@ -132,7 +132,7 @@ describe('MarketManagerModule', function () {
 
     describe('deposit into the pool', async () => {
       before('mint USD to use market', async () => {
-        await systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), One);
+        await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
         await systems().USD.connect(user1).approve(MockMarket().address, One);
         txn = await MockMarket().connect(user1).buySynth(One);
       });
