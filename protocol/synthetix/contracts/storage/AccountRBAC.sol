@@ -23,11 +23,6 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
 
-    /**
-     * @dev Thrown when a permission specified by a user does not exist or is invalid.
-     */
-    error InvalidPermission(bytes32 permission);
-
     struct Data {
         /**
          * @dev The owner of the account and admin of all permissions.
@@ -41,23 +36,6 @@ library AccountRBAC {
          * @dev Array of addresses that this account has given permissions to.
          */
         SetUtil.AddressSet permissionAddresses;
-    }
-
-    /**
-     * @dev Reverts if the specified permission is unknown to the account RBAC system.
-     */
-    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
-    // solc-ignore-next-line func-mutability
-    function isPermissionValid(bytes32 permission) internal {
-        if (
-            permission != AccountRBAC._WITHDRAW_PERMISSION &&
-            permission != AccountRBAC._DELEGATE_PERMISSION &&
-            permission != AccountRBAC._MINT_PERMISSION &&
-            permission != AccountRBAC._ADMIN_PERMISSION &&
-            permission != AccountRBAC._REWARDS_PERMISSION
-        ) {
-            revert InvalidPermission(permission);
-        }
     }
 
     /**
