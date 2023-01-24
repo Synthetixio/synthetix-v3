@@ -5,7 +5,7 @@ import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import { DecayTokenModule } from '../../../typechain-types';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 const parseEther = ethers.utils.parseEther;
 
@@ -19,8 +19,6 @@ describe('DecayTokenModule', () => {
   let owner: ethers.Signer;
   let user1: ethers.Signer;
   let user2: ethers.Signer;
-
-  let startTime = 0;
 
   const decimal = 18;
 
@@ -67,10 +65,6 @@ describe('DecayTokenModule', () => {
   const restore = snapshotCheckpoint(getProvider);
 
   describe('mint', () => {
-    before(async () => {
-      startTime = await getTime(getProvider());
-    });
-
     before('100 tokens is minted to user1', async () => {
       await TokenModule.connect(owner).mint(await user1.getAddress(), amount);
     });
@@ -92,7 +86,7 @@ describe('DecayTokenModule', () => {
     describe('check the values at timestamp 1', () => {
       before('fast forward to timestamp 1', async () => {
         //sets next block timestamp
-        await fastForwardTo(startTime + 2, getProvider());
+        await fastForward(1, getProvider());
       });
 
       it('totalSupply is 100 * (1 - (1 - 0) * 0.01) = 99', async () => {
@@ -139,21 +133,13 @@ describe('DecayTokenModule', () => {
   describe('changing interest rate over time', async () => {
     before(restore);
 
-    before(async () => {
-      startTime = await getTime(getProvider());
-    });
-
     before('100 tokens is minted to user1 at timestamp 0', async () => {
       await TokenModule.connect(owner).mint(await user1.getAddress(), amount);
     });
 
-    const restoreInterestChanges = snapshotCheckpoint(getProvider);
-
     describe('fast forward to timestamp 1', () => {
-      before(restoreInterestChanges);
-
       before('fastForward', async () => {
-        await fastForwardTo(startTime + 1, getProvider());
+        await fastForward(1, getProvider());
       });
 
       it('totalSupply is 100 * (1 - (1 - 0) * 0.01) = 99', async () => {
@@ -168,38 +154,39 @@ describe('DecayTokenModule', () => {
         assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), parseEther('99'));
       });
     });
+  });
+  describe('changing interest rate over time', async () => {
+    before(restore);
+
+    before('100 tokens is minted to user1 at timestamp 0', async () => {
+      await TokenModule.connect(owner).mint(await user1.getAddress(), amount);
+    });
 
     describe('fast forward to timestamp 2', () => {
-      before(restoreInterestChanges);
-
       before('update interest rate to 2% per 1 seconds', async () => {
         await TokenModule.setInterestRate(interestRate.mul(2));
       });
 
       before('fastForward', async () => {
-        await fastForwardTo(startTime + 2, getProvider());
+        await fastForward(1, getProvider());
       });
 
-      it('totalSupply is 100 * (1 - (1 - 0.02) ** 2) = 96.04', async () => {
-        assertBn.equal(await TokenModule.totalSupply(), parseEther('96.04'));
+      it('totalSupply is 99 * (0.98) = 97.02', async () => {
+        assertBn.equal(await TokenModule.totalSupply(), parseEther('97.02'));
       });
 
-      it('token per share is (96.04 / 100) = 0.9604', async () => {
-        assertBn.equal(await TokenModule.tokensPerShare(), parseEther('0.9604'));
+      it('token per share is (97.02 / 100) = 0.9604', async () => {
+        assertBn.equal(await TokenModule.tokensPerShare(), parseEther('0.9702'));
       });
 
-      it('user 1 balance is 100 * 0.9604 = 96.04', async () => {
-        assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), parseEther('96.04'));
+      it('user 1 balance is 100 * 0.9702 = 97.02', async () => {
+        assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), parseEther('97.02'));
       });
     });
   });
 
   describe('transfer', async () => {
     before(restore);
-
-    before(async () => {
-      startTime = await getTime(getProvider());
-    });
 
     before('1000 tokens is minted to user1 at timestamp 0', async () => {
       await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
@@ -215,7 +202,7 @@ describe('DecayTokenModule', () => {
 
     describe('when advancing more', function () {
       before('fast forward', async function () {
-        await fastForwardTo(startTime + 2, getProvider());
+        await fastForward(1, getProvider());
       });
 
       it('check owner balance at timestamp 2', async () => {
@@ -226,9 +213,6 @@ describe('DecayTokenModule', () => {
 
   describe('transferFrom', async () => {
     before(restore);
-    before(async () => {
-      startTime = await getTime(getProvider());
-    });
 
     before('1000 tokens is minted to user1 at timestamp 0', async () => {
       await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
