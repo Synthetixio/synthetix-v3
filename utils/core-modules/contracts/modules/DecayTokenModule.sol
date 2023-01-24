@@ -63,16 +63,24 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         store.interestRate = _rate;
     }
 
-    function totalSupply() public view virtual override(ERC20, IERC20) returns (uint256) {
+    function totalShares() public view virtual returns (uint256) {
+        return ERC20Storage.load().totalSupply;
+    }
+
+    function totalSupply() public view virtual override(ERC20, IERC20) returns (uint256 supply) {
         uint256 totalShares = ERC20Storage.load().totalSupply;
         if (_totalSupplyAtEpochStart() == 0) {
             return totalShares;
         }
-        return (
-            _totalSupplyAtEpochStart().mulDecimal(
-                ((10 ** 18) - ((block.timestamp - _epochStart()) * _ratePerSecond()))
-            )
-        );
+        uint t = (block.timestamp - _epochStart());
+        supply = _totalSupplyAtEpochStart();
+        uint r = ((10 ** 18) - _ratePerSecond());
+
+        for (uint i = 0; i < t; i++) {
+            supply = supply.mulDecimal(r);
+        }
+
+        return (supply);
     }
 
     function balanceOf(address owner) public view override(ERC20, IERC20) returns (uint256) {
