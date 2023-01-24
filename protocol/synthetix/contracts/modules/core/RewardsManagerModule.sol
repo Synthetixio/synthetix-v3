@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
@@ -143,7 +143,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address collateralType,
         address distributor
     ) external override returns (uint256) {
-        Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));

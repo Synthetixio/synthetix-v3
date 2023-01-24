@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "../../interfaces/IIssueUSDModule.sol";
 
@@ -41,8 +41,7 @@ contract IssueUSDModule is IIssueUSDModule {
         address collateralType,
         uint256 amount
     ) external override {
-        // Ensure the caller is allowed to mint
-        _onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._MINT_PERMISSION);
 
         Pool.Data storage pool = Pool.load(poolId);
 
@@ -111,16 +110,5 @@ contract IssueUSDModule is IIssueUSDModule {
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
-    }
-
-    /**
-     * @dev Reverts if the given account does not have the specified permission.
-     */
-    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
-    // solc-ignore-next-line func-mutability
-    function _onlyWithPermission(uint128 accountId, bytes32 permission) internal {
-        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
-            revert Account.PermissionDenied(accountId, permission, msg.sender);
-        }
     }
 }

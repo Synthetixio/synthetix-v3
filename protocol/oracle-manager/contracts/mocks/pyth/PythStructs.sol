@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 contract PythStructs {
     // A price with a degree of uncertainty, represented as a price +- a confidence interval.

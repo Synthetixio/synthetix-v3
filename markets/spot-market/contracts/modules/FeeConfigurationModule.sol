@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
@@ -89,5 +89,15 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         feeConfiguration.feeCollector = IFeeCollector(feeCollector);
 
         emit FeeCollectorSet(synthMarketId, feeCollector);
+    }
+
+    function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.wrapFixedFee = wrapFee;
+        feeConfiguration.unwrapFixedFee = unwrapFee;
+
+        emit WrapperFeesSet(synthMarketId, wrapFee, unwrapFee);
     }
 }

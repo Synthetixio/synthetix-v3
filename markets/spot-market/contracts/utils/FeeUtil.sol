@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -26,7 +26,7 @@ library FeeUtil {
 
         // TODO: negative fees are ignored.  Verify this.
         if (totalFees > 0) {
-            collectedFees = collectFees(marketId, totalFees.toUint());
+            collectedFees = collectFees(marketId, totalFees.toUint(), transactor, transactionType);
         }
     }
 
@@ -204,12 +204,9 @@ library FeeUtil {
         );
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
-        uint wrappedMarketCollateral = 0;
-        if (wrapper.wrappingEnabled) {
-            wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
-                .getMarketCollateralAmount(marketId, wrapper.collateralType)
-                .mulDecimal(collateralPrice);
-        }
+        uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
+            .getMarketCollateralAmount(marketId, wrapper.wrapCollateralType)
+            .mulDecimal(collateralPrice);
 
         uint initialSkew = totalSynthValue - wrappedMarketCollateral;
         uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
@@ -298,15 +295,21 @@ library FeeUtil {
      * If no fee collector is specified, all fees are deposited into the market manager to help staker c-ratios.
      *
      */
-    function collectFees(uint128 marketId, uint totalFees) internal returns (uint collectedFees) {
+    function collectFees(
+        uint128 marketId,
+        uint totalFees,
+        address transactor,
+        SpotMarketFactory.TransactionType transactionType
+    ) internal returns (uint collectedFees) {
         IFeeCollector feeCollector = FeeConfiguration.load(marketId).feeCollector;
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         if (address(feeCollector) != address(0)) {
-            store.usdToken.approve(address(feeCollector), totalFees);
-
             uint previousUsdBalance = store.usdToken.balanceOf(address(this));
-            feeCollector.collectFees(marketId, totalFees);
+
+            store.usdToken.approve(address(feeCollector), totalFees);
+            feeCollector.collectFees(marketId, totalFees, transactor, uint8(transactionType));
+
             uint currentUsdBalance = store.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;
 

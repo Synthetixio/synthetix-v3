@@ -9,7 +9,7 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 
 const parseEther = ethers.utils.parseEther;
 
-describe.only('DecayTokenModule', () => {
+describe('DecayTokenModule', () => {
   const { getContractBehindProxy, getSigners, getProvider } = bootstrap({
     implementation: 'DecayTokenModuleRouter',
   });
