@@ -424,9 +424,8 @@ library Market {
                 self.poolsDebtDistribution.totalSharesD18 > 0
                     ? valueToDistributeD18.divDecimal(
                         self.poolsDebtDistribution.totalSharesD18.toInt()
-                    )
-                    : // solhint-disable-next-line numcast/safe-cast
-                    int(0)
+                    ) // solhint-disable-next-line numcast/safe-cast
+                    : int(0)
             );
     }
 
