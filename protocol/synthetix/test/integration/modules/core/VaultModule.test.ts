@@ -20,10 +20,6 @@ describe('VaultModule', function () {
     collateralAddress,
   } = bootstrapWithStakedPool();
 
-  function maxUint(type) {
-    return pow(2, type).sub(1);
-  }
-
   const MAX_UINT = ethers.BigNumber.from(2).pow(256).sub(1);
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
