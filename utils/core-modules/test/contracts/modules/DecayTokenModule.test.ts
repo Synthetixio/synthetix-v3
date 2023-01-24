@@ -194,7 +194,6 @@ describe('DecayTokenModule', () => {
     });
   });
 
-  // TODO: Review compounding interest
   describe('transfer', async () => {
     before(restore);
 

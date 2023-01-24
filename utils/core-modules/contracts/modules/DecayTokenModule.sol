@@ -68,9 +68,8 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     function totalSupply() public view virtual override(ERC20, IERC20) returns (uint256 supply) {
-        uint256 totalShares = ERC20Storage.load().totalSupply;
         if (_totalSupplyAtEpochStart() == 0) {
-            return totalShares;
+            return totalShares();
         }
         uint t = (block.timestamp - _epochStart());
         supply = _totalSupplyAtEpochStart();
@@ -149,13 +148,13 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     function _tokensPerShare() internal view returns (uint256) {
-        uint256 totalShares = ERC20Storage.load().totalSupply;
+        uint256 shares = totalShares();
 
-        if (_totalSupplyAtEpochStart() == 0 || totalShares == 0) {
+        if (_totalSupplyAtEpochStart() == 0 || shares == 0) {
             return DecimalMath.UNIT;
         }
 
-        return totalSupply().divDecimal(totalShares);
+        return totalSupply().divDecimal(shares);
     }
 
     function _tokenToShare(uint256 amount) internal view returns (uint256) {
