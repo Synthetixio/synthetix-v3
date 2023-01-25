@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./Account.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
@@ -22,6 +20,11 @@ library AccountRBAC {
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
+
+    /**
+     * @dev Thrown when a permission specified by a user does not exist or is invalid.
+     */
+    error InvalidPermission(bytes32 permission);
 
     struct Data {
         /**
@@ -54,7 +57,7 @@ library AccountRBAC {
         }
 
         if (permission == "") {
-            revert Account.InvalidPermission("");
+            revert InvalidPermission("");
         }
 
         if (!self.permissionAddresses.contains(target)) {

@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "../interfaces/ITokenModule.sol";
 import "../interfaces/INftModule.sol";
-import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 
 library AssociatedSystem {
     struct Data {

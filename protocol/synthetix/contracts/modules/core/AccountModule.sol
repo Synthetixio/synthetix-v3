@@ -1,10 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-
-import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../interfaces/IAccountModule.sol";

@@ -11,8 +11,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./OracleManager.sol";
 
-import "../interfaces/external/IAggregatorV3Interface.sol";
-
 /**
  * @title Tracks system-wide settings for each collateral type, as well as helper functions for it, such as retrieving its current price from the oracle manager.
  */
