@@ -6,7 +6,8 @@ import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol"
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
-import "@synthetixio/core-contracts/contracts/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 /**
  * @title Module for managing the snxUSD token as an associated system.
