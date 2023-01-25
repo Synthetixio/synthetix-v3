@@ -46,9 +46,7 @@ library AccountRBAC {
     /**
      * @dev Reverts if the specified permission is unknown to the account RBAC system.
      */
-    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
-    // solc-ignore-next-line func-mutability
-    function isPermissionValid(bytes32 permission) internal {
+    function isPermissionValid(bytes32 permission) internal pure {
         if (
             permission != AccountRBAC._WITHDRAW_PERMISSION &&
             permission != AccountRBAC._DELEGATE_PERMISSION &&
