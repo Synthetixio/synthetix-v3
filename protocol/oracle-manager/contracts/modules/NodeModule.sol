@@ -129,24 +129,24 @@ contract NodeModule is INodeModule {
         NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
-        // To save gas we only retrive and loop over the storage when nodeType requires it
-        // Retrieve the output of the node's parents
-        NodeOutput.Data[] memory reducerParentNodeOutputs = new NodeOutput.Data[](
-            nodeDefinition.parents.length
-        );
-        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            reducerParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
-        }
+            // To save gas we only retrive and loop over the storage when nodeType requires it
+            // Retrieve the output of the node's parents
+            NodeOutput.Data[] memory reducerParentNodeOutputs = new NodeOutput.Data[](
+                nodeDefinition.parents.length
+            );
+            for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+                reducerParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+            }
             return ReducerNode.process(reducerParentNodeOutputs, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
-        // To save gas we only retrive and loop over the storage when nodeType requires it
-        // Retrieve the output of the node's parents
-        NodeOutput.Data[] memory externalParentNodeOutputs = new NodeOutput.Data[](
-            nodeDefinition.parents.length
-        );
-        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            externalParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
-        }
+            // To save gas we only retrive and loop over the storage when nodeType requires it
+            // Retrieve the output of the node's parents
+            NodeOutput.Data[] memory externalParentNodeOutputs = new NodeOutput.Data[](
+                nodeDefinition.parents.length
+            );
+            for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+                externalParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+            }
             return ExternalNode.process(externalParentNodeOutputs, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
             return ChainlinkNode.process(nodeDefinition.parameters);
@@ -157,30 +157,33 @@ contract NodeModule is INodeModule {
         } else if (
             nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
         ) {
-        // To save gas we only retrive and loop over the storage when nodeType requires it
-        // Retrieve the output of the node's parents
-        NodeOutput.Data[] memory priceDeviationParentNodeOutputs = new NodeOutput.Data[](
-            nodeDefinition.parents.length
-        );
-        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            priceDeviationParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
-        }
+            // To save gas we only retrive and loop over the storage when nodeType requires it
+            // Retrieve the output of the node's parents
+            NodeOutput.Data[] memory priceDeviationParentNodeOutputs = new NodeOutput.Data[](
+                nodeDefinition.parents.length
+            );
+            for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+                priceDeviationParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+            }
             return
                 PriceDeviationCircuitBreakerNode.process(
                     priceDeviationParentNodeOutputs,
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
-        // To save gas we only retrive and loop over the storage when nodeType requires it
-        // Retrieve the output of the node's parents
-        NodeOutput.Data[] memory stalenessParentNodeOutputs = new NodeOutput.Data[](
-            nodeDefinition.parents.length
-        );
-        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            stalenessParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
-        }
+            // To save gas we only retrive and loop over the storage when nodeType requires it
+            // Retrieve the output of the node's parents
+            NodeOutput.Data[] memory stalenessParentNodeOutputs = new NodeOutput.Data[](
+                nodeDefinition.parents.length
+            );
+            for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+                stalenessParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+            }
             return
-                StalenessCircuitBreakerNode.process(stalenessParentNodeOutputs, nodeDefinition.parameters);
+                StalenessCircuitBreakerNode.process(
+                    stalenessParentNodeOutputs,
+                    nodeDefinition.parameters
+                );
         }
         revert UnprocessableNode(nodeId);
     }
