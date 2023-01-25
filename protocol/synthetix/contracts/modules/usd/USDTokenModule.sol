@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/modules/TokenModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol";
 

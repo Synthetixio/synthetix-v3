@@ -9,8 +9,6 @@ import "./MarketPoolInfo.sol";
 
 import "../interfaces/external/IMarket.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Connects external contracts that implement the `IMarket` interface to the system.
  *
