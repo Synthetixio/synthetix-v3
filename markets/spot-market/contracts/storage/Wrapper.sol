@@ -21,10 +21,10 @@ library Wrapper {
         uint256 maxWrappableAmount;
     }
 
-    function load(uint128 marketId) internal pure returns (Data storage store) {
+    function load(uint128 marketId) internal pure returns (Data storage wrapper) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Wrapper", marketId));
         assembly {
-            store.slot := s
+            wrapper.slot := s
         }
     }
 
