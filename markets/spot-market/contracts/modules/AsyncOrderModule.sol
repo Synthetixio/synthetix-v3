@@ -45,10 +45,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId
         );
 
-        require(
-            settlementStrategyId < asyncOrderConfiguration.settlementStrategies.length,
-            "Invalid settlement strategy ID"
-        );
+        if (settlementStrategyId >= asyncOrderConfiguration.settlementStrategies.length) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
 
         int256 utilizationDelta;
         uint256 cancellationFee;

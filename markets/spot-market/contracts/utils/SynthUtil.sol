@@ -30,38 +30,6 @@ library SynthUtil {
      *   total amount of shares held in the market contract and their shares are reduced.
      **/
 
-    // Mint synths to escrow and add shares, tracked as owned by the market
-    function mintToEscrow(uint128 marketId, uint256 synthAmount) internal {
-        ITokenModule token = getToken(marketId);
-        AsyncOrderConfiguration.Data storage asyncOrderData = AsyncOrderConfiguration.load(
-            marketId
-        );
-
-        token.mint(address(this), synthAmount);
-
-        uint sharesAmount = asyncOrderData.totalEscrowedSynthShares == 0
-            ? synthAmount
-            : (synthAmount * asyncOrderData.totalEscrowedSynthShares) /
-                token.balanceOf(address(this));
-        asyncOrderData.escrowedSynthShares[address(this)] += sharesAmount;
-        asyncOrderData.totalEscrowedSynthShares += sharesAmount;
-    }
-
-    // Convert synth amount to shares, remove these shares from the market, and burn the shares amount
-    function burnFromEscrow(uint128 marketId, uint256 synthAmount) internal {
-        ITokenModule token = getToken(marketId);
-        AsyncOrderConfiguration.Data storage asyncOrderData = AsyncOrderConfiguration.load(
-            marketId
-        );
-
-        uint256 sharesAmount = (synthAmount * asyncOrderData.totalEscrowedSynthShares) /
-            token.balanceOf(address(this));
-        asyncOrderData.escrowedSynthShares[address(this)] -= sharesAmount;
-        asyncOrderData.totalEscrowedSynthShares -= sharesAmount;
-
-        token.burn(address(this), sharesAmount);
-    }
-
     // Transfer synths into escrow and add shares, tracked as owned by the sender
     function transferIntoEscrow(uint128 marketId, address from, uint256 synthAmount) internal {
         ITokenModule token = getToken(marketId);

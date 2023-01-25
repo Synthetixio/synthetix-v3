@@ -45,6 +45,8 @@ interface IAsyncOrderModule {
         uint256 settlementWindowDuration
     );
 
+    error InvalidSettlementStrategy(uint256 settlementStrategyId);
+
     function commitOrder(
         uint128 marketId,
         SpotMarketFactory.TransactionType orderType,
