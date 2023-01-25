@@ -2,9 +2,9 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { MockMarket } from '../../../typechain-types/contracts/mocks/MockMarket';
-import { snapshotCheckpoint } from '../../utils/snapshot';
-import { bootstrap } from '../bootstrap';
+import { MockMarket } from '../../../../typechain-types/contracts/mocks/MockMarket';
+import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { bootstrap } from '../../bootstrap';
 
 describe('Market', function () {
   const { systems, provider, signers } = bootstrap();
@@ -420,14 +420,28 @@ describe('Market', function () {
             .Market_adjustPoolShares(fakeMarketId, fakePool1, 20, One.mul(-10));
 
           await systems().Core.connect(owner).Market_set_netIssuanceD18(fakeMarketId, -1000);
+
+          // sanity
+          assertBn.equal(
+            await systems().Core.connect(owner).Market__testOnly_inRangePools(fakeMarketId),
+            0
+          );
         });
 
-        it('never distributes anything because there is no pool to absorb the gains', async () => {
-          await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 999);
-          await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 999);
+        before('distribute down', async () => {
+          await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
+        });
 
-          // none of the pools have received any debt allocation becuase there is
-          // no pool to take on the exposure from 0 to -20
+        it('debt per share is at the point where the pool was added', async () => {
+          assertBn.equal(
+            await systems().Core.callStatic.Market_getDebtPerShare(fakeMarketId),
+            One.mul(-4)
+          );
+        });
+
+        it('debt is only partially moved', async () => {
+          // none of the pools have received any debt allocation
+          // becuase it only just now entered the range
           assertBn.equal(
             await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
               fakeMarketId,
@@ -451,25 +465,19 @@ describe('Market', function () {
           );
         });
 
-        describe('add another in-range pool to absorb wins', async () => {
-          before('add pool', async () => {
-            await systems()
-              .Core.connect(owner)
-              .Market_adjustPoolShares(fakeMarketId, fakePool1 + 1, 1, 0);
-
+        describe('call again', async () => {
+          before('move into range with limit 1', async () => {
             await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
           });
 
           it('debt per share is at the point where the pool was added', async () => {
             assertBn.equal(
               await systems().Core.callStatic.Market_getDebtPerShare(fakeMarketId),
-              One.mul(-4)
+              One.mul(-8)
             );
           });
 
-          it('debt is only partially moved', async () => {
-            // none of the pools have received any debt allocation
-            // becuase it only just now entered the range
+          it('debt is moved as far as possible', async () => {
             assertBn.equal(
               await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
                 fakeMarketId,
@@ -489,7 +497,7 @@ describe('Market', function () {
                 fakeMarketId,
                 fakePool3
               ),
-              0
+              -60
             );
           });
 
@@ -501,7 +509,7 @@ describe('Market', function () {
             it('debt per share is at the point where the pool was added', async () => {
               assertBn.equal(
                 await systems().Core.callStatic.Market_getDebtPerShare(fakeMarketId),
-                One.mul(-8)
+                One.mul(-10)
               );
             });
 
@@ -518,52 +526,15 @@ describe('Market', function () {
                   fakeMarketId,
                   fakePool2
                 ),
-                0
+                -10
               );
               assertBn.equal(
                 await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
                   fakeMarketId,
                   fakePool3
                 ),
-                -60
+                -90
               );
-            });
-
-            describe('call again', async () => {
-              before('move into range with limit 1', async () => {
-                await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
-              });
-
-              it('debt per share is at the point where the pool was added', async () => {
-                assertBn.equal(
-                  await systems().Core.callStatic.Market_getDebtPerShare(fakeMarketId),
-                  One.mul(-10)
-                );
-              });
-
-              it('debt is moved as far as possible', async () => {
-                assertBn.equal(
-                  await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
-                    fakeMarketId,
-                    fakePool1
-                  ),
-                  0
-                );
-                assertBn.equal(
-                  await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
-                    fakeMarketId,
-                    fakePool2
-                  ),
-                  -10
-                );
-                assertBn.equal(
-                  await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
-                    fakeMarketId,
-                    fakePool3
-                  ),
-                  -90
-                );
-              });
             });
           });
         });

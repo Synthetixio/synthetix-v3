@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
@@ -8,7 +8,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "./SpotMarketFactory.sol";
 import "../utils/SynthUtil.sol";
-import "./Fee.sol";
 import "./Wrapper.sol";
 
 /**

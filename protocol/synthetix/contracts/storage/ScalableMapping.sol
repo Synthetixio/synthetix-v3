@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -45,6 +45,11 @@ library ScalableMapping {
      */
     error InsufficientMappedAmount();
 
+    /**
+     * @dev Thrown when attempting to scale a mapping with no shares.
+     */
+    error CannotScaleEmptyMapping();
+
     struct Data {
         uint128 totalSharesD18;
         int128 scaleModifierD27;
@@ -62,6 +67,9 @@ library ScalableMapping {
         }
 
         uint256 totalSharesD18 = self.totalSharesD18;
+        if (totalSharesD18 == 0) {
+            revert CannotScaleEmptyMapping();
+        }
 
         int256 valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
         int256 deltaScaleModifierD27 = valueD45 / totalSharesD18.toInt();

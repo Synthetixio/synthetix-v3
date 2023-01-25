@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -9,6 +9,7 @@ import "../storage/SpotMarketFactory.sol";
 import "../storage/AsyncOrderConfiguration.sol";
 import "../interfaces/IAsyncOrderModule.sol";
 import "../utils/AsyncOrderClaimTokenUtil.sol";
+import "../utils/FeeUtil.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 
@@ -23,7 +24,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
-    using Fee for Fee.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
 
     // ************
@@ -64,20 +64,22 @@ contract AsyncOrderModule is IAsyncOrderModule {
             store.usdToken.transferFrom(msg.sender, address(this), amountProvided);
 
             // Calculate fees
-            (uint256 amountUsableUsd, uint256 estimatedFees) = Fee.calculateFees(
+            (uint256 amountUsableUsd, int256 estimatedFees) = FeeUtil.calculateFees(
                 marketId,
                 msg.sender,
                 amountProvided,
                 SpotMarketFactory.TransactionType.ASYNC_BUY
             );
-            cancellationFee = estimatedFees;
+            cancellationFee = estimatedFees > 0 ? estimatedFees.toUint() : 0;
 
             // The utilization increases based on the estimated fill
-            utilizationDelta = Price.usdSynthExchangeRate(
-                marketId,
-                amountUsableUsd,
-                SpotMarketFactory.TransactionType.ASYNC_BUY
-            );
+            utilizationDelta = Price
+                .usdSynthExchangeRate(
+                    marketId,
+                    amountUsableUsd,
+                    SpotMarketFactory.TransactionType.ASYNC_BUY
+                )
+                .toInt();
         }
 
         if (orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
@@ -99,13 +101,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
 
             // Set cancellation fee based on estimation
-            (uint256 estimatedFill, uint256 estimatedFees) = Fee.calculateFees(
+            (uint256 estimatedFill, int256 estimatedFees) = FeeUtil.calculateFees(
                 marketId,
                 msg.sender,
                 usdAmount,
                 SpotMarketFactory.TransactionType.ASYNC_SELL
             );
-            cancellationFee = estimatedFees;
+            cancellationFee = estimatedFees > 0 ? estimatedFees.toUint() : 0;
 
             // Decrease the utilization based on the amount remaining after fees
             uint256 synthAmount = Price.usdSynthExchangeRate(
@@ -293,9 +295,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
             AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
         ) = _prepareSettlement(marketId, asyncOrderId);
 
-        IPythVerifier(settlementStrategy.priceVerificationContract).parsePriceFeedUpdates(
-            priceData
-        );
+        // TODO: does not satisfy interface
+        // IPythVerifier(settlementStrategy.priceVerificationContract).parsePriceFeedUpdates(
+        //     priceData
+        // );
 
         // TODO
         // confirm that priceData is for asyncOrderClaim.settlementTime
@@ -451,17 +454,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        AsyncOrderConfiguration.Data memory asyncOrderConfiguration = AsyncOrderConfiguration.load(
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
-        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
-            asyncOrderId
-        ];
 
         // TODO: Confirm negative fee situation
         // TODO: Move feesToCollect into cancelOrder and pass it instead of shouldReturnFee
-        int feesToCollect = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
-        int amountToReturn = asyncOrderClaim.amountEscrowed - feesToCollect;
+        uint feesToCollect = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
+        uint amountToReturn = asyncOrderClaim.amountEscrowed - feesToCollect;
 
         // Return the USD
         store.usdToken.transferFrom(
@@ -470,10 +470,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
             amountToReturn
         );
 
-        // Collect the fees
-        if (feesToCollect > 0) {
-            Fee.collectFees(marketId, feesToCollect.toUint());
-        }
+        FeeUtil.collectFees(
+            marketId,
+            feesToCollect,
+            msg.sender,
+            SpotMarketFactory.TransactionType.ASYNC_BUY
+        );
     }
 
     function _returnSellOrderEscrow(
@@ -482,16 +484,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
         bool shouldReturnFee,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
-        AsyncOrderConfiguration.Data memory asyncOrderConfiguration = AsyncOrderConfiguration.load(
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
-        AsyncOrderClaim.Data memory asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[
-            asyncOrderId
-        ];
 
         // TODO: Confirm negative fee situation
         // TODO: Move feesToCollect into cancelOrder and pass it instead of shouldReturnFee
-        int feesInUsd = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
+        uint feesInUsd = shouldReturnFee ? 0 : asyncOrderClaim.cancellationFee;
 
         if (feesInUsd > 0) {
             // Calculate the value of the fees in synths

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 /**
  * @title ERC721 non-fungible token (NFT) contract.
@@ -16,6 +16,11 @@ interface IERC721 {
      * @param addr The address that cannot receive the tokens.
      */
     error InvalidTransferRecipient(address addr);
+
+    /**
+     * @notice Thrown when attempting to specify an owner which is not valid (ex. the 0x00000... address)
+     */
+    error InvalidOwner(address addr);
 
     /**
      * @notice Thrown when attempting to operate on a token id that does not exist.
@@ -46,6 +51,10 @@ interface IERC721 {
 
     /**
      * @notice Returns the number of tokens in ``owner``'s account.
+     *
+     * Requirements:
+     *
+     * - `owner` must be a valid address
      */
     function balanceOf(address owner) external view returns (uint256 balance);
 

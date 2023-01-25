@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
@@ -8,6 +8,7 @@ import "../interfaces/IFeeConfigurationModule.sol";
 import "../interfaces/ISynthTokenModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../storage/FeeConfiguration.sol";
 
 /**
  * @title Module for configuring fees for registered synth markets.
@@ -23,8 +24,8 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
     function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
-        Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.atomicFixedFee = atomicFixedFee;
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.atomicFixedFee = atomicFixedFee;
 
         emit AtomicFixedFeeSet(synthMarketId, atomicFixedFee);
     }
@@ -35,8 +36,8 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
     function setMarketSkewScale(uint128 synthMarketId, uint skewScale) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
-        Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.skewScale = skewScale;
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.skewScale = skewScale;
 
         emit MarketSkewScaleSet(synthMarketId, skewScale);
     }
@@ -50,8 +51,8 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
-        Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.utilizationFeeRate = utilizationFeeRate;
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.utilizationFeeRate = utilizationFeeRate;
 
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
     }
@@ -65,7 +66,7 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         uint fixedFeeAmount
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
-        Fee.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
+        FeeConfiguration.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
 
         emit AtomicTransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
     }
@@ -84,9 +85,19 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
 
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
-        Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.feeCollector = IFeeCollector(feeCollector);
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.feeCollector = IFeeCollector(feeCollector);
 
         emit FeeCollectorSet(synthMarketId, feeCollector);
+    }
+
+    function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.wrapFixedFee = wrapFee;
+        feeConfiguration.unwrapFixedFee = unwrapFee;
+
+        emit WrapperFeesSet(synthMarketId, wrapFee, unwrapFee);
     }
 }

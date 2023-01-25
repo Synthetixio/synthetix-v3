@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "../../interfaces/IMarketManagerModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
@@ -150,5 +150,15 @@ contract MarketManagerModule is IMarketManagerModule {
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
 
         emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function distributeDebtToPools(
+        uint128 marketId,
+        uint maxIter
+    ) external override returns (bool) {
+        return Market.load(marketId).distributeDebtToPools(maxIter);
     }
 }

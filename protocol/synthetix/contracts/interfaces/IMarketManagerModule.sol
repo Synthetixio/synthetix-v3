@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 /**
  * @title System-wide entry point for the management of markets connected to the system.
@@ -132,4 +132,14 @@ interface IMarketManagerModule {
      * @return A boolean that is true if the market's capacity is locked at the time of the query.
      */
     function isMarketCapacityLocked(uint128 marketId) external view returns (bool);
+
+    /**
+     * @notice Update a market's current debt registration with the system.
+     * This function is provided as an escape hatch for pool griefing, preventing
+     * overwhelming the system with a series of very small pools and creating high gas
+     * costs to update an account.
+     * @param marketId the id of the market that needs pools bumped
+     * @return whether or not all bumpable pools have been bumped
+     */
+    function distributeDebtToPools(uint128 marketId, uint maxIter) external returns (bool);
 }

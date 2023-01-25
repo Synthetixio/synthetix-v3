@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
@@ -64,9 +64,10 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 tokenAmount
     ) public override {
-        Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION);
-
-        Account.Data storage account = Account.load(accountId);
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._WITHDRAW_PERMISSION
+        );
 
         uint256 tokenAmountD18 = CollateralConfiguration
             .load(collateralType)
@@ -160,9 +161,10 @@ contract CollateralModule is ICollateralModule {
         uint256 amount,
         uint64 expireTimestamp
     ) external override {
-        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
-
-        Account.Data storage account = Account.load(accountId);
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._ADMIN_PERMISSION
+        );
 
         (uint256 totalDeposited, , uint256 totalLocked) = account.getCollateralTotals(
             collateralType

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -15,10 +15,6 @@ library Collateral {
     using SafeCastU256 for uint256;
 
     struct Data {
-        /**
-         * @dev Indicates if the collateral is set, i.e. not empty.
-         */
-        bool isSet;
         /**
          * @dev The amount that can be withdrawn or delegated in this collateral.
          */
@@ -40,12 +36,7 @@ library Collateral {
      * @dev Increments the entry's availableCollateral.
      */
     function increaseAvailableCollateral(Data storage self, uint amountD18) internal {
-        if (!self.isSet) {
-            self.isSet = true;
-            self.amountAvailableForDelegationD18 = amountD18;
-        } else {
-            self.amountAvailableForDelegationD18 += amountD18;
-        }
+        self.amountAvailableForDelegationD18 += amountD18;
     }
 
     /**

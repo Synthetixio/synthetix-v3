@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "./ERC20.sol";
 import "./ERC20PermitStorage.sol";
@@ -43,7 +43,6 @@ contract ERC20Permit is ERC20, IERC20Permit {
         }
 
         ERC20PermitStorage.Data storage store = ERC20PermitStorage.load();
-        ERC20Storage.Data storage erc20Store = ERC20Storage.load();
 
         uint256 nonce = store.nonces[owner];
 
@@ -78,10 +77,8 @@ contract ERC20Permit is ERC20, IERC20Permit {
                 revert InvalidSigner(recoveredAddress);
             }
 
-            erc20Store.allowance[recoveredAddress][spender] = value;
+            _approve(recoveredAddress, spender, value);
         }
-
-        emit Approval(owner, spender, value);
     }
 
     /**

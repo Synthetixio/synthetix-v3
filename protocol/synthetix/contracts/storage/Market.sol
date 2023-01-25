@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 
@@ -8,6 +8,8 @@ import "./CollateralConfiguration.sol";
 import "./MarketPoolInfo.sol";
 
 import "../interfaces/external/IMarket.sol";
+
+import "hardhat/console.sol";
 
 /**
  * @title Connects external contracts that implement the `IMarket` interface to the system.
@@ -275,6 +277,26 @@ library Market {
     }
 
     /**
+     * Returns the number of pools currently active in the market
+     *
+     * Note: this is test only
+     */
+    // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
+    function _testOnly_inRangePools(Data storage self) internal view returns (uint) {
+        return self.inRangePools.size();
+    }
+
+    /**
+     * Returns the number of pools currently active in the market
+     *
+     * Note: this is test only
+     */
+    // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
+    function _testOnly_outRangePools(Data storage self) internal view returns (uint) {
+        return self.outRangePools.size();
+    }
+
+    /**
      * @dev Returns the debt value per share
      */
     function getDebtPerShare(Data storage self) internal view returns (int256 debtPerShareD18) {
@@ -372,7 +394,10 @@ library Market {
      *
      * Note: The parameter `maxIter` is used as an escape hatch to discourage griefing.
      */
-    function distributeDebtToPools(Data storage self, uint256 maxIter) internal {
+    function distributeDebtToPools(
+        Data storage self,
+        uint256 maxIter
+    ) internal returns (bool fullyDistributed) {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
         int256 targetBalanceD18 = totalDebt(self);
@@ -388,6 +413,8 @@ library Market {
             );
             self.lastDistributedMarketBalanceD18 = targetBalanceD18.to128();
         }
+
+        return !exhausted;
     }
 
     /**
@@ -399,7 +426,13 @@ library Market {
     ) internal view returns (int256 targetValuePerShareD18) {
         return
             self.poolsDebtDistribution.getValuePerShare() +
-            valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());
+            (
+                self.poolsDebtDistribution.totalSharesD18 > 0
+                    ? valueToDistributeD18.divDecimal(
+                        self.poolsDebtDistribution.totalSharesD18.toInt()
+                    ) // solhint-disable-next-line numcast/safe-cast
+                    : int(0)
+            );
     }
 
     /**
@@ -412,7 +445,7 @@ library Market {
         int256 maxDistributedD18,
         uint256 maxIter
     ) internal returns (int256 actuallyDistributedD18, bool exhausted) {
-        if (maxDistributedD18 == 0 || self.poolsDebtDistribution.totalSharesD18 == 0) {
+        if (maxDistributedD18 == 0) {
             return (0, false);
         }
 
@@ -433,7 +466,7 @@ library Market {
         // Note: This loop should rarely execute its main body. When it does, it only executes once for each pool that exceeds the limit since `distributeValue` is not run for most pools. Thus, market users are not hit with any overhead as a result of this.
         uint256 iters;
         for (iters = 0; iters < maxIter; iters++) {
-            // Exit if there are no in range pools.
+            // Exit if there are no pools that can be moved
             if (fromHeap.size() == 0) {
                 break;
             }
@@ -441,11 +474,16 @@ library Market {
             // Identify the pool with the lowest maximum value per share.
             HeapUtil.Node memory edgePool = fromHeap.getMax();
 
-            // Exit if the lowest max value per share does not hit the limit.
-            // Note: `-edgePool.priority` is actually the max value per share limit of the pool
+            // 2 cases where we want to break out of this loop
             if (
-                -edgePool.priority >=
-                k * getTargetValuePerShare(self, (maxDistributedD18 - actuallyDistributedD18))
+                // If there is no pool in range, and we are going down
+                (maxDistributedD18 - actuallyDistributedD18 > 0 &&
+                    self.poolsDebtDistribution.totalSharesD18 == 0) ||
+                // If there is a pool in ragne, and the lowest max value per share does not hit the limit, exit
+                // Note: `-edgePool.priority` is actually the max value per share limit of the pool
+                (self.poolsDebtDistribution.totalSharesD18 > 0 &&
+                    -edgePool.priority >=
+                    k * getTargetValuePerShare(self, (maxDistributedD18 - actuallyDistributedD18)))
             ) {
                 break;
             }
@@ -455,13 +493,24 @@ library Market {
             togglePool(fromHeap, toHeap);
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
-            int256 debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.toInt().mulDecimal(
-                -k * edgePool.priority - self.poolsDebtDistribution.getValuePerShare() // Diff between current value and max value per share.
-            );
-            self.poolsDebtDistribution.distributeValue(debtToLimitD18);
+            if (self.poolsDebtDistribution.totalSharesD18 > 0) {
+                int256 debtToLimitD18 = self
+                    .poolsDebtDistribution
+                    .totalSharesD18
+                    .toInt()
+                    .mulDecimal(
+                        -k * edgePool.priority - self.poolsDebtDistribution.getValuePerShare() // Diff between current value and max value per share.
+                    );
+                self.poolsDebtDistribution.distributeValue(debtToLimitD18);
 
-            // Update the global distributed and outstanding balances with the debt that was just distributed.
-            actuallyDistributedD18 += debtToLimitD18;
+                // Update the global distributed and outstanding balances with the debt that was just distributed.
+                actuallyDistributedD18 += debtToLimitD18;
+            } else {
+                self.poolsDebtDistribution.valuePerShareD27 = (-k * edgePool.priority)
+                    .to256()
+                    .upscale(DecimalMath.PRECISION_FACTOR)
+                    .to128();
+            }
 
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.

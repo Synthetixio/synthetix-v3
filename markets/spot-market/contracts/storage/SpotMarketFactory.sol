@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 import "./Price.sol";
-import "./Fee.sol";
 import "./Wrapper.sol";
 
 /**
@@ -43,6 +42,10 @@ library SpotMarketFactory {
          * @dev mapping of marketId to marketOwner
          */
         mapping(uint128 => address) marketOwners;
+        /**
+         * @dev mapping of marketId to marketNominatedOwner
+         */
+        mapping(uint128 => address) nominatedMarketOwners;
     }
 
     enum TransactionType {

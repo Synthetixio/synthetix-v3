@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 /// @title IPythEvents contains the events that Pyth contract emits.
 /// @dev This interface can be used for listening to the updates for off-chain and testing purposes.

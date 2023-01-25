@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "./Distribution.sol";
 import "./MarketConfiguration.sol";
@@ -213,9 +213,12 @@ library Pool {
         uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
+        // solhint-disable-next-line numcast/safe-cast
+        int256 debtPerShareD18 = debtD18 > 0 ? debtD18.divDecimal(totalSharesD18.toInt()) : int(0);
+
         if (minLiquidityRatioD18 == 0) {
             // If minLiquidityRatioD18 is zero, then set limit to 100%.
-            return valuePerShareD18 + DecimalMath.UNIT_INT;
+            return valuePerShareD18 + DecimalMath.UNIT_INT - debtPerShareD18;
         } else if (totalSharesD18 == 0) {
             // margin = credit / systemLimit, per share
             return valuePerShareD18;
@@ -227,7 +230,7 @@ library Pool {
             return
                 marketData.poolsDebtDistribution.getValuePerShare() +
                 marginD18.toInt() -
-                debtD18.divDecimal(totalSharesD18.toInt());
+                debtPerShareD18;
         }
     }
 
@@ -414,11 +417,10 @@ library Pool {
         );
         int256 getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
-        // if they have a credit, just treat their debt as 0
         return
-            getPositionCollateralValueD18.divDecimal(
-                getPositionDebtD18 < 0 ? 0 : getPositionDebtD18.toUint()
-            );
+            getPositionDebtD18 > 0
+                ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
+                : 1e20;
     }
 
     /**

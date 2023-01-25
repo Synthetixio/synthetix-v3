@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 < 0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/AuthorizableStorage.sol:AuthorizableStorage
 library AuthorizableStorage {
@@ -342,7 +342,6 @@ library AccountRBAC {
 // @custom:artifact contracts/storage/Collateral.sol:Collateral
 library Collateral {
     struct Data {
-        bool isSet;
         uint256 amountAvailableForDelegationD18;
         SetUtil.UintSet pools;
         CollateralLock.Data[] locks;

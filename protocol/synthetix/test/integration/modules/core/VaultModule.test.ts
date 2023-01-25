@@ -85,20 +85,34 @@ describe('VaultModule', function () {
   }
 
   describe('fresh vault', async () => {
+    const fakeFreshVaultId = 209372;
+
+    before('create empty vault', async () => {
+      await systems().Core.createPool(fakeFreshVaultId, await user1.getAddress());
+    });
+
     it('returns 0 debt', async () => {
-      assertBn.equal(await systems().Core.callStatic.getVaultDebt(0, collateralAddress()), 0);
+      assertBn.equal(
+        await systems().Core.callStatic.getVaultDebt(fakeFreshVaultId, collateralAddress()),
+        0
+      );
     });
 
     it('returns 0 collateral', async () => {
       assertBn.equal(
-        (await systems().Core.callStatic.getVaultCollateral(0, collateralAddress()))[0],
+        (
+          await systems().Core.callStatic.getVaultCollateral(fakeFreshVaultId, collateralAddress())
+        )[0],
         0
       );
     });
 
     it('returns 0 collateral ratio', async () => {
       assertBn.equal(
-        await systems().Core.callStatic.getVaultCollateralRatio(0, collateralAddress()),
+        await systems().Core.callStatic.getVaultCollateralRatio(
+          fakeFreshVaultId,
+          collateralAddress()
+        ),
         0
       );
     });
@@ -181,7 +195,13 @@ describe('VaultModule', function () {
       const restore = snapshotCheckpoint(provider);
       after(restore);
 
-      before('disable collatearal', async () => {
+      const fakeVaultId = 93729028;
+
+      before('create empty vault', async () => {
+        await systems().Core.createPool(fakeVaultId, await user1.getAddress());
+      });
+
+      before('disable collateral', async () => {
         const beforeConfiguration = await systems().Core.getCollateralConfiguration(
           collateralAddress()
         );
@@ -197,7 +217,7 @@ describe('VaultModule', function () {
             .Core.connect(user1)
             .delegateCollateral(
               accountId,
-              0,
+              fakeVaultId,
               collateralAddress(),
               depositAmount.div(50),
               ethers.utils.parseEther('1')

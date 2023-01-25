@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
@@ -101,9 +101,12 @@ contract AccountModule is IAccountModule {
     ) external override {
         _isPermissionValid(permission);
 
-        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._ADMIN_PERMISSION
+        );
 
-        Account.load(accountId).rbac.grantPermission(permission, user);
+        account.rbac.grantPermission(permission, user);
 
         emit PermissionGranted(accountId, permission, user, msg.sender);
     }
@@ -116,9 +119,12 @@ contract AccountModule is IAccountModule {
         bytes32 permission,
         address user
     ) external override {
-        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._ADMIN_PERMISSION
+        );
 
-        Account.load(accountId).rbac.revokePermission(permission, user);
+        account.rbac.revokePermission(permission, user);
 
         emit PermissionRevoked(accountId, permission, user, msg.sender);
     }

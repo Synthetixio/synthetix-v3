@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
@@ -46,7 +46,7 @@ contract VaultModule is IVaultModule {
         uint256 leverage
     ) external override {
         Pool.requireExists(poolId);
-        Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.

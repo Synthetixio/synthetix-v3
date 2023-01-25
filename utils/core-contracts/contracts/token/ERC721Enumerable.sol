@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "./ERC721.sol";
 import "./ERC721EnumerableStorage.sol";
@@ -14,6 +14,15 @@ import "../interfaces/IERC721Enumerable.sol";
  */
 abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     /**
+     * @inheritdoc IERC165
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return
+            super.supportsInterface(interfaceId) ||
+            interfaceId == type(IERC721Enumerable).interfaceId;
+    }
+
+    /**
      * @inheritdoc IERC721Enumerable
      */
     function tokenOfOwnerByIndex(
@@ -21,7 +30,7 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         uint256 index
     ) public view virtual override returns (uint256) {
         if (ERC721.balanceOf(owner) <= index) {
-            return 0;
+            revert IndexOverrun(index, ERC721.balanceOf(owner));
         }
         return ERC721EnumerableStorage.load().ownedTokens[owner][index];
     }
@@ -38,7 +47,7 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
      */
     function tokenByIndex(uint256 index) public view virtual override returns (uint256) {
         if (index >= ERC721Enumerable.totalSupply()) {
-            return 0;
+            revert IndexOverrun(index, ERC721Enumerable.totalSupply());
         }
         return ERC721EnumerableStorage.load().allTokens[index];
     }
