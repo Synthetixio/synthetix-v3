@@ -42,6 +42,21 @@ library AccountRBAC {
     }
 
     /**
+     * @dev Reverts if the specified permission is unknown to the account RBAC system.
+     */
+    function isPermissionValid(bytes32 permission) internal pure {
+        if (
+            permission != AccountRBAC._WITHDRAW_PERMISSION &&
+            permission != AccountRBAC._DELEGATE_PERMISSION &&
+            permission != AccountRBAC._MINT_PERMISSION &&
+            permission != AccountRBAC._ADMIN_PERMISSION &&
+            permission != AccountRBAC._REWARDS_PERMISSION
+        ) {
+            revert InvalidPermission(permission);
+        }
+    }
+
+    /**
      * @dev Sets the owner of the account.
      */
     function setOwner(Data storage self, address owner) internal {

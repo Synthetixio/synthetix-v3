@@ -35,11 +35,6 @@ library Account {
      */
     error InsufficientAccountCollateral(uint256 requestedAmount);
 
-    /**
-     * @dev Thrown when a permission specified by a user does not exist or is invalid.
-     */
-    error InvalidPermission(bytes32 permission);
-
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
