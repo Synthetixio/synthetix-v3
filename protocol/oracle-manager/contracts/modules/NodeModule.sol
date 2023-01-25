@@ -128,19 +128,26 @@ contract NodeModule is INodeModule {
     function _process(bytes32 nodeId) internal view returns (NodeOutput.Data memory price) {
         NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
 
+        if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
+        // To save gas we only retrive and loop over the storage when nodeType requires it
         // Retrieve the output of the node's parents
-        NodeOutput.Data[] memory parentNodeOutputs = new NodeOutput.Data[](
+        NodeOutput.Data[] memory reducerParentNodeOutputs = new NodeOutput.Data[](
             nodeDefinition.parents.length
         );
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            parentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+            reducerParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
         }
-
-        // Generate the node's output using the appropriate logic for the given node's type
-        if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
-            return ReducerNode.process(parentNodeOutputs, nodeDefinition.parameters);
+            return ReducerNode.process(reducerParentNodeOutputs, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
-            return ExternalNode.process(parentNodeOutputs, nodeDefinition.parameters);
+        // To save gas we only retrive and loop over the storage when nodeType requires it
+        // Retrieve the output of the node's parents
+        NodeOutput.Data[] memory externalParentNodeOutputs = new NodeOutput.Data[](
+            nodeDefinition.parents.length
+        );
+        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+            externalParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+        }
+            return ExternalNode.process(externalParentNodeOutputs, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
             return ChainlinkNode.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
@@ -150,14 +157,30 @@ contract NodeModule is INodeModule {
         } else if (
             nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
         ) {
+        // To save gas we only retrive and loop over the storage when nodeType requires it
+        // Retrieve the output of the node's parents
+        NodeOutput.Data[] memory priceDeviationParentNodeOutputs = new NodeOutput.Data[](
+            nodeDefinition.parents.length
+        );
+        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+            priceDeviationParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+        }
             return
                 PriceDeviationCircuitBreakerNode.process(
-                    parentNodeOutputs,
+                    priceDeviationParentNodeOutputs,
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
+        // To save gas we only retrive and loop over the storage when nodeType requires it
+        // Retrieve the output of the node's parents
+        NodeOutput.Data[] memory stalenessParentNodeOutputs = new NodeOutput.Data[](
+            nodeDefinition.parents.length
+        );
+        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+            stalenessParentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+        }
             return
-                StalenessCircuitBreakerNode.process(parentNodeOutputs, nodeDefinition.parameters);
+                StalenessCircuitBreakerNode.process(stalenessParentNodeOutputs, nodeDefinition.parameters);
         }
         revert UnprocessableNode(nodeId);
     }
