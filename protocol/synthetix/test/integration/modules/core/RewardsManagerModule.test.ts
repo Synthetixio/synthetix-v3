@@ -156,7 +156,7 @@ describe('RewardsManagerModule', function () {
           });
 
           it('is distributed', async () => {
-            const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+            const [rewards] = await systems().Core.callStatic.updateRewards(
               poolId,
               collateralAddress(),
               accountId
@@ -227,7 +227,7 @@ describe('RewardsManagerModule', function () {
 
             it('is distributed', async () => {
               // should have received 2 distributions
-              const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+              const [rewards] = await systems().Core.callStatic.updateRewards(
                 poolId,
                 collateralAddress(),
                 accountId
@@ -327,7 +327,7 @@ describe('RewardsManagerModule', function () {
           });
 
           it('does not distribute future', async () => {
-            const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+            const [rewards] = await systems().Core.callStatic.updateRewards(
               poolId,
               collateralAddress(),
               accountId
@@ -378,7 +378,7 @@ describe('RewardsManagerModule', function () {
           });
 
           it('distributes portion of rewards immediately', async () => {
-            const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+            const [rewards] = await systems().Core.callStatic.updateRewards(
               poolId,
               collateralAddress(),
               accountId
@@ -417,7 +417,7 @@ describe('RewardsManagerModule', function () {
               });
 
               it('distributes portion of rewards immediately', async () => {
-                const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+                const [rewards] = await systems().Core.callStatic.updateRewards(
                   poolId,
                   collateralAddress(),
                   accountId
@@ -494,7 +494,7 @@ describe('RewardsManagerModule', function () {
       });
 
       it('returns no rewards remaining', async () => {
-        const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+        const [rewards] = await systems().Core.callStatic.updateRewards(
           poolId,
           collateralAddress(),
           accountId
