@@ -194,7 +194,7 @@ library Pool {
     }
 
     /**
-     * @dev Determines the resulting maximum value per share for a market, according to a system-wide minimum liquidity ratio. This prevents markets from taking too much debt.
+     * @dev Determines the resulting maximum value per share for a market, according to a system-wide minimum liquidity ratio. This prevents markets from assigning more debt to pools than they have collateral to cover.
      *
      * Note: There is a market-wide fail safe for each market at `MarketConfiguration.maxDebtShareValue`. The lower of the two values should be used.
      *
@@ -202,7 +202,7 @@ library Pool {
      */
     function getSystemMaxValuePerShare(
         Data storage self,
-        uint128 marketId, // Note: We are keeping this value as a uint128 for now for testability reasons.
+        uint128 marketId,
         uint256 creditCapacityD18,
         int256 debtD18
     ) internal view returns (int256) {
