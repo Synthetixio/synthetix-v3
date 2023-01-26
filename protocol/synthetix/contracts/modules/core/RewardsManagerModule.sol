@@ -114,7 +114,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     /**
      * @inheritdoc IRewardsManagerModule
      */
-    function getClaimableRewards(
+    function updateRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
