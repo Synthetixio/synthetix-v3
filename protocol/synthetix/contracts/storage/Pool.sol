@@ -217,8 +217,9 @@ library Pool {
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
         // If there are no shares in the pool's debt distribution,
+        // (and the minimum liquidity setting is not set),
         // then the maximum value per share is the market's current value per share.
-        if (totalSharesD18 == 0) {
+        if (totalSharesD18 == 0 && minLiquidityRatioD18 != 0) {
             return valuePerShareD18;
         }
 
