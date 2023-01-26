@@ -2,10 +2,10 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./PythStructs.sol";
-import "./IPyth.sol";
+import "./IPythMock.sol";
 import "./PythErrors.sol";
 
-abstract contract AbstractPyth is IPyth {
+abstract contract AbstractPyth is IPythMock {
     /// @notice Returns the price feed with given id.
     /// @dev Reverts if the price does not exist.
     /// @param id The Pyth Price Feed ID of which to fetch the PriceFeed.

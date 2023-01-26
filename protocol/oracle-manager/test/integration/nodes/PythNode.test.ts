@@ -4,6 +4,8 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 
+const parseUnits = ethers.utils.parseUnits;
+
 describe('PythNode', function () {
   const { getContract, getSigners } = bootstrap();
 
@@ -12,8 +14,9 @@ describe('PythNode', function () {
   let PythMock: ethers.Contract;
 
   const priceFeedId = ethers.utils.hexZeroPad('0x6d6f636b', 32);
-  const price = 1559;
-  const emaPrice = 420;
+  const decimals = 8;
+  const price = parseUnits('1559', decimals).toString();
+  const emaPrice = parseUnits('420', decimals).toString();
   const timestamp = 4000;
 
   before('prepare environment', async () => {
@@ -30,7 +33,7 @@ describe('PythNode', function () {
       priceFeedId,
       price,
       1,
-      1,
+      -decimals,
       emaPrice,
       1,
       timestamp
@@ -50,7 +53,7 @@ describe('PythNode', function () {
 
     // Verify the node processes output as expected
     const output = await NodeModule.process(nodeId);
-    assertBn.equal(output.price, price);
+    assertBn.equal(output.price, parseUnits(price, 18 - decimals).toString());
     assertBn.equal(output.timestamp, timestamp);
   });
 
@@ -65,7 +68,7 @@ describe('PythNode', function () {
 
     // Verify the node processes output as expected
     const output = await NodeModule.process(nodeId);
-    assertBn.equal(output.price, emaPrice);
+    assertBn.equal(output.price, parseUnits(emaPrice, 18 - decimals).toString());
     assertBn.equal(output.timestamp, timestamp);
   });
 });
