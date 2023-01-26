@@ -150,7 +150,7 @@ describe('VaultModule', function () {
       verifyAccountState(accountId, poolId, depositAmount, 0)
     );
 
-    it('has infinite cratio', async function () {
+    it('has max cratio', async function () {
       assertBn.equal(
         await systems().Core.callStatic.getPositionCollateralRatio(
           accountId,
