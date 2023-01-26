@@ -18,6 +18,8 @@ defaultValue = "SNXGOV"
 [setting.init_council_member]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
 
+[setting.epoch_start]
+
 [setting.epoch_duration]
 defaultValue = "90" # days
 
@@ -113,9 +115,9 @@ func = "initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64,address
 args = [
   ["<%= settings.init_council_member %>"],
   "1",
-  "<%= Math.floor(Date.now() / 1000) %>",
-  "<%= Math.floor(Date.now() / 1000) + 86400 * settings.voting_period_duration %>",
-  "<%= Math.floor(Date.now() / 1000) + 86400 * settings.epoch_duration %>",
+  "<%= settings.epoch_start %>",
+  "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",
+  "<%= settings.epoch_start + 86400 * settings.epoch_duration %>",
   "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
