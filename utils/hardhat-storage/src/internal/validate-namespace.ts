@@ -1,11 +1,13 @@
 import { findOne } from '@synthetixio/core-utils/utils/ast/finders';
 import { Node, YulNode } from 'solidity-ast/node';
-import { FunctionDefinition } from 'solidity-ast/types';
+import { FunctionDefinition, VariableDeclaration } from 'solidity-ast/types';
 import { createError } from './error';
 import { iterateSlotAssignments } from './iterators';
 import { isPresent } from './misc';
 import { render } from './render';
 import { ValidateParams } from './validate';
+
+const SLOT_FORMAT = /^keccak256\(abi\.encode\("[0-9a-zA-Z-_.]+"\)\)$/;
 
 export function validateSlotNamespaceCollisions({ sourceUnits }: ValidateParams) {
   const slots: string[] = [];
@@ -21,40 +23,56 @@ export function validateSlotNamespaceCollisions({ sourceUnits }: ValidateParams)
       const val = yulAssignment.value;
 
       // The assignment of the .slot value should be an existing variable
-      if (val.nodeType === 'YulFunctionCall') {
+      if (val.nodeType !== 'YulIdentifier') {
         return _error(
-          'Store assignments can only be literal assignments, not FunctionCall',
+          'Store assignments can only be assignments to a constant value in the contract',
           yulAssignment
         );
       }
 
-      let slot: string;
-      if (val.nodeType === 'YulLiteral') {
-        slot = render(val);
-      } else {
-        // Find when the value is declared
-        const varStatement = _findVariableDeclarationStatementOf(functionNode, val.name);
+      // Find when the value is declared inside the current function
+      const varStatement = _findVariableDeclarationStatementOf(functionNode, val.name);
 
-        if (!varStatement) {
-          return _error(`Could not find variable declaration value for "${val.name}"`, val);
-        }
+      if (!varStatement) {
+        return _error(`Could not find variable declaration value for "${val.name}"`, val);
+      }
 
-        const varDeclaration = findOne(varStatement, 'VariableDeclaration');
+      if (!varStatement.initialValue) {
+        return _error('Slot value not initialized', varStatement);
+      }
 
-        if (!varDeclaration) return _error('Missing var declaration statement', varStatement);
+      if (varStatement.initialValue.nodeType !== 'Identifier') {
+        return _error('Slot value should be a contract constant', varStatement);
+      }
 
-        const varType = varDeclaration.typeDescriptions.typeString;
+      const slotName = varStatement.initialValue.name;
 
-        if (varType !== 'bytes32') {
-          return _error(
-            `Was expecting a slot type value of "bytes32", but "${varType}" was given`,
-            varDeclaration
-          );
-        }
+      const constantDeclaration = contractNode.nodes.find(
+        (node) => node.nodeType === 'VariableDeclaration' && node.constant && node.name === slotName
+      ) as VariableDeclaration | undefined;
 
-        if (!varStatement.initialValue) return _error('Slot value not initialized', varStatement);
+      if (!constantDeclaration?.value) {
+        return _error(
+          'Slot value should be a contract constant with a value initialized',
+          varStatement
+        );
+      }
 
-        slot = render(varStatement.initialValue);
+      const varType = constantDeclaration.typeDescriptions.typeString;
+      if (varType !== 'bytes32') {
+        return _error(
+          `Was expecting a slot type value of "bytes32", but "${varType}" was given`,
+          constantDeclaration
+        );
+      }
+
+      const slot = render(constantDeclaration.value);
+
+      if (!SLOT_FORMAT.test(slot)) {
+        return _error(
+          `Store slot definition should have the format "keccak256(abi.encode("your-slot-name"))" but "${slot}" given.`,
+          val
+        );
       }
 
       if (slots.includes(slot)) {
