@@ -1,0 +1,78 @@
+name = "synthetix-election-module"
+description = "On-chain voting for synthetix councils"
+version = "<%= package.version %>"
+
+[setting.salt]
+defaultValue = "governance"
+
+# Deployment Owner, defaults to first hardhat account
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.council_token_name]
+defaultValue = "Synthetix Governance Module"
+
+[setting.council_token_symbol]
+defaultValue = "SNXGOV"
+
+[setting.init_council_member]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
+
+[setting.epoch_duration]
+defaultValue = "90" # days
+
+[setting.voting_period_duration]
+defaultValue = "7" # days
+
+[contract.OwnerModule]
+artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
+
+[contract.UpgradeModule]
+artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+
+[contract.ElectionModule]
+artifact = "contracts/modules/ElectionModule.sol:ElectionModule"
+
+[contract.ElectionInspectorModule]
+artifact = "contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule"
+
+[contract.DebtShareMock]
+artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
+
+[router.Router]
+contracts = [
+  "ElectionModule",
+  "ElectionInspectorModule",
+  "OwnerModule",
+  "UpgradeModule",
+]
+
+depends = [
+  "contract.ElectionModule",
+  "contract.ElectionInspectorModule",
+  "contract.OwnerModule",
+  "contract.UpgradeModule"
+]
+
+[contract.proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= outputs.self.runs.router.address %>"]
+salt = "<%= settings.salt %>"
+
+depends = ["contract.InitialProxy", "router.Router"]
+
+[invoke.init_election_module]
+target = ["Proxy"]
+func = "initializeElectionModule"
+args = [
+  "<%= settings.council_token_name %>",
+  "<%= settings.council_token_symbol %>",
+  "<%= settings.init_council_member %>",
+  "1",
+  "<%= Date.now() / 1000 %>",
+  "<%= Date.now() / 1000 + 86400 * settings.voting_period_duration %>",
+  "<%= Date.now() / 1000 + 86400 * settings.epoch_duration %>",
+  "<%= contracts.DebtShareMock.address %>",
+]
+
+depends = ["contract.Proxy"]
