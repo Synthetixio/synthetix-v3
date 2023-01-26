@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "../interfaces/IElectionModule.sol";
-import "../submodules/election/ElectionSchedule.sol";
-import "../submodules/election/ElectionCredentials.sol";
-import "../submodules/election/ElectionVotes.sol";
-import "../submodules/election/ElectionTally.sol";
+import "../../interfaces/IElectionModule.sol";
+import "../../submodules/election/ElectionSchedule.sol";
+import "../../submodules/election/ElectionCredentials.sol";
+import "../../submodules/election/ElectionVotes.sol";
+import "../../submodules/election/ElectionTally.sol";
 
 contract BaseElectionModule is
     IElectionModule,
@@ -21,9 +21,7 @@ contract BaseElectionModule is
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
 
-    function initializeElectionModule(
-        string memory councilTokenName,
-        string memory councilTokenSymbol,
+    function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
@@ -32,9 +30,7 @@ contract BaseElectionModule is
     ) external virtual override onlyIfNotInitialized {
         OwnableStorage.onlyOwner();
 
-        _initializeElectionModule(
-            councilTokenName,
-            councilTokenSymbol,
+        _initOrUpgradeElectionModule(
             firstCouncil,
             minimumActiveMembers,
             nominationPeriodStartDate,
@@ -43,9 +39,7 @@ contract BaseElectionModule is
         );
     }
 
-    function _initializeElectionModule(
-        string memory councilTokenName,
-        string memory councilTokenSymbol,
+    function _initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,

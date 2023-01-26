@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "../interfaces/IElectionModule.sol";
-import "../interfaces/ISynthetixElectionModule.sol";
-import "../submodules/election/DebtShareManager.sol";
-import "../submodules/election/CrossChainDebtShareManager.sol";
+import "../../interfaces/IElectionModule.sol";
+import "../../interfaces/ISynthetixElectionModule.sol";
+import "../../submodules/election/DebtShareManager.sol";
+import "../../submodules/election/CrossChainDebtShareManager.sol";
 
 import "./BaseElectionModule.sol";
 
@@ -16,9 +16,7 @@ contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChai
     error WrongInitializer();
 
     /// @dev The BaseElectionModule initializer should not be called, and this one must be called instead
-    function initializeElectionModule(
-        string memory,
-        string memory,
+    function initOrUpgradeElectionModule(
         address[] memory,
         uint8,
         uint64,
@@ -30,9 +28,7 @@ contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChai
     }
 
     /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
-    function initializeElectionModule(
-        string memory councilTokenName,
-        string memory councilTokenSymbol,
+    function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
@@ -42,13 +38,11 @@ contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChai
     ) external override {
         OwnableStorage.onlyOwner();
         if (Council.load().initialized) {
-            revert WrongInitializer();
+            return;
         }
         _setDebtShareContract(debtShareContract);
 
-        _initializeElectionModule(
-            councilTokenName,
-            councilTokenSymbol,
+        _initOrUpgradeElectionModule(
             firstCouncil,
             minimumActiveMembers,
             nominationPeriodStartDate,

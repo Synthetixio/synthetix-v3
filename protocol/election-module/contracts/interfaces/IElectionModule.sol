@@ -8,9 +8,7 @@ interface IElectionModule {
     // ---------------------------------------
 
     /// @notice Initializes the module and immediately starts the first epoch
-    function initializeElectionModule(
-        string memory councilTokenName,
-        string memory councilTokenSymbol,
+    function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,

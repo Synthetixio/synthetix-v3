@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IElectionInspectorModule.sol";
-import "../submodules/election/ElectionBase.sol";
+import "../../interfaces/IElectionInspectorModule.sol";
+import "../../submodules/election/ElectionBase.sol";
 
 contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
     using SetUtil for SetUtil.AddressSet;

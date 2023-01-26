@@ -10,6 +10,8 @@
     "size-contracts": "hardhat size-contracts"
   },
   "devDependencies": {
-    "hardhat-cannon": "^2.0.0-alpha.7"
+    "@synthetixio/common-config": "*",
+    "@synthetixio/core-contracts": "*",
+    "@synthetixio/core-modules": "*"
   }
 }
