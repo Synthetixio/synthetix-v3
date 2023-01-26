@@ -190,6 +190,9 @@ contract NodeModule is INodeModule {
         return false;
     }
 
+    /**
+     * @param dev helper function that calls process on parent nodes.
+     */
     function processParentNodeOutputs(
         NodeDefinition.Data storage nodeDefinition
     ) internal view returns (NodeOutput.Data[] memory parentNodeOutputs) {
