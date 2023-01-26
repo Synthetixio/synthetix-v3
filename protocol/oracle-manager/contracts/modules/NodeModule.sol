@@ -131,13 +131,13 @@ contract NodeModule is INodeModule {
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
             return
                 ReducerNode.process(
-                    processParentNodeOutputs(nodeDefinition),
+                    _processParentNodeOutputs(nodeDefinition),
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
             return
                 ExternalNode.process(
-                    processParentNodeOutputs(nodeDefinition),
+                    _processParentNodeOutputs(nodeDefinition),
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
@@ -151,13 +151,13 @@ contract NodeModule is INodeModule {
         ) {
             return
                 PriceDeviationCircuitBreakerNode.process(
-                    processParentNodeOutputs(nodeDefinition),
+                    _processParentNodeOutputs(nodeDefinition),
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
             return
                 StalenessCircuitBreakerNode.process(
-                    processParentNodeOutputs(nodeDefinition),
+                    _processParentNodeOutputs(nodeDefinition),
                     nodeDefinition.parameters
                 );
         }
@@ -191,11 +191,11 @@ contract NodeModule is INodeModule {
     }
 
     /**
-     * @param dev helper function that calls process on parent nodes.
+     * @dev helper function that calls process on parent nodes.
      */
-    function processParentNodeOutputs(
+    function _processParentNodeOutputs(
         NodeDefinition.Data storage nodeDefinition
-    ) internal view returns (NodeOutput.Data[] memory parentNodeOutputs) {
+    ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
         NodeOutput.Data[] memory parentNodeOutputs = new NodeOutput.Data[](
             nodeDefinition.parents.length
         );
