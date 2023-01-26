@@ -106,7 +106,11 @@ library CollateralConfiguration {
      * @dev Loads all available collateral types configured in the system.
      * @return availableCollaterals An array of addresses, one for each collateral type supported by the system.
      */
-    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage availableCollaterals) {
+    function loadAvailableCollaterals()
+        internal
+        pure
+        returns (SetUtil.AddressSet storage availableCollaterals)
+    {
         bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
             availableCollaterals.slot := s
