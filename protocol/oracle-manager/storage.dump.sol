@@ -24,10 +24,10 @@ contract ProxyStorage {
         address implementation;
         bool simulatingUpgrade;
     }
-    function _proxyStore() internal pure returns (ProxyStore storage store) {
+    function _proxyStore() internal pure returns (ProxyStore storage proxy) {
         bytes32 s = _SLOT_PROXY_STORAGE;
         assembly {
-            store.slot := s
+            proxy.slot := s
         }
     }
 }

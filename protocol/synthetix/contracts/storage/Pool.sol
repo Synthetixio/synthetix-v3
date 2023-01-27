@@ -105,10 +105,10 @@ library Pool {
     /**
      * @dev Returns the pool stored at the specified pool id.
      */
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
-            data.slot := s
+            pool.slot := s
         }
     }
 
@@ -117,15 +117,15 @@ library Pool {
      *
      * Reverts if the specified pool already exists.
      */
-    function create(uint128 id, address owner) internal returns (Pool.Data storage self) {
+    function create(uint128 id, address owner) internal returns (Pool.Data storage pool) {
         if (Pool.exists(id)) {
             revert PoolAlreadyExists(id);
         }
 
-        self = load(id);
+        pool = load(id);
 
-        self.id = id;
-        self.owner = owner;
+        pool.id = id;
+        pool.owner = owner;
     }
 
     /**
@@ -217,8 +217,9 @@ library Pool {
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
         // If there are no shares in the pool's debt distribution,
+        // (and the minimum liquidity setting is not set),
         // then the maximum value per share is the market's current value per share.
-        if (totalSharesD18 == 0) {
+        if (totalSharesD18 == 0 && minLiquidityRatioD18 != 0) {
             return valuePerShareD18;
         }
 

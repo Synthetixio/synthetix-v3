@@ -19,23 +19,23 @@ library NodeDefinition {
         bytes32[] parents;
     }
 
-    function load(bytes32 id) internal pure returns (Data storage data) {
+    function load(bytes32 id) internal pure returns (Data storage node) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
-            data.slot := s
+            node.slot := s
         }
     }
 
     function create(
         Data memory nodeDefinition
-    ) internal returns (NodeDefinition.Data storage self, bytes32 id) {
+    ) internal returns (NodeDefinition.Data storage node, bytes32 id) {
         id = getId(nodeDefinition);
 
-        self = load(id);
+        node = load(id);
 
-        self.nodeType = nodeDefinition.nodeType;
-        self.parameters = nodeDefinition.parameters;
-        self.parents = nodeDefinition.parents;
+        node.nodeType = nodeDefinition.nodeType;
+        node.parameters = nodeDefinition.parameters;
+        node.parents = nodeDefinition.parents;
     }
 
     function getId(Data memory nodeDefinition) internal pure returns (bytes32) {

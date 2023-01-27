@@ -48,9 +48,9 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 wrapAmount
     ) external override returns (uint256 amountToMint) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
-        store.isValidMarket(marketId);
+        spotMarketFactory.isValidMarket(marketId);
         wrapperStore.isValidWrapper();
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
@@ -59,10 +59,10 @@ contract WrapperModule is IWrapperModule {
         if (wrappingCollateral.allowance(msg.sender, address(this)) < wrapAmount)
             revert InsufficientAllowance(
                 wrapAmount,
-                store.usdToken.allowance(msg.sender, address(this))
+                spotMarketFactory.usdToken.allowance(msg.sender, address(this))
             );
 
-        uint currentDepositedCollateral = IMarketCollateralModule(store.synthetix)
+        uint currentDepositedCollateral = IMarketCollateralModule(spotMarketFactory.synthetix)
             .getMarketCollateralAmount(marketId, wrapperStore.wrapCollateralType);
 
         // revert when wrapping more than the supply cap
@@ -76,8 +76,8 @@ contract WrapperModule is IWrapperModule {
 
         // safe transfer?
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
-        wrappingCollateral.approve(store.synthetix, wrapAmount);
-        IMarketCollateralModule(store.synthetix).depositMarketCollateral(
+        wrappingCollateral.approve(spotMarketFactory.synthetix, wrapAmount);
+        IMarketCollateralModule(spotMarketFactory.synthetix).depositMarketCollateral(
             marketId,
             wrapperStore.wrapCollateralType,
             wrapAmount
@@ -102,7 +102,7 @@ contract WrapperModule is IWrapperModule {
             // currently we withdraw fees amount from market to send to fee collector
             // whatever is leftover gets re-deposited into the market manager.
             // we should consolidate this and only withdraw the amount required
-            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
                 totalFees.toUint()
@@ -133,9 +133,9 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 unwrapAmount
     ) external override returns (uint256 returnCollateralAmount) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
-        store.isValidMarket(marketId);
+        spotMarketFactory.isValidMarket(marketId);
         wrapperStore.isValidWrapper();
 
         ITokenModule synth = SynthUtil.getToken(marketId);
@@ -161,7 +161,7 @@ contract WrapperModule is IWrapperModule {
 
         uint collectedFees = 0;
         if (totalFees > 0) {
-            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
                 totalFees.toUint()
@@ -180,7 +180,7 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
-        IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
+        IMarketCollateralModule(spotMarketFactory.synthetix).withdrawMarketCollateral(
             marketId,
             wrapperStore.wrapCollateralType,
             returnCollateralAmount
