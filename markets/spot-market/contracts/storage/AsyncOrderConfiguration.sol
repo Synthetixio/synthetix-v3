@@ -30,10 +30,10 @@ library AsyncOrderConfiguration {
         */
     }
 
-    function load(uint128 marketId) internal pure returns (Data storage store) {
+    function load(uint128 marketId) internal pure returns (Data storage asyncOrderConfiguration) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrder", marketId));
         assembly {
-            store.slot := s
+            asyncOrderConfiguration.slot := s
         }
     }
 

@@ -302,22 +302,22 @@ library FeeUtil {
         SpotMarketFactory.TransactionType transactionType
     ) internal returns (uint collectedFees) {
         IFeeCollector feeCollector = FeeConfiguration.load(marketId).feeCollector;
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
 
         if (address(feeCollector) != address(0)) {
-            uint previousUsdBalance = store.usdToken.balanceOf(address(this));
+            uint previousUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
 
-            store.usdToken.approve(address(feeCollector), totalFees);
+            spotMarketFactory.usdToken.approve(address(feeCollector), totalFees);
             feeCollector.collectFees(marketId, totalFees, transactor, uint8(transactionType));
 
-            uint currentUsdBalance = store.usdToken.balanceOf(address(this));
+            uint currentUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;
 
-            store.usdToken.approve(address(feeCollector), 0);
+            spotMarketFactory.usdToken.approve(address(feeCollector), 0);
         }
 
         uint feesToDeposit = totalFees - collectedFees;
-        store.depositToMarketManager(marketId, feesToDeposit);
+        spotMarketFactory.depositToMarketManager(marketId, feesToDeposit);
     }
 
     function _applyFees(

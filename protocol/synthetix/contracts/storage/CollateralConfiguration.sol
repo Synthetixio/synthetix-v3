@@ -93,23 +93,27 @@ library CollateralConfiguration {
     /**
      * @dev Loads the CollateralConfiguration object for the given collateral type.
      * @param token The address of the collateral type.
-     * @return data The CollateralConfiguration object.
+     * @return collateralConfiguration The CollateralConfiguration object.
      */
-    function load(address token) internal pure returns (Data storage data) {
+    function load(address token) internal pure returns (Data storage collateralConfiguration) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration", token));
         assembly {
-            data.slot := s
+            collateralConfiguration.slot := s
         }
     }
 
     /**
      * @dev Loads all available collateral types configured in the system.
-     * @return data An array of addresses, one for each collateral type supported by the system.
+     * @return availableCollaterals An array of addresses, one for each collateral type supported by the system.
      */
-    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
+    function loadAvailableCollaterals()
+        internal
+        pure
+        returns (SetUtil.AddressSet storage availableCollaterals)
+    {
         bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
-            data.slot := s
+            availableCollaterals.slot := s
         }
     }
 

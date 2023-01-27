@@ -82,13 +82,13 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     function burnWithAllowance(address from, address spender, uint256 amount) external {
         OwnableStorage.onlyOwner();
 
-        ERC20Storage.Data storage store = ERC20Storage.load();
+        ERC20Storage.Data storage erc20 = ERC20Storage.load();
 
-        if (amount > store.allowance[from][spender]) {
-            revert InsufficientAllowance(amount, store.allowance[from][spender]);
+        if (amount > erc20.allowance[from][spender]) {
+            revert InsufficientAllowance(amount, erc20.allowance[from][spender]);
         }
 
-        store.allowance[from][spender] -= amount;
+        erc20.allowance[from][spender] -= amount;
 
         _burn(from, amount);
     }
