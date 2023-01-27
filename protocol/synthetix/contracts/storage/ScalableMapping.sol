@@ -58,8 +58,7 @@ library ScalableMapping {
 
     /**
      * @dev Inflates or deflates the total value of the distribution by the given value.
-     *
-     * The value being distributed ultimately modifies the distribution's scaleModifier.
+     * @dev The incoming value is split per share, and used as a delta that is *added* to the existing scale modifier. The resulting scale modifier must be in the range [-1, type(int128).max).
      */
     function scale(Data storage self, int256 valueD18) internal {
         if (valueD18 == 0) {
