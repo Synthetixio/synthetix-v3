@@ -92,7 +92,7 @@ contract VaultModule is IVaultModule {
         _ensureAccountCollateralsContainsPool(accountId, poolId, collateralType);
 
         // If decreasing the delegated collateral amount,
-        // check the account's collateralization ration.
+        // check the account's collateralization ratio.
         // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
         if (newCollateralAmountD18 < currentCollateralAmount) {
             int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
