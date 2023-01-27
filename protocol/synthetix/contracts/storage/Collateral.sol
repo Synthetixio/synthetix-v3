@@ -27,7 +27,7 @@ library Collateral {
          * @dev Marks portions of the collateral as locked,
          * until a given unlock date.
          *
-         * Note: Locks apply to delegated collateral and to collateral not 
+         * Note: Locks apply to delegated collateral and to collateral not
          * assigned or delegated to a pool (see ICollateralModule).
          */
         CollateralLock.Data[] locks;
