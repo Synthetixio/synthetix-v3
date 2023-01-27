@@ -43,10 +43,10 @@ library FeeConfiguration {
         IFeeCollector feeCollector;
     }
 
-    function load(uint128 marketId) internal pure returns (Data storage store) {
+    function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
         assembly {
-            store.slot := s
+            feeConfiguration.slot := s
         }
     }
 

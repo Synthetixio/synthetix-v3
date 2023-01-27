@@ -40,7 +40,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         override
         returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
@@ -54,14 +54,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 cancellationFee;
         if (orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
             // Accept USD (amountProvided is usd)
-            uint256 allowance = store.usdToken.allowance(msg.sender, address(this));
-            if (store.usdToken.balanceOf(msg.sender) < amountProvided) {
+            uint256 allowance = spotMarketFactory.usdToken.allowance(msg.sender, address(this));
+            if (spotMarketFactory.usdToken.balanceOf(msg.sender) < amountProvided) {
                 revert InsufficientFunds();
             }
             if (allowance < amountProvided) {
                 revert InsufficientAllowance(amountProvided, allowance);
             }
-            store.usdToken.transferFrom(msg.sender, address(this), amountProvided);
+            spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), amountProvided);
 
             // Calculate fees
             (uint256 amountUsableUsd, int256 estimatedFees) = FeeUtil.calculateFees(
@@ -230,8 +230,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 "Needs more recent price report"
             );
 
-            SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+            SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
                 AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
                 finalOrderAmount
@@ -372,12 +372,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
 
         // Deposit USD
         // TODO: Add fee collector logic
-        store.usdToken.approve(address(this), asyncOrderClaim.amountEscrowed);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
+        spotMarketFactory.usdToken.approve(address(this), asyncOrderClaim.amountEscrowed);
+        IMarketManagerModule(spotMarketFactory.synthetix).depositMarketUsd(
             marketId,
             address(this),
             asyncOrderClaim.amountEscrowed
@@ -389,7 +389,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
 
         // Burn Synths
         // TODO: Add fee collector logic
@@ -453,7 +453,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         bool shouldReturnFee,
         AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
@@ -464,7 +464,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint amountToReturn = asyncOrderClaim.amountEscrowed - feesToCollect;
 
         // Return the USD
-        store.usdToken.transferFrom(
+        spotMarketFactory.usdToken.transferFrom(
             address(this),
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
             amountToReturn

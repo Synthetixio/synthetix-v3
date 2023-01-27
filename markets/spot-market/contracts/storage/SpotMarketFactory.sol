@@ -57,10 +57,10 @@ library SpotMarketFactory {
         UNWRAP
     }
 
-    function load() internal pure returns (Data storage store) {
+    function load() internal pure returns (Data storage spotMarketFactory) {
         bytes32 s = _SLOT_SPOT_MARKET_FACTORY;
         assembly {
-            store.slot := s
+            spotMarketFactory.slot := s
         }
     }
 

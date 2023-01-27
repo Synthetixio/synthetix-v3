@@ -18,10 +18,10 @@ library OracleManager {
     /**
      * @dev Loads the singleton storage info about the oracle manager.
      */
-    function load() internal pure returns (Data storage data) {
+    function load() internal pure returns (Data storage oracleManager) {
         bytes32 s = _SLOT_ORACLE_MANAGER;
         assembly {
-            data.slot := s
+            oracleManager.slot := s
         }
     }
 }
