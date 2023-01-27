@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
@@ -10,7 +8,6 @@ import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 
 import "../../interfaces/IVaultModule.sol";
-import "../../interfaces/IUSDTokenModule.sol";
 
 /**
  * @title Allows accounts to delegate collateral to a pool.

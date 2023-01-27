@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/CollateralConfiguration.sol";
-
 /**
  * @title Module for managing user collateral.
  * @notice Allows users to deposit and withdraw collateral from the system.

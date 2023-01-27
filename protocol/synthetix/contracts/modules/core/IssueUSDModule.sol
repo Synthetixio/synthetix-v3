@@ -8,7 +8,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../storage/Account.sol";
-import "../../storage/Pool.sol";
 import "../../storage/CollateralConfiguration.sol";
 
 /**

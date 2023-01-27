@@ -2,6 +2,8 @@
 pragma solidity >=0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../utils/FullMath.sol";
 import "../utils/TickMath.sol";
@@ -16,12 +18,21 @@ library UniswapNode {
     using SafeCastU56 for uint56;
     using SafeCastU32 for uint32;
     using SafeCastI56 for int56;
+    using SafeCastI256 for int256;
+
+    using DecimalMath for int256;
+
+    uint8 public constant PRECISION = 18;
 
     function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
-        (address token0, address token1, address pool, uint32 secondsAgo) = abi.decode(
-            parameters,
-            (address, address, address, uint32)
-        );
+        (
+            address token0,
+            address token1,
+            uint8 decimals0,
+            uint8 decimals1,
+            address pool,
+            uint32 secondsAgo
+        ) = abi.decode(parameters, (address, address, uint8, uint8, address, uint32));
 
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;
@@ -37,9 +48,15 @@ library UniswapNode {
             tick--;
         }
 
-        int256 price = getQuoteAtTick(tick, 1e6, token0, token1).toInt();
+        uint256 baseAmount = 10 ** decimals0;
+        int256 price = getQuoteAtTick(tick, baseAmount.to128(), token0, token1).toInt();
 
-        return NodeOutput.Data(price, 0, 0, 0);
+        uint256 factor = (PRECISION - decimals1);
+        int256 finalPrice = factor > 0
+            ? price.upscale(factor)
+            : price.downscale((-factor.toInt()).toUint());
+
+        return NodeOutput.Data(finalPrice, 0, 0, 0);
     }
 
     function getQuoteAtTick(
@@ -71,14 +88,29 @@ library UniswapNode {
         }
 
         // Must have correct length of parameters data
-        if (nodeDefinition.parameters.length != 32 * 4) {
+        if (nodeDefinition.parameters.length != 192) {
             return false;
         }
 
-        (, , address pool, uint32 secondsAgo) = abi.decode(
-            nodeDefinition.parameters,
-            (address, address, address, uint32)
-        );
+        (
+            address token0,
+            address token1,
+            uint8 decimals0,
+            uint8 decimals1,
+            address pool,
+            uint32 secondsAgo
+        ) = abi.decode(
+                nodeDefinition.parameters,
+                (address, address, uint8, uint8, address, uint32)
+            );
+
+        if (IERC20(token0).decimals() != decimals0) {
+            return false;
+        }
+
+        if (IERC20(token1).decimals() != decimals1) {
+            return false;
+        }
 
         // Must return relevant function without error
         uint32[] memory secondsAgos = new uint32[](2);

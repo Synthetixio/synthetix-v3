@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/AuthorizableStorage.sol";
-import "@synthetixio/core-modules/contracts/modules/TokenModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 /**
  * @title Module for managing the snxUSD token as an associated system.

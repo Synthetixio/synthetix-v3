@@ -3,8 +3,8 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./VaultEpoch.sol";
 import "./RewardDistribution.sol";
-import "./CollateralConfiguration.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**

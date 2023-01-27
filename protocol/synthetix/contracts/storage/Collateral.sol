@@ -5,7 +5,6 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./CollateralLock.sol";
-import "./Pool.sol";
 
 /**
  * @title Stores information about a deposited asset for a given account.
