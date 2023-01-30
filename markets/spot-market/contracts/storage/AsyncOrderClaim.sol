@@ -12,6 +12,8 @@ library AsyncOrderClaim {
     );
     error OrderNotEligibleForCancellation(uint256 timestamp, uint256 expirationTime);
 
+    error InvalidVerificationResponse();
+
     struct Data {
         SpotMarketFactory.TransactionType orderType;
         uint256 amountEscrowed; // Amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
@@ -19,6 +21,7 @@ library AsyncOrderClaim {
         uint256 commitmentTime;
         int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
+        uint256 commitmentBlockNum;
     }
 
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -38,7 +41,8 @@ library AsyncOrderClaim {
         uint256 settlementStrategyId,
         uint256 commitmentTime,
         int256 committedAmountUsd,
-        uint256 minimumSettlementAmount
+        uint256 minimumSettlementAmount,
+        uint256 commitmentBlockNum
     ) internal returns (Data storage) {
         Data storage self = load(marketId, claimId);
         self.orderType = orderType;
@@ -47,19 +51,21 @@ library AsyncOrderClaim {
         self.commitmentTime = commitmentTime;
         self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
+        self.commitmentBlockNum = commitmentBlockNum;
 
         return self;
     }
 
     function checkWithinSettlementWindow(
         Data storage claim,
-        SettlementStrategy.Data storage settlementStrategy
+        SettlementStrategy.Data storage settlementStrategy,
+        uint256 timestamp
     ) internal view {
         uint startTime = claim.commitmentTime + settlementStrategy.settlementDelay;
         uint expirationTime = startTime + settlementStrategy.settlementWindowDuration;
 
-        if (block.timestamp < startTime || block.timestamp >= expirationTime) {
-            revert OrderNotWithinSettlementWindow(block.timestamp, startTime, expirationTime);
+        if (timestamp < startTime || timestamp >= expirationTime) {
+            revert OrderNotWithinSettlementWindow(timestamp, startTime, expirationTime);
         }
     }
 

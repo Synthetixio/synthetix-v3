@@ -28,22 +28,16 @@ interface IAsyncOrderModule {
         address indexed sender
     );
 
-    error InsufficientFunds();
+    error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
 
-    error InsufficientAllowance(uint256 expected, uint256 current);
+    error InvalidVerificationResponse();
 
-    error OutsideOfConfirmationWindow(
-        uint256 currentTime,
-        uint256 commitmentTime,
-        uint256 minimumOrderAge,
-        uint256 settlementWindowDuration
-    );
-
-    error InsufficientCancellationTimeElapsed(
-        uint256 currentTime,
-        uint256 commitmentTime,
-        uint256 minimumOrderAge,
-        uint256 settlementWindowDuration
+    error OffchainLookup(
+        address sender,
+        string[] urls,
+        bytes callData,
+        bytes4 callbackFunction,
+        bytes extraData
     );
 
     function commitOrder(
