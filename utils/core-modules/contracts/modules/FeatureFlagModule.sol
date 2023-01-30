@@ -20,6 +20,10 @@ contract FeatureFlagModule is IFeatureFlagModule {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).allowAll = allowAll;
 
+        if (allowAll) {
+            setFeatureFlagDenyAll(feature, false);
+        }
+
         emit FeatureFlagAllowAllSet(feature, allowAll);
     }
 
