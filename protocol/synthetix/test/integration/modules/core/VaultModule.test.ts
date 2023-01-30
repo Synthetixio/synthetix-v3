@@ -175,6 +175,20 @@ describe('VaultModule', function () {
       );
     });
 
+    it('fails when new collateral amount equals current collateral amount', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).delegateCollateral(
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount,
+          ethers.utils.parseEther('1')
+        ),
+        'InvalidCollateralAmount()',
+        systems().Core
+      );
+    });
+
     it('fails when pool does not exist', async () => {
       await assertRevert(
         systems()
