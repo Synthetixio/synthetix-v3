@@ -1,12 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IDebtShare.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
+import "../interfaces/IDebtShare.sol";
 import "./CrossChainDebtShare.sol";
 
 library DebtShare {
+    bytes32 private constant _SLOT_DEBT_SHARE_STORAGE =
+        keccak256(abi.encode("io.synthetix.election-module.debtshare"));
+
     struct Data {
         // Synthetix c2 DebtShare contract used to determine vote power in the local chain
         IDebtShare debtShareContract;
@@ -17,9 +19,9 @@ library DebtShare {
     }
 
     function load() internal pure returns (Data storage debtShare) {
+        bytes32 s = _SLOT_DEBT_SHARE_STORAGE;
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.debtshare")) - 1)
-            debtShare.slot := 0x24dbf425c80a2b812a860ebf3bf1d082b94299e66be3feb971f862ad0811d2b8
+            debtShare.slot := s
         }
     }
 }

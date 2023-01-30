@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IDebtShare.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import "../interfaces/IDebtShare.sol";
 
 library CrossChainDebtShare {
     struct Data {
