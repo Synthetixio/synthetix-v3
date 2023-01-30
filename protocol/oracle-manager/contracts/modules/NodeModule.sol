@@ -196,9 +196,7 @@ contract NodeModule is INodeModule {
     function _processParentNodeOutputs(
         NodeDefinition.Data storage nodeDefinition
     ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
-        NodeOutput.Data[] memory parentNodeOutputs = new NodeOutput.Data[](
-            nodeDefinition.parents.length
-        );
+        parentNodeOutputs = new NodeOutput.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
             parentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
         }
