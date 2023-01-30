@@ -18,6 +18,11 @@ interface IVaultModule {
     error CapacityLocked(uint256 marketId);
 
     /**
+     * @notice Thrown when the specified new collateral amount to delegate to the vault equals the current existing amount.
+     */
+    error InvalidCollateralAmount();
+
+    /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
