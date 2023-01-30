@@ -65,6 +65,9 @@ contract VaultModule is IVaultModule {
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
+        // Ensure current collateral amount differs from the new collateral amount.
+        if (newCollateralAmount == currentCollateralAmount) revert InvalidCollateralAmount();
+
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
         if (newCollateralAmount > currentCollateralAmount) {
