@@ -140,4 +140,27 @@ describe('FeatureFlagModule', function () {
       assertBn.equal(await SampleFeatureFlagModule.getFeatureFlaggedValue(), 25);
     });
   });
+
+  describe('set denyAll for a feature flag', async function () {
+    let denyAllTx: ethers.ContractTransaction;
+
+    before('deny all', async function () {
+      denyAllTx = await FeatureFlagModule.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
+    });
+
+    it('emits event', async function () {
+      await assertEvent(
+        denyAllTx,
+        `FeatureFlagDenyAllSet("${FEATURE_FLAG_NAME}", true)`,
+        FeatureFlagModule
+      );
+    });
+
+    it('does not allow a user to set value when denyAll is true', async function () {
+      await assertRevert(
+        SampleFeatureFlagModule.connect(permissionedUser).setFeatureFlaggedValue(25),
+        'FeatureUnavailable'
+      );
+    });
+  });
 });

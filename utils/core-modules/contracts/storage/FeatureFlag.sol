@@ -11,6 +11,7 @@ library FeatureFlag {
     struct Data {
         bytes32 name;
         bool allowAll;
+        bool denyAll;
         SetUtil.AddressSet permissionedAddresses;
     }
 
@@ -29,6 +30,10 @@ library FeatureFlag {
 
     function hasAccess(bytes32 feature, address value) internal view returns (bool) {
         Data storage store = FeatureFlag.load(feature);
+
+        if (store.denyAll) {
+            return false;
+        }
 
         return store.allowAll || store.permissionedAddresses.contains(value);
     }

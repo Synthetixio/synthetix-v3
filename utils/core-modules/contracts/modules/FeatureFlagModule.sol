@@ -26,6 +26,16 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
+    function setFeatureFlagDenyAll(bytes32 feature, bool denyAll) external override {
+        OwnableStorage.onlyOwner();
+        FeatureFlag.load(feature).denyAll = denyAll;
+
+        emit FeatureFlagDenyAllSet(feature, denyAll);
+    }
+
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
     function addToFeatureFlagAllowlist(bytes32 feature, address account) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).permissionedAddresses.add(account);
