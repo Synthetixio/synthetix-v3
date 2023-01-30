@@ -45,15 +45,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         override
         returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
-<<<<<<< HEAD
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
-            marketId
-        );
-=======
         SpotMarketFactory.load().isValidMarket(marketId);
         AsyncOrderConfiguration.load(marketId).isValidSettlementStrategy(settlementStrategyId);
->>>>>>> f07aacb2 (some cleanup)
 
         int256 committedAmountUsd;
         uint amountEscrowed;
@@ -214,94 +207,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // _settleOrder()
     }
 
-<<<<<<< HEAD
-    function _prepareSettlement(
-        uint128 marketId,
-        uint128 asyncOrderId
-    )
-        internal
-        returns (
-            AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
-            AsyncOrderClaim.Data memory asyncOrderClaim,
-            AsyncOrderConfiguration.SettlementStrategy memory settlementStrategy
-        )
-    {
-        asyncOrderConfiguration = AsyncOrderConfiguration.load(marketId);
-        asyncOrderClaim = asyncOrderConfiguration.asyncOrderClaims[asyncOrderId];
-        settlementStrategy = asyncOrderConfiguration.settlementStrategies[
-            asyncOrderClaim.settlementStrategyId
-        ];
-
-        // Confirm we're in the settlement window
-        require(block.timestamp >= asyncOrderClaim.settlementTime, "too soon");
-        if (settlementStrategy.settlementWindowDuration > 0) {
-            require(
-                asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration <
-                    block.timestamp,
-                "too late"
-            );
-        }
-
-        // Collect what's held in escrow
-        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            _collectBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            _collectSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        }
-    }
-
-    function _finalizeSettlement(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        uint finalOrderAmount,
-        AsyncOrderConfiguration.Data storage asyncOrderConfiguration,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) internal {
-        // Adjust utilization delta for use in fee calculation
-        asyncOrderConfiguration.asyncUtilizationDelta -= asyncOrderClaim.utilizationDelta;
-
-        // Burn NFT
-        AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
-
-        // Emit event
-        emit OrderSettled(marketId, asyncOrderId, asyncOrderClaim, finalOrderAmount, msg.sender);
-    }
-
-    function _collectBuyOrderEscrow(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private {
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-
-        // Deposit USD
-        // TODO: Add fee collector logic
-        spotMarketFactory.usdToken.approve(address(this), asyncOrderClaim.amountEscrowed);
-        IMarketManagerModule(spotMarketFactory.synthetix).depositMarketUsd(
-            marketId,
-            address(this),
-            asyncOrderClaim.amountEscrowed
-        );
-    }
-
-    function _collectSellOrderEscrow(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private {
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-
-        // Burn Synths
-        // TODO: Add fee collector logic
-        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
-    }
-
-    // ************
-    // CANCELLATION
-    // ************
-
-=======
->>>>>>> f07aacb2 (some cleanup)
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
@@ -336,40 +241,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _settleOrder(
         uint128 marketId,
         uint128 asyncOrderId,
-<<<<<<< HEAD
-<<<<<<< HEAD
-        bool shouldReturnFee,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) private {
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
-            marketId
-        );
-=======
-=======
-        uint256 price,
->>>>>>> 5b89cfe5 (offchain stuff)
+        uint price,
         SpotMarketFactory.Data storage spotMarketFactory,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount) {
-<<<<<<< HEAD
-        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy);
->>>>>>> f07aacb2 (some cleanup)
-=======
         asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy, block.timestamp);
->>>>>>> 5b89cfe5 (offchain stuff)
 
         address trader = AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId);
 
-<<<<<<< HEAD
-        // Return the USD
-        spotMarketFactory.usdToken.transferFrom(
-            address(this),
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            amountToReturn
-        );
-=======
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
             (uint256 amountUsable, , ) = FeeUtil.processFees(
                 marketId,
@@ -377,7 +257,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 asyncOrderClaim.amountEscrowed,
                 SpotMarketFactory.TransactionType.BUY
             );
->>>>>>> f07aacb2 (some cleanup)
 
             spotMarketFactory.depositToMarketManager(marketId, amountUsable);
 
