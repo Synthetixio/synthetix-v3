@@ -172,4 +172,14 @@ library RewardDistribution {
 
         return valuePerShareChangeD18;
     }
+
+    function resetEntry(Data storage entry) internal {
+        entry.distributor = IRewardDistributor(address(0));
+        entry.__slotAvailableForFutureUse = 0;
+        entry.rewardPerShareD18 = 0;
+        entry.scheduledValueD18 = 0;
+        entry.start = 0;
+        entry.duration = 0;
+        entry.lastUpdate = 0;
+    }
 }

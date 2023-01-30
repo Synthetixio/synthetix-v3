@@ -235,13 +235,16 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("distributor", "is not registered");
         }
 
-        pool.vaults[collateralType].rewardIds.remove(rewardId);
+        rewardIds.remove(rewardId);
 
         if (distributor == address(0)) {
             revert ParameterError.InvalidParameter("distributor", "must be non-zero");
         }
-
         pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(address(0));
+
+        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
+
+        reward.resetEntry();
 
         emit RewardsDistributorRemoved(poolId, collateralType, distributor);
     }
