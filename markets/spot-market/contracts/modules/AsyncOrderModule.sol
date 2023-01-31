@@ -98,7 +98,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
     // SETTLEMENT
     // ************
 
-    function settleOrder(uint128 marketId, uint128 asyncOrderId) external override returns (uint) {
+    function settleOrder(
+        uint128 marketId,
+        uint128 asyncOrderId
+    ) external override returns (uint, int, uint) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -122,7 +125,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
     }
 
-    function settleOnChainOrder(uint128 marketId, uint128 asyncOrderId) external returns (uint) {
+    function settleOnChainOrder(
+        uint128 marketId,
+        uint128 asyncOrderId
+    ) external returns (uint, int, uint) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -145,7 +151,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function settleChainlinkOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external returns (uint finalOrderAmount) {
+    ) external returns (uint, int, uint) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         SettlementStrategy.Data storage settlementStrategy = AsyncOrderConfiguration
@@ -171,40 +177,54 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // price deviation check?
 
-        _settleOrder(
-            marketId,
-            asyncOrderId,
-            uint(int(median)), // TODO: check this
-            SpotMarketFactory.load(),
-            asyncOrderClaim,
-            settlementStrategy
-        );
+        return
+            _settleOrder(
+                marketId,
+                asyncOrderId,
+                uint(int(median)), // TODO: check this
+                SpotMarketFactory.load(),
+                asyncOrderClaim,
+                settlementStrategy
+            );
     }
 
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external returns (uint finalOrderAmount) {
-        (uint128 marketId, uint asyncOrderId) = abi.decode(extraData, (uint128, uint128));
+    ) external returns (uint, int, uint) {
+        (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         SettlementStrategy.Data storage settlementStrategy = AsyncOrderConfiguration
             .load(marketId)
             .settlementStrategies[asyncOrderClaim.settlementStrategyId];
 
-        // bytes memory verifierResponse = IPythVerifier(
-        //     settlementStrategy.priceVerificationContract
-        // ).parsePriceFeedUpdates(result);
+        (, bytes[] memory data) = abi.decode(result, (uint8, bytes[]));
 
-        // TODO: does not satisfy interface
-        // IPythVerifier(settlementStrategy.priceVerificationContract).parsePriceFeedUpdates(
-        //     priceData
-        // );
-        // TODO
-        // confirm that priceData is for asyncOrderClaim.settlementTime
-        // confirm the price is for what we want
-        // price deviation check?
+        bytes32[] memory priceIds = new bytes32[](1);
+        priceIds[0] = settlementStrategy.feedId;
 
-        // _settleOrder()
+        IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
+            settlementStrategy.priceVerificationContract
+        ).parsePriceFeedUpdates(
+                data,
+                priceIds,
+                uint64(asyncOrderClaim.commitmentTime + settlementStrategy.settlementDelay), // TODO: safe conversion
+                uint64(asyncOrderClaim.commitmentTime + settlementStrategy.settlementWindowDuration)
+            );
+
+        uint publishTime = uint(priceFeeds[0].price.publishTime);
+
+        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy, publishTime);
+
+        return
+            _settleOrder(
+                marketId,
+                asyncOrderId,
+                uint(int(priceFeeds[0].price.price)), // TODO: check this
+                SpotMarketFactory.load(),
+                asyncOrderClaim,
+                settlementStrategy
+            );
     }
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
@@ -216,26 +236,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             asyncOrderConfiguration.settlementStrategies[asyncOrderClaim.settlementStrategyId]
         );
 
-        IAsyncOrderClaimTokenModule nft = AsyncOrderClaimTokenUtil.getNft(marketId);
-        address trader = nft.ownerOf(asyncOrderId);
-        // Return escrowed funds after keeping the fee
-        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            ITokenModule(SpotMarketFactory.load().usdToken).transfer(
-                trader,
-                asyncOrderClaim.amountEscrowed
-            );
-        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            AsyncOrder.transferFromEscrow(marketId, trader, asyncOrderClaim.amountEscrowed);
-        }
-
-        // Burn NFT
-        nft.burn(asyncOrderId);
-
-        // Commitment amount accounting
-        AsyncOrder.adjustCommitmentAmount(marketId, asyncOrderClaim.committedAmountUsd * -1);
-
-        // Emit event
-        emit OrderCancelled(marketId, asyncOrderId, asyncOrderClaim, trader);
+        _issueRefund(marketId, asyncOrderId, asyncOrderClaim);
     }
 
     function _settleOrder(
@@ -245,79 +246,98 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SpotMarketFactory.Data storage spotMarketFactory,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private returns (uint finalOrderAmount) {
+    ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
         asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy, block.timestamp);
 
         address trader = AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId);
 
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            (uint256 amountUsable, , ) = FeeUtil.processFees(
-                marketId,
-                trader,
-                asyncOrderClaim.amountEscrowed,
-                SpotMarketFactory.TransactionType.BUY
-            );
-
-            spotMarketFactory.depositToMarketManager(marketId, amountUsable);
-
-            finalOrderAmount = amountUsable.divDecimal(price);
-
-            // TODO: need explanation on this check
-            // require(
-            //     Price
-            //         .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_BUY)
-            //         .timestamp >= asyncOrderClaim.settlementTime,
-            //     "Needs more recent price report"
-            // );
-
-            SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
+            _settleBuyOrder(marketId, trader, price, asyncOrderClaim, spotMarketFactory);
         }
 
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            uint synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
-                marketId,
-                asyncOrderClaim.amountEscrowed
-            );
-            AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
-
-            // TODO: AtomicSell is the same, consolidate into OrderUtil? (same for buy above)
-            uint usdAmount = synthAmount.mulDecimal(price);
-
-            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-                marketId,
-                trader,
-                usdAmount
-            );
-
-            (finalOrderAmount, , ) = FeeUtil.processFees(
-                marketId,
-                msg.sender,
-                usdAmount,
-                SpotMarketFactory.TransactionType.SELL
-            );
-
-            if (finalOrderAmount > usdAmount) {
-                IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-                    marketId,
-                    msg.sender,
-                    finalOrderAmount - usdAmount
-                );
-
-                ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
-            } else {
-                ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, finalOrderAmount);
-            }
-
-            // TODO: need explanation on this check
-            // require(
-            //     Price
-            //         .getCurrentPriceData(marketId, SpotMarketFactory.TransactionType.ASYNC_SELL)
-            //         .timestamp >= asyncOrderClaim.settlementTime,
-            //     "Needs more recent price report"
-            // );
+            _settleSellOrder(marketId, trader, price, asyncOrderClaim, spotMarketFactory);
         }
 
         _finalizeSettlement(marketId, asyncOrderId, finalOrderAmount, asyncOrderClaim);
+    }
+
+    function _settleBuyOrder(
+        uint128 marketId,
+        address trader,
+        uint price,
+        AsyncOrderClaim.Data storage asyncOrderClaim,
+        SpotMarketFactory.Data storage spotMarketFactory
+    ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
+        uint amountUsable;
+        (amountUsable, totalFees, collectedFees) = FeeUtil.processFees(
+            marketId,
+            trader,
+            asyncOrderClaim.amountEscrowed,
+            SpotMarketFactory.TransactionType.BUY
+        );
+
+        finalOrderAmount = amountUsable.divDecimal(price);
+
+        if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
+            revert MinimumSettlementAmountNotMet(
+                asyncOrderClaim.minimumSettlementAmount,
+                finalOrderAmount
+            );
+        }
+
+        spotMarketFactory.depositToMarketManager(marketId, amountUsable);
+
+        SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
+    }
+
+    function _settleSellOrder(
+        uint128 marketId,
+        address trader,
+        uint price,
+        AsyncOrderClaim.Data storage asyncOrderClaim,
+        SpotMarketFactory.Data storage spotMarketFactory
+    ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
+        uint synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
+            marketId,
+            asyncOrderClaim.amountEscrowed
+        );
+        AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
+
+        // TODO: AtomicSell is the same, consolidate into OrderUtil? (same for buy above)
+        uint usdAmount = synthAmount.mulDecimal(price);
+
+        (finalOrderAmount, totalFees, collectedFees) = FeeUtil.processFees(
+            marketId,
+            msg.sender,
+            usdAmount,
+            SpotMarketFactory.TransactionType.SELL
+        );
+
+        if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
+            revert MinimumSettlementAmountNotMet(
+                asyncOrderClaim.minimumSettlementAmount,
+                finalOrderAmount
+            );
+        }
+
+        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            marketId,
+            trader,
+            usdAmount
+        );
+
+        if (finalOrderAmount > usdAmount) {
+            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+                marketId,
+                msg.sender,
+                finalOrderAmount - usdAmount
+            );
+
+            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
+        } else {
+            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, finalOrderAmount);
+        }
     }
 
     function _finalizeSettlement(
@@ -340,7 +360,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private returns (uint finalOrderAmount) {
+    ) private view returns (uint, int256, uint256) {
         string[] memory urls = new string[](1);
         bytes4 selector;
         if (settlementStrategy.strategyType == SettlementStrategy.Type.CHAINLINK) {
@@ -360,6 +380,33 @@ contract AsyncOrderModule is IAsyncOrderModule {
             selector,
             abi.encode(marketId, asyncOrderId)
         );
+    }
+
+    function _issueRefund(
+        uint128 marketId,
+        uint128 asyncOrderId,
+        AsyncOrderClaim.Data storage asyncOrderClaim
+    ) private {
+        IAsyncOrderClaimTokenModule nft = AsyncOrderClaimTokenUtil.getNft(marketId);
+        address trader = nft.ownerOf(asyncOrderId);
+        // Return escrowed funds after keeping the fee
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            ITokenModule(SpotMarketFactory.load().usdToken).transfer(
+                trader,
+                asyncOrderClaim.amountEscrowed
+            );
+        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            AsyncOrder.transferFromEscrow(marketId, trader, asyncOrderClaim.amountEscrowed);
+        }
+
+        // Burn NFT
+        nft.burn(asyncOrderId);
+
+        // Commitment amount accounting
+        AsyncOrder.adjustCommitmentAmount(marketId, asyncOrderClaim.committedAmountUsd * -1);
+
+        // Emit event
+        emit OrderCancelled(marketId, asyncOrderId, asyncOrderClaim, trader);
     }
 
     function _generateChainlinkUrl(
@@ -391,5 +438,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
                     settlementStrategy.feedId
                 )
             );
+    }
+
+    function unwrapArray(bytes32[1] memory foo) internal pure returns (uint256[] memory bar) {
+        assembly {
+            bar := foo
+        }
     }
 }

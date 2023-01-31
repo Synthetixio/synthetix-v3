@@ -40,6 +40,8 @@ interface IAsyncOrderModule {
         bytes extraData
     );
 
+    error MinimumSettlementAmountNotMet(uint256 minimum, uint256 actual);
+
     function commitOrder(
         uint128 marketId,
         SpotMarketFactory.TransactionType orderType,
@@ -51,7 +53,7 @@ interface IAsyncOrderModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount);
+    ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
 }
