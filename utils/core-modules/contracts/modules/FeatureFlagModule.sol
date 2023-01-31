@@ -21,7 +21,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
         FeatureFlag.load(feature).allowAll = allowAll;
 
         if (allowAll) {
-            this.setFeatureFlagDenyAll(feature, false);
+            FeatureFlag.load(feature).denyAll = false;
         }
 
         emit FeatureFlagAllowAllSet(feature, allowAll);
