@@ -1,4 +1,4 @@
-name = "synthetix-election-module"
+name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
 
