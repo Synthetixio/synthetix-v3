@@ -46,8 +46,7 @@
     "debug": "4.3.4",
     "lodash": "4.17.21",
     "mustache": "4.2.0",
-    "solc": "^0.8.17",
-    "solidity-ast": "0.4.26"
+    "solc": "^0.8.17"
   },
   "peerDependenciesMeta": {
     "@usecannon/builder": {

@@ -4,7 +4,7 @@
   "description": "Core Synthetix Protocol Contracts",
   "private": true,
   "scripts": {
-    "build": "rm -rf contracts/generated && hardhat generate-testable",
+    "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat generate-testable",
     "test": "npm run build -- --quiet && hardhat test",
     "coverage": "npm run build -- --quiet && hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
