@@ -24,10 +24,10 @@ contract ProxyStorage {
         address implementation;
         bool simulatingUpgrade;
     }
-    function _proxyStore() internal pure returns (ProxyStore storage store) {
+    function _proxyStore() internal pure returns (ProxyStore storage proxy) {
         bytes32 s = _SLOT_PROXY_STORAGE;
         assembly {
-            store.slot := s
+            proxy.slot := s
         }
     }
 }
@@ -104,10 +104,10 @@ library NodeDefinition {
         bytes parameters;
         bytes32[] parents;
     }
-    function load(bytes32 id) internal pure returns (Data storage node) {
+    function load(bytes32 id) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
-            node.slot := s
+            data.slot := s
         }
     }
 }
