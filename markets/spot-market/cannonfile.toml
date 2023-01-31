@@ -10,15 +10,11 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.synthetixPackage]
+defaultValue = "synthetix:3.0.0-alpha.8"
+
 [import.synthetix]
-source = "synthetix:3.0.0-alpha.8"
-
-[setting.oracle_manager_version]
-defaultValue = "1.2.2"
-
-[import.oracle_manager]
-source = "oracle-manager:<%= settings.oracle_manager_version %>"
-options.owner = "<%= settings.owner %>"
+source = "<%= settings.synthetixPackage %>"
 
 [contract.SpotMarketFactoryModule]
 artifact = "SpotMarketFactoryModule"
@@ -120,7 +116,6 @@ depends = [
   "contract.AsyncOrderClaimTokenModule"
 ]
 
-
 [invoke.initialize_spot_market_factory]
 target = ["SpotMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
@@ -128,11 +123,11 @@ func = "initialize"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
   "<%= imports.synthetix.contracts.USDProxy.address %>",
-  "<%= imports.oracle_manager.contracts.Proxy.address %>",
+  "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
   "<%= contracts.SynthRouter.address %>",
   "<%= contracts.AsyncOrderClaimRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "import.oracle_manager", "router.SynthRouter", "router.AsyncOrderClaimRouter"]
+depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "router.SynthRouter", "router.AsyncOrderClaimRouter"]
 
 # add pool owner to feature flag allow list (owner must be pdao for this to be successful)
 [invoke.addSpotMarketToFeatureFlag]

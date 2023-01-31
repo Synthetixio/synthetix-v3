@@ -1,12 +1,12 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "0.0.2-alpha",
+  "version": "0.0.3-alpha",
   "description": "Spot Market implementation",
   "private": true,
   "scripts": {
     "build": "hardhat storage:verify && hardhat cannon:build",
     "start": "npm run build && npm run cannon",
-    "cannon": "npx cannon spot-market:0.0.2-alpha",
+    "cannon": "npx cannon spot-market:0.0.3-alpha",
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
