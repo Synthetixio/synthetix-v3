@@ -29,6 +29,9 @@ artifact = "AtomicOrderModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
+[contract.AsyncOrderConfigurationModule]
+artifact = "AsyncOrderConfigurationModule"
+
 [contract.WrapperModule]
 artifact = "WrapperModule"
 
@@ -68,6 +71,7 @@ contracts = [
   "SpotMarketFactoryModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
+  "AsyncOrderConfigurationModule",
   "WrapperModule",
   "FeeConfigurationModule",
   "FeatureFlagModule"
@@ -77,6 +81,7 @@ depends = [
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderConfigurationModule",
   "contract.WrapperModule",
   "contract.FeeConfigurationModule",
   "contract.FeatureFlagModule",
