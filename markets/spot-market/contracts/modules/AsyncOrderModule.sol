@@ -252,14 +252,32 @@ contract AsyncOrderModule is IAsyncOrderModule {
         address trader = AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId);
 
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
-            _settleBuyOrder(marketId, trader, price, asyncOrderClaim, spotMarketFactory);
+            (finalOrderAmount, totalFees, collectedFees) = _settleBuyOrder(
+                marketId,
+                trader,
+                price,
+                asyncOrderClaim,
+                spotMarketFactory
+            );
         }
 
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            _settleSellOrder(marketId, trader, price, asyncOrderClaim, spotMarketFactory);
+            (finalOrderAmount, totalFees, collectedFees) = _settleSellOrder(
+                marketId,
+                trader,
+                price,
+                asyncOrderClaim,
+                spotMarketFactory
+            );
         }
 
-        _finalizeSettlement(marketId, asyncOrderId, finalOrderAmount, asyncOrderClaim);
+        AsyncOrder.adjustCommitmentAmount(marketId, asyncOrderClaim.committedAmountUsd * -1);
+
+        // Burn NFT
+        AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
+
+        // Emit event
+        emit OrderSettled(marketId, asyncOrderId, asyncOrderClaim, finalOrderAmount, msg.sender);
     }
 
     function _settleBuyOrder(
@@ -338,21 +356,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         } else {
             ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, finalOrderAmount);
         }
-    }
-
-    function _finalizeSettlement(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        uint finalOrderAmount,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) internal {
-        AsyncOrder.adjustCommitmentAmount(marketId, asyncOrderClaim.committedAmountUsd * -1);
-
-        // Burn NFT
-        AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
-
-        // Emit event
-        emit OrderSettled(marketId, asyncOrderId, asyncOrderClaim, finalOrderAmount, msg.sender);
     }
 
     function _settleOffchain(
