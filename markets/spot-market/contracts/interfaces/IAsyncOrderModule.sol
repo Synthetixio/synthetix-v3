@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../storage/AsyncOrderConfiguration.sol";
+import "../storage/AsyncOrderClaim.sol";
 
 interface IAsyncOrderModule {
     event OrderCommitted(
@@ -27,35 +28,32 @@ interface IAsyncOrderModule {
         address indexed sender
     );
 
-    error InsufficientFunds();
+    error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
 
-    error InsufficientAllowance(uint256 expected, uint256 current);
+    error InvalidVerificationResponse();
 
-    error OutsideOfConfirmationWindow(
-        uint256 currentTime,
-        uint256 commitmentTime,
-        uint256 minimumOrderAge,
-        uint256 settlementWindowDuration
+    error OffchainLookup(
+        address sender,
+        string[] urls,
+        bytes callData,
+        bytes4 callbackFunction,
+        bytes extraData
     );
 
-    error InsufficientCancellationTimeElapsed(
-        uint256 currentTime,
-        uint256 commitmentTime,
-        uint256 minimumOrderAge,
-        uint256 settlementWindowDuration
-    );
+    error MinimumSettlementAmountNotMet(uint256 minimum, uint256 actual);
 
     function commitOrder(
         uint128 marketId,
         SpotMarketFactory.TransactionType orderType,
         uint256 amountProvided,
-        uint256 settlementStrategyId
+        uint256 settlementStrategyId,
+        uint256 minimumSettlementAmount
     ) external returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim);
 
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount);
+    ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
 }
