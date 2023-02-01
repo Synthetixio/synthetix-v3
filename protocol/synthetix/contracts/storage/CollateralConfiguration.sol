@@ -215,17 +215,25 @@ library CollateralConfiguration {
      * E.g: USDC uses 6 decimals of precision, so this would upscale it by 12 decimals.
      * @param self The CollateralConfiguration object corresponding to the collateral type being converted.
      * @param tokenAmount The token amount, denominated in its native decimal precision.
-     * @return The converted amount, denominated in the system's 18 decimal precision.
+     * @return amountD18 The converted amount, denominated in the system's 18 decimal precision.
      */
     function convertTokenToSystemAmount(
         Data storage self,
         uint256 tokenAmount
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256 amountD18) {
         // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
         if (self.tokenAddress == address(0)) {
             revert CollateralNotFound();
         }
 
-        return (tokenAmount * DecimalMath.UNIT) / (10 ** IERC20(self.tokenAddress).decimals());
+        // try to query the decimals of the token
+        /// @dev if a fallback function exists, it will be executed if decimals() is not defined
+        /// and may return expected return type (i.e. uint8)
+        try IERC20(self.tokenAddress).decimals() returns (uint8 decimals) {
+            amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
+        } catch {
+            // if the token doesn't have a decimals function, assume it's 0 decimals
+            amountD18 = tokenAmount * DecimalMath.UNIT;
+        }
     }
 }
