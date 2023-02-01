@@ -241,9 +241,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("distributor", "must be non-zero");
         }
 
-        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
-        reward.distributor = IRewardDistributor(address(0));
-        reward.resetEntry();
+        pool.vaults[collateralType].rewards[rewardId].resetEntry();
 
         emit RewardsDistributorRemoved(poolId, collateralType, distributor);
     }
