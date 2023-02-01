@@ -67,6 +67,13 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
+    function getFeatureFlagDenyAll(bytes32 feature) external view override returns (bool) {
+        return FeatureFlag.load(feature).denyAll;
+    }
+
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
     function getFeatureFlagAllowlist(
         bytes32 feature
     ) external view override returns (address[] memory) {

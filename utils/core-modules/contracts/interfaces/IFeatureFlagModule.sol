@@ -76,6 +76,13 @@ interface IFeatureFlagModule {
     function getFeatureFlagAllowAll(bytes32 feature) external view returns (bool);
 
     /**
+     * @notice Determines if the given feature is denied to all users.
+     * @param feature The bytes32 id of the feature.
+     * @return True if noone is allowed to use the feature.
+     */
+    function getFeatureFlagDenyAll(bytes32 feature) external view returns (bool);
+
+    /**
      * @notice Returns a list of addresses that are allowed to use the specified feature.
      * @param feature The bytes32 id of the feature.
      * @return The queried list of addresses.
