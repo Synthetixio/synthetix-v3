@@ -226,14 +226,19 @@ library CollateralConfiguration {
             revert CollateralNotFound();
         }
 
-        // try to query the decimals of the token
         /// @dev if a fallback function exists, it will be executed if decimals() is not defined
         /// and may return expected return type (i.e. uint8)
         try IERC20(self.tokenAddress).decimals() returns (uint8 decimals) {
-            amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
+            /// @dev if decimals() is not defined, but an existing fallback function returns a
+            /// bytes representation of uint8, this logic may have unexpected results
+            if (decimals == 0) {
+                amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** 18);
+            } else {
+                amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
+            }
         } catch {
-            // if the token doesn't have a decimals function, assume it's 0 decimals
-            amountD18 = tokenAmount * DecimalMath.UNIT;
+            // if the token doesn't have a decimals function, assume it's 18 decimals
+            amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** 18);
         }
     }
 }
