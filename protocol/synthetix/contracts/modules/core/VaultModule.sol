@@ -238,7 +238,7 @@ contract VaultModule is IVaultModule {
             collateral.increaseAvailableCollateral(oldCollateralAmount - newCollateralAmount);
         }
 
-        // If the collateral amount not negative, make sure that the pool exists
+        // If the collateral amount is not negative, make sure that the pool exists
         // in the collateral entry's pool array. Otherwise remove it.
         bool containsPool = collateral.pools.contains(poolId);
         if (newCollateralAmount >= 0 && !containsPool) {
