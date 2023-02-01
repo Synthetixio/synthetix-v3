@@ -162,5 +162,12 @@ describe('FeatureFlagModule', function () {
         'FeatureUnavailable'
       );
     });
+
+    it('does allow only owner to set value', async function () {
+      await assertRevert(
+        FeatureFlagModule.connect(permissionedUser).setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true),
+        `Unauthorized("${await permissionedUser.getAddress()}")`
+      );
+    });
   });
 });
