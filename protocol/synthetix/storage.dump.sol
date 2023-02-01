@@ -1,19 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11 < 0.9.0;
-
-// @custom:artifact @synthetixio/core-contracts/contracts/ownership/AuthorizableStorage.sol:AuthorizableStorage
-library AuthorizableStorage {
-    bytes32 private constant _SLOT_AUTHORIZABLE_STORAGE = keccak256(abi.encode("io.synthetix.synthetix.Authorizable"));
-    struct Data {
-        address authorized;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_AUTHORIZABLE_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
-}
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -193,16 +179,6 @@ library Initialized {
     }
 }
 
-// @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeOutput.sol:Node
-library Node {
-    struct Data {
-        int256 price;
-        uint timestamp;
-        uint volatilityScore;
-        uint liquidityScore;
-    }
-}
-
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -210,21 +186,31 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH,
-        PriceDeviationCircuitBreaker,
         UNISWAP,
-        StalenessCircuitBreaker
+        PYTH,
+        PRICE_DEVIATION_CIRCUIT_BREAKER,
+        STALENESS_CIRCUIT_BREAKER
     }
     struct Data {
-        bytes32[] parents;
         NodeType nodeType;
         bytes parameters;
+        bytes32[] parents;
     }
     function load(bytes32 id) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
             data.slot := s
         }
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeOutput.sol:NodeOutput
+library NodeOutput {
+    struct Data {
+        int256 price;
+        uint256 timestamp;
+        uint256 __slotAvailableForFutureUse1;
+        uint256 __slotAvailableForFutureUse2;
     }
 }
 
@@ -350,6 +336,7 @@ library Collateral {
 
 // @custom:artifact contracts/storage/CollateralConfiguration.sol:CollateralConfiguration
 library CollateralConfiguration {
+    bytes32 private constant _SLOT_AVAILABLE_COLLATERALS = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration_availableCollaterals"));
     struct Data {
         bool depositingEnabled;
         uint256 issuanceRatioD18;
@@ -366,7 +353,7 @@ library CollateralConfiguration {
         }
     }
     function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration_availableCollaterals"));
+        bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
             data.slot := s
         }

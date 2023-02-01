@@ -123,7 +123,13 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
 
-    /* tbd */
+    /**
+     * @notice upgrades the async order nft implementation for a given market.
+     * @dev Only the market owner can call this function.
+     * @dev The nft implementation is upgraded via the proxy.
+     * @param marketId id of the market
+     * @param asyncOrderImpl async order nft implementation to upgrade to
+     */
     function upgradeAsyncOrderTokenImpl(uint128 marketId, address asyncOrderImpl) external;
 
     /**

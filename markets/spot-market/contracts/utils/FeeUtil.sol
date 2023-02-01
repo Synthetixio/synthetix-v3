@@ -24,7 +24,6 @@ library FeeUtil {
     ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
         (amountUsable, totalFees) = calculateFees(marketId, transactor, usdAmount, transactionType);
 
-        // TODO: negative fees are ignored.  Verify this.
         if (totalFees > 0) {
             collectedFees = collectFees(marketId, totalFees.toUint(), transactor, transactionType);
         }
@@ -123,9 +122,7 @@ library FeeUtil {
             SpotMarketFactory.TransactionType.BUY
         );
 
-        uint fixedFee = async
-            ? feeConfiguration.asyncFixedFee
-            : _getAtomicFixedFee(feeConfiguration, transactor);
+        uint fixedFee = _getAtomicFixedFee(feeConfiguration, transactor);
 
         int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
 
@@ -155,9 +152,7 @@ library FeeUtil {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        uint fixedFee = async
-            ? feeConfiguration.asyncFixedFee
-            : _getAtomicFixedFee(feeConfiguration, transactor);
+        uint fixedFee = _getAtomicFixedFee(feeConfiguration, transactor);
         int totalFees = skewFee + fixedFee.toInt();
 
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
@@ -199,9 +194,11 @@ library FeeUtil {
 
         uint skewScaleValue = feeConfiguration.skewScale.mulDecimal(collateralPrice);
 
-        uint totalSynthValue = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
-            collateralPrice
-        );
+        uint totalSynthValue = (SynthUtil
+            .getToken(marketId)
+            .totalSupply()
+            .mulDecimal(collateralPrice)
+            .toInt() + AsyncOrder.load(marketId).totalCommittedUsdAmount).toUint(); // add async order commitment amount in escrow
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
         uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
@@ -212,7 +209,6 @@ library FeeUtil {
         uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
         uint skewAfterFill = initialSkew;
-        // TODO: when the Adjustment after fill is calculated, does it take into account the Adjustments collected for the trade?
         if (isBuyTrade) {
             skewAfterFill += amount;
         } else if (isSellTrade) {
@@ -243,8 +239,6 @@ library FeeUtil {
      *  Utilization Rate Delta = 120 - 110 = 10% delta
      *  Fee charged = 10 * 0.001 (0.1%)  = 1%
      *
-     * TODO: verify this calculation with the team
-     * TODO: utilization fee should be average of before and after fill
      */
     function calculateUtilizationRateFee(
         FeeConfiguration.Data storage feeConfiguration,
@@ -255,15 +249,12 @@ library FeeUtil {
         if (feeConfiguration.utilizationFeeRate == 0) {
             return 0;
         }
-        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
-            marketId
-        );
 
         uint delegatedCollateral = IMarketManagerModule(SpotMarketFactory.load().synthetix)
             .getMarketCollateral(marketId);
 
         uint totalBalance = (SynthUtil.getToken(marketId).totalSupply().toInt() +
-            asyncOrderConfiguration.asyncUtilizationDelta).toUint();
+            AsyncOrder.load(marketId).totalCommittedUsdAmount).toUint();
 
         uint totalValueBeforeFill = totalBalance.mulDecimal(
             Price.getCurrentPrice(marketId, transactionType)
