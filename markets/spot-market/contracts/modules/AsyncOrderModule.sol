@@ -429,13 +429,18 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage settlementStrategy,
         uint256 commitmentTime
     ) private view returns (string memory url) {
+        bytes32 commitmentTimeBytes = bytes32(abi.encode(commitmentTime));
+
+        // get last 8 bytes
+        bytes8 commitmentTimeBytes8 = bytes8(commitmentTimeBytes << 192);
+
         return
             string(
                 abi.encodePacked(
                     settlementStrategy.url,
                     "?data=",
-                    abi.encodePacked(commitmentTime),
-                    settlementStrategy.feedId
+                    settlementStrategy.feedId,
+                    commitmentTimeBytes8
                 )
             );
     }
