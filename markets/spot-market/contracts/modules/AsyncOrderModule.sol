@@ -122,8 +122,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                     asyncOrderId,
                     Price.getCurrentPrice(marketId, asyncOrderClaim.orderType),
                     spotMarketFactory,
-                    asyncOrderClaim,
-                    settlementStrategy
+                    asyncOrderClaim
                 );
         } else {
             return _settleOffchain(marketId, asyncOrderId, asyncOrderClaim, settlementStrategy);
