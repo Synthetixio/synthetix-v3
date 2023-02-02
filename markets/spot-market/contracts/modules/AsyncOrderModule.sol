@@ -74,7 +74,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
 
         // Issue an async order claim NFT
-        asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
+        asyncOrderId = _mintNft(marketId);
 
         asyncOrderClaim = AsyncOrderClaim.create(
             marketId,
@@ -371,7 +371,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             urls[0] = _generateChainlinkUrl(settlementStrategy, asyncOrderClaim.commitmentTime);
         } else if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
             selector = AsyncOrderModule.settlePythOrder.selector;
-            urls[0] = _generatePythUrl(settlementStrategy, asyncOrderClaim.commitmentTime);
+            urls[0] = settlementStrategy.url;
         } else {
             revert SettlementStrategyNotFound(settlementStrategy.strategyType);
         }
@@ -379,7 +379,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
         revert OffchainLookup(
             address(this),
             urls,
-            abi.encode(settlementStrategy.feedId),
+            abi.encodePacked(
+                settlementStrategy.feedId,
+                _getTimeInBytes(asyncOrderClaim.commitmentTime)
+            ),
             selector,
             abi.encode(marketId, asyncOrderId)
         );
@@ -390,7 +393,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data storage asyncOrderClaim
     ) private {
-        IAsyncOrderClaimTokenModule nft = AsyncOrderClaimTokenUtil.getNft(marketId);
+        INftModule nft = AsyncOrderClaimTokenUtil.getNft(marketId);
         address trader = nft.ownerOf(asyncOrderId);
         // Return escrowed funds after keeping the fee
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
@@ -428,29 +431,17 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
     }
 
-    function _generatePythUrl(
-        SettlementStrategy.Data storage settlementStrategy,
-        uint256 commitmentTime
-    ) private view returns (string memory url) {
+    function _getTimeInBytes(uint256 commitmentTime) private pure returns (bytes8) {
         bytes32 commitmentTimeBytes = bytes32(abi.encode(commitmentTime));
 
         // get last 8 bytes
-        bytes8 commitmentTimeBytes8 = bytes8(commitmentTimeBytes << 192);
-
-        return
-            string(
-                abi.encodePacked(
-                    settlementStrategy.url,
-                    "?data=",
-                    settlementStrategy.feedId,
-                    commitmentTimeBytes8
-                )
-            );
+        return bytes8(commitmentTimeBytes << 192);
     }
 
-    function unwrapArray(bytes32[1] memory foo) internal pure returns (uint256[] memory bar) {
-        assembly {
-            bar := foo
-        }
+    function _mintNft(uint128 marketId) private returns (uint128 asyncOrderId) {
+        INftModule nft = AsyncOrderClaimTokenUtil.getNft(marketId);
+        uint256 tokenId = nft.totalSupply();
+        asyncOrderId = tokenId.to128();
+        nft.mint(msg.sender, tokenId);
     }
 }
