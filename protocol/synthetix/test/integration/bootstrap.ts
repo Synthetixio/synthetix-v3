@@ -3,7 +3,7 @@ import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
-import { snapshotCheckpoint } from '../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
 
 import type {
   AccountProxy,
