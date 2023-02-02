@@ -5,6 +5,9 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "./Election.sol";
 
 library Council {
+    bytes32 private constant _SLOT_COUNCIL =
+        keccak256(abi.encode("io.synthetix.governance.council"));
+
     struct Data {
         // True if initializeElectionModule was called
         bool initialized;
@@ -30,10 +33,10 @@ library Council {
         Evaluation
     }
 
-    function load() internal pure returns (Data storage store) {
+    function load() internal pure returns (Data storage council) {
+        bytes32 s = _SLOT_COUNCIL;
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.election")) - 1)
-            store.slot := 0x4a7bae7406c7467d50a80c6842d6ba8287c729469098e48fc594351749ba4b22
+            council.slot := s
         }
     }
 
