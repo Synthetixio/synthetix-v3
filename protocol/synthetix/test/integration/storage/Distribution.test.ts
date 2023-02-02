@@ -3,7 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { Contract, ethers, BigNumber } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import { wei } from '@synthetixio/wei';
-import { snapshotCheckpoint } from '../../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
 
 const distUtils = {
   getActor: (id: string) => ethers.utils.formatBytes32String(id),

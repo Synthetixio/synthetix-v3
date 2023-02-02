@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { MockMarket } from '../../../../typechain-types/contracts/mocks/MockMarket';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
 import { bootstrap } from '../../bootstrap';
 
 // thanks to iosiro for providing this test during their audit!

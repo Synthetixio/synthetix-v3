@@ -5,7 +5,7 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
 
 describe('PoolModule Admin', function () {
   const {

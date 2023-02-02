@@ -6,7 +6,7 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
 
 // ---------------------------------------
 // If the tests are failing Make sure you run foundryup to update the anvil to latest version

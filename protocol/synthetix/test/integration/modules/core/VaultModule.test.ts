@@ -5,7 +5,7 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
 
 describe('VaultModule', function () {
   const {
