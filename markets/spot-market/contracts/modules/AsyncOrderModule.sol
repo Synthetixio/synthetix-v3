@@ -76,13 +76,18 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // Issue an async order claim NFT
         asyncOrderId = _mintNft(marketId);
 
+        uint settlementDelay = AsyncOrderConfiguration
+            .load(marketId)
+            .settlementStrategies[settlementStrategyId]
+            .settlementDelay;
+
         asyncOrderClaim = AsyncOrderClaim.create(
             marketId,
             asyncOrderId,
             orderType,
             amountEscrowed,
             settlementStrategyId,
-            block.timestamp,
+            block.timestamp + settlementDelay,
             committedAmountUsd,
             minimumSettlementAmount,
             block.number
@@ -137,14 +142,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .load(marketId)
             .settlementStrategies[asyncOrderClaim.settlementStrategyId];
 
+        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy);
+
         return
             _settleOrder(
                 marketId,
                 asyncOrderId,
                 Price.getCurrentPrice(marketId, asyncOrderClaim.orderType),
                 spotMarketFactory,
-                asyncOrderClaim,
-                settlementStrategy
+                asyncOrderClaim
             );
     }
 
@@ -157,6 +163,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage settlementStrategy = AsyncOrderConfiguration
             .load(marketId)
             .settlementStrategies[asyncOrderClaim.settlementStrategyId];
+
+        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy);
 
         bytes memory verifierResponse = IChainlinkVerifier(
             settlementStrategy.priceVerificationContract
@@ -173,18 +181,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
             revert InvalidVerificationResponse();
         }
 
-        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy, observationsTimestamp);
-
-        // price deviation check?
-
         return
             _settleOrder(
                 marketId,
                 asyncOrderId,
                 uint(int(median)), // TODO: check this
                 SpotMarketFactory.load(),
-                asyncOrderClaim,
-                settlementStrategy
+                asyncOrderClaim
             );
     }
 
@@ -198,6 +201,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .load(marketId)
             .settlementStrategies[asyncOrderClaim.settlementStrategyId];
 
+        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy);
+
         (, bytes[] memory data) = abi.decode(result, (uint8, bytes[]));
 
         bytes32[] memory priceIds = new bytes32[](1);
@@ -208,13 +213,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
         ).parsePriceFeedUpdates(
                 data,
                 priceIds,
-                uint64(asyncOrderClaim.commitmentTime + settlementStrategy.settlementDelay), // TODO: safe conversion
-                uint64(asyncOrderClaim.commitmentTime + settlementStrategy.settlementWindowDuration)
+                uint64(asyncOrderClaim.settlementTime), // TODO: safe conversion
+                uint64(asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
             );
 
         uint publishTime = uint(priceFeeds[0].price.publishTime);
-
-        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy, publishTime);
 
         return
             _settleOrder(
@@ -222,8 +225,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 asyncOrderId,
                 uint(int(priceFeeds[0].price.price)), // TODO: check this
                 SpotMarketFactory.load(),
-                asyncOrderClaim,
-                settlementStrategy
+                asyncOrderClaim
             );
     }
 
@@ -244,11 +246,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 asyncOrderId,
         uint price,
         SpotMarketFactory.Data storage spotMarketFactory,
-        AsyncOrderClaim.Data storage asyncOrderClaim,
-        SettlementStrategy.Data storage settlementStrategy
+        AsyncOrderClaim.Data storage asyncOrderClaim
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
-        asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy, block.timestamp);
-
         address trader = AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId);
 
         if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
@@ -368,7 +367,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         bytes4 selector;
         if (settlementStrategy.strategyType == SettlementStrategy.Type.CHAINLINK) {
             selector = AsyncOrderModule.settleChainlinkOrder.selector;
-            urls[0] = _generateChainlinkUrl(settlementStrategy, asyncOrderClaim.commitmentTime);
+            urls[0] = _generateChainlinkUrl(settlementStrategy, asyncOrderClaim.settlementTime);
         } else if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
             selector = AsyncOrderModule.settlePythOrder.selector;
             urls[0] = settlementStrategy.url;
@@ -381,7 +380,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             urls,
             abi.encodePacked(
                 settlementStrategy.feedId,
-                _getTimeInBytes(asyncOrderClaim.commitmentTime)
+                _getTimeInBytes(asyncOrderClaim.settlementTime)
             ),
             selector,
             abi.encode(marketId, asyncOrderId)
@@ -431,11 +430,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
     }
 
-    function _getTimeInBytes(uint256 commitmentTime) private pure returns (bytes8) {
-        bytes32 commitmentTimeBytes = bytes32(abi.encode(commitmentTime));
+    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
+        bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
 
         // get last 8 bytes
-        return bytes8(commitmentTimeBytes << 192);
+        return bytes8(settlementTimeBytes << 192);
     }
 
     function _mintNft(uint128 marketId) private returns (uint128 asyncOrderId) {
