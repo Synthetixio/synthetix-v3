@@ -11,7 +11,12 @@ import "./BaseElectionModule.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 /// @notice This extends the base ElectionModule by determining voting power by Synthetix v2 debt share
-contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChainDebtShareManager, BaseElectionModule {
+contract ElectionModule is
+    ISynthetixElectionModule,
+    DebtShareManager,
+    CrossChainDebtShareManager,
+    BaseElectionModule
+{
     error TooManyCandidates();
     error WrongInitializer();
 
@@ -52,7 +57,9 @@ contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChai
     }
 
     /// @dev Overrides the BaseElectionModule nominate function to only allow 1 candidate to be nominated
-    function cast(address[] calldata candidates)
+    function cast(
+        address[] calldata candidates
+    )
         public
         override(BaseElectionModule, IElectionModule)
         onlyInPeriod(Council.ElectionPeriod.Vote)
@@ -68,11 +75,9 @@ contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChai
     // Debt shares
     // ---------------------------------------
 
-    function setDebtShareContract(address debtShareContract)
-        external
-        override
-        onlyInPeriod(Council.ElectionPeriod.Administration)
-    {
+    function setDebtShareContract(
+        address debtShareContract
+    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
 
         _setDebtShareContract(debtShareContract);
@@ -84,7 +89,9 @@ contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChai
         return address(DebtShare.load().debtShareContract);
     }
 
-    function setDebtShareSnapshotId(uint snapshotId) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    function setDebtShareSnapshotId(
+        uint snapshotId
+    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setDebtShareSnapshotId(snapshotId);
     }
@@ -101,15 +108,18 @@ contract ElectionModule is ISynthetixElectionModule, DebtShareManager, CrossChai
     // Cross chain debt shares
     // ---------------------------------------
 
-    function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber)
-        external
-        override
-        onlyInPeriod(Council.ElectionPeriod.Nomination)
-    {
+    function setCrossChainDebtShareMerkleRoot(
+        bytes32 merkleRoot,
+        uint blocknumber
+    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
 
-        emit CrossChainDebtShareMerkleRootSet(merkleRoot, blocknumber, Council.load().lastElectionId);
+        emit CrossChainDebtShareMerkleRootSet(
+            merkleRoot,
+            blocknumber,
+            Council.load().lastElectionId
+        );
     }
 
     function getCrossChainDebtShareMerkleRoot() external view override returns (bytes32) {

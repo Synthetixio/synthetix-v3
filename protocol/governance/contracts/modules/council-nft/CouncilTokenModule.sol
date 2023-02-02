@@ -10,4 +10,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
  * @title Module with custom NFT logic for the account token.
  * @dev See IAccountTokenModule.
  */
-contract CouncilTokenModule is ICouncilTokenModule, NftModule {}
+contract CouncilTokenModule is ICouncilTokenModule, NftModule {
+
+}

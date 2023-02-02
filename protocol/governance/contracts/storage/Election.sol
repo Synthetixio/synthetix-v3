@@ -9,11 +9,8 @@ import "./Epoch.sol";
 import "./ElectionSettings.sol";
 
 library Election {
-
     struct Data {
-
         Epoch.Data epoch;
-
         // True if ballots have been counted in this election
         bool evaluated;
         // True if NFTs have been re-shuffled in this election
@@ -32,7 +29,6 @@ library Election {
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
         mapping(address => uint) candidateVotes;
-
         ElectionSettings.Data settings;
     }
 

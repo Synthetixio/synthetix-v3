@@ -66,7 +66,13 @@ contract BaseElectionModule is
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
         uint64 epochStartDate = uint64(block.timestamp);
-        _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
+        _configureEpochSchedule(
+            firstEpoch,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
 
         _addCouncilMembers(firstCouncil, 0);
 
@@ -98,7 +104,11 @@ contract BaseElectionModule is
             true /*ensureChangesAreSmall = true*/
         );
 
-        emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
+        emit EpochScheduleUpdated(
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate
+        );
     }
 
     function modifyEpochSchedule(
@@ -115,7 +125,11 @@ contract BaseElectionModule is
             false /*!ensureChangesAreSmall = false*/
         );
 
-        emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
+        emit EpochScheduleUpdated(
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate
+        );
     }
 
     function setMinEpochDurations(
@@ -124,34 +138,48 @@ contract BaseElectionModule is
         uint64 newMinEpochDuration
     ) external override {
         OwnableStorage.onlyOwner();
-        _setMinEpochDurations(newMinNominationPeriodDuration, newMinVotingPeriodDuration, newMinEpochDuration);
+        _setMinEpochDurations(
+            newMinNominationPeriodDuration,
+            newMinVotingPeriodDuration,
+            newMinEpochDuration
+        );
 
-        emit MinimumEpochDurationsChanged(newMinNominationPeriodDuration, newMinVotingPeriodDuration, newMinEpochDuration);
+        emit MinimumEpochDurationsChanged(
+            newMinNominationPeriodDuration,
+            newMinVotingPeriodDuration,
+            newMinEpochDuration
+        );
     }
 
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override {
         OwnableStorage.onlyOwner();
         if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
 
-        Council.load().nextElectionSettings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
+        Council
+            .load()
+            .nextElectionSettings
+            .maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
 
         emit MaxDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
     }
 
-    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external override {
+    function setDefaultBallotEvaluationBatchSize(
+        uint newDefaultBallotEvaluationBatchSize
+    ) external override {
         OwnableStorage.onlyOwner();
         if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
 
-        Council.load().nextElectionSettings.defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
+        Council
+            .load()
+            .nextElectionSettings
+            .defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
 
         emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
     }
 
-    function setNextEpochSeatCount(uint8 newSeatCount)
-        external
-        override
-        onlyInPeriod(Council.ElectionPeriod.Administration)
-    {
+    function setNextEpochSeatCount(
+        uint8 newSeatCount
+    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
@@ -180,7 +208,10 @@ contract BaseElectionModule is
 
         // Don't immediately jump to an election if the council still has enough members
         if (Council.load().getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
-        if (Council.load().councilMembers.length() >= Council.load().nextElectionSettings.minimumActiveMembers) return;
+        if (
+            Council.load().councilMembers.length() >=
+            Council.load().nextElectionSettings.minimumActiveMembers
+        ) return;
 
         _jumpToNominationPeriod();
 
@@ -197,7 +228,11 @@ contract BaseElectionModule is
         emit CandidateNominated(msg.sender, Council.load().lastElectionId);
     }
 
-    function withdrawNomination() external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    function withdrawNomination()
+        external
+        override
+        onlyInPeriod(Council.ElectionPeriod.Nomination)
+    {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
         if (!nominees.contains(msg.sender)) revert NotNominated();
@@ -208,7 +243,9 @@ contract BaseElectionModule is
     }
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
-    function cast(address[] calldata candidates) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
+    function cast(
+        address[] calldata candidates
+    ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
 
         if (votePower == 0) revert NoVotePower();
@@ -237,7 +274,9 @@ contract BaseElectionModule is
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
-    function evaluate(uint numBallots) external override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
+    function evaluate(
+        uint numBallots
+    ) external override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
         Election.Data storage election = Council.load().getCurrentElection();
 
         if (election.evaluated) revert ElectionAlreadyEvaluated();
@@ -248,7 +287,11 @@ contract BaseElectionModule is
 
         uint totalBallots = election.ballotIds.length;
         if (election.numEvaluatedBallots < totalBallots) {
-            emit ElectionBatchEvaluated(currentEpochIndex, election.numEvaluatedBallots, totalBallots);
+            emit ElectionBatchEvaluated(
+                currentEpochIndex,
+                election.numEvaluatedBallots,
+                totalBallots
+            );
         } else {
             election.evaluated = true;
 
@@ -287,7 +330,11 @@ contract BaseElectionModule is
     {
         ElectionSettings.Data storage settings = Council.load().nextElectionSettings;
 
-        return (settings.minNominationPeriodDuration, settings.minVotingPeriodDuration, settings.minEpochDuration);
+        return (
+            settings.minNominationPeriodDuration,
+            settings.minVotingPeriodDuration,
+            settings.minEpochDuration
+        );
     }
 
     function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
@@ -338,7 +385,9 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().nominees.values();
     }
 
-    function calculateBallotId(address[] calldata candidates) external pure override returns (bytes32) {
+    function calculateBallotId(
+        address[] calldata candidates
+    ) external pure override returns (bytes32) {
         return keccak256(abi.encode(candidates));
     }
 
@@ -358,7 +407,9 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().ballotsById[ballotId].votes;
     }
 
-    function getBallotCandidates(bytes32 ballotId) external view override returns (address[] memory) {
+    function getBallotCandidates(
+        bytes32 ballotId
+    ) external view override returns (address[] memory) {
         return Council.load().getCurrentElection().ballotsById[ballotId].candidates;
     }
 

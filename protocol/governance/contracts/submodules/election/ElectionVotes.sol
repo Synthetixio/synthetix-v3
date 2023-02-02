@@ -71,7 +71,10 @@ contract ElectionVotes is ElectionBase {
         return ballotId;
     }
 
-    function _withdrawVote(address user, uint votePower) internal virtual returns (bytes32 ballotId) {
+    function _withdrawVote(
+        address user,
+        uint votePower
+    ) internal virtual returns (bytes32 ballotId) {
         Election.Data storage election = Council.load().getCurrentElection();
 
         ballotId = election.ballotIdsByAddress[user];

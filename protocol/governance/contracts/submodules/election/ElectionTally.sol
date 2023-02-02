@@ -1,4 +1,3 @@
-
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -12,9 +11,7 @@ contract ElectionTally is ElectionBase {
 
     using Council for Council.Data;
 
-
     function _evaluateNextBallotBatch(uint numBallots) internal {
-
         Election.Data storage election = Council.load().getCurrentElection();
 
         if (numBallots == 0) {
@@ -99,11 +96,10 @@ contract ElectionTally is ElectionBase {
         }
     }
 
-    function _findWinnerWithLeastVotes(Election.Data storage election, SetUtil.AddressSet storage winners)
-        private
-        view
-        returns (address leastVotedWinner, uint leastVotes)
-    {
+    function _findWinnerWithLeastVotes(
+        Election.Data storage election,
+        SetUtil.AddressSet storage winners
+    ) private view returns (address leastVotedWinner, uint leastVotes) {
         leastVotes = type(uint).max;
 
         uint numWinners = winners.length();

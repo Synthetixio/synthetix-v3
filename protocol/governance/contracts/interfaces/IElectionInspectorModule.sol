@@ -36,10 +36,16 @@ interface IElectionInspectorModule {
     function getBallotVotesInEpoch(bytes32 ballotId, uint epochIndex) external view returns (uint);
 
     /// @notice Returns the list of candidates that a particular ballot has in a given epoch
-    function getBallotCandidatesInEpoch(bytes32 ballotId, uint epochIndex) external view returns (address[] memory);
+    function getBallotCandidatesInEpoch(
+        bytes32 ballotId,
+        uint epochIndex
+    ) external view returns (address[] memory);
 
     /// @notice Returns the number of votes a candidate received in a given epoch
-    function getCandidateVotesInEpoch(address candidate, uint epochIndex) external view returns (uint);
+    function getCandidateVotesInEpoch(
+        address candidate,
+        uint epochIndex
+    ) external view returns (uint);
 
     /// @notice Returns the winners of the given election
     function getElectionWinnersInEpoch(uint epochIndex) external view returns (address[] memory);

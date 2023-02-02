@@ -15,15 +15,22 @@ contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
         return Election.load(epochIndex).epoch.endDate;
     }
 
-    function getNominationPeriodStartDateForIndex(uint epochIndex) external view override returns (uint64) {
+    function getNominationPeriodStartDateForIndex(
+        uint epochIndex
+    ) external view override returns (uint64) {
         return Election.load(epochIndex).epoch.nominationPeriodStartDate;
     }
 
-    function getVotingPeriodStartDateForIndex(uint epochIndex) external view override returns (uint64) {
+    function getVotingPeriodStartDateForIndex(
+        uint epochIndex
+    ) external view override returns (uint64) {
         return Election.load(epochIndex).epoch.votingPeriodStartDate;
     }
 
-    function wasNominated(address candidate, uint epochIndex) external view override returns (bool) {
+    function wasNominated(
+        address candidate,
+        uint epochIndex
+    ) external view override returns (bool) {
         return Election.load(epochIndex).nominees.contains(candidate);
     }
 
@@ -31,7 +38,10 @@ contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
         return Election.load(epochIndex).nominees.values();
     }
 
-    function getBallotVotedAtEpoch(address user, uint epochIndex) public view override returns (bytes32) {
+    function getBallotVotedAtEpoch(
+        address user,
+        uint epochIndex
+    ) public view override returns (bytes32) {
         return Election.load(epochIndex).ballotIdsByAddress[user];
     }
 
@@ -39,24 +49,30 @@ contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
         return getBallotVotedAtEpoch(user, epochIndex) != bytes32(0);
     }
 
-    function getBallotVotesInEpoch(bytes32 ballotId, uint epochIndex) external view override returns (uint) {
+    function getBallotVotesInEpoch(
+        bytes32 ballotId,
+        uint epochIndex
+    ) external view override returns (uint) {
         return Election.load(epochIndex).ballotsById[ballotId].votes;
     }
 
-    function getBallotCandidatesInEpoch(bytes32 ballotId, uint epochIndex)
-        external
-        view
-        override
-        returns (address[] memory)
-    {
+    function getBallotCandidatesInEpoch(
+        bytes32 ballotId,
+        uint epochIndex
+    ) external view override returns (address[] memory) {
         return Election.load(epochIndex).ballotsById[ballotId].candidates;
     }
 
-    function getCandidateVotesInEpoch(address candidate, uint epochIndex) external view override returns (uint) {
+    function getCandidateVotesInEpoch(
+        address candidate,
+        uint epochIndex
+    ) external view override returns (uint) {
         return Election.load(epochIndex).candidateVotes[candidate];
     }
 
-    function getElectionWinnersInEpoch(uint epochIndex) external view override returns (address[] memory) {
+    function getElectionWinnersInEpoch(
+        uint epochIndex
+    ) external view override returns (address[] memory) {
         return Election.load(epochIndex).winners.values();
     }
 }

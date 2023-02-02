@@ -6,4 +6,7 @@ import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 /**
  * @title Module with custom NFT logic for the account token.
  */
-interface ICouncilTokenModule is INftModule {}
+// solhint-disable-next-line no-empty-blocks
+interface ICouncilTokenModule is INftModule {
+
+}

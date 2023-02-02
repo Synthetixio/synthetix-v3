@@ -7,7 +7,6 @@ import "./ElectionBase.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
-
 /// @dev Core functionality for keeping track of council members with an NFT token
 contract ElectionCredentials is ElectionBase {
     using SetUtil for SetUtil.AddressSet;

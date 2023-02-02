@@ -25,7 +25,12 @@ contract ElectionSchedule is ElectionBase {
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
     ) internal {
-        _validateEpochSchedule(epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
+        _validateEpochSchedule(
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
 
         epoch.startDate = epochStartDate;
         epoch.nominationPeriodStartDate = nominationPeriodStartDate;
@@ -71,14 +76,21 @@ contract ElectionSchedule is ElectionBase {
         uint64 newEpochEndDate,
         bool ensureChangesAreSmall
     ) internal {
-        uint64 maxDateAdjustmentTolerance = Council.load().nextElectionSettings.maxDateAdjustmentTolerance;
+        uint64 maxDateAdjustmentTolerance = Council
+            .load()
+            .nextElectionSettings
+            .maxDateAdjustmentTolerance;
 
         if (ensureChangesAreSmall) {
             if (
                 _uint64AbsDifference(newEpochEndDate, epoch.endDate) > maxDateAdjustmentTolerance ||
-                _uint64AbsDifference(newNominationPeriodStartDate, epoch.nominationPeriodStartDate) >
+                _uint64AbsDifference(
+                    newNominationPeriodStartDate,
+                    epoch.nominationPeriodStartDate
+                ) >
                 maxDateAdjustmentTolerance ||
-                _uint64AbsDifference(newVotingPeriodStartDate, epoch.votingPeriodStartDate) > maxDateAdjustmentTolerance
+                _uint64AbsDifference(newVotingPeriodStartDate, epoch.votingPeriodStartDate) >
+                maxDateAdjustmentTolerance
             ) {
                 revert InvalidEpochConfiguration();
             }
@@ -126,8 +138,10 @@ contract ElectionSchedule is ElectionBase {
 
         uint64 currentEpochStartDate = uint64(block.timestamp);
         uint64 currentEpochEndDate = currentEpochStartDate + _getEpochDuration(previousEpoch);
-        uint64 currentVotingPeriodStartDate = currentEpochEndDate - _getVotingPeriodDuration(previousEpoch);
-        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate - _getNominationPeriodDuration(previousEpoch);
+        uint64 currentVotingPeriodStartDate = currentEpochEndDate -
+            _getVotingPeriodDuration(previousEpoch);
+        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate -
+            _getNominationPeriodDuration(previousEpoch);
 
         _configureEpochSchedule(
             currentEpoch,
@@ -146,7 +160,11 @@ contract ElectionSchedule is ElectionBase {
     ) internal {
         ElectionSettings.Data storage settings = Council.load().nextElectionSettings;
 
-        if (newMinNominationPeriodDuration == 0 || newMinVotingPeriodDuration == 0 || newMinEpochDuration == 0) {
+        if (
+            newMinNominationPeriodDuration == 0 ||
+            newMinVotingPeriodDuration == 0 ||
+            newMinEpochDuration == 0
+        ) {
             revert InvalidElectionSettings();
         }
 
