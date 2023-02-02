@@ -33,6 +33,27 @@ describe('Atomic Order Module buy()', () => {
     );
   });
 
+  describe('slippage', () => {
+    let withdrawableUsd: Ethers.BigNumber;
+    it('reverts buy when minAmountReceived condition is not meet', async () => {
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+
+      await assertRevert(
+        systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(10)),
+        `InsufficientReturnAmount("${bn(10)}", "${bn(1)}")`
+      );
+    });
+
+    it('trader1 has 0 snxETH', async () => {
+      assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(0));
+    });
+
+    it('market withdrawable Usd has not change', async () => {
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId()), withdrawableUsd);
+    });
+  });
+
   describe('no fees', () => {
     let withdrawableUsd: Ethers.BigNumber;
     let txn: Ethers.providers.TransactionResponse;
