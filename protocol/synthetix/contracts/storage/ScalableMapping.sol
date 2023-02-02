@@ -4,8 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "./DistributionActor.sol";
-
 /**
  * @title Data structure that wraps a mapping with a scalar multiplier.
  *
@@ -60,8 +58,7 @@ library ScalableMapping {
 
     /**
      * @dev Inflates or deflates the total value of the distribution by the given value.
-     *
-     * The value being distributed ultimately modifies the distribution's scaleModifier.
+     * @dev The incoming value is split per share, and used as a delta that is *added* to the existing scale modifier. The resulting scale modifier must be in the range [-1, type(int128).max).
      */
     function scale(Data storage self, int256 valueD18) internal {
         if (valueD18 == 0) {

@@ -1,55 +1,33 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./AsyncOrderClaim.sol";
+import "./SettlementStrategy.sol";
 
 library AsyncOrderConfiguration {
     struct Data {
-        mapping(uint256 => AsyncOrderClaim.Data) asyncOrderClaims;
-        mapping(address => uint256) escrowedSynthShares;
-        uint256 totalEscrowedSynthShares;
-        SettlementStrategy[] settlementStrategies;
-        int256 asyncUtilizationDelta;
+        /**
+         * @dev trader can specify one of these configured strategies when placing async order
+         */
+        SettlementStrategy.Data[] settlementStrategies;
     }
 
-    enum SettlementStrategyType {
-        ONCHAIN,
-        CHAINLINK,
-        PYTH
-    }
-
-    struct SettlementStrategy {
-        SettlementStrategyType strategyType;
-        uint256 fixedFee;
-        uint256 settlementDelay;
-        uint256 settlementWindowDuration;
-        address priceVerificationContract; // For Chainlink and Pyth settlement strategies
-        /*
-            - **Price Deviation Circuit Breaker Node ID** - For Chainlink and Pyth settlement strategies. _t.b.d._
-            - **Price Deviation Circuit Breaker Tolerance** - For Chainlink and Pyth settlement strategies. _t.b.d._
-        */
-    }
-
-    function load(uint128 marketId) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrder", marketId));
+    function load(uint128 marketId) internal pure returns (Data storage asyncOrderConfiguration) {
+        bytes32 s = keccak256(
+            abi.encode("io.synthetix.spot-market.AsyncOrderConfiguration", marketId)
+        );
         assembly {
-            store.slot := s
+            asyncOrderConfiguration.slot := s
         }
     }
 
-    function create(
-        uint128 marketId,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) internal {
-        update(load(marketId), asyncOrderId, asyncOrderClaim);
-    }
+    error InvalidSettlementStrategy(uint256 settlementStrategyId);
 
-    function update(
+    function isValidSettlementStrategy(
         Data storage self,
-        uint128 asyncOrderId,
-        AsyncOrderClaim.Data memory asyncOrderClaim
-    ) internal {
-        self.asyncOrderClaims[asyncOrderId] = asyncOrderClaim;
+        uint256 settlementStrategyId
+    ) internal view {
+        if (settlementStrategyId >= self.settlementStrategies.length) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
     }
 }

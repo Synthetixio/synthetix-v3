@@ -42,6 +42,8 @@ The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org
 - Parameters:
   - `address tokenAddress` - The address of the token
   - `address stablecoinAddress` - The address of the stablecoin
+  - `uint8 tokenDecimals` - The number of decimals places used by the token contract. _This must match what is provided by the token contract's `decimals()` function_.
+  - `uint8 stablecoinDecimals` - The number of decimals places used by the stablecoin contract. _This must match what is provided by the stablecoin contract's `decimals()` function_.
   - `address pool` - The address of the Uniswap V3 pool to observe for the price. **Note that pools with deeper liquidity are less subject to price manipulation.**
   - `uint32 secondsAgo` - The duration (in seconds) of the lookback window for prices to be incorporated in a time-weighted average price calculation. **Note that lower values increase this node's susceptibility to price manipulation, but can decrease the accuracy of the present market rate of the asset.**
 - Expected Parents: 0

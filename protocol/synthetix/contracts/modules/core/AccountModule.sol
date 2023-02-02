@@ -1,10 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-
-import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../interfaces/IAccountModule.sol";
@@ -103,7 +99,7 @@ contract AccountModule is IAccountModule {
         bytes32 permission,
         address user
     ) external override {
-        _isPermissionValid(permission);
+        AccountRBAC.isPermissionValid(permission);
 
         Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
@@ -161,22 +157,6 @@ contract AccountModule is IAccountModule {
     function _onlyAccountToken() internal {
         if (msg.sender != address(getAccountTokenAddress())) {
             revert OnlyAccountTokenProxy(msg.sender);
-        }
-    }
-
-    /**
-     * @dev Reverts if the specified permission is unknown to the account RBAC system.
-     */
-    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
-    // solc-ignore-next-line func-mutability
-    function _isPermissionValid(bytes32 permission) internal {
-        if (
-            permission != AccountRBAC._WITHDRAW_PERMISSION &&
-            permission != AccountRBAC._DELEGATE_PERMISSION &&
-            permission != AccountRBAC._MINT_PERMISSION &&
-            permission != AccountRBAC._ADMIN_PERMISSION
-        ) {
-            revert Account.InvalidPermission(permission);
         }
     }
 }

@@ -105,10 +105,10 @@ library Pool {
     /**
      * @dev Returns the pool stored at the specified pool id.
      */
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
-            data.slot := s
+            pool.slot := s
         }
     }
 
@@ -117,15 +117,15 @@ library Pool {
      *
      * Reverts if the specified pool already exists.
      */
-    function create(uint128 id, address owner) internal returns (Pool.Data storage self) {
+    function create(uint128 id, address owner) internal returns (Pool.Data storage pool) {
         if (Pool.exists(id)) {
             revert PoolAlreadyExists(id);
         }
 
-        self = load(id);
+        pool = load(id);
 
-        self.id = id;
-        self.owner = owner;
+        pool.id = id;
+        pool.owner = owner;
     }
 
     /**
@@ -194,41 +194,55 @@ library Pool {
     }
 
     /**
-     * @dev Implements a system-wide fail safe to prevent a market from taking too much debt.
+     * @dev Determines the resulting maximum value per share for a market, according to a system-wide minimum liquidity ratio. This prevents markets from assigning more debt to pools than they have collateral to cover.
      *
-     * Note: There is a non-system-wide fail safe for each market at `MarketConfiguration.maxDebtShareValue`.
+     * Note: There is a market-wide fail safe for each market at `MarketConfiguration.maxDebtShareValue`. The lower of the two values should be used.
      *
      * See `SystemPoolConfiguration.minLiquidityRatio`.
      */
     function getSystemMaxValuePerShare(
         Data storage self,
-        uint128 marketId, // we are keeping this value as a uint128 for now for testability reasons
+        uint128 marketId,
         uint256 creditCapacityD18,
         int256 debtD18
     ) internal view returns (int256) {
-        Market.Data storage marketData = Market.load(marketId);
+        // Get the system-wide minimum liquidity ratio.
         uint256 minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
-        // Calculate the margin of debt that the market could incur to hit the system wide limit.
+        // Retrieve the total shares of the pool's debt distribution.
         uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
+
+        // Retrieve the current value per share of the market.
+        Market.Data storage marketData = Market.load(marketId);
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
-        if (minLiquidityRatioD18 == 0) {
-            // If minLiquidityRatioD18 is zero, then set limit to 100%.
-            return valuePerShareD18 + DecimalMath.UNIT_INT;
-        } else if (totalSharesD18 == 0) {
-            // margin = credit / systemLimit, per share
+        // If there are no shares in the pool's debt distribution,
+        // (and the minimum liquidity setting is not set),
+        // then the maximum value per share is the market's current value per share.
+        if (totalSharesD18 == 0 && minLiquidityRatioD18 != 0) {
             return valuePerShareD18;
-        } else {
-            uint256 marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
-                totalSharesD18
-            );
-
-            return
-                marketData.poolsDebtDistribution.getValuePerShare() +
-                marginD18.toInt() -
-                debtD18.divDecimal(totalSharesD18.toInt());
         }
+
+        // Calculate the *debt* per share of the pool's debt distribution.
+        // solhint-disable-next-line numcast/safe-cast
+        int256 debtPerShareD18 = debtD18 > 0 ? debtD18.divDecimal(totalSharesD18.toInt()) : int(0);
+
+        // If the system-wide setting is not set (unlikely),
+        // then the resulting maximum value per share is the distribution's value per share,
+        // plus a margin of 100% (see how `marginD18` is calculated below),
+        // minus the current debt per share.
+        if (minLiquidityRatioD18 == 0) {
+            return valuePerShareD18 + DecimalMath.UNIT_INT - debtPerShareD18;
+        }
+
+        // Calculate the margin of debt that the market would incur if it hit the system wide limit.
+        uint256 marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
+            totalSharesD18
+        );
+
+        // The resulting maximum value per share is the distribution's value per share,
+        // plus the margin to hit the limit, minus the current debt per share.
+        return valuePerShareD18 + marginD18.toInt() - debtPerShareD18;
     }
 
     /**
@@ -414,11 +428,10 @@ library Pool {
         );
         int256 getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
-        // if they have a credit, just treat their debt as 0
         return
-            getPositionCollateralValueD18.divDecimal(
-                getPositionDebtD18 < 0 ? 0 : getPositionDebtD18.toUint()
-            );
+            getPositionDebtD18 > 0
+                ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
+                : 1e20;
     }
 
     /**

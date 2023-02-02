@@ -114,7 +114,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     /**
      * @inheritdoc IRewardsManagerModule
      */
-    function getClaimableRewards(
+    function updateRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
@@ -154,6 +154,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         uint256 reward = vault.updateReward(accountId, rewardId);
 
+        vault.rewards[rewardId].claimStatus[accountId].pendingSendD18 = 0;
         vault.rewards[rewardId].distributor.payout(
             accountId,
             poolId,
@@ -161,7 +162,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
             msg.sender,
             reward
         );
-        vault.rewards[rewardId].claimStatus[accountId].pendingSendD18 = 0;
 
         emit RewardsClaimed(
             accountId,

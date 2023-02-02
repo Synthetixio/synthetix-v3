@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/AuthorizableStorage.sol";
-import "@synthetixio/core-modules/contracts/modules/TokenModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 /**
  * @title Module for managing the snxUSD token as an associated system.
@@ -81,13 +82,13 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     function burnWithAllowance(address from, address spender, uint256 amount) external {
         OwnableStorage.onlyOwner();
 
-        ERC20Storage.Data storage store = ERC20Storage.load();
+        ERC20Storage.Data storage erc20 = ERC20Storage.load();
 
-        if (amount > store.allowance[from][spender]) {
-            revert InsufficientAllowance(amount, store.allowance[from][spender]);
+        if (amount > erc20.allowance[from][spender]) {
+            revert InsufficientAllowance(amount, erc20.allowance[from][spender]);
         }
 
-        store.allowance[from][spender] -= amount;
+        erc20.allowance[from][spender] -= amount;
 
         _burn(from, amount);
     }

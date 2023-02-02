@@ -207,6 +207,8 @@ contract ERC721 is IERC721, IERC721Metadata {
         store.balanceOf[to] += 1;
         store.ownerOf[tokenId] = to;
 
+        _postTransfer(address(0), to, tokenId);
+
         emit Transfer(address(0), to, tokenId);
     }
 
@@ -214,12 +216,14 @@ contract ERC721 is IERC721, IERC721Metadata {
         ERC721Storage.Data storage store = ERC721Storage.load();
         address holder = store.ownerOf[tokenId];
 
-        _beforeTransfer(holder, address(0), tokenId);
-
         _approve(address(0), tokenId);
+
+        _beforeTransfer(holder, address(0), tokenId);
 
         store.balanceOf[holder] -= 1;
         delete store.ownerOf[tokenId];
+
+        _postTransfer(holder, address(0), tokenId);
 
         emit Transfer(holder, address(0), tokenId);
     }

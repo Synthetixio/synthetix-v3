@@ -34,8 +34,10 @@ contract SpotMarketFactoryModule is
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
 
     function _isInitialized() internal view override returns (bool) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        return store.synthetix != address(0) && store.usdToken != ITokenModule(address(0));
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        return
+            spotMarketFactory.synthetix != address(0) &&
+            spotMarketFactory.usdToken != ITokenModule(address(0));
     }
 
     /**
@@ -56,13 +58,14 @@ contract SpotMarketFactoryModule is
         address initialAsyncOrderClaimImplementation
     ) external override {
         OwnableStorage.onlyOwner();
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
 
-        store.synthetix = snxAddress;
-        store.initialSynthImplementation = initialSynthImplementation;
-        store.initialAsyncOrderClaimImplementation = initialAsyncOrderClaimImplementation;
-        store.usdToken = ITokenModule(usdTokenAddress);
-        store.oracle = INodeModule(oracleManager);
+        spotMarketFactory.synthetix = snxAddress;
+        spotMarketFactory.initialSynthImplementation = initialSynthImplementation;
+        spotMarketFactory
+            .initialAsyncOrderClaimImplementation = initialAsyncOrderClaimImplementation;
+        spotMarketFactory.usdToken = ITokenModule(usdTokenAddress);
+        spotMarketFactory.oracle = INodeModule(oracleManager);
     }
 
     /**
@@ -75,8 +78,8 @@ contract SpotMarketFactoryModule is
     ) external override onlyIfInitialized returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
-        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        uint128 synthMarketId = IMarketManagerModule(spotMarketFactory.synthetix).registerMarket(
             address(this)
         );
 
@@ -85,7 +88,7 @@ contract SpotMarketFactoryModule is
             tokenName,
             tokenSymbol,
             18,
-            factory.initialSynthImplementation
+            spotMarketFactory.initialSynthImplementation
         );
 
         _initOrUpgradeNft(
@@ -93,10 +96,10 @@ contract SpotMarketFactoryModule is
             tokenName,
             tokenSymbol,
             "",
-            factory.initialAsyncOrderClaimImplementation
+            spotMarketFactory.initialAsyncOrderClaimImplementation
         );
 
-        factory.marketOwners[synthMarketId] = synthOwner;
+        spotMarketFactory.marketOwners[synthMarketId] = synthOwner;
 
         emit SynthRegistered(synthMarketId);
 
@@ -194,28 +197,28 @@ contract SpotMarketFactoryModule is
      * @inheritdoc ISpotMarketFactoryModule
      */
     function acceptMarketOwnership(uint128 synthMarketId) public override {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        address currentNominatedOwner = store.nominatedMarketOwners[synthMarketId];
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        address currentNominatedOwner = spotMarketFactory.nominatedMarketOwners[synthMarketId];
         if (msg.sender != currentNominatedOwner) {
             revert NotNominated(msg.sender);
         }
 
         emit MarketOwnerChanged(
             synthMarketId,
-            store.marketOwners[synthMarketId],
+            spotMarketFactory.marketOwners[synthMarketId],
             currentNominatedOwner
         );
 
-        store.marketOwners[synthMarketId] = currentNominatedOwner;
-        store.nominatedMarketOwners[synthMarketId] = address(0);
+        spotMarketFactory.marketOwners[synthMarketId] = currentNominatedOwner;
+        spotMarketFactory.nominatedMarketOwners[synthMarketId] = address(0);
     }
 
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
     function getMarketOwner(uint128 synthMarketId) public view override returns (address) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        return store.marketOwners[synthMarketId];
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        return spotMarketFactory.marketOwners[synthMarketId];
     }
 
     /**

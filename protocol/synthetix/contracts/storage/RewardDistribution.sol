@@ -68,7 +68,7 @@ library RewardDistribution {
      * record this independently as well.
      */
     function distribute(
-        Data storage entry,
+        Data storage self,
         Distribution.Data storage dist,
         int256 amountD18,
         uint64 start,
@@ -86,7 +86,7 @@ library RewardDistribution {
         uint curTime = block.timestamp;
 
         // Unlocks the entry's distributed amount into its value per share.
-        diffD18 += updateEntry(entry, dist.totalSharesD18);
+        diffD18 += updateEntry(self, dist.totalSharesD18);
 
         // If the current time is past the end of the entry's duration,
         // update any rewards which may have accrued since last run.
@@ -94,21 +94,21 @@ library RewardDistribution {
         if (start + duration <= curTime) {
             diffD18 += amountD18.divDecimal(totalSharesD18.toInt());
 
-            entry.lastUpdate = 0;
-            entry.start = 0;
-            entry.duration = 0;
-            entry.scheduledValueD18 = 0;
+            self.lastUpdate = 0;
+            self.start = 0;
+            self.duration = 0;
+            self.scheduledValueD18 = 0;
             // Else, schedule the amount to distribute.
         } else {
-            entry.scheduledValueD18 = amountD18.to128();
+            self.scheduledValueD18 = amountD18.to128();
 
-            entry.start = start;
-            entry.duration = duration;
+            self.start = start;
+            self.duration = duration;
 
             // The amount is actually the amount distributed already *plus* whatever has been specified now.
-            entry.lastUpdate = 0;
+            self.lastUpdate = 0;
 
-            diffD18 += updateEntry(entry, dist.totalSharesD18);
+            diffD18 += updateEntry(self, dist.totalSharesD18);
         }
     }
 
@@ -118,11 +118,11 @@ library RewardDistribution {
      * Note: call every time before `totalShares` changes.
      */
     function updateEntry(
-        Data storage entry,
+        Data storage self,
         uint256 totalSharesAmountD18
     ) internal returns (int256) {
         // Cannot process distributed rewards if a pool is empty or if it has no rewards.
-        if (entry.scheduledValueD18 == 0 || totalSharesAmountD18 == 0) {
+        if (self.scheduledValueD18 == 0 || totalSharesAmountD18 == 0) {
             return 0;
         }
 
@@ -131,36 +131,36 @@ library RewardDistribution {
         int256 valuePerShareChangeD18 = 0;
 
         // Cannot update an entry whose start date has not being reached.
-        if (curTime < entry.start) {
+        if (curTime < self.start) {
             return 0;
         }
 
         // If the entry's duration is zero and the its last update is zero,
         // consider the entry to be an instant distribution.
-        if (entry.duration == 0 && entry.lastUpdate < entry.start) {
+        if (self.duration == 0 && self.lastUpdate < self.start) {
             // Simply update the value per share to the total value divided by the total shares.
-            valuePerShareChangeD18 = entry.scheduledValueD18.to256().divDecimal(
+            valuePerShareChangeD18 = self.scheduledValueD18.to256().divDecimal(
                 totalSharesAmountD18.toInt()
             );
             // Else, if the last update was before the end of the duration.
-        } else if (entry.lastUpdate < entry.start + entry.duration) {
+        } else if (self.lastUpdate < self.start + self.duration) {
             // Determine how much was previously distributed.
             // If the last update is zero, then nothing was distributed,
             // otherwise the amount is proportional to the time elapsed since the start.
-            int256 lastUpdateDistributedD18 = entry.lastUpdate < entry.start
+            int256 lastUpdateDistributedD18 = self.lastUpdate < self.start
                 ? SafeCastI128.zero()
-                : (entry.scheduledValueD18 * (entry.lastUpdate - entry.start).toInt()) /
-                    entry.duration.toInt();
+                : (self.scheduledValueD18 * (self.lastUpdate - self.start).toInt()) /
+                    self.duration.toInt();
 
             // If the current time is beyond the duration, then consider all scheduled value to be distributed.
             // Else, the amount distributed is proportional to the elapsed time.
-            int256 curUpdateDistributedD18 = entry.scheduledValueD18;
-            if (curTime < entry.start + entry.duration) {
+            int256 curUpdateDistributedD18 = self.scheduledValueD18;
+            if (curTime < self.start + self.duration) {
                 // Note: Not using an intermediate time ratio variable
                 // in the following calculation to maintain precision.
                 curUpdateDistributedD18 =
-                    (curUpdateDistributedD18 * (curTime - entry.start).toInt()) /
-                    entry.duration.toInt();
+                    (curUpdateDistributedD18 * (curTime - self.start).toInt()) /
+                    self.duration.toInt();
             }
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
@@ -168,7 +168,7 @@ library RewardDistribution {
                 .divDecimal(totalSharesAmountD18.toInt());
         }
 
-        entry.lastUpdate = curTime.to32();
+        self.lastUpdate = curTime.to32();
 
         return valuePerShareChangeD18;
     }

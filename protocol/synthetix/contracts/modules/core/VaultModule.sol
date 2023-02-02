@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
@@ -10,7 +8,6 @@ import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 
 import "../../interfaces/IVaultModule.sol";
-import "../../interfaces/IUSDTokenModule.sol";
 
 /**
  * @title Allows accounts to delegate collateral to a pool.
@@ -42,7 +39,7 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint256 newCollateralAmount,
+        uint256 newCollateralAmountD18,
         uint256 leverage
     ) external override {
         Pool.requireExists(poolId);
@@ -50,10 +47,10 @@ contract VaultModule is IVaultModule {
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
         // See CollateralConfiguration.minDelegationD18.
-        if (newCollateralAmount > 0) {
+        if (newCollateralAmountD18 > 0) {
             CollateralConfiguration.requireSufficientDelegation(
                 collateralType,
-                newCollateralAmount
+                newCollateralAmountD18
             );
         }
 
@@ -70,14 +67,14 @@ contract VaultModule is IVaultModule {
 
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
-        if (newCollateralAmount > currentCollateralAmount) {
+        if (newCollateralAmountD18 > currentCollateralAmount) {
             // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
             CollateralConfiguration.collateralEnabled(collateralType);
 
             Account.requireSufficientCollateral(
                 accountId,
                 collateralType,
-                newCollateralAmount - currentCollateralAmount
+                newCollateralAmountD18 - currentCollateralAmount
             );
         }
 
@@ -87,7 +84,7 @@ contract VaultModule is IVaultModule {
             accountId,
             poolId,
             collateralType,
-            newCollateralAmount,
+            newCollateralAmountD18,
             currentCollateralAmount,
             leverage
         );
@@ -95,16 +92,16 @@ contract VaultModule is IVaultModule {
         _ensureAccountCollateralsContainsPool(accountId, poolId, collateralType);
 
         // If decreasing the delegated collateral amount,
-        // check the account's collateralization ration.
+        // check the account's collateralization ratio.
         // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
-        if (newCollateralAmount < currentCollateralAmount) {
+        if (newCollateralAmountD18 < currentCollateralAmount) {
             int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
 
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 debt < 0 ? 0 : debt.toUint(),
-                newCollateralAmount.mulDecimal(collateralPrice)
+                newCollateralAmountD18.mulDecimal(collateralPrice)
             );
 
             // Accounts cannot reduce collateral if any of the pool's
@@ -116,7 +113,7 @@ contract VaultModule is IVaultModule {
             accountId,
             poolId,
             collateralType,
-            newCollateralAmount,
+            newCollateralAmountD18,
             leverage,
             msg.sender
         );

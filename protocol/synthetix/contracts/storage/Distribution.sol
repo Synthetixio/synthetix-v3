@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "./DistributionActor.sol";
 
@@ -51,12 +50,12 @@ library Distribution {
      *
      * The value being distributed ultimately modifies the distribution's valuePerShare.
      */
-    function distributeValue(Data storage dist, int valueD18) internal {
+    function distributeValue(Data storage self, int valueD18) internal {
         if (valueD18 == 0) {
             return;
         }
 
-        uint totalSharesD18 = dist.totalSharesD18;
+        uint totalSharesD18 = self.totalSharesD18;
 
         if (totalSharesD18 == 0) {
             revert EmptyDistribution();
@@ -65,7 +64,7 @@ library Distribution {
         int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
         int deltaValuePerShareD27 = valueD45 / totalSharesD18.toInt();
 
-        dist.valuePerShareD27 += deltaValuePerShareD27.to128();
+        self.valuePerShareD27 += deltaValuePerShareD27.to128();
     }
 
     /**
@@ -76,22 +75,22 @@ library Distribution {
      * Returns the the amount by which the actors value changed since the last update.
      */
     function setActorShares(
-        Data storage dist,
+        Data storage self,
         bytes32 actorId,
         uint newActorSharesD18
     ) internal returns (int valueChangeD18) {
-        valueChangeD18 = getActorValueChange(dist, actorId);
+        valueChangeD18 = getActorValueChange(self, actorId);
 
-        DistributionActor.Data storage actor = dist.actorInfo[actorId];
+        DistributionActor.Data storage actor = self.actorInfo[actorId];
 
         uint128 sharesUint128D18 = newActorSharesD18.to128();
-        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128D18 - actor.sharesD18;
+        self.totalSharesD18 = self.totalSharesD18 + sharesUint128D18 - actor.sharesD18;
 
         actor.sharesD18 = sharesUint128D18;
 
         actor.lastValuePerShareD27 = newActorSharesD18 == 0
             ? SafeCastI128.zero()
-            : dist.valuePerShareD27;
+            : self.valuePerShareD27;
     }
 
     /**
@@ -99,10 +98,10 @@ library Distribution {
      * returns the change in value for the actor, since their last update.
      */
     function accumulateActor(
-        Data storage dist,
+        Data storage self,
         bytes32 actorId
     ) internal returns (int valueChangeD18) {
-        return setActorShares(dist, actorId, getActorShares(dist, actorId));
+        return setActorShares(self, actorId, getActorShares(self, actorId));
     }
 
     /**
@@ -115,11 +114,11 @@ library Distribution {
      * or just `delta_valuePerShare * shares`.
      */
     function getActorValueChange(
-        Data storage dist,
+        Data storage self,
         bytes32 actorId
     ) internal view returns (int valueChangeD18) {
-        DistributionActor.Data storage actor = dist.actorInfo[actorId];
-        int deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
+        DistributionActor.Data storage actor = self.actorInfo[actorId];
+        int deltaValuePerShareD27 = self.valuePerShareD27 - actor.lastValuePerShareD27;
 
         int changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.toInt();
         valueChangeD18 = changedValueD45 / DecimalMath.UNIT_PRECISE_INT;
@@ -129,10 +128,10 @@ library Distribution {
      * @dev Returns the number of shares owned by an actor in the distribution.
      */
     function getActorShares(
-        Data storage dist,
+        Data storage self,
         bytes32 actorId
     ) internal view returns (uint sharesD18) {
-        return dist.actorInfo[actorId].sharesD18;
+        return self.actorInfo[actorId].sharesD18;
     }
 
     /**

@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 import "../interfaces/external/IPyth.sol";
 
 library PythNode {
+    using DecimalMath for int64;
+    using SafeCastI256 for int256;
+
+    int256 public constant PRECISION = 18;
+
     function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
         (address pythAddress, bytes32 priceFeedId, bool useEma) = abi.decode(
             parameters,
@@ -15,7 +23,13 @@ library PythNode {
         PythStructs.Price memory pythData = useEma
             ? pyth.getEmaPriceUnsafe(priceFeedId)
             : pyth.getPriceUnsafe(priceFeedId);
-        return NodeOutput.Data(pythData.price, pythData.publishTime, 0, 0);
+
+        int256 factor = PRECISION + pythData.expo;
+        int256 price = factor > 0
+            ? pythData.price.upscale(factor.toUint())
+            : pythData.price.downscale((-factor).toUint());
+
+        return NodeOutput.Data(price, pythData.publishTime, 0, 0);
     }
 
     function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {

@@ -35,11 +35,6 @@ library Account {
      */
     error InsufficientAccountCollateral(uint256 requestedAmount);
 
-    /**
-     * @dev Thrown when a permission specified by a user does not exist or is invalid.
-     */
-    error InvalidPermission(bytes32 permission);
-
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
@@ -61,10 +56,10 @@ library Account {
     /**
      * @dev Returns the account stored at the specified account id.
      */
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
-            data.slot := s
+            account.slot := s
         }
     }
 
@@ -73,11 +68,11 @@ library Account {
      *
      * Note: Will not fail if the account already exists, and if so, will overwrite the existing owner. Whatever calls this internal function must first check that the account doesn't exist before re-creating it.
      */
-    function create(uint128 id, address owner) internal returns (Data storage self) {
-        self = load(id);
+    function create(uint128 id, address owner) internal returns (Data storage account) {
+        account = load(id);
 
-        self.id = id;
-        self.rbac.owner = owner;
+        account.id = id;
+        account.rbac.owner = owner;
     }
 
     /**

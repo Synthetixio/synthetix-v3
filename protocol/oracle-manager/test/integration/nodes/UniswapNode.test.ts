@@ -10,6 +10,9 @@ describe('UniswapNode', function () {
   const abi = ethers.utils.defaultAbiCoder;
   let NodeModule: ethers.Contract;
   let MockObservable: ethers.Contract;
+  let token0: ethers.Contract;
+  let token1: ethers.Contract;
+  let nodeId: string;
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');
@@ -18,19 +21,24 @@ describe('UniswapNode', function () {
     // Deploy the mock
     const factory = await hre.ethers.getContractFactory('MockObservable');
     MockObservable = await factory.connect(owner).deploy([4, 0], [12, 12], [10, 20]);
+
+    const ERC20MockFactory = await hre.ethers.getContractFactory('ERC20Mock');
+    token0 = await ERC20MockFactory.connect(owner).deploy();
+    await token0.initialize('Tether USD', 'usdt', 6);
+    token1 = await ERC20MockFactory.connect(owner).deploy();
+    await token1.initialize('Synthetix Network Token', 'snx', 18);
+  });
+
+  it('register the uniswap node the latest price', async () => {
+    const NodeParameters = abi.encode(
+      ['address', 'address', 'uint8', 'uint8', 'address', 'uint32'],
+      [token0.address, token1.address, 6, 18, MockObservable.address, 4]
+    );
+    await NodeModule.registerNode(NodeTypes.UNISWAP, NodeParameters, []);
+    nodeId = await NodeModule.getNodeId(NodeTypes.UNISWAP, NodeParameters, []);
   });
 
   it('retrieves the latest price', async () => {
-    // Register the mock
-    const NodeParameters = abi.encode(
-      ['address', 'address', 'address', 'uint32'],
-      // eslint-disable-next-line max-len
-      [ethers.constants.AddressZero, ethers.constants.AddressZero, MockObservable.address, 4] // using the mock's address for the token addresses because the mock doesn't take them into account
-    );
-    await NodeModule.registerNode(NodeTypes.UNISWAP, NodeParameters, []);
-    const nodeId = await NodeModule.getNodeId(NodeTypes.UNISWAP, NodeParameters, []);
-
-    // Verify the node processes output as expected
     const output = await NodeModule.process(nodeId);
     assertBn.equal(output.price, 1000000);
     assertBn.equal(output.timestamp, 0);

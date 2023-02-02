@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 
 import "./Distribution.sol";
@@ -149,10 +148,10 @@ library Market {
     /**
      * @dev Returns the market stored at the specified market id.
      */
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Market", id));
         assembly {
-            data.slot := s
+            market.slot := s
         }
     }
 
@@ -393,7 +392,10 @@ library Market {
      *
      * Note: The parameter `maxIter` is used as an escape hatch to discourage griefing.
      */
-    function distributeDebtToPools(Data storage self, uint256 maxIter) internal {
+    function distributeDebtToPools(
+        Data storage self,
+        uint256 maxIter
+    ) internal returns (bool fullyDistributed) {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
         int256 targetBalanceD18 = totalDebt(self);
@@ -409,6 +411,8 @@ library Market {
             );
             self.lastDistributedMarketBalanceD18 = targetBalanceD18.to128();
         }
+
+        return !exhausted;
     }
 
     /**

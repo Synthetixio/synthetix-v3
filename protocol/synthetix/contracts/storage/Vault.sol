@@ -3,8 +3,8 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./VaultEpoch.sol";
 import "./RewardDistribution.sol";
-import "./CollateralConfiguration.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
@@ -125,7 +125,9 @@ library Vault {
     ) internal returns (uint256[] memory, address[] memory) {
         uint256[] memory rewards = new uint256[](self.rewardIds.length());
         address[] memory distributors = new address[](self.rewardIds.length());
-        for (uint256 i = 0; i < self.rewardIds.length(); i++) {
+
+        uint numRewards = self.rewardIds.length();
+        for (uint256 i = 0; i < numRewards; i++) {
             RewardDistribution.Data storage dist = self.rewards[self.rewardIds.valueAt(i + 1)];
 
             if (address(dist.distributor) == address(0)) {

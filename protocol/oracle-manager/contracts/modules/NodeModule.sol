@@ -128,19 +128,18 @@ contract NodeModule is INodeModule {
     function _process(bytes32 nodeId) internal view returns (NodeOutput.Data memory price) {
         NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
 
-        // Retrieve the output of the node's parents
-        NodeOutput.Data[] memory parentNodeOutputs = new NodeOutput.Data[](
-            nodeDefinition.parents.length
-        );
-        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            parentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
-        }
-
-        // Generate the node's output using the appropriate logic for the given node's type
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
-            return ReducerNode.process(parentNodeOutputs, nodeDefinition.parameters);
+            return
+                ReducerNode.process(
+                    _processParentNodeOutputs(nodeDefinition),
+                    nodeDefinition.parameters
+                );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
-            return ExternalNode.process(parentNodeOutputs, nodeDefinition.parameters);
+            return
+                ExternalNode.process(
+                    _processParentNodeOutputs(nodeDefinition),
+                    nodeDefinition.parameters
+                );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
             return ChainlinkNode.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
@@ -152,12 +151,15 @@ contract NodeModule is INodeModule {
         ) {
             return
                 PriceDeviationCircuitBreakerNode.process(
-                    parentNodeOutputs,
+                    _processParentNodeOutputs(nodeDefinition),
                     nodeDefinition.parameters
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
             return
-                StalenessCircuitBreakerNode.process(parentNodeOutputs, nodeDefinition.parameters);
+                StalenessCircuitBreakerNode.process(
+                    _processParentNodeOutputs(nodeDefinition),
+                    nodeDefinition.parameters
+                );
         }
         revert UnprocessableNode(nodeId);
     }
@@ -186,5 +188,17 @@ contract NodeModule is INodeModule {
             return StalenessCircuitBreakerNode.validate(nodeDefinition);
         }
         return false;
+    }
+
+    /**
+     * @dev helper function that calls process on parent nodes.
+     */
+    function _processParentNodeOutputs(
+        NodeDefinition.Data storage nodeDefinition
+    ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
+        parentNodeOutputs = new NodeOutput.Data[](nodeDefinition.parents.length);
+        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+            parentNodeOutputs[i] = this.process(nodeDefinition.parents[i]);
+        }
     }
 }

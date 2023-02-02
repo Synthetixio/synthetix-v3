@@ -5,14 +5,12 @@ import "../../interfaces/IMarketManagerModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 import "../../interfaces/external/IMarket.sol";
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 
 import "../../storage/Market.sol";
 import "../../storage/MarketCreator.sol";
-import "../../storage/Account.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
@@ -150,5 +148,15 @@ contract MarketManagerModule is IMarketManagerModule {
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
 
         emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function distributeDebtToPools(
+        uint128 marketId,
+        uint maxIter
+    ) external override returns (bool) {
+        return Market.load(marketId).distributeDebtToPools(maxIter);
     }
 }

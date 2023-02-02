@@ -7,7 +7,7 @@ import "./IPythEvents.sol";
 /// @title Consume prices from the Pyth Network (https://pyth.network/).
 /// @dev Please refer to the guidance at https://docs.pyth.network/consumers/best-practices for how to consume prices safely.
 /// @author Pyth Data Association
-interface IPyth is IPythEvents {
+interface IPythMock is IPythEvents {
     /// @notice Returns the period (in seconds) that a price feed is considered valid since its publish time
     function getValidTimePeriod() external view returns (uint validTimePeriod);
 

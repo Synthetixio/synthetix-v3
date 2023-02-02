@@ -24,11 +24,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
      * @inheritdoc IAtomicOrderModule
      */
     function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        store.isValidMarket(marketId);
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.isValidMarket(marketId);
 
         // transfer usd from buyer
-        store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
+        spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
         (uint256 amountUsable, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
@@ -40,7 +40,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         // TODO: processFees deposits fees into the market manager
         // and so does this, need to consolidate for effeciency
-        store.depositToMarketManager(marketId, amountUsable);
+        spotMarketFactory.depositToMarketManager(marketId, amountUsable);
 
         // Exchange amount after fees into synths to buyer
         uint256 synthAmount = Price.usdSynthExchangeRate(
@@ -59,8 +59,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
      * @inheritdoc IAtomicOrderModule
      */
     function sell(uint128 marketId, uint256 synthAmount) external override returns (uint256) {
-        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        store.isValidMarket(marketId);
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.isValidMarket(marketId);
 
         // Exchange synths provided into dollar amount
         uint256 usdAmount = Price.synthUsdExchangeRate(
@@ -70,7 +70,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         // Withdraw USD amount
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, address(this), usdAmount);
+        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            marketId,
+            address(this),
+            usdAmount
+        );
 
         // Calculate fees
         (uint256 returnAmount, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
@@ -84,15 +88,15 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
         if (returnAmount > usdAmount) {
-            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
                 msg.sender,
                 returnAmount - usdAmount
             );
 
-            ITokenModule(store.usdToken).transfer(msg.sender, usdAmount);
+            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
         } else {
-            ITokenModule(store.usdToken).transfer(msg.sender, returnAmount);
+            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, returnAmount);
         }
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees);

@@ -37,6 +37,9 @@ library SpotMarketFactory {
          * @dev when synth is registered, this is the initial implementation address the proxy services.
          */
         address initialSynthImplementation;
+        /**
+         * @dev initial NFT implemention used for async order claims.  this implementation can later be upgraded.
+         */
         address initialAsyncOrderClaimImplementation;
         /**
          * @dev mapping of marketId to marketOwner
@@ -57,10 +60,10 @@ library SpotMarketFactory {
         UNWRAP
     }
 
-    function load() internal pure returns (Data storage store) {
+    function load() internal pure returns (Data storage spotMarketFactory) {
         bytes32 s = _SLOT_SPOT_MARKET_FACTORY;
         assembly {
-            store.slot := s
+            spotMarketFactory.slot := s
         }
     }
 
