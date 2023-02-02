@@ -114,13 +114,25 @@ function _getContractFromOutputs(
   let contract;
 
   if (contractName.includes('.')) {
-    const [importName, subContractName] = contractName.split('.');
+    const nestedContracts = contractName.split('.');
 
-    if (!outputs.imports[importName]) {
-      throw new Error(`cannonfile does not includes an import named "${importName}"`);
+    // this logic handles deeply nested imports such as synthetix.oracle_manager.Proxy
+    // which is really outputs.imports.synthetix.imports.oracle_manager.contracts.Proxy
+
+    let imports: ChainBuilderContext['imports'] | undefined = outputs.imports;
+
+    for (const c of nestedContracts.slice(0, -2)) {
+      if (!imports![c]) {
+        throw new Error(`cannonfile does not includes an import named "${c}"`);
+      } else {
+        imports = imports![c].imports;
+      }
     }
 
-    contract = outputs.imports[importName]!.contracts![subContractName];
+    contract =
+      imports![nestedContracts[nestedContracts.length - 2]].contracts![
+        nestedContracts[nestedContracts.length - 1]
+      ];
   } else {
     contract = outputs.contracts[contractName];
   }

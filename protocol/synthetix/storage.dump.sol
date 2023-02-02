@@ -156,6 +156,7 @@ library FeatureFlag {
     struct Data {
         bytes32 name;
         bool allowAll;
+        bool denyAll;
         SetUtil.AddressSet permissionedAddresses;
     }
     function load(bytes32 featureName) internal pure returns (Data storage store) {
