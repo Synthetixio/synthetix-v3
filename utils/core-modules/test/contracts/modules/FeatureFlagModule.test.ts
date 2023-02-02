@@ -1,6 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { FeatureFlagModule, SampleFeatureFlagModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
@@ -138,6 +139,40 @@ describe('FeatureFlagModule', function () {
     it('reverts when feature flag is disabled', async function () {
       await SampleFeatureFlagModule.connect(user).setFeatureFlaggedValue(25);
       assertBn.equal(await SampleFeatureFlagModule.getFeatureFlaggedValue(), 25);
+    });
+  });
+
+  describe('set denyAll for a feature flag', async function () {
+    let denyAllTx: ethers.ContractTransaction;
+
+    before('deny all', async function () {
+      denyAllTx = await FeatureFlagModule.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
+    });
+
+    it('emits event', async function () {
+      await assertEvent(
+        denyAllTx,
+        `FeatureFlagDenyAllSet("${FEATURE_FLAG_NAME}", true)`,
+        FeatureFlagModule
+      );
+    });
+
+    it('does not allow a user to set value when denyAll is true', async function () {
+      await assertRevert(
+        SampleFeatureFlagModule.connect(permissionedUser).setFeatureFlaggedValue(25),
+        'FeatureUnavailable'
+      );
+    });
+
+    it('does allow only owner to set value', async function () {
+      await assertRevert(
+        FeatureFlagModule.connect(permissionedUser).setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true),
+        `Unauthorized("${await permissionedUser.getAddress()}")`
+      );
+    });
+    it('returns true when checking if denyAll is active', async function () {
+      const isTrue = await FeatureFlagModule.getFeatureFlagDenyAll(FEATURE_FLAG_NAME);
+      assert.strictEqual(isTrue, true);
     });
   });
 });

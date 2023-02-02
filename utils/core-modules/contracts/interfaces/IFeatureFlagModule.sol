@@ -20,6 +20,13 @@ interface IFeatureFlagModule {
     event FeatureFlagAllowAllSet(bytes32 feature, bool allowAll);
 
     /**
+     * @notice Emitted when general access has been blocked for a feature.
+     * @param feature The bytes32 id of the feature.
+     * @param denyAll True if the feature was blocked for everyone and false if it is only allowed for those included in the allowlist or if allowAll is set to true.
+     */
+    event FeatureFlagDenyAllSet(bytes32 feature, bool denyAll);
+
+    /**
      * @notice Emitted when an address was given access to a feature.
      * @param feature The bytes32 id of the feature.
      * @param account The address that was given access to the feature.
@@ -41,6 +48,13 @@ interface IFeatureFlagModule {
     function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external;
 
     /**
+     * @notice Enables or disables free access to a feature.
+     * @param feature The bytes32 id of the feature.
+     * @param denyAll True to allow noone to use the feature, false to fallback to the allowlist.
+     */
+    function setFeatureFlagDenyAll(bytes32 feature, bool denyAll) external;
+
+    /**
      * @notice Allows an address to use a feature.
      * @param feature The bytes32 id of the feature.
      * @param account The address that is allowed to use the feature.
@@ -60,6 +74,13 @@ interface IFeatureFlagModule {
      * @return True if anyone is allowed to use the feature, false if per-user control is used.
      */
     function getFeatureFlagAllowAll(bytes32 feature) external view returns (bool);
+
+    /**
+     * @notice Determines if the given feature is denied to all users.
+     * @param feature The bytes32 id of the feature.
+     * @return True if noone is allowed to use the feature.
+     */
+    function getFeatureFlagDenyAll(bytes32 feature) external view returns (bool);
 
     /**
      * @notice Returns a list of addresses that are allowed to use the specified feature.

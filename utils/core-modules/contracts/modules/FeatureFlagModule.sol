@@ -20,7 +20,21 @@ contract FeatureFlagModule is IFeatureFlagModule {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).allowAll = allowAll;
 
+        if (allowAll) {
+            FeatureFlag.load(feature).denyAll = false;
+        }
+
         emit FeatureFlagAllowAllSet(feature, allowAll);
+    }
+
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
+    function setFeatureFlagDenyAll(bytes32 feature, bool denyAll) external override {
+        OwnableStorage.onlyOwner();
+        FeatureFlag.load(feature).denyAll = denyAll;
+
+        emit FeatureFlagDenyAllSet(feature, denyAll);
     }
 
     /**
@@ -48,6 +62,13 @@ contract FeatureFlagModule is IFeatureFlagModule {
      */
     function getFeatureFlagAllowAll(bytes32 feature) external view override returns (bool) {
         return FeatureFlag.load(feature).allowAll;
+    }
+
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
+    function getFeatureFlagDenyAll(bytes32 feature) external view override returns (bool) {
+        return FeatureFlag.load(feature).denyAll;
     }
 
     /**
