@@ -1,6 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { FeatureFlagModule, SampleFeatureFlagModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
@@ -168,6 +169,10 @@ describe('FeatureFlagModule', function () {
         FeatureFlagModule.connect(permissionedUser).setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true),
         `Unauthorized("${await permissionedUser.getAddress()}")`
       );
+    });
+    it('returns true when checking if denyAll is active', async function () {
+      const isTrue = await FeatureFlagModule.getFeatureFlagDenyAll(FEATURE_FLAG_NAME);
+      assert.strictEqual(isTrue, true);
     });
   });
 });
