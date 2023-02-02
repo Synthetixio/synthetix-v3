@@ -58,6 +58,7 @@ library Council {
     function getCurrentPeriod(Data storage self) internal view returns (ElectionPeriod) {
         Epoch.Data storage epoch = getCurrentElection(self).epoch;
 
+        // solhint-disable-next-line numcast/safe-cast
         uint64 currentTime = uint64(block.timestamp);
 
         if (currentTime >= epoch.endDate) {
