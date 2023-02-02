@@ -93,7 +93,7 @@ export function createPoolNameUpdatedEvent(
     new ethereum.EventParam('poolId', ethereum.Value.fromI32(id))
   );
   newPoolNameUpdatedEvent.parameters.push(
-    new ethereum.EventParam('name', ethereum.Value.fromBytes(Bytes.fromUTF8(name)))
+    new ethereum.EventParam('name', ethereum.Value.fromString(name))
   );
   newPoolNameUpdatedEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
   newPoolNameUpdatedEvent.block.number = BigInt.fromI64(block['blockNumber']);
