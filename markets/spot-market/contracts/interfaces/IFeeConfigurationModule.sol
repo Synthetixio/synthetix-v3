@@ -34,7 +34,8 @@ interface IFeeConfigurationModule {
     event AsyncFixedFeeSet(uint indexed synthMarketId, uint asyncFixedFee);
 
     /**
-     * @notice emitted when the fixed fee for atomic orders is set for a given transactor
+     * @notice emitted when the fixed fee is set for a given transactor
+     * @dev this overrides the async/atomic fixed fees for a given transactor
      * @param synthMarketId Id of the market to set the fees for.
      * @param transactor fixed fee for the transactor (overrides the global fixed fee)
      * @param fixedFeeAmount the fixed fee for the corresponding market, and transactor
