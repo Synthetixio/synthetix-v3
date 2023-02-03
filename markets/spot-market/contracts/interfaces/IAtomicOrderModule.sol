@@ -15,6 +15,10 @@ interface IAtomicOrderModule {
      * @notice Thrown when trader has not provided allowance for the market to transfer the underlying asset.
      */
     error InsufficientAllowance(uint expected, uint current);
+    /**
+     * @notice Thrown when a trade doesn't meet minimum expected return amount.
+     */
+    error InsufficientAmountReceived(uint expected, uint current);
 
     /**
      * @notice Gets fired when buy trade is complete
@@ -51,9 +55,14 @@ interface IAtomicOrderModule {
      * @dev Uses the buyFeedId configured for the market.
      * @param synthMarketId Id of the market used for the trade.
      * @param amountUsd Amount of snxUSD trader is providing allownace to for the trade.
+     * @param minAmountReceived Min Amount of synth is expected the trader to receive otherwise the transaction will revert.
      * @return synthReturned Synth received on the trade based on amount provided by trader.
      */
-    function buy(uint128 synthMarketId, uint amountUsd) external returns (uint);
+    function buy(
+        uint128 synthMarketId,
+        uint amountUsd,
+        uint minAmountReceived
+    ) external returns (uint);
 
     /**
      * @notice Initiates a sell trade returning snxUSD for the specified amount of synth, sellAmount.
@@ -61,7 +70,12 @@ interface IAtomicOrderModule {
      * @dev Leftover fees not collected get deposited into the market manager to improve market PnL.
      * @param synthMarketId Id of the market used for the trade.
      * @param sellAmount Amount of synth trader is trading for snxUSD.
+     * @param minAmountReceived Min Amount of snxUSD is expected the trader to receive otherwise the transaction will revert.
      * @return amountReturned Amount of snxUSD returned to user based on synth provided by trader.
      */
-    function sell(uint128 synthMarketId, uint sellAmount) external returns (uint);
+    function sell(
+        uint128 synthMarketId,
+        uint sellAmount,
+        uint minAmountReceived
+    ) external returns (uint);
 }
