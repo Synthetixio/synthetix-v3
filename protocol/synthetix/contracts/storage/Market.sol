@@ -350,7 +350,10 @@ library Market {
 
         int128 valuePerShareD18 = self.poolsDebtDistribution.getValuePerShare().to128();
 
-        if (newPoolMaxShareValueD18 < valuePerShareD18) {
+        if (newCreditCapacityD18 == 0) {
+            self.inRangePools.extractById(poolId);
+            self.outRangePools.extractById(poolId);
+        } else if (newPoolMaxShareValueD18 < valuePerShareD18) {
             // this will ensure calculations below can correctly gauge shares changes
             newCreditCapacityD18 = 0;
             self.inRangePools.extractById(poolId);

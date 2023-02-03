@@ -156,6 +156,7 @@ library FeatureFlag {
     struct Data {
         bytes32 name;
         bool allowAll;
+        bool denyAll;
         SetUtil.AddressSet permissionedAddresses;
     }
     function load(bytes32 featureName) internal pure returns (Data storage store) {
@@ -196,10 +197,10 @@ library NodeDefinition {
         bytes parameters;
         bytes32[] parents;
     }
-    function load(bytes32 id) internal pure returns (Data storage data) {
+    function load(bytes32 id) internal pure returns (Data storage node) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
-            data.slot := s
+            node.slot := s
         }
     }
 }
@@ -303,10 +304,10 @@ library Account {
         bytes32 __slotAvailableForFutureUse;
         mapping(address => Collateral.Data) collaterals;
     }
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
-            data.slot := s
+            account.slot := s
         }
     }
 }
@@ -346,16 +347,16 @@ library CollateralConfiguration {
         address tokenAddress;
         uint256 minDelegationD18;
     }
-    function load(address token) internal pure returns (Data storage data) {
+    function load(address token) internal pure returns (Data storage collateralConfiguration) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration", token));
         assembly {
-            data.slot := s
+            collateralConfiguration.slot := s
         }
     }
-    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
+    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage availableCollaterals) {
         bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
-            data.slot := s
+            availableCollaterals.slot := s
         }
     }
 }
@@ -404,10 +405,10 @@ library Market {
         address collateralType;
         uint256 amountD18;
     }
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Market", id));
         assembly {
-            data.slot := s
+            market.slot := s
         }
     }
 }
@@ -428,10 +429,10 @@ library MarketCreator {
         mapping(address => uint128[]) marketIdsForAddress;
         uint128 lastCreatedMarketId;
     }
-    function getMarketStore() internal pure returns (Data storage data) {
+    function getMarketStore() internal pure returns (Data storage marketStore) {
         bytes32 s = _SLOT_MARKET_CREATOR;
         assembly {
-            data.slot := s
+            marketStore.slot := s
         }
     }
 }
@@ -450,10 +451,10 @@ library OracleManager {
     struct Data {
         address oracleManagerAddress;
     }
-    function load() internal pure returns (Data storage data) {
+    function load() internal pure returns (Data storage oracleManager) {
         bytes32 s = _SLOT_ORACLE_MANAGER;
         assembly {
-            data.slot := s
+            oracleManager.slot := s
         }
     }
 }
@@ -471,10 +472,10 @@ library Pool {
         Distribution.Data vaultsDebtDistribution;
         mapping(address => Vault.Data) vaults;
     }
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
-            data.slot := s
+            pool.slot := s
         }
     }
 }
@@ -518,10 +519,10 @@ library SystemPoolConfiguration {
         uint preferredPool;
         SetUtil.UintSet approvedPools;
     }
-    function load() internal pure returns (Data storage data) {
+    function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
         assembly {
-            data.slot := s
+            systemPoolConfiguration.slot := s
         }
     }
 }
