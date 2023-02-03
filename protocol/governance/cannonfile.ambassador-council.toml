@@ -1,0 +1,65 @@
+name = "synthetix-ambassador-council"
+description = "On-chain voting for synthetix Ambassador Council"
+version = "<%= package.version %>"
+
+[setting.salt]
+defaultValue = "synthetix-ambassador-council"
+
+[setting.council_proxy_address]
+defaultValue = "0x37fAc8c146889333734015B0C942b620aCfeeff8"
+
+[setting.council_token_name]
+defaultValue = "Synthetix Ambassador Council Token"
+
+[setting.council_token_symbol]
+defaultValue = "SNX-ACT"
+
+[contract.InitialModuleBundle]
+artifact = "InitialModuleBundle"
+create2 = true
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.ElectionModule]
+artifact = "ElectionModule"
+
+[contract.ElectionInspectorModule]
+artifact = "ElectionInspectorModule"
+
+[contract.CouncilTokenModule]
+artifact = "CouncilTokenModule"
+
+[router.CoreRouter]
+contracts = [
+  "AssociatedSystemsModule",
+  "ElectionModule",
+  "ElectionInspectorModule",
+  "InitialModuleBundle",
+]
+depends = [
+  "contract.AssociatedSystemsModule",
+  "contract.ElectionModule",
+  "contract.ElectionInspectorModule",
+  "contract.InitialModuleBundle",
+]
+
+[invoke.upgrade_core_proxy]
+target = ["<%= settings.council_proxy_address %>"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.CoreRouter.address %>"]
+factory.CoreProxy.abiOf = ["CoreRouter"]
+factory.CoreProxy.event = "Upgraded"
+factory.CoreProxy.arg = 0
+depends = ["router.CoreRouter"]
+
+[router.CouncilTokenRouter]
+contracts = [
+  "CouncilTokenModule",
+  "InitialModuleBundle",
+]
+depends = [
+  "contract.CouncilTokenModule",
+  "contract.InitialModuleBundle"
+]
