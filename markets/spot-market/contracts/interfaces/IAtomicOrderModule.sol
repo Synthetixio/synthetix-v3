@@ -18,7 +18,7 @@ interface IAtomicOrderModule {
     /**
      * @notice Thrown when a trade doesn't meet minimum expected return amount.
      */
-    error InsufficientReturnAmount(uint expected, uint current);
+    error InsufficientAmountReceived(uint expected, uint current);
 
     /**
      * @notice Gets fired when buy trade is complete
@@ -55,6 +55,7 @@ interface IAtomicOrderModule {
      * @dev Uses the buyFeedId configured for the market.
      * @param synthMarketId Id of the market used for the trade.
      * @param amountUsd Amount of snxUSD trader is providing allownace to for the trade.
+     * @param minAmountReceived Min Amount of synth is expected the trader to receive otherwise the transaction will revert.
      * @return synthReturned Synth received on the trade based on amount provided by trader.
      */
     function buy(
@@ -69,6 +70,7 @@ interface IAtomicOrderModule {
      * @dev Leftover fees not collected get deposited into the market manager to improve market PnL.
      * @param synthMarketId Id of the market used for the trade.
      * @param sellAmount Amount of synth trader is trading for snxUSD.
+     * @param minAmountReceived Min Amount of snxUSD is expected the trader to receive otherwise the transaction will revert.
      * @return amountReturned Amount of snxUSD returned to user based on synth provided by trader.
      */
     function sell(

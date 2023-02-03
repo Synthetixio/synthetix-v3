@@ -54,7 +54,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         if (synthAmount < minAmountReceived) {
-            revert InsufficientReturnAmount(minAmountReceived, synthAmount);
+            revert InsufficientAmountReceived(minAmountReceived, synthAmount);
         }
 
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
@@ -97,6 +97,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.SELL
         );
 
+        if (returnAmount < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, returnAmount);
+        }
+
         // Burn synths provided
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
@@ -110,10 +114,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
             ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
         } else {
             ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, returnAmount);
-        }
-
-        if (returnAmount < minAmountReceived) {
-            revert InsufficientReturnAmount(minAmountReceived, returnAmount);
         }
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees);

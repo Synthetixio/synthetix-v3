@@ -60,7 +60,7 @@ describe('Atomic Order Module sell()', () => {
 
       await assertRevert(
         systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(1000)),
-        `InsufficientReturnAmount("${bn(1000)}", "${bn(900)}")`
+        `InsufficientAmountReceived("${bn(1000)}", "${bn(900)}")`
       );
     });
 
