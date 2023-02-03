@@ -27,12 +27,19 @@ interface IFeeConfigurationModule {
     event AtomicFixedFeeSet(uint indexed synthMarketId, uint atomicFixedFee);
 
     /**
+     * @notice emitted when the fixed fee for async orders is set.
+     * @param synthMarketId Id of the market to set the fees for.
+     * @param asyncFixedFee the fixed fee for the corresponding market
+     */
+    event AsyncFixedFeeSet(uint indexed synthMarketId, uint asyncFixedFee);
+
+    /**
      * @notice emitted when the fixed fee for atomic orders is set for a given transactor
      * @param synthMarketId Id of the market to set the fees for.
      * @param transactor fixed fee for the transactor (overrides the global fixed fee)
      * @param fixedFeeAmount the fixed fee for the corresponding market, and transactor
      */
-    event AtomicTransactorFixedFeeSet(
+    event TransactorFixedFeeSet(
         uint indexed synthMarketId,
         address transactor,
         uint fixedFeeAmount
@@ -67,6 +74,14 @@ interface IFeeConfigurationModule {
     function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external;
 
     /**
+     * @notice sets the async fixed fee for a given market
+     * @dev only marketOwner can set the fee
+     * @param synthMarketId Id of the market the fee applies to.
+     * @param asyncFixedFee fixed fee amount represented in bips with 18 decimals.
+     */
+    function setAsyncFixedFee(uint128 synthMarketId, uint asyncFixedFee) external;
+
+    /**
      * @notice sets the skew scale for a given market
      * @dev only marketOwner can set the skew scale
      * @param synthMarketId Id of the market the skew scale applies to.
@@ -84,12 +99,13 @@ interface IFeeConfigurationModule {
     function setMarketUtilizationFees(uint128 synthMarketId, uint utilizationFeeRate) external;
 
     /**
-     * @notice sets the atomic fixed fee for a given market and transactor
+     * @notice sets the fixed fee for a given market and transactor
+     * @dev overrides both the atomic and async fixed fees
      * @dev only marketOwner can set the fee
      * @dev especially useful for direct integrations where configured traders get a discount
      * @param synthMarketId Id of the market the custom transactor fee applies to.
      * @param transactor address of the trader getting discounted fees.
-     * @param fixedFeeAmount the atomic fixed fee applying to the provided transactor.
+     * @param fixedFeeAmount the fixed fee applying to the provided transactor.
      */
     function setCustomTransactorFees(
         uint128 synthMarketId,

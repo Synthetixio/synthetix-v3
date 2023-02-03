@@ -33,6 +33,17 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
     /**
      * @inheritdoc IFeeConfigurationModule
      */
+    function setAsyncFixedFee(uint128 synthMarketId, uint asyncFixedFee) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        FeeConfiguration.load(synthMarketId).asyncFixedFee = asyncFixedFee;
+
+        emit AsyncFixedFeeSet(synthMarketId, asyncFixedFee);
+    }
+
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setMarketSkewScale(uint128 synthMarketId, uint skewScale) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -68,7 +79,7 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         FeeConfiguration.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
 
-        emit AtomicTransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
+        emit TransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
     }
 
     /**
