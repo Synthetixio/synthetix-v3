@@ -7,6 +7,8 @@ import "../../interfaces/IAccountModule.sol";
 import "../../interfaces/IAccountTokenModule.sol";
 import "../../storage/Account.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 /**
  * @title Module for managing accounts.
  * @dev See IAccountModule.
@@ -18,6 +20,8 @@ contract AccountModule is IAccountModule {
     using Account for Account.Data;
 
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
+
+    bytes32 private constant _CREATE_ACCOUNT_FEATURE_FLAG = "createAccount";
 
     /**
      * @inheritdoc IAccountModule
@@ -49,6 +53,7 @@ contract AccountModule is IAccountModule {
      * @inheritdoc IAccountModule
      */
     function createAccount(uint128 requestedAccountId) external override {
+        FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
         accountTokenModule.mint(msg.sender, requestedAccountId);
 

@@ -45,8 +45,11 @@ library Account {
          * @dev Role based access control data for the account.
          */
         AccountRBAC.Data rbac;
-        // solhint-disable-next-line private-vars-leading-underscore
-        bytes32 __slotAvailableForFutureUse;
+
+        uint64 lastInteraction;
+        uint64 __slotAvailableForFutureUse;
+        uint128 __slot2AvailableForFutureUse;
+
         /**
          * @dev Address set of collaterals that are being used in the system by this account.
          */
@@ -131,17 +134,24 @@ library Account {
     }
 
     /**
-     * @dev Loads the Account object for the specified accountId, and validates that sender has the specified permission. These are two different actions but they are merged in a single function because loading an account and checking for a permission is a very common use case in other parts of the code.
+     * @dev Loads the Account object for the specified accountId, 
+     * and validates that sender has the specified permission. It also resets
+     * the interaction timeout. These 
+     * are different actions but they are merged in a single function 
+     * because loading an account and checking for a permission is a very 
+     * common use case in other parts of the code.
      */
     function loadAccountAndValidatePermission(
         uint128 accountId,
         bytes32 permission
-    ) internal view returns (Data storage account) {
+    ) internal returns (Data storage account) {
         account = Account.load(accountId);
 
         if (!account.rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
+        
+        account.lastInteraction = uint64(block.timestamp);
     }
 
     /**

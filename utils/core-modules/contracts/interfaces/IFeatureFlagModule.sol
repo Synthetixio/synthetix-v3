@@ -69,6 +69,13 @@ interface IFeatureFlagModule {
     function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external;
 
     /**
+     * @notice Sets addresses which can disable a feature (but not enable it). Overwrites any preexisting data.
+     * @param feature The bytes32 id of the feature.
+     * @param deniers The addresses which should have the ability to unilaterally disable the feature
+     */
+    function setDeniers(bytes32 feature, address[] memory deniers) external;
+
+    /**
      * @notice Determines if the given feature is freely allowed to all users.
      * @param feature The bytes32 id of the feature.
      * @return True if anyone is allowed to use the feature, false if per-user control is used.

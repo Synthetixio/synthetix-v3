@@ -7,6 +7,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 import "../../interfaces/IVaultModule.sol";
 
 /**
@@ -32,6 +34,8 @@ contract VaultModule is IVaultModule {
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
+    bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
+
     /**
      * @inheritdoc IVaultModule
      */
@@ -42,6 +46,7 @@ contract VaultModule is IVaultModule {
         uint256 newCollateralAmountD18,
         uint256 leverage
     ) external override {
+        FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         Pool.requireExists(poolId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
