@@ -209,10 +209,10 @@ library TickMath {
         int24 tickLow = (logSqrt10001 - 3402992956809132418596140100660247210).to24() >> 128;
         int24 tickHi = (logSqrt10001 + 291339464771989622907027621153398088495).to24() >> 128;
 
-        bool isEqual = tickLow == tickHi;
-        if (isEqual) {
+        if (tickLow == tickHi) {
             tick = tickLow;
+        } else {
+            tick = getSqrtRatioAtTick(tickHi) <= sqrtPriceX96 ? tickHi : tickLow;
         }
-        tick = getSqrtRatioAtTick(tickHi) <= sqrtPriceX96 ? tickHi : tickLow;
     }
 }
