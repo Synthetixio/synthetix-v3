@@ -14,8 +14,8 @@ defaultValue = "Synthetix Ambassador Council Token"
 [setting.council_token_symbol]
 defaultValue = "SNX-ACT"
 
-[contract.InitialModuleBundle]
-artifact = "InitialModuleBundle"
+[contract.CoreModule]
+artifact = "CoreModule"
 create2 = true
 
 [contract.AssociatedSystemsModule]
@@ -35,13 +35,13 @@ contracts = [
   "AssociatedSystemsModule",
   "ElectionModule",
   "ElectionInspectorModule",
-  "InitialModuleBundle",
+  "CoreModule",
 ]
 depends = [
   "contract.AssociatedSystemsModule",
   "contract.ElectionModule",
   "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
+  "contract.CoreModule",
 ]
 
 [invoke.upgrade_core_proxy]
@@ -57,9 +57,9 @@ depends = ["router.CoreRouter"]
 [router.CouncilTokenRouter]
 contracts = [
   "CouncilTokenModule",
-  "InitialModuleBundle",
+  "CoreModule",
 ]
 depends = [
   "contract.CouncilTokenModule",
-  "contract.InitialModuleBundle"
+  "contract.CoreModule"
 ]

@@ -26,18 +26,17 @@ defaultValue = "90" # days
 [setting.voting_period_duration]
 defaultValue = "7" # days
 
-[contract.InitialModuleBundle]
-artifact = "InitialModuleBundle"
+[contract.CoreModule]
+artifact = "CoreModule"
 create2 = true
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
-abiOf = ["InitialModuleBundle"]
+abiOf = ["CoreModule"]
 create2 = true
-
-depends = ["contract.InitialModuleBundle"]
+depends = ["contract.CoreModule"]
 
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
@@ -59,14 +58,13 @@ contracts = [
   "AssociatedSystemsModule",
   "ElectionModule",
   "ElectionInspectorModule",
-  "InitialModuleBundle",
+  "CoreModule",
 ]
-
 depends = [
   "contract.AssociatedSystemsModule",
   "contract.ElectionModule",
   "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
+  "contract.CoreModule",
 ]
 
 [invoke.upgrade_core_proxy]
@@ -82,12 +80,11 @@ depends = ["contract.InitialProxy", "router.CoreRouter"]
 [router.CouncilTokenRouter]
 contracts = [
   "CouncilTokenModule",
-  "InitialModuleBundle",
+  "CoreModule",
 ]
-
 depends = [
   "contract.CouncilTokenModule",
-  "contract.InitialModuleBundle"
+  "contract.CoreModule"
 ]
 
 [invoke.init_council_token]
@@ -121,5 +118,4 @@ args = [
   "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
-
 depends = ["invoke.init_council_token", "contract.DebtShareMock"]
