@@ -122,7 +122,7 @@ library FeeUtil {
             SpotMarketFactory.TransactionType.BUY
         );
 
-        uint fixedFee = _getAtomicFixedFee(feeConfiguration, transactor);
+        uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
 
         int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
 
@@ -152,7 +152,7 @@ library FeeUtil {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        uint fixedFee = _getAtomicFixedFee(feeConfiguration, transactor);
+        uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
         int totalFees = skewFee + fixedFee.toInt();
 
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
@@ -319,15 +319,20 @@ library FeeUtil {
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }
 
-    function _getAtomicFixedFee(
+    /*
+     * @dev if special fee is set for a given transactor that takes precedence over the global fixed fees
+     * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
+     */
+    function _getFixedFee(
         FeeConfiguration.Data storage feeConfiguration,
-        address transactor
+        address transactor,
+        bool async
     ) private view returns (uint) {
-        // TODO: add to readme, can't set transactor's value to zero
-        // talk to afif
         return
             feeConfiguration.atomicFixedFeeOverrides[transactor] > 0
                 ? feeConfiguration.atomicFixedFeeOverrides[transactor]
+                : async
+                ? feeConfiguration.asyncFixedFee
                 : feeConfiguration.atomicFixedFee;
     }
 }
