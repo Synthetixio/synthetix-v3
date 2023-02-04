@@ -47,7 +47,7 @@ dataSources:
       eventHandlers:
         - event: PoolCreated(indexed uint128,indexed address,indexed address)
           handler: handlePoolCreated
-        - event: PoolNameUpdated(indexed uint128,indexed string,indexed address)
+        - event: PoolNameUpdated(indexed uint128,string,indexed address)
           handler: handlePoolNameUpdated
         - event: PoolOwnershipAccepted(indexed uint128,indexed address)
           handler: handleNewPoolOwner
