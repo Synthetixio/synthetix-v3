@@ -17,6 +17,7 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
  * @dev See IIssueUSDModule.
  */
 contract IssueUSDModule is IIssueUSDModule {
+    using Account for Account.Data;
     using AccountRBAC for AccountRBAC.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;

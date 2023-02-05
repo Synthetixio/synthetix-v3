@@ -155,11 +155,18 @@ contract AccountModule is IAccountModule {
     }
 
     /**
+     * @inheritdoc IAccountModule
+     */
+    function getAccountLastInteraction(uint128 accountId) external view returns (uint) {
+        return Account.load(accountId).lastInteraction;
+    }
+
+    /**
      * @dev Reverts if the caller is not the account token managed by this module.
      */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
-    function _onlyAccountToken() internal {
+    function _onlyAccountToken() internal view {
         if (msg.sender != address(getAccountTokenAddress())) {
             revert OnlyAccountTokenProxy(msg.sender);
         }

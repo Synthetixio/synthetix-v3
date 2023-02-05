@@ -3,11 +3,12 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForward, fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import { bootstrap } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
+import { snapshotCheckpoint } from '../../../../utils/snapshot';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider } = bootstrap();
@@ -160,6 +161,49 @@ describe('CollateralModule', function () {
               'withdraw',
               () => systems().Core.connect(user1).withdraw(1, Collateral.address, depositAmount)
             );
+
+            describe('when there is a account withdraw timeout set', async () => {
+              let restore = snapshotCheckpoint(provider);
+
+              let expireTime = 180;
+              before('set timeout', async () => {
+                // make sure the account has an interaction
+                await systems().Core.connect(owner).Account_set_lastInteraction(
+                  1,
+                  getTime(provider())
+                );
+
+                await systems().Core.connect(owner).setConfig(
+                  ethers.utils.formatBytes32String('accountTimeoutWithdraw'), 
+                  ethers.utils.zeroPad(ethers.BigNumber.from(expireTime).toHexString(), 32)
+                );
+              });
+
+              after(restore);
+
+              it('should not allow withdrawal because of account interaction', async () => {              
+                console.log('last interaction', await systems().Core.getAccountLastInteraction(1));
+                await assertRevert(
+                  systems()
+                    .Core.connect(user1)
+                    .withdraw(1, Collateral.address, depositAmount),
+                  'AccountActivityTimeoutPending',
+                  systems().Core
+                )
+              });
+
+              describe('time passes', () => {
+                before('fast forward', async () => {
+                  await fastForwardTo(parseInt(await systems().Core.getAccountLastInteraction(1)) + expireTime, provider());
+                });
+
+                it('works', async () => {
+                  await systems()
+                    .Core.connect(user1)
+                    .withdraw(1, Collateral.address, depositAmount);
+                });
+              });
+            });
 
             describe('when withdrawing collateral', () => {
               before('withdraw some collateral', async () => {

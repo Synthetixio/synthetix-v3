@@ -35,6 +35,11 @@ library Account {
      */
     error InsufficientAccountCollateral(uint256 requestedAmount);
 
+    /**
+     * @dev Thrown when the requested operation requires an activity timeout before the
+     */
+    error AccountActivityTimeoutPending(uint128 accountId, uint currentTime, uint requiredTime);
+
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
@@ -133,6 +138,12 @@ library Account {
         return totalAssignedD18;
     }
 
+    function recordInteraction(
+        Data storage self
+    ) internal {
+        self.lastInteraction = uint64(block.timestamp);
+    }
+
     /**
      * @dev Loads the Account object for the specified accountId, 
      * and validates that sender has the specified permission. It also resets
@@ -151,7 +162,32 @@ library Account {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
         
-        account.lastInteraction = uint64(block.timestamp);
+        recordInteraction(account);
+    }
+
+    /**
+     * @dev Loads the Account object for the specified accountId, 
+     * and validates that sender has the specified permission. It also resets
+     * the interaction timeout. These 
+     * are different actions but they are merged in a single function 
+     * because loading an account and checking for a permission is a very 
+     * common use case in other parts of the code.
+     */
+    function loadAccountAndValidatePermissionAndTimeout(
+        uint128 accountId,
+        bytes32 permission,
+        uint timeout
+    ) internal view returns (Data storage account) {
+        account = Account.load(accountId);
+
+        if (!account.rbac.authorized(permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
+        
+        uint endWaitingPeriod = account.lastInteraction + timeout;
+        if (block.timestamp < endWaitingPeriod) {
+            revert AccountActivityTimeoutPending(accountId, block.timestamp, endWaitingPeriod);
+        }
     }
 
     /**
