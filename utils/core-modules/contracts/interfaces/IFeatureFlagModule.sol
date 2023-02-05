@@ -17,28 +17,35 @@ interface IFeatureFlagModule {
      * @param feature The bytes32 id of the feature.
      * @param allowAll True if the feature was allowed for everyone and false if it is only allowed for those included in the allowlist.
      */
-    event FeatureFlagAllowAllSet(bytes32 feature, bool allowAll);
+    event FeatureFlagAllowAllSet(bytes32 indexed feature, bool allowAll);
 
     /**
      * @notice Emitted when general access has been blocked for a feature.
      * @param feature The bytes32 id of the feature.
      * @param denyAll True if the feature was blocked for everyone and false if it is only allowed for those included in the allowlist or if allowAll is set to true.
      */
-    event FeatureFlagDenyAllSet(bytes32 feature, bool denyAll);
+    event FeatureFlagDenyAllSet(bytes32 indexed feature, bool denyAll);
 
     /**
      * @notice Emitted when an address was given access to a feature.
      * @param feature The bytes32 id of the feature.
      * @param account The address that was given access to the feature.
      */
-    event FeatureFlagAllowlistAdded(bytes32 feature, address account);
+    event FeatureFlagAllowlistAdded(bytes32 indexed feature, address account);
 
     /**
      * @notice Emitted when access to a feature has been removed from an address.
      * @param feature The bytes32 id of the feature.
      * @param account The address that no longer has access to the feature.
      */
-    event FeatureFlagAllowlistRemoved(bytes32 feature, address account);
+    event FeatureFlagAllowlistRemoved(bytes32 indexed feature, address account);
+
+    /**
+     * @notice Emitted when the list of addresses which can block a feature has been updated
+     * @param feature The bytes32 id of the feature.
+     * @param deniers The list of addresses which are allowed to block a feature
+     */
+    event FeatureFlagDeniersReset(bytes32 indexed feature, address[] deniers);
 
     /**
      * @notice Enables or disables free access to a feature.
@@ -74,6 +81,12 @@ interface IFeatureFlagModule {
      * @param deniers The addresses which should have the ability to unilaterally disable the feature
      */
     function setDeniers(bytes32 feature, address[] memory deniers) external;
+
+    /**
+     * @notice Gets the list of address which can block a feature
+     * @param feature The bytes32 id of the feature.
+     */
+    function getDeniers(bytes32 feature) external returns (address[] memory);
 
     /**
      * @notice Determines if the given feature is freely allowed to all users.

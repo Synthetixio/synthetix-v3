@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 library FeatureFlag {
     using SetUtil for SetUtil.AddressSet;
 
-    error FeatureUnavailable();
+    error FeatureUnavailable(bytes32 which);
 
     struct Data {
         bytes32 name;
@@ -25,7 +25,7 @@ library FeatureFlag {
 
     function ensureAccessToFeature(bytes32 feature) internal view {
         if (!hasAccess(feature, msg.sender)) {
-            revert FeatureUnavailable();
+            revert FeatureUnavailable(feature);
         }
     }
 

@@ -15,11 +15,12 @@ describe('FeatureFlagModule', function () {
   let SampleFeatureFlagModule: SampleFeatureFlagModule;
   let permissionedUser: ethers.Signer;
   let user: ethers.Signer;
+  let denier1: ethers.Signer, denier2: ethers.Signer, denier3: ethers.Signer;
 
   const FEATURE_FLAG_NAME = ethers.utils.formatBytes32String('SAMPLE_FEATURE');
 
   before('identify signers', function () {
-    [, permissionedUser, user] = getSigners();
+    [, permissionedUser, user, denier1, denier2, denier3] = getSigners();
   });
 
   before('identify modules', function () {
@@ -67,7 +68,7 @@ describe('FeatureFlagModule', function () {
     it('reverts when user does not have permission', async function () {
       await assertRevert(
         SampleFeatureFlagModule.connect(user).setFeatureFlaggedValue(15),
-        'FeatureUnavailable'
+        `FeatureUnavailable(${FEATURE_FLAG_NAME})`
       );
     });
 
@@ -116,7 +117,7 @@ describe('FeatureFlagModule', function () {
     it('does not allow removed permissionedUser to set value', async function () {
       await assertRevert(
         SampleFeatureFlagModule.connect(permissionedUser).setFeatureFlaggedValue(25),
-        'FeatureUnavailable'
+        `FeatureUnavailable(${FEATURE_FLAG_NAME})`
       );
     });
   });
@@ -160,7 +161,7 @@ describe('FeatureFlagModule', function () {
     it('does not allow a user to set value when denyAll is true', async function () {
       await assertRevert(
         SampleFeatureFlagModule.connect(permissionedUser).setFeatureFlaggedValue(25),
-        'FeatureUnavailable'
+        `FeatureUnavailable(${FEATURE_FLAG_NAME})`
       );
     });
 
@@ -173,6 +174,74 @@ describe('FeatureFlagModule', function () {
     it('returns true when checking if denyAll is active', async function () {
       const isTrue = await FeatureFlagModule.getFeatureFlagDenyAll(FEATURE_FLAG_NAME);
       assert.strictEqual(isTrue, true);
+    });
+  });
+
+  describe('setDeniers()', async () => {
+    it.skip('only allows owner to call', async () => {
+      assertRevert(
+        FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, []),
+        'Unauthorized(',
+        FeatureFlagModule
+      );
+    });
+
+    describe('when invoked successfully', async () => {
+
+      let txn: ethers.providers.TransactionReceipt;
+      
+      before('set deniers', async () => {
+        txn = await (await FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, [
+          await denier1.getAddress(),
+          await denier2.getAddress(), 
+          await denier3.getAddress()
+        ])).wait();
+
+        
+      });
+
+      it('has correct deniers', async () => {
+        const addrs = await FeatureFlagModule.getDeniers(FEATURE_FLAG_NAME);
+        assert(addrs.length === 3);
+        assert(addrs.includes(await denier1.getAddress()));
+        assert(addrs.includes(await denier2.getAddress()));
+        assert(addrs.includes(await denier3.getAddress()));
+      });
+
+      it('emits event', async () => {
+        assertEvent(
+          txn,
+          `FeatureFlagDeniersReset("${FEATURE_FLAG_NAME}",`,
+          FeatureFlagModule
+        )
+      });
+
+      it('does not revert when any of the deniers attempt to deny all', async () => {
+        await FeatureFlagModule.connect(denier1).callStatic.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
+        await FeatureFlagModule.connect(denier2).callStatic.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
+        await FeatureFlagModule.connect(denier3).callStatic.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
+      });
+
+      describe('when invoked a second time', async () => {
+        before('set deniers again', async () => {
+          await FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, [await denier3.getAddress(), await denier2.getAddress()]);
+        });
+
+        it('sets new deniers correctly', async () => {
+          const addrs = await FeatureFlagModule.getDeniers(FEATURE_FLAG_NAME);
+          assert(addrs.length === 2);
+          assert(addrs.includes(await denier2.getAddress()));
+          assert(addrs.includes(await denier3.getAddress()));
+        });
+
+        it('removed signer should no longer have capability', async () => {
+          assertRevert(
+            FeatureFlagModule.connect(denier1).setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true),
+            `Unauthorized("${denier1}")`,
+            FeatureFlagModule
+          );
+        })
+      });
     });
   });
 });

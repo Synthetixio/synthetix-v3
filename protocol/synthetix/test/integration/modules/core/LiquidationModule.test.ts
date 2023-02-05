@@ -4,6 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('LiquidationModule', function () {
   const {
@@ -74,6 +75,12 @@ describe('LiquidationModule', function () {
           systems().Core
         );
       });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'liquidate',
+        () => systems().Core.connect(user1).liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId)
+      );
 
       // a second account is required to "absorb" the debt which is coming from the first account
       describe('another account joins', () => {
@@ -227,6 +234,12 @@ describe('LiquidationModule', function () {
           debtAmount
         );
       });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'liquidateVault',
+        () => systems().Core.connect(user1).liquidateVault(poolId, collateralAddress(), accountId, debtAmount.div(4))
+      );
 
       describe('successful partial liquidation', () => {
         const liquidatorAccountId = 384572397362837;

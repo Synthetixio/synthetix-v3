@@ -7,6 +7,7 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 // ---------------------------------------
 // If the tests are failing Make sure you run foundryup to update the anvil to latest version
@@ -481,6 +482,14 @@ describe('RewardsManagerModule', function () {
         systems().Core
       );
     });
+    
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'claimRewards',
+      () => systems()
+        .Core.connect(user1)
+        .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address)
+    );
 
     describe('successful claim', () => {
       before('claim', async () => {

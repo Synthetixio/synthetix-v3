@@ -63,13 +63,16 @@ contract FeatureFlagModule is IFeatureFlagModule {
         emit FeatureFlagAllowlistRemoved(feature, account);
     }
 
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
     function setDeniers(bytes32 feature, address[] memory deniers) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 
         // resize array (its really dumb how you have to do this)
         uint storageLen = flag.deniers.length;
-        for (uint i = storageLen;i > deniers.length;i++) {
+        for (uint i = storageLen;i > deniers.length;i--) {
             flag.deniers.pop();
         }
 
@@ -81,6 +84,21 @@ contract FeatureFlagModule is IFeatureFlagModule {
                 flag.deniers[i] = deniers[i];
             }
         }
+        
+        emit FeatureFlagDeniersReset(feature, deniers);
+    }
+
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
+    function getDeniers(bytes32 feature) external view override returns (address[] memory) {
+        FeatureFlag.Data storage flag = FeatureFlag.load(feature);
+        address[] memory addrs = new address[](flag.deniers.length);
+        for (uint i = 0;i < addrs.length;i++) {
+            addrs[i] = flag.deniers[i];
+        }
+
+        return addrs;
     }
 
     /**

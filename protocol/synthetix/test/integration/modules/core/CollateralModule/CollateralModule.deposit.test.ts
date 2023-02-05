@@ -7,6 +7,7 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import { bootstrap } from '../../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../../verifications';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider } = bootstrap();
@@ -88,6 +89,12 @@ describe('CollateralModule', function () {
             });
           });
 
+          verifyUsesFeatureFlag(
+            () => systems().Core,
+            'deposit',
+            () => systems().Core.connect(user1).deposit(1, Collateral.address, 1)
+          );
+
           describe('when depositing collateral', () => {
             const depositAmount = ethers.utils.parseUnits('1', 6);
             const systemDepositAmount = ethers.utils.parseEther('1');
@@ -147,6 +154,12 @@ describe('CollateralModule', function () {
                 );
               });
             });
+
+            verifyUsesFeatureFlag(
+              () => systems().Core,
+              'withdraw',
+              () => systems().Core.connect(user1).withdraw(1, Collateral.address, depositAmount)
+            );
 
             describe('when withdrawing collateral', () => {
               before('withdraw some collateral', async () => {

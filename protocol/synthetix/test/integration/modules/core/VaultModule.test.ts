@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('VaultModule', function () {
   const {
@@ -190,6 +191,18 @@ describe('VaultModule', function () {
         systems().Core
       );
     });
+
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'delegateCollateral',
+      () => systems().Core.connect(user1).delegateCollateral(
+        accountId,
+        42,
+        collateralAddress(),
+        depositAmount.div(50),
+        ethers.utils.parseEther('1')
+      )
+    );
 
     describe('when collateral is disabled', async () => {
       const restore = snapshotCheckpoint(provider);
