@@ -205,7 +205,10 @@ describe('MarketCollateralModule', function () {
       verifyUsesFeatureFlag(
         () => systems().Core,
         'withdrawMarketCollateral',
-        () => MockMarket().connect(user1).withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
+        () =>
+          MockMarket()
+            .connect(user1)
+            .withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
       );
 
       describe('successful withdraw partial', async () => {

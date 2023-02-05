@@ -79,7 +79,10 @@ describe('LiquidationModule', function () {
       verifyUsesFeatureFlag(
         () => systems().Core,
         'liquidate',
-        () => systems().Core.connect(user1).liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId)
+        () =>
+          systems()
+            .Core.connect(user1)
+            .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId)
       );
 
       // a second account is required to "absorb" the debt which is coming from the first account
@@ -238,7 +241,10 @@ describe('LiquidationModule', function () {
       verifyUsesFeatureFlag(
         () => systems().Core,
         'liquidateVault',
-        () => systems().Core.connect(user1).liquidateVault(poolId, collateralAddress(), accountId, debtAmount.div(4))
+        () =>
+          systems()
+            .Core.connect(user1)
+            .liquidateVault(poolId, collateralAddress(), accountId, debtAmount.div(4))
       );
 
       describe('successful partial liquidation', () => {

@@ -178,26 +178,25 @@ describe('FeatureFlagModule', function () {
   });
 
   describe('setDeniers()', async () => {
-    it.skip('only allows owner to call', async () => {
-      assertRevert(
-        FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, []),
+    it('only allows owner to call', async () => {
+      await assertRevert(
+        FeatureFlagModule.connect(denier1).setDeniers(FEATURE_FLAG_NAME, []),
         'Unauthorized(',
         FeatureFlagModule
       );
     });
 
     describe('when invoked successfully', async () => {
-
       let txn: ethers.providers.TransactionReceipt;
-      
-      before('set deniers', async () => {
-        txn = await (await FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, [
-          await denier1.getAddress(),
-          await denier2.getAddress(), 
-          await denier3.getAddress()
-        ])).wait();
 
-        
+      before('set deniers', async () => {
+        txn = await (
+          await FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, [
+            await denier1.getAddress(),
+            await denier2.getAddress(),
+            await denier3.getAddress(),
+          ])
+        ).wait();
       });
 
       it('has correct deniers', async () => {
@@ -209,22 +208,34 @@ describe('FeatureFlagModule', function () {
       });
 
       it('emits event', async () => {
-        assertEvent(
+        await assertEvent(
           txn,
           `FeatureFlagDeniersReset("${FEATURE_FLAG_NAME}",`,
           FeatureFlagModule
-        )
+        );
       });
 
       it('does not revert when any of the deniers attempt to deny all', async () => {
-        await FeatureFlagModule.connect(denier1).callStatic.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
-        await FeatureFlagModule.connect(denier2).callStatic.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
-        await FeatureFlagModule.connect(denier3).callStatic.setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
+        await FeatureFlagModule.connect(denier1).callStatic.setFeatureFlagDenyAll(
+          FEATURE_FLAG_NAME,
+          true
+        );
+        await FeatureFlagModule.connect(denier2).callStatic.setFeatureFlagDenyAll(
+          FEATURE_FLAG_NAME,
+          true
+        );
+        await FeatureFlagModule.connect(denier3).callStatic.setFeatureFlagDenyAll(
+          FEATURE_FLAG_NAME,
+          true
+        );
       });
 
       describe('when invoked a second time', async () => {
         before('set deniers again', async () => {
-          await FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, [await denier3.getAddress(), await denier2.getAddress()]);
+          await FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, [
+            await denier3.getAddress(),
+            await denier2.getAddress(),
+          ]);
         });
 
         it('sets new deniers correctly', async () => {
@@ -235,12 +246,12 @@ describe('FeatureFlagModule', function () {
         });
 
         it('removed signer should no longer have capability', async () => {
-          assertRevert(
+          await assertRevert(
             FeatureFlagModule.connect(denier1).setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true),
-            `Unauthorized("${denier1}")`,
+            `Unauthorized("${await denier1.getAddress()}")`,
             FeatureFlagModule
           );
-        })
+        });
       });
     });
   });

@@ -195,13 +195,16 @@ describe('VaultModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'delegateCollateral',
-      () => systems().Core.connect(user1).delegateCollateral(
-        accountId,
-        42,
-        collateralAddress(),
-        depositAmount.div(50),
-        ethers.utils.parseEther('1')
-      )
+      () =>
+        systems()
+          .Core.connect(user1)
+          .delegateCollateral(
+            accountId,
+            42,
+            collateralAddress(),
+            depositAmount.div(50),
+            ethers.utils.parseEther('1')
+          )
     );
 
     describe('when collateral is disabled', async () => {

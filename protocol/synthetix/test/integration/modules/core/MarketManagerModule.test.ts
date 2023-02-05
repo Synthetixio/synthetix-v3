@@ -34,7 +34,7 @@ describe('MarketManagerModule', function () {
 
   describe('registerMarket()', async () => {
     before(restore);
-    
+
     verifyUsesFeatureFlag(
       () => systems().Core,
       'registerMarket',
@@ -161,7 +161,7 @@ describe('MarketManagerModule', function () {
 
         await MockMarket().connect(user1).setReportedDebt(reportedDebtBefore);
       });
-    
+
       verifyUsesFeatureFlag(
         () => systems().Core,
         'withdrawMarketUsd',

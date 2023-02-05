@@ -18,9 +18,7 @@ describe('PoolModule Create / Ownership', function () {
   verifyUsesFeatureFlag(
     () => systems().Core,
     'createPool',
-    () => systems()
-      .Core.connect(user1)
-      .createPool(1, ethers.constants.AddressZero)
+    () => systems().Core.connect(user1).createPool(1, ethers.constants.AddressZero)
   );
 
   describe('When creating a Pool', async () => {

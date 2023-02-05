@@ -482,13 +482,14 @@ describe('RewardsManagerModule', function () {
         systems().Core
       );
     });
-    
+
     verifyUsesFeatureFlag(
       () => systems().Core,
       'claimRewards',
-      () => systems()
-        .Core.connect(user1)
-        .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address)
+      () =>
+        systems()
+          .Core.connect(user1)
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address)
     );
 
     describe('successful claim', () => {

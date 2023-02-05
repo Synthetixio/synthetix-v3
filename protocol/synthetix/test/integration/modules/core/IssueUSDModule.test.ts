@@ -103,7 +103,10 @@ describe('IssueUSDModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'mintUsd',
-      () => systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
+      () =>
+        systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
     );
 
     describe('successful mint', () => {
@@ -171,7 +174,10 @@ describe('IssueUSDModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'burnUsd',
-      () => systems().Core.connect(user1).burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
+      () =>
+        systems()
+          .Core.connect(user1)
+          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
     );
 
     describe('burn from other account', async () => {

@@ -5,7 +5,6 @@ pragma solidity >=0.8.11 <0.9.0;
  * @title System wide configuration for anything
  */
 library Config {
-
     struct Data {
         uint __unused;
     }
