@@ -230,6 +230,30 @@ describe('FeatureFlagModule', function () {
         );
       });
 
+      describe('when denier has denied', async () => {
+        before('deny', async () => {
+          await FeatureFlagModule.connect(denier1).setFeatureFlagDenyAll(FEATURE_FLAG_NAME, true);
+        });
+
+        it('cant be undone by the denier', async () => {
+          await assertRevert(
+            FeatureFlagModule.connect(denier1).setFeatureFlagDenyAll(
+              FEATURE_FLAG_NAME,
+              false // this is disabling the denyAll flag
+            ),
+            'Unauthorized(',
+            FeatureFlagModule
+          );
+        });
+
+        it('the owner can undo feature flag deny all', async () => {
+          await FeatureFlagModule.setFeatureFlagDenyAll(
+            FEATURE_FLAG_NAME,
+            false // this is disabling the denyAll flag
+          );
+        });
+      });
+
       describe('when invoked a second time', async () => {
         before('set deniers again', async () => {
           await FeatureFlagModule.setDeniers(FEATURE_FLAG_NAME, [
