@@ -24,9 +24,7 @@ library FeeUtil {
     ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
         (amountUsable, totalFees) = calculateFees(marketId, transactor, usdAmount, transactionType);
 
-        if (totalFees > 0) {
-            collectedFees = collectFees(marketId, totalFees.toUint(), transactor, transactionType);
-        }
+        collectedFees = collectFees(marketId, totalFees, transactor, transactionType);
     }
 
     /**
@@ -288,18 +286,24 @@ library FeeUtil {
      */
     function collectFees(
         uint128 marketId,
-        uint totalFees,
+        int totalFees,
         address transactor,
         SpotMarketFactory.TransactionType transactionType
     ) internal returns (uint collectedFees) {
+        if (totalFees <= 0) {
+            return 0;
+        }
+
+        uint totalFeesUint = totalFees.toUint();
+
         IFeeCollector feeCollector = FeeConfiguration.load(marketId).feeCollector;
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
 
         if (address(feeCollector) != address(0)) {
             uint previousUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
 
-            spotMarketFactory.usdToken.approve(address(feeCollector), totalFees);
-            feeCollector.collectFees(marketId, totalFees, transactor, uint8(transactionType));
+            spotMarketFactory.usdToken.approve(address(feeCollector), totalFeesUint);
+            feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
 
             uint currentUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;
@@ -307,7 +311,7 @@ library FeeUtil {
             spotMarketFactory.usdToken.approve(address(feeCollector), 0);
         }
 
-        uint feesToDeposit = totalFees - collectedFees;
+        uint feesToDeposit = totalFeesUint - collectedFees;
         spotMarketFactory.depositToMarketManager(marketId, feesToDeposit);
     }
 

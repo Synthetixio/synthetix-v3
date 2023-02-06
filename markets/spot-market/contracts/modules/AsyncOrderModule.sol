@@ -46,11 +46,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
         returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
         SpotMarketFactory.load().isValidMarket(marketId);
-        AsyncOrderConfiguration.load(marketId).isValidSettlementStrategy(settlementStrategyId);
+        AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
+            marketId
+        );
+        asyncOrderConfiguration.isValidSettlementStrategy(settlementStrategyId);
 
         int256 committedAmountUsd;
         uint amountEscrowed;
         if (orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            asyncOrderConfiguration.isValidAmount(settlementStrategyId, amountProvided);
             SpotMarketFactory.load().usdToken.transferFrom(
                 msg.sender,
                 address(this),
@@ -62,14 +66,17 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
 
         if (orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
-            amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
-
             // Get the dollar value of the provided synths
             uint256 usdAmount = Price.synthUsdExchangeRate(
                 marketId,
                 amountProvided,
                 SpotMarketFactory.TransactionType.SELL
             );
+
+            asyncOrderConfiguration.isValidAmount(settlementStrategyId, usdAmount);
+
+            amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
+
             committedAmountUsd = -1 * usdAmount.toInt();
         }
 
@@ -122,7 +129,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                     asyncOrderId,
                     Price.getCurrentPrice(marketId, asyncOrderClaim.orderType),
                     spotMarketFactory,
-                    asyncOrderClaim
+                    asyncOrderClaim,
+                    settlementStrategy
                 );
         } else {
             return _settleOffchain(marketId, asyncOrderId, asyncOrderClaim, settlementStrategy);
@@ -149,7 +157,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 asyncOrderId,
                 Price.getCurrentPrice(marketId, asyncOrderClaim.orderType),
                 spotMarketFactory,
-                asyncOrderClaim
+                asyncOrderClaim,
+                settlementStrategy
             );
     }
 
@@ -186,7 +195,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 asyncOrderId,
                 uint(int(median)), // TODO: check this
                 SpotMarketFactory.load(),
-                asyncOrderClaim
+                asyncOrderClaim,
+                settlementStrategy
             );
     }
 
@@ -245,7 +255,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 asyncOrderId,
         uint price,
         SpotMarketFactory.Data storage spotMarketFactory,
-        AsyncOrderClaim.Data storage asyncOrderClaim
+        AsyncOrderClaim.Data storage asyncOrderClaim,
+        SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
         address trader = AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId);
 
@@ -255,7 +266,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 trader,
                 price,
                 asyncOrderClaim,
-                spotMarketFactory
+                spotMarketFactory,
+                settlementStrategy
             );
         }
 
@@ -265,7 +277,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 trader,
                 price,
                 asyncOrderClaim,
-                spotMarketFactory
+                spotMarketFactory,
+                settlementStrategy
             );
         }
 
@@ -283,17 +296,21 @@ contract AsyncOrderModule is IAsyncOrderModule {
         address trader,
         uint price,
         AsyncOrderClaim.Data storage asyncOrderClaim,
-        SpotMarketFactory.Data storage spotMarketFactory
+        SpotMarketFactory.Data storage spotMarketFactory,
+        SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
-        uint amountUsable;
-        (amountUsable, totalFees, collectedFees) = FeeUtil.processFees(
+        // remove keeper fee
+        uint amountUsable = asyncOrderClaim.amountEscrowed - settlementStrategy.keepersReward;
+
+        uint finalAmountUsd;
+        (finalAmountUsd, totalFees, collectedFees) = FeeUtil.processFees(
             marketId,
             trader,
-            asyncOrderClaim.amountEscrowed,
+            amountUsable,
             SpotMarketFactory.TransactionType.BUY
         );
 
-        finalOrderAmount = amountUsable.divDecimal(price);
+        finalOrderAmount = finalAmountUsd.divDecimal(price);
 
         if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
             revert MinimumSettlementAmountNotMet(
@@ -302,7 +319,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        spotMarketFactory.depositToMarketManager(marketId, amountUsable);
+        ITokenModule(spotMarketFactory.usdToken).transfer(
+            msg.sender,
+            settlementStrategy.keepersReward
+        );
+
+        spotMarketFactory.depositToMarketManager(marketId, finalAmountUsd);
 
         SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
     }
@@ -312,7 +334,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         address trader,
         uint price,
         AsyncOrderClaim.Data storage asyncOrderClaim,
-        SpotMarketFactory.Data storage spotMarketFactory
+        SpotMarketFactory.Data storage spotMarketFactory,
+        SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
         uint synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
             marketId,
@@ -321,12 +344,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
 
         // TODO: AtomicSell is the same, consolidate into OrderUtil? (same for buy above)
-        uint usdAmount = synthAmount.mulDecimal(price);
+        uint usableAmount = synthAmount.mulDecimal(price);
 
         (finalOrderAmount, totalFees, collectedFees) = FeeUtil.processFees(
             marketId,
             msg.sender,
-            usdAmount,
+            usableAmount,
             SpotMarketFactory.TransactionType.SELL
         );
 
@@ -340,7 +363,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
             marketId,
             trader,
-            usdAmount
+            usableAmount
         );
 
         if (finalOrderAmount > usdAmount) {
