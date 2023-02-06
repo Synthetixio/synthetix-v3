@@ -46,6 +46,7 @@ depends = [
 
 [invoke.upgrade_core_proxy]
 target = ["<%= settings.council_proxy_address %>"]
+abi = ["CoreModule"]
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
@@ -63,3 +64,36 @@ depends = [
   "contract.CouncilTokenModule",
   "contract.CoreModule"
 ]
+
+[invoke.init_council_token]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeNft"
+args = [
+  "<%= formatBytes32String('councilToken') %>",
+  "Synthetix Governance Token",
+  "SNXGOV",
+  "https://synthetix.io",
+  "<%= contracts.CouncilTokenRouter.address %>"
+]
+depends = [
+  "invoke.upgrade_core_proxy",
+  "router.CouncilTokenRouter"
+]
+factory.CouncilTokenProxy.abiOf = ["CouncilTokenRouter"]
+factory.CouncilTokenProxy.event = "AssociatedSystemSet"
+factory.CouncilTokenProxy.arg = 2
+
+[invoke.init_election_module]
+target = ["CoreProxy"]
+func = "initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64,address)"
+args = [
+  ["<%= settings.init_council_member %>"],
+  "1",
+  "<%= settings.epoch_start %>",
+  "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",
+  "<%= settings.epoch_start + 86400 * settings.epoch_duration %>",
+  "<%= contracts.DebtShareMock.address %>",
+]
+from = "<%= settings.owner %>"
+depends = ["invoke.init_council_token", "contract.DebtShareMock"]
