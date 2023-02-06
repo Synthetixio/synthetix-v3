@@ -151,6 +151,7 @@ library FeeUtil {
         );
 
         uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
+
         int totalFees = skewFee + fixedFee.toInt();
 
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
@@ -204,6 +205,7 @@ library FeeUtil {
             .mulDecimal(collateralPrice);
 
         uint initialSkew = totalSynthValue - wrappedMarketCollateral;
+        uint totalSupply = SynthUtil.getToken(marketId).totalSupply();
         uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
         uint skewAfterFill = initialSkew;

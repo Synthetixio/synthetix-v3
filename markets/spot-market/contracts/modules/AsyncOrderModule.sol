@@ -29,6 +29,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using AsyncOrder for AsyncOrder.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
+    using SettlementStrategy for SettlementStrategy.Data;
 
     // ************
     // COMMITMENT
@@ -185,6 +186,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
             int192 median
         ) = abi.decode(verifierResponse, (bytes32, uint32, uint64, int192));
 
+        uint offchainPrice = uint(int(median)); // TODO: check this
+
+        settlementStrategy.checkPriceDeviation(
+            offchainPrice,
+            Price.getCurrentPrice(marketId, asyncOrderClaim.orderType)
+        );
+
         if (feedId != settlementStrategy.feedId) {
             revert InvalidVerificationResponse();
         }
@@ -193,7 +201,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             _settleOrder(
                 marketId,
                 asyncOrderId,
-                uint(int(median)), // TODO: check this
+                offchainPrice,
                 SpotMarketFactory.load(),
                 asyncOrderClaim,
                 settlementStrategy
@@ -226,15 +234,23 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 uint64(asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
             );
 
+        uint offchainPrice = uint(int(priceFeeds[0].price.price)); // TODO: check this
+
+        settlementStrategy.checkPriceDeviation(
+            offchainPrice,
+            Price.getCurrentPrice(marketId, asyncOrderClaim.orderType)
+        );
+
         uint publishTime = uint(priceFeeds[0].price.publishTime);
 
         return
             _settleOrder(
                 marketId,
                 asyncOrderId,
-                uint(int(priceFeeds[0].price.price)), // TODO: check this
+                offchainPrice,
                 SpotMarketFactory.load(),
-                asyncOrderClaim
+                asyncOrderClaim,
+                settlementStrategy
             );
     }
 
@@ -341,7 +357,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             asyncOrderClaim.amountEscrowed
         );
-        AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
 
         // TODO: AtomicSell is the same, consolidate into OrderUtil? (same for buy above)
         uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.keepersReward;
@@ -352,6 +367,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
             usableAmount,
             SpotMarketFactory.TransactionType.SELL
         );
+
+        // burn after fee calculation to avoid before/after fill calculations
+        AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
 
         if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
             revert MinimumSettlementAmountNotMet(
@@ -377,17 +395,17 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-            marketId,
-            trader,
-            finalOrderAmount
-        );
-
         // send keeper it's reward
         IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
             marketId,
             msg.sender,
             settlementStrategy.keepersReward
+        );
+
+        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            marketId,
+            trader,
+            finalOrderAmount
         );
     }
 

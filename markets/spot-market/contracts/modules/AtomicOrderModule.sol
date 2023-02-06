@@ -75,9 +75,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
-        // Burn synths provided
-        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
-
         // Exchange synths provided into dollar amount
         uint256 usdAmount = Price.synthUsdExchangeRate(
             marketId,
@@ -96,6 +93,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
         if (returnAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnAmount);
         }
+
+        // Burn synths provided
+        // Burn after calculation because skew is calculating using total supply prior to fill
+        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
         uint collectedFees;
 
