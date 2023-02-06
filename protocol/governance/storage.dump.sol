@@ -151,7 +151,6 @@ library Council {
     }
     struct Data {
         bool initialized;
-        address councilToken;
         SetUtil.AddressSet councilMembers;
         mapping(address => uint) councilTokenIds;
         uint lastElectionId;

@@ -28,16 +28,6 @@ contract TestableCouncilStorage {
         return store.initialized;
     }
 
-    function Council_set_councilToken(address val) external {
-        Council.Data storage store = _getInstanceStore();
-        store.councilToken = val;
-    }
-
-    function Council_get_councilToken() external view returns (address) {
-        Council.Data storage store = _getInstanceStore();
-        return store.councilToken;
-    }
-
     function Council_set_lastElectionId(uint val) external {
         Council.Data storage store = _getInstanceStore();
         store.lastElectionId = val;
@@ -63,7 +53,7 @@ contract TestableCouncilStorage {
         return Council.newElection(store);
     }
 
-    function Council_getCurrentPeriod() external view returns (ElectionPeriod) {
+    function Council_getCurrentPeriod() external view returns (Council.ElectionPeriod) {
         Council.Data storage store = _getInstanceStore();
         return Council.getCurrentPeriod(store);
     }

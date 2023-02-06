@@ -426,7 +426,7 @@ contract BaseElectionModule is
     }
 
     function getCouncilToken() public view override returns (address) {
-        return Council.load().councilToken;
+        return address(_getCouncilToken());
     }
 
     function getCouncilMembers() external view override returns (address[] memory) {

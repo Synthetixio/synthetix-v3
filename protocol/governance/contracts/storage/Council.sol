@@ -11,8 +11,6 @@ library Council {
     struct Data {
         // True if initializeElectionModule was called
         bool initialized;
-        // The address of the council NFT
-        address councilToken;
         // Council member addresses
         SetUtil.AddressSet councilMembers;
         // Council token id's by council member address
@@ -58,7 +56,7 @@ library Council {
     }
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
-    function getCurrentPeriod(Data storage self) internal view returns (ElectionPeriod) {
+    function getCurrentPeriod(Data storage self) internal view returns (Council.ElectionPeriod) {
         Epoch.Data storage epoch = getCurrentElection(self).epoch;
 
         // solhint-disable-next-line numcast/safe-cast

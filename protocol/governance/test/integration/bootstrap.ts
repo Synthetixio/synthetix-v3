@@ -1,20 +1,20 @@
 import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
-import { ethers } from 'ethers';
-import hre from 'hardhat';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
-
-import type { GovernanceProxy } from '../generated/typechain';
+import type { ElectionModule, DebtShareMock, CouncilTokenModule } from '../../typechain-types';
 
 export interface Proxies {
-  GovernanceProxy: GovernanceProxy;
+  CoreProxy: ElectionModule;
+  DebtShareMock: DebtShareMock;
+  CouncilTokenModule: CouncilTokenModule;
 }
 
 interface Systems {
-  Council: GovernanceProxy;
+  Council: ElectionModule;
+  DebtShare: DebtShareMock;
+  CouncilToken: CouncilTokenModule;
 }
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
-  cannonfile: 'cannonfile.test.toml',
+  cannonfile: 'cannonfile.toml',
 });
 
 const restoreSnapshot = createSnapshot();
@@ -23,17 +23,14 @@ export let systems: Systems;
 
 before('load system proxies', function () {
   systems = {
-    Council: getContract('GovernanceProxy'),
+    Council: getContract('CoreProxy'),
+    DebtShare: getContract('DebtShareMock'),
+    CouncilToken: getContract('CouncilTokenModule'),
   } as Systems;
 });
 
 export function bootstrap() {
   before(restoreSnapshot);
-
-  before('give owner permission to TODO', async () => {
-    const [owner] = getSigners();
-    // TODO
-  });
 
   return {
     provider: () => getProvider(),

@@ -1,4 +1,12 @@
-contracts/Router.sol
 deployments/hardhat
 deployments/local
 deployments/localhost
+
+typechain-types
+
+# generated test modules
+contracts/modules/test
+contracts/generated
+
+# generated routers
+contracts/routers

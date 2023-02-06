@@ -84,7 +84,7 @@ contract ElectionCredentials is ElectionBase {
         emit CouncilMemberRemoved(member, epochIndex);
     }
 
-    function _getCouncilToken() private view returns (IERC721) {
+    function _getCouncilToken() internal view returns (IERC721) {
         return AssociatedSystem.load(_COUNCIL_NFT_SYSTEM).asNft();
     }
 

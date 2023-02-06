@@ -15,29 +15,36 @@ defaultValue = "Synthetix Governance Module"
 [setting.council_token_symbol]
 defaultValue = "SNXGOV"
 
+[setting.council_token_uri]
+defaultValue = "https://synthetix.io"
+
 [setting.init_council_member]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
 
-[setting.epoch_start]
+# TODO Use this instead of dynamic value in prod
+# [setting.epoch_start]
+# defaultValue = "1675715044"
 
 [setting.epoch_duration]
-defaultValue = "90" # days
+defaultValue = "120" # days
 
-[setting.voting_period_duration]
+[setting.nomination_period_duration]
 defaultValue = "7" # days
 
-[contract.InitialModuleBundle]
-artifact = "InitialModuleBundle"
+[setting.voting_period_duration]
+defaultValue = "14" # days
+
+[contract.CoreModule]
+artifact = "contracts/modules/core/CoreModule.sol:CoreModule"
 create2 = true
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
-abiOf = ["InitialModuleBundle"]
+abiOf = ["CoreModule"]
 create2 = true
-
-depends = ["contract.InitialModuleBundle"]
+depends = ["contract.CoreModule"]
 
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
@@ -59,14 +66,13 @@ contracts = [
   "AssociatedSystemsModule",
   "ElectionModule",
   "ElectionInspectorModule",
-  "InitialModuleBundle",
+  "CoreModule",
 ]
-
 depends = [
   "contract.AssociatedSystemsModule",
   "contract.ElectionModule",
   "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
+  "contract.CoreModule",
 ]
 
 [invoke.upgrade_core_proxy]
@@ -82,12 +88,11 @@ depends = ["contract.InitialProxy", "router.CoreRouter"]
 [router.CouncilTokenRouter]
 contracts = [
   "CouncilTokenModule",
-  "InitialModuleBundle",
+  "CoreModule",
 ]
-
 depends = [
   "contract.CouncilTokenModule",
-  "contract.InitialModuleBundle"
+  "contract.CoreModule"
 ]
 
 [invoke.init_council_token]
@@ -96,9 +101,9 @@ from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
   "<%= formatBytes32String('councilToken') %>",
-  "Synthetix Governance Token",
-  "SNXGOV",
-  "https://synthetix.io",
+  "<%= settings.council_token_name %>",
+  "<%= settings.council_token_symbol %>",
+  "<%= settings.council_token_uri %>",
   "<%= contracts.CouncilTokenRouter.address %>"
 ]
 depends = [
@@ -115,11 +120,10 @@ func = "initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64,address
 args = [
   ["<%= settings.init_council_member %>"],
   "1",
-  "<%= settings.epoch_start %>",
-  "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",
-  "<%= settings.epoch_start + 86400 * settings.epoch_duration %>",
+  "<%= Math.floor(Date.now() / 1000) + 86400 * settings.epoch_duration - 86400 * settings.voting_period_duration - 86400 * settings.nomination_period_duration %>",
+  "<%= Math.floor(Date.now() / 1000) + 86400 * settings.epoch_duration - 86400 * settings.voting_period_duration %>",
+  "<%= Math.floor(Date.now() / 1000) + 86400 * settings.epoch_duration %>",
   "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
-
 depends = ["invoke.init_council_token", "contract.DebtShareMock"]
