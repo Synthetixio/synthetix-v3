@@ -15,6 +15,9 @@ defaultValue = "Synthetix Governance Module"
 [setting.council_token_symbol]
 defaultValue = "SNXGOV"
 
+[setting.council_token_uri]
+defaultValue = "https://synthetix.io"
+
 [setting.init_council_member]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
 
@@ -93,9 +96,9 @@ from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
   "<%= formatBytes32String('councilToken') %>",
-  "Synthetix Governance Token",
-  "SNXGOV",
-  "https://synthetix.io",
+  "<%= settings.council_token_name %>",
+  "<%= settings.council_token_symbol %>",
+  "<%= settings.council_token_uri %>",
   "<%= contracts.CouncilTokenRouter.address %>"
 ]
 depends = [
