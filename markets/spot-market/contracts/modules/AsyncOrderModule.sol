@@ -344,11 +344,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
 
         // TODO: AtomicSell is the same, consolidate into OrderUtil? (same for buy above)
-        uint usableAmount = synthAmount.mulDecimal(price);
+        uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.keepersReward;
 
-        (finalOrderAmount, totalFees, collectedFees) = FeeUtil.processFees(
+        (finalOrderAmount, totalFees) = FeeUtil.calculateFees(
             marketId,
-            msg.sender,
+            trader,
             usableAmount,
             SpotMarketFactory.TransactionType.SELL
         );
@@ -360,23 +360,35 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
+        if (totalFees > 0) {
+            // withdraw fees
+            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+                marketId,
+                address(this),
+                totalFees.toUint()
+            );
+
+            // collect fees
+            collectedFees = FeeUtil.collectFees(
+                marketId,
+                totalFees,
+                msg.sender,
+                SpotMarketFactory.TransactionType.SELL
+            );
+        }
+
         IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
             marketId,
             trader,
-            usableAmount
+            finalOrderAmount
         );
 
-        if (finalOrderAmount > usdAmount) {
-            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-                marketId,
-                msg.sender,
-                finalOrderAmount - usdAmount
-            );
-
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
-        } else {
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, finalOrderAmount);
-        }
+        // send keeper it's reward
+        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            marketId,
+            msg.sender,
+            settlementStrategy.keepersReward
+        );
     }
 
     function _settleOffchain(

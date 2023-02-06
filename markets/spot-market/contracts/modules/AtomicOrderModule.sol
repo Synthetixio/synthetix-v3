@@ -75,6 +75,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
+        // Burn synths provided
+        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
+
         // Exchange synths provided into dollar amount
         uint256 usdAmount = Price.synthUsdExchangeRate(
             marketId,
@@ -82,15 +85,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        // Withdraw USD amount
-        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-            marketId,
-            address(this),
-            usdAmount
-        );
-
-        // Calculate fees
-        (uint256 returnAmount, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
+        // calculate fees
+        (uint256 returnAmount, int256 totalFees) = FeeUtil.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -101,20 +97,30 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, returnAmount);
         }
 
-        // Burn synths provided
-        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
+        uint collectedFees;
 
-        if (returnAmount > usdAmount) {
+        if (totalFees > 0) {
+            // withdraw fees
             IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
-                msg.sender,
-                returnAmount - usdAmount
+                address(this),
+                totalFees.toUint()
             );
 
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
-        } else {
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, returnAmount);
+            // collect fees
+            collectedFees = FeeUtil.collectFees(
+                marketId,
+                totalFees,
+                msg.sender,
+                SpotMarketFactory.TransactionType.SELL
+            );
         }
+
+        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            marketId,
+            msg.sender,
+            returnAmount
+        );
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees);
 

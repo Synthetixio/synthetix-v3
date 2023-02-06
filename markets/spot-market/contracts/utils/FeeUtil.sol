@@ -105,7 +105,7 @@ library FeeUtil {
         uint128 marketId,
         uint256 amount,
         bool async
-    ) internal returns (uint amountUsable, int feesCollected) {
+    ) internal returns (uint amountUsable, int calculatedFees) {
         uint utilizationFee = calculateUtilizationRateFee(
             feeConfiguration,
             marketId,
@@ -124,7 +124,7 @@ library FeeUtil {
 
         int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
 
-        (amountUsable, feesCollected) = _applyFees(amount, totalFees);
+        (amountUsable, calculatedFees) = _applyFees(amount, totalFees);
     }
 
     /**
