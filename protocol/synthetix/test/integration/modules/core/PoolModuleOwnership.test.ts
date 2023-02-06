@@ -4,6 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 
 import { bootstrap } from '../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('PoolModule Create / Ownership', function () {
   const { signers, systems } = bootstrap();
@@ -14,14 +15,11 @@ describe('PoolModule Create / Ownership', function () {
     [owner, user1, user2] = signers();
   });
 
-  it('should revert if user does not have permission to create pool', async () => {
-    await assertRevert(
-      systems()
-        .Core.connect(user1)
-        .createPool(1, await user1.getAddress()),
-      'FeatureUnavailable()'
-    );
-  });
+  verifyUsesFeatureFlag(
+    () => systems().Core,
+    'createPool',
+    () => systems().Core.connect(user1).createPool(1, ethers.constants.AddressZero)
+  );
 
   describe('When creating a Pool', async () => {
     let receipt: ethers.providers.TransactionReceipt;

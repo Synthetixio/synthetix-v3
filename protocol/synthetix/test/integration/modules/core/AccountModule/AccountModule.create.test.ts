@@ -5,6 +5,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 
 import { bootstrap } from '../../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../../verifications';
 
 describe('AccountModule', function () {
   const { signers, systems } = bootstrap();
@@ -18,6 +19,12 @@ describe('AccountModule', function () {
     before('identify signers', async () => {
       [, user1, user2] = signers();
     });
+
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'createAccount',
+      () => systems().Core.connect(user1).createAccount(1)
+    );
 
     describe('when user creates an account via the core system', function () {
       before('create the account', async function () {
