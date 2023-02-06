@@ -316,7 +316,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
         // remove keeper fee
-        uint amountUsable = asyncOrderClaim.amountEscrowed - settlementStrategy.keepersReward;
+        uint amountUsable = asyncOrderClaim.amountEscrowed - settlementStrategy.settlementReward;
 
         uint finalAmountUsd;
         (finalAmountUsd, totalFees, collectedFees) = FeeUtil.processFees(
@@ -337,7 +337,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         ITokenModule(spotMarketFactory.usdToken).transfer(
             msg.sender,
-            settlementStrategy.keepersReward
+            settlementStrategy.settlementReward
         );
 
         spotMarketFactory.depositToMarketManager(marketId, finalAmountUsd);
@@ -359,7 +359,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
 
         // TODO: AtomicSell is the same, consolidate into OrderUtil? (same for buy above)
-        uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.keepersReward;
+        uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.settlementReward;
 
         (finalOrderAmount, totalFees) = FeeUtil.calculateFees(
             marketId,
@@ -399,7 +399,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
             marketId,
             msg.sender,
-            settlementStrategy.keepersReward
+            settlementStrategy.settlementReward
         );
 
         IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(

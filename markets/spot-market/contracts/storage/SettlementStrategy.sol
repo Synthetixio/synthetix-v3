@@ -18,7 +18,7 @@ library SettlementStrategy {
         address priceVerificationContract; // For Chainlink and Pyth settlement strategies
         bytes32 feedId;
         string url;
-        uint256 keepersReward; // TODO: rename to settlementReward
+        uint256 settlementReward;
         uint256 priceDeviationTolerance;
     }
 

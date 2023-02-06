@@ -21,7 +21,7 @@ library AsyncOrderConfiguration {
     }
 
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
-    error InvalidCommitmentAmount(uint amount, uint keepersReward);
+    error InvalidCommitmentAmount(uint amount, uint settlementReward);
 
     function isValidSettlementStrategy(
         Data storage self,
@@ -44,9 +44,9 @@ library AsyncOrderConfiguration {
         uint256 settlementStrategyId,
         uint256 amount
     ) internal view {
-        uint keepersReward = self.settlementStrategies[settlementStrategyId].keepersReward;
-        if (amount <= keepersReward) {
-            revert InvalidCommitmentAmount(amount, keepersReward);
+        uint settlementReward = self.settlementStrategies[settlementStrategyId].settlementReward;
+        if (amount <= settlementReward) {
+            revert InvalidCommitmentAmount(amount, settlementReward);
         }
     }
 }
