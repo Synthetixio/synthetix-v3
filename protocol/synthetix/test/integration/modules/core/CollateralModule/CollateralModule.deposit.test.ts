@@ -8,7 +8,7 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import { bootstrap } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
-import { snapshotCheckpoint } from '../../../../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/cannon/snapshot';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider } = bootstrap();

@@ -6,7 +6,7 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/cannon/snapshot';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
 // ---------------------------------------

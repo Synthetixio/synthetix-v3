@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
-import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/cannon/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import hre from 'hardhat';
 import { wei } from '@synthetixio/wei';
