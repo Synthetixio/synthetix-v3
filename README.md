@@ -80,7 +80,6 @@ Then, follow the instructions in the [synthetix-deployments repository](https://
 
 ### Finalizing a Release
 
-After the new version of the [synthetix-omnibus](https://usecannon.com/packages/synthetix-omnibus) package has been published, the previously published packages can be updated to include the deployment data from remote networks from the omnibus release. The contracts from that release can also be verified on Etherscan.
+After the new version of the [synthetix-omnibus](https://usecannon.com/packages/synthetix-omnibus) package has been published, the previously published packages can be verified on Etherscan.
 
-- Check out the commit prior to the version increment above and run `cannon publish <PACKAGE_NAME>:<VERSION> --private-key xxx --tags latest,3`
-- From the relevant package's directory, run the following command for each network it was deployed on: `npx hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>`
+From the relevant package's directory, run the following command for each network it was deployed on: `npx hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>`
