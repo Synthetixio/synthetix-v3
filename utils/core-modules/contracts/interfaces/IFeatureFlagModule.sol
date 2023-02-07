@@ -63,6 +63,7 @@ interface IFeatureFlagModule {
 
     /**
      * @notice Allows an address to use a feature.
+     * @dev This function does nothing if the specified account is already on the allowlist.
      * @param feature The bytes32 id of the feature.
      * @param account The address that is allowed to use the feature.
      */
@@ -70,6 +71,7 @@ interface IFeatureFlagModule {
 
     /**
      * @notice Disallows an address from using a feature.
+     * @dev This function does nothing if the specified account is already on the allowlist.
      * @param feature The bytes32 id of the feature.
      * @param account The address that is disallowed from using the feature.
      */
