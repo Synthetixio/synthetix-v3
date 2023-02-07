@@ -39,6 +39,30 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
         Initialized.load(_INITIALIZED_NAME).initialized = true;
     }
 
+    /**
+     * @inheritdoc INftModule
+     */
+    function burn(uint256 tokenId) external override {
+        OwnableStorage.onlyOwner();
+        _burn(tokenId);
+    }
+
+    /**
+     * @inheritdoc INftModule
+     */
+    function mint(address to, uint256 tokenId) external override {
+        OwnableStorage.onlyOwner();
+        _mint(to, tokenId);
+    }
+
+    /**
+     * @inheritdoc INftModule
+     */
+    function setAllowance(uint tokenId, address spender) external override {
+        OwnableStorage.onlyOwner();
+        ERC721Storage.load().tokenApprovals[tokenId] = spender;
+    }
+
     function _isInitialized() internal view override returns (bool) {
         return Initialized.load(_INITIALIZED_NAME).initialized;
     }

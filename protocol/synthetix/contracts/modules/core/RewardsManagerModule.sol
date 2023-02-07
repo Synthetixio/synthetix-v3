@@ -13,6 +13,8 @@ import "../../storage/Pool.sol";
 
 import "../../interfaces/IRewardsManagerModule.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 /**
  * @title Module for connecting rewards distributors to vaults.
  * @dev See IRewardsManagerModule.
@@ -32,6 +34,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
     using RewardDistribution for RewardDistribution.Data;
 
     uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
+
+    bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
 
     /**
      * @inheritdoc IRewardsManagerModule
@@ -143,6 +147,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address collateralType,
         address distributor
     ) external override returns (uint256) {
+        FeatureFlag.ensureAccessToFeature(_CLAIM_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];

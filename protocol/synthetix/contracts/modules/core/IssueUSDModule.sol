@@ -10,11 +10,14 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 /**
  * @title Module for the minting and burning of stablecoins.
  * @dev See IIssueUSDModule.
  */
 contract IssueUSDModule is IIssueUSDModule {
+    using Account for Account.Data;
     using AccountRBAC for AccountRBAC.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
@@ -31,6 +34,9 @@ contract IssueUSDModule is IIssueUSDModule {
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
+    bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
+    bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
+
     /**
      * @inheritdoc IIssueUSDModule
      */
@@ -40,6 +46,7 @@ contract IssueUSDModule is IIssueUSDModule {
         address collateralType,
         uint256 amount
     ) external override {
+        FeatureFlag.ensureAccessToFeature(_MINT_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._MINT_PERMISSION);
 
         Pool.Data storage pool = Pool.load(poolId);
@@ -82,6 +89,7 @@ contract IssueUSDModule is IIssueUSDModule {
         address collateralType,
         uint256 amount
     ) external override {
+        FeatureFlag.ensureAccessToFeature(_BURN_FEATURE_FLAG);
         Pool.Data storage pool = Pool.load(poolId);
 
         // Retrieve current position debt

@@ -23,7 +23,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
     /**
      * @inheritdoc IAtomicOrderModule
      */
-    function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
+    function buy(
+        uint128 marketId,
+        uint usdAmount,
+        uint minAmountReceived
+    ) external override returns (uint) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -48,6 +52,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
             amountUsable,
             SpotMarketFactory.TransactionType.BUY
         );
+
+        if (synthAmount < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, synthAmount);
+        }
+
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
         emit SynthBought(marketId, synthAmount, totalFees, collectedFees);
@@ -58,7 +67,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
     /**
      * @inheritdoc IAtomicOrderModule
      */
-    function sell(uint128 marketId, uint256 synthAmount) external override returns (uint256) {
+    function sell(
+        uint128 marketId,
+        uint256 synthAmount,
+        uint minAmountReceived
+    ) external override returns (uint256) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -83,6 +96,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
             usdAmount,
             SpotMarketFactory.TransactionType.SELL
         );
+
+        if (returnAmount < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, returnAmount);
+        }
 
         // Burn synths provided
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
