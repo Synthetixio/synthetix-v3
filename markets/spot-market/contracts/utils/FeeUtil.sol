@@ -24,9 +24,7 @@ library FeeUtil {
     ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
         (amountUsable, totalFees) = calculateFees(marketId, transactor, usdAmount, transactionType);
 
-        if (totalFees > 0) {
-            collectedFees = collectFees(marketId, totalFees.toUint(), transactor, transactionType);
-        }
+        collectedFees = collectFees(marketId, totalFees, transactor, transactionType);
     }
 
     /**
@@ -107,7 +105,7 @@ library FeeUtil {
         uint128 marketId,
         uint256 amount,
         bool async
-    ) internal returns (uint amountUsable, int feesCollected) {
+    ) internal returns (uint amountUsable, int calculatedFees) {
         uint utilizationFee = calculateUtilizationRateFee(
             feeConfiguration,
             marketId,
@@ -126,7 +124,7 @@ library FeeUtil {
 
         int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
 
-        (amountUsable, feesCollected) = _applyFees(amount, totalFees);
+        (amountUsable, calculatedFees) = _applyFees(amount, totalFees);
     }
 
     /**
@@ -153,6 +151,7 @@ library FeeUtil {
         );
 
         uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
+
         int totalFees = skewFee + fixedFee.toInt();
 
         (amountUsable, feesCollected) = _applyFees(amount, totalFees);
@@ -206,6 +205,7 @@ library FeeUtil {
             .mulDecimal(collateralPrice);
 
         uint initialSkew = totalSynthValue - wrappedMarketCollateral;
+        uint totalSupply = SynthUtil.getToken(marketId).totalSupply();
         uint initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
         uint skewAfterFill = initialSkew;
@@ -288,18 +288,24 @@ library FeeUtil {
      */
     function collectFees(
         uint128 marketId,
-        uint totalFees,
+        int totalFees,
         address transactor,
         SpotMarketFactory.TransactionType transactionType
     ) internal returns (uint collectedFees) {
+        if (totalFees <= 0) {
+            return 0;
+        }
+
+        uint totalFeesUint = totalFees.toUint();
+
         IFeeCollector feeCollector = FeeConfiguration.load(marketId).feeCollector;
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
 
         if (address(feeCollector) != address(0)) {
             uint previousUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
 
-            spotMarketFactory.usdToken.approve(address(feeCollector), totalFees);
-            feeCollector.collectFees(marketId, totalFees, transactor, uint8(transactionType));
+            spotMarketFactory.usdToken.approve(address(feeCollector), totalFeesUint);
+            feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
 
             uint currentUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;
@@ -307,7 +313,7 @@ library FeeUtil {
             spotMarketFactory.usdToken.approve(address(feeCollector), 0);
         }
 
-        uint feesToDeposit = totalFees - collectedFees;
+        uint feesToDeposit = totalFeesUint - collectedFees;
         spotMarketFactory.depositToMarketManager(marketId, feesToDeposit);
     }
 

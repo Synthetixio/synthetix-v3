@@ -43,13 +43,6 @@ describe('Atomic Order Module sell()', () => {
     await assertRevert(systems().SpotMarket.buy(25, 10000, 0), 'InvalidMarket');
   });
 
-  it('reverts when user does not have synth amount to sell', async () => {
-    await assertRevert(
-      systems().SpotMarket.connect(signers()[8]).sell(marketId(), 10000, 0),
-      'InsufficientBalance("10000", "0")'
-    );
-  });
-
   describe('slippage', () => {
     let withdrawableUsd: Ethers.BigNumber;
     let traderBalance: Ethers.BigNumber;

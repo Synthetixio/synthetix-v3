@@ -55,13 +55,6 @@ contract WrapperModule is IWrapperModule {
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
 
-        if (wrappingCollateral.balanceOf(msg.sender) < wrapAmount) revert InsufficientFunds();
-        if (wrappingCollateral.allowance(msg.sender, address(this)) < wrapAmount)
-            revert InsufficientAllowance(
-                wrapAmount,
-                spotMarketFactory.usdToken.allowance(msg.sender, address(this))
-            );
-
         uint currentDepositedCollateral = IMarketCollateralModule(spotMarketFactory.synthetix)
             .getMarketCollateralAmount(marketId, wrapperStore.wrapCollateralType);
 
@@ -96,12 +89,8 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.WRAP
         );
 
-        uint collectedFees = 0;
+        uint collectedFees;
         if (totalFees > 0) {
-            // TODO: potential gas consideration:
-            // currently we withdraw fees amount from market to send to fee collector
-            // whatever is leftover gets re-deposited into the market manager.
-            // we should consolidate this and only withdraw the amount required
             IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
@@ -109,7 +98,7 @@ contract WrapperModule is IWrapperModule {
             );
             collectedFees = FeeUtil.collectFees(
                 marketId,
-                totalFees.toUint(),
+                totalFees,
                 msg.sender,
                 SpotMarketFactory.TransactionType.WRAP
             );
@@ -140,12 +129,11 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
 
-        if (synth.balanceOf(msg.sender) < unwrapAmount) revert InsufficientFunds();
-        uint256 allowance = synth.allowance(msg.sender, address(this));
-        if (allowance < unwrapAmount) revert InsufficientAllowance(unwrapAmount, allowance);
-
         // transfer from seller
         synth.transferFrom(msg.sender, address(this), unwrapAmount);
+
+        // TODO: do i need to transfer to burn?
+        synth.burn(address(this), unwrapAmount);
 
         uint256 unwrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
@@ -168,7 +156,7 @@ contract WrapperModule is IWrapperModule {
             );
             collectedFees = FeeUtil.collectFees(
                 marketId,
-                totalFees.toUint(),
+                totalFees,
                 msg.sender,
                 SpotMarketFactory.TransactionType.UNWRAP
             );
@@ -187,7 +175,6 @@ contract WrapperModule is IWrapperModule {
         );
 
         ITokenModule(wrapperStore.wrapCollateralType).transfer(msg.sender, returnCollateralAmount);
-        synth.burn(address(this), unwrapAmount);
 
         emit SynthUnwrapped(marketId, returnCollateralAmount, totalFees, collectedFees);
     }

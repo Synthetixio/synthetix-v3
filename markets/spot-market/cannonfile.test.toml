@@ -5,7 +5,7 @@ include = [
 ]
 
 [import.synthetix]
-source = "synthetix:3.0.0-alpha.9-testable"
+source = "synthetix:3.0.0-alpha.10-testable"
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"

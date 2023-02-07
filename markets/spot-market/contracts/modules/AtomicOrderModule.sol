@@ -82,15 +82,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        // Withdraw USD amount
-        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-            marketId,
-            address(this),
-            usdAmount
-        );
-
-        // Calculate fees
-        (uint256 returnAmount, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
+        // calculate fees
+        (uint256 returnAmount, int256 totalFees) = FeeUtil.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -102,19 +95,33 @@ contract AtomicOrderModule is IAtomicOrderModule {
         }
 
         // Burn synths provided
+        // Burn after calculation because skew is calculating using total supply prior to fill
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
-        if (returnAmount > usdAmount) {
+        uint collectedFees;
+
+        if (totalFees > 0) {
+            // withdraw fees
             IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
-                msg.sender,
-                returnAmount - usdAmount
+                address(this),
+                totalFees.toUint()
             );
 
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
-        } else {
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, returnAmount);
+            // collect fees
+            collectedFees = FeeUtil.collectFees(
+                marketId,
+                totalFees,
+                msg.sender,
+                SpotMarketFactory.TransactionType.SELL
+            );
         }
+
+        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            marketId,
+            msg.sender,
+            returnAmount
+        );
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees);
 
