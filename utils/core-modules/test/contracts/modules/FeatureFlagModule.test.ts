@@ -62,6 +62,18 @@ describe('FeatureFlagModule', function () {
         FeatureFlagModule
       );
     });
+
+    it('allows addToFeatureFlagAllowlist to be called a second time without consequence', async function () {
+      await FeatureFlagModule.addToFeatureFlagAllowlist(
+        FEATURE_FLAG_NAME,
+        await permissionedUser.getAddress()
+      );
+
+      assert.equal(
+        (await FeatureFlagModule.getFeatureFlagAllowlist(FEATURE_FLAG_NAME)).toString(),
+        [await permissionedUser.getAddress()].toString()
+      );
+    });
   });
 
   describe('call function behind feature flag', async function () {
@@ -118,6 +130,18 @@ describe('FeatureFlagModule', function () {
       await assertRevert(
         SampleFeatureFlagModule.connect(permissionedUser).setFeatureFlaggedValue(25),
         `FeatureUnavailable(${FEATURE_FLAG_NAME})`
+      );
+    });
+
+    it('allows removeFromFeatureFlagAllowlist to be called a second time without consequence', async function () {
+      await FeatureFlagModule.removeFromFeatureFlagAllowlist(
+        FEATURE_FLAG_NAME,
+        await permissionedUser.getAddress()
+      );
+
+      assert.equal(
+        (await FeatureFlagModule.getFeatureFlagAllowlist(FEATURE_FLAG_NAME)).toString(),
+        [].toString()
       );
     });
   });

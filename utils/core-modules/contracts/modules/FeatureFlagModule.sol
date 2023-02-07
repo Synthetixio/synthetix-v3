@@ -48,9 +48,15 @@ contract FeatureFlagModule is IFeatureFlagModule {
      */
     function addToFeatureFlagAllowlist(bytes32 feature, address account) external override {
         OwnableStorage.onlyOwner();
-        FeatureFlag.load(feature).permissionedAddresses.add(account);
 
-        emit FeatureFlagAllowlistAdded(feature, account);
+        SetUtil.AddressSet storage permissionedAddresses = FeatureFlag
+            .load(feature)
+            .permissionedAddresses;
+
+        if (!permissionedAddresses.contains(account)) {
+            permissionedAddresses.add(account);
+            emit FeatureFlagAllowlistAdded(feature, account);
+        }
     }
 
     /**
@@ -58,9 +64,15 @@ contract FeatureFlagModule is IFeatureFlagModule {
      */
     function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external override {
         OwnableStorage.onlyOwner();
-        FeatureFlag.load(feature).permissionedAddresses.remove(account);
 
-        emit FeatureFlagAllowlistRemoved(feature, account);
+        SetUtil.AddressSet storage permissionedAddresses = FeatureFlag
+            .load(feature)
+            .permissionedAddresses;
+
+        if (permissionedAddresses.contains(account)) {
+            FeatureFlag.load(feature).permissionedAddresses.remove(account);
+            emit FeatureFlagAllowlistRemoved(feature, account);
+        }
     }
 
     /**
