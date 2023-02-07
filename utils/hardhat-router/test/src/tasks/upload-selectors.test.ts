@@ -1,9 +1,9 @@
-import { ok, equal } from 'assert/strict';
 import { JsonFragment } from '@ethersproject/abi';
+import { equal, ok } from 'assert/strict';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import * as fourbytes from '../../../src/internal/fourbytes';
 import { TASK_UPLOAD_SELECTORS } from '../../../src/task-names';
 import { loadEnvironment } from '../../helpers/use-environment';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 describe('tasks/upload-selectors.ts', function () {
   let hre: HardhatRuntimeEnvironment;

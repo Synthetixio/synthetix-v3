@@ -16,6 +16,7 @@ jobs:
             core-contracts,
             core-utils,
             core-modules,
+            router,
             hardhat-router,
             sample-project,
             main,
@@ -36,6 +37,9 @@ jobs:
           - package: hardhat-router
             workspace: "@synthetixio/hardhat-router"
             coverage-file: utils/hardhat-router/coverage/lcov.info
+          - package: router
+            workspace: "@synthetixio/router"
+            coverage-file: utils/router/coverage/lcov.info
           - package: sample-project
             workspace: "@synthetixio/sample-project"
           - package: oracle-manager
