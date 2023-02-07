@@ -3,6 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
 import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../../verifications';
 
 describe('MarketCollateralModule', function () {
   const { signers, systems, MockMarket, marketId, collateralAddress, collateralContract, restore } =
@@ -69,7 +70,7 @@ describe('MarketCollateralModule', function () {
       });
     });
 
-    describe('deposit()', async () => {
+    describe('depositMarketCollateral()', async () => {
       before(restore);
 
       before('configure max', async () => {
@@ -107,6 +108,12 @@ describe('MarketCollateralModule', function () {
           systems().Core
         );
       });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'depositMarketCollateral',
+        () => MockMarket().connect(user1).deposit(collateralAddress(), configuredMaxAmount)
+      );
 
       describe('invoked successfully', () => {
         let tx: ethers.providers.TransactionReceipt;
@@ -150,7 +157,7 @@ describe('MarketCollateralModule', function () {
       });
     });
 
-    describe('Withdraw()', async () => {
+    describe('WithdrawMarketCollateral()', async () => {
       before(restore);
 
       before('configure max', async () => {
@@ -194,6 +201,15 @@ describe('MarketCollateralModule', function () {
           systems().Core
         );
       });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'withdrawMarketCollateral',
+        () =>
+          MockMarket()
+            .connect(user1)
+            .withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
+      );
 
       describe('successful withdraw partial', async () => {
         let tx: ethers.providers.TransactionReceipt;

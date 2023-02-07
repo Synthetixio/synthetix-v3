@@ -12,13 +12,11 @@ library AsyncOrderClaim {
     );
     error OrderNotEligibleForCancellation(uint256 timestamp, uint256 expirationTime);
 
-    error InvalidVerificationResponse();
-
     struct Data {
         SpotMarketFactory.TransactionType orderType;
         uint256 amountEscrowed; // Amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
         uint256 settlementStrategyId;
-        uint256 commitmentTime;
+        uint256 settlementTime;
         int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
         uint256 commitmentBlockNum;
@@ -39,7 +37,7 @@ library AsyncOrderClaim {
         SpotMarketFactory.TransactionType orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
-        uint256 commitmentTime,
+        uint256 settlementTime,
         int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
         uint256 commitmentBlockNum
@@ -48,7 +46,7 @@ library AsyncOrderClaim {
         self.orderType = orderType;
         self.amountEscrowed = amountEscrowed;
         self.settlementStrategyId = settlementStrategyId;
-        self.commitmentTime = commitmentTime;
+        self.settlementTime = settlementTime;
         self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
         self.commitmentBlockNum = commitmentBlockNum;
@@ -58,14 +56,13 @@ library AsyncOrderClaim {
 
     function checkWithinSettlementWindow(
         Data storage claim,
-        SettlementStrategy.Data storage settlementStrategy,
-        uint256 timestamp
+        SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint startTime = claim.commitmentTime + settlementStrategy.settlementDelay;
+        uint startTime = claim.settlementTime;
         uint expirationTime = startTime + settlementStrategy.settlementWindowDuration;
 
-        if (timestamp < startTime || timestamp >= expirationTime) {
-            revert OrderNotWithinSettlementWindow(timestamp, startTime, expirationTime);
+        if (block.timestamp < startTime || block.timestamp >= expirationTime) {
+            revert OrderNotWithinSettlementWindow(block.timestamp, startTime, expirationTime);
         }
     }
 
@@ -73,9 +70,7 @@ library AsyncOrderClaim {
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint expirationTime = claim.commitmentTime +
-            settlementStrategy.settlementDelay +
-            settlementStrategy.settlementWindowDuration;
+        uint expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < expirationTime) {
             revert OrderNotEligibleForCancellation(block.timestamp, expirationTime);

@@ -45,12 +45,6 @@ All projects in this monorepo that involve contracts use a proxy architecture de
 
 See the [Router README](utils/hardhat-router/README.md) for more details.
 
-## Deployments with Cannon
-
-All projects in this repo that involve the deployment of contracts use [Cannon](https://usecannon.com/), a novel tool to manage protocol deployment and testing on blockchains.
-
-Please refer to the [Cannon Documentation](https://usecannon.com/docs) for more details.
-
 ## Information for Developers
 
 If you intend to develop in this repository, please read the following items.
@@ -64,3 +58,28 @@ If you intend to develop in this repository, please read the following items.
 ### Console logs in contracts
 
 In the contracts, use `import "hardhat/console.sol";`, then run `DEBUG=cannon:cli:rpc npm test`.
+
+## Deployment Guide
+
+Deployment of the protocol is managed in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
+
+To prepare for system upgrades, this repository is used to release new versions of the [protocol](/protocol) and [markets](/markets).
+
+### Preparing a Release
+
+- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `npm i -g @usecannon/cli`.
+- After installing for the first time, run `cannon setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
+- Run `npm i` and `npm run build` in the root directory of the repository.
+- From the directory of the package you're releasing, run `npx hardhat cannon:build`.
+- Confirm the private key that owns the corresponding namespace in the package registry is set in the `.env` file as `DEPLOYER_PRIVATE_KEY`.
+- Publish the release to Cannon package registry with `npx hardhat cannon:publish --network mainnet`.
+- Increment the version in the relevant `package.json` and push the change to this repository. (The repositories should always contain the version number of the next release.)
+
+Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
+
+### Finalizing a Release
+
+After the new version of the [synthetix-omnibus](https://usecannon.com/packages/synthetix-omnibus) package has been published, the previously published packages can be updated to include the deployment data from remote networks from the omnibus release. The contracts from that release can also be verified on Etherscan.
+
+- Check out the commit prior to the version increment above and run `cannon publish <PACKAGE_NAME>:<VERSION> --private-key xxx --tags latest,3`
+- From the relevant package's directory, run the following command for each network it was deployed on: `npx hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>`

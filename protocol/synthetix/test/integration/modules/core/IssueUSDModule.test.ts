@@ -4,7 +4,8 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/src/utils/cannon/snapshot';
+import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
@@ -99,6 +100,15 @@ describe('IssueUSDModule', function () {
       );
     });
 
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'mintUsd',
+      () =>
+        systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
+    );
+
     describe('successful mint', () => {
       before('mint', async () => {
         await systems().Core.connect(user1).mintUsd(
@@ -160,6 +170,15 @@ describe('IssueUSDModule', function () {
         .Core.connect(user1)
         .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
     });
+
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'burnUsd',
+      () =>
+        systems()
+          .Core.connect(user1)
+          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
+    );
 
     describe('burn from other account', async () => {
       before('transfer burn collateral', async () => {

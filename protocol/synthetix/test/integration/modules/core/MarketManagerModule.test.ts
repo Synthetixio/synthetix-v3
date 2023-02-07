@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { MockMarket__factory } from '../../../../typechain-types/index';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('MarketManagerModule', function () {
   const {
@@ -34,12 +35,11 @@ describe('MarketManagerModule', function () {
   describe('registerMarket()', async () => {
     before(restore);
 
-    it('does not allow non-permissioned user to register market', async () => {
-      await assertRevert(
-        systems().Core.connect(user2).registerMarket(user1.getAddress()),
-        'FeatureUnavailable()'
-      );
-    });
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'registerMarket',
+      () => systems().Core.connect(user2).registerMarket(user1.getAddress())
+    );
 
     it('reverts when trying to register a market that does not support the IMarket interface', async function () {
       await assertRevert(
@@ -82,7 +82,7 @@ describe('MarketManagerModule', function () {
     });
   });
 
-  describe('deposit()', async () => {
+  describe('depositMarketUsd()', async () => {
     before(restore);
 
     before('acquire USD', async () => {
@@ -97,38 +97,49 @@ describe('MarketManagerModule', function () {
       );
     });
 
-    describe('success', async () => {
-      before('deposit', async () => {
+    describe('when funds have been approved', async () => {
+      before('approve usd', async () => {
         await systems().USD.connect(user1).approve(MockMarket().address, One);
-        txn = await MockMarket().connect(user1).buySynth(One);
       });
 
-      it('takes USD away', async () => {
-        assertBn.isZero(await systems().USD.balanceOf(await user1.getAddress()));
-      });
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'depositMarketUsd',
+        () => MockMarket().connect(user1).buySynth(One)
+      );
 
-      it('increases withdrawableUsd', async () => {
-        assertBn.equal(
-          await systems().Core.connect(user1).getWithdrawableMarketUsd(marketId()),
-          depositAmount.add(One)
-        );
-      });
+      describe('success', async () => {
+        before('deposit', async () => {
+          txn = await MockMarket().connect(user1).buySynth(One);
+        });
 
-      it('leaves totalDebt the same', async () => {
-        assertBn.isZero(await systems().Core.connect(user1).getMarketTotalDebt(marketId()));
-      });
+        it('takes USD away', async () => {
+          assertBn.isZero(await systems().USD.balanceOf(await user1.getAddress()));
+        });
 
-      it('accrues no debt', async () => {
-        // should only have the one USD minted earlier
-        assertBn.equal(
-          await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
-          0
-        );
+        it('increases withdrawableUsd', async () => {
+          assertBn.equal(
+            await systems().Core.connect(user1).getWithdrawableMarketUsd(marketId()),
+            depositAmount.add(One)
+          );
+        });
+
+        it('leaves totalDebt the same', async () => {
+          assertBn.isZero(await systems().Core.connect(user1).getMarketTotalDebt(marketId()));
+        });
+
+        it('accrues no debt', async () => {
+          // should only have the one USD minted earlier
+          assertBn.equal(
+            await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+            0
+          );
+        });
       });
     });
   });
 
-  describe('withdraw()', async () => {
+  describe('withdrawMarketUsd()', async () => {
     before(restore);
 
     describe('deposit into the pool', async () => {
@@ -150,6 +161,12 @@ describe('MarketManagerModule', function () {
 
         await MockMarket().connect(user1).setReportedDebt(reportedDebtBefore);
       });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'withdrawMarketUsd',
+        () => MockMarket().connect(user1).sellSynth(One.div(2))
+      );
 
       describe('withdraw some from the market', async () => {
         before('mint USD to use market', async () => {
