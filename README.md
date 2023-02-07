@@ -67,13 +67,14 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 ### Preparing a Release
 
-- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `npm i -g @usecannon/cli`.
+- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `npm i -g @usecannon/cli` and `hardhat-cannon` is upgraded to the latest through the repository.
 - After installing for the first time, run `cannon setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
 - Run `npm i` and `npm run build` in the root directory of the repository.
-- From the directory of the package you're releasing, run `npx hardhat cannon:build`.
+- From the directory of the package you're releasing, run `npx hardhat cannon:build`. **Remember to bump the version number of the oracle manager in the synthetix toml file after you're upgrading oracle manager.**
 - Confirm the private key that owns the corresponding namespace in the package registry is set in the `.env` file as `DEPLOYER_PRIVATE_KEY`.
 - Publish the release to Cannon package registry with `npx hardhat cannon:publish --network mainnet`.
-- Increment the version in the relevant `package.json` and push the change to this repository. (The repositories should always contain the version number of the next release.)
+- Increment the version in the relevant `package.json` files and then run `npm i` in the root directory. _The repositories should always contain the version number of the next release._
+- Push the change to this repository.
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
 
