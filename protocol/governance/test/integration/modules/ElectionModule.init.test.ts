@@ -1,16 +1,26 @@
+import hre from 'hardhat';
 import { ethers } from 'ethers';
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bootstrap } from '../bootstrap';
+import { CouncilTokenModule } from '../../../typechain-types';
 
-describe('SynthetixElectionModule (initialization)', () => {
+describe('ElectionModule (initialization)', () => {
   const { systems, provider, signers } = bootstrap();
 
-  let owner: ethers.Signer;
+  let owner: ethers.Signer, user: ethers.Signer;
+  let CouncilToken: CouncilTokenModule;
 
   before('identify signers', async () => {
-    [owner] = signers();
+    [owner, user] = signers();
+  });
+
+  before('identify the council token', async function () {
+    CouncilToken = await hre.ethers.getContractAt(
+      'CouncilTokenModule',
+      await systems().Council.getCouncilToken()
+    );
   });
 
   // Note: The module is initialized in the cannonfile.
@@ -54,6 +64,11 @@ describe('SynthetixElectionModule (initialization)', () => {
         await systems().Council.getCouncilToken(),
         '0x0000000000000000000000000000000000000000'
       );
+    });
+
+    it('shows the expected NFT owners', async function () {
+      assertBn.equal(await CouncilToken.balanceOf(await owner.getAddress()), 1);
+      assertBn.equal(await CouncilToken.balanceOf(await user.getAddress()), 0);
     });
   });
 });

@@ -1,16 +1,14 @@
 import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
-import type { ElectionModule, DebtShareMock, CouncilTokenModule } from '../../typechain-types';
+import type { ElectionModule, DebtShareMock } from '../../typechain-types';
 
 export interface Proxies {
   CoreProxy: ElectionModule;
   DebtShareMock: DebtShareMock;
-  CouncilTokenModule: CouncilTokenModule;
 }
 
 interface Systems {
   Council: ElectionModule;
   DebtShare: DebtShareMock;
-  CouncilToken: CouncilTokenModule;
 }
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
@@ -25,7 +23,6 @@ before('load system proxies', function () {
   systems = {
     Council: getContract('CoreProxy'),
     DebtShare: getContract('DebtShareMock'),
-    CouncilToken: getContract('CouncilTokenModule'),
   } as Systems;
 });
 

@@ -1,6 +1,18 @@
 # Synthetix Governance Modules
 
-Governance cotracts for on chain voting.
+Governance contracts for on chain voting.
+
+## Code Status
+
+This code is a WIP port from the [v1.0.0-governance-branch](https://github.com/Synthetixio/synthetix-v3/tree/v1.0.0-governance-branch), and is currently not functional. All releases and updates to the currently deployed election modules and councils are made from that branch, which has been audited by Iosiro.
+
+The code currently in this main, under `protocol/governance` is a modernized port of the old code in the governance branch, and changes the storage layout of the election module. This makes this code incompatible with the old code and will require deployment of new proxies, new NFTs, etc.
+
+The current state of the code is that tests are not passing, and the contracts need to be further modified to work correctly, and later re-audited.
+
+The governance branch also contains tests that were not brought into the branch in the core-modules folder. These will also need to be ported here to prove correct functionality of the new code, and perhaps new tests will be needed for the generated storage objects.
+
+Finally, it may be desired to remove old election code used in fixture tests in packages outside of `protocol/governance`.
 
 ## Cannon Usage
 
