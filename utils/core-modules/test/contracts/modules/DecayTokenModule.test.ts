@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/cannon/snapshot';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import { DecayTokenModule } from '../../../typechain-types';
