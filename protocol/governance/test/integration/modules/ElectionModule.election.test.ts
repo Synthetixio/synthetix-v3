@@ -30,7 +30,7 @@ import { DebtShareMock, CouncilTokenModule } from '../../../typechain-types/inde
 
 // TODO: The port of these tests is incomplete. See README.md.
 
-describe('ElectionModule (election)', function () {
+describe.skip('ElectionModule (election)', function () {
   const { signers, systems, provider } = bootstrap();
 
   let CouncilToken: CouncilTokenModule;

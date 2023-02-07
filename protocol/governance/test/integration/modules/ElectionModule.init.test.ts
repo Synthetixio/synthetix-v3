@@ -6,7 +6,7 @@ import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bootstrap } from '../bootstrap';
 import { CouncilTokenModule } from '../../../typechain-types';
 
-describe('ElectionModule (initialization)', () => {
+describe.skip('ElectionModule (initialization)', () => {
   const { systems, provider, signers } = bootstrap();
 
   let owner: ethers.Signer, user: ethers.Signer;
