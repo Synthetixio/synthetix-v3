@@ -4,8 +4,8 @@ include = [
   "cannonfile.toml"
 ]
 
-[import.synthetix]
-source = "synthetix:3.0.0-alpha.10-testable"
+[provision.synthetix]
+source = "synthetix:3.0.0-alpha.12-testable"
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
@@ -14,4 +14,4 @@ artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
 target = ["FeeCollectorMock"]
 func = "setUsdToken"
 args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
-depends = ["contract.FeeCollectorMock", "import.synthetix"]
+depends = ["contract.FeeCollectorMock", "provision.synthetix"]

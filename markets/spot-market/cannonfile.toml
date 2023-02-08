@@ -13,7 +13,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.synthetixPackage]
 defaultValue = "synthetix:3.0.0-alpha.10"
 
-[import.synthetix]
+[provision.synthetix]
 source = "<%= settings.synthetixPackage %>"
 
 [contract.SpotMarketFactoryModule]
@@ -127,7 +127,7 @@ args = [
   "<%= contracts.SynthRouter.address %>",
   "<%= contracts.AsyncOrderClaimRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "router.SynthRouter", "router.AsyncOrderClaimRouter"]
+depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix", "router.SynthRouter", "router.AsyncOrderClaimRouter"]
 
 # add pool owner to feature flag allow list (owner must be pdao for this to be successful)
 [invoke.addSpotMarketToFeatureFlag]
@@ -135,7 +135,7 @@ target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
-depends = ['import.synthetix', 'invoke.upgrade_spot_market_proxy']
+depends = ['provision.synthetix', 'invoke.upgrade_spot_market_proxy']
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
