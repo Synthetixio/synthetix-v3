@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
-import { verifyUsesFeatureFlag } from '../../verifications';
+import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../verifications';
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
@@ -99,6 +99,17 @@ describe('IssueUSDModule', function () {
         systems().Core
       );
     });
+
+    verifyChecksCollateralEnabled(
+      () => systems().Core.connect(owner),
+      collateralAddress,
+      () => systems().Core.connect(user1).mintUsd(
+        accountId,
+        poolId,
+        collateralAddress(),
+        depositAmount.div(10) // should be enough
+      )
+    );
 
     verifyUsesFeatureFlag(
       () => systems().Core,

@@ -49,6 +49,9 @@ contract IssueUSDModule is IIssueUSDModule {
         FeatureFlag.ensureAccessToFeature(_MINT_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._MINT_PERMISSION);
 
+        // disabled collateralType cannot be used for minting
+        CollateralConfiguration.collateralEnabled(collateralType);
+
         Pool.Data storage pool = Pool.load(poolId);
 
         int256 debt = pool.updateAccountDebt(collateralType, accountId);
