@@ -5,12 +5,9 @@ import "./AsyncOrderConfiguration.sol";
 import "./SpotMarketFactory.sol";
 
 library AsyncOrderClaim {
-    error OrderNotWithinSettlementWindow(
-        uint256 timestamp,
-        uint256 startTime,
-        uint256 expirationTime
-    );
-    error OrderNotEligibleForCancellation(uint256 timestamp, uint256 expirationTime);
+    error OutsideSettlementWindow(uint256 timestamp, uint256 startTime, uint256 expirationTime);
+    error IneligibleForCancellation(uint256 timestamp, uint256 expirationTime);
+    error OrderAlreadySettled(uint256 asyncOrderId);
 
     struct Data {
         SpotMarketFactory.TransactionType orderType;
@@ -20,6 +17,8 @@ library AsyncOrderClaim {
         int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
         uint256 commitmentBlockNum;
+        uint256 settledAt;
+        address settlementAddress;
     }
 
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -40,7 +39,7 @@ library AsyncOrderClaim {
         uint256 settlementTime,
         int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
-        uint256 commitmentBlockNum
+        address settlementAddress
     ) internal returns (Data storage) {
         Data storage self = load(marketId, claimId);
         self.orderType = orderType;
@@ -49,20 +48,24 @@ library AsyncOrderClaim {
         self.settlementTime = settlementTime;
         self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
-        self.commitmentBlockNum = commitmentBlockNum;
-
+        self.settlementAddress = settlementAddress;
         return self;
     }
 
-    function checkWithinSettlementWindow(
+    function checkSettlementValidity(
         Data storage claim,
+        uint asyncOrderId,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
+        if (claim.settledAt != 0) {
+            revert OrderAlreadySettled(asyncOrderId);
+        }
+
         uint startTime = claim.settlementTime;
         uint expirationTime = startTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < startTime || block.timestamp >= expirationTime) {
-            revert OrderNotWithinSettlementWindow(block.timestamp, startTime, expirationTime);
+            revert OutsideSettlementWindow(block.timestamp, startTime, expirationTime);
         }
     }
 
@@ -73,7 +76,7 @@ library AsyncOrderClaim {
         uint expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < expirationTime) {
-            revert OrderNotEligibleForCancellation(block.timestamp, expirationTime);
+            revert IneligibleForCancellation(block.timestamp, expirationTime);
         }
     }
 }

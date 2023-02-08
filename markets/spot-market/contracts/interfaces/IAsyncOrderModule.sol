@@ -16,8 +16,9 @@ interface IAsyncOrderModule {
     event OrderSettled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
-        AsyncOrderClaim.Data asyncOrderClaim,
         uint256 finalOrderAmount,
+        int totalFees,
+        uint collectedFees,
         address indexed sender
     );
 

@@ -138,6 +138,13 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    function getAsyncOrderClaimToken(uint128 marketId) external view override returns (address) {
+        return address(AsyncOrderClaimTokenUtil.getNft(marketId));
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 

@@ -12,6 +12,7 @@ import {
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
   SynthRouter,
+  PythVerifierMock,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -23,6 +24,7 @@ type Proxies = {
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
+  PythVerifierMock: PythVerifierMock;
 };
 
 export type Systems = {
