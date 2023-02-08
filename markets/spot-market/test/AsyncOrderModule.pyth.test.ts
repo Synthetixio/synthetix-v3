@@ -1,13 +1,13 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter, AsyncOrderClaimRouter } from '../generated/typechain';
+import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe.only('AsyncOrderModule pyth', () => {
-  const { systems, signers, marketId, provider, restore } = bootstrapTraders(
+describe('AsyncOrderModule pyth', () => {
+  const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
 
@@ -17,7 +17,7 @@ describe.only('AsyncOrderModule pyth', () => {
     synth: SynthRouter,
     startTime: number,
     strategyId: number,
-    pythSettlementStrategy: any,
+    pythSettlementStrategy: Record<string, unknown>,
     pythCallData: string,
     extraData: string;
 
@@ -54,11 +54,11 @@ describe.only('AsyncOrderModule pyth', () => {
   describe('commit order', () => {
     let commitTxn: ethers.providers.TransactionResponse;
     before('commit', async () => {
-      startTime = await getTime(provider());
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), 0, bn(0.8));
+        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8));
+      startTime = await getTime(provider());
     });
 
     it('emits event', async () => {
@@ -73,21 +73,24 @@ describe.only('AsyncOrderModule pyth', () => {
   describe('settle order', () => {
     before('fast forward to settlement time', async () => {
       await fastForwardTo(startTime + 6, provider());
+    });
+
+    before('setup bytes data', () => {
       extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [marketId(), 1]);
       pythCallData = ethers.utils.solidityPack(
         ['bytes32', 'uint64'],
-        [pythSettlementStrategy.feedId, startTime + 6]
+        [pythSettlementStrategy.feedId, startTime + 5]
       );
     });
 
     it('reverts with offchain error', async () => {
       const functionSig = systems().SpotMarket.interface.getSighash('settlePythOrder');
-      // await assertRevert(
-      //   systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
-      //   `OffchainLookup("${systems().SpotMarket.address}", "${
-      //     pythSettlementStrategy.url
-      //   }", "${pythCallData}", "${functionSig}", "${extraData}")`
-      // );
+      await assertRevert(
+        systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
+        `OffchainLookup("${systems().SpotMarket.address}", "${
+          pythSettlementStrategy.url
+        }", "${pythCallData}", "${functionSig}", "${extraData}")`
+      );
 
       await assertRevert(
         systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
