@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter, AsyncOrderClaimRouter } from '../generated/typechain';
+import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
@@ -18,7 +18,7 @@ const settlementStrategy = {
 };
 
 describe('AsyncOrderModule onchain', () => {
-  const { systems, signers, marketId, provider, restore } = bootstrapTraders(
+  const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 

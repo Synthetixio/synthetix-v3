@@ -4,8 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "hardhat/console.sol";
-
 library SettlementStrategy {
     using DecimalMath for uint256;
     using SafeCastI256 for int256;

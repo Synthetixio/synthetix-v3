@@ -15,8 +15,6 @@ import "../utils/FeeUtil.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Module to process asyncronous orders
  * @notice See README.md for an overview of asyncronous orders
@@ -190,7 +188,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         bytes calldata result,
         bytes calldata extraData
     ) external returns (uint, int, uint) {
-        console.log(1);
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         SettlementStrategy.Data storage settlementStrategy = AsyncOrderConfiguration
@@ -338,8 +335,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             asyncOrderClaim.amountEscrowed
         );
-
-        console.log("synth amount", synthAmount);
 
         address trader = asyncOrderClaim.settlementAddress;
 
