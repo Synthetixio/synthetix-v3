@@ -31,8 +31,10 @@ export function verifyChecksCollateralEnabled(
   collateralAddress: () => string,
   txn: () => Promise<unknown>
 ) {
-  describe.only('collateral is disabled', async () => {
-    const restore = snapshotCheckpoint(() => c().signer.provider as ethers.providers.JsonRpcProvider);
+  describe('collateral is disabled', async () => {
+    const restore = snapshotCheckpoint(
+      () => c().signer.provider as ethers.providers.JsonRpcProvider
+    );
     before('disable collateral', async () => {
       await c().configureCollateral({
         depositingEnabled: false,
@@ -41,18 +43,14 @@ export function verifyChecksCollateralEnabled(
         liquidationRewardD18: 0,
         oracleNodeId: ethers.utils.formatBytes32String(''),
         tokenAddress: collateralAddress(),
-        minDelegationD18: 0
-      })
+        minDelegationD18: 0,
+      });
     });
 
     after(restore);
 
     it('verifies collateral is enabled', async () => {
-      await assertRevert(
-        txn(),
-        'CollateralDepositDisabled',
-        c()
-      )
+      await assertRevert(txn(), 'CollateralDepositDisabled', c());
     });
   });
 }

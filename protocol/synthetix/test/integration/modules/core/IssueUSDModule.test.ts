@@ -103,12 +103,13 @@ describe('IssueUSDModule', function () {
     verifyChecksCollateralEnabled(
       () => systems().Core.connect(owner),
       collateralAddress,
-      () => systems().Core.connect(user1).mintUsd(
-        accountId,
-        poolId,
-        collateralAddress(),
-        depositAmount.div(10) // should be enough
-      )
+      () =>
+        systems().Core.connect(user1).mintUsd(
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.div(10) // should be enough
+        )
     );
 
     verifyUsesFeatureFlag(
