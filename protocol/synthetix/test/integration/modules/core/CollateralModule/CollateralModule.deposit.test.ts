@@ -101,13 +101,12 @@ describe('CollateralModule', function () {
           it('fails when depositing to nonexistant account', async () => {
             await assertRevert(
               systems().Core.connect(user1).deposit(283729, Collateral.address, depositAmount),
-              `AccountNotFound("283729")`,
+              'AccountNotFound("283729")',
               systems().Core
             );
           });
 
           describe('when depositing collateral', () => {
-
             before('deposit some collateral', async () => {
               const tx = await systems()
                 .Core.connect(user1)
