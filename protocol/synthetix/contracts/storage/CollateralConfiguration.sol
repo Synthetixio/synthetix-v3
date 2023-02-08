@@ -200,7 +200,11 @@ library CollateralConfiguration {
         uint256 debtD18,
         uint256 collateralValueD18
     ) internal view {
-        if (debtD18 != 0 && collateralValueD18.divDecimal(debtD18) < self.issuanceRatioD18) {
+        if (
+            debtD18 != 0 &&
+            (collateralValueD18 == 0 ||
+                collateralValueD18.divDecimal(debtD18) < self.issuanceRatioD18)
+        ) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,
                 debtD18,

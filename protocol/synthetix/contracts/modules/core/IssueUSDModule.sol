@@ -52,7 +52,7 @@ contract IssueUSDModule is IIssueUSDModule {
         // disabled collateralType cannot be used for minting
         CollateralConfiguration.collateralEnabled(collateralType);
 
-        Pool.Data storage pool = Pool.load(poolId);
+        Pool.Data storage pool = Pool.loadExisting(poolId);
 
         int256 debt = pool.updateAccountDebt(collateralType, accountId);
         int256 newDebt = debt + amount.toInt();

@@ -44,7 +44,7 @@ library Pool {
     struct Data {
         /**
          * @dev Numeric identifier for the pool. Must be unique.
-         * @dev A pool with id zero exists! (See Pool.exists()). Users can delegate to this pool to be able to mint USD without being exposed to fluctuating debt.
+         * @dev A pool with id zero exists! (See Pool.loadExisting()). Users can delegate to this pool to be able to mint USD without being exposed to fluctuating debt.
          */
         uint128 id;
         /**
@@ -118,7 +118,7 @@ library Pool {
      * Reverts if the specified pool already exists.
      */
     function create(uint128 id, address owner) internal returns (Pool.Data storage pool) {
-        if (Pool.exists(id)) {
+        if (id == 0 || load(id).id == id) {
             revert PoolAlreadyExists(id);
         }
 
@@ -246,12 +246,15 @@ library Pool {
     }
 
     /**
-     * @dev Returns true if a pool with the specified id exists.
-     *
-     * Note: Pool zero always exists, see "Pool.id".
+     * @dev Reverts if the pool does not exist with appropriate error. Otherwise, returns the pool.
      */
-    function exists(uint128 id) internal view returns (bool) {
-        return id == 0 || load(id).id == id;
+    function loadExisting(uint128 id) internal view returns (Data storage) {
+        Data storage p = load(id);
+        if (id != 0 && p.id != id) {
+            revert PoolNotFound(id);
+        }
+
+        return p;
     }
 
     /**
@@ -432,15 +435,6 @@ library Pool {
             getPositionDebtD18 > 0
                 ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
                 : 1e20;
-    }
-
-    /**
-     * @dev Reverts if the specified pool does not exist.
-     */
-    function requireExists(uint128 poolId) internal view {
-        if (!Pool.exists(poolId)) {
-            revert PoolNotFound(poolId);
-        }
     }
 
     /**

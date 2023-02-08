@@ -100,6 +100,19 @@ describe('IssueUSDModule', function () {
       );
     });
 
+    it('verifies pool exists', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).mintUsd(
+          accountId,
+          845628, // invalid pool id
+          collateralAddress(),
+          depositAmount.div(10) // should be enough
+        ),
+        'PoolNotFound("845628")',
+        systems().Core
+      );
+    });
+
     verifyChecksCollateralEnabled(
       () => systems().Core.connect(owner),
       collateralAddress,

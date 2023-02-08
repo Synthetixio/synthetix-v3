@@ -47,7 +47,7 @@ contract VaultModule is IVaultModule {
         uint256 leverage
     ) external override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
@@ -245,7 +245,7 @@ contract VaultModule is IVaultModule {
             collateral.increaseAvailableCollateral(oldCollateralAmount - newCollateralAmount);
         }
 
-        // If the collateral amount is positive, make sure that the pool exists
+        // If the collateral amount is positive, make sure that the Pool.loadExisting
         // in the collateral entry's pool array. Otherwise remove it.
         if (newCollateralAmount > 0 && !collateral.pools.contains(poolId)) {
             collateral.pools.add(poolId);
