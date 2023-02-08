@@ -9,6 +9,9 @@ import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
+import "../../storage/Config.sol";
+
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
  * @title Module for managing user collateral.
@@ -23,6 +26,11 @@ contract CollateralModule is ICollateralModule {
     using Collateral for Collateral.Data;
     using SafeCastU256 for uint256;
 
+    bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
+    bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
+
+    bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
+
     /**
      * @inheritdoc ICollateralModule
      */
@@ -31,6 +39,7 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 tokenAmount
     ) public override {
+        FeatureFlag.ensureAccessToFeature(_DEPOSIT_FEATURE_FLAG);
         CollateralConfiguration.collateralEnabled(collateralType);
 
         Account.Data storage account = Account.load(accountId);
@@ -61,9 +70,11 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 tokenAmount
     ) public override {
-        Account.Data storage account = Account.loadAccountAndValidatePermission(
+        FeatureFlag.ensureAccessToFeature(_WITHDRAW_FEATURE_FLAG);
+        Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
-            AccountRBAC._WITHDRAW_PERMISSION
+            AccountRBAC._WITHDRAW_PERMISSION,
+            uint(Config.read(_CONFIG_TIMEOUT_WITHDRAW))
         );
 
         uint256 tokenAmountD18 = CollateralConfiguration

@@ -29,6 +29,8 @@ contract MarketManagerModule is IMarketManagerModule {
 
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
+    bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
+    bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
     /**
      * @inheritdoc IMarketManagerModule
@@ -106,6 +108,7 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+        FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
@@ -131,6 +134,7 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+        FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
         // Call must come from the market itself.

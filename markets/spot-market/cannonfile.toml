@@ -11,7 +11,7 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:3.0.0-alpha.9"
+defaultValue = "synthetix:3.0.0-alpha.10"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"

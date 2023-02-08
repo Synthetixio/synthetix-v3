@@ -19,6 +19,7 @@ jobs:
             hardhat-router,
             sample-project,
             main,
+            oracle-manager,
           ]
         include:
           - package: core-contracts
@@ -37,6 +38,8 @@ jobs:
             coverage-file: utils/hardhat-router/coverage/lcov.info
           - package: sample-project
             workspace: "@synthetixio/sample-project"
+          - package: oracle-manager
+            workspace: "@synthetixio/oracle-manager"
           - package: main
             workspace: "@synthetixio/main"
             size-contracts: true

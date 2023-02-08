@@ -27,9 +27,9 @@ describe('Atomic Order Module sell()', () => {
 
   before('setup traders', async () => {
     await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(10_000));
-    await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000));
+    await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000), bn(10));
     await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-    await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000));
+    await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000), bn(10));
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -40,14 +40,30 @@ describe('Atomic Order Module sell()', () => {
   });
 
   it('reverts on invalid market', async () => {
-    await assertRevert(systems().SpotMarket.buy(25, 10000), 'InvalidMarket');
+    await assertRevert(systems().SpotMarket.buy(25, 10000, 0), 'InvalidMarket');
   });
 
-  it('reverts when user does not have synth amount to sell', async () => {
-    await assertRevert(
-      systems().SpotMarket.connect(signers()[8]).sell(marketId(), 10000),
-      'InsufficientBalance("10000", "0")'
-    );
+  describe('slippage', () => {
+    let withdrawableUsd: Ethers.BigNumber;
+    let traderBalance: Ethers.BigNumber;
+    it('reverts sell when minAmountReceived condition is not meet', async () => {
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
+      traderBalance = await synth.balanceOf(await trader1.getAddress());
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+
+      await assertRevert(
+        systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(1000)),
+        `InsufficientAmountReceived("${bn(1000)}", "${bn(900)}")`
+      );
+    });
+
+    it('trader1 snxUSD balance has not changed', async () => {
+      assertBn.equal(await synth.balanceOf(await trader1.getAddress()), traderBalance);
+    });
+
+    it('market withdrawable Usd has not change', async () => {
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId()), withdrawableUsd);
+    });
   });
 
   describe('no fees', () => {
@@ -55,7 +71,7 @@ describe('Atomic Order Module sell()', () => {
     before('sell 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
-      txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1));
+      txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(900));
     });
 
     it('trader1 received 900 snxUSD', async () => {
@@ -88,7 +104,7 @@ describe('Atomic Order Module sell()', () => {
 
     before('sell 1 snxETH', async () => {
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
-      await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1));
+      await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(900));
     });
 
     // no utilizaiton fees should apply to sell
@@ -112,7 +128,7 @@ describe('Atomic Order Module sell()', () => {
     before('sell 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
-      txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1));
+      txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(891));
     });
 
     // $9 fee, 1% fee
@@ -148,7 +164,7 @@ describe('Atomic Order Module sell()', () => {
 
       before('sell 1 snxETH', async () => {
         await synth.connect(trader2).approve(systems().SpotMarket.address, bn(1));
-        await systems().SpotMarket.connect(trader2).sell(marketId(), bn(1));
+        await systems().SpotMarket.connect(trader2).sell(marketId(), bn(1), bn(899.1));
       });
 
       it('only charges custom transactor fees', async () => {
@@ -175,7 +191,7 @@ describe('Atomic Order Module sell()', () => {
 
     before('buy 5 snxETH', async () => {
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(5));
-      await systems().SpotMarket.connect(trader1).sell(marketId(), bn(5));
+      await systems().SpotMarket.connect(trader1).sell(marketId(), bn(5), bn(5242.5));
     });
 
     it('trader1 gets extra snxUSD back for selling', async () => {

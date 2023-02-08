@@ -79,7 +79,7 @@ describe('SpotMarketFactory', () => {
 
     it('buy 2 snxETH', async () => {
       await systems().USD.connect(user1).approve(systems().SpotMarket.address, bn(2000));
-      await systems().SpotMarket.connect(user1).buy(marketId(), bn(2000));
+      await systems().SpotMarket.connect(user1).buy(marketId(), bn(2000), bn(2));
     });
 
     it('market reported debt should be 1800 = 2 * 900 (with 18decimals)', async () => {
@@ -88,7 +88,7 @@ describe('SpotMarketFactory', () => {
 
     it('sell 1 snxETH', async () => {
       await synth.connect(user1).approve(systems().SpotMarket.address, bn(1));
-      await systems().SpotMarket.connect(user1).sell(marketId(), bn(1));
+      await systems().SpotMarket.connect(user1).sell(marketId(), bn(1), bn(900));
     });
 
     it('market reported debt should be 900 = 1 * 900 (with 18decimals)', async () => {

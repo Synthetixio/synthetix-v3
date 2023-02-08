@@ -1,0 +1,17 @@
+{
+  "name": "@synthetixio/governance",
+  "version": "2.0.0",
+  "description": "On-Chain elections for all Synthetix councils",
+  "private": true,
+  "scripts": {
+    "test": "hardhat test test/unit/**/*.test.js",
+    "coverage": "hardhat coverage --testfiles test/unit/**/*.test.js",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat size-contracts"
+  },
+  "devDependencies": {
+    "@synthetixio/common-config": "*",
+    "@synthetixio/core-contracts": "*",
+    "@synthetixio/core-modules": "*"
+  }
+}

@@ -23,14 +23,35 @@ describe('Atomic Order Module buy()', () => {
   });
 
   it('reverts on invalid market', async () => {
-    await assertRevert(systems().SpotMarket.buy(25, 10000), 'InvalidMarket');
+    await assertRevert(systems().SpotMarket.buy(25, 10000, 10000), 'InvalidMarket');
   });
 
   it('reverts when user does not have proper funds', async () => {
     await assertRevert(
-      systems().SpotMarket.connect(signers()[8]).buy(marketId(), 10000),
+      systems().SpotMarket.connect(signers()[8]).buy(marketId(), 10000, 10000),
       'InsufficientAllowance("10000", "0")'
     );
+  });
+
+  describe('slippage', () => {
+    let withdrawableUsd: Ethers.BigNumber;
+    it('reverts buy when minAmountReceived condition is not meet', async () => {
+      withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+
+      await assertRevert(
+        systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(10)),
+        `InsufficientAmountReceived("${bn(10)}", "${bn(1)}")`
+      );
+    });
+
+    it('trader1 has 0 snxETH', async () => {
+      assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(0));
+    });
+
+    it('market withdrawable Usd has not change', async () => {
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId()), withdrawableUsd);
+    });
   });
 
   describe('no fees', () => {
@@ -39,7 +60,7 @@ describe('Atomic Order Module buy()', () => {
     before('buy 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000));
+      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(1));
     });
 
     it('trader1 has 1 snxETH', async () => {
@@ -70,7 +91,7 @@ describe('Atomic Order Module buy()', () => {
     before('buy 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000));
+      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(0.99));
     });
 
     it('trader1 has 0.99 snxETH after fees', async () => {
@@ -109,7 +130,7 @@ describe('Atomic Order Module buy()', () => {
 
     before('buy 50 snxETH', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(50_000));
-      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(50_000));
+      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(50_000), bn(50));
     });
 
     describe('when utilization is under 100%', () => {
@@ -122,7 +143,7 @@ describe('Atomic Order Module buy()', () => {
     describe('when utilization is over 100%', () => {
       before('buy 100 snxETH', async () => {
         await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(100_000));
-        await systems().SpotMarket.connect(trader2).buy(marketId(), bn(100_000));
+        await systems().SpotMarket.connect(trader2).buy(marketId(), bn(100_000), bn(97.5));
       });
 
       it('applies utilization fee', async () => {
@@ -152,7 +173,7 @@ describe('Atomic Order Module buy()', () => {
     describe('first trader buy', () => {
       before('buy 10 snxETH', async () => {
         await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(10_000));
-        await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000));
+        await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000), bn(9.5));
       });
 
       it('trader1 gets 9.5 snxETH', async () => {
@@ -165,7 +186,7 @@ describe('Atomic Order Module buy()', () => {
     describe('next trader buy', () => {
       before('buy 10 more snxETH', async () => {
         await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-        await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000));
+        await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000), bn(8.55));
       });
 
       it('trader2 gets 8.55 snxETH', async () => {
@@ -195,8 +216,10 @@ describe('Atomic Order Module buy()', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(90_000));
       await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(25_000));
 
-      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(90_000)); // 90 eth
-      await systems().SpotMarket.connect(trader2).buy(marketId(), bn(25_000)); // 25 eth
+      await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(90_000), bn(90 * 0.945)); // 90 eth
+      await systems().SpotMarket.connect(trader2).buy(marketId(), bn(25_000), bn(22.185625)); // 25 eth
     });
 
     it('sent correct amounts of synth to trader 1', async () => {
@@ -226,7 +249,7 @@ describe('Atomic Order Module buy()', () => {
       before('trader1 buys again', async () => {
         previousTrader1Balance = await synth.balanceOf(await trader1.getAddress());
         await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-        await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000));
+        await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), 0);
       });
 
       it('trader1 gets lower atomic fixed fee', async () => {
@@ -269,7 +292,7 @@ describe('Atomic Order Module buy()', () => {
 
     before('trader buys snxETH', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(100_000));
-      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(100_000)); // 90 eth
+      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(100_000), bn(99)); // 90 eth
     });
 
     const expectedFee = bn(100_000 * 0.01);

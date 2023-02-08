@@ -6,12 +6,14 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 library FeatureFlag {
     using SetUtil for SetUtil.AddressSet;
 
-    error FeatureUnavailable();
+    error FeatureUnavailable(bytes32 which);
 
     struct Data {
         bytes32 name;
         bool allowAll;
+        bool denyAll;
         SetUtil.AddressSet permissionedAddresses;
+        address[] deniers;
     }
 
     function load(bytes32 featureName) internal pure returns (Data storage store) {
@@ -23,13 +25,27 @@ library FeatureFlag {
 
     function ensureAccessToFeature(bytes32 feature) internal view {
         if (!hasAccess(feature, msg.sender)) {
-            revert FeatureUnavailable();
+            revert FeatureUnavailable(feature);
         }
     }
 
     function hasAccess(bytes32 feature, address value) internal view returns (bool) {
         Data storage store = FeatureFlag.load(feature);
 
+        if (store.denyAll) {
+            return false;
+        }
+
         return store.allowAll || store.permissionedAddresses.contains(value);
+    }
+
+    function isDenier(Data storage self, address possibleDenier) internal view returns (bool) {
+        for (uint i = 0; i < self.deniers.length; i++) {
+            if (self.deniers[i] == possibleDenier) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

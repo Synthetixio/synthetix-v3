@@ -35,6 +35,11 @@ library Account {
      */
     error InsufficientAccountCollateral(uint256 requestedAmount);
 
+    /**
+     * @dev Thrown when the requested operation requires an activity timeout before the
+     */
+    error AccountActivityTimeoutPending(uint128 accountId, uint currentTime, uint requiredTime);
+
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
@@ -45,8 +50,9 @@ library Account {
          * @dev Role based access control data for the account.
          */
         AccountRBAC.Data rbac;
-        // solhint-disable-next-line private-vars-leading-underscore
-        bytes32 __slotAvailableForFutureUse;
+        uint64 lastInteraction;
+        uint64 __slotAvailableForFutureUse;
+        uint128 __slot2AvailableForFutureUse;
         /**
          * @dev Address set of collaterals that are being used in the system by this account.
          */
@@ -130,17 +136,54 @@ library Account {
         return totalAssignedD18;
     }
 
+    function recordInteraction(Data storage self) internal {
+        // solhint-disable-next-line numcast/safe-cast
+        self.lastInteraction = uint64(block.timestamp);
+    }
+
     /**
-     * @dev Loads the Account object for the specified accountId, and validates that sender has the specified permission. These are two different actions but they are merged in a single function because loading an account and checking for a permission is a very common use case in other parts of the code.
+     * @dev Loads the Account object for the specified accountId,
+     * and validates that sender has the specified permission. It also resets
+     * the interaction timeout. These
+     * are different actions but they are merged in a single function
+     * because loading an account and checking for a permission is a very
+     * common use case in other parts of the code.
      */
     function loadAccountAndValidatePermission(
         uint128 accountId,
         bytes32 permission
+    ) internal returns (Data storage account) {
+        account = Account.load(accountId);
+
+        if (!account.rbac.authorized(permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        recordInteraction(account);
+    }
+
+    /**
+     * @dev Loads the Account object for the specified accountId,
+     * and validates that sender has the specified permission. It also resets
+     * the interaction timeout. These
+     * are different actions but they are merged in a single function
+     * because loading an account and checking for a permission is a very
+     * common use case in other parts of the code.
+     */
+    function loadAccountAndValidatePermissionAndTimeout(
+        uint128 accountId,
+        bytes32 permission,
+        uint timeout
     ) internal view returns (Data storage account) {
         account = Account.load(accountId);
 
         if (!account.rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        uint endWaitingPeriod = account.lastInteraction + timeout;
+        if (block.timestamp < endWaitingPeriod) {
+            revert AccountActivityTimeoutPending(accountId, block.timestamp, endWaitingPeriod);
         }
     }
 

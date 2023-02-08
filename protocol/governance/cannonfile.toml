@@ -1,0 +1,125 @@
+name = "synthetix-governance"
+description = "On-chain voting for synthetix councils"
+version = "<%= package.version %>"
+
+[setting.salt]
+defaultValue = "governance"
+
+# Deployment Owner, defaults to first hardhat account
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.council_token_name]
+defaultValue = "Synthetix Governance Module"
+
+[setting.council_token_symbol]
+defaultValue = "SNXGOV"
+
+[setting.init_council_member]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
+
+[setting.epoch_start]
+
+[setting.epoch_duration]
+defaultValue = "90" # days
+
+[setting.voting_period_duration]
+defaultValue = "7" # days
+
+[contract.InitialModuleBundle]
+artifact = "InitialModuleBundle"
+create2 = true
+
+[contract.InitialProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
+salt = "<%= settings.salt %>"
+abiOf = ["InitialModuleBundle"]
+create2 = true
+
+depends = ["contract.InitialModuleBundle"]
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.ElectionModule]
+artifact = "ElectionModule"
+
+[contract.ElectionInspectorModule]
+artifact = "ElectionInspectorModule"
+
+[contract.CouncilTokenModule]
+artifact = "CouncilTokenModule"
+
+[contract.DebtShareMock]
+artifact = "DebtShareMock"
+
+[router.CoreRouter]
+contracts = [
+  "AssociatedSystemsModule",
+  "ElectionModule",
+  "ElectionInspectorModule",
+  "InitialModuleBundle",
+]
+
+depends = [
+  "contract.AssociatedSystemsModule",
+  "contract.ElectionModule",
+  "contract.ElectionInspectorModule",
+  "contract.InitialModuleBundle",
+]
+
+[invoke.upgrade_core_proxy]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.CoreRouter.address %>"]
+factory.CoreProxy.abiOf = ["CoreRouter"]
+factory.CoreProxy.event = "Upgraded"
+factory.CoreProxy.arg = 0
+depends = ["contract.InitialProxy", "router.CoreRouter"]
+
+[router.CouncilTokenRouter]
+contracts = [
+  "CouncilTokenModule",
+  "InitialModuleBundle",
+]
+
+depends = [
+  "contract.CouncilTokenModule",
+  "contract.InitialModuleBundle"
+]
+
+[invoke.init_council_token]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeNft"
+args = [
+  "<%= formatBytes32String('councilToken') %>",
+  "Synthetix Governance Token",
+  "SNXGOV",
+  "https://synthetix.io",
+  "<%= contracts.CouncilTokenRouter.address %>"
+]
+depends = [
+  "invoke.upgrade_core_proxy",
+  "router.CouncilTokenRouter"
+]
+factory.AccountProxy.abiOf = ["CouncilTokenRouter"]
+factory.AccountProxy.event = "AssociatedSystemSet"
+factory.AccountProxy.arg = 2
+
+[invoke.init_election_module]
+target = ["CoreProxy"]
+func = "initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64,address)"
+args = [
+  ["<%= settings.init_council_member %>"],
+  "1",
+  "<%= settings.epoch_start %>",
+  "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",
+  "<%= settings.epoch_start + 86400 * settings.epoch_duration %>",
+  "<%= contracts.DebtShareMock.address %>",
+]
+from = "<%= settings.owner %>"
+
+depends = ["invoke.init_council_token", "contract.DebtShareMock"]

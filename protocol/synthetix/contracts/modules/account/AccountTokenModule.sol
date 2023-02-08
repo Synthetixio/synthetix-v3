@@ -18,16 +18,6 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
     using SafeCastI256 for int256;
 
     /**
-     * @inheritdoc IAccountTokenModule
-     */
-    function mint(address owner, uint256 nftId) external {
-        OwnableStorage.onlyOwner();
-        _mint(owner, nftId);
-
-        emit Mint(owner, nftId);
-    }
-
-    /**
      * @dev Updates account RBAC storage to track the current owner of the token.
      */
     function _postTransfer(

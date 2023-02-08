@@ -8,6 +8,7 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "../../interfaces/IUtilsModule.sol";
 
 import "../../storage/OracleManager.sol";
+import "../../storage/Config.sol";
 
 /**
  * @title Module with assorted utility functions.
@@ -48,5 +49,15 @@ contract UtilsModule is IUtilsModule {
 
         OracleManager.Data storage oracle = OracleManager.load();
         oracle.oracleManagerAddress = oracleManagerAddress;
+    }
+
+    function setConfig(bytes32 k, bytes32 v) external override {
+        OwnableStorage.onlyOwner();
+        return Config.put(k, v);
+    }
+
+    function getConfig(bytes32 k) external view override returns (bytes32 v) {
+        OwnableStorage.onlyOwner();
+        return Config.read(k);
     }
 }
