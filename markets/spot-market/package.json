@@ -8,12 +8,13 @@
     "start": "npm run build && npm run cannon",
     "cannon": "npx cannon spot-market:0.0.3-alpha",
     "test": "hardhat test",
+    "test:fork": "hardhat test --network goerli test-fork/AsyncOrdersModule.e2e.test.ts",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "keywords": [],
-  "author": "Sunny Vempati",
+  "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
     "@synthetixio/common-config": "*",

@@ -36,9 +36,16 @@ export type Systems = {
   Synth: (address: string) => SynthRouter;
 };
 
-const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
-  cannonfile: 'cannonfile.test.toml',
-});
+const params =
+  hre.network.name === 'cannon'
+    ? { cannonfile: 'cannonfile.test.toml' }
+    : {
+        dryRun: true,
+        impersonate: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        cannonfile: 'cannonfile.test.toml',
+      };
+
+const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>(params);
 
 const restoreSnapshot = createSnapshot();
 
