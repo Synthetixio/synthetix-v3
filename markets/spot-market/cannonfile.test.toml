@@ -10,8 +10,17 @@ source = "synthetix:3.0.0-alpha.10-testable"
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
 
+[contract.PythVerifierMock]
+artifact = "contracts/mocks/PythVerifierMock.sol:PythVerifierMock"
+
 [invoke.set_usd_token_for_fee_collector]
 target = ["FeeCollectorMock"]
 func = "setUsdToken"
 args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
 depends = ["contract.FeeCollectorMock", "import.synthetix"]
+
+[invoke.set_initial_price]
+target = ["PythVerifierMock"]
+func = "setPrice"
+args = ["2000"]
+depends = ["contract.PythVerifierMock"]

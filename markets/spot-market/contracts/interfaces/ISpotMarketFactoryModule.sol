@@ -106,6 +106,14 @@ interface ISpotMarketFactoryModule is IMarket {
     function getSynth(uint128 marketId) external view returns (address);
 
     /**
+     * @notice Get the proxy address of the async order claim nft token for the provided marketId
+     * @dev Uses associated systems module to retrieve the token address.
+     * @param marketId id of the market
+     * @return asyncOrderClaimTokenAddress address of the proxy for the async order claim token
+     */
+    function getAsyncOrderClaimToken(uint128 marketId) external view returns (address);
+
+    /**
      * @notice Update the price data for a given market.
      * @dev Only the market owner can call this function.
      * @param synthMarketId id of the market

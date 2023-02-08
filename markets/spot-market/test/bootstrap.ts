@@ -13,6 +13,8 @@ import {
   SynthetixOracle_managerProxy,
   SynthRouter,
   FeeCollectorMock,
+  AsyncOrderClaimRouter,
+  PythVerifierMock,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -23,7 +25,9 @@ type Proxies = {
   ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
+  AsyncOrderClaimRouter: AsyncOrderClaimRouter;
   FeeCollectorMock: FeeCollectorMock;
+  PythVerifierMock: PythVerifierMock;
 };
 
 export type Systems = {
@@ -34,6 +38,7 @@ export type Systems = {
   OracleManager: SynthetixOracle_managerProxy;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
+  AsyncOrderClaimToken: (address: string) => AsyncOrderClaimRouter;
 };
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
@@ -51,7 +56,9 @@ before('load contracts', () => {
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
     FeeCollectorMock: getContract('FeeCollectorMock'),
+    PythVerifierMock: getContract('PythVerifierMock'),
     Synth: (address: string) => getContract('SynthRouter', address),
+    AsyncOrderClaimToken: (address: string) => getContract('AsyncOrderClaimRouter', address),
   };
 });
 

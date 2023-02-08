@@ -19,6 +19,7 @@ library SpotMarketFactory {
 
     error OnlyMarketOwner(address marketOwner, address sender);
     error InvalidMarket(uint128 marketId);
+    error InvalidAsyncTransactionType(TransactionType transactionType);
 
     struct Data {
         /**
@@ -75,9 +76,15 @@ library SpotMarketFactory {
         }
     }
 
-    function isValidMarket(Data storage self, uint128 marketId) internal view returns (bool) {
+    function isValidMarket(Data storage self, uint128 marketId) internal view {
         if (self.marketOwners[marketId] == address(0)) {
             revert InvalidMarket(marketId);
+        }
+    }
+
+    function isValidAsyncTransaction(TransactionType orderType) internal view {
+        if (orderType != TransactionType.ASYNC_BUY && orderType != TransactionType.ASYNC_SELL) {
+            revert InvalidAsyncTransactionType(orderType);
         }
     }
 

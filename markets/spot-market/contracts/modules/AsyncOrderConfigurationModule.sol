@@ -12,17 +12,28 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
-    ) external override {
+    ) external override returns (uint256 strategyId) {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
 
-        AsyncOrderConfiguration.load(marketId).settlementStrategies.push(strategy);
+        AsyncOrderConfiguration.Data storage config = AsyncOrderConfiguration.load(marketId);
+        strategyId = config.settlementStrategies.length;
+
+        config.settlementStrategies.push(strategy);
+
+        emit SettlementStrategyAdded(marketId, strategyId);
     }
 
-    function removeSettlementStrategy(uint128 marketId, uint256 strategyId) external override {
+    function toggleSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId,
+        bool enabled
+    ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
-        delete AsyncOrderConfiguration.load(marketId).settlementStrategies[strategyId];
+        AsyncOrderConfiguration.load(marketId).settlementStrategies[strategyId].disabled = !enabled;
+
+        emit SettlementStrategyUpdated(marketId, strategyId, enabled);
     }
 
     function getSettlementStrategy(
