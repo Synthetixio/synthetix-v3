@@ -226,8 +226,6 @@ library CollateralConfiguration {
             revert CollateralNotFound();
         }
 
-        /// @dev if a fallback function exists, it will be executed if decimals() is not defined
-        /// and may return expected return type (i.e. uint8)
         try IERC20(self.tokenAddress).decimals() returns (uint8 decimals) {
             /// @dev if decimals() is not defined, but an existing fallback function returns a
             /// bytes representation of uint8, this logic may have unexpected results
