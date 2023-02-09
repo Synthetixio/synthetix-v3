@@ -101,7 +101,7 @@ interface IElectionModule {
         );
 
     /// @notice Exposes maximum size of adjustments when calling tweakEpochSchedule
-    function getMaxDateAdjustmenTolerance() external view returns (uint64);
+    function getMaxDateAdjustmentTolerance() external view returns (uint64);
 
     /// @notice Shows the default batch size when calling evaluate() with numBallots = 0
     function getDefaultBallotEvaluationBatchSize() external view returns (uint);

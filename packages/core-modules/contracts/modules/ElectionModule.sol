@@ -297,7 +297,7 @@ contract ElectionModule is
         return (settings.minNominationPeriodDuration, settings.minVotingPeriodDuration, settings.minEpochDuration);
     }
 
-    function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
+    function getMaxDateAdjustmentTolerance() external view override returns (uint64) {
         return _electionSettings().maxDateAdjustmentTolerance;
     }
 
