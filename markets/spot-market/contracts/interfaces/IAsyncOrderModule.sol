@@ -57,4 +57,9 @@ interface IAsyncOrderModule {
     ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
+
+    function getAsyncOrderClaim(
+        uint128 marketId,
+        uint128 asyncOrderId
+    ) external view returns (AsyncOrderClaim.Data memory);
 }
