@@ -1,6 +1,6 @@
 import { subtask, task } from 'hardhat/config';
-import { timed } from '../internal/timed';
-import * as taskNames from '../task-names';
+import { timed } from '../../hardhat-router/src/internal/timed';
+import * as taskNames from '../../hardhat-router/src/task-names';
 
 for (const [taskKey, taskName] of Object.entries(taskNames)) {
   const factory = taskKey.startsWith('TASK_') ? task : subtask;

@@ -27,7 +27,8 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "@usecannon/builder": "^2.0.0"
+    "@usecannon/builder": "^2.0.0",
+    "hardhat": "^2.0.0"
   },
   "devDependencies": {
     "@types/debug": "4.1.7",
@@ -46,6 +47,9 @@
   },
   "peerDependenciesMeta": {
     "@usecannon/builder": {
+      "optional": true
+    },
+    "hardhat": {
       "optional": true
     }
   }

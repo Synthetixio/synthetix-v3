@@ -1,3 +1,3 @@
 import './subtasks';
 import './tasks';
-import './extensions/timers';
+import '@synthetixio/common-config/extensions/timers';
