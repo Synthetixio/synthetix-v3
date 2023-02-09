@@ -13,7 +13,6 @@ contract DebtShareStorage {
         uint128[] debtShareIds;
         // Array of CrossChainDebtShareData's for each epoch
         CrossChainDebtShareData[] crossChainDebtShareData;
-        ICrossDomainMessenger crossDomainMessenger;
     }
 
     struct CrossChainDebtShareData {

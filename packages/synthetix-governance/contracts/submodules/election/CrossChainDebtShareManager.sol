@@ -3,9 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/MerkleProof.sol";
 import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol";
-import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
-import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
-import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "../../storage/DebtShareStorage.sol";
 
 /// @dev Uses a merkle tree to track user Synthetix v2 debt shares on other chains at a particular block number
@@ -16,6 +13,8 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
 
     event CrossChainDebtShareMerkleRootSet(bytes32 merkleRoot, uint blocknumber, uint epoch);
     event CrossChainDebtShareDeclared(address user, uint debtShare);
+
+    address private constant _L2CrossDomainMessenger = 0x4200000000000000000000000000000000000007;
 
     function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
         CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
@@ -74,34 +73,8 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
         return debtShareData.debtShares[user];
     }
 
-    function _setCrossDomainMessenger(address newCrossDomainMessengerAddress) internal {
-        DebtShareStore storage store = _debtShareStore();
-
-        if (newCrossDomainMessengerAddress == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
-
-        if (newCrossDomainMessengerAddress == address(store.crossDomainMessenger)) {
-            revert ChangeError.NoChange();
-        }
-
-        if (!AddressUtil.isContract(newCrossDomainMessengerAddress)) {
-            revert AddressError.NotAContract(newCrossDomainMessengerAddress);
-        }
-
-        store.crossDomainMessenger = ICrossDomainMessenger(newCrossDomainMessengerAddress);
-    }
-
-    function _getCrossDomainMessenger() internal view returns (address) {
-        return address(_debtShareStore().crossDomainMessenger);
-    }
-
     function _validateCrossChainMessage(address user) internal {
-        ICrossDomainMessenger messenger = ICrossDomainMessenger(_debtShareStore().crossDomainMessenger);
-
-        if (address(messenger) == address(0)) {
-            revert CrossDomainMessengerNotSet();
-        }
+        ICrossDomainMessenger messenger = ICrossDomainMessenger(_L2CrossDomainMessenger);
 
         if (msg.sender != address(messenger)) {
             revert OnlyCrossDomainMessengerCanInvoke();
