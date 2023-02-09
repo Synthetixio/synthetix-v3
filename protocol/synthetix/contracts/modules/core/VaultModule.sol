@@ -97,7 +97,12 @@ contract VaultModule is IVaultModule {
             leverage
         );
 
-        _updateAccountCollateralPools(accountId, poolId, collateralType, newCollateralAmountD18 > 0);
+        _updateAccountCollateralPools(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18 > 0
+        );
 
         // If decreasing the delegated collateral amount,
         // check the account's collateralization ratio.
@@ -293,8 +298,7 @@ contract VaultModule is IVaultModule {
 
         if (added && !depositedCollateral.pools.contains(poolId)) {
             depositedCollateral.pools.add(poolId);
-        }
-        else if (!added && depositedCollateral.pools.contains(poolId)) {
+        } else if (!added && depositedCollateral.pools.contains(poolId)) {
             depositedCollateral.pools.remove(poolId);
         }
     }
