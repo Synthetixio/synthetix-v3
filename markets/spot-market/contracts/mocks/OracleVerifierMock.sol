@@ -2,14 +2,16 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/external/IPythVerifier.sol";
+import "../interfaces/external/IChainlinkVerifier.sol";
 
-contract PythVerifierMock is IPythVerifier {
+contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
     int64 public price;
 
     function setPrice(int64 newPrice) external {
         price = newPrice;
     }
 
+    // Pyth verifier
     function parsePriceFeedUpdates(
         bytes[] calldata updateData,
         bytes32[] calldata priceIds,
@@ -33,5 +35,13 @@ contract PythVerifierMock is IPythVerifier {
                 publishTime: minPublishTime
             })
         });
+    }
+
+    // Chainlink verifier
+    function verify(
+        bytes memory chainlinkBlob
+    ) external view override returns (bytes memory verifierResponse) {
+        int192 priceFormatted = int192(price) * 10 ** 18;
+        verifierResponse = abi.encode("ETH-USD", block.timestamp, 10, priceFormatted);
     }
 }

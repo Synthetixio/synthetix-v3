@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('AsyncOrderModule pyth', () => {
+describe.only('AsyncOrderModule chainlink', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
@@ -17,8 +17,8 @@ describe('AsyncOrderModule pyth', () => {
     synth: SynthRouter,
     startTime: number,
     strategyId: number,
-    pythSettlementStrategy: Record<string, unknown>,
-    pythCallData: string,
+    chainlinkSettlementStrategy: Record<string, unknown>,
+    chainlinkCallData: string,
     extraData: string;
 
   before('identify', async () => {
@@ -28,23 +28,23 @@ describe('AsyncOrderModule pyth', () => {
   });
 
   before('add settlement strategy', async () => {
-    pythSettlementStrategy = {
-      strategyType: 2,
+    chainlinkSettlementStrategy = {
+      strategyType: 1,
       settlementDelay: 5,
       settlementWindowDuration: 120,
       priceVerificationContract: systems().OracleVerifierMock.address,
-      feedId: ethers.utils.formatBytes32String('ETH/USD'),
-      url: 'https://fakeapi.pyth.network/',
+      feedId: ethers.utils.formatBytes32String('ETH-USD'),
+      url: 'https://fakeapi.chainlink.network/',
       settlementReward: bn(5),
       priceDeviationTolerance: bn(0.2),
     };
 
     strategyId = await systems()
       .SpotMarket.connect(marketOwner)
-      .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy);
+      .callStatic.addSettlementStrategy(marketId(), chainlinkSettlementStrategy);
     await systems()
       .SpotMarket.connect(marketOwner)
-      .addSettlementStrategy(marketId(), pythSettlementStrategy);
+      .addSettlementStrategy(marketId(), chainlinkSettlementStrategy);
   });
 
   before('setup fixed fee', async () => {
@@ -77,42 +77,43 @@ describe('AsyncOrderModule pyth', () => {
 
     before('setup bytes data', () => {
       extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [marketId(), 1]);
-      pythCallData = ethers.utils.solidityPack(
+      chainlinkCallData = ethers.utils.solidityPack(
         ['bytes32', 'uint64'],
-        [pythSettlementStrategy.feedId, startTime + 5]
+        [chainlinkSettlementStrategy.feedId, startTime + 5]
       );
     });
 
     it('reverts with offchain error', async () => {
-      const functionSig = systems().SpotMarket.interface.getSighash('settlePythOrder');
+      const functionSig = systems().SpotMarket.interface.getSighash('settleChainlinkOrder');
+
       await assertRevert(
         systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
         `OffchainLookup("${systems().SpotMarket.address}", "${
-          pythSettlementStrategy.url
-        }", "${pythCallData}", "${functionSig}", "${extraData}")`
+          chainlinkSettlementStrategy.url
+        }", "${chainlinkCallData}", "${functionSig}", "${extraData}")`
       );
     });
   });
 
   // after off chain look up
-  describe('settle pyth order', () => {
+  describe('settle chainlink order', () => {
     it('reverts due to high price deviation', async () => {
       await assertRevert(
-        systems().SpotMarket.connect(keeper).settlePythOrder(pythCallData, extraData),
+        systems().SpotMarket.connect(keeper).settleChainlinkOrder(chainlinkCallData, extraData),
         'PriceDeviationToleranceExceeded'
       );
     });
 
-    describe('change mock pyth price', () => {
+    describe('change mock chainlink price', () => {
       let settleTxn: ethers.providers.TransactionResponse;
-      before('set mock pyth price', async () => {
+      before('set mock chainlink price', async () => {
         await systems().OracleVerifierMock.setPrice('1100');
       });
 
       before('settle', async () => {
         settleTxn = await systems()
           .SpotMarket.connect(keeper)
-          .settlePythOrder(pythCallData, extraData);
+          .settleChainlinkOrder(chainlinkCallData, extraData);
       });
 
       // ($1000 sent - $5 keeper) / ($1100/eth price) * 0.99 (1% fee) = 0.8955

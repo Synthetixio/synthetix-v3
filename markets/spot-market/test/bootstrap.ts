@@ -5,14 +5,14 @@ import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import {
-  FeeCollectorMock,
   SpotMarketProxy,
   SynthetixCollateralMock,
   SynthetixCoreProxy,
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
   SynthRouter,
-  PythVerifierMock,
+  FeeCollectorMock,
+  OracleVerifierMock,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -24,7 +24,7 @@ type Proxies = {
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
-  PythVerifierMock: PythVerifierMock;
+  OracleVerifierMock: OracleVerifierMock;
 };
 
 export type Systems = {
@@ -33,6 +33,7 @@ export type Systems = {
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
+  OracleVerifierMock: OracleVerifierMock;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
@@ -52,6 +53,7 @@ before('load contracts', () => {
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
     FeeCollectorMock: getContract('FeeCollectorMock'),
+    OracleVerifierMock: getContract('OracleVerifierMock'),
     Synth: (address: string) => getContract('SynthRouter', address),
   };
 });

@@ -15,6 +15,8 @@ import "../utils/FeeUtil.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Module to process asyncronous orders
  * @notice See README.md for an overview of asyncronous orders
@@ -160,7 +162,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             bytes32 feedId,
             uint32 observationsTimestamp,
             uint64 observationsBlocknumber,
-            int192 median
+            int192 median // TODO: why is this int192? decimals?
         ) = abi.decode(verifierResponse, (bytes32, uint32, uint64, int192));
 
         uint offchainPrice = uint(int(median)); // TODO: check this
@@ -170,7 +172,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             Price.getCurrentPrice(marketId, asyncOrderClaim.orderType)
         );
 
-        if (feedId != settlementStrategy.feedId) {
+        if (observationsTimestamp < asyncOrderClaim.settlementTime) {
             revert InvalidVerificationResponse();
         }
 
@@ -396,13 +398,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage settlementStrategy
     ) private view returns (uint, int256, uint256) {
         string[] memory urls = new string[](1);
+        urls[0] = settlementStrategy.url;
+
         bytes4 selector;
         if (settlementStrategy.strategyType == SettlementStrategy.Type.CHAINLINK) {
             selector = AsyncOrderModule.settleChainlinkOrder.selector;
-            urls[0] = _generateChainlinkUrl(settlementStrategy, asyncOrderClaim.settlementTime);
         } else if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
             selector = AsyncOrderModule.settlePythOrder.selector;
-            urls[0] = settlementStrategy.url;
         } else {
             revert SettlementStrategyNotFound(settlementStrategy.strategyType);
         }
@@ -440,22 +442,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // Emit event
         emit OrderCancelled(marketId, asyncOrderId, asyncOrderClaim, trader);
-    }
-
-    function _generateChainlinkUrl(
-        SettlementStrategy.Data storage settlementStrategy,
-        uint256 commitmentBlock
-    ) private view returns (string memory url) {
-        return
-            string(
-                abi.encodePacked(
-                    settlementStrategy.url,
-                    "?feedIDStr=",
-                    settlementStrategy.feedId,
-                    "&L2Blocknumber=",
-                    bytes32(commitmentBlock)
-                )
-            );
     }
 
     function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
