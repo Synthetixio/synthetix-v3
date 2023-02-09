@@ -9,7 +9,12 @@ import "../submodules/election/DebtShareManager.sol";
 import "../submodules/election/CrossChainDebtShareManager.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
-/// @notice This extends the base ElectionModule by determining voting power by Synthetix v2 debt share
+/// @notice This extends the base ElectionModule by determining voting power by Synthetix v2 debt shares, both on L1 and on L2.
+/// @dev The L2 debt shares are read directly from a contract, and the L1 debt shares are read from a merkle tree.
+/// @dev A snapshot must be set to determine the debt share id to use.
+/// @dev The merkle proof must also be provided for L1 debt shares before an election.
+/// @dev L1 EOA debt share holders can use declareAndCast to vote.
+/// @dev L1 non-EOA debt share holders can use declareAndCastCrossChain to vote, but they need to relay the call through Optimism's messengers.
 contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareManager, CrossChainDebtShareManager {
     error TooManyCandidates();
     error WrongInitializer();
@@ -51,7 +56,8 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         );
     }
 
-    /// @dev Overrides the BaseElectionModule nominate function to only allow 1 candidate to be nominated
+    /// @dev Overrides the BaseElectionModule cast function to only allow 1 candidate to be voted.
+    /// @dev This function is all that needs to be called by L2 debt share holders to vote.
     function cast(address[] calldata candidates)
         public
         override(BaseElectionModule, IElectionModule)
@@ -61,7 +67,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
             revert TooManyCandidates();
         }
 
-        super.cast(candidates);
+        _cast(msg.sender, candidates);
     }
 
     // ---------------------------------------
@@ -128,10 +134,12 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         emit CrossChainDebtShareDeclared(user, debtShare);
     }
 
+    /// @dev L1 EOA debt share holders need to call this function before calling cast, or can call declareAndCast to avoid having to make two calls.
     function getDeclaredCrossChainDebtShare(address user) external view override returns (uint) {
         return _getDeclaredCrossChainDebtShare(user);
     }
 
+    /// @dev L1 EOA debt share holders can call this single function to vote.
     function declareAndCast(
         uint256 debtShare,
         bytes32[] calldata merkleProof,
@@ -140,6 +148,36 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         declareCrossChainDebtShare(msg.sender, debtShare, merkleProof);
 
         cast(candidates);
+    }
+
+    function setCrossDomainMessenger(address messenger) external onlyOwner {
+        _setCrossDomainMessenger(messenger);
+
+        emit CrossDomainMessengerSet(messenger);
+    }
+
+    function getCrossDomainMessenger() external view returns (address) {
+        _getCrossDomainMessenger();
+    }
+
+    /// @dev L1 non-EOA debt share holders can use Optimism cross chain messengers to initiate a message on L1, and finalize it in this function to vote.
+    function declareAndCastRelayed(
+        address user,
+        uint256 debtShare,
+        bytes32[] calldata merkleProof,
+        address[] calldata candidates
+    ) public override onlyInPeriod(ElectionPeriod.Vote) {
+        if (candidates.length > 1) {
+            revert TooManyCandidates();
+        }
+
+        // Reverts if msg.sender is not the Optimism messenger on L2,
+        // or if the initiator on L1 is not the user.
+        _validateCrossChainMessage(user);
+
+        declareCrossChainDebtShare(user, debtShare, merkleProof);
+
+        _cast(user, candidates);
     }
 
     // ---------------------------------------

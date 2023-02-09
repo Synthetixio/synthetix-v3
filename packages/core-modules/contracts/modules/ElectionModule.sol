@@ -212,7 +212,11 @@ contract ElectionModule is
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
     function cast(address[] calldata candidates) public virtual override onlyInPeriod(ElectionPeriod.Vote) {
-        uint votePower = _getVotePower(msg.sender);
+        _cast(msg.sender, candidates);
+    }
+
+    function _cast(address user, address[] calldata candidates) internal virtual {
+        uint votePower = _getVotePower(user);
 
         if (votePower == 0) revert NoVotePower();
 
@@ -222,13 +226,13 @@ contract ElectionModule is
 
         uint epochIndex = _getCurrentEpochIndex();
 
-        if (hasVoted(msg.sender)) {
-            _withdrawCastedVote(msg.sender, epochIndex);
+        if (hasVoted(user)) {
+            _withdrawCastedVote(user, epochIndex);
         }
 
-        ballotId = _recordVote(msg.sender, votePower, candidates);
+        ballotId = _recordVote(user, votePower, candidates);
 
-        emit VoteRecorded(msg.sender, ballotId, epochIndex, votePower);
+        emit VoteRecorded(user, ballotId, epochIndex, votePower);
     }
 
     function withdrawVote() external override onlyInPeriod(ElectionPeriod.Vote) {
