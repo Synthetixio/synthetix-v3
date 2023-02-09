@@ -13,7 +13,6 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../utils/SynthUtil.sol";
-import "../utils/AsyncOrderClaimTokenUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
@@ -54,16 +53,13 @@ contract SpotMarketFactoryModule is
         address snxAddress,
         address usdTokenAddress,
         address oracleManager,
-        address initialSynthImplementation,
-        address initialAsyncOrderClaimImplementation
+        address initialSynthImplementation
     ) external override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
 
         spotMarketFactory.synthetix = snxAddress;
         spotMarketFactory.initialSynthImplementation = initialSynthImplementation;
-        spotMarketFactory
-            .initialAsyncOrderClaimImplementation = initialAsyncOrderClaimImplementation;
         spotMarketFactory.usdToken = ITokenModule(usdTokenAddress);
         spotMarketFactory.oracle = INodeModule(oracleManager);
     }
@@ -89,14 +85,6 @@ contract SpotMarketFactoryModule is
             tokenSymbol,
             18,
             spotMarketFactory.initialSynthImplementation
-        );
-
-        _initOrUpgradeNft(
-            AsyncOrderClaimTokenUtil.getSystemId(synthMarketId),
-            tokenName,
-            tokenSymbol,
-            "",
-            spotMarketFactory.initialAsyncOrderClaimImplementation
         );
 
         spotMarketFactory.marketOwners[synthMarketId] = synthOwner;
@@ -138,13 +126,6 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function getAsyncOrderClaimToken(uint128 marketId) external view override returns (address) {
-        return address(AsyncOrderClaimTokenUtil.getNft(marketId));
-    }
-
-    /**
-     * @inheritdoc ISpotMarketFactoryModule
-     */
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
@@ -156,19 +137,6 @@ contract SpotMarketFactoryModule is
             address(SynthUtil.getToken(marketId)),
             synthImpl
         );
-    }
-
-    /**
-     * @inheritdoc ISpotMarketFactoryModule
-     */
-    function upgradeAsyncOrderTokenImpl(
-        uint128 marketId,
-        address asyncOrderImpl
-    ) external override {
-        SpotMarketFactory.load().onlyMarketOwner(marketId);
-
-        bytes32 asyncOrderClaimTokenId = AsyncOrderClaimTokenUtil.getSystemId(marketId);
-        _upgradeNft(asyncOrderClaimTokenId, asyncOrderImpl);
     }
 
     /**

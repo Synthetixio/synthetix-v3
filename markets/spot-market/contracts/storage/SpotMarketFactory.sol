@@ -39,10 +39,6 @@ library SpotMarketFactory {
          */
         address initialSynthImplementation;
         /**
-         * @dev initial NFT implemention used for async order claims.  this implementation can later be upgraded.
-         */
-        address initialAsyncOrderClaimImplementation;
-        /**
          * @dev mapping of marketId to marketOwner
          */
         mapping(uint128 => address) marketOwners;

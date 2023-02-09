@@ -10,7 +10,6 @@ import "../storage/AsyncOrderConfiguration.sol";
 import "../storage/AsyncOrder.sol";
 import "../storage/SettlementStrategy.sol";
 import "../interfaces/IAsyncOrderModule.sol";
-import "../utils/AsyncOrderClaimTokenUtil.sol";
 import "../utils/FeeUtil.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
