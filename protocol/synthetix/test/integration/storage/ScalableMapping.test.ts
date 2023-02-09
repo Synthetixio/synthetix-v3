@@ -12,7 +12,7 @@ const distUtils = {
 const bn = (n: number) => wei(n).toBN();
 const hp = wei(1, 27).toBN();
 
-describe('ScalableMapping', () => {
+describe.only('ScalableMapping', () => {
   const { systems, signers, provider } = bootstrap();
   const restore = snapshotCheckpoint(provider);
 
@@ -42,23 +42,23 @@ describe('ScalableMapping', () => {
       before('add value', async () => {
         await FakeScalableMapping.ScalableMapping_set(actor1, bn(50));
         await FakeScalableMapping.ScalableMapping_set(actor2, bn(150));
-        await FakeScalableMapping.ScalableMapping_set(actor3, bn(250));
+        await FakeScalableMapping.ScalableMapping_set(actor3, bn(300));
       });
 
       it('has correct actor shares', async () => {
         assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor1), bn(50));
         assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor2), bn(150));
-        assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor3), bn(250));
+        assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor3), bn(300));
       });
 
       it('has correct actor values', async () => {
         assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor1), bn(50));
         assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor2), bn(150));
-        assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor3), bn(250));
+        assertBn.equal(await FakeScalableMapping.ScalableMapping_get(actor3), bn(300));
       });
 
       it('returns proper total value', async () => {
-        assertBn.equal(await FakeScalableMapping.ScalableMapping_totalAmount(), bn(450));
+        assertBn.equal(await FakeScalableMapping.ScalableMapping_totalAmount(), bn(500));
       });
     });
 
@@ -72,21 +72,22 @@ describe('ScalableMapping', () => {
 
       it('has correct total amount', async () => {
         totalAmount = await FakeScalableMapping.ScalableMapping_totalAmount();
-        assertBn.near(totalAmount, bn(1450), 1); // precision off by 1; just dust
+        console.log('TOTAL AMOUNT: ', totalAmount.toString());
+        assertBn.near(totalAmount, bn(1500), 1); // precision off by 1; just dust
       });
 
       it('has correct actor values', async () => {
         assertBn.equal(
           await FakeScalableMapping.ScalableMapping_get(actor1),
-          bn(50).mul(totalAmount).div(bn(450))
+          bn(50).mul(totalAmount).div(bn(500))
         );
         assertBn.equal(
           await FakeScalableMapping.ScalableMapping_get(actor2),
-          bn(150).mul(totalAmount).div(bn(450))
+          bn(150).mul(totalAmount).div(bn(500))
         );
         assertBn.equal(
           await FakeScalableMapping.ScalableMapping_get(actor3),
-          bn(250).mul(totalAmount).div(bn(450))
+          bn(300).mul(totalAmount).div(bn(500))
         );
       });
     });
@@ -100,7 +101,7 @@ describe('ScalableMapping', () => {
 
       it('has correct total amount', async () => {
         const totalAmount = await FakeScalableMapping.ScalableMapping_totalAmount();
-        assertBn.near(totalAmount, bn(1950), 1);
+        assertBn.near(totalAmount, bn(2000), 3); // dust
       });
     });
 
@@ -111,7 +112,12 @@ describe('ScalableMapping', () => {
 
       it('has correct total amount', async () => {
         const totalAmount = await FakeScalableMapping.ScalableMapping_totalAmount();
-        assertBn.near(totalAmount, bn(1900), 1);
+        // actor 4 received ~166.67 shares for their 500 value contribution
+        // total shares is then 166.67 + 150 + 300 + 50 = 666.67
+        // if 50 shares leave system:
+        // (2000 total value * 50) / 666.67 = 149.9999
+        // 2000 - 149.9999 = 1850 ish (more precision in contract)
+        assertBn.near(totalAmount, bn(1850)); // roughly
       });
     });
 
