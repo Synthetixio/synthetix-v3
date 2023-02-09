@@ -48,7 +48,10 @@ library Price {
     ) internal view returns (NodeOutput.Data memory price) {
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        if (transactionType == SpotMarketFactory.TransactionType.BUY) {
+        if (
+            transactionType == SpotMarketFactory.TransactionType.BUY ||
+            transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY
+        ) {
             price = INodeModule(factory.oracle).process(self.buyFeedId);
         } else {
             price = INodeModule(factory.oracle).process(self.sellFeedId);

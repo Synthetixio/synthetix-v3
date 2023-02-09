@@ -8,6 +8,7 @@ library AsyncOrder {
     struct Data {
         uint256 totalEscrowedSynthShares;
         int256 totalCommittedUsdAmount;
+        uint128 totalClaims;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -15,11 +16,6 @@ library AsyncOrder {
         assembly {
             store.slot := s
         }
-    }
-
-    function adjustCommitmentAmount(uint128 marketId, int256 amount) internal {
-        Data storage self = load(marketId);
-        self.totalCommittedUsdAmount += amount;
     }
 
     function transferIntoEscrow(
