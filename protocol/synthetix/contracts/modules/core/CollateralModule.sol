@@ -152,18 +152,17 @@ contract CollateralModule is ICollateralModule {
         }
 
         uint index = offset;
-        for (uint i = 0;i < count;i++) {
+        for (uint i = 0; i < count; i++) {
             if (locks[index].lockExpirationTime <= currentTime) {
                 emit CollateralLockExpired(
-                    accountId, 
-                    collateralType, 
-                    locks[index].amountD18, 
+                    accountId,
+                    collateralType,
+                    locks[index].amountD18,
                     locks[index].lockExpirationTime
                 );
 
                 locks[index] = locks[locks.length - 1];
                 locks.pop();
-
             } else {
                 index++;
             }
@@ -193,7 +192,7 @@ contract CollateralModule is ICollateralModule {
 
         locks = new CollateralLock.Data[](count);
 
-        for (uint i = 0;i < count;i++) {
+        for (uint i = 0; i < count; i++) {
             locks[i] = storageLocks[offset + i];
         }
     }
