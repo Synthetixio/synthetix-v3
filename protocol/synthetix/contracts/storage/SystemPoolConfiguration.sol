@@ -17,9 +17,7 @@ library SystemPoolConfiguration {
          * Note: If zero, then this value defaults to 100%.
          */
         uint minLiquidityRatioD18;
-
         uint128 __reservedForFutureUse;
-        
         /**
          * @dev Id of the main pool set by the system owner.
          */
