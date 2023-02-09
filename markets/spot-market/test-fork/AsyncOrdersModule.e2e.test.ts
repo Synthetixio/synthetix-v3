@@ -1,11 +1,17 @@
 import { Contract } from 'ethers';
 import hre from 'hardhat';
-import { ethers as Ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
 import { MinEthersFactory } from '../typechain-types/common';
 import { SynthRouter } from '../generated/typechain';
 import { snapshotCheckpoint } from '../../legacy-market/test/utils';
 import assertBignumber from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+
+const feedId = '0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6';
+const pythAPI = `https://xc-testnet.pyth.network/api/latest_vaas?ids[]=${feedId}`;
+const feedAddress = '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C';
 
 describe('AsyncOrdersModule.e2e.test', function () {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -13,48 +19,68 @@ describe('AsyncOrdersModule.e2e.test', function () {
   );
   // creates traders with USD
 
-  let owner: Ethers.Signer, trader1: Ethers.Signer, trader2: Ethers.Signer;
-  let synth: SynthRouter;
+  let owner: ethers.Signer;
 
-  let initialTrader1Balance: Ethers.BigNumber, initialTrader2Balance: Ethers.BigNumber;
+  let keeper: ethers.Signer,
+    synth: SynthRouter,
+    startTime: number,
+    strategyId: number,
+    pythSettlementStrategy: Record<string, unknown>,
+    pythCallData: string,
+    extraData: string;
 
-  before('identify actors', async () => {
+  before('identify', async () => {
     [owner] = signers();
-  });
-
-  before('identify synth', async () => {
-    const synthAddress = await systems().SpotMarket.getSynth(1);
+    const synthAddress = await systems().SpotMarket.getSynth(marketId());
     synth = systems().Synth(synthAddress);
   });
 
-  before('setup traders', async () => {
-    await systems().USD.connect(owner).approve(systems().SpotMarket.address, bn(10_000));
-    await systems().SpotMarket.connect(owner).buy(marketId(), bn(10_000), bn(10));
-    // await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-    // await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000), bn(10));
+  before('add settlement strategy', async () => {
+    pythSettlementStrategy = {
+      strategyType: 2,
+      settlementDelay: 5,
+      settlementWindowDuration: 120,
+      priceVerificationContract: feedAddress,
+      feedId,
+      url: 'https://xc-mainnet.pyth.network/api/get_vaa_ccip?data={data}',
+      settlementReward: bn(5),
+      priceDeviationTolerance: bn(1000),
+    };
+
+    strategyId = await systems()
+      .SpotMarket.connect(owner)
+      .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy);
+    await systems()
+      .SpotMarket.connect(owner)
+      .addSettlementStrategy(marketId(), pythSettlementStrategy);
   });
 
-  const restore = snapshotCheckpoint(provider);
-
-  before('identify initial trader balances', async () => {
-    initialTrader1Balance = await systems().USD.balanceOf(await owner.getAddress());
+  before('setup fixed fee', async () => {
+    await systems().SpotMarket.connect(owner).setAsyncFixedFee(marketId(), bn(0.01));
   });
 
-  it('Should be able to buy and sell with the Chainlink settlement strategy', async function () {
-    await systems().USD.connect(owner).approve(systems().SpotMarket.address, bn(1000));
-    await systems().SpotMarket.connect(owner).buy(marketId(), bn(1000), bn(1));
+  describe('commit order', () => {
+    let commitTxn: ethers.providers.TransactionResponse;
+    before('commit', async () => {
+      await systems().USD.connect(owner).approve(systems().SpotMarket.address, bn(1000));
+      commitTxn = await systems()
+        .SpotMarket.connect(owner)
+        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8));
+      startTime = await getTime(provider());
+    });
 
-    // const usdt = await hre.ethers.getContractAt(
-    //   'IERC20',
-    //   '0xe802376580c10fe23f027e1e19ed9d54d4c9311e'
-    // );
-
-    // console.log(await usdt.decimals());
+    it('emits event', async () => {
+      await assertEvent(
+        commitTxn,
+        `OrderCommitted(${marketId()}, 2, ${bn(1000)}, 1, "${await owner.getAddress()}"`,
+        systems().SpotMarket
+      );
+    });
   });
 
-  it('trader1 has 1 snxETH', async () => {
-    assertBignumber.equal(await synth.balanceOf(await owner.getAddress()), bn(1));
-  });
+  // it('trader1 has 1 snxETH', async () => {
+  //   assertBignumber.equal(await synth.balanceOf(await owner.getAddress()), bn(1));
+  // });
   //   expect(await Greeter.greet()).to.equal('Hello world!');
 
   //   const setGreetingTx = await Greeter.setGreeting('Hola mundo!');

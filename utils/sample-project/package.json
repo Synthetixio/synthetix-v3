@@ -14,6 +14,6 @@
     "@synthetixio/core-modules": "*",
     "@synthetixio/hardhat-router": "*",
     "@synthetixio/hardhat-storage": "*",
-    "hardhat-cannon": "^2.0.8"
+    "hardhat-cannon": "^2.0.9-alpha.1"
   }
 }

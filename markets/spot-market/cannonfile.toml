@@ -11,7 +11,7 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:3.0.0-alpha.10"
+defaultValue = "synthetix:3.0.0-alpha.12"
 
 [provision.synthetix]
 source = "<%= settings.synthetixPackage %>"
@@ -111,7 +111,7 @@ args = [
   "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
   "<%= contracts.SynthRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix", "router.SynthRouter", "router.AsyncOrderClaimRouter"]
+depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix", "router.SynthRouter"]
 
 # add pool owner to feature flag allow list (owner must be pdao for this to be successful)
 [invoke.addSpotMarketToFeatureFlag]

@@ -113,6 +113,7 @@ export function bootstrapWithStakedPool() {
 
   before('configure collateral', async () => {
     const [owner] = r.signers();
+    console.log('r.signers()', r.signers());
 
     // add collateral
     await (

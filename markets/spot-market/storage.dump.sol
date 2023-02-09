@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -51,43 +51,6 @@ library ERC20Storage {
     }
 }
 
-// @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721EnumerableStorage.sol:ERC721EnumerableStorage
-library ERC721EnumerableStorage {
-    bytes32 private constant _SLOT_ERC721_ENUMERABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC721Enumerable"));
-    struct Data {
-        mapping(uint256 => uint256) ownedTokensIndex;
-        mapping(uint256 => uint256) allTokensIndex;
-        mapping(address => mapping(uint256 => uint256)) ownedTokens;
-        uint256[] allTokens;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_ERC721_ENUMERABLE_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
-}
-
-// @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721Storage.sol:ERC721Storage
-library ERC721Storage {
-    bytes32 private constant _SLOT_ERC721_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC721"));
-    struct Data {
-        string name;
-        string symbol;
-        string baseTokenURI;
-        mapping(uint256 => address) ownerOf;
-        mapping(address => uint256) balanceOf;
-        mapping(uint256 => address) tokenApprovals;
-        mapping(address => mapping(address => bool)) operatorApprovals;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_ERC721_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
-}
-
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/DecimalMath.sol:DecimalMath
 library DecimalMath {
     uint256 public constant UNIT = 1e18;
@@ -112,11 +75,6 @@ library SetUtil {
         bytes32[] _values;
         mapping(bytes32 => uint) _positions;
     }
-}
-
-// @custom:artifact @synthetixio/core-modules/contracts/modules/NftModule.sol:NftModule
-contract NftModule {
-    bytes32 internal constant _INITIALIZED_NAME = "NftModule";
 }
 
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
@@ -158,23 +116,12 @@ library FeatureFlag {
     struct Data {
         bytes32 name;
         bool allowAll;
+        bool denyAll;
         SetUtil.AddressSet permissionedAddresses;
+        address[] deniers;
     }
     function load(bytes32 featureName) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.FeatureFlag", featureName));
-        assembly {
-            store.slot := s
-        }
-    }
-}
-
-// @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
-library Initialized {
-    struct Data {
-        bool initialized;
-    }
-    function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
         assembly {
             store.slot := s
         }
@@ -229,11 +176,6 @@ interface IPythVerifier {
         Price price;
         Price emaPrice;
     }
-}
-
-// @custom:artifact contracts/modules/SpotMarketFactoryModule.sol:SpotMarketFactoryModule
-contract SpotMarketFactoryModule {
-    bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
 }
 
 // @custom:artifact contracts/storage/AsyncOrderClaim.sol:AsyncOrderClaim
@@ -311,6 +253,26 @@ library Price {
     }
 }
 
+// @custom:artifact contracts/storage/SettlementStrategy.sol:SettlementStrategy
+library SettlementStrategy {
+    enum Type {
+        ONCHAIN,
+        CHAINLINK,
+        PYTH
+    }
+    struct Data {
+        Type strategyType;
+        uint256 settlementDelay;
+        uint256 settlementWindowDuration;
+        address priceVerificationContract;
+        bytes32 feedId;
+        string url;
+        uint256 settlementReward;
+        uint256 priceDeviationTolerance;
+        bool disabled;
+    }
+}
+
 // @custom:artifact contracts/storage/SpotMarketFactory.sol:SpotMarketFactory
 library SpotMarketFactory {
     bytes32 private constant _SLOT_SPOT_MARKET_FACTORY = keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
@@ -342,8 +304,8 @@ library SpotMarketFactory {
 // @custom:artifact contracts/storage/Wrapper.sol:Wrapper
 library Wrapper {
     struct Data {
-        address wrapCollateralType;
-        uint256 maxWrappableAmount;
+        address collateralType;
+        bool wrappingEnabled;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Wrapper", marketId));
@@ -351,4 +313,9 @@ library Wrapper {
             store.slot := s
         }
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
