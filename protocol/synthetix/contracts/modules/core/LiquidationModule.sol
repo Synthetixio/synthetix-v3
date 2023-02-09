@@ -203,7 +203,7 @@ contract LiquidationModule is ILiquidationModule {
         Account.load(liquidateAsAccountId).collaterals[collateralType].increaseAvailableCollateral(
             liquidationData.collateralLiquidated
         );
-        liquidationData.amountRewarded = liquidationData.debtLiquidated;
+        liquidationData.amountRewarded = liquidationData.collateralLiquidated;
 
         emit VaultLiquidation(
             poolId,
