@@ -31,4 +31,30 @@ describe('NftModule', function () {
       assert.equal(await NftModule.isInitialized(), true);
     });
   });
+
+  describe('mint()', () => {
+    it('only allows owner to call', async () => {
+      await assertRevert(
+        NftModule.connect(user).mint(await user.getAddress(), 12341234),
+        'Unauthorized(',
+        NftModule
+      );
+    });
+  });
+
+  describe('safeMint()', () => {
+    it('only allows owner to call', async () => {
+      await assertRevert(
+        NftModule.connect(user).safeMint(await user.getAddress(), 12341234, ''),
+        'Unauthorized(',
+        NftModule
+      );
+    });
+  });
+
+  describe('burn()', () => {
+    it('only allows owner to call', async () => {
+      await assertRevert(NftModule.connect(user).burn(12341234), 'Unauthorized(', NftModule);
+    });
+  });
 });

@@ -55,7 +55,7 @@ contract AccountModule is IAccountModule {
     function createAccount(uint128 requestedAccountId) external override {
         FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
-        accountTokenModule.mint(msg.sender, requestedAccountId);
+        accountTokenModule.safeMint(msg.sender, requestedAccountId, "");
 
         Account.create(requestedAccountId, msg.sender);
 

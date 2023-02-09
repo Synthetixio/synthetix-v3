@@ -30,6 +30,14 @@ interface INftModule is IERC721Enumerable {
     function mint(address to, uint tokenId) external;
 
     /**
+     * @notice Allows the owner to mint tokens. Verifies that the receiver can receive the token
+     * @param to The address to receive the newly minted token.
+     * @param tokenId The ID of the newly minted token
+     * @param data any data which should be sent to the receiver
+     */
+    function safeMint(address to, uint256 tokenId, bytes memory data) external;
+
+    /**
      * @notice Allows the owner to burn tokens.
      * @param tokenId The token to burn
      */
