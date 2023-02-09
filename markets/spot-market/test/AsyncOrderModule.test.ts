@@ -5,7 +5,7 @@ import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('AsyncOrderModule chainlink', () => {
+describe.only('AsyncOrderModule chainlink', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
@@ -39,6 +39,10 @@ describe('AsyncOrderModule chainlink', () => {
         settlementReward: bn(5),
         priceDeviationTolerance: bn(0.01),
       });
+  });
+
+  before('setup fixed fee', async () => {
+    await systems().SpotMarket.connect(marketOwner).setAsyncFixedFee(marketId(), bn(0.01));
   });
 
   describe('invalid market/claim ids', () => {
@@ -101,6 +105,71 @@ describe('AsyncOrderModule chainlink', () => {
     describe('when attempting to settle a cancelled order', () => {
       it('reverts', async () => {
         await assertRevert(systems().SpotMarket.settleOrder(marketId(), 1), 'OrderAlreadySettled');
+      });
+    });
+  });
+
+  describe('slippage protection', () => {
+    describe('buy', () => {
+      before('commit', async () => {
+        await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(2000));
+        // order # 2
+        await systems()
+          .SpotMarket.connect(trader1)
+          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.99));
+        // order # 3
+        await systems()
+          .SpotMarket.connect(trader1)
+          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.98));
+      });
+
+      before('fast forward', async () => {
+        await fastForwardTo((await getTime(provider())) + 5, provider());
+      });
+
+      it('reverts when minimum amount not met', async () => {
+        // due to fees, user doesn't receive full 1 ether
+        await assertRevert(
+          systems().SpotMarket.settleOrder(marketId(), 2),
+          `MinimumSettlementAmountNotMet(${bn(0.99)}, ${bn(0.98505)})`
+        );
+      });
+
+      it('settles on minimum amount met', async () => {
+        await systems().SpotMarket.settleOrder(marketId(), 3);
+        assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(0.98505));
+      });
+    });
+
+    describe('sell', () => {
+      let traderBalance: ethers.BigNumber;
+      before('commit', async () => {
+        traderBalance = await systems().USD.balanceOf(await trader1.getAddress());
+        await synth.connect(trader1).approve(systems().SpotMarket.address, bn(0.5));
+        // order # 4
+        await systems().SpotMarket.connect(trader1).commitOrder(marketId(), 3, bn(0.1), 0, bn(85)); // actual return is 84.15
+        // order # 5
+        await systems().SpotMarket.connect(trader1).commitOrder(marketId(), 3, bn(0.1), 0, bn(83));
+      });
+
+      before('fast forward', async () => {
+        await fastForwardTo((await getTime(provider())) + 5, provider());
+      });
+
+      it('reverts when minimum amount not met', async () => {
+        // due to fees, user doesn't receive full 1 ether
+        await assertRevert(
+          systems().SpotMarket.settleOrder(marketId(), 4),
+          `MinimumSettlementAmountNotMet(${bn(85)}, ${bn(84.15)})`
+        );
+      });
+
+      it('settles on minimum amount met', async () => {
+        await systems().SpotMarket.settleOrder(marketId(), 5);
+        assertBn.equal(
+          await systems().USD.balanceOf(await trader1.getAddress()),
+          traderBalance.add(bn(84.15))
+        );
       });
     });
   });
