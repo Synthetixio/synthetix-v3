@@ -3,10 +3,9 @@ import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe.only('AsyncOrderModule chainlink', () => {
+describe('AsyncOrderModule chainlink', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
