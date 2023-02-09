@@ -97,7 +97,7 @@ contract VaultModule is IVaultModule {
             leverage
         );
 
-        _ensureAccountCollateralsContainsPool(accountId, poolId, collateralType);
+        _updateAccountCollateralPools(accountId, poolId, collateralType, newCollateralAmountD18 > 0);
 
         // If decreasing the delegated collateral amount,
         // check the account's collateralization ratio.
@@ -281,17 +281,21 @@ contract VaultModule is IVaultModule {
     /**
      * @dev Registers the pool in the given account's collaterals array.
      */
-    function _ensureAccountCollateralsContainsPool(
+    function _updateAccountCollateralPools(
         uint128 accountId,
         uint128 poolId,
-        address collateralType
+        address collateralType,
+        bool added
     ) internal {
         Collateral.Data storage depositedCollateral = Account.load(accountId).collaterals[
             collateralType
         ];
 
-        if (!depositedCollateral.pools.contains(poolId)) {
+        if (added && !depositedCollateral.pools.contains(poolId)) {
             depositedCollateral.pools.add(poolId);
+        }
+        else if (!added && depositedCollateral.pools.contains(poolId)) {
+            depositedCollateral.pools.remove(poolId);
         }
     }
 }
