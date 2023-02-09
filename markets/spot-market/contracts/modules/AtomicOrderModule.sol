@@ -42,8 +42,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.BUY
         );
 
-        // TODO: processFees deposits fees into the market manager
-        // and so does this, need to consolidate for effeciency
         spotMarketFactory.depositToMarketManager(marketId, amountUsable);
 
         // Exchange amount after fees into synths to buyer
