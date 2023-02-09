@@ -35,7 +35,7 @@ This is a monorepo with the following folder structure and packages:
     ├── core-utils               // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
     ├── router                   // Cannon plugin that merges multiple modules into a router contract.
     ├── hardhat-storage          // Hardhat plugin used to detect storage collisions between proxy implementations.
-    ├── sample-project           // Sample project based on hardhat-router and cannon.
+    ├── sample-project           // Sample project based on router proxy and cannon.
     └── solhint-plugin-numcast   // Solidity linter plugin to avoid low level numeric casts which can lead to silent overflows.
 ```
 

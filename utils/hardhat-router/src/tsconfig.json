@@ -7,6 +7,14 @@
     "allowJs": true,
     "composite": true
   },
-  "include": ["./**/*.ts", "./**/*.js", "./**/*.json"],
+  "include": [
+    "./**/*.ts",
+    "./**/*.js",
+    "./**/*.json",
+    "../../hardhat-storage/src/subtasks/generate-testable-storage.ts",
+    "../../hardhat-storage/src/internal/render-testable-storage.ts",
+    "../../hardhat-storage/src/internal/quiet-compile.ts",
+    "../../hardhat-storage/src/internal/render-template.ts"
+  ],
   "exclude": []
 }

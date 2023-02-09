@@ -16,9 +16,6 @@ import '@synthetixio/hardhat-storage';
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
-// Log hardhat tasks execution time
-import './extensions/timers';
-
 const config = {
   solidity: {
     version: '0.8.17',

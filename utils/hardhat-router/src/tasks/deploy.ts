@@ -3,10 +3,10 @@ import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
 import { getContractsFullyQualifiedNames } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { TASK_STORAGE_VERIFY } from '@synthetixio/hardhat-storage/dist/task-names';
+import { quietCompile } from '@synthetixio/hardhat-storage/src/internal/quiet-compile';
 import { task } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { deployContract, deployContracts } from '../internal/deploy-contract';
-import { quietCompile } from '../internal/quiet-compile';
 import {
   SUBTASK_GENERATE_ROUTER,
   SUBTASK_VALIDATE_INTERFACES,

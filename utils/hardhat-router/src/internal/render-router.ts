@@ -1,9 +1,9 @@
 import path from 'node:path';
 import { JsonFragment } from '@ethersproject/abi';
 import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
-import { renderTemplate } from './render-template';
-import { toPrivateConstantCase } from './router-helper';
+import { renderTemplate } from '@synthetixio/hardhat-storage/src/internal/render-template';
 import { routerFunctionFilter } from './router-function-filter';
+import { toPrivateConstantCase } from './router-helper';
 
 const TAB = '    ';
 
