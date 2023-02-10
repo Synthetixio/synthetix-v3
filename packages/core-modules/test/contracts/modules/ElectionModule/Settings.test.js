@@ -289,7 +289,7 @@ describe('ElectionModule (settings)', () => {
 
           it('changes the setting', async () => {
             assertBn.equal(
-              await ElectionModule.getMaxDateAdjustmenTolerance(),
+              await ElectionModule.getMaxDateAdjustmentTolerance(),
               newMaxDateAdjustmentTolerance
             );
           });

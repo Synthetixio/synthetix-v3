@@ -73,7 +73,7 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
         return debtShareData.debtShares[user];
     }
 
-    function _validateCrossChainMessage(address user) internal {
+    function _validateCrossChainMessage(address user) internal view {
         ICrossDomainMessenger messenger = ICrossDomainMessenger(_L2CrossDomainMessenger);
 
         if (msg.sender != address(messenger)) {
