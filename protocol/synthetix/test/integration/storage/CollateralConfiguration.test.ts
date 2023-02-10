@@ -1,27 +1,19 @@
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { ethers } from 'ethers';
-import { snapshotCheckpoint } from '../../utils/snapshot';
-import { bootstrapWithMockMarketAndPool } from '../bootstrap';
+// import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+// import { ethers } from 'ethers';
+// import { snapshotCheckpoint } from '../../utils/snapshot';
+// import { bootstrapWithMockMarketAndPool } from '../bootstrap';
 
 describe('CollateralConfiguration', function () {
-  const {
-    systems,
-    provider,
-    signers,
-    marketId,
-    poolId,
-    accountId,
-    MockMarket,
-    depositAmount,
-    collateralAddress,
-  } = bootstrapWithMockMarketAndPool();
+  // const {
+  //   signers,
+  // } = bootstrapWithMockMarketAndPool();
 
-  let owner: ethers.Signer;
-  let user1: ethers.Signer;
+  // let owner: ethers.Signer;
+  // let user1: ethers.Signer;
 
-  before('init', async () => {
-    [owner, user1] = signers();
-  });
+  // before('init', async () => {
+  //   [owner, user1] = signers();
+  // });
 
   describe('convertTokenToSystemAmount()', async () => {
     it('scales token with 0 decimals to system amount', async () => {});
