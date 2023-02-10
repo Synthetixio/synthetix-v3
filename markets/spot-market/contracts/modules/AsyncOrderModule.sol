@@ -200,8 +200,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         ).parsePriceFeedUpdates(
                 updateData,
                 priceIds,
-                uint64(asyncOrderClaim.settlementTime), // TODO: safe conversion
-                uint64(asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
+                asyncOrderClaim.settlementTime.to64(),
+                (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
+                    .to64()
             );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
