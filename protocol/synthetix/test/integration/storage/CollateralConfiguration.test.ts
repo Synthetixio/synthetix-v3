@@ -24,17 +24,11 @@ describe('CollateralConfiguration', function () {
   });
 
   describe('convertTokenToSystemAmount()', async () => {
-    it('scales token with 0 decimals to system amount', async () => {
-    });
-    it('scales token with 6 decimals system amount', async () => {
-    });
-    it('scales token with 18 decimals to system amount', async () => {
-    });
-    it('scales token with greater than 18 decimals to system amount', async () => {
-    });
-    it('scales token that does not define decimals to system amount', async () => {
-    });
-    it('reverts when scaling to system amount results in loss of precision', async () => {
-    });
+    it('scales token with 0 decimals to system amount', async () => {});
+    it('scales token with 6 decimals system amount', async () => {});
+    it('scales token with 18 decimals to system amount', async () => {});
+    it('scales token with greater than 18 decimals to system amount', async () => {});
+    it('scales token that does not define decimals to system amount', async () => {});
+    it('reverts when scaling to system amount results in loss of precision', async () => {});
   });
 });
