@@ -150,6 +150,16 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         cast(candidates);
     }
 
+    function setCrossDomainMessenger(address messenger) external onlyOwner {
+        _setCrossDomainMessenger(messenger);
+
+        emit CrossDomainMessengerSet(messenger);
+    }
+
+    function getCrossDomainMessenger() external view returns (address) {
+        return _getCrossDomainMessenger();
+    }
+
     /// @dev L1 non-EOA debt share holders can use Optimism cross chain messengers to initiate a message on L1, and finalize it in this function to vote.
     /// @dev Call Proxy__OVM_L1CrossDomainMessenger 0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1 on L1 with ICrossDomainMessenger.sendMessage(<council-address-on-L1>, abi.encodeWithSignature("declareAndCastRelayed(address,uint256,bytes32[],address[])", user, debtShare, merkleProof, candidates)), 1000000).
     function declareAndCastRelayed(

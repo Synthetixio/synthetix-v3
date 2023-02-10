@@ -39,6 +39,7 @@ contract ElectionBase is ElectionStorage {
     error AlreadyACouncilMember();
     error NotACouncilMember();
     error InvalidMinimumActiveMembers();
+    error CrossDomainMessengerNotSet();
     error OnlyCrossDomainMessengerCanInvoke();
     error OnlyCrossDomainUserCanInvoke();
 
@@ -70,6 +71,7 @@ contract ElectionBase is ElectionStorage {
     event ElectionEvaluated(uint indexed epochIndex, uint totalBallots);
     event ElectionBatchEvaluated(uint indexed epochIndex, uint evaluatedBallots, uint totalBallots);
     event EmergencyElectionStarted(uint indexed epochIndex);
+    event CrossDomainMessengerSet(address messenger);
 
     // ---------------------------------------
     // Helpers

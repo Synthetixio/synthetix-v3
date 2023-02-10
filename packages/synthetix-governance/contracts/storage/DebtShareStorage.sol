@@ -13,6 +13,8 @@ contract DebtShareStorage {
         uint128[] debtShareIds;
         // Array of CrossChainDebtShareData's for each epoch
         CrossChainDebtShareData[] crossChainDebtShareData;
+        // Stores the address of the Optimism cross domain messenger on L2
+        ICrossDomainMessenger crossDomainMessenger;
     }
 
     struct CrossChainDebtShareData {

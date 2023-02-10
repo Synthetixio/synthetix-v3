@@ -24,10 +24,10 @@ const {
 } = require('./helpers/debt-share-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('SynthetixElectionModule - general elections', function () {
+describe.only('SynthetixElectionModule - general elections', function () {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, DebtShare, CouncilToken;
+  let ElectionModule, DebtShare, CouncilToken, Messenger;
 
   let owner;
   let user1, user2, user3, user4, user5, user6, user7, user8, user9;
@@ -74,6 +74,11 @@ describe('SynthetixElectionModule - general elections', function () {
   before('deploy debt shares mock', async function () {
     const factory = await ethers.getContractFactory('DebtShareMock');
     DebtShare = await factory.deploy();
+  });
+
+  before('deploy the messenger mock', async function () {
+    const factory = await ethers.getContractFactory('CrossDomainMessengerMock');
+    Messenger = await factory.deploy();
   });
 
   describe('when the election module is initialized', function () {
@@ -165,6 +170,61 @@ describe('SynthetixElectionModule - general elections', function () {
 
         it('shows that the DebtShare contract is connected', async function () {
           assert.equal(await ElectionModule.getDebtShareContract(), DebtShare.address);
+        });
+      });
+    });
+
+    describe('when attempting to call declareAndCastRelayed before a messenger is set', function () {
+      before('take snapshot', async function () {
+        snapshotId = await takeSnapshot(ethers.provider);
+      });
+
+      after('restore snapshot', async function () {
+        await restoreSnapshot(snapshotId, ethers.provider);
+      });
+
+      before('fast forward', async function () {
+        await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+      });
+
+      it('reverts', async function () {
+        await assertRevert(
+          ElectionModule.declareAndCastRelayed(
+            user1.address,
+            1,
+            ['0x0000000000000000000000000000000000000000000000000000000000000000'],
+            [user5.address]
+          ),
+          'CrossDomainMessengerNotSet'
+        );
+      });
+    });
+
+    describe('when setting the cross domain messenger', function () {
+      describe('with an non-owner account', function () {
+        it('reverts', async function () {
+          await assertRevert(
+            ElectionModule.connect(user1).setCrossDomainMessenger(Messenger.address),
+            `Unauthorized("${user1.address}")`
+          );
+        });
+      });
+
+      describe('with the owner account', function () {
+        before('set the messenger', async function () {
+          const tx = await ElectionModule.setCrossDomainMessenger(Messenger.address);
+          receipt = await tx.wait();
+        });
+
+        it('sets the messenger', async function () {
+          assert.equal(await ElectionModule.getCrossDomainMessenger(), Messenger.address);
+        });
+
+        it('emitted an event', async function () {
+          const event = findEvent({ receipt, eventName: 'CrossDomainMessengerSet' });
+
+          assert.ok(event);
+          assertBn.equal(event.args.messenger, Messenger.address);
         });
       });
     });
