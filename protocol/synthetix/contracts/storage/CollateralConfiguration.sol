@@ -55,6 +55,11 @@ library CollateralConfiguration {
      */
     error InsufficientDelegation(uint256 minDelegation);
 
+    /**
+     * @dev Thrown when attempting to convert a token to the system amount and the conversion results in a loss of precision.
+     */
+    error PrecisionLost();
+
     struct Data {
         /**
          * @dev Allows the owner to control deposits and delegation of collateral types.
@@ -230,13 +235,18 @@ library CollateralConfiguration {
             /// @dev if decimals() is not defined, but an existing fallback function returns a
             /// bytes representation of uint8, this logic may have unexpected results
             if (decimals == 0) {
-                amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** 18);
-            } else {
+                amountD18 = tokenAmount;
+            } else if (decimals <= 18) {
                 amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
+            } else {
+                // ensure no precision is lost when converting to 18 decimals
+                if (tokenAmount % (10 ** DecimalMath.UNIT) != 0) {
+                    revert PrecisionLost();
+                }
             }
         } catch {
             // if the token doesn't have a decimals function, assume it's 18 decimals
-            amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** 18);
+            amountD18 = tokenAmount;
         }
     }
 }
