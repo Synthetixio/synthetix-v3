@@ -5,23 +5,15 @@ import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe.only('AsyncOrderModule chainlink', () => {
+describe('AsyncOrderModule chainlink', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
 
-  let marketOwner: ethers.Signer,
-    trader1: ethers.Signer,
-    keeper: ethers.Signer,
-    synth: SynthRouter,
-    startTime: number,
-    strategyId: number,
-    chainlinkSettlementStrategy: Record<string, unknown>,
-    chainlinkCallData: string,
-    extraData: string;
+  let marketOwner: ethers.Signer, trader1: ethers.Signer, synth: SynthRouter;
 
   before('identify', async () => {
-    [, , marketOwner, trader1, , keeper] = signers();
+    [, , marketOwner, trader1] = signers();
     const synthAddress = await systems().SpotMarket.getSynth(marketId());
     synth = systems().Synth(synthAddress);
   });
