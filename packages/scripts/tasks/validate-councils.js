@@ -3,7 +3,6 @@ const assert = require('assert/strict');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const {
-  formatDate,
   fromUnixTimestamp,
   toUnixTimestamp,
 } = require('@synthetixio/core-js/utils/misc/dates');
@@ -234,7 +233,7 @@ async function validateCouncilToken({ Token, council }) {
 }
 
 function readableDate(timestamp) {
-  return formatDate(fromUnixTimestamp(timestamp));
+  return fromUnixTimestamp(timestamp).toISOString();
 }
 
 async function validate({ action, expectedResult, validation, successFn, errorFn }) {
