@@ -3,7 +3,7 @@ import logger from '@synthetixio/core-utils/utils/io/logger';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { ElementaryTypeName, SourceUnit, TypeName } from 'solidity-ast';
 import { findAll } from 'solidity-ast/utils';
-import { renderTemplate } from '../internal/render-template';
+import { renderTemplate } from './render-template';
 
 interface TestableStorageTemplateInputs {
   relativeSourceName: string;

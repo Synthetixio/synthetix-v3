@@ -1,10 +1,12 @@
-import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ethers } from 'ethers'; // This is needed because of types
 import {
   AssociatedSystemsModule,
   AssociatedSystemsModuleRouter,
   CoreRouter,
+  DecayTokenModule,
+  DecayTokenModuleRouter,
   FeatureFlagModule,
   FeatureFlagModuleRouter,
   GenericModule,
@@ -18,8 +20,6 @@ import {
   TokenModule,
   TokenModuleRouter,
   UpgradeModule,
-  DecayTokenModule,
-  DecayTokenModuleRouter,
 } from '../typechain-types';
 
 interface Contracts {
