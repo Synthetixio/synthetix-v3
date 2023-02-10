@@ -231,16 +231,15 @@ library CollateralConfiguration {
             revert CollateralNotFound();
         }
 
+        /// @dev this try-catch block assumes there is no malicious code in the token's fallback function
         try IERC20(self.tokenAddress).decimals() returns (uint8 decimals) {
-            /// @dev if decimals() is not defined, but an existing fallback function returns a
-            /// bytes representation of uint8, this logic may have unexpected results
-            if (decimals == 0) {
+            if (decimals == 18) {
                 amountD18 = tokenAmount;
-            } else if (decimals <= 18) {
+            } else if (decimals < 18) {
                 amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
             } else {
                 // ensure no precision is lost when converting to 18 decimals
-                if (tokenAmount % (10 ** DecimalMath.UNIT) != 0) {
+                if (tokenAmount % (10 ** (decimals - DecimalMath.UNIT)) != 0) {
                     revert PrecisionLost();
                 }
             }
