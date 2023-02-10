@@ -97,8 +97,6 @@ contract VaultModule is IVaultModule {
             leverage
         );
 
-        _ensureAccountCollateralsContainsPool(accountId, poolId, collateralType);
-
         // If decreasing the delegated collateral amount,
         // check the account's collateralization ratio.
         // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
@@ -248,11 +246,12 @@ contract VaultModule is IVaultModule {
             collateral.increaseAvailableCollateral(oldCollateralAmount - newCollateralAmount);
         }
 
-        // If the collateral amount is positive, make sure that the pool exists
+        // If the collateral amount is not negative, make sure that the pool exists
         // in the collateral entry's pool array. Otherwise remove it.
-        if (newCollateralAmount > 0 && !collateral.pools.contains(poolId)) {
+        bool containsPool = collateral.pools.contains(poolId);
+        if (newCollateralAmount >= 0 && !containsPool) {
             collateral.pools.add(poolId);
-        } else if (collateral.pools.contains((poolId))) {
+        } else if (containsPool) {
             collateral.pools.remove(poolId);
         }
 
@@ -275,23 +274,6 @@ contract VaultModule is IVaultModule {
 
         if (market.id > 0) {
             revert CapacityLocked(market.id);
-        }
-    }
-
-    /**
-     * @dev Registers the pool in the given account's collaterals array.
-     */
-    function _ensureAccountCollateralsContainsPool(
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType
-    ) internal {
-        Collateral.Data storage depositedCollateral = Account.load(accountId).collaterals[
-            collateralType
-        ];
-
-        if (!depositedCollateral.pools.contains(poolId)) {
-            depositedCollateral.pools.add(poolId);
         }
     }
 }
