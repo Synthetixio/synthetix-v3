@@ -1,5 +1,5 @@
-import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
