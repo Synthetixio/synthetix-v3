@@ -1,5 +1,5 @@
+import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { TASK_COMPILE } from '../task-names';
 
 /*
  * Note: Even though hardhat's compile task has a quiet option,

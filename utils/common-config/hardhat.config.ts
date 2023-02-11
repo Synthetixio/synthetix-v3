@@ -3,17 +3,15 @@ import dotenv from 'dotenv';
 import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
-import '@synthetixio/hardhat-router';
-import '@synthetixio/hardhat-storage';
 import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
-
 import 'hardhat-ignore-warnings';
 
-// cannon builder plugin
-import '@synthetixio/router/src/utils/cannon';
+// Router generation cannon plugin
+import '@synthetixio/router/utils/cannon';
+import '@synthetixio/hardhat-storage';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
