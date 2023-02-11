@@ -28,10 +28,7 @@ contract CollateralMockWithoutDecimals {
     error AlreadyInitialized();
     error NotInitialized();
 
-    function initialize(
-        string memory tokenName,
-        string memory tokenSymbol
-    ) public {
+    function initialize(string memory tokenName, string memory tokenSymbol) public {
         _initialize(tokenName, tokenSymbol);
     }
 
@@ -94,19 +91,11 @@ contract CollateralMockWithoutDecimals {
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
         return _transferFrom(from, to, amount);
     }
 
-    function _transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) internal returns (bool) {
+    function _transferFrom(address from, address to, uint256 amount) internal returns (bool) {
         Data storage store = load();
 
         uint256 currentAllowance = store.allowance[from][msg.sender];
@@ -123,11 +112,7 @@ contract CollateralMockWithoutDecimals {
         return true;
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal {
+    function _transfer(address from, address to, uint256 amount) internal {
         Data storage store = load();
 
         uint256 accountBalance = store.balanceOf[from];
@@ -147,11 +132,7 @@ contract CollateralMockWithoutDecimals {
         emit Transfer(from, to, amount);
     }
 
-    function _approve(
-        address owner,
-        address spender,
-        uint256 amount
-    ) internal {
+    function _approve(address owner, address spender, uint256 amount) internal {
         load().allowance[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
