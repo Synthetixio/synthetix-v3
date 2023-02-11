@@ -217,7 +217,8 @@ library CollateralConfiguration {
 
     /**
      * @dev Converts token amounts with non-system decimal precisions, to 18 decimals of precision.
-     * E.g: USDC uses 6 decimals of precision, so this would upscale it by 12 decimals.
+     * E.g: $TOKEN_A uses 6 decimals of precision, so this would upscale it by 12 decimals.
+     * E.g: $TOKEN_B uses 20 decimals of precision, so this would downscale it by 2 decimals.
      * @param self The CollateralConfiguration object corresponding to the collateral type being converted.
      * @param tokenAmount The token amount, denominated in its native decimal precision.
      * @return amountD18 The converted amount, denominated in the system's 18 decimal precision.
@@ -239,8 +240,11 @@ library CollateralConfiguration {
                 amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
             } else {
                 // ensure no precision is lost when converting to 18 decimals
-                if (tokenAmount % (10 ** (decimals - DecimalMath.UNIT)) != 0) {
+                if (tokenAmount % (10 ** (decimals - 18)) != 0) {
                     revert PrecisionLost();
+                } else {
+                    // this will scale down the amount by the difference between the token's decimals and 18
+                    amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
                 }
             }
         } catch {
