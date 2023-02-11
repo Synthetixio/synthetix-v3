@@ -45,7 +45,7 @@ describe('NftModule', function () {
   describe('safeMint()', () => {
     it('only allows owner to call', async () => {
       await assertRevert(
-        NftModule.connect(user).safeMint(await user.getAddress(), 12341234, ''),
+        NftModule.connect(user).safeMint(await user.getAddress(), 12341234, '0x'),
         'Unauthorized(',
         NftModule
       );
