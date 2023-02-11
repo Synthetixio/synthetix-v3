@@ -1,4 +1,4 @@
-# hardhat-router
+# router
 
 Solidity router generator.
 
@@ -12,12 +12,13 @@ Example:
 A user calls the `rebalancePool()` function on a deployed router, which merges 3 modules; A.sol, B.sol, and C.sol. The router determines that the function `rebalancePool` is defined in module B.sol. So, the router simply performs a `DELEGATECALL` to B's deployed instance.
 
 This router is similar to the [Diamond Proxy](https://eips.ethereum.org/EIPS/eip-2535) but:
-* is simpler
-  * because it has no module management interface
-* more explicit
-  * because its modular composition can easily be seen by looking at its hardcoded module addresses
-* more efficient
-  * because it hardcodes the deployed module addresses, minimizing `SLOAD` usage
+
+- is simpler
+  - because it has no module management interface
+- more explicit
+  - because its modular composition can easily be seen by looking at its hardcoded module addresses
+- more efficient
+  - because it hardcodes the deployed module addresses, minimizing `SLOAD` usage
 
 ### Module deployment
 
@@ -124,16 +125,18 @@ contract Router {
 ### Router validation
 
 After generation, the plugin performs a series of validations on the generated source, including:
-* Checks that there are no duplicate selectors in its modules (function names must be unique)
-* That there are no storage collisions between module namespaces
-* That there are no invalid storage mutations between module namespaces
-* TODO: Complete list of validations
+
+- Checks that there are no duplicate selectors in its modules (function names must be unique)
+- That there are no storage collisions between module namespaces
+- That there are no invalid storage mutations between module namespaces
+- TODO: Complete list of validations
 
 ### Storage namespaces
 
 To avoid storage collisions between modules, we recommend the usage of storage namespaces.
 
 Instead of declaring variables in regular Solidity slots:
+
 ```
 contract SettingsModule {
 	uint private _someSetting;
@@ -149,6 +152,7 @@ contract SettingsModule {
 ```
 
 Use a store:
+
 ```
 contract SettingsModule is SettingsStorage {
 	function setSomeSetting(uint newValue) external {
@@ -181,6 +185,7 @@ Since the router `DELEGATECALL`s to its implementation modules, all code specifi
 Thus, all modules have access to the global storage of the system. Instead of performing calls to other modules, it is recommended to use Mixins that know how to interact with the storage of another module.
 
 E.g.
+
 ```
 contract OwnableMixin is OwnableStorage {
   modifier onlyOwner() {
@@ -211,6 +216,7 @@ This plugin will deploy a proxy and set its implementation as the router.
 ### Plugin configuration
 
 hardhat.config.js
+
 ```
 module.exports = {
   solidity: '0.8.11'

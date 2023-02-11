@@ -42,6 +42,14 @@ interface IAssociateDebtModule {
 
     /**
      * @notice Allows a market to associate debt with a specific position.
+     * The specified debt will be removed from all vault participants pro-rata. After removing the debt, the amount will
+     * be allocated directly to the specified account.
+     * **NOTE**: if the specified account is an existing staker on the vault, their position will be included in the pro-rata
+     * reduction. Ex: if there are 10 users staking 10 USD of debt on a pool, and associate debt is called with 10 USD on one of those users,
+     * their debt after the operation is complete will be 19 USD. This might seem unusual, but its actually ideal behavior when
+     * your market has incurred some new debt, and it wants to allocate this amount directly to a specific user. In this case, the user's
+     * debt balance would increase pro rata, but then get decreased pro-rata, and then increased to the full amount on their account. All
+     * other accounts would be left with no change to their debt, however.
      * @param marketId The id of the market to which debt was associated.
      * @param poolId The id of the pool associated to the target market.
      * @param collateralType The address of the collateral type that acts as collateral in the corresponding pool.

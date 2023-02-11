@@ -33,7 +33,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     /**
      * @inheritdoc IPoolConfigurationModule
      */
-    function getPreferredPool() external view override returns (uint) {
+    function getPreferredPool() external view override returns (uint128) {
         return SystemPoolConfiguration.load().preferredPool;
     }
 
