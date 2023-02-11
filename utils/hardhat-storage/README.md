@@ -1,6 +1,6 @@
 # hardhat-storage
 
-Hardhat Plugin to validate storage usage on a set of solidity contracts. The intention of this library is to avoid any unintended storage side effects when using Proxy architectures. E.g. when using [`@synthetixio/hardhat-router`](https://github.com/Synthetixio/synthetix-v3/tree/main/utils/hardhat-router).
+Hardhat Plugin to validate storage usage on a set of solidity contracts. The intention of this library is to avoid any unintended storage side effects when using Proxy architectures. E.g. when using [`@synthetixio/router`](https://github.com/Synthetixio/synthetix-v3/tree/main/utils/router).
 
 ## Validations
 
@@ -8,7 +8,7 @@ Hardhat Plugin to validate storage usage on a set of solidity contracts. The int
 
 It makes sure that your contracts are not using [state variables](https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html) to avoid any storage collisions between different contracts executed behind the same Proxy.
 
-To avoid this error it is recommended to use [Storage Namespaces](../hardhat-router/README.md#storage-namespaces).
+To avoid this error it is recommended to use [Storage Namespaces](../router/README.md#storage-namespaces).
 
 ### Storage Namespace Slots
 

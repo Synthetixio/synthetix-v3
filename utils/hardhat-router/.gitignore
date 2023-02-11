@@ -1,8 +1,0 @@
-# Deployment Output from Tests
-test/fixture-projects/*/deployments/local
-test/fixture-projects/*/deployments/hardhat
-test/fixture-projects/*/contracts/Router.sol
-test/fixture-projects/*/contracts/Proxy.sol
-
-# Build Output
-dist/

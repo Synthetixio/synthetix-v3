@@ -1,18 +1,17 @@
-import { ethers } from 'ethers';
-import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
-import hre from 'hardhat';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
-
+import { ethers } from 'ethers';
+import hre from 'hardhat';
 import {
-  SpotMarketProxy,
-  SynthetixCoreProxy,
-  SynthetixUSDProxy,
-  SynthetixCollateralMock,
-  SynthetixOracle_managerProxy,
-  SynthRouter,
   FeeCollectorMock,
+  SpotMarketProxy,
+  SynthetixCollateralMock,
+  SynthetixCoreProxy,
+  SynthetixOracle_managerProxy,
+  SynthetixUSDProxy,
+  SynthRouter,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 

@@ -41,6 +41,7 @@ contract CollateralModule is ICollateralModule {
     ) public override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_FEATURE_FLAG);
         CollateralConfiguration.collateralEnabled(collateralType);
+        Account.exists(accountId);
 
         Account.Data storage account = Account.load(accountId);
 

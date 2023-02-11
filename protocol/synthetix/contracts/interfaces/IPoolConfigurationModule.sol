@@ -47,11 +47,11 @@ interface IPoolConfigurationModule {
      * @notice Retrieves the unique system preferred pool.
      * @return The id of the pool that is currently set as preferred in the system.
      */
-    function getPreferredPool() external view returns (uint256);
+    function getPreferredPool() external view returns (uint128);
 
     /**
      * @notice Retrieves the pool that are approved by the system owner.
      * @return An array with all of the pool ids that are approved in the system.
      */
-    function getApprovedPools() external view returns (uint256[] calldata);
+    function getApprovedPools() external view returns (uint[] calldata);
 }
