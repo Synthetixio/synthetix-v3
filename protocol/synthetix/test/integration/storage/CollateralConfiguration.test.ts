@@ -44,7 +44,7 @@ describe('CollateralConfiguration', function () {
         ONE
       );
 
-      let expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
+      const expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
         ethers.BigNumber.from(10).pow(DECIMALS)
       );
 
@@ -60,7 +60,7 @@ describe('CollateralConfiguration', function () {
         ONE
       );
 
-      let expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
+      const expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
         ethers.BigNumber.from(10).pow(DECIMALS)
       );
 
@@ -76,7 +76,7 @@ describe('CollateralConfiguration', function () {
         ONE
       );
 
-      let expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
+      const expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
         ethers.BigNumber.from(10).pow(DECIMALS)
       );
 
@@ -93,7 +93,7 @@ describe('CollateralConfiguration', function () {
         ONE_HUNDRED // with 20 decimals, this is 1.0, or in the context of the system 1 * 10^18
       );
 
-      let expectedAmountD18 = ONE_HUNDRED.mul(ethers.BigNumber.from(10).pow(18)).div(
+      const expectedAmountD18 = ONE_HUNDRED.mul(ethers.BigNumber.from(10).pow(18)).div(
         ethers.BigNumber.from(10).pow(DECIMALS)
       );
 
@@ -129,7 +129,7 @@ describe('CollateralConfiguration', function () {
         ONE
       );
 
-      let expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
+      const expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
         ethers.BigNumber.from(10).pow(DECIMALS)
       );
 
