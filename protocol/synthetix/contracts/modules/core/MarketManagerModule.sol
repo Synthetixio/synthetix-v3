@@ -53,9 +53,10 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function getWithdrawableMarketUsd(uint128 marketId) public view override returns (uint256) {
-        return
-            Market.load(marketId).creditCapacityD18 +
-            Market.load(marketId).getDepositedCollateralValue();
+        int256 withdrawable = Market.load(marketId).creditCapacityD18 +
+            Market.load(marketId).getDepositedCollateralValue().toInt();
+
+        return withdrawable < 0 ? 0 : withdrawable.toUint();
     }
 
     /**
@@ -118,7 +119,7 @@ contract MarketManagerModule is IMarketManagerModule {
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting.
-        market.creditCapacityD18 += amount.to128();
+        market.creditCapacityD18 += amount.toInt().to128();
         market.netIssuanceD18 -= amount.toInt().to128();
 
         // Burn the incoming USD.
@@ -145,7 +146,7 @@ contract MarketManagerModule is IMarketManagerModule {
             revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting.
-        marketData.creditCapacityD18 -= amount.to128();
+        marketData.creditCapacityD18 -= amount.toInt().to128();
         marketData.netIssuanceD18 += amount.toInt().to128();
 
         // Mint the requested USD.
