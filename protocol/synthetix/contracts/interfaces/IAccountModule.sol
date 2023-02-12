@@ -68,11 +68,11 @@ interface IAccountModule {
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
      * @param accountId The id of the account whose permissions are being retrieved.
-     * @return An array of AccountPermission objects describing the permissions granted to the account.
+     * @return permissions An array of AccountPermission objects describing the permissions granted to the account.
      */
     function getAccountPermissions(
         uint128 accountId
-    ) external view returns (AccountPermissions[] memory);
+    ) external view returns (AccountPermissions[] memory permissions);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
@@ -140,44 +140,44 @@ interface IAccountModule {
      * @param accountId The id of the account whose permission is being queried.
      * @param permission The bytes32 identifier of the permission.
      * @param user The target address whose permission is being queried.
-     * @return A boolean with the response of the query.
+     * @return hasPermission A boolean with the response of the query.
      */
     function hasPermission(
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external view returns (bool);
+    ) external view returns (bool hasPermission);
 
     /**
      * @notice Returns `true` if `target` is authorized to `permission` for account `accountId`.
      * @param accountId The id of the account whose permission is being queried.
      * @param permission The bytes32 identifier of the permission.
      * @param target The target address whose permission is being queried.
-     * @return A boolean with the response of the query.
+     * @return isAuthorized A boolean with the response of the query.
      */
     function isAuthorized(
         uint128 accountId,
         bytes32 permission,
         address target
-    ) external view returns (bool);
+    ) external view returns (bool isAuthorized);
 
     /**
      * @notice Returns the address for the account token used by the module.
-     * @return The address of the account token.
+     * @return accountNftToken The address of the account token.
      */
-    function getAccountTokenAddress() external view returns (address);
+    function getAccountTokenAddress() external view returns (address accountNftToken);
 
     /**
      * @notice Returns the address that owns a given account, as recorded by the system.
      * @param accountId The account id whose owner is being retrieved.
-     * @return The owner of the given account id.
+     * @return owner The owner of the given account id.
      */
-    function getAccountOwner(uint128 accountId) external view returns (address);
+    function getAccountOwner(uint128 accountId) external view returns (address owner);
 
     /**
      * @notice Returns the last unix timestamp that a permissioned action was taken with this account
      * @param accountId The account id to check
-     * @return The unix timestamp of the last time a permissioned action occured with the account
+     * @return timestamp The unix timestamp of the last time a permissioned action occured with the account
      */
-    function getAccountLastInteraction(uint128 accountId) external view returns (uint);
+    function getAccountLastInteraction(uint128 accountId) external view returns (uint timestamp);
 }

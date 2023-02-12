@@ -67,7 +67,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc IMarket
      */
-    function reportedDebt(uint128 requestedMarketId) public view returns (uint) {
+    function reportedDebt(uint128 requestedMarketId) public view returns (uint debt) {
         if (marketId == requestedMarketId) {
             // in cases where we are in the middle of an account migration, we want to prevent the debt from changing, so we "lock" the value to the amount as the call starts
             // so we can detect the increase and associate it properly later.
@@ -94,7 +94,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc IMarket
      */
-    function locked(uint128 /* requestedMarketId*/) external pure returns (uint) {
+    function locked(uint128 /* requestedMarketId*/) external pure returns (uint lockedAmount) {
         // legacy market never locks collateral
         return 0;
     }
@@ -279,7 +279,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @dev Returns the amount of dollar-denominated debt associated with {debtSharesMigrated} in the V2 system.
      */
-    function _calculateDebtValueMigrated(uint debtSharesMigrated) internal view returns (uint) {
+    function _calculateDebtValueMigrated(uint debtSharesMigrated) internal view returns (uint portionMigrated) {
         (uint totalSystemDebt, uint totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer"))
             .allNetworksDebtInfo();
 
