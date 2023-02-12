@@ -56,7 +56,7 @@ contract IssueUSDModule is IIssueUSDModule {
 
         // Ensure minting stablecoins is increasing the debt of the position
         if (newDebt <= debt) {
-            revert InvalidParameter("newDebt", "should be greater than current debt");
+            revert ParameterError.InvalidParameter("newDebt", "should be greater than current debt");
         }
 
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
