@@ -92,7 +92,7 @@ library VaultEpoch {
         int256 amountD18
     ) internal returns (int256 newDebtD18) {
         int256 currentDebtD18 = self.consolidatedDebtAmountsD18[accountId];
-        self.consolidatedDebtAmountsD18[accountId] += amountD18.to128();
+        self.consolidatedDebtAmountsD18[accountId] += amountD18;
         self.totalConsolidatedDebtD18 += amountD18.to128();
         return currentDebtD18 + amountD18;
     }
