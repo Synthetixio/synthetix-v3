@@ -358,7 +358,7 @@ library Pool {
      */
     function findMarketWithCapacityLocked(
         Data storage self
-    ) internal view returns (Market.Data storage lockedMarketId) {
+    ) internal view returns (Market.Data storage lockedMarket) {
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
