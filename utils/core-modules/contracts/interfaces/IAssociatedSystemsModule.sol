@@ -12,7 +12,7 @@ pragma solidity >=0.8.11 <0.9.0;
  *
  * Furthermore, associated systems are typed in the AssociatedSystem utility library (See AssociatedSystem.sol):
  * - KIND_ERC20: A managed associated system specifically wrapping an ERC20 implementation.
- * - KIND_ERC721: A managed associated system specifically wrapping an ERC20 implementation.
+ * - KIND_ERC721: A managed associated system specifically wrapping an ERC721 implementation.
  * - KIND_UNMANAGED: Any unmanaged associated system.
  */
 interface IAssociatedSystemsModule {

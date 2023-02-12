@@ -84,6 +84,7 @@ library VaultEpoch {
 
     /**
      * @dev Adjusts the debt associated with `accountId` by `amountD18`.
+     * Used to add or remove debt from/to a specific account, instead of all accounts at once (use distributeDebtToAccounts for that)
      */
     function assignDebtToAccount(
         Data storage self,

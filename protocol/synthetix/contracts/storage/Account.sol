@@ -91,7 +91,7 @@ library Account {
     }
 
     /**
-     * @dev Returns information about the total collateral assigned, deposited, and locked by the account, and the given collateral type.
+     * @dev Given a collateral type, returns information about the total collateral assigned, deposited, and locked by the account
      */
     function getCollateralTotals(
         Data storage self,
