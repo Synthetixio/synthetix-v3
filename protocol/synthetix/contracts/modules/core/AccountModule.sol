@@ -35,14 +35,14 @@ contract AccountModule is IAccountModule {
      */
     function getAccountPermissions(
         uint128 accountId
-    ) external view returns (AccountPermissions[] memory permissions) {
+    ) external view returns (AccountPermissions[] memory accountPerms) {
         AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
 
         uint256 allPermissionsLength = accountRbac.permissionAddresses.length();
-        permissions = new AccountPermissions[](allPermissionsLength);
+        accountPerms = new AccountPermissions[](allPermissionsLength);
         for (uint256 i = 1; i <= allPermissionsLength; i++) {
             address permissionAddress = accountRbac.permissionAddresses.valueAt(i);
-            permissions[i - 1] = AccountPermissions({
+            accountPerms[i - 1] = AccountPermissions({
                 user: permissionAddress,
                 permissions: accountRbac.permissions[permissionAddress].values()
             });

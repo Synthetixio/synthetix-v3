@@ -68,11 +68,11 @@ interface IAccountModule {
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
      * @param accountId The id of the account whose permissions are being retrieved.
-     * @return permissions An array of AccountPermission objects describing the permissions granted to the account.
+     * @return accountPerms An array of AccountPermission objects describing the permissions granted to the account.
      */
     function getAccountPermissions(
         uint128 accountId
-    ) external view returns (AccountPermissions[] memory permissions);
+    ) external view returns (AccountPermissions[] memory accountPerms);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
