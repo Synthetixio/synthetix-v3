@@ -38,7 +38,7 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) public override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_FEATURE_FLAG);
         CollateralConfiguration.collateralEnabled(collateralType);
         Account.exists(accountId);
@@ -70,7 +70,7 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) public override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_FEATURE_FLAG);
         Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
