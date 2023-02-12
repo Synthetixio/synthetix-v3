@@ -118,12 +118,17 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         // get synthetix v2x addresses
         IERC20 oldUSD = IERC20(v2xResolver.getAddress("ProxysUSD"));
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("Synthetix"));
+        IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
 
         // retrieve the sUSD from the user so we can burn it
         oldUSD.transferFrom(msg.sender, address(this), amount);
 
         // now burn it
+        uint beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
         oldSynthetix.burnSynths(amount);
+        if (iss.debtBalanceOf(address(this), "sUSD") != beforeDebt - amount) {
+            revert Paused();
+        }
 
         // now mint same amount of snxUSD (called a "withdraw" in v3 land)
         v3System.withdrawMarketUsd(marketId, msg.sender, amount);
