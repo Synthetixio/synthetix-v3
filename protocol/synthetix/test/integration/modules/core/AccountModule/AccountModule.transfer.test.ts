@@ -21,9 +21,15 @@ describe('AccountModule', function () {
     });
 
     before('grant some permissions', async () => {
-      await systems().Core.connect(user1).grantPermission(1, Permissions.REWARDS, await user1.getAddress());
-      await systems().Core.connect(user1).grantPermission(1, Permissions.WITHDRAW, await user3.getAddress());
-      await systems().Core.connect(user1).grantPermission(1, Permissions.DELEGATE, await user3.getAddress());
+      await systems()
+        .Core.connect(user1)
+        .grantPermission(1, Permissions.REWARDS, await user1.getAddress());
+      await systems()
+        .Core.connect(user1)
+        .grantPermission(1, Permissions.WITHDRAW, await user3.getAddress());
+      await systems()
+        .Core.connect(user1)
+        .grantPermission(1, Permissions.DELEGATE, await user3.getAddress());
     });
 
     describe('when an account NFT is transferred', function () {
