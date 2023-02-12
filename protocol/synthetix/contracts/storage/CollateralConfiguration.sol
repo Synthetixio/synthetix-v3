@@ -57,8 +57,10 @@ library CollateralConfiguration {
 
     /**
      * @dev Thrown when attempting to convert a token to the system amount and the conversion results in a loss of precision.
+     * @param tokenAmount The amount of tokens that were attempted to be converted.
+     * @param decimals The number of decimals of the token that was attempted to be converted.
      */
-    error PrecisionLost();
+    error PrecisionLost(uint tokenAmount, uint8 decimals);
 
     struct Data {
         /**
@@ -241,11 +243,11 @@ library CollateralConfiguration {
             } else {
                 // ensure no precision is lost when converting to 18 decimals
                 if (tokenAmount % (10 ** (decimals - 18)) != 0) {
-                    revert PrecisionLost();
-                } else {
-                    // this will scale down the amount by the difference between the token's decimals and 18
-                    amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
+                    revert PrecisionLost(tokenAmount, decimals);
                 }
+
+                // this will scale down the amount by the difference between the token's decimals and 18
+                amountD18 = (tokenAmount * DecimalMath.UNIT) / (10 ** decimals);
             }
         } catch {
             // if the token doesn't have a decimals function, assume it's 18 decimals
