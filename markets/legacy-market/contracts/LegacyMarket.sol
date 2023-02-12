@@ -33,6 +33,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
 
+    error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
@@ -59,7 +60,10 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      * @inheritdoc ILegacyMarket
      */
     function registerMarket() external onlyOwner returns (uint128 newMarketId) {
-        require(marketId == 0, "Market already registered");
+        if (marketId != 0) {
+            revert MarketAlreadyRegistered(marketId);
+        }
+
         newMarketId = v3System.registerMarket(address(this));
         marketId = newMarketId;
     }

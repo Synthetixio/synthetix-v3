@@ -31,6 +31,12 @@ interface IAssociatedSystemsModule {
     );
 
     /**
+     * @notice Emitted when the function you are calling requires an associated system, but it
+     * has not been registered
+     */
+    error MissingAssociatedSystem(bytes32 id);
+
+    /**
      * @notice Creates or initializes a managed associated ERC20 token.
      * @param id The bytes32 identifier of the associated system. If the id is new to the system, it will create a new proxy for the associated system.
      * @param name The token name that will be used to initialize the proxy.

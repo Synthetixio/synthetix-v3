@@ -55,7 +55,9 @@ contract IssueUSDModule is IIssueUSDModule {
         int256 newDebt = debt + amount.toInt();
 
         // Ensure minting stablecoins is increasing the debt of the position
-        require(newDebt > debt, "Incorrect new debt");
+        if (newDebt <= debt) {
+            revert InvalidParameter("newDebt", "should be greater than current debt");
+        }
 
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);

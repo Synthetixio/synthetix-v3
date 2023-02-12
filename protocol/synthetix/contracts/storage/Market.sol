@@ -513,6 +513,7 @@ library Market {
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
             if (maxDistributedD18 > 0) {
+                // the below requires are only for sanity
                 require(
                     self.poolsDebtDistribution.getActorShares(edgePool.id.toBytes32()) > 0,
                     "no shares before actor removal"
