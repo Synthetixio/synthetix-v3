@@ -125,7 +125,7 @@ interface IRewardsManagerModule {
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param accountId The id of the account whose available rewards are being queried.
      * @return claimableD18 An array of ids of the reward entries that are claimable by the position.
-     * @return distributorsD18 An array with the addresses of the reward distributors associated with the claimable rewards.
+     * @return distributors An array with the addresses of the reward distributors associated with the claimable rewards.
      */
     function updateRewards(
         uint128 poolId,

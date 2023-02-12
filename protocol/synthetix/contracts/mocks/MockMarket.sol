@@ -11,14 +11,14 @@ import "../interfaces/IMarketCollateralModule.sol";
 contract MockMarket is IMarket {
     using DecimalMath for uint256;
 
-    uint private _reportedDebt;
-    uint private _locked;
-    uint private _price;
+    uint256 private _reportedDebt;
+    uint256 private _locked;
+    uint256 private _price;
 
     address private _proxy;
     uint128 private _marketId;
 
-    function initialize(address proxy, uint128 marketId, uint initialPrice) external {
+    function initialize(address proxy, uint128 marketId, uint256 initialPrice) external {
         _proxy = proxy;
         _marketId = marketId;
         _price = initialPrice;
@@ -28,7 +28,7 @@ contract MockMarket is IMarket {
         uint128 poolId,
         address collateralType,
         uint128 accountId,
-        uint amount
+        uint256 amount
     ) external {
         IAssociateDebtModule(_proxy).associateDebt(
             _marketId,
@@ -39,27 +39,27 @@ contract MockMarket is IMarket {
         );
     }
 
-    function buySynth(uint amount) external {
+    function buySynth(uint256 amount) external {
         _reportedDebt += amount;
-        uint toDeposit = amount.divDecimal(_price);
+        uint256 toDeposit = amount.divDecimal(_price);
         IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
-    function sellSynth(uint amount) external {
+    function sellSynth(uint256 amount) external {
         _reportedDebt -= amount;
-        uint toDeposit = amount.divDecimal(_price);
+        uint256 toDeposit = amount.divDecimal(_price);
         IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
-    function setReportedDebt(uint newReportedDebt) external {
+    function setReportedDebt(uint256 newReportedDebt) external {
         _reportedDebt = newReportedDebt;
     }
 
-    function setLocked(uint newLocked) external {
+    function setLocked(uint256 newLocked) external {
         _locked = newLocked;
     }
 
-    function reportedDebt(uint128) external view override returns (uint) {
+    function reportedDebt(uint128) external view override returns (uint256) {
         return _reportedDebt;
     }
 
@@ -67,30 +67,30 @@ contract MockMarket is IMarket {
         return "MockMarket";
     }
 
-    function locked(uint128) external view override returns (uint) {
+    function locked(uint128) external view override returns (uint256) {
         return _locked;
     }
 
-    function setPrice(uint newPrice) external {
+    function setPrice(uint256 newPrice) external {
         _price = newPrice;
     }
 
-    function price() external view returns (uint) {
+    function price() external view returns (uint256) {
         return _price;
     }
 
-    function deposit(address collateralType, uint amount) external {
+    function deposit(address collateralType, uint256 amount) external {
         IERC20(collateralType).transferFrom(msg.sender, address(this), amount);
         IERC20(collateralType).approve(_proxy, amount);
         IMarketCollateralModule(_proxy).depositMarketCollateral(_marketId, collateralType, amount);
     }
 
-    function withdraw(address collateralType, uint amount) external {
+    function withdraw(address collateralType, uint256 amount) external {
         IMarketCollateralModule(_proxy).withdrawMarketCollateral(_marketId, collateralType, amount);
         IERC20(collateralType).transfer(msg.sender, amount);
     }
 
-    function name(uint) external pure returns (string memory) {
+    function name(uint256) external pure returns (string memory) {
         return "Mock Market";
     }
 

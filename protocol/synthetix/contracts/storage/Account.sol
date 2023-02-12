@@ -38,7 +38,11 @@ library Account {
     /**
      * @dev Thrown when the requested operation requires an activity timeout before the
      */
-    error AccountActivityTimeoutPending(uint128 accountId, uint currentTime, uint requiredTime);
+    error AccountActivityTimeoutPending(
+        uint128 accountId,
+        uint256 currentTime,
+        uint256 requiredTime
+    );
 
     struct Data {
         /**
@@ -173,7 +177,7 @@ library Account {
     function loadAccountAndValidatePermissionAndTimeout(
         uint128 accountId,
         bytes32 permission,
-        uint timeout
+        uint256 timeout
     ) internal view returns (Data storage account) {
         account = Account.load(accountId);
 
@@ -181,7 +185,7 @@ library Account {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
 
-        uint endWaitingPeriod = account.lastInteraction + timeout;
+        uint256 endWaitingPeriod = account.lastInteraction + timeout;
         if (block.timestamp < endWaitingPeriod) {
             revert AccountActivityTimeoutPending(accountId, block.timestamp, endWaitingPeriod);
         }

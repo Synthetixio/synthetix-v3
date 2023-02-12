@@ -280,7 +280,7 @@ library Market {
      * Note: this is test only
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_inRangePools(Data storage self) internal view returns (uint) {
+    function _testOnly_inRangePools(Data storage self) internal view returns (uint256) {
         return self.inRangePools.size();
     }
 
@@ -290,7 +290,7 @@ library Market {
      * Note: this is test only
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_outRangePools(Data storage self) internal view returns (uint) {
+    function _testOnly_outRangePools(Data storage self) internal view returns (uint256) {
         return self.outRangePools.size();
     }
 
@@ -429,7 +429,7 @@ library Market {
                     ? valueToDistributeD18.divDecimal(
                         self.poolsDebtDistribution.totalSharesD18.toInt()
                     ) // solhint-disable-next-line numcast/safe-cast
-                    : int(0)
+                    : int256(0)
             );
     }
 

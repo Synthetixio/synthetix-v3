@@ -147,6 +147,6 @@ interface IMarketManagerModule {
      */
     function distributeDebtToPools(
         uint128 marketId,
-        uint maxIter
+        uint256 maxIter
     ) external returns (bool finishedDistributing);
 }

@@ -53,5 +53,5 @@ interface IPoolConfigurationModule {
      * @notice Retrieves the pool that are approved by the system owner.
      * @return poolIds An array with all of the pool ids that are approved in the system.
      */
-    function getApprovedPools() external view returns (uint[] calldata poolIds);
+    function getApprovedPools() external view returns (uint256[] calldata poolIds);
 }

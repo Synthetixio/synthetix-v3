@@ -179,5 +179,5 @@ interface IAccountModule {
      * @param accountId The account id to check
      * @return timestamp The unix timestamp of the last time a permissioned action occured with the account
      */
-    function getAccountLastInteraction(uint128 accountId) external view returns (uint timestamp);
+    function getAccountLastInteraction(uint128 accountId) external view returns (uint256 timestamp);
 }

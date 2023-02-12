@@ -157,7 +157,7 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function getAccountLastInteraction(uint128 accountId) external view returns (uint) {
+    function getAccountLastInteraction(uint128 accountId) external view returns (uint256) {
         return Account.load(accountId).lastInteraction;
     }
 

@@ -75,7 +75,7 @@ contract CollateralModule is ICollateralModule {
         Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
             AccountRBAC._WITHDRAW_PERMISSION,
-            uint(Config.read(_CONFIG_TIMEOUT_WITHDRAW))
+            uint256(Config.read(_CONFIG_TIMEOUT_WITHDRAW))
         );
 
         uint256 tokenAmountD18 = CollateralConfiguration

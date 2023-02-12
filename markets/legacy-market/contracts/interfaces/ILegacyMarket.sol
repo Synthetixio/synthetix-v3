@@ -18,9 +18,9 @@ interface ILegacyMarket {
      */
     event AccountMigrated(
         address indexed staker,
-        uint indexed accountId,
-        uint collateralAmount,
-        uint debtAmount
+        uint256 indexed accountId,
+        uint256 collateralAmount,
+        uint256 debtAmount
     );
 
     /**
@@ -28,7 +28,7 @@ interface ILegacyMarket {
      * @param account the address of the address which provided the sUSD for conversion
      * @param amount the amount of sUSD burnt, and the amount of snxUSD minted
      */
-    event ConvertedUSD(address indexed account, uint amount);
+    event ConvertedUSD(address indexed account, uint256 amount);
 
     /**
      * @notice Called by anyone with {amount} sUSD to convert {amount} sUSD to {amount} snxUSD.
@@ -38,7 +38,7 @@ interface ILegacyMarket {
      * * LegacyMarket must have already sufficient migrated collateral
      * @param amount the quantity to convert
      */
-    function convertUSD(uint amount) external;
+    function convertUSD(uint256 amount) external;
 
     /**
      * @notice Called by an SNX staker on v2x to convert their position to the equivalent on v3. This entails the following broad steps:

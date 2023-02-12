@@ -50,19 +50,19 @@ library Distribution {
      *
      * The value being distributed ultimately modifies the distribution's valuePerShare.
      */
-    function distributeValue(Data storage self, int valueD18) internal {
+    function distributeValue(Data storage self, int256 valueD18) internal {
         if (valueD18 == 0) {
             return;
         }
 
-        uint totalSharesD18 = self.totalSharesD18;
+        uint256 totalSharesD18 = self.totalSharesD18;
 
         if (totalSharesD18 == 0) {
             revert EmptyDistribution();
         }
 
-        int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
-        int deltaValuePerShareD27 = valueD45 / totalSharesD18.toInt();
+        int256 valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
+        int256 deltaValuePerShareD27 = valueD45 / totalSharesD18.toInt();
 
         self.valuePerShareD27 += deltaValuePerShareD27.to128();
     }
@@ -77,7 +77,7 @@ library Distribution {
     function setActorShares(
         Data storage self,
         bytes32 actorId,
-        uint newActorSharesD18
+        uint256 newActorSharesD18
     ) internal returns (int valueChangeD18) {
         valueChangeD18 = getActorValueChange(self, actorId);
 
@@ -118,9 +118,9 @@ library Distribution {
         bytes32 actorId
     ) internal view returns (int valueChangeD18) {
         DistributionActor.Data storage actor = self.actorInfo[actorId];
-        int deltaValuePerShareD27 = self.valuePerShareD27 - actor.lastValuePerShareD27;
+        int256 deltaValuePerShareD27 = self.valuePerShareD27 - actor.lastValuePerShareD27;
 
-        int changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.toInt();
+        int256 changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.toInt();
         valueChangeD18 = changedValueD45 / DecimalMath.UNIT_PRECISE_INT;
     }
 
@@ -130,7 +130,7 @@ library Distribution {
     function getActorShares(
         Data storage self,
         bytes32 actorId
-    ) internal view returns (uint sharesD18) {
+    ) internal view returns (uint256 sharesD18) {
         return self.actorInfo[actorId].sharesD18;
     }
 
