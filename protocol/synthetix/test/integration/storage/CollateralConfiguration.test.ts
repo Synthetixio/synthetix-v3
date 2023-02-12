@@ -37,7 +37,7 @@ describe('CollateralConfiguration', function () {
     ).wait();
   };
 
-  describe.only('convertTokenToSystemAmount()', async () => {
+  describe('convertTokenToSystemAmount()', async () => {
     describe('scaling tokens with 0 decimals to system amount', async () => {
       const DECIMALS = 0;
 
