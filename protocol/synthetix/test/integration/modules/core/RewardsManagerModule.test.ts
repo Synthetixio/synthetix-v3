@@ -586,24 +586,42 @@ describe('RewardsManagerModule', function () {
       );
     });
 
-    it('pool owner can remove reward distributor', async () => {
-      await systems()
-        .Core.connect(owner)
-        .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);
-    });
+    describe('successful invoke', async () => {
+      before('remove', async () => {
+        await systems()
+          .Core.connect(owner)
+          .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);
+      });
 
-    it('make sure distributor is removed', async () => {
-      await assertRevert(
-        RewardDistributor.connect(owner).distributeRewards(
-          poolId,
-          collateralAddress(),
-          rewardAmount,
-          0, // timestamp
-          0
-        ),
-        'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")',
-        systems().Core
-      );
+      it('make sure distributor is removed', async () => {
+        await assertRevert(
+          RewardDistributor.connect(owner).distributeRewards(
+            poolId,
+            collateralAddress(),
+            rewardAmount,
+            0, // timestamp
+            0
+          ),
+          'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")',
+          systems().Core
+        );
+      });
+
+      it('can still claim accumulated rewards', async () => {
+        await systems()
+          .Core.connect(user1)
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+      });
+
+      it('cannot be re-registered', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(owner)
+            .registerRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address),
+          'InvalidParameter("distributor", "cant be re-registered")',
+          systems().Core
+        );
+      });
     });
   });
 });

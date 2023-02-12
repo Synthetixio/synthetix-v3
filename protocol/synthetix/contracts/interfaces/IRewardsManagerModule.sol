@@ -77,6 +77,14 @@ interface IRewardsManagerModule {
 
     /**
      * @notice Called by pool owner to remove a registered rewards distributor for vault participants.
+     * WARNING: if you remove a rewards distributor, the same address can never be re-registered again. If you
+     * simply want to turn off
+     * rewards, call `distributeRewards` with 0 emission. If you need to completely reset the rewards distributor
+     * again, create a new rewards distributor at a new address and register the new one.
+     * This function is provided since the number of rewards distributors added to an account is finite,
+     * so you can remove an unused rewards distributor if need be.
+     * NOTE: unclaimed rewards can still be claimed after a rewards distributor is removed (though any
+     * rewards-over-time will be halted)
      * @param poolId The id of the pool whose rewards are to be managed by the specified distributor.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the reward distributor to be registered.
