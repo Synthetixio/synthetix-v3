@@ -92,7 +92,10 @@ library ReducerNode {
     function max(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory maxPrice) {
-        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+        if (parentNodeOutputs.length > 0) {
+            maxPrice = parentNodeOutputs[0];
+        }
+        for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
             if (parentNodeOutputs[i].price > maxPrice.price) {
                 maxPrice = parentNodeOutputs[i];
             }
