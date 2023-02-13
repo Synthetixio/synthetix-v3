@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { NodeModule } from '../generated/typechain';
 import NodeTypes from './mixins/Node.types';
+import { wei } from '@synthetixio/wei';
 
 const abi = ethers.utils.defaultAbiCoder;
 
@@ -77,3 +78,5 @@ export function bootstrapWithNodes() {
     nodeId4: () => nodeId4,
   };
 }
+
+export const bn = (n: number) => wei(n).toBN();

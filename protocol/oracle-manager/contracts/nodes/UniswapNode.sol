@@ -122,6 +122,10 @@ library UniswapNode {
             return false;
         }
 
+        if(decimals0 > 18 || decimals1 > 18) {
+            return false;
+        }
+
         // Must return relevant function without error
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;

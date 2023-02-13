@@ -5,6 +5,9 @@ contract MockObservable {
     Observation private observation0;
     Observation private observation1;
 
+    address public immutable token0;
+    address public immutable token1;
+
     struct Observation {
         uint32 secondsAgo;
         int56 tickCumulatives;
@@ -14,7 +17,9 @@ contract MockObservable {
     constructor(
         uint32[] memory secondsAgos,
         int56[] memory tickCumulatives,
-        uint160[] memory secondsPerLiquidityCumulativeX128s
+        uint160[] memory secondsPerLiquidityCumulativeX128s,
+        address _token0,
+        address _token1
     ) {
         require(
             secondsAgos.length == 2 &&
@@ -33,6 +38,9 @@ contract MockObservable {
             tickCumulatives[1],
             secondsPerLiquidityCumulativeX128s[1]
         );
+
+        token0 = _token0;
+        token1 = _token1;
     }
 
     function observe(
