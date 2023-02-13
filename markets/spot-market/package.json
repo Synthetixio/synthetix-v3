@@ -8,7 +8,7 @@
     "start": "npm run build && npm run cannon",
     "cannon": "npx cannon spot-market:0.0.3-alpha",
     "test": "hardhat test",
-    "test:fork": "hardhat test --network goerli test-fork/AsyncOrdersModule.e2e.test.ts",
+    "test:fork": "hardhat test --network optimistic-goerli test-fork/AsyncOrdersModule.e2e.test.ts",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"
@@ -21,6 +21,7 @@
     "@synthetixio/core-contracts": "*",
     "@synthetixio/core-modules": "*",
     "@synthetixio/router": "*",
+    "axios": "1.3.2",
     "solidity-docgen": "0.6.0-beta.22",
     "ts-node": "10.9.1",
     "typechain": "8.1.1",

@@ -67,6 +67,22 @@ before('load contracts', () => {
 
 export function bootstrap() {
   before(restoreSnapshot);
+  const signers: ethers.Wallet[] = [];
+
+  before('set up accounts', async () => {
+    const provider = getProvider();
+    for (let i = 1; i < 8; i++) {
+      const signer = ethers.Wallet.fromMnemonic(
+        'test test test test test test test test test test test junk',
+        `m/44'/60'/0'/0/${i}`
+      ).connect(provider);
+      signers.push(signer);
+      await provider.send('hardhat_setBalance', [
+        await signer.getAddress(),
+        `0x${(1e22).toString(16)}`,
+      ]);
+    }
+  });
 
   before('give owner permission to create pools', async () => {
     const [owner] = getSigners();
@@ -78,7 +94,7 @@ export function bootstrap() {
 
   return {
     provider: () => getProvider(),
-    signers: () => getSigners(),
+    signers: () => [...getSigners(), ...signers],
     owner: () => getSigners()[0],
     systems: () => contracts,
   };
@@ -113,7 +129,6 @@ export function bootstrapWithStakedPool() {
 
   before('configure collateral', async () => {
     const [owner] = r.signers();
-    console.log('r.signers()', r.signers());
 
     // add collateral
     await (

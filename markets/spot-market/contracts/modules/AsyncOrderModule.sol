@@ -191,13 +191,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
             SettlementStrategy.Data storage settlementStrategy
         ) = _performClaimValidityChecks(marketId, asyncOrderId);
 
-        bytes8 time = abi.decode(result[:32], (bytes8));
+        // bytes8 time = abi.decode(result[:32], (bytes8));
 
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = settlementStrategy.feedId;
 
         bytes[] memory updateData = new bytes[](1);
-        updateData[0] = abi.encodePacked(result[:32]);
+        updateData[0] = result;
 
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract

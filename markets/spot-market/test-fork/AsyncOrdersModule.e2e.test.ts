@@ -1,17 +1,25 @@
-import { Contract } from 'ethers';
-import hre from 'hardhat';
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
-import { MinEthersFactory } from '../typechain-types/common';
 import { SynthRouter } from '../generated/typechain';
-import { snapshotCheckpoint } from '../../legacy-market/test/utils';
-import assertBignumber from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import axios from 'axios';
 
 const feedId = '0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6';
 const pythAPI = `https://xc-testnet.pyth.network/api/latest_vaas?ids[]=${feedId}`;
 const feedAddress = '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C';
+
+const pythSettlementStrategy = {
+  strategyType: 2,
+  settlementDelay: 5,
+  settlementWindowDuration: 1200,
+  priceVerificationContract: feedAddress,
+  feedId,
+  url: 'https://xc-testnet.pyth.network/api/get_vaa_ccip?data={data}',
+  settlementReward: bn(5),
+  priceDeviationTolerance: bn(1000),
+};
 
 describe('AsyncOrdersModule.e2e.test', function () {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -19,52 +27,38 @@ describe('AsyncOrdersModule.e2e.test', function () {
   );
   // creates traders with USD
 
-  let owner: ethers.Signer;
-
-  let keeper: ethers.Signer,
+  let marketOwner: ethers.Signer,
+    trader1: ethers.Signer,
+    keeper: ethers.Signer,
     synth: SynthRouter,
     startTime: number,
-    strategyId: number,
-    pythSettlementStrategy: Record<string, unknown>,
-    pythCallData: string,
-    extraData: string;
+    strategyId: number;
 
   before('identify', async () => {
-    [owner] = signers();
+    [, , marketOwner, trader1, , keeper] = signers();
     const synthAddress = await systems().SpotMarket.getSynth(marketId());
     synth = systems().Synth(synthAddress);
   });
 
   before('add settlement strategy', async () => {
-    pythSettlementStrategy = {
-      strategyType: 2,
-      settlementDelay: 5,
-      settlementWindowDuration: 120,
-      priceVerificationContract: feedAddress,
-      feedId,
-      url: 'https://xc-mainnet.pyth.network/api/get_vaa_ccip?data={data}',
-      settlementReward: bn(5),
-      priceDeviationTolerance: bn(1000),
-    };
-
     strategyId = await systems()
-      .SpotMarket.connect(owner)
+      .SpotMarket.connect(marketOwner)
       .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy);
     await systems()
-      .SpotMarket.connect(owner)
+      .SpotMarket.connect(marketOwner)
       .addSettlementStrategy(marketId(), pythSettlementStrategy);
   });
 
   before('setup fixed fee', async () => {
-    await systems().SpotMarket.connect(owner).setAsyncFixedFee(marketId(), bn(0.01));
+    await systems().SpotMarket.connect(marketOwner).setAsyncFixedFee(marketId(), bn(0.01));
   });
 
   describe('commit order', () => {
     let commitTxn: ethers.providers.TransactionResponse;
     before('commit', async () => {
-      await systems().USD.connect(owner).approve(systems().SpotMarket.address, bn(1000));
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
-        .SpotMarket.connect(owner)
+        .SpotMarket.connect(trader1)
         .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8));
       startTime = await getTime(provider());
     });
@@ -72,48 +66,48 @@ describe('AsyncOrdersModule.e2e.test', function () {
     it('emits event', async () => {
       await assertEvent(
         commitTxn,
-        `OrderCommitted(${marketId()}, 2, ${bn(1000)}, 1, "${await owner.getAddress()}"`,
+        `OrderCommitted(${marketId()}, 2, ${bn(1000)}, 1, "${await trader1.getAddress()}"`,
         systems().SpotMarket
       );
     });
   });
 
-  // it('trader1 has 1 snxETH', async () => {
-  //   assertBignumber.equal(await synth.balanceOf(await owner.getAddress()), bn(1));
-  // });
-  //   expect(await Greeter.greet()).to.equal('Hello world!');
+  describe('settle order', () => {
+    let url: string, data: string, extraData: string;
 
-  //   const setGreetingTx = await Greeter.setGreeting('Hola mundo!');
+    before('fast forward to settlement time', async () => {
+      await fastForwardTo(startTime + 6, provider());
+    });
 
-  //   // wait until the transaction is mined
-  //   await setGreetingTx.wait();
+    it('settle pyth order', async () => {
+      try {
+        const tx = await systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1);
+        await tx.wait(); // txReceipt.
+      } catch (err: any) {
+        const parseString = (str: string) => str.trim().replace('"', '').replace('"', '');
+        const parsedError = formatErrorMessage(err)
+          .replace('OffchainLookup(', '')
+          .replace(')', '')
+          .split(',');
+        url = parseString(parsedError[1]);
+        data = parseString(parsedError[2]);
+        extraData = parseString(parsedError[4].split('\n')[0]);
 
-  //   expect(await Greeter.greet()).to.equal('Hola mundo!');
+        console.log({
+          url,
+          data,
+          extraData,
+        });
+      }
 
-  // Build the chain state
-  // `cannon build --chain-id ${CHAIN_ID} user=${publicKey} chainlinkAggregatorAddress=${}`
+      // const parsedURL = url.replace('{data}', data);
 
-  // Require them
-  // const x = require('');
+      const parsedURL =
+        'https://xc-testnet.pyth.network/api/get_vaa_ccip?data=0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a60000000063ea4e5f';
+      console.log('parsedURL:', parsedURL);
 
-  // Create an order commitment
-  // MarketProxy.commitBuyOrder()
-
-  // Attempt to settle and receive the information from the revert
-
-  // Poll the off-chain API until the data is available
-
-  // Settle the order
-
-  //   const tx = await signer.sendTransaction({
-  //     to: '<to_account>',
-  //     value: ethers.utils.parseUnits('0.001', 'ether'),
-  //   });
-  //   console.log('Mining transaction...');
-  //   console.log(`https://${network}.etherscan.io/tx/${tx.hash}`);
-  //   // Waiting for the transaction to be mined
-  //   const receipt = await tx.wait();
-  //   // The transaction is now on chain!
-  //   console.log(`Mined in block ${receipt.blockNumber}`);
-  // });
+      const response = await axios.get(parsedURL);
+      await systems().SpotMarket.connect(keeper).settlePythOrder(response.data, extraData);
+    });
+  });
 });

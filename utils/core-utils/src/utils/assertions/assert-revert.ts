@@ -29,7 +29,7 @@ export default async function assertRevert(
     );
   }
 
-  let errorMessage = _formatErrorMessage(error);
+  let errorMessage = formatErrorMessage(error);
   if (errorMessage.includes(expectedMessage)) {
     return; // Expected message found.
   }
@@ -63,7 +63,7 @@ const HARDHAT_CUSTOM_PREFIX =
   'VM Exception while processing transaction: reverted with custom error ';
 
 // Converts an error into a string, and handles edge cases.
-function _formatErrorMessage(error: { [k: string]: unknown }): string {
+export function formatErrorMessage(error: { [k: string]: unknown }): string {
   // Custom error is found in the error message as
   // 'errorArgs=[{"type":"BigNumber","hex":"0x0539"}], errorName="ErrorName"'.
   if (error.errorName) {
