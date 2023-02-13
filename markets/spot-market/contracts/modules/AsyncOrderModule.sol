@@ -184,7 +184,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external returns (uint, int, uint) {
+    ) external payable returns (uint, int, uint) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -197,15 +197,22 @@ contract AsyncOrderModule is IAsyncOrderModule {
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = result;
 
+        console.log("bla1:");
+        console.log(asyncOrderClaim.settlementTime.to64());
+        console.log("bla2:");
+        console.log(
+            (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration).to64()
+        );
+        console.log("bla3:");
+        console.log(block.timestamp);
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates(
-                updateData,
-                priceIds,
-                asyncOrderClaim.settlementTime.to64(),
-                (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
-                    .to64()
-            );
+        ).parsePriceFeedUpdates{value: msg.value}(
+            updateData,
+            priceIds,
+            asyncOrderClaim.settlementTime.to64(),
+            (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration).to64()
+        );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
         uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();

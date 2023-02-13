@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
 import { SynthRouter } from '../generated/typechain';
@@ -12,7 +13,7 @@ const feedAddress = '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C';
 
 const pythSettlementStrategy = {
   strategyType: 2,
-  settlementDelay: 5,
+  settlementDelay: 1,
   settlementWindowDuration: 1200,
   priceVerificationContract: feedAddress,
   feedId,
@@ -59,7 +60,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8));
+        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0));
       startTime = await getTime(provider());
     });
 
@@ -100,14 +101,17 @@ describe('AsyncOrdersModule.e2e.test', function () {
         });
       }
 
-      // const parsedURL = url.replace('{data}', data);
+      // const parsedURL = url.replace('?data={data}', '');
 
       const parsedURL =
-        'https://xc-testnet.pyth.network/api/get_vaa_ccip?data=0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a60000000063ea4e5f';
+        'https://xc-testnet.pyth.network/api/get_vaa_ccip?data=0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a60000000063eaae18';
       console.log('parsedURL:', parsedURL);
 
       const response = await axios.get(parsedURL);
-      await systems().SpotMarket.connect(keeper).settlePythOrder(response.data, extraData);
+
+      await systems().SpotMarket.connect(keeper).settlePythOrder(response.data.data, extraData, {
+        value: 1,
+      });
     });
   });
 });
