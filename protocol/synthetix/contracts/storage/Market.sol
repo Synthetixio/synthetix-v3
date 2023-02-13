@@ -214,6 +214,10 @@ library Market {
             CollateralConfiguration.Data storage collateralConfiguration = CollateralConfiguration
                 .load(entry.collateralType);
 
+            if (entry.amountD18 == 0) {
+                continue;
+            }
+
             uint256 priceD18 = CollateralConfiguration.getCollateralPrice(collateralConfiguration);
 
             totalDepositedCollateralValueD18 += priceD18.mulDecimal(entry.amountD18);

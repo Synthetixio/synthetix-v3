@@ -49,11 +49,6 @@ contract CollateralModule is ICollateralModule {
 
         address self = address(this);
 
-        uint256 allowance = IERC20(collateralType).allowance(depositFrom, self);
-        if (allowance < tokenAmount) {
-            revert IERC20.InsufficientAllowance(tokenAmount, allowance);
-        }
-
         collateralType.safeTransferFrom(depositFrom, self, tokenAmount);
 
         account.collaterals[collateralType].increaseAvailableCollateral(

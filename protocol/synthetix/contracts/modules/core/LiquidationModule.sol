@@ -161,7 +161,7 @@ contract LiquidationModule is ILiquidationModule {
             );
         }
 
-        uint256 vaultDebt = rawVaultDebt < 0 ? 0 : rawVaultDebt.toUint();
+        uint256 vaultDebt = rawVaultDebt.toUint();
 
         if (vaultDebt <= maxUsd) {
             // Conduct a full vault liquidation
