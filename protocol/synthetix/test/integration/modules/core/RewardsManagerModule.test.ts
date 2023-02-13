@@ -460,6 +460,20 @@ describe('RewardsManagerModule', function () {
     describe('wallets joining and leaving', () => {});
   });
 
+  describe('updateRewards()', async () => {
+    before(restore);
+
+    it('only works with existing account', async () => {
+      await assertRevert(
+        systems().Core.connect(owner).updateRewards(poolId, collateralAddress(), 276823567823),
+        'AccountNotFound(',
+        systems().Core
+      );
+    });
+
+    // the results of this function are verified elsewhere
+  });
+
   describe('claimRewards()', async () => {
     before(restore);
 
