@@ -492,6 +492,26 @@ describe('RewardsManagerModule', function () {
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address)
     );
 
+    describe('when distributor payout returns false', async () => {
+      before('set fail', async () => {
+        await RewardDistributor.connect(owner).setShouldFailPayout(true);
+      });
+
+      after('set fail', async () => {
+        await RewardDistributor.connect(owner).setShouldFailPayout(false);
+      });
+
+      it('reverts', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
+          `RewardUnavailable("${RewardDistributor.address}")`,
+          systems().Core
+        );
+      });
+    });
+
     describe('successful claim', () => {
       before('claim', async () => {
         await systems()

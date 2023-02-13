@@ -160,13 +160,17 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 reward = vault.updateReward(accountId, rewardId);
 
         vault.rewards[rewardId].claimStatus[accountId].pendingSendD18 = 0;
-        vault.rewards[rewardId].distributor.payout(
+        bool success = vault.rewards[rewardId].distributor.payout(
             accountId,
             poolId,
             collateralType,
             msg.sender,
             reward
         );
+
+        if (!success) {
+            revert RewardUnavailable(distributor);
+        }
 
         emit RewardsClaimed(
             accountId,
