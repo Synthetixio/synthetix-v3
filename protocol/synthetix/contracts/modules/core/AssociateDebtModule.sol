@@ -10,6 +10,7 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
+import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 
 /**
@@ -44,6 +45,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         uint256 amount
     ) external returns (int256) {
         FeatureFlag.ensureAccessToFeature(_ASSOCIATE_DEBT_FEATURE_FLAG);
+        Account.exists(accountId);
 
         Pool.Data storage poolData = Pool.load(poolId);
         VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
