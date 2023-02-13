@@ -1,16 +1,15 @@
-import { ethers } from 'ethers';
-import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
-import hre from 'hardhat';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
-
+import { ethers } from 'ethers';
+import hre from 'hardhat';
 import {
   SpotMarketProxy,
-  SynthetixCoreProxy,
-  SynthetixUSDProxy,
   SynthetixCollateralMock,
+  SynthetixCoreProxy,
   SynthetixOracle_managerProxy,
+  SynthetixUSDProxy,
   SynthRouter,
   FeeCollectorMock,
   OracleVerifierMock,
@@ -34,6 +33,7 @@ export type Systems = {
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
+  OracleVerifierMock: OracleVerifierMock;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };

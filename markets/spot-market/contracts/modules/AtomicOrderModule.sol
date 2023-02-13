@@ -39,6 +39,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             msg.sender,
             usdAmount,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY),
             SpotMarketFactory.TransactionType.BUY
         );
 
@@ -85,6 +86,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             msg.sender,
             usdAmount,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.SELL),
             SpotMarketFactory.TransactionType.SELL
         );
 

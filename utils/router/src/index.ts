@@ -1,2 +1,2 @@
-import './generate';
-import './compile';
+export * from './generate';
+export * from './compile';

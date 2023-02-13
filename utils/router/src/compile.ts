@@ -1,6 +1,6 @@
 import solc from 'solc';
 
-export async function compileRouter(contractName: string, sourceCode: string) {
+export async function compileContract(contractName: string, sourceCode: string) {
   const input = {
     language: 'Solidity',
     sources: {

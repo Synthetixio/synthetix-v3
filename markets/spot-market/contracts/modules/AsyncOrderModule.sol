@@ -191,8 +191,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             SettlementStrategy.Data storage settlementStrategy
         ) = _performClaimValidityChecks(marketId, asyncOrderId);
 
-        // bytes8 time = abi.decode(result[:32], (bytes8));
-
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = settlementStrategy.feedId;
 
@@ -204,8 +202,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         ).parsePriceFeedUpdates(
                 updateData,
                 priceIds,
-                uint64(asyncOrderClaim.settlementTime), // TODO: safe conversion
-                uint64(asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
+                asyncOrderClaim.settlementTime.to64(),
+                (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
+                    .to64()
             );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
@@ -304,6 +303,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             trader,
             amountUsable,
+            price,
             SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
@@ -347,6 +347,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             trader,
             usableAmount,
+            price,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
