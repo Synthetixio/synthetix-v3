@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithNodes } from '../bootstrap';
+import { bn, bootstrapWithNodes } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 
 describe('PriceDeviationCircuitBreakerNode', function () {
@@ -21,7 +21,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     let node1, node2;
     before(async () => {
       // 40% Deviation Tolerance
-      const deviationTolerance = 40;
+      const deviationTolerance = bn(0.4);
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
       await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
@@ -54,7 +54,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     let nodeId;
     before(async () => {
       // 50% Deviation Tolerance
-      const deviationTolerance = 50;
+      const deviationTolerance = bn(0.5);
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
       await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
@@ -75,7 +75,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     let nodeId;
     before(async () => {
       // 60% Deviation Tolerance
-      const deviationTolerance = 60;
+      const deviationTolerance = bn(0.6);
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
       await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
