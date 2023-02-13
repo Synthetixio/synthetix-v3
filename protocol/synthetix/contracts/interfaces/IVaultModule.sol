@@ -73,7 +73,7 @@ interface IVaultModule {
      * @param collateralType The address of the collateral used in the queried position.
      * @return The collateralization ratio of the position (collateral / debt), denominated with 18 decimals of precision.
      */
-    function getPositionCollateralizationRatio(
+    function getPositionCollateralRatio(
         uint128 accountId,
         uint128 poolId,
         address collateralType

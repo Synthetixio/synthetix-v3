@@ -8,7 +8,7 @@ import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
-describe('VaultModule', function () {
+describe.only('VaultModule', function () {
   const {
     signers,
     systems,
@@ -81,6 +81,12 @@ describe('VaultModule', function () {
       assertBn.equal(
         await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
         debt
+      );
+      assertBn.equal(
+        await systems().Core.callStatic.getPositionCollateralRatio(accountId, poolId, collateralAddress()),
+        ethers.BigNumber.from(debt).eq(0) ? 0 : ethers.BigNumber.from(collateralAmount)
+          .mul(ethers.utils.parseEther('1'))
+          .div(debt)
       );
     };
   }
@@ -283,6 +289,16 @@ describe('VaultModule', function () {
         'user1 has become indebted',
         verifyAccountState(accountId, poolId, depositAmount, startingDebt)
       );
+
+      it('vault c-ratio is affected', async () => {
+        assertBn.equal(
+          await systems().Core.callStatic.getVaultCollateralRatio(
+            poolId,
+            collateralAddress()
+          ),
+          depositAmount.mul(ethers.utils.parseEther('1')).div(startingDebt)
+        );
+      });
 
       describe('second user delegates', async () => {
         const user2AccountId = 283847;
@@ -615,8 +631,6 @@ describe('VaultModule', function () {
         });
       });
     });
-
-    // TODO: also test that user can pull outstanding USD out of position with 0 collateral
 
     describe('first user leaves', async () => {
       before(restore);
