@@ -8,7 +8,7 @@ import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
-describe.only('VaultModule', function () {
+describe('VaultModule', function () {
   const {
     signers,
     systems,
@@ -83,10 +83,14 @@ describe.only('VaultModule', function () {
         debt
       );
       assertBn.equal(
-        await systems().Core.callStatic.getPositionCollateralRatio(accountId, poolId, collateralAddress()),
-        ethers.BigNumber.from(debt).eq(0) ? 0 : ethers.BigNumber.from(collateralAmount)
-          .mul(ethers.utils.parseEther('1'))
-          .div(debt)
+        await systems().Core.callStatic.getPositionCollateralRatio(
+          accountId,
+          poolId,
+          collateralAddress()
+        ),
+        ethers.BigNumber.from(debt).eq(0)
+          ? 0
+          : ethers.BigNumber.from(collateralAmount).mul(ethers.utils.parseEther('1')).div(debt)
       );
     };
   }
@@ -292,10 +296,7 @@ describe.only('VaultModule', function () {
 
       it('vault c-ratio is affected', async () => {
         assertBn.equal(
-          await systems().Core.callStatic.getVaultCollateralRatio(
-            poolId,
-            collateralAddress()
-          ),
+          await systems().Core.callStatic.getVaultCollateralRatio(poolId, collateralAddress()),
           depositAmount.mul(ethers.utils.parseEther('1')).div(startingDebt)
         );
       });

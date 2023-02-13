@@ -181,10 +181,7 @@ contract VaultModule is IVaultModule {
             collateralType,
             accountId
         );
-        collateralizationRatio = pool.currentAccountCollateralRatio(
-            collateralType,
-            accountId
-        );
+        collateralizationRatio = pool.currentAccountCollateralRatio(collateralType, accountId);
     }
 
     /**
