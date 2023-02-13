@@ -72,14 +72,12 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param usdTokenAddress configured snxUSD token address
      * @param oracleManager oracle manager used for retrieving pricing data
      * @param initialSynthImplementation initial synth implementation used to initialize new synths when registering.
-     * @param initialAsyncOrderClaimImplementation initial async order claim implementation.
      */
     function initialize(
         address snxAddress,
         address usdTokenAddress,
         address oracleManager,
-        address initialSynthImplementation,
-        address initialAsyncOrderClaimImplementation
+        address initialSynthImplementation
     ) external;
 
     /**
@@ -122,15 +120,6 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param synthImpl new synth implementation
      */
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
-
-    /**
-     * @notice upgrades the async order nft implementation for a given market.
-     * @dev Only the market owner can call this function.
-     * @dev The nft implementation is upgraded via the proxy.
-     * @param marketId id of the market
-     * @param asyncOrderImpl async order nft implementation to upgrade to
-     */
-    function upgradeAsyncOrderTokenImpl(uint128 marketId, address asyncOrderImpl) external;
 
     /**
      * @notice Allows the current market owner to nominate a new owner.
