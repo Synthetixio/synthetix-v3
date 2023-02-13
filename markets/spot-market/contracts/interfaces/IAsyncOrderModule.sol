@@ -16,8 +16,9 @@ interface IAsyncOrderModule {
     event OrderSettled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
-        AsyncOrderClaim.Data asyncOrderClaim,
         uint256 finalOrderAmount,
+        int totalFees,
+        uint collectedFees,
         address indexed sender
     );
 
@@ -56,4 +57,9 @@ interface IAsyncOrderModule {
     ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
+
+    function getAsyncOrderClaim(
+        uint128 marketId,
+        uint128 asyncOrderId
+    ) external view returns (AsyncOrderClaim.Data memory);
 }

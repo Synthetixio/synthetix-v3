@@ -68,7 +68,7 @@ export = {
    * Assert if `a` is zero
    * @param {(string|number|BigNumber)} a
    */
-  isZero: (a: BigNumberish) => () => {
+  isZero(a: BigNumberish) {
     if (!BigNumber.from(a).isZero()) {
       throw new BigNumberAssertionError({
         actual: a,
@@ -82,21 +82,19 @@ export = {
    * Assert if `a` is within a small range of `b`
    */
   near(a: BigNumberish, b: BigNumberish, tolerance: BigNumberish = 10000) {
-    return () => {
-      const abn = BigNumber.from(a);
-      const bbn = BigNumber.from(b);
-      const tolerancebn = BigNumber.from(tolerance);
+    const abn = BigNumber.from(a);
+    const bbn = BigNumber.from(b);
+    const tolerancebn = BigNumber.from(tolerance);
 
-      const lower = bbn.sub(tolerancebn);
-      const upper = bbn.add(tolerancebn);
+    const lower = bbn.sub(tolerancebn);
+    const upper = bbn.add(tolerancebn);
 
-      if (abn.lt(lower) || abn.gt(upper)) {
-        throw new BigNumberAssertionError({
-          actual: abn,
-          expected: bbn,
-          operator: 'near',
-        });
-      }
-    };
+    if (abn.lt(lower) || abn.gt(upper)) {
+      throw new BigNumberAssertionError({
+        actual: abn,
+        expected: bbn,
+        operator: 'near',
+      });
+    }
   },
 };
