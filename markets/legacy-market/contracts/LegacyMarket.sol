@@ -157,6 +157,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      * @dev Migrates {staker} from V2 to {accountId} in V3.
      */
     function _migrate(address staker, uint128 accountId) internal {
+        // start building the staker's v3 account
+        v3System.createAccount(accountId);
+
         // find out how much debt is on the v2x system
         tmpLockedDebt = reportedDebt(marketId);
 
@@ -173,9 +176,6 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
 
         // transfer all collateral from the user to our account
         (uint256 collateralMigrated, uint256 debtValueMigrated) = _gatherFromV2(staker);
-
-        // start building the staker's v3 account
-        v3System.createAccount(accountId);
 
         // put the collected collateral into their v3 account
         v3System.deposit(accountId, address(oldSynthetix), collateralMigrated);
