@@ -112,6 +112,16 @@ library UniswapNode {
             return false;
         }
 
+        address poolToken0 = IUniswapV3Pool(pool).token0();
+        address poolToken1 = IUniswapV3Pool(pool).token1();
+
+        if (
+            !(poolToken0 == token0 && poolToken1 == token1) &&
+            !(poolToken0 == token1 && poolToken1 == token0)
+        ) {
+            return false;
+        }
+
         // Must return relevant function without error
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;
