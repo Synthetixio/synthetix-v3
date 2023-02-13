@@ -173,7 +173,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         }
 
         // Reverts if msg.sender is not the Optimism messenger on L2,
-        // or if the initiator on L1 is not the user.
+        // or if the initiator on L1 is not the user that is voting.
         _validateCrossChainMessage(user);
 
         declareCrossChainDebtShare(user, debtShare, merkleProof);

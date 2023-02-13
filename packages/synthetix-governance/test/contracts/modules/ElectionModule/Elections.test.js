@@ -59,6 +59,52 @@ describe.only('SynthetixElectionModule - general elections', function () {
     },
   ];
 
+  async function _callDeclareAndCastRelayedThroughMessenger(
+    sender,
+    user,
+    amount,
+    proof,
+    candidates
+  ) {
+    const artifact = hre.artifacts.readArtifactSync(
+      'contracts/modules/ElectionModule.sol:ElectionModule'
+    );
+
+    const iface = new hre.ethers.utils.Interface(artifact.abi);
+
+    const encodedCall = iface.encodeFunctionData('declareAndCastRelayed', [
+      user.address,
+      amount,
+      proof,
+      candidates,
+    ]);
+
+    const tx = await Messenger.connect(sender).sendMessage(
+      ElectionModule.address,
+      encodedCall,
+      1000000
+    );
+
+    const receipt = await tx.wait();
+
+    return receipt;
+  }
+
+  async function _MessageFailedWithError(receipt, customError) {
+    const event = findEvent({
+      receipt,
+      eventName: 'MessageSent',
+    });
+
+    if (event.args.success === true) {
+      return false;
+    }
+
+    const customErrorHash = hre.ethers.utils.id(customError);
+
+    return event.args.response.slice(0, 10) === customErrorHash.slice(0, 10);
+  }
+
   before('identify signers', async () => {
     [owner, user1, user2, user3, user4, user5, user6, user7, user8, user9] =
       await ethers.getSigners();
@@ -465,6 +511,38 @@ describe.only('SynthetixElectionModule - general elections', function () {
                     assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
                   });
 
+                  describe('when users attempt to interact with the relay function directly from L2', function () {
+                    it('reverts', async function () {
+                      const { amount, proof } = merkleTree.claims[user1.address];
+
+                      await assertRevert(
+                        ElectionModule.declareAndCastRelayed(user1.address, amount, proof, [
+                          user5.address,
+                        ]),
+                        'OnlyCrossDomainMessengerCanInvoke'
+                      );
+                    });
+                  });
+
+                  describe('when users initiate a relay transaction for another user', function () {
+                    it('reverts', async function () {
+                      const { amount, proof } = merkleTree.claims[user2.address];
+
+                      assert.ok(
+                        await _MessageFailedWithError(
+                          await _callDeclareAndCastRelayedThroughMessenger(
+                            user1,
+                            user2,
+                            amount,
+                            proof,
+                            [user5.address]
+                          ),
+                          'OnlyCrossDomainUserCanInvoke()'
+                        )
+                      );
+                    });
+                  });
+
                   describe('when users declare their cross chain debt shares incorrectly', function () {
                     describe('when a user declares a wrong amount', function () {
                       it('reverts', async function () {
@@ -534,8 +612,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
                     before('declare', async function () {
                       await declare(user1);
-                      await declare(user2);
-                      // Note: Intentionally not declaring for user3
+                      // Note: Intentionally not declaring for users 2 and 3
                     });
 
                     describe('when a user attempts to re-declare cross chain debt shares', function () {
@@ -556,10 +633,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
                       });
 
                       assert.ok(event);
-                      assertBn.equal(event.args.user, user2.address);
+                      assertBn.equal(event.args.user, user1.address);
                       assertBn.equal(
                         event.args.debtShare,
-                        expectedCrossChainDebtShare(user2.address, epoch.debtShareSnapshotId)
+                        expectedCrossChainDebtShare(user1.address, epoch.debtShareSnapshotId)
                       );
                     });
 
@@ -568,20 +645,12 @@ describe.only('SynthetixElectionModule - general elections', function () {
                         await ElectionModule.getDeclaredCrossChainDebtShare(user1.address),
                         expectedCrossChainDebtShare(user1.address, epoch.debtShareSnapshotId)
                       );
-                      assertBn.equal(
-                        await ElectionModule.getDeclaredCrossChainDebtShare(user2.address),
-                        expectedCrossChainDebtShare(user2.address, epoch.debtShareSnapshotId)
-                      );
                     });
 
                     it('shows that users have the expected vote power (cross chain component is now declared)', async function () {
                       assert.deepEqual(
                         await ElectionModule.getVotePower(user1.address),
                         expectedVotePower(user1.address, epoch.debtShareSnapshotId)
-                      );
-                      assert.deepEqual(
-                        await ElectionModule.getVotePower(user2.address),
-                        expectedVotePower(user2.address, epoch.debtShareSnapshotId)
                       );
                     });
 
@@ -599,8 +668,19 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
                       before('vote', async function () {
                         await ElectionModule.connect(user1).cast([user4.address]);
-                        await ElectionModule.connect(user2).cast([user4.address]);
+
+                        // Use cross chain relay for user 2.
+                        const { amount, proof } = merkleTree.claims[user2.address];
+                        await _callDeclareAndCastRelayedThroughMessenger(
+                          user2,
+                          user2,
+                          amount,
+                          proof,
+                          [user4.address]
+                        );
+
                         await declareAndCast(user3, [user5.address]); // user3 didn't declare cross chain debt shares yet
+
                         await ElectionModule.connect(user4).cast([user6.address]);
                         await ElectionModule.connect(user5).cast([user4.address]);
                       });
