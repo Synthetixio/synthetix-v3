@@ -197,14 +197,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = result;
 
-        console.log("bla1:");
-        console.log(asyncOrderClaim.settlementTime.to64());
-        console.log("bla2:");
-        console.log(
-            (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration).to64()
-        );
-        console.log("bla3:");
-        console.log(block.timestamp);
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract
         ).parsePriceFeedUpdates{value: msg.value}(

@@ -25,7 +25,7 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
   let signers: ethers.Signer[];
 
   before(async function prepareNode() {
-    this.timeout(90000);
+    this.timeout(900000);
 
     const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
     const typechainFolder = path.resolve(generatedPath, 'typechain');

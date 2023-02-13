@@ -81,4 +81,9 @@ interface IPythVerifier {
         uint64 minPublishTime,
         uint64 maxPublishTime
     ) external payable returns (PriceFeed[] memory priceFeeds);
+
+    /// @notice Returns the required fee to update an array of price updates.
+    /// @param updateDataSize Number of price updates.
+    /// @return feeAmount The required fee in Wei.
+    function getUpdateFee(uint updateDataSize) external view returns (uint feeAmount);
 }

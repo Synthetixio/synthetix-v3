@@ -5,15 +5,14 @@ import { SynthRouter } from '../generated/typechain';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import axios from 'axios';
+const fetch = require('node-fetch');
 
 const feedId = '0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6';
-const pythAPI = `https://xc-testnet.pyth.network/api/latest_vaas?ids[]=${feedId}`;
 const feedAddress = '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C';
 
 const pythSettlementStrategy = {
   strategyType: 2,
-  settlementDelay: 1,
+  settlementDelay: 0,
   settlementWindowDuration: 1200,
   priceVerificationContract: feedAddress,
   feedId,
@@ -26,9 +25,9 @@ describe('AsyncOrdersModule.e2e.test', function () {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
-  // creates traders with USD
 
   let marketOwner: ethers.Signer,
+    verifier: ethers.Contract,
     trader1: ethers.Signer,
     keeper: ethers.Signer,
     synth: SynthRouter,
@@ -39,6 +38,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
     [, , marketOwner, trader1, , keeper] = signers();
     const synthAddress = await systems().SpotMarket.getSynth(marketId());
     synth = systems().Synth(synthAddress);
+    verifier = await hre.ethers.getContractAt('IPythVerifier', feedAddress);
   });
 
   before('add settlement strategy', async () => {
@@ -77,7 +77,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
     let url: string, data: string, extraData: string;
 
     before('fast forward to settlement time', async () => {
-      await fastForwardTo(startTime + 6, provider());
+      await fastForwardTo(startTime + 1, provider());
     });
 
     it('settle pyth order', async () => {
@@ -101,16 +101,17 @@ describe('AsyncOrdersModule.e2e.test', function () {
         });
       }
 
-      // const parsedURL = url.replace('?data={data}', '');
-
-      const parsedURL =
-        'https://xc-testnet.pyth.network/api/get_vaa_ccip?data=0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a60000000063eaae18';
+      const fee = await verifier.getUpdateFee(1);
+      const parsedURL = url.replace('{data}', data);
       console.log('parsedURL:', parsedURL);
 
-      const response = await axios.get(parsedURL);
+      //There is a delay on pyth service
+      await new Promise((resolve) => setTimeout(resolve, 30000));
 
-      await systems().SpotMarket.connect(keeper).settlePythOrder(response.data.data, extraData, {
-        value: 1,
+      const response = await fetch(parsedURL).then((res: any) => res.json());
+
+      await systems().SpotMarket.connect(keeper).settlePythOrder(response.data, extraData, {
+        value: fee.toString(),
       });
     });
   });
