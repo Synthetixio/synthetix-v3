@@ -24,7 +24,7 @@ const {
 } = require('./helpers/debt-share-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe.only('SynthetixElectionModule - general elections', function () {
+describe('SynthetixElectionModule - general elections', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, DebtShare, CouncilToken, Messenger;
@@ -59,13 +59,13 @@ describe.only('SynthetixElectionModule - general elections', function () {
     },
   ];
 
-  async function _callDeclareAndCastRelayedThroughMessenger(
+  async function _callDeclareAndCastRelayedThroughMessenger({
     sender,
     user,
     amount,
     proof,
-    candidates
-  ) {
+    candidates,
+  }) {
     const artifact = hre.artifacts.readArtifactSync(
       'contracts/modules/ElectionModule.sol:ElectionModule'
     );
@@ -530,13 +530,13 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
                       assert.ok(
                         await _MessageFailedWithError(
-                          await _callDeclareAndCastRelayedThroughMessenger(
-                            user1,
-                            user2,
+                          await _callDeclareAndCastRelayedThroughMessenger({
+                            sender: user1,
+                            user: user2,
                             amount,
                             proof,
-                            [user5.address]
-                          ),
+                            candidates: [user5.address],
+                          }),
                           'OnlyCrossDomainUserCanInvoke()'
                         )
                       );
@@ -671,13 +671,13 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
                         // Use cross chain relay for user 2.
                         const { amount, proof } = merkleTree.claims[user2.address];
-                        await _callDeclareAndCastRelayedThroughMessenger(
-                          user2,
-                          user2,
+                        await _callDeclareAndCastRelayedThroughMessenger({
+                          sender: user2,
+                          user: user2,
                           amount,
                           proof,
-                          [user4.address]
-                        );
+                          candidates: [user4.address],
+                        });
 
                         await declareAndCast(user3, [user5.address]); // user3 didn't declare cross chain debt shares yet
 

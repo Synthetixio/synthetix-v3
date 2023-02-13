@@ -13,13 +13,13 @@ contract CrossDomainMessengerMock is ICrossDomainMessenger {
     }
 
     function sendMessage(
-        address _target,
-        bytes calldata _message,
-        uint32 /* _gasLimit*/
+        address target,
+        bytes calldata message,
+        uint32 /* gasLimit*/
     ) external {
         _xDomainMessageSender = msg.sender;
 
-        (bool success, bytes memory response) = _target.call(_message);
+        (bool success, bytes memory response) = target.call(message);
 
         bytes32 responseParsed;
 
