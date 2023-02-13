@@ -18,7 +18,7 @@ library ExternalNode {
 
     function validate(NodeDefinition.Data memory nodeDefinition) internal returns (bool) {
         // Must have correct length of parameters data
-        if (nodeDefinition.parameters.length != 32) {
+        if (nodeDefinition.parameters.length < 32) {
             return false;
         }
 
