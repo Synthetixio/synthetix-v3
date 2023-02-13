@@ -13,7 +13,11 @@ interface IAsyncOrderConfigurationModule {
         SettlementStrategy.Data memory strategy
     ) external returns (uint256 strategyId);
 
-    function toggleSettlementStrategy(uint128 marketId, uint256 strategyId, bool enabled) external;
+    function setSettlementStrategyEnabled(
+        uint128 marketId,
+        uint256 strategyId,
+        bool enabled
+    ) external;
 
     function getSettlementStrategy(
         uint128 marketId,

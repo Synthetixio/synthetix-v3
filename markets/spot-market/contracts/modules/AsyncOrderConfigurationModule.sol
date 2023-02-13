@@ -25,7 +25,7 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
         emit SettlementStrategyAdded(marketId, strategyId);
     }
 
-    function toggleSettlementStrategy(
+    function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
         bool enabled
