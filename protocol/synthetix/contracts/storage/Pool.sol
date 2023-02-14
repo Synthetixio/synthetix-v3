@@ -344,12 +344,10 @@ library Pool {
         Data storage self,
         address collateralType
     ) internal returns (uint256) {
-        recalculateVaultCollateral(self, collateralType);
-
-        int256 debtD18 = self.vaults[collateralType].currentDebt();
+        int256 vaultDebtD18 = currentVaultDebt(self, collateralType);
         (, uint256 collateralValueD18) = currentVaultCollateral(self, collateralType);
 
-        return debtD18 > 0 ? debtD18.toUint().divDecimal(collateralValueD18) : 0;
+        return vaultDebtD18 > 0 ? vaultDebtD18.toUint().divDecimal(collateralValueD18) : 0;
     }
 
     /**
