@@ -12,6 +12,8 @@ contract RewardDistributorMock is IRewardDistributor {
     address private _token;
     string private _name;
 
+    bool public shouldFailPayout;
+
     function initialize(address rewardManager, address token_, string memory name_) public {
         _rewardManager = rewardManager;
         _token = token_;
@@ -26,6 +28,10 @@ contract RewardDistributorMock is IRewardDistributor {
         return _token;
     }
 
+    function setShouldFailPayout(bool fail) external {
+        shouldFailPayout = fail;
+    }
+
     function payout(
         uint128,
         uint128,
@@ -38,7 +44,7 @@ contract RewardDistributorMock is IRewardDistributor {
             revert AccessError.Unauthorized(msg.sender);
         }
         IERC20(_token).transfer(sender, amount);
-        return true;
+        return !shouldFailPayout;
     }
 
     function distributeRewards(

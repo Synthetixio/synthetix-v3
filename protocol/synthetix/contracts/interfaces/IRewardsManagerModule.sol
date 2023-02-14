@@ -6,6 +6,14 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 interface IRewardsManagerModule {
     /**
+     * @notice Emitted when a reward distributor returns `false` from `payout` indicating a problem
+     * preventing the payout from being executed. In this case, it is advised to check with the
+     * project maintainers, and possibly try again in the future.
+     * @param distributor the distributor which originated the issue
+     */
+    error RewardUnavailable(address distributor);
+
+    /**
      * @notice Emitted when the pool owner or an existing reward distributor sets up rewards for vault participants.
      * @param poolId The id of the pool on which rewards were distributed.
      * @param collateralType The collateral type of the pool on which rewards were distributed.
