@@ -224,8 +224,9 @@ library Pool {
         }
 
         // Calculate the *debt* per share of the pool's debt distribution.
-        // solhint-disable-next-line numcast/safe-cast
-        int256 debtPerShareD18 = debtD18 > 0 ? debtD18.divDecimal(totalSharesD18.toInt()) : int(0);
+        int256 debtPerShareD18 = debtD18 > 0
+            ? debtD18.divDecimal(totalSharesD18.toInt()) // solhint-disable-next-line numcast/safe-cast
+            : int256(0);
 
         // If the system-wide setting is not set (unlikely),
         // then the resulting maximum value per share is the distribution's value per share,
@@ -357,7 +358,7 @@ library Pool {
      */
     function findMarketWithCapacityLocked(
         Data storage self
-    ) internal view returns (Market.Data storage lockedMarketId) {
+    ) internal view returns (Market.Data storage lockedMarket) {
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 

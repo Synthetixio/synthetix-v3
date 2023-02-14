@@ -280,7 +280,7 @@ library Market {
      * Note: this is test only
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_inRangePools(Data storage self) internal view returns (uint) {
+    function _testOnly_inRangePools(Data storage self) internal view returns (uint256) {
         return self.inRangePools.size();
     }
 
@@ -290,7 +290,7 @@ library Market {
      * Note: this is test only
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_outRangePools(Data storage self) internal view returns (uint) {
+    function _testOnly_outRangePools(Data storage self) internal view returns (uint256) {
         return self.outRangePools.size();
     }
 
@@ -429,7 +429,7 @@ library Market {
                     ? valueToDistributeD18.divDecimal(
                         self.poolsDebtDistribution.totalSharesD18.toInt()
                     ) // solhint-disable-next-line numcast/safe-cast
-                    : int(0)
+                    : int256(0)
             );
     }
 
@@ -513,6 +513,7 @@ library Market {
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
             if (maxDistributedD18 > 0) {
+                // the below requires are only for sanity
                 require(
                     self.poolsDebtDistribution.getActorShares(edgePool.id.toBytes32()) > 0,
                     "no shares before actor removal"

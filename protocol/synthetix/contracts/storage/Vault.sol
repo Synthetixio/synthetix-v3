@@ -119,7 +119,7 @@ library Vault {
         uint256[] memory rewards = new uint256[](self.rewardIds.length());
         address[] memory distributors = new address[](self.rewardIds.length());
 
-        uint numRewards = self.rewardIds.length();
+        uint256 numRewards = self.rewardIds.length();
         for (uint256 i = 0; i < numRewards; i++) {
             RewardDistribution.Data storage dist = self.rewards[self.rewardIds.valueAt(i + 1)];
 

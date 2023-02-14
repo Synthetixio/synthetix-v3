@@ -159,7 +159,7 @@ contract MarketManagerModule is IMarketManagerModule {
      */
     function distributeDebtToPools(
         uint128 marketId,
-        uint maxIter
+        uint256 maxIter
     ) external override returns (bool) {
         return Market.load(marketId).distributeDebtToPools(maxIter);
     }

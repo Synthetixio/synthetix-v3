@@ -112,12 +112,12 @@ interface ICollateralModule {
      * @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated to pools.
      * @param accountId The id of the account whose collateral is being queried.
      * @param collateralType The address of the collateral type whose amount is being queried.
-     * @return The amount of collateral that is available for withdrawal or delegation, denominated with 18 decimals of precision.
+     * @return amountD18 The amount of collateral that is available for withdrawal or delegation, denominated with 18 decimals of precision.
      */
     function getAccountAvailableCollateral(
         uint128 accountId,
         address collateralType
-    ) external view returns (uint256);
+    ) external view returns (uint256 amountD18);
 
     /**
      * @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited).

@@ -64,7 +64,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     /**
      * @inheritdoc IPoolConfigurationModule
      */
-    function getApprovedPools() external view override returns (uint[] memory) {
+    function getApprovedPools() external view override returns (uint256[] memory) {
         return SystemPoolConfiguration.load().approvedPools.values();
     }
 }

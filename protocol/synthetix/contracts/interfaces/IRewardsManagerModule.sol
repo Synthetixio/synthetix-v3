@@ -118,39 +118,39 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool to claim rewards on.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the rewards distributor associated with the rewards being claimed.
-     * @return The amount of rewards that were available for the account and thus claimed.
+     * @return amountClaimedD18 The amount of rewards that were available for the account and thus claimed.
      */
     function claimRewards(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external returns (uint256);
+    ) external returns (uint256 amountClaimedD18);
 
     /**
      * @notice For a given position, return the rewards that can currently be claimed.
      * @param poolId The id of the pool being queried.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param accountId The id of the account whose available rewards are being queried.
-     * @return An array of ids of the reward entries that are claimable by the position.
-     * @return An array with the addresses of the reward distributors associated with the claimable rewards.
+     * @return claimableD18 An array of ids of the reward entries that are claimable by the position.
+     * @return distributors An array with the addresses of the reward distributors associated with the claimable rewards.
      */
     function updateRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external returns (uint256[] memory, address[] memory);
+    ) external returns (uint256[] memory claimableD18, address[] memory distributors);
 
     /**
      * @notice Returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault.
      * @param poolId The id of the pool being queried.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the rewards distributor associated with the rewards in question.
-     * @return The queried rewards rate.
+     * @return rateD18 The queried rewards rate.
      */
     function getRewardRate(
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external view returns (uint256);
+    ) external view returns (uint256 rateD18);
 }

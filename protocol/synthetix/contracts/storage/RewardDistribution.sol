@@ -83,7 +83,7 @@ library RewardDistribution {
             );
         }
 
-        uint curTime = block.timestamp;
+        uint256 curTime = block.timestamp;
 
         // Unlocks the entry's distributed amount into its value per share.
         diffD18 += updateEntry(self, dist.totalSharesD18);
@@ -126,7 +126,7 @@ library RewardDistribution {
             return 0;
         }
 
-        uint curTime = block.timestamp;
+        uint256 curTime = block.timestamp;
 
         int256 valuePerShareChangeD18 = 0;
 

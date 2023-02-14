@@ -28,13 +28,14 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     bool public pauseMigration;
 
     // used by _migrate to temporarily set reportedDebt to another value before
-    uint tmpLockedDebt;
+    uint256 tmpLockedDebt;
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
 
+    error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
-    error InsufficientCollateralMigrated(uint amountRequested, uint amountAvailable);
+    error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
 
     /**
@@ -49,7 +50,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
 
         IERC20(v2xResolverAddress.getAddress("ProxySynthetix")).approve(
             address(v3SystemAddress),
-            type(uint).max
+            type(uint256).max
         );
 
         return true;
@@ -59,7 +60,10 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      * @inheritdoc ILegacyMarket
      */
     function registerMarket() external onlyOwner returns (uint128 newMarketId) {
-        require(marketId == 0, "Market already registered");
+        if (marketId != 0) {
+            revert MarketAlreadyRegistered(marketId);
+        }
+
         newMarketId = v3System.registerMarket(address(this));
         marketId = newMarketId;
     }
@@ -67,7 +71,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc IMarket
      */
-    function reportedDebt(uint128 requestedMarketId) public view returns (uint) {
+    function reportedDebt(uint128 requestedMarketId) public view returns (uint256 debt) {
         if (marketId == requestedMarketId) {
             // in cases where we are in the middle of an account migration, we want to prevent the debt from changing, so we "lock" the value to the amount as the call starts
             // so we can detect the increase and associate it properly later.
@@ -94,7 +98,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc IMarket
      */
-    function locked(uint128 /* requestedMarketId*/) external pure returns (uint) {
+    function locked(uint128 /* requestedMarketId*/) external pure returns (uint256 lockedAmount) {
         // legacy market never locks collateral
         return 0;
     }
@@ -102,7 +106,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc ILegacyMarket
      */
-    function convertUSD(uint amount) external {
+    function convertUSD(uint256 amount) external {
         if (pauseStablecoinConversion) {
             revert Paused();
         }
@@ -168,7 +172,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         ).getVestingSchedules(staker, 0, 1000);
 
         // transfer all collateral from the user to our account
-        (uint collateralMigrated, uint debtValueMigrated) = _gatherFromV2(staker);
+        (uint256 collateralMigrated, uint256 debtValueMigrated) = _gatherFromV2(staker);
 
         // start building the staker's v3 account
         v3System.createAccount(accountId);
@@ -177,8 +181,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         v3System.deposit(accountId, address(oldSynthetix), collateralMigrated);
 
         // create the most-equivalent mechanism for v3 to match the vesting entries: a "lock"
-        uint curTime = block.timestamp;
-        for (uint i = 0; i < oldEscrows.length; i++) {
+        uint256 curTime = block.timestamp;
+        for (uint256 i = 0; i < oldEscrows.length; i++) {
             if (oldEscrows[i].endTime > curTime) {
                 v3System.createLock(
                     accountId,
@@ -228,7 +232,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      */
     function _gatherFromV2(
         address staker
-    ) internal returns (uint totalCollateralAmount, uint totalDebtAmount) {
+    ) internal returns (uint256 totalCollateralAmount, uint256 totalDebtAmount) {
         // get v2x addresses needed to get all the resources from staker's account
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
         ISynthetixDebtShare oldDebtShares = ISynthetixDebtShare(
@@ -236,11 +240,11 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         );
 
         // find out how much collateral we will have to migrate when we are done
-        uint unlockedSnx = IERC20(address(oldSynthetix)).balanceOf(staker);
+        uint256 unlockedSnx = IERC20(address(oldSynthetix)).balanceOf(staker);
         totalCollateralAmount = ISynthetix(v2xResolver.getAddress("Synthetix")).collateral(staker);
 
         // find out how much debt we will have when we are done
-        uint debtSharesMigrated = oldDebtShares.balanceOf(staker);
+        uint256 debtSharesMigrated = oldDebtShares.balanceOf(staker);
 
         // we cannot create an account if there is no debt shares, or there is no collateral for any debt that exists (shouldn't be able to happen but sanity)
         if (totalCollateralAmount == 0 || debtSharesMigrated == 0) {
@@ -279,8 +283,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @dev Returns the amount of dollar-denominated debt associated with {debtSharesMigrated} in the V2 system.
      */
-    function _calculateDebtValueMigrated(uint debtSharesMigrated) internal view returns (uint) {
-        (uint totalSystemDebt, uint totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer"))
+    function _calculateDebtValueMigrated(uint256 debtSharesMigrated) internal view returns (uint256 portionMigrated) {
+        (uint256 totalSystemDebt, uint256 totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer"))
             .allNetworksDebtInfo();
 
         return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
