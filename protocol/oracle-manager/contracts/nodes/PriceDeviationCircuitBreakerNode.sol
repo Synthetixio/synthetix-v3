@@ -21,14 +21,13 @@ library PriceDeviationCircuitBreakerNode {
         int256 primaryPrice = abs(parentNodeOutputs[0].price);
         int256 comparisonPrice = abs(parentNodeOutputs[1].price);
 
-        if (primaryPrice == 0) {
-            revert InvalidPrice();
-        }
-
         if (primaryPrice != comparisonPrice) {
             int256 difference = abs(primaryPrice - comparisonPrice);
-            if (deviationTolerance.toInt() < ((difference * 1e18) / primaryPrice)) {
-                if (parentNodeOutputs.length > 2 && parentNodeOutputs[2].price != 0) {
+            if (
+                primaryPrice == 0 ||
+                deviationTolerance.toInt() < ((difference * 1e18) / primaryPrice)
+            ) {
+                if (parentNodeOutputs.length > 2) {
                     return parentNodeOutputs[2];
                 } else {
                     revert DeviationToleranceExceeded(difference / primaryPrice);
