@@ -225,9 +225,8 @@ library Pool {
 
         // Calculate the *debt* per share of the pool's debt distribution.
         int256 debtPerShareD18 = debtD18 > 0
-            ? debtD18.divDecimal(totalSharesD18.toInt())
-            : // solhint-disable-next-line numcast/safe-cast
-            int256(0);
+            ? debtD18.divDecimal(totalSharesD18.toInt()) // solhint-disable-next-line numcast/safe-cast
+            : int256(0);
 
         // If the system-wide setting is not set (unlikely),
         // then the resulting maximum value per share is the distribution's value per share,
