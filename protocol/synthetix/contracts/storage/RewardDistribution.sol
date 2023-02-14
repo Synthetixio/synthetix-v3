@@ -86,7 +86,7 @@ library RewardDistribution {
         uint256 curTime = block.timestamp;
 
         // Unlocks the entry's distributed amount into its value per share.
-        diffD18 += updateEntry(self, dist.totalSharesD18);
+        diffD18 += updateEntry(self, totalSharesD18);
 
         // If the current time is past the end of the entry's duration,
         // update any rewards which may have accrued since last run.
@@ -108,7 +108,7 @@ library RewardDistribution {
             // The amount is actually the amount distributed already *plus* whatever has been specified now.
             self.lastUpdate = 0;
 
-            diffD18 += updateEntry(self, dist.totalSharesD18);
+            diffD18 += updateEntry(self, totalSharesD18);
         }
     }
 
