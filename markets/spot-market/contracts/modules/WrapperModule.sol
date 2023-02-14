@@ -86,6 +86,7 @@ contract WrapperModule is IWrapperModule {
             marketId,
             msg.sender,
             wrapAmountInUsd,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.WRAP),
             SpotMarketFactory.TransactionType.WRAP
         );
 
@@ -144,6 +145,7 @@ contract WrapperModule is IWrapperModule {
             marketId,
             msg.sender,
             unwrapAmountInUsd,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.UNWRAP),
             SpotMarketFactory.TransactionType.UNWRAP
         );
 

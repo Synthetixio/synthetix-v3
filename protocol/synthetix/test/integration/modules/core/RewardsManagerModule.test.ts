@@ -460,6 +460,20 @@ describe('RewardsManagerModule', function () {
     describe('wallets joining and leaving', () => {});
   });
 
+  describe('updateRewards()', async () => {
+    before(restore);
+
+    it('only works with existing account', async () => {
+      await assertRevert(
+        systems().Core.connect(owner).updateRewards(poolId, collateralAddress(), 276823567823),
+        'AccountNotFound(',
+        systems().Core
+      );
+    });
+
+    // the results of this function are verified elsewhere
+  });
+
   describe('claimRewards()', async () => {
     before(restore);
 
@@ -491,6 +505,26 @@ describe('RewardsManagerModule', function () {
           .Core.connect(user1)
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address)
     );
+
+    describe('when distributor payout returns false', async () => {
+      before('set fail', async () => {
+        await RewardDistributor.connect(owner).setShouldFailPayout(true);
+      });
+
+      after('set fail', async () => {
+        await RewardDistributor.connect(owner).setShouldFailPayout(false);
+      });
+
+      it('reverts', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
+          `RewardUnavailable("${RewardDistributor.address}")`,
+          systems().Core
+        );
+      });
+    });
 
     describe('successful claim', () => {
       before('claim', async () => {

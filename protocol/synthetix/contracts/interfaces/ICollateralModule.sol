@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "../storage/CollateralLock.sol";
+
 /**
  * @title Module for managing user collateral.
  * @notice Allows users to deposit and withdraw collateral from the system.
@@ -23,6 +25,34 @@ interface ICollateralModule {
         address indexed collateralType,
         uint256 tokenAmount,
         address indexed sender
+    );
+
+    /**
+     * @notice Emitted when a lock is created on someone's account
+     * @param accountId The id of the account that received a lock
+     * @param collateralType The address of the collateral type that was locked
+     * @param tokenAmount The amount of collateral that was locked, demoninated in system units (1e18)
+     * @param expireTimestamp unix timestamp at which the lock is due to expire
+     */
+    event CollateralLockCreated(
+        uint128 indexed accountId,
+        address indexed collateralType,
+        uint256 tokenAmount,
+        uint64 expireTimestamp
+    );
+
+    /**
+     * @notice Emitted when a lock is cleared from an account due to expiration
+     * @param accountId The id of the account that has the expired lock
+     * @param collateralType The address of the collateral type that was unlocked
+     * @param tokenAmount The amount of collateral that was unlocked, demoninated in system units (1e18)
+     * @param expireTimestamp unix timestamp at which the unlock is due to expire
+     */
+    event CollateralLockExpired(
+        uint128 indexed accountId,
+        address indexed collateralType,
+        uint256 tokenAmount,
+        uint64 expireTimestamp
     );
 
     /**
@@ -94,14 +124,29 @@ interface ICollateralModule {
      * @param accountId The id of the account whose locks are being cleared.
      * @param collateralType The address of the collateral type to clean locks for.
      * @param offset The index of the first lock to clear.
-     * @param items The number of locks to clear.
+     * @param count The number of slots to check for cleaning locks. Set to 0 to clean all locks at/after offset
+     * @return cleared the number of locks that were actually expired (and therefore cleared)
      */
     function cleanExpiredLocks(
         uint128 accountId,
         address collateralType,
         uint256 offset,
-        uint256 items
-    ) external;
+        uint256 count
+    ) external returns (uint cleared);
+
+    /**
+     * @notice Get a list of locks existing in account. Lists all locks in storage, even if they are expired
+     * @param accountId The id of the account whose locks we want to read
+     * @param collateralType The address of the collateral type for locks we want to read
+     * @param offset The index of the first lock to read
+     * @param count The number of slots to check for cleaning locks. Set to 0 to read all locks after offset
+     */
+    function getLocks(
+        uint128 accountId,
+        address collateralType,
+        uint256 offset,
+        uint256 count
+    ) external view returns (CollateralLock.Data[] memory locks);
 
     /**
      * @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.

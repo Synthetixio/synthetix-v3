@@ -23,7 +23,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
      */
     function setPreferredPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
 
         SystemPoolConfiguration.load().preferredPool = poolId;
 
@@ -42,7 +42,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
      */
     function addApprovedPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
 
         SystemPoolConfiguration.load().approvedPools.add(poolId);
 
@@ -54,7 +54,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
      */
     function removeApprovedPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
 
         SystemPoolConfiguration.load().approvedPools.remove(poolId);
 

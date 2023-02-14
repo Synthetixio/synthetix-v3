@@ -86,12 +86,15 @@ library Account {
     }
 
     /**
-     * @dev Returns if an account exists for the given id.
+     * @dev Reverts if the account does not exist with appropriate error. Otherwise, returns the account.
      */
-    function exists(uint128 id) internal view {
-        if (load(id).rbac.owner == address(0)) {
+    function exists(uint128 id) internal view returns (Data storage account) {
+        Data storage a = load(id);
+        if (a.rbac.owner == address(0)) {
             revert AccountNotFound(id);
         }
+
+        return a;
     }
 
     /**

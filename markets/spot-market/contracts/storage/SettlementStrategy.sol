@@ -9,7 +9,7 @@ library SettlementStrategy {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
-    error PriceDeviationToleranceExceeded(uint256 deviation);
+    error PriceDeviationToleranceExceeded(uint256 deviation, uint tolerance);
 
     struct Data {
         Type strategyType;
@@ -20,6 +20,7 @@ library SettlementStrategy {
         string url;
         uint256 settlementReward;
         uint256 priceDeviationTolerance;
+        bool disabled;
     }
 
     enum Type {
@@ -33,11 +34,14 @@ library SettlementStrategy {
         uint offchainPrice,
         uint onchainPrice
     ) internal view {
-        int priceDeviation = offchainPrice.toInt() - onchainPrice.toInt();
-        uint priceDeviationPercentage = abs(priceDeviation).toUint().divDecimal(offchainPrice);
+        int priceDeviation = abs(offchainPrice.toInt() - onchainPrice.toInt());
+        uint priceDeviationPercentage = abs(priceDeviation).toUint().divDecimal(onchainPrice);
 
         if (priceDeviationPercentage > strategy.priceDeviationTolerance) {
-            revert PriceDeviationToleranceExceeded(priceDeviationPercentage);
+            revert PriceDeviationToleranceExceeded(
+                priceDeviationPercentage,
+                strategy.priceDeviationTolerance
+            );
         }
     }
 
