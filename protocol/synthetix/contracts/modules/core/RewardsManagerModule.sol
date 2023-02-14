@@ -123,6 +123,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address collateralType,
         uint128 accountId
     ) external override returns (uint256[] memory, address[] memory) {
+        Account.exists(accountId);
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         return vault.updateRewards(accountId);
     }
