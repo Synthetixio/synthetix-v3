@@ -26,10 +26,10 @@ library UniswapNode {
 
     function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
         (
-            address token0,
-            address token1,
-            uint8 decimals0,
-            uint8 decimals1,
+            address token,
+            address stablecoin,
+            uint8 decimalsToken,
+            uint8 decimalsStablecoin,
             address pool,
             uint32 secondsAgo
         ) = abi.decode(parameters, (address, address, uint8, uint8, address, uint32));
@@ -48,10 +48,10 @@ library UniswapNode {
             tick--;
         }
 
-        uint256 baseAmount = 10 ** decimals0;
-        int256 price = getQuoteAtTick(tick, baseAmount.to128(), token0, token1).toInt();
+        uint256 baseAmount = 10 ** decimalsToken;
+        int256 price = getQuoteAtTick(tick, baseAmount.to128(), token, stablecoin).toInt();
 
-        uint256 factor = (PRECISION - decimals1);
+        uint256 factor = (PRECISION - decimalsStablecoin);
         int256 finalPrice = factor > 0
             ? price.upscale(factor)
             : price.downscale((-factor.toInt()).toUint());
@@ -93,8 +93,8 @@ library UniswapNode {
         }
 
         (
-            address token0,
-            address token1,
+            address token,
+            address stablecoin,
             uint8 decimals0,
             uint8 decimals1,
             address pool,
@@ -104,11 +104,11 @@ library UniswapNode {
                 (address, address, uint8, uint8, address, uint32)
             );
 
-        if (IERC20(token0).decimals() != decimals0) {
+        if (IERC20(token).decimals() != decimals0) {
             return false;
         }
 
-        if (IERC20(token1).decimals() != decimals1) {
+        if (IERC20(stablecoin).decimals() != decimals1) {
             return false;
         }
 
@@ -116,13 +116,13 @@ library UniswapNode {
         address poolToken1 = IUniswapV3Pool(pool).token1();
 
         if (
-            !(poolToken0 == token0 && poolToken1 == token1) &&
-            !(poolToken0 == token1 && poolToken1 == token0)
+            !(poolToken0 == token && poolToken1 == stablecoin) &&
+            !(poolToken0 == stablecoin && poolToken1 == token)
         ) {
             return false;
         }
 
-        if(decimals0 > 18 || decimals1 > 18) {
+        if (decimals0 > 18 || decimals1 > 18) {
             return false;
         }
 

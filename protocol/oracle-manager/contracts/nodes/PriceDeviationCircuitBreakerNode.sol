@@ -19,14 +19,14 @@ library PriceDeviationCircuitBreakerNode {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
         int256 primaryPrice = abs(parentNodeOutputs[0].price);
-        int256 fallbackPrice = abs(parentNodeOutputs[1].price);
+        int256 comparisonPrice = abs(parentNodeOutputs[1].price);
 
         if (primaryPrice == 0) {
             revert InvalidPrice();
         }
 
-        if (primaryPrice != fallbackPrice) {
-            int256 difference = abs(primaryPrice - fallbackPrice);
+        if (primaryPrice != comparisonPrice) {
+            int256 difference = abs(primaryPrice - comparisonPrice);
             if (deviationTolerance.toInt() < ((difference * 1e18) / primaryPrice)) {
                 if (parentNodeOutputs.length > 2 && parentNodeOutputs[2].price != 0) {
                     return parentNodeOutputs[2];

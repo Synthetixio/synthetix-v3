@@ -131,6 +131,9 @@ library ReducerNode {
         divPrice.price = parentNodeOutputs[0].price;
         divPrice.timestamp = parentNodeOutputs[0].timestamp;
         for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
+            if (parentNodeOutputs[i].price == 0) {
+                revert("parent price is zero");
+            }
             divPrice.price /= parentNodeOutputs[i].price;
             divPrice.timestamp += parentNodeOutputs[i].timestamp;
         }
