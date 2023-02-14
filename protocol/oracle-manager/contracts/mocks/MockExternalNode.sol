@@ -18,6 +18,12 @@ contract MockExternalNode is IExternalNode {
         return output;
     }
 
+    function validate(
+        NodeDefinition.Data memory nodeDefinition
+    ) external pure override returns (bool) {
+        return nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL;
+    }
+
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {

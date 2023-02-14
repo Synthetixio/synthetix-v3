@@ -27,6 +27,10 @@ library ExternalNode {
             return false;
         }
 
+        if (!IExternalNode(externalNode).validate(nodeDefinition)) {
+            return false;
+        }
+
         return true;
     }
 }
