@@ -53,8 +53,6 @@ contract AssociateDebtModule is IAssociateDebtModule {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        bytes32 actorId = accountId.toBytes32();
-
         // The market must appear in pool configuration of the specified position
         if (!poolData.hasMarket(marketId)) {
             revert NotFundedByPool(marketId, poolId);
@@ -69,13 +67,16 @@ contract AssociateDebtModule is IAssociateDebtModule {
         // Assign this debt to the specified position
         int256 updatedDebt = epochData.assignDebtToAccount(accountId, amount.toInt());
 
+        (, uint256 actorCollateralValue) = poolData.currentAccountCollateral(
+            collateralType,
+            accountId
+        );
+
         // Reverts if this debt increase would make the position liquidatable
         _verifyCollateralRatio(
             collateralType,
             updatedDebt > 0 ? updatedDebt.toUint() : 0,
-            CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(
-                epochData.collateralAmounts.get(actorId)
-            )
+            actorCollateralValue
         );
 
         emit DebtAssociated(marketId, poolId, collateralType, accountId, amount, updatedDebt);
