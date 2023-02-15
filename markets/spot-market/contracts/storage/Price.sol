@@ -8,6 +8,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "./SpotMarketFactory.sol";
 import "../utils/SynthUtil.sol";
+import "../utils/TransactionUtil.sol";
 import "./Wrapper.sol";
 
 /**
@@ -44,14 +45,11 @@ library Price {
      */
     function getCurrentPriceData(
         uint128 marketId,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal view returns (NodeOutput.Data memory price) {
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        if (
-            transactionType == SpotMarketFactory.TransactionType.BUY ||
-            transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY
-        ) {
+        if (Transaction.isBuy(transactionType)) {
             price = INodeModule(factory.oracle).process(self.buyFeedId);
         } else {
             price = INodeModule(factory.oracle).process(self.sellFeedId);
@@ -63,7 +61,7 @@ library Price {
      */
     function getCurrentPrice(
         uint128 marketId,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal view returns (uint price) {
         return getCurrentPriceData(marketId, transactionType).price.toUint();
     }
@@ -84,7 +82,7 @@ library Price {
     function usdSynthExchangeRate(
         uint128 marketId,
         uint amountUsd,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal view returns (uint256 synthAmount) {
         uint256 currentPrice = getCurrentPriceData(marketId, transactionType).price.toUint();
 
@@ -98,7 +96,7 @@ library Price {
     function synthUsdExchangeRate(
         uint128 marketId,
         uint sellAmount,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal view returns (uint256 amountUsd) {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
         amountUsd = sellAmount.mulDecimal(currentPrice);

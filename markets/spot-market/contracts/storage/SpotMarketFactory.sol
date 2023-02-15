@@ -5,6 +5,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
+import "../utils/TransactionUtil.sol";
 import "./Price.sol";
 import "./Wrapper.sol";
 
@@ -19,7 +20,6 @@ library SpotMarketFactory {
 
     error OnlyMarketOwner(address marketOwner, address sender);
     error InvalidMarket(uint128 marketId);
-    error InvalidAsyncTransactionType(TransactionType transactionType);
 
     struct Data {
         /**
@@ -48,15 +48,6 @@ library SpotMarketFactory {
         mapping(uint128 => address) nominatedMarketOwners;
     }
 
-    enum TransactionType {
-        BUY,
-        SELL,
-        ASYNC_BUY,
-        ASYNC_SELL,
-        WRAP,
-        UNWRAP
-    }
-
     function load() internal pure returns (Data storage spotMarketFactory) {
         bytes32 s = _SLOT_SPOT_MARKET_FACTORY;
         assembly {
@@ -75,12 +66,6 @@ library SpotMarketFactory {
     function isValidMarket(Data storage self, uint128 marketId) internal view {
         if (self.marketOwners[marketId] == address(0)) {
             revert InvalidMarket(marketId);
-        }
-    }
-
-    function isValidAsyncTransaction(TransactionType orderType) internal view {
-        if (orderType != TransactionType.ASYNC_BUY && orderType != TransactionType.ASYNC_SELL) {
-            revert InvalidAsyncTransactionType(orderType);
         }
     }
 

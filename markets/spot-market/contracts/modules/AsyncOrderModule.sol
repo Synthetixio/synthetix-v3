@@ -11,6 +11,7 @@ import "../storage/AsyncOrder.sol";
 import "../storage/SettlementStrategy.sol";
 import "../interfaces/IAsyncOrderModule.sol";
 import "../utils/FeeUtil.sol";
+import "../utils/TransactionUtil.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 
@@ -33,13 +34,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
     int256 public constant PRECISION = 18;
 
-    // ************
-    // COMMITMENT
-    // ************
-
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function commitOrder(
         uint128 marketId,
-        SpotMarketFactory.TransactionType orderType,
+        Transaction.Type orderType,
         uint256 amountProvided,
         uint256 settlementStrategyId,
         uint256 minimumSettlementAmount
@@ -48,8 +48,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         override
         returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
+        Transaction.isAsyncTransaction(orderType);
         SpotMarketFactory.load().isValidMarket(marketId);
-        SpotMarketFactory.isValidAsyncTransaction(orderType);
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
@@ -57,7 +57,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         int256 committedAmountUsd;
         uint amountEscrowed;
-        if (orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+        if (orderType == Transaction.Type.ASYNC_BUY) {
             asyncOrderConfiguration.isValidAmount(settlementStrategyId, amountProvided);
             SpotMarketFactory.load().usdToken.transferFrom(
                 msg.sender,
@@ -69,16 +69,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
             amountEscrowed = amountProvided;
         }
 
-        if (orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+        if (orderType == Transaction.Type.ASYNC_SELL) {
             // Get the dollar value of the provided synths
             uint256 usdAmount = Price.synthUsdExchangeRate(
                 marketId,
                 amountProvided,
-                SpotMarketFactory.TransactionType.SELL
+                Transaction.Type.ASYNC_SELL
             );
 
             asyncOrderConfiguration.isValidAmount(settlementStrategyId, usdAmount);
-
             amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
 
             committedAmountUsd = -1 * usdAmount.toInt();
@@ -110,10 +109,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderId, msg.sender);
     }
 
-    // ************
-    // SETTLEMENT
-    // ************
-
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
@@ -137,10 +135,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function settleChainlinkOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external returns (uint, int, uint) {
+    ) external override returns (uint, int, uint) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -179,10 +180,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external returns (uint, int, uint) {
+    ) external override returns (uint, int, uint) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -225,6 +229,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         asyncOrderClaim.checkClaimValidity();
@@ -237,6 +244,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         _issueRefund(marketId, asyncOrderId, asyncOrderClaim);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
@@ -244,6 +254,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return AsyncOrderClaim.load(marketId, asyncOrderId);
     }
 
+    /// PRIVATE FUNCTIONS
+    /// -----------------
+
+    /**
+     * @dev Reusable logic used for settling orders once the appropriate checks are performed in calling functions.
+     */
     function _settleOrder(
         uint128 marketId,
         uint128 asyncOrderId,
@@ -253,10 +269,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
         // adjust commitment amount prior to fee calculation (used for skew/utilization calcs)
         AsyncOrder.load(marketId).totalCommittedUsdAmount -= asyncOrderClaim.committedAmountUsd;
-
+        // set settledAt to avoid any potential reentrancy
         asyncOrderClaim.settledAt = block.timestamp;
 
-        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+        if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_BUY) {
             (finalOrderAmount, totalFees, collectedFees) = _settleBuyOrder(
                 marketId,
                 price,
@@ -265,7 +281,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+        if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_SELL) {
             (finalOrderAmount, totalFees, collectedFees) = _settleSellOrder(
                 marketId,
                 price,
@@ -285,6 +301,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @dev logic for settling a buy order
+     */
     function _settleBuyOrder(
         uint128 marketId,
         uint price,
@@ -302,7 +321,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             trader,
             amountUsable,
             price,
-            SpotMarketFactory.TransactionType.ASYNC_BUY
+            Transaction.Type.ASYNC_BUY
         );
 
         finalOrderAmount = finalAmountUsd.divDecimal(price);
@@ -324,6 +343,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
     }
 
+    /**
+     * @dev logic for settling a sell order
+     */
     function _settleSellOrder(
         uint128 marketId,
         uint price,
@@ -331,6 +353,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        // get amount of synth from escrow
+        // can't use amountEscrowed directly because the token could have decayed
         uint synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
             marketId,
             asyncOrderClaim.amountEscrowed
@@ -338,7 +362,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         address trader = asyncOrderClaim.owner;
 
-        // TODO: AtomicSell is the same, consolidate into OrderUtil? (same for buy above)
         uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.settlementReward;
 
         (finalOrderAmount, totalFees) = FeeUtil.calculateFees(
@@ -346,12 +369,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
             trader,
             usableAmount,
             price,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
+            Transaction.Type.ASYNC_SELL
         );
 
         // burn after fee calculation to avoid before/after fill calculations
         AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
 
+        // check slippage tolerance
         if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
             revert MinimumSettlementAmountNotMet(
                 asyncOrderClaim.minimumSettlementAmount,
@@ -372,7 +396,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                SpotMarketFactory.TransactionType.SELL
+                Transaction.Type.ASYNC_SELL
             );
         }
 
@@ -383,6 +407,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             settlementStrategy.settlementReward
         );
 
+        // send trader final amount
         IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
             marketId,
             trader,
@@ -390,6 +415,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @dev logic for settling an offchain order
+     */
     function _settleOffchain(
         uint128 marketId,
         uint128 asyncOrderId,
@@ -408,6 +436,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             revert SettlementStrategyNotFound(settlementStrategy.strategyType);
         }
 
+        // see EIP-3668: https://eips.ethereum.org/EIPS/eip-3668
         revert OffchainLookup(
             address(this),
             urls,
@@ -416,10 +445,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 _getTimeInBytes(asyncOrderClaim.settlementTime)
             ),
             selector,
-            abi.encode(marketId, asyncOrderId)
+            abi.encode(marketId, asyncOrderId) // extraData that gets sent to callback for validation
         );
     }
 
+    /**
+     * @dev used for cancel orders
+     */
     function _issueRefund(
         uint128 marketId,
         uint128 asyncOrderId,
@@ -433,12 +465,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.load(marketId).totalCommittedUsdAmount -= asyncOrderClaim.committedAmountUsd;
 
         // Return escrowed funds after keeping the fee
-        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+        if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_BUY) {
             ITokenModule(SpotMarketFactory.load().usdToken).transfer(
                 trader,
                 asyncOrderClaim.amountEscrowed
             );
-        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+        } else if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_SELL) {
             AsyncOrder.transferFromEscrow(marketId, trader, asyncOrderClaim.amountEscrowed);
         }
 

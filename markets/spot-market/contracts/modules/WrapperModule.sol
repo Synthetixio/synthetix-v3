@@ -80,22 +80,18 @@ contract WrapperModule is IWrapperModule {
         uint256 wrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             wrapAmount,
-            SpotMarketFactory.TransactionType.WRAP
+            Transaction.Type.WRAP
         );
 
         (uint256 returnAmountUsd, int256 totalFees) = FeeUtil.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
-            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.WRAP),
-            SpotMarketFactory.TransactionType.WRAP
+            Price.getCurrentPrice(marketId, Transaction.Type.WRAP),
+            Transaction.Type.WRAP
         );
 
-        amountToMint = Price.usdSynthExchangeRate(
-            marketId,
-            returnAmountUsd,
-            SpotMarketFactory.TransactionType.WRAP
-        );
+        amountToMint = Price.usdSynthExchangeRate(marketId, returnAmountUsd, Transaction.Type.WRAP);
 
         if (amountToMint < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, amountToMint);
@@ -112,7 +108,7 @@ contract WrapperModule is IWrapperModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                SpotMarketFactory.TransactionType.WRAP
+                Transaction.Type.WRAP
             );
         }
 
@@ -145,20 +141,20 @@ contract WrapperModule is IWrapperModule {
         uint256 unwrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             unwrapAmount,
-            SpotMarketFactory.TransactionType.UNWRAP
+            Transaction.Type.UNWRAP
         );
         (uint256 returnAmountUsd, int256 totalFees) = FeeUtil.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
-            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.UNWRAP),
-            SpotMarketFactory.TransactionType.UNWRAP
+            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP),
+            Transaction.Type.UNWRAP
         );
 
         returnCollateralAmount = Price.usdSynthExchangeRate(
             marketId,
             returnAmountUsd,
-            SpotMarketFactory.TransactionType.UNWRAP
+            Transaction.Type.UNWRAP
         );
 
         if (returnCollateralAmount < minAmountReceived) {
@@ -176,7 +172,7 @@ contract WrapperModule is IWrapperModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                SpotMarketFactory.TransactionType.UNWRAP
+                Transaction.Type.UNWRAP
             );
         }
 

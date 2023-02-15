@@ -21,7 +21,7 @@ library FeeUtil {
         address transactor,
         uint256 usdAmount,
         uint256 synthPrice,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
         (amountUsable, totalFees) = calculateFees(
             marketId,
@@ -42,37 +42,31 @@ library FeeUtil {
         address transactor,
         uint256 usdAmount,
         uint256 synthPrice,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal returns (uint256 amountUsable, int256 feesCollected) {
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
 
-        if (
-            transactionType == SpotMarketFactory.TransactionType.BUY ||
-            transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY
-        ) {
+        if (Transaction.isBuy(transactionType)) {
             (amountUsable, feesCollected) = calculateBuyFees(
                 feeConfiguration,
                 transactor,
                 marketId,
                 usdAmount,
                 synthPrice,
-                transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY
+                transactionType == Transaction.Type.ASYNC_BUY
             );
-        } else if (
-            transactionType == SpotMarketFactory.TransactionType.SELL ||
-            transactionType == SpotMarketFactory.TransactionType.ASYNC_SELL
-        ) {
+        } else if (Transaction.isSell(transactionType)) {
             (amountUsable, feesCollected) = calculateSellFees(
                 feeConfiguration,
                 transactor,
                 marketId,
                 usdAmount,
                 synthPrice,
-                transactionType == SpotMarketFactory.TransactionType.ASYNC_SELL
+                transactionType == Transaction.Type.ASYNC_SELL
             );
-        } else if (transactionType == SpotMarketFactory.TransactionType.WRAP) {
+        } else if (transactionType == Transaction.Type.WRAP) {
             (amountUsable, feesCollected) = calculateWrapFees(feeConfiguration, usdAmount);
-        } else if (transactionType == SpotMarketFactory.TransactionType.UNWRAP) {
+        } else if (transactionType == Transaction.Type.UNWRAP) {
             (amountUsable, feesCollected) = calculateUnwrapFees(feeConfiguration, usdAmount);
         } else {
             amountUsable = usdAmount;
@@ -129,7 +123,7 @@ library FeeUtil {
             marketId,
             amount,
             synthPrice,
-            SpotMarketFactory.TransactionType.BUY
+            Transaction.Type.BUY
         );
 
         uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
@@ -161,7 +155,7 @@ library FeeUtil {
             marketId,
             amount,
             synthPrice,
-            SpotMarketFactory.TransactionType.SELL
+            Transaction.Type.SELL
         );
 
         uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
@@ -189,16 +183,14 @@ library FeeUtil {
         uint128 marketId,
         uint amount,
         uint synthPrice,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal returns (int skewFee) {
         if (feeConfiguration.skewScale == 0) {
             return 0;
         }
 
-        bool isBuyTrade = transactionType == SpotMarketFactory.TransactionType.BUY ||
-            transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY;
-        bool isSellTrade = transactionType == SpotMarketFactory.TransactionType.SELL ||
-            transactionType == SpotMarketFactory.TransactionType.ASYNC_SELL;
+        bool isBuyTrade = Transaction.isBuy(transactionType);
+        bool isSellTrade = Transaction.isSell(transactionType);
 
         if (!isBuyTrade && !isSellTrade) {
             return 0;
@@ -267,6 +259,7 @@ library FeeUtil {
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
 
+        // Note: take into account the async order commitment amount in escrow
         uint totalValueBeforeFill = (totalBalance.mulDecimal(synthPrice).toInt() +
             AsyncOrder.load(marketId).totalCommittedUsdAmount).toUint();
         uint totalValueAfterFill = totalValueBeforeFill + amount;
@@ -300,7 +293,7 @@ library FeeUtil {
         uint128 marketId,
         int totalFees,
         address transactor,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal returns (uint collectedFees) {
         if (totalFees <= 0) {
             return 0;

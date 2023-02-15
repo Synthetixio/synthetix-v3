@@ -17,7 +17,7 @@ library FeeConfiguration {
          */
         uint atomicFixedFee;
         /**
-         * @dev atomic buy/sell fixed fee that's applied on all async trades. Percentage, 18 decimals
+         * @dev buy/sell fixed fee that's applied on all async trades. Percentage, 18 decimals
          */
         uint asyncFixedFee;
         /**

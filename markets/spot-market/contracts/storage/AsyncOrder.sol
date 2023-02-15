@@ -4,10 +4,22 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../utils/SynthUtil.sol";
 
+/**
+ * @title Async order top level data storage
+ */
 library AsyncOrder {
     struct Data {
+        /**
+         * @dev tracking total shares for share calculation of synths escrowed.  instead of storing direct synth amounts, we store shares in case of token decay.
+         */
         uint256 totalEscrowedSynthShares;
+        /**
+         * @dev tracks total escrowed value in USD for use in fee calculation.
+         */
         int256 totalCommittedUsdAmount;
+        /**
+         * @dev # of total claims; used to generate a unique claim Id on commitment.
+         */
         uint128 totalClaims;
     }
 

@@ -79,7 +79,7 @@ describe('Multiple orders integration test', () => {
 
     before('wrap collateral', async () => {
       await systems().CollateralMock.connect(trader1).approve(systems().SpotMarket.address, bn(10));
-      await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(10));
+      await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(10), 0);
     });
 
     it('trader receives 1 snxETH', async () => {

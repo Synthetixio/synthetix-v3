@@ -13,6 +13,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../utils/SynthUtil.sol";
+import "../utils/TransactionUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
@@ -100,7 +101,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.SELL);
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -111,7 +112,7 @@ contract SpotMarketFactoryModule is
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint totalValue = totalBalance.mulDecimal(
-            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY)
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY)
         );
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }
