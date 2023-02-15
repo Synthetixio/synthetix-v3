@@ -30,6 +30,10 @@ library AsyncOrder {
         }
     }
 
+    /**
+     * @dev The following functions are used to escrow synths.  We use shares instead of direct synth amounts to account for token decay.
+     * @dev if there's no decay, then the shares will be equal to the synth amount.
+     */
     function transferIntoEscrow(
         uint128 marketId,
         address from,
