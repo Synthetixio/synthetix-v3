@@ -71,7 +71,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
 
     modifier onlyIfAssociated(bytes32 id) {
         if (address(AssociatedSystem.load(id).proxy) == address(0)) {
-            revert InitError.NotInitialized();
+            revert MissingAssociatedSystem(id);
         }
 
         _;

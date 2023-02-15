@@ -154,6 +154,20 @@ describe('MarketCollateralModule', function () {
             systems().Core
           );
         });
+
+        describe('when withdrawing all usd', async () => {
+          let withdrawable: ethers.BigNumber;
+          before('do it', async () => {
+            withdrawable = await systems().Core.getWithdrawableMarketUsd(marketId());
+            // because of the way the mock market works we must first increase reported debt
+            await MockMarket().connect(user1).setReportedDebt(withdrawable);
+          });
+
+          it('should be able to withdrawn', async () => {
+            // now actually withdraw
+            await (await MockMarket().connect(user1).sellSynth(withdrawable)).wait();
+          });
+        });
       });
     });
 

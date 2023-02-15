@@ -95,13 +95,20 @@ library AccountRBAC {
 
     /**
      * @dev Revokes all permissions for the specified target address.
+     * @notice only removes permissions for the given address, not for the entire account
      */
     function revokeAllPermissions(Data storage self, address target) internal {
         bytes32[] memory permissions = self.permissions[target].values();
 
-        for (uint256 i = 1; i <= permissions.length; i++) {
-            revokePermission(self, permissions[i - 1], target);
+        if (permissions.length == 0) {
+            return;
         }
+
+        for (uint256 i = 0; i < permissions.length; i++) {
+            self.permissions[target].remove(permissions[i]);
+        }
+
+        self.permissionAddresses.remove(target);
     }
 
     /**

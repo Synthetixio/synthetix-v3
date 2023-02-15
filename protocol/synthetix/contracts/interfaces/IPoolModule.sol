@@ -144,16 +144,16 @@ interface IPoolModule {
     /**
      * @notice Returns the current pool owner.
      * @param poolId The id of the pool whose ownership is being queried.
-     * @return The current owner of the pool.
+     * @return owner The current owner of the pool.
      */
-    function getPoolOwner(uint128 poolId) external view returns (address);
+    function getPoolOwner(uint128 poolId) external view returns (address owner);
 
     /**
      * @notice Returns the current nominated pool owner.
      * @param poolId The id of the pool whose nominated owner is being queried.
-     * @return The current nominated owner of the pool.
+     * @return nominatedOwner The current nominated owner of the pool.
      */
-    function getNominatedPoolOwner(uint128 poolId) external view returns (address);
+    function getNominatedPoolOwner(uint128 poolId) external view returns (address nominatedOwner);
 
     /**
      * @notice Allows the system owner (not the pool owner) to set the system-wide minimum liquidity ratio.
@@ -163,7 +163,7 @@ interface IPoolModule {
 
     /**
      * @notice Retrieves the system-wide minimum liquidity ratio.
-     * @return The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision.
+     * @return minRatioD18 The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision.
      */
-    function getMinLiquidityRatio() external view returns (uint256);
+    function getMinLiquidityRatio() external view returns (uint256 minRatioD18);
 }

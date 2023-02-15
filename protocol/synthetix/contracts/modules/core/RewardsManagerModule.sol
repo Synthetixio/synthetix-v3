@@ -126,6 +126,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address collateralType,
         uint128 accountId
     ) external override returns (uint256[] memory, address[] memory) {
+        Account.exists(accountId);
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         return vault.updateRewards(accountId);
     }
@@ -163,9 +164,18 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 rewardAmount = vault.updateReward(accountId, rewardId);
 
         RewardDistribution.Data storage reward = vault.rewards[rewardId];
-
         reward.claimStatus[accountId].pendingSendD18 = 0;
-        reward.distributor.payout(accountId, poolId, collateralType, msg.sender, rewardAmount);
+        bool success = vault.rewards[rewardId].distributor.payout(
+            accountId,
+            poolId,
+            collateralType,
+            msg.sender,
+            rewardAmount
+        );
+
+        if (!success) {
+            revert RewardUnavailable(distributor);
+        }
 
         emit RewardsClaimed(
             accountId,
