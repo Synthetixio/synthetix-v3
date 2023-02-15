@@ -97,7 +97,7 @@ Traders may simulate calling these functions with `callStatic` to retrieve a quo
 
 In addition to the fees specific to transaction types outlined above, the following fees may be applied for different effects. Some or all of the fees may also be captured and distributed by a custom fee collector, rather than returned to liquidity providers directly.
 
-### Supply Target Fee (`utilizationFeeRate`)
+### Utilization Rate Fee
 
 A supply target fee helps limit liquidity providers' exposure to price fluctuations of the asset in situations where demand becomes very high. The amount of liquidity provided to a market implies a _supply target_. This is the ideal maximum amount of synths that the market would issue, where all of the credit capacity provided to the market were being utilized. This could expressed as a utilization rate of 100%.
 
