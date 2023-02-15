@@ -27,7 +27,7 @@ The market allows traders to buy or sell synths in a single (atomic) transaction
 
 To buy a synth in an atomic order, a trader may call `buy(uint128 marketId, uint usdAmount, uint minAmountReceived)` with the market ID for the synth they'd like to purchase, the amount of stablecoins they'd like to provide for the exchange, and the minimum amount of synths to receive for the transaction to succeed. The trader must first approve the transfer of the amount of stablecoins to the market.
 
-To sell a synth in an atomic order, a trader may call `sell(uint128 marketId, uint synthAmount, uint minAmountReceived)` with the market ID for the synth they'd like to sell, the amount of synths they'd like to provide for the exchange, and the minimum amount of stablecoins they'd like in return. The trader must first approve the transfer of the amount of synths to the market.
+To sell a synth in an atomic order, a trader may call `sell(uint128 marketId, uint synthAmount, uint minAmountReceived)` with the market ID for the synth they'd like to sell, the amount of synths they'd like to provide for the exchange, and the minimum amount of stablecoins to receive for the transaction to succeed. The trader must first approve the transfer of the amount of synths to the market.
 
 Traders may simulate calling these functions with `callStatic` to retrieve a quote of how much would have been provided in the exchange.
 
