@@ -214,8 +214,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             Price.getCurrentPrice(marketId, asyncOrderClaim.orderType)
         );
 
-        uint publishTime = uint(priceFeeds[0].price.publishTime);
-
         return
             _settleOrder(
                 marketId,
@@ -238,6 +236,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         _issueRefund(marketId, asyncOrderId, asyncOrderClaim);
     }
 
+    // solc-ignore-next-line func-mutability
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
