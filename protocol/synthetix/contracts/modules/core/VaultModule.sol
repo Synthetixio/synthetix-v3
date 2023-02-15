@@ -47,7 +47,7 @@ contract VaultModule is IVaultModule {
         uint256 leverage
     ) external override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.

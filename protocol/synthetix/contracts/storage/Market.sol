@@ -75,8 +75,11 @@ library Market {
          *
          * The Market's credit capacity also has a dependency on the external market reported debt as it will respond to that debt (and hence change the credit capacity if it increases or decreases)
          *
+         * The credit capacity can go negative if all of the collateral provided by pools is exhausted, and there is market provided collateral available to consume. in this case, the debt is still being
+         * appropriately assigned, but the market has a dynamic cap based on deposited collateral types.
+         *
          */
-        uint128 creditCapacityD18;
+        int128 creditCapacityD18;
         /**
          * @dev The total balance that the market had the last time that its debt was distributed.
          *
@@ -211,6 +214,10 @@ library Market {
             CollateralConfiguration.Data storage collateralConfiguration = CollateralConfiguration
                 .load(entry.collateralType);
 
+            if (entry.amountD18 == 0) {
+                continue;
+            }
+
             uint256 priceD18 = CollateralConfiguration.getCollateralPrice(collateralConfiguration);
 
             totalDepositedCollateralValueD18 += priceD18.mulDecimal(entry.amountD18);
@@ -243,12 +250,12 @@ library Market {
         Data storage self,
         uint256 creditCapacitySharesD18,
         int256 maxShareValueD18
-    ) internal view returns (uint256 contributionD18) {
+    ) internal view returns (int256 contributionD18) {
         // Determine how much the current value per share deviates from the maximum.
         uint256 deltaValuePerShareD18 = (maxShareValueD18 -
             self.poolsDebtDistribution.getValuePerShare()).toUint();
 
-        return deltaValuePerShareD18.mulDecimal(creditCapacitySharesD18);
+        return deltaValuePerShareD18.mulDecimal(creditCapacitySharesD18).toInt();
     }
 
     /**
@@ -256,7 +263,7 @@ library Market {
      *
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
-        return self.creditCapacityD18 < getLockedCreditCapacity(self);
+        return self.creditCapacityD18 < getLockedCreditCapacity(self).toInt();
     }
 
     /**
@@ -280,7 +287,7 @@ library Market {
      * Note: this is test only
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_inRangePools(Data storage self) internal view returns (uint) {
+    function _testOnly_inRangePools(Data storage self) internal view returns (uint256) {
         return self.inRangePools.size();
     }
 
@@ -290,7 +297,7 @@ library Market {
      * Note: this is test only
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_outRangePools(Data storage self) internal view returns (uint) {
+    function _testOnly_outRangePools(Data storage self) internal view returns (uint256) {
         return self.outRangePools.size();
     }
 
@@ -429,7 +436,7 @@ library Market {
                     ? valueToDistributeD18.divDecimal(
                         self.poolsDebtDistribution.totalSharesD18.toInt()
                     ) // solhint-disable-next-line numcast/safe-cast
-                    : int(0)
+                    : int256(0)
             );
     }
 
@@ -513,6 +520,7 @@ library Market {
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
             if (maxDistributedD18 > 0) {
+                // the below requires are only for sanity
                 require(
                     self.poolsDebtDistribution.getActorShares(edgePool.id.toBytes32()) > 0,
                     "no shares before actor removal"

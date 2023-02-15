@@ -78,14 +78,14 @@ interface ILiquidationModule {
      * @param poolId The id of the pool which holds the position that is to be liquidated.
      * @param collateralType The address of the collateral being used in the position that is to be liquidated.
      * @param liquidateAsAccountId Account id that will receive the rewards from the liquidation.
-     * @return Information about the position that was liquidated.
+     * @return liquidationData Information about the position that was liquidated.
      */
     function liquidate(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId
-    ) external returns (LiquidationData memory);
+    ) external returns (LiquidationData memory liquidationData);
 
     /**
      * @notice Liquidates an entire vault.
@@ -109,19 +109,22 @@ interface ILiquidationModule {
      * @param accountId The id of the account whose position is being queried for liquidation.
      * @param poolId The id of the pool whose position is being queried for liquidation.
      * @param collateralType The address of the collateral backing up the position being queried for liquidation.
-     * @return A boolean with the response to the query.
+     * @return canLiquidate A boolean with the response to the query.
      */
     function isPositionLiquidatable(
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external returns (bool);
+    ) external returns (bool canLiquidate);
 
     /**
      * @notice Determines whether a specified vault is liquidatable.
      * @param poolId The id of the pool that owns the vault that is being queried for liquidation.
      * @param collateralType The address of the collateral being held at the vault that is being queried for liquidation.
-     * @return A boolean with the response to the query.
+     * @return canVaultLiquidate A boolean with the response to the query.
      */
-    function isVaultLiquidatable(uint128 poolId, address collateralType) external returns (bool);
+    function isVaultLiquidatable(
+        uint128 poolId,
+        address collateralType
+    ) external returns (bool canVaultLiquidate);
 }

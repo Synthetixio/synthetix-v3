@@ -36,14 +36,14 @@ library Collateral {
     /**
      * @dev Increments the entry's availableCollateral.
      */
-    function increaseAvailableCollateral(Data storage self, uint amountD18) internal {
+    function increaseAvailableCollateral(Data storage self, uint256 amountD18) internal {
         self.amountAvailableForDelegationD18 += amountD18;
     }
 
     /**
      * @dev Decrements the entry's availableCollateral.
      */
-    function decreaseAvailableCollateral(Data storage self, uint amountD18) internal {
+    function decreaseAvailableCollateral(Data storage self, uint256 amountD18) internal {
         self.amountAvailableForDelegationD18 -= amountD18;
     }
 
@@ -53,11 +53,11 @@ library Collateral {
      * Sweeps through all existing locks and accumulates their amount,
      * if their unlock date is in the future.
      */
-    function getTotalLocked(Data storage self) internal view returns (uint) {
+    function getTotalLocked(Data storage self) internal view returns (uint256) {
         uint64 currentTime = block.timestamp.to64();
 
         uint256 lockedD18;
-        for (uint i = 0; i < self.locks.length; i++) {
+        for (uint256 i = 0; i < self.locks.length; i++) {
             CollateralLock.Data storage lock = self.locks[i];
 
             if (lock.lockExpirationTime > currentTime) {
