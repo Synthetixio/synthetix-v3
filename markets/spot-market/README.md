@@ -51,7 +51,7 @@ The market owner can configure various _settlement strategies_ for asyncronous o
 - **Price Verification Contract**: The price verification contract that will verify the result data blob returned by the offchain gateway during offchain lookup of prices.
 - **Offchain Feed ID**: The feedId used to retrieve the off-chain oracle price. This is encoded into the off-chain lookup URL.
 - **Offchain URL gateway**: The offchain gateway url that is communicated to the client to call offchain.
-- **settlementReward**: The reward amount given to the address initiating a settlement on a trader's behalf.
+- **Settlement Reward**: The reward amount given to the address initiating a settlement on a trader's behalf.
 - **Price Deviation Tolerance** - compares the onchain price and the price retrieved from offchain and ensures the tolerance isn't above this configured value.
 - **disabled** - Ability to disable the strategy for the corresponding market.
 
