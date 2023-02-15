@@ -348,7 +348,7 @@ library Pool {
         int256 vaultDebtD18 = currentVaultDebt(self, collateralType);
         (, uint256 collateralValueD18) = currentVaultCollateral(self, collateralType);
 
-        return vaultDebtD18 > 0 ? vaultDebtD18.toUint().divDecimal(collateralValueD18) : 0;
+        return vaultDebtD18 > 0 ? collateralValueD18.divDecimal(vaultDebtD18.toUint()) : 0;
     }
 
     /**
@@ -418,7 +418,7 @@ library Pool {
     /**
      * @dev Returns the specified account's collateralization ratio (collateral / debt).
      */
-    function currentAccountCollateralizationRatio(
+    function currentAccountCollateralRatio(
         Data storage self,
         address collateralType,
         uint128 accountId
@@ -433,7 +433,7 @@ library Pool {
         return
             getPositionDebtD18 > 0
                 ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
-                : 1e20;
+                : 0;
     }
 
     /**

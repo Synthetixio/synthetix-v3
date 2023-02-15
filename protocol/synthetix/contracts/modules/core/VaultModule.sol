@@ -128,12 +128,12 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
-    function getPositionCollateralizationRatio(
+    function getPositionCollateralRatio(
         uint128 accountId,
         uint128 poolId,
         address collateralType
     ) external override returns (uint256) {
-        return Pool.load(poolId).currentAccountCollateralizationRatio(collateralType, accountId);
+        return Pool.load(poolId).currentAccountCollateralRatio(collateralType, accountId);
     }
 
     /**
@@ -181,10 +181,7 @@ contract VaultModule is IVaultModule {
             collateralType,
             accountId
         );
-        collateralizationRatio = pool.currentAccountCollateralizationRatio(
-            collateralType,
-            accountId
-        );
+        collateralizationRatio = pool.currentAccountCollateralRatio(collateralType, accountId);
     }
 
     /**
