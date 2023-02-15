@@ -47,7 +47,7 @@ The market owner can configure various _settlement strategies_ for asyncronous o
   - Chainlink: Use Chainlink-verifiable price data related to the settlement time.
   - Pyth: Use Pyth-verifiable price data related to the settlement time.
 - **Settlement Delay** - This is added to the timestamp associated with the block when the commitment is made to determine the settlement time. You must specify a settlement delay greater than 0 to ensure settlements don't happen on the same block as commitment (This is strongly recommended to mitigate front-running for on-chain settlements.)
-- **Settlement Window Duration** - The duration after the settlement time at which an order expires. If order has expired past the duration, then the order is eligible for cancellation. (This is strongly recommended to mitigate trader optionality for on-chain settlements.)
+- **Settlement Window Duration** - The duration after the settlement time at which an order expires. If order has expired, then the order is eligible for cancellation. (This is strongly recommended to mitigate trader optionality for on-chain settlements.)
 - **Price Verification Contract**: The price verification contract that will verify the result data blob returned by the offchain gateway during offchain lookup of prices.
 - **Offchain Feed Id**: The feedId used to retrieve offchain oracle price. Usually encoded into the request offchain.
 - **Offchain URL gateway**: The offchain gateway url that is communicated to the client to call offchain.
