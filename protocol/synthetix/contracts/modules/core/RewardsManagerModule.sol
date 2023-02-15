@@ -68,6 +68,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
         if (rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter("distributor", "is already registered");
         }
+        if (address(pool.vaults[collateralType].rewards[rewardId].distributor) != address(0)) {
+            revert ParameterError.InvalidParameter("distributor", "cant be re-registered");
+        }
 
         rewardIds.add(rewardId);
         if (distributor == address(0)) {
@@ -154,19 +157,20 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
 
-        if (!vault.rewardIds.contains(rewardId)) {
+        if (address(vault.rewards[rewardId].distributor) != distributor) {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
-        uint256 reward = vault.updateReward(accountId, rewardId);
+        uint256 rewardAmount = vault.updateReward(accountId, rewardId);
 
-        vault.rewards[rewardId].claimStatus[accountId].pendingSendD18 = 0;
+        RewardDistribution.Data storage reward = vault.rewards[rewardId];
+        reward.claimStatus[accountId].pendingSendD18 = 0;
         bool success = vault.rewards[rewardId].distributor.payout(
             accountId,
             poolId,
             collateralType,
             msg.sender,
-            reward
+            rewardAmount
         );
 
         if (!success) {
@@ -178,10 +182,10 @@ contract RewardsManagerModule is IRewardsManagerModule {
             poolId,
             collateralType,
             address(vault.rewards[rewardId].distributor),
-            reward
+            rewardAmount
         );
 
-        return reward;
+        return rewardAmount;
     }
 
     /**
@@ -250,7 +254,16 @@ contract RewardsManagerModule is IRewardsManagerModule {
         if (distributor == address(0)) {
             revert ParameterError.InvalidParameter("distributor", "must be non-zero");
         }
-        pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(address(0));
+
+        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
+
+        // ensure rewards emission is stopped (users can still come in to claim rewards after the fact)
+        reward.distribute(
+            pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+            0,
+            0,
+            0
+        );
 
         emit RewardsDistributorRemoved(poolId, collateralType, distributor);
     }
