@@ -20,6 +20,7 @@ jobs:
             sample-project,
             main,
             oracle-manager,
+            spot-market,
           ]
         include:
           - package: core-contracts
@@ -40,6 +41,8 @@ jobs:
             workspace: "@synthetixio/sample-project"
           - package: oracle-manager
             workspace: "@synthetixio/oracle-manager"
+          - package: spot-market
+            workspace: "@synthetixio/spot-market"
           - package: main
             workspace: "@synthetixio/main"
             size-contracts: true
