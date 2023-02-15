@@ -49,7 +49,7 @@ The market owner can configure various _settlement strategies_ for asyncronous o
 - **Settlement Delay** - This is added to the timestamp associated with the block when the commitment is made to determine the settlement time. You must specify a settlement delay greater than 0 to ensure settlements don't happen on the same block as commitment (This is strongly recommended to mitigate front-running for on-chain settlements.)
 - **Settlement Window Duration** - The duration after the settlement time at which an order expires. If order has expired, then the order is eligible for cancellation. (This is strongly recommended to mitigate trader optionality for on-chain settlements.)
 - **Price Verification Contract**: The price verification contract that will verify the result data blob returned by the offchain gateway during offchain lookup of prices.
-- **Offchain Feed Id**: The feedId used to retrieve offchain oracle price. Usually encoded into the request offchain.
+- **Offchain Feed ID**: The feedId used to retrieve the off-chain oracle price. This is encoded into the off-chain lookup URL.
 - **Offchain URL gateway**: The offchain gateway url that is communicated to the client to call offchain.
 - **settlementReward**: The reward amount given to the address initiating a settlement on a trader's behalf.
 - **Price Deviation Tolerance** - compares the onchain price and the price retrieved from offchain and ensures the tolerance isn't above this configured value.
