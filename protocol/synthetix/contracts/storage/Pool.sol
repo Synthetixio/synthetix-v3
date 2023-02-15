@@ -348,7 +348,7 @@ library Pool {
         int256 vaultDebtD18 = currentVaultDebt(self, collateralType);
         (, uint256 collateralValueD18) = currentVaultCollateral(self, collateralType);
 
-        return vaultDebtD18 > 0 ? collateralValueD18.toUint().divDecimal(vaultDebtD18) : 0;
+        return vaultDebtD18 > 0 ? collateralValueD18.divDecimal(vaultDebtD18.toUint()) : 0;
     }
 
     /**
