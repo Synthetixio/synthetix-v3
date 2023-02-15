@@ -48,6 +48,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         override
         returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
+        // validation checks
         Transaction.isAsyncTransaction(orderType);
         SpotMarketFactory.load().isValidMarket(marketId);
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
@@ -57,6 +58,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         int256 committedAmountUsd;
         uint amountEscrowed;
+        // setup data to create async order based on transaction type
         if (orderType == Transaction.Type.ASYNC_BUY) {
             asyncOrderConfiguration.isValidAmount(settlementStrategyId, amountProvided);
             SpotMarketFactory.load().usdToken.transferFrom(
@@ -77,7 +79,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 Transaction.Type.ASYNC_SELL
             );
 
+            // ensures that the amount provided is greater than the settlement reward
             asyncOrderConfiguration.isValidAmount(settlementStrategyId, usdAmount);
+            // using escrow in case of decaying token value
             amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
 
             committedAmountUsd = -1 * usdAmount.toInt();
