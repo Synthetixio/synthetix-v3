@@ -31,7 +31,7 @@ contract Ownable is IOwnable {
     /**
      * @inheritdoc IOwnable
      */
-    function nominateNewOwner(address newNominatedOwner) public override onlyOwnerIfSet {
+    function nominateNewOwner(address newNominatedOwner) public override onlyOwner {
         OwnableStorage.Data storage store = OwnableStorage.load();
 
         if (newNominatedOwner == address(0)) {
@@ -78,20 +78,6 @@ contract Ownable is IOwnable {
      */
     modifier onlyOwner() {
         OwnableStorage.onlyOwner();
-
-        _;
-    }
-
-    /**
-     * @dev Reverts if the caller is not the owner, except if it is not set yet.
-     */
-    modifier onlyOwnerIfSet() {
-        address theOwner = OwnableStorage.getOwner();
-
-        // if owner is set then check if msg.sender is the owner
-        if (theOwner != address(0)) {
-            OwnableStorage.onlyOwner();
-        }
 
         _;
     }
