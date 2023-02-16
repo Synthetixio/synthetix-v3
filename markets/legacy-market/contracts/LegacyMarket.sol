@@ -271,6 +271,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      */
     function setPauseStablecoinConversion(bool paused) external onlyOwner {
         pauseStablecoinConversion = paused;
+
+        emit PauseStablecoinConversionSet(msg.sender, paused);
     }
 
     /**
@@ -278,14 +280,19 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      */
     function setPauseMigration(bool paused) external onlyOwner {
         pauseMigration = paused;
+
+        emit PauseMigrationSet(msg.sender, paused);
     }
 
     /**
      * @dev Returns the amount of dollar-denominated debt associated with {debtSharesMigrated} in the V2 system.
      */
-    function _calculateDebtValueMigrated(uint256 debtSharesMigrated) internal view returns (uint256 portionMigrated) {
-        (uint256 totalSystemDebt, uint256 totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer"))
-            .allNetworksDebtInfo();
+    function _calculateDebtValueMigrated(
+        uint256 debtSharesMigrated
+    ) internal view returns (uint256 portionMigrated) {
+        (uint256 totalSystemDebt, uint256 totalDebtShares, ) = IIssuer(
+            v2xResolver.getAddress("Issuer")
+        ).allNetworksDebtInfo();
 
         return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
     }
