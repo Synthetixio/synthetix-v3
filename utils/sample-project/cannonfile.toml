@@ -27,17 +27,10 @@ artifact = "contracts/modules/AnotherModule.sol:AnotherModule"
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.CoreModule.address %>"]
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
-
-[invoke.acquire_ownership]
-target = ["InitialProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["contract.InitialProxy"]
 
 [router.Router]
 exec = "@synthetixio/hardhat-router/utils/cannon"
@@ -65,4 +58,4 @@ args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["invoke.acquire_ownership", "router.Router"]
+depends = ["contract.InitialProxy", "router.Router"]
