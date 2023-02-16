@@ -66,10 +66,10 @@ jobs:
         name: Execute size command
         run: npm run --workspace=${{ matrix.workspace }} size-contracts
       - if: matrix.storage-check
-        name: Check storage.dump.sol
+        name: Check storage.dump.sol is up-to-date
         run: |
           npm explore ${{ matrix.workspace }}
-          git diff --exit-code storage.dump.sol
+          git diff --exit-code -- storage.dump.sol
       - name: Execute tests
         run: REPORT_GAS=true npm run --workspace=${{ matrix.workspace }} coverage
       - if: ${{ matrix.coverage-file }}
