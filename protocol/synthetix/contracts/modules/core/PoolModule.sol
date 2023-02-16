@@ -116,10 +116,8 @@ contract PoolModule is IPoolModule {
         uint128 poolId,
         MarketConfiguration.Data[] memory newMarketConfigurations
     ) external override {
-        Pool.requireExists(poolId);
+        Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
-
-        Pool.Data storage pool = Pool.load(poolId);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         // Note: This follows the same pattern as Pool.recalculateVaultCollateral(),
@@ -202,10 +200,10 @@ contract PoolModule is IPoolModule {
      * @inheritdoc IPoolModule
      */
     function setPoolName(uint128 poolId, string memory name) external override {
-        Pool.requireExists(poolId);
+        Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
-        Pool.load(poolId).name = name;
+        pool.name = name;
 
         emit PoolNameUpdated(poolId, name, msg.sender);
     }

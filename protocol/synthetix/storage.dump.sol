@@ -1,20 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.11<0.9.0;
 
-// @custom:artifact @synthetixio/core-contracts/contracts/ownership/AuthorizableStorage.sol:AuthorizableStorage
-library AuthorizableStorage {
-    bytes32 private constant _SLOT_AUTHORIZABLE_STORAGE = keccak256(abi.encode("io.synthetix.synthetix.Authorizable"));
-    struct Data {
-        address authorized;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_AUTHORIZABLE_STORAGE;
-        assembly {
-            store.slot := s
-        }
-    }
-}
-
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
@@ -170,7 +156,9 @@ library FeatureFlag {
     struct Data {
         bytes32 name;
         bool allowAll;
+        bool denyAll;
         SetUtil.AddressSet permissionedAddresses;
+        address[] deniers;
     }
     function load(bytes32 featureName) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.FeatureFlag", featureName));
@@ -210,10 +198,10 @@ library NodeDefinition {
         bytes parameters;
         bytes32[] parents;
     }
-    function load(bytes32 id) internal pure returns (Data storage data) {
+    function load(bytes32 id) internal pure returns (Data storage node) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
-            data.slot := s
+            node.slot := s
         }
     }
 }
@@ -259,6 +247,7 @@ interface IEVM2AnySubscriptionOnRampRouterInterface {
 // @custom:artifact contracts/modules/core/AccountModule.sol:AccountModule
 contract AccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
+    bytes32 private constant _CREATE_ACCOUNT_FEATURE_FLAG = "createAccount";
 }
 
 // @custom:artifact contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule
@@ -267,20 +256,39 @@ contract AssociateDebtModule {
     bytes32 private constant _ASSOCIATE_DEBT_FEATURE_FLAG = "associateDebt";
 }
 
+// @custom:artifact contracts/modules/core/CollateralModule.sol:CollateralModule
+contract CollateralModule {
+    bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
+    bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
+    bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
+}
+
 // @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
 contract IssueUSDModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
+    bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
 }
 
 // @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
 contract LiquidationModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _LIQUIDATE_FEATURE_FLAG = "liquidate";
+    bytes32 private constant _LIQUIDATE_VAULT_FEATURE_FLAG = "liquidateVault";
+}
+
+// @custom:artifact contracts/modules/core/MarketCollateralModule.sol:MarketCollateralModule
+contract MarketCollateralModule {
+    bytes32 private constant _DEPOSIT_MARKET_COLLATERAL_FEATURE_FLAG = "depositMarketCollateral";
+    bytes32 private constant _WITHDRAW_MARKET_COLLATERAL_FEATURE_FLAG = "withdrawMarketCollateral";
 }
 
 // @custom:artifact contracts/modules/core/MarketManagerModule.sol:MarketManagerModule
 contract MarketManagerModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
+    bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
+    bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
@@ -291,6 +299,7 @@ contract PoolModule {
 // @custom:artifact contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule
 contract RewardsManagerModule {
     uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
+    bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
 }
 
 // @custom:artifact contracts/modules/core/UtilsModule.sol:UtilsModule
@@ -299,6 +308,11 @@ contract UtilsModule {
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
     bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
+}
+
+// @custom:artifact contracts/modules/core/VaultModule.sol:VaultModule
+contract VaultModule {
+    bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
 }
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
@@ -314,13 +328,15 @@ library Account {
     struct Data {
         uint128 id;
         AccountRBAC.Data rbac;
-        bytes32 __slotAvailableForFutureUse;
+        uint64 lastInteraction;
+        uint64 __slotAvailableForFutureUse;
+        uint128 __slot2AvailableForFutureUse;
         mapping(address => Collateral.Data) collaterals;
     }
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
-            data.slot := s
+            account.slot := s
         }
     }
 }
@@ -360,16 +376,16 @@ library CollateralConfiguration {
         address tokenAddress;
         uint256 minDelegationD18;
     }
-    function load(address token) internal pure returns (Data storage data) {
+    function load(address token) internal pure returns (Data storage collateralConfiguration) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration", token));
         assembly {
-            data.slot := s
+            collateralConfiguration.slot := s
         }
     }
-    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
+    function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage availableCollaterals) {
         bytes32 s = _SLOT_AVAILABLE_COLLATERALS;
         assembly {
-            data.slot := s
+            availableCollaterals.slot := s
         }
     }
 }
@@ -377,8 +393,15 @@ library CollateralConfiguration {
 // @custom:artifact contracts/storage/CollateralLock.sol:CollateralLock
 library CollateralLock {
     struct Data {
-        uint256 amountD18;
+        uint128 amountD18;
         uint64 lockExpirationTime;
+    }
+}
+
+// @custom:artifact contracts/storage/Config.sol:Config
+library Config {
+    struct Data {
+        uint __unused;
     }
 }
 
@@ -418,10 +441,10 @@ library Market {
         address collateralType;
         uint256 amountD18;
     }
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Market", id));
         assembly {
-            data.slot := s
+            market.slot := s
         }
     }
 }
@@ -442,10 +465,10 @@ library MarketCreator {
         mapping(address => uint128[]) marketIdsForAddress;
         uint128 lastCreatedMarketId;
     }
-    function getMarketStore() internal pure returns (Data storage data) {
+    function getMarketStore() internal pure returns (Data storage marketStore) {
         bytes32 s = _SLOT_MARKET_CREATOR;
         assembly {
-            data.slot := s
+            marketStore.slot := s
         }
     }
 }
@@ -464,10 +487,10 @@ library OracleManager {
     struct Data {
         address oracleManagerAddress;
     }
-    function load() internal pure returns (Data storage data) {
+    function load() internal pure returns (Data storage oracleManager) {
         bytes32 s = _SLOT_ORACLE_MANAGER;
         assembly {
-            data.slot := s
+            oracleManager.slot := s
         }
     }
 }
@@ -485,10 +508,10 @@ library Pool {
         Distribution.Data vaultsDebtDistribution;
         mapping(address => Vault.Data) vaults;
     }
-    function load(uint128 id) internal pure returns (Data storage data) {
+    function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
-            data.slot := s
+            pool.slot := s
         }
     }
 }
@@ -529,13 +552,14 @@ library SystemPoolConfiguration {
     bytes32 private constant _SLOT_SYSTEM_POOL_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemPoolConfiguration"));
     struct Data {
         uint minLiquidityRatioD18;
-        uint preferredPool;
+        uint128 __reservedForFutureUse;
+        uint128 preferredPool;
         SetUtil.UintSet approvedPools;
     }
-    function load() internal pure returns (Data storage data) {
+    function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
         assembly {
-            data.slot := s
+            systemPoolConfiguration.slot := s
         }
     }
 }

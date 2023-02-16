@@ -1,12 +1,12 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "rootDir": ".",
+    "baseUrl": "./src",
+    "rootDir": "./src",
     "outDir": "./dist",
-    "allowJs": true,
-    "composite": true
+    "composite": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.json"],
+  "include": ["src/**/*.ts"],
   "exclude": []
 }

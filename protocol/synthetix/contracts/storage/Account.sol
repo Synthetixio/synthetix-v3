@@ -38,7 +38,11 @@ library Account {
     /**
      * @dev Thrown when the requested operation requires an activity timeout before the
      */
-    error AccountActivityTimeoutPending(uint128 accountId, uint currentTime, uint requiredTime);
+    error AccountActivityTimeoutPending(
+        uint128 accountId,
+        uint256 currentTime,
+        uint256 requiredTime
+    );
 
     struct Data {
         /**
@@ -82,16 +86,19 @@ library Account {
     }
 
     /**
-     * @dev Returns if an account exists for the given id.
+     * @dev Reverts if the account does not exist with appropriate error. Otherwise, returns the account.
      */
-    function exists(uint128 id) internal view {
-        if (load(id).rbac.owner == address(0)) {
+    function exists(uint128 id) internal view returns (Data storage account) {
+        Data storage a = load(id);
+        if (a.rbac.owner == address(0)) {
             revert AccountNotFound(id);
         }
+
+        return a;
     }
 
     /**
-     * @dev Returns information about the total collateral assigned, deposited, and locked by the account, and the given collateral type.
+     * @dev Given a collateral type, returns information about the total collateral assigned, deposited, and locked by the account
      */
     function getCollateralTotals(
         Data storage self,
@@ -173,7 +180,7 @@ library Account {
     function loadAccountAndValidatePermissionAndTimeout(
         uint128 accountId,
         bytes32 permission,
-        uint timeout
+        uint256 timeout
     ) internal view returns (Data storage account) {
         account = Account.load(accountId);
 
@@ -181,7 +188,7 @@ library Account {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
 
-        uint endWaitingPeriod = account.lastInteraction + timeout;
+        uint256 endWaitingPeriod = account.lastInteraction + timeout;
         if (block.timestamp < endWaitingPeriod) {
             revert AccountActivityTimeoutPending(accountId, block.timestamp, endWaitingPeriod);
         }

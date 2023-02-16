@@ -1,18 +1,18 @@
-import { ethers } from 'ethers';
-import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
-import hre from 'hardhat';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
-
+import { ethers } from 'ethers';
+import hre from 'hardhat';
 import {
   SpotMarketProxy,
-  SynthetixCoreProxy,
-  SynthetixUSDProxy,
   SynthetixCollateralMock,
-  Oracle_managerProxy,
+  SynthetixCoreProxy,
+  SynthetixOracle_managerProxy,
+  SynthetixUSDProxy,
   SynthRouter,
   FeeCollectorMock,
+  OracleVerifierMock,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -20,10 +20,11 @@ type Proxies = {
   ['synthetix.CoreProxy']: SynthetixCoreProxy;
   ['synthetix.USDProxy']: SynthetixUSDProxy;
   ['synthetix.CollateralMock']: SynthetixCollateralMock;
-  ['oracle_manager.Proxy']: Oracle_managerProxy;
+  ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
+  OracleVerifierMock: OracleVerifierMock;
 };
 
 export type Systems = {
@@ -31,7 +32,8 @@ export type Systems = {
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
-  OracleManager: Oracle_managerProxy;
+  OracleManager: SynthetixOracle_managerProxy;
+  OracleVerifierMock: OracleVerifierMock;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
@@ -48,9 +50,10 @@ before('load contracts', () => {
     Core: getContract('synthetix.CoreProxy'),
     USD: getContract('synthetix.USDProxy'),
     SpotMarket: getContract('SpotMarketProxy'),
-    OracleManager: getContract('oracle_manager.Proxy'),
+    OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
     FeeCollectorMock: getContract('FeeCollectorMock'),
+    OracleVerifierMock: getContract('OracleVerifierMock'),
     Synth: (address: string) => getContract('SynthRouter', address),
   };
 });

@@ -105,28 +105,28 @@ interface IMarketCollateralModule {
      * @notice Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.
      * @param marketId The id of the market for which the maximum is being queried.
      * @param collateralType The address of the collateral for which the maximum is being queried.
-     * @return The maximum amount of collateral set for the market, denominated with 18 decimals of precision.
+     * @return amountD18 The maximum amount of collateral set for the market, denominated with 18 decimals of precision.
      */
     function getMaximumMarketCollateral(
         uint128 marketId,
         address collateralType
-    ) external returns (uint256);
+    ) external returns (uint256 amountD18);
 
     /**
      * @notice Return the total amount of a given collateral type that a specified market has deposited.
      * @param marketId The id of the market for which the directly deposited collateral amount is being queried.
      * @param collateralType The address of the collateral for which the amount is being queried.
-     * @return The total amount of collateral of this type delegated to the market, denominated with 18 decimals of precision.
+     * @return amountD18 The total amount of collateral of this type delegated to the market, denominated with 18 decimals of precision.
      */
     function getMarketCollateralAmount(
         uint128 marketId,
         address collateralType
-    ) external returns (uint256);
+    ) external returns (uint256 amountD18);
 
     /**
      * @notice Return the total value of collateral that a specified market has deposited.
      * @param marketId The id of the market for which the directly deposited collateral amount is being queried.
-     * @return The total value of collateral deposited by the market, denominated with 18 decimals of precision.
+     * @return valueD18 The total value of collateral deposited by the market, denominated with 18 decimals of precision.
      */
-    function getMarketCollateralValue(uint128 marketId) external returns (uint256);
+    function getMarketCollateralValue(uint128 marketId) external returns (uint256 valueD18);
 }

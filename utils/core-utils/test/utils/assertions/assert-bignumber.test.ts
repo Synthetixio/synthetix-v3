@@ -1,5 +1,5 @@
+import { throws } from 'node:assert';
 import { BigNumber, BigNumberish, ethers } from 'ethers';
-
 import bn from '../../../src/utils/assertions/assert-bignumber';
 
 // https://stackoverflow.com/questions/56863875/
@@ -63,5 +63,14 @@ describe('utils/assertions/assert-bignumber.ts', function () {
 
   it('#isZero', function () {
     bn.isZero(0);
+    throws(() => bn.isZero(1), bn.BigNumberAssertionError);
+    throws(() => bn.isZero(1000), bn.BigNumberAssertionError);
+  });
+
+  it('#near', function () {
+    bn.near(1, 2, 1);
+    bn.near(10000, 9500, 1000);
+    throws(() => bn.near(1, 3, 0), bn.BigNumberAssertionError);
+    throws(() => bn.near(10000, 20000, 350), bn.BigNumberAssertionError);
   });
 });

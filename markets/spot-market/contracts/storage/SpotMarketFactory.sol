@@ -19,6 +19,7 @@ library SpotMarketFactory {
 
     error OnlyMarketOwner(address marketOwner, address sender);
     error InvalidMarket(uint128 marketId);
+    error InvalidAsyncTransactionType(TransactionType transactionType);
 
     struct Data {
         /**
@@ -37,10 +38,6 @@ library SpotMarketFactory {
          * @dev when synth is registered, this is the initial implementation address the proxy services.
          */
         address initialSynthImplementation;
-        /**
-         * @dev initial NFT implemention used for async order claims.  this implementation can later be upgraded.
-         */
-        address initialAsyncOrderClaimImplementation;
         /**
          * @dev mapping of marketId to marketOwner
          */
@@ -75,9 +72,15 @@ library SpotMarketFactory {
         }
     }
 
-    function isValidMarket(Data storage self, uint128 marketId) internal view returns (bool) {
+    function isValidMarket(Data storage self, uint128 marketId) internal view {
         if (self.marketOwners[marketId] == address(0)) {
             revert InvalidMarket(marketId);
+        }
+    }
+
+    function isValidAsyncTransaction(TransactionType orderType) internal view {
+        if (orderType != TransactionType.ASYNC_BUY && orderType != TransactionType.ASYNC_SELL) {
+            revert InvalidAsyncTransactionType(orderType);
         }
     }
 

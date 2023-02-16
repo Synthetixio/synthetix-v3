@@ -1,23 +1,20 @@
-import _ from 'lodash';
-import { ethers } from 'ethers';
-import Debug from 'debug';
-import { JTDDataType } from 'ajv/dist/core';
-
 import {
+  ChainArtifacts,
   ChainBuilderContext,
   ChainBuilderRuntimeInfo,
-  ChainArtifacts,
   registerAction,
 } from '@usecannon/builder';
-
 import {
   getContractDefinitionFromPath,
   getMergedAbiFromContractPaths,
 } from '@usecannon/builder/dist/util';
-
+import { JTDDataType } from 'ajv/dist/core';
+import Debug from 'debug';
+import { ethers } from 'ethers';
+import _ from 'lodash';
+import { compileContract } from '../compile';
 import { generateRouter } from '../generate';
 import { DeployedContractData } from '../types';
-import { compileRouter } from '../compile';
 
 const debug = Debug('router:cannon');
 
@@ -114,14 +111,14 @@ const routerAction = {
 
     const contractName = currentLabel.slice('router.'.length);
 
-    const sourceCode = await generateRouter({
+    const sourceCode = generateRouter({
       contractName,
       contracts,
     });
 
     debug('router source code', sourceCode);
 
-    const solidityInfo = await compileRouter(contractName, sourceCode);
+    const solidityInfo = await compileContract(contractName, sourceCode);
 
     const deployTxn = await ethers.ContractFactory.fromSolidity(
       solidityInfo
