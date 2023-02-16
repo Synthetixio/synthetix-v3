@@ -84,7 +84,7 @@ args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.SpotMarketProxy.event = "Upgraded"
 factory.SpotMarketProxy.arg = 0
-depends = ["router.SpotMarketRouter"]
+depends = ["contract.InitialSpotMarketProxy", "router.SpotMarketRouter"]
 
 # create synth router
 [router.SynthRouter]

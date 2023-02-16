@@ -58,4 +58,4 @@ args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["router.Router"]
+depends = ["contract.InitialProxy", "router.Router"]
