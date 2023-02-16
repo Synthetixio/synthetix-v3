@@ -74,7 +74,7 @@ To prepare for system upgrades, this repository is used to release new versions 
 - Confirm the private key that owns the corresponding namespace in the package registry is set in the `.env` file as `DEPLOYER_PRIVATE_KEY`.
 - Publish the release to Cannon package registry with `npx hardhat cannon:publish --network mainnet`.
 - Increment the version in the relevant `package.json` files and then run `npm i` in the root directory. _The repositories should always contain the version number of the next release._ **Also bump the version of the oracle manager in the synthetix toml file after you've upgraded oracle manager.**
-- Push the change to this repository.
+- Commit and push the change to this repository.
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
 
