@@ -52,17 +52,10 @@ artifact = "contracts/modules/mocks/GenericModule.sol:GenericModule"
 
 [contract.Proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.CoreRouter.address %>"]
+args = ["<%= contracts.CoreRouter.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreRouter"]
 salt = "<%= settings.salt %>"
 depends = ["router.CoreRouter"]
-
-[invoke.acquire_ownership]
-target = ["Proxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["contract.Proxy"]
 
 # Core Router
 
