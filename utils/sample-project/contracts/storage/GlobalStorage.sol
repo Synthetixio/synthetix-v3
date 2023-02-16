@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 contract GlobalStorage {
     bytes32 private constant _SLOT_GLOBAL_STORAGE =
-        keccak256(abi.encode("io.synthetix.sample-project.Global"));
+        keccak256(abi.encode("io.synthetix.sample-project.GlobalTest"));
 
     struct GlobalStore {
         uint value;
