@@ -336,12 +336,11 @@ library FeeUtil {
         FeeConfiguration.Data storage feeConfiguration,
         address transactor,
         bool async
-    ) private view returns (uint) {
-        return
-            feeConfiguration.atomicFixedFeeOverrides[transactor] > 0
-                ? feeConfiguration.atomicFixedFeeOverrides[transactor]
-                : async
-                ? feeConfiguration.asyncFixedFee
-                : feeConfiguration.atomicFixedFee;
+    ) private view returns (uint fixedFee) {
+        if (feeConfiguration.atomicFixedFeeOverrides[transactor] > 0) {
+            fixedFee = feeConfiguration.atomicFixedFeeOverrides[transactor];
+        } else {
+            fixedFee = async ? feeConfiguration.asyncFixedFee : feeConfiguration.atomicFixedFee;
+        }
     }
 }
