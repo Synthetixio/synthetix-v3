@@ -48,17 +48,10 @@ artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
 [contract.InitialSpotMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.CoreModule.address %>"]
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
-
-[invoke.acquire_ownership]
-target = ["InitialSpotMarketProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["contract.InitialSpotMarketProxy"]
 
 # Core
 [router.SpotMarketRouter]
@@ -91,7 +84,7 @@ args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.SpotMarketProxy.event = "Upgraded"
 factory.SpotMarketProxy.arg = 0
-depends = ["invoke.acquire_ownership", "router.SpotMarketRouter"]
+depends = ["router.SpotMarketRouter"]
 
 # create synth router
 [router.SynthRouter]
