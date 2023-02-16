@@ -10,4 +10,3 @@ contract Proxy is UUPSProxyWithOwner {
         address initialOwner
     ) UUPSProxyWithOwner(firstImplementation, initialOwner) {}
 }
-
