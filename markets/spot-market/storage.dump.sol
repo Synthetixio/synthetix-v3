@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -322,8 +322,8 @@ library SpotMarketFactory {
 // @custom:artifact contracts/storage/Wrapper.sol:Wrapper
 library Wrapper {
     struct Data {
-        address wrapCollateralType;
-        uint256 maxWrappableAmount;
+        address collateralType;
+        bool wrappingEnabled;
     }
     function load(uint128 marketId) internal pure returns (Data storage wrapper) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Wrapper", marketId));
@@ -331,4 +331,21 @@ library Wrapper {
             wrapper.slot := s
         }
     }
+}
+
+// @custom:artifact contracts/utils/TransactionUtil.sol:Transaction
+library Transaction {
+    enum Type {
+        BUY,
+        SELL,
+        ASYNC_BUY,
+        ASYNC_SELL,
+        WRAP,
+        UNWRAP
+    }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
