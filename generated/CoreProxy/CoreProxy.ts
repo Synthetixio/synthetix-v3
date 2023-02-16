@@ -138,6 +138,50 @@ export class FeatureFlagAllowlistRemoved__Params {
   }
 }
 
+export class FeatureFlagDeniersReset extends ethereum.Event {
+  get params(): FeatureFlagDeniersReset__Params {
+    return new FeatureFlagDeniersReset__Params(this);
+  }
+}
+
+export class FeatureFlagDeniersReset__Params {
+  _event: FeatureFlagDeniersReset;
+
+  constructor(event: FeatureFlagDeniersReset) {
+    this._event = event;
+  }
+
+  get feature(): Bytes {
+    return this._event.parameters[0].value.toBytes();
+  }
+
+  get deniers(): Array<Address> {
+    return this._event.parameters[1].value.toAddressArray();
+  }
+}
+
+export class FeatureFlagDenyAllSet extends ethereum.Event {
+  get params(): FeatureFlagDenyAllSet__Params {
+    return new FeatureFlagDenyAllSet__Params(this);
+  }
+}
+
+export class FeatureFlagDenyAllSet__Params {
+  _event: FeatureFlagDenyAllSet;
+
+  constructor(event: FeatureFlagDenyAllSet) {
+    this._event = event;
+  }
+
+  get feature(): Bytes {
+    return this._event.parameters[0].value.toBytes();
+  }
+
+  get denyAll(): boolean {
+    return this._event.parameters[1].value.toBoolean();
+  }
+}
+
 export class AccountCreated extends ethereum.Event {
   get params(): AccountCreated__Params {
     return new AccountCreated__Params(this);
@@ -1494,6 +1538,25 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
+  getDeniers(feature: Bytes): Array<Address> {
+    let result = super.call('getDeniers', 'getDeniers(bytes32):(address[])', [
+      ethereum.Value.fromFixedBytes(feature),
+    ]);
+
+    return result[0].toAddressArray();
+  }
+
+  try_getDeniers(feature: Bytes): ethereum.CallResult<Array<Address>> {
+    let result = super.tryCall('getDeniers', 'getDeniers(bytes32):(address[])', [
+      ethereum.Value.fromFixedBytes(feature),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddressArray());
+  }
+
   getFeatureFlagAllowAll(feature: Bytes): boolean {
     let result = super.call('getFeatureFlagAllowAll', 'getFeatureFlagAllowAll(bytes32):(bool)', [
       ethereum.Value.fromFixedBytes(feature),
@@ -1536,6 +1599,25 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddressArray());
   }
 
+  getFeatureFlagDenyAll(feature: Bytes): boolean {
+    let result = super.call('getFeatureFlagDenyAll', 'getFeatureFlagDenyAll(bytes32):(bool)', [
+      ethereum.Value.fromFixedBytes(feature),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_getFeatureFlagDenyAll(feature: Bytes): ethereum.CallResult<boolean> {
+    let result = super.tryCall('getFeatureFlagDenyAll', 'getFeatureFlagDenyAll(bytes32):(bool)', [
+      ethereum.Value.fromFixedBytes(feature),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
   isFeatureAllowed(feature: Bytes, account: Address): boolean {
     let result = super.call('isFeatureAllowed', 'isFeatureAllowed(bytes32,address):(bool)', [
       ethereum.Value.fromFixedBytes(feature),
@@ -1555,6 +1637,29 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  getAccountLastInteraction(accountId: BigInt): BigInt {
+    let result = super.call(
+      'getAccountLastInteraction',
+      'getAccountLastInteraction(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(accountId)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getAccountLastInteraction(accountId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getAccountLastInteraction',
+      'getAccountLastInteraction(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(accountId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getAccountOwner(accountId: BigInt): Address {
@@ -2307,13 +2412,13 @@ export class CoreProxy extends ethereum.SmartContract {
   }
 
   getPreferredPool(): BigInt {
-    let result = super.call('getPreferredPool', 'getPreferredPool():(uint256)', []);
+    let result = super.call('getPreferredPool', 'getPreferredPool():(uint128)', []);
 
     return result[0].toBigInt();
   }
 
   try_getPreferredPool(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('getPreferredPool', 'getPreferredPool():(uint256)', []);
+    let result = super.tryCall('getPreferredPool', 'getPreferredPool():(uint128)', []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -2538,6 +2643,25 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new CoreProxy__updateRewardsResult(value[0].toBigIntArray(), value[1].toAddressArray())
     );
+  }
+
+  getConfig(k: Bytes): Bytes {
+    let result = super.call('getConfig', 'getConfig(bytes32):(bytes32)', [
+      ethereum.Value.fromFixedBytes(k),
+    ]);
+
+    return result[0].toBytes();
+  }
+
+  try_getConfig(k: Bytes): ethereum.CallResult<Bytes> {
+    let result = super.tryCall('getConfig', 'getConfig(bytes32):(bytes32)', [
+      ethereum.Value.fromFixedBytes(k),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytes());
   }
 
   getPosition(
@@ -3022,6 +3146,40 @@ export class RemoveFromFeatureFlagAllowlistCall__Outputs {
   }
 }
 
+export class SetDeniersCall extends ethereum.Call {
+  get inputs(): SetDeniersCall__Inputs {
+    return new SetDeniersCall__Inputs(this);
+  }
+
+  get outputs(): SetDeniersCall__Outputs {
+    return new SetDeniersCall__Outputs(this);
+  }
+}
+
+export class SetDeniersCall__Inputs {
+  _call: SetDeniersCall;
+
+  constructor(call: SetDeniersCall) {
+    this._call = call;
+  }
+
+  get feature(): Bytes {
+    return this._call.inputValues[0].value.toBytes();
+  }
+
+  get deniers(): Array<Address> {
+    return this._call.inputValues[1].value.toAddressArray();
+  }
+}
+
+export class SetDeniersCall__Outputs {
+  _call: SetDeniersCall;
+
+  constructor(call: SetDeniersCall) {
+    this._call = call;
+  }
+}
+
 export class SetFeatureFlagAllowAllCall extends ethereum.Call {
   get inputs(): SetFeatureFlagAllowAllCall__Inputs {
     return new SetFeatureFlagAllowAllCall__Inputs(this);
@@ -3052,6 +3210,40 @@ export class SetFeatureFlagAllowAllCall__Outputs {
   _call: SetFeatureFlagAllowAllCall;
 
   constructor(call: SetFeatureFlagAllowAllCall) {
+    this._call = call;
+  }
+}
+
+export class SetFeatureFlagDenyAllCall extends ethereum.Call {
+  get inputs(): SetFeatureFlagDenyAllCall__Inputs {
+    return new SetFeatureFlagDenyAllCall__Inputs(this);
+  }
+
+  get outputs(): SetFeatureFlagDenyAllCall__Outputs {
+    return new SetFeatureFlagDenyAllCall__Outputs(this);
+  }
+}
+
+export class SetFeatureFlagDenyAllCall__Inputs {
+  _call: SetFeatureFlagDenyAllCall;
+
+  constructor(call: SetFeatureFlagDenyAllCall) {
+    this._call = call;
+  }
+
+  get feature(): Bytes {
+    return this._call.inputValues[0].value.toBytes();
+  }
+
+  get denyAll(): boolean {
+    return this._call.inputValues[1].value.toBoolean();
+  }
+}
+
+export class SetFeatureFlagDenyAllCall__Outputs {
+  _call: SetFeatureFlagDenyAllCall;
+
+  constructor(call: SetFeatureFlagDenyAllCall) {
     this._call = call;
   }
 }
@@ -4884,6 +5076,40 @@ export class RegisterCcipCall__Outputs {
   _call: RegisterCcipCall;
 
   constructor(call: RegisterCcipCall) {
+    this._call = call;
+  }
+}
+
+export class SetConfigCall extends ethereum.Call {
+  get inputs(): SetConfigCall__Inputs {
+    return new SetConfigCall__Inputs(this);
+  }
+
+  get outputs(): SetConfigCall__Outputs {
+    return new SetConfigCall__Outputs(this);
+  }
+}
+
+export class SetConfigCall__Inputs {
+  _call: SetConfigCall;
+
+  constructor(call: SetConfigCall) {
+    this._call = call;
+  }
+
+  get k(): Bytes {
+    return this._call.inputValues[0].value.toBytes();
+  }
+
+  get v(): Bytes {
+    return this._call.inputValues[1].value.toBytes();
+  }
+}
+
+export class SetConfigCall__Outputs {
+  _call: SetConfigCall;
+
+  constructor(call: SetConfigCall) {
     this._call = call;
   }
 }

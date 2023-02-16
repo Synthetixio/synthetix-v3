@@ -6,8 +6,6 @@ dataSources:
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: '0xEB5aFAF2d4B82F32ec6B2c7cb8f9e8aF27FbaEA3'
-      startBlock: 4884107
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -95,4 +93,3 @@ dataSources:
             address,(bool,uint256,uint256,uint256,bytes32,address,uint256))
           handler: handleCollateralConfigured
       file: ./src/core.ts
-    network: optimism-goerli

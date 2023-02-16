@@ -3,7 +3,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "yarn build:goerli && yarn build:optimism-goerli",
+    "build": "yarn build:goerli && yarn build:optimism-goerli && prettier --write subgraph.yaml",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "codegen": "graph codegen && prettier --write .",
     "build:goerli": "node ./codegen goerli && yarn codegen && graph build --output-dir ./build/goerli --network goerli",
