@@ -9,7 +9,11 @@ import "../interfaces/IOwnerModule.sol";
  * @title Module for giving a system owner based access control.
  * See IOwnerModule.
  */
-// solhint-disable-next-line no-empty-blocks
 contract OwnerModule is Ownable, IOwnerModule {
+    // solhint-disable-next-line no-empty-blocks
+    constructor() Ownable(address(0)) {
+        // empty intentionally
+    }
+
     // no impl intentionally
 }

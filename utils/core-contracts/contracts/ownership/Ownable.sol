@@ -11,6 +11,10 @@ import "../errors/ChangeError.sol";
  * See IOwnable.
  */
 contract Ownable is IOwnable {
+    constructor(address initialOwner) {
+        OwnableStorage.load().owner = initialOwner;
+    }
+
     /**
      * @inheritdoc IOwnable
      */
