@@ -237,4 +237,9 @@ describe('DecayTokenModule', () => {
       );
     });
   });
+  describe('optimized pow function', () => {
+    it('5.1 ** 3', async () => {
+      assertBn.equal(await TokenModule.pow(parseEther('5.1'), 3), parseEther('132.651'));
+    });
+  });
 });
