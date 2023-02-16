@@ -6,6 +6,10 @@ description = "Sample usage of the router manager"
 description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
 defaultValue = "sample-project"
 
+[setting.initialOwner]
+description = "Admin user to initialize the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [setting.owner]
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
@@ -27,13 +31,16 @@ artifact = "contracts/modules/AnotherModule.sol:AnotherModule"
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
+args = [
+  "<%= contracts.CoreModule.address %>",
+  "<%= settings.initialOwner %>"
+]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
 [router.Router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
+exec = "@synthetixio/router/utils/cannon"
 func = "generate"
 contracts = [
   "CoreModule",

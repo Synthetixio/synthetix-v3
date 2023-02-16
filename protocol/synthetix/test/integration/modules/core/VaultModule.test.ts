@@ -82,6 +82,16 @@ describe('VaultModule', function () {
         await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
         debt
       );
+      assertBn.equal(
+        await systems().Core.callStatic.getPositionCollateralRatio(
+          accountId,
+          poolId,
+          collateralAddress()
+        ),
+        ethers.BigNumber.from(debt).eq(0)
+          ? 0
+          : ethers.BigNumber.from(collateralAmount).mul(ethers.utils.parseEther('1')).div(debt)
+      );
     };
   }
 
@@ -172,6 +182,22 @@ describe('VaultModule', function () {
           ethers.utils.parseEther('1')
         ),
         'InsufficientDelegation("20000000000000000000")',
+        systems().Core
+      );
+    });
+
+    it('fails when new collateral amount equals current collateral amount', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .delegateCollateral(
+            accountId,
+            poolId,
+            collateralAddress(),
+            depositAmount,
+            ethers.utils.parseEther('1')
+          ),
+        'InvalidCollateralAmount()',
         systems().Core
       );
     });
@@ -267,6 +293,13 @@ describe('VaultModule', function () {
         'user1 has become indebted',
         verifyAccountState(accountId, poolId, depositAmount, startingDebt)
       );
+
+      it('vault c-ratio is affected', async () => {
+        assertBn.equal(
+          await systems().Core.callStatic.getVaultCollateralRatio(poolId, collateralAddress()),
+          depositAmount.mul(ethers.utils.parseEther('1')).div(startingDebt)
+        );
+      });
 
       describe('second user delegates', async () => {
         const user2AccountId = 283847;
@@ -599,8 +632,6 @@ describe('VaultModule', function () {
         });
       });
     });
-
-    // TODO: also test that user can pull outstanding USD out of position with 0 collateral
 
     describe('first user leaves', async () => {
       before(restore);

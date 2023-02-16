@@ -3,12 +3,12 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "../../interfaces/ICollateralModule.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
-import "../../storage/CollateralLock.sol";
 import "../../storage/Config.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
@@ -38,9 +38,10 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) public override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_FEATURE_FLAG);
         CollateralConfiguration.collateralEnabled(collateralType);
+        Account.exists(accountId);
 
         Account.Data storage account = Account.load(accountId);
 
@@ -69,12 +70,12 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) public override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_FEATURE_FLAG);
         Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
             AccountRBAC._WITHDRAW_PERMISSION,
-            uint(Config.read(_CONFIG_TIMEOUT_WITHDRAW))
+            uint256(Config.read(_CONFIG_TIMEOUT_WITHDRAW))
         );
 
         uint256 tokenAmountD18 = CollateralConfiguration
@@ -132,31 +133,68 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 offset,
-        uint256 items
-    ) external override {
+        uint256 count
+    ) external override returns (uint cleared) {
         CollateralLock.Data[] storage locks = Account
             .load(accountId)
             .collaterals[collateralType]
             .locks;
 
-        if (offset > locks.length || items > locks.length) {
-            revert ArrayError.OutOfBounds();
-        }
-
         uint64 currentTime = block.timestamp.to64();
 
-        if (offset == 0 && items == 0) {
-            items = locks.length;
+        uint len = locks.length;
+
+        if (offset >= len) {
+            return 0;
         }
 
-        uint256 index = offset;
-        while (index < locks.length) {
+        if (count == 0 || offset + count >= len) {
+            count = len - offset;
+        }
+
+        uint index = offset;
+        for (uint i = 0; i < count; i++) {
             if (locks[index].lockExpirationTime <= currentTime) {
+                emit CollateralLockExpired(
+                    accountId,
+                    collateralType,
+                    locks[index].amountD18,
+                    locks[index].lockExpirationTime
+                );
+
                 locks[index] = locks[locks.length - 1];
                 locks.pop();
             } else {
                 index++;
             }
+        }
+
+        return count + offset - index;
+    }
+
+    /**
+     * @inheritdoc ICollateralModule
+     */
+    function getLocks(
+        uint128 accountId,
+        address collateralType,
+        uint256 offset,
+        uint256 count
+    ) external view override returns (CollateralLock.Data[] memory locks) {
+        CollateralLock.Data[] storage storageLocks = Account
+            .load(accountId)
+            .collaterals[collateralType]
+            .locks;
+        uint len = storageLocks.length;
+
+        if (count == 0 || offset + count >= len) {
+            count = offset < len ? len - offset : 0;
+        }
+
+        locks = new CollateralLock.Data[](count);
+
+        for (uint i = 0; i < count; i++) {
+            locks[i] = storageLocks[offset + i];
         }
     }
 
@@ -178,12 +216,22 @@ contract CollateralModule is ICollateralModule {
             collateralType
         );
 
-        if (totalDeposited - totalLocked < amount) {
+        if (expireTimestamp <= block.timestamp) {
+            revert ParameterError.InvalidParameter("expireTimestamp", "must be in the future");
+        }
+
+        if (amount == 0) {
+            revert ParameterError.InvalidParameter("amount", "must be nonzero");
+        }
+
+        if (amount > totalDeposited - totalLocked) {
             revert InsufficientAccountCollateral(amount);
         }
 
         account.collaterals[collateralType].locks.push(
-            CollateralLock.Data(amount, expireTimestamp)
+            CollateralLock.Data(amount.to128(), expireTimestamp)
         );
+
+        emit CollateralLockCreated(accountId, collateralType, amount, expireTimestamp);
     }
 }

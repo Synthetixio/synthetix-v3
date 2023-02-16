@@ -32,12 +32,14 @@ contract MarketCollateralModule is IMarketCollateralModule {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_COLLATERAL_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
+        // Ensure the sender is the market address associated with the specified marketId
+        if (msg.sender != marketData.marketAddress) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
         uint256 systemAmount = CollateralConfiguration
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
-
-        // Ensure the sender is the market address associated with the specified marketId
-        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         uint256 maxDepositable = marketData.maximumDepositableD18[collateralType];
         uint256 depositedCollateralEntryIndex = _findOrCreateDepositEntryIndex(

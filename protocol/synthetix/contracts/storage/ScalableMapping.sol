@@ -111,7 +111,7 @@ library ScalableMapping {
      */
     function get(Data storage self, bytes32 actorId) internal view returns (uint256 valueD18) {
         uint256 totalSharesD18 = self.totalSharesD18;
-        if (self.totalSharesD18 == 0) {
+        if (totalSharesD18 == 0) {
             return 0;
         }
 

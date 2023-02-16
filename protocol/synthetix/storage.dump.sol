@@ -393,7 +393,7 @@ library CollateralConfiguration {
 // @custom:artifact contracts/storage/CollateralLock.sol:CollateralLock
 library CollateralLock {
     struct Data {
-        uint256 amountD18;
+        uint128 amountD18;
         uint64 lockExpirationTime;
     }
 }
@@ -401,7 +401,7 @@ library CollateralLock {
 // @custom:artifact contracts/storage/Config.sol:Config
 library Config {
     struct Data {
-        uint __unused;
+        uint256 __unused;
     }
 }
 
@@ -428,7 +428,7 @@ library Market {
         uint128 id;
         address marketAddress;
         int128 netIssuanceD18;
-        uint128 creditCapacityD18;
+        int128 creditCapacityD18;
         int128 lastDistributedMarketBalanceD18;
         HeapUtil.Data inRangePools;
         HeapUtil.Data outRangePools;
@@ -551,8 +551,9 @@ library ScalableMapping {
 library SystemPoolConfiguration {
     bytes32 private constant _SLOT_SYSTEM_POOL_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemPoolConfiguration"));
     struct Data {
-        uint minLiquidityRatioD18;
-        uint preferredPool;
+        uint256 minLiquidityRatioD18;
+        uint128 __reservedForFutureUse;
+        uint128 preferredPool;
         SetUtil.UintSet approvedPools;
     }
     function load() internal pure returns (Data storage systemPoolConfiguration) {

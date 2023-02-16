@@ -10,6 +10,7 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
+import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 
 /**
@@ -44,6 +45,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         uint256 amount
     ) external returns (int256) {
         FeatureFlag.ensureAccessToFeature(_ASSOCIATE_DEBT_FEATURE_FLAG);
+        Account.exists(accountId);
 
         Pool.Data storage poolData = Pool.load(poolId);
         VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
@@ -52,8 +54,6 @@ contract AssociateDebtModule is IAssociateDebtModule {
         if (msg.sender != marketData.marketAddress) {
             revert AccessError.Unauthorized(msg.sender);
         }
-
-        bytes32 actorId = accountId.toBytes32();
 
         // The market must appear in pool configuration of the specified position
         if (!poolData.hasMarket(marketId)) {
@@ -69,13 +69,16 @@ contract AssociateDebtModule is IAssociateDebtModule {
         // Assign this debt to the specified position
         int256 updatedDebt = epochData.assignDebtToAccount(accountId, amount.toInt());
 
+        (, uint256 actorCollateralValue) = poolData.currentAccountCollateral(
+            collateralType,
+            accountId
+        );
+
         // Reverts if this debt increase would make the position liquidatable
         _verifyCollateralRatio(
             collateralType,
             updatedDebt > 0 ? updatedDebt.toUint() : 0,
-            CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(
-                epochData.collateralAmounts.get(actorId)
-            )
+            actorCollateralValue
         );
 
         emit DebtAssociated(marketId, poolId, collateralType, accountId, amount, updatedDebt);

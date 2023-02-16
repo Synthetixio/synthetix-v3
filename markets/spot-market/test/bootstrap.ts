@@ -1,18 +1,18 @@
-import { ethers } from 'ethers';
-import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
-import hre from 'hardhat';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
-
+import { ethers } from 'ethers';
+import hre from 'hardhat';
 import {
   SpotMarketProxy,
-  SynthetixCoreProxy,
-  SynthetixUSDProxy,
   SynthetixCollateralMock,
+  SynthetixCoreProxy,
   SynthetixOracle_managerProxy,
+  SynthetixUSDProxy,
   SynthRouter,
   FeeCollectorMock,
+  OracleVerifierMock,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -24,6 +24,7 @@ type Proxies = {
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
+  OracleVerifierMock: OracleVerifierMock;
 };
 
 export type Systems = {
@@ -32,6 +33,7 @@ export type Systems = {
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
+  OracleVerifierMock: OracleVerifierMock;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
@@ -51,6 +53,7 @@ before('load contracts', () => {
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
     FeeCollectorMock: getContract('FeeCollectorMock'),
+    OracleVerifierMock: getContract('OracleVerifierMock'),
     Synth: (address: string) => getContract('SynthRouter', address),
   };
 });

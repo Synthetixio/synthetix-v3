@@ -39,11 +39,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             msg.sender,
             usdAmount,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY),
             SpotMarketFactory.TransactionType.BUY
         );
 
-        // TODO: processFees deposits fees into the market manager
-        // and so does this, need to consolidate for effeciency
         spotMarketFactory.depositToMarketManager(marketId, amountUsable);
 
         // Exchange amount after fees into synths to buyer
@@ -87,6 +86,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             msg.sender,
             usdAmount,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.SELL),
             SpotMarketFactory.TransactionType.SELL
         );
 

@@ -1,6 +1,6 @@
+import debug from 'debug';
 import { renderRouter } from './internal/render-router';
 import { DeployedContractData } from './types';
-import debug from 'debug';
 
 interface Params {
   contractName?: string;
@@ -8,10 +8,10 @@ interface Params {
   contracts: DeployedContractData[];
 }
 
-export async function generateRouter({
+export function generateRouter({
   contractName = 'Router',
   template = undefined,
-  contracts = [],
+  contracts,
 }: Params) {
   for (const c of contracts) debug(`${c.contractName}: ${c.deployedAddress}`);
 

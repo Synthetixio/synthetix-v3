@@ -10,4 +10,4 @@ node_modules/
 utils/*/utils
 utils/*/test/generated
 protocol/*/test/generated
-Router.sol
+*Router.sol
