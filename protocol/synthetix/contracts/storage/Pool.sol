@@ -392,23 +392,25 @@ library Pool {
 
     /**
      * @dev Returns the specified account's collateralization ratio (collateral / debt).
+     * @dev If the account's debt is negative or zero, returns an "infinite" c-ratio.
      */
     function currentAccountCollateralRatio(
         Data storage self,
         address collateralType,
         uint128 accountId
     ) internal returns (uint256) {
-        (, uint256 getPositionCollateralValueD18) = currentAccountCollateral(
+        int256 positionDebtD18 = updateAccountDebt(self, collateralType, accountId);
+        if (positionDebtD18 <= 0) {
+            return type(uint256).max;
+        }
+
+        (, uint256 positionCollateralValueD18) = currentAccountCollateral(
             self,
             collateralType,
             accountId
         );
-        int256 getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
-        return
-            getPositionDebtD18 > 0
-                ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
-                : 0;
+        return positionCollateralValueD18.divDecimal(positionDebtD18.toUint());
     }
 
     /**
