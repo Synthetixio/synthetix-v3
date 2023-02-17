@@ -5,11 +5,9 @@ import { ethers } from 'ethers';
 import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
 
-describe.only('MarketCollateralModule', function () {
+describe('MarketCollateralModule', function () {
   const { signers, systems, MockMarket, marketId, collateralAddress, collateralContract, restore } =
     bootstrapWithMockMarketAndPool();
-
-  const One = ethers.utils.parseEther('1');
 
   let owner: ethers.Signer, user1: ethers.Signer;
 
