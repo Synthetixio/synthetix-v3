@@ -60,9 +60,11 @@ jobs:
           run_daemon: true
       - run: npm ci
       - run: npm run build
-      - if: ${{ matrix.size-contracts }}
+      - if: matrix.size-contracts
         name: Execute size command
         run: npm run --workspace=${{ matrix.workspace }} size-contracts
+      - name: Check storage.dump.sol is up-to-date
+        run: npm explore ${{ matrix.workspace }} -- git diff --exit-code -- storage.dump.sol
       - name: Execute tests
         run: REPORT_GAS=true npm run --workspace=${{ matrix.workspace }} coverage
       - if: ${{ matrix.coverage-file }}
