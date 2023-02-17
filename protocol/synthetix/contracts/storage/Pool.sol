@@ -145,9 +145,8 @@ library Pool {
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
         uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
-        int128 debtPerShareD18 = totalCreditCapacityD18 > 0
-            ? // solhint-disable-next-line numcast/safe-cast
-            int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+        int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
+            ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
             : int128(0);
 
         int256 cumulativeDebtChangeD18 = 0;
