@@ -33,6 +33,42 @@ describe('ERC20', function () {
     });
   });
 
+  describe('when specifying zero addresses or amounts', function () {
+    it('reverts', async function () {
+      const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+      // Zero address
+      await assertRevert(
+        ERC20.approve(ZERO_ADDRESS, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+      await assertRevert(
+        ERC20.transfer(ZERO_ADDRESS, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+      await assertRevert(
+        ERC20.mintFor(ZERO_ADDRESS, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+      await assertRevert(
+        ERC20.burnFor(ZERO_ADDRESS, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+
+      // Zero amount
+      await assertRevert(
+        ERC20.approve(await user1.getAddress(), 0),
+        'InvalidParameter("amount", "Zero amount")'
+      );
+      await assertRevert(
+        ERC20.transfer(await user1.getAddress(), 0),
+        'InvalidParameter("amount", "Zero amount")'
+      );
+      await assertRevert(ERC20.mint(0), 'InvalidParameter("amount", "Zero amount")');
+      await assertRevert(ERC20.burn(0), 'InvalidParameter("amount", "Zero amount")');
+    });
+  });
+
   describe('Before minting any tokens', function () {
     it('the total supply is 0', async function () {
       assertBn.equal(await ERC20.totalSupply(), 0);

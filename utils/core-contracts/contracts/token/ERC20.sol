@@ -136,6 +136,8 @@ contract ERC20 is IERC20 {
     }
 
     function _transfer(address from, address to, uint256 amount) internal virtual {
+        _checkZeroAddressOrAmount(to, amount);
+
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 accountBalance = store.balanceOf[from];
@@ -156,11 +158,26 @@ contract ERC20 is IERC20 {
     }
 
     function _approve(address owner, address spender, uint256 amount) internal virtual {
+        _checkZeroAddressOrAmount(spender, amount);
+
         ERC20Storage.load().allowance[owner][spender] = amount;
+
         emit Approval(owner, spender, amount);
     }
 
+    function _checkZeroAddressOrAmount(address target, uint256 amount) private pure {
+        if (target == address(0)) {
+            revert ParameterError.InvalidParameter("target", "Zero address");
+        }
+
+        if (amount == 0) {
+            revert ParameterError.InvalidParameter("amount", "Zero amount");
+        }
+    }
+
     function _mint(address to, uint256 amount) internal virtual {
+        _checkZeroAddressOrAmount(to, amount);
+
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         store.totalSupply += amount;
@@ -174,6 +191,8 @@ contract ERC20 is IERC20 {
     }
 
     function _burn(address from, uint256 amount) internal virtual {
+        _checkZeroAddressOrAmount(from, amount);
+
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 accountBalance = store.balanceOf[from];
@@ -181,7 +200,7 @@ contract ERC20 is IERC20 {
             revert InsufficientBalance(amount, accountBalance);
         }
 
-        // No need for underflow check since it would have occured in the previous step
+        // No need for underflow check since it would have occurred in the previous step
         unchecked {
             store.balanceOf[from] -= amount;
             store.totalSupply -= amount;
