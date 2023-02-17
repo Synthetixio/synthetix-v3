@@ -5,7 +5,6 @@ pragma solidity >=0.8.0;
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
-        bool initialized;
         address owner;
         address nominatedOwner;
     }
@@ -42,11 +41,6 @@ library DecimalMath {
     int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
     int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
     uint256 public constant PRECISION_FACTOR = 9;
-}
-
-// @custom:artifact contracts/Router.sol:Router
-contract Router {
-    address private constant _ORACLE_MANAGER_MODULE = 0xda02f6b685725f4661b83fACcA22c11259b460fA;
 }
 
 // @custom:artifact contracts/interfaces/external/IPyth.sol:PythStructs
