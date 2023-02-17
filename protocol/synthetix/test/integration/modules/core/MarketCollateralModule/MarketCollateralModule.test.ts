@@ -212,7 +212,7 @@ describe('MarketCollateralModule', function () {
         await assertRevert(
           MockMarket()
             .connect(user1)
-            .withdraw(collateralAddress(), configuredMaxAmount.div(2).add(1)),
+            .withdrawCollateral(collateralAddress(), configuredMaxAmount.div(2).add(1)),
           `InsufficientMarketCollateralWithdrawable("${marketId()}", "${collateralAddress()}", "${configuredMaxAmount
             .div(2)
             .add(1)
@@ -227,7 +227,7 @@ describe('MarketCollateralModule', function () {
         () =>
           MockMarket()
             .connect(user1)
-            .withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
+            .withdrawCollateral(collateralAddress(), configuredMaxAmount.div(2).div(4))
       );
 
       describe('successful withdraw partial', async () => {
@@ -236,7 +236,7 @@ describe('MarketCollateralModule', function () {
           tx = await (
             await MockMarket()
               .connect(user1)
-              .withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
+              .withdrawCollateral(collateralAddress(), configuredMaxAmount.div(2).div(4))
           ).wait();
         });
 
@@ -282,7 +282,7 @@ describe('MarketCollateralModule', function () {
             // this should be the amount remaining
             await MockMarket()
               .connect(user1)
-              .withdraw(
+              .withdrawCollateral(
                 collateralAddress(),
                 configuredMaxAmount.div(2).sub(configuredMaxAmount.div(2).div(4))
               );
@@ -300,7 +300,11 @@ describe('MarketCollateralModule', function () {
       });
 
       describe('cannot withdraw collateral when credit capacity is over-utilized', async () => {
-        before('withdraw maximum amount of USD', async () => {
+        before('deposit collateral and withdraw maximum amount of USD', async () => {
+          await MockMarket()
+            .connect(user1)
+            .depositCollateral(collateralAddress(), configuredMaxAmount);
+
           const totalWithdrawableUsd = await systems()
             .Core.connect(user1)
             .getWithdrawableMarketUsd(marketId());
@@ -311,7 +315,6 @@ describe('MarketCollateralModule', function () {
           const totalWithdrawableCollateral = await systems()
             .Core.connect(user1)
             .getMarketCollateralAmount(marketId(), collateralAddress());
-
           await assertRevert(
             MockMarket()
               .connect(user1)
