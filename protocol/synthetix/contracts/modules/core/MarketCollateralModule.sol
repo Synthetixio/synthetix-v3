@@ -14,6 +14,7 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
  * @dev See IMarketCollateralModule.
  */
 contract MarketCollateralModule is IMarketCollateralModule {
+    using SafeCastU256 for uint256;
     using ERC20Helper for address;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Market for Market.Data;
@@ -95,6 +96,13 @@ contract MarketCollateralModule is IMarketCollateralModule {
         // Transfer the collateral out of the system and account for it
         collateralEntry.amountD18 -= systemAmount;
         collateralType.safeTransfer(marketData.marketAddress, tokenAmount);
+
+        // Ensure that the market is not withdrawing collateral such that it results in a negative getWithdrawableMarketUsd
+        int256 newWithdrawableMarketUsd = marketData.creditCapacityD18 +
+            marketData.getDepositedCollateralValue().toInt();
+        if (newWithdrawableMarketUsd < 0) {
+            revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
+        }
 
         emit MarketCollateralWithdrawn(marketId, collateralType, tokenAmount, msg.sender);
     }
