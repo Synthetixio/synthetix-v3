@@ -46,7 +46,9 @@ interface ILegacyMarket {
 
     /**
      * @notice Called by anyone with {amount} sUSD to convert {amount} sUSD to {amount} snxUSD.
-     The sUSD will be burned (thereby reducing the sUSD total supply and v2x system size), and snxUSD will be minted.
+     * The sUSD will be burned (thereby reducing the sUSD total supply and v2x system size), and snxUSD will be minted.
+     * Any user who has sUSD can call this function. If you have migrated to v3 and there is insufficient sUSD liquidity
+     * to convert, consider buying snxUSD on the open market, since that means most snxUSD has already been migrated.
      * Requirements:
      * * User must first approve() the legacy market contract to spend the user's sUSD
      * * LegacyMarket must have already sufficient migrated collateral

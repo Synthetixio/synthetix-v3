@@ -97,6 +97,13 @@ contract VaultModule is IVaultModule {
             leverage
         );
 
+        _updateAccountCollateralPools(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18 > 0
+        );
+
         // If decreasing the delegated collateral amount,
         // check the account's collateralization ratio.
         // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
@@ -245,12 +252,7 @@ contract VaultModule is IVaultModule {
 
         // If the collateral amount is not negative, make sure that the pool exists
         // in the collateral entry's pool array. Otherwise remove it.
-        bool containsPool = collateral.pools.contains(poolId);
-        if (newCollateralAmount >= 0 && !containsPool) {
-            collateral.pools.add(poolId);
-        } else if (containsPool) {
-            collateral.pools.remove(poolId);
-        }
+        _updateAccountCollateralPools(accountId, poolId, collateralType, newCollateralAmount > 0);
 
         // Update the account's position in the vault data structure.
         pool.vaults[collateralType].currentEpoch().updateAccountPosition(
@@ -271,6 +273,27 @@ contract VaultModule is IVaultModule {
 
         if (market.id > 0) {
             revert CapacityLocked(market.id);
+        }
+    }
+
+    /**
+     * @dev Registers the pool in the given account's collaterals array.
+     */
+    function _updateAccountCollateralPools(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        bool added
+    ) internal {
+        Collateral.Data storage depositedCollateral = Account.load(accountId).collaterals[
+            collateralType
+        ];
+
+        bool containsPool = depositedCollateral.pools.contains(poolId);
+        if (added && !containsPool) {
+            depositedCollateral.pools.add(poolId);
+        } else if (!added && containsPool) {
+            depositedCollateral.pools.remove(poolId);
         }
     }
 }

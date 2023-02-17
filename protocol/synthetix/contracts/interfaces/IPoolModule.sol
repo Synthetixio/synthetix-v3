@@ -157,13 +157,13 @@ interface IPoolModule {
 
     /**
      * @notice Allows the system owner (not the pool owner) to set the system-wide minimum liquidity ratio.
-     * @param minLiquidityRatio The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision.
+     * @param minLiquidityRatio The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
 
     /**
      * @notice Retrieves the system-wide minimum liquidity ratio.
-     * @return minRatioD18 The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision.
+     * @return minRatioD18 The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function getMinLiquidityRatio() external view returns (uint256 minRatioD18);
 }
