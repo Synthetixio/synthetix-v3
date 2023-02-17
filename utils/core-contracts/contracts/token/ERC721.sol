@@ -33,7 +33,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function balanceOf(address holder) public view virtual override returns (uint) {
+    function balanceOf(address holder) public view virtual override returns (uint balance) {
         if (holder == address(0)) {
             revert InvalidOwner(holder);
         }
@@ -103,7 +103,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function getApproved(uint256 tokenId) public view virtual override returns (address) {
+    function getApproved(uint256 tokenId) public view virtual override returns (address operator) {
         if (!_exists(tokenId)) {
             revert TokenDoesNotExist(tokenId);
         }
