@@ -165,7 +165,6 @@ library Pool {
 
             uint256 marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) /
                 totalWeightsD18;
-            //int256 marketDebtD18 = (totalDebtD18 * weightD18.toInt()) / totalWeightsD18.toInt();
 
             Market.Data storage marketData = Market.load(marketConfiguration.marketId);
 
