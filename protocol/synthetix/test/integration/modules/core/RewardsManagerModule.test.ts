@@ -549,7 +549,7 @@ describe('RewardsManagerModule', function () {
         assertBn.equal(rewards[0], 0);
       });
 
-      it('doesn\'t get any rewards on subsequent claim', async () => {
+      it("doesn't get any rewards on subsequent claim", async () => {
         await assertRevert(
           systems()
             .Core.connect(user1)
