@@ -93,9 +93,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
         }
 
-        // Transfer the collateral out of the system and account for it
+        // Account for transferring out collateral
         collateralEntry.amountD18 -= systemAmount;
-        collateralType.safeTransfer(marketData.marketAddress, tokenAmount);
 
         // Ensure that the market is not withdrawing collateral such that it results in a negative getWithdrawableMarketUsd
         int256 newWithdrawableMarketUsd = marketData.creditCapacityD18 +
@@ -103,6 +102,9 @@ contract MarketCollateralModule is IMarketCollateralModule {
         if (newWithdrawableMarketUsd < 0) {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
         }
+
+        // Transfer the collateral to the market
+        collateralType.safeTransfer(marketData.marketAddress, tokenAmount);
 
         emit MarketCollateralWithdrawn(marketId, collateralType, tokenAmount, msg.sender);
     }
