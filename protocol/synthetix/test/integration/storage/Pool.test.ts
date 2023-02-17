@@ -58,12 +58,7 @@ describe('Pool', function () {
 
     it('subtracts debt from the max debt per share', async () => {
       assertBn.equal(
-        await systems().Core.Pool_getSystemMaxValuePerShare(
-          0,
-          marketId(),
-          One.mul(2),
-          One.div(10)
-        ),
+        await systems().Core.Pool_getSystemMaxValuePerShare(0, marketId(), One.mul(2), One.div(10)),
         ethers.utils.parseEther('0.4')
       );
     });

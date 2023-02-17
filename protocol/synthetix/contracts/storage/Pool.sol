@@ -145,9 +145,10 @@ library Pool {
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
         uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
-        int128 debtPerShareD18 = totalCreditCapacityD18 > 0 ?
-            int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() :
-            int128(0);
+        int128 debtPerShareD18 = totalCreditCapacityD18 > 0
+            ? // solhint-disable-next-line numcast/safe-cast
+            int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+            : int128(0);
 
         int256 cumulativeDebtChangeD18 = 0;
 
@@ -208,13 +209,14 @@ library Pool {
         uint256 minLiquidityRatioD18,
         int256 debtPerShareD18
     ) internal view returns (int256) {
-
         // Retrieve the current value per share of the market.
         Market.Data storage marketData = Market.load(marketId);
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
         // Calculate the margin of debt that the market would incur if it hit the system wide limit.
-        uint256 marginD18 = minLiquidityRatioD18 == 0 ? DecimalMath.UNIT : DecimalMath.UNIT.divDecimal(minLiquidityRatioD18);
+        uint256 marginD18 = minLiquidityRatioD18 == 0
+            ? DecimalMath.UNIT
+            : DecimalMath.UNIT.divDecimal(minLiquidityRatioD18);
 
         // The resulting maximum value per share is the distribution's value per share,
         // plus the margin to hit the limit, minus the current debt per share.
