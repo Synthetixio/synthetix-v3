@@ -54,9 +54,9 @@ interface IERC721 {
      *
      * Requirements:
      *
-     * - `owner` must be a valid address
+     * - `holder` must be a valid address
      */
-    function balanceOf(address owner) external view returns (uint256 balance);
+    function balanceOf(address holder) external view returns (uint256 balance);
 
     /**
      * @notice Returns the owner of the `tokenId` token.
