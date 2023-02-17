@@ -88,9 +88,9 @@ describe('AsyncOrderModule chainlink', () => {
 
       await assertRevert(
         systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
-        `OffchainLookup("${systems().SpotMarket.address}", "${
+        `OffchainLookup("${systems().SpotMarket.address}", ["${
           chainlinkSettlementStrategy.url
-        }", "${chainlinkCallData}", "${functionSig}", "${extraData}")`
+        }"], "${chainlinkCallData}", "${functionSig}", "${extraData}")`
       );
     });
   });

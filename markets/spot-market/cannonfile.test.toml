@@ -45,7 +45,7 @@ artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
 [contract.InitialSpotMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.CoreModule.address %>"]
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
