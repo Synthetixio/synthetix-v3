@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "../interfaces/IERC20.sol";
 import "../errors/InitError.sol";
+import "../errors/ParameterError.sol";
 import "./ERC20Storage.sol";
 
 /*
@@ -195,6 +196,13 @@ contract ERC20 is IERC20 {
         uint8 tokenDecimals
     ) internal virtual {
         ERC20Storage.Data storage store = ERC20Storage.load();
+
+        if (bytes(tokenName).length == 0 || bytes(tokenSymbol).length == 0 || tokenDecimals == 0) {
+            revert ParameterError.InvalidParameter(
+                "tokenName|tokenSymbol|tokenDecimals",
+                "At least one is zero"
+            );
+        }
 
         if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
             revert InitError.AlreadyInitialized();
