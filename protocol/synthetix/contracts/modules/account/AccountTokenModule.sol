@@ -12,10 +12,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
  * @dev See IAccountTokenModule.
  */
 contract AccountTokenModule is IAccountTokenModule, NftModule {
-    using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
-    using SafeCastI128 for int128;
-    using SafeCastI256 for int256;
 
     /**
      * @dev Updates account RBAC storage to track the current owner of the token.

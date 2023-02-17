@@ -16,9 +16,10 @@ jobs:
             core-contracts,
             core-utils,
             core-modules,
-            hardhat-router,
+            router,
             sample-project,
             main,
+            oracle-manager,
           ]
         include:
           - package: core-contracts
@@ -32,11 +33,13 @@ jobs:
             workspace: "@synthetixio/core-modules"
             coverage-file: utils/core-modules/coverage.json
             size-contracts: true
-          - package: hardhat-router
-            workspace: "@synthetixio/hardhat-router"
-            coverage-file: utils/hardhat-router/coverage/lcov.info
+          - package: router
+            workspace: "@synthetixio/router"
+            coverage-file: utils/router/coverage/lcov.info
           - package: sample-project
             workspace: "@synthetixio/sample-project"
+          - package: oracle-manager
+            workspace: "@synthetixio/oracle-manager"
           - package: main
             workspace: "@synthetixio/main"
             size-contracts: true
@@ -57,9 +60,11 @@ jobs:
           run_daemon: true
       - run: npm ci
       - run: npm run build
-      - if: ${{ matrix.size-contracts }}
+      - if: matrix.size-contracts
         name: Execute size command
         run: npm run --workspace=${{ matrix.workspace }} size-contracts
+      - name: Check storage.dump.sol is up-to-date
+        run: npm explore ${{ matrix.workspace }} -- git diff --exit-code -- storage.dump.sol
       - name: Execute tests
         run: REPORT_GAS=true npm run --workspace=${{ matrix.workspace }} coverage
       - if: ${{ matrix.coverage-file }}

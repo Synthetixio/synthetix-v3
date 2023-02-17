@@ -11,6 +11,8 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 /**
  * @title Module for liquidated positions and vaults that are below the liquidation ratio.
  * @dev See ILiquidationModule.
@@ -33,6 +35,9 @@ contract LiquidationModule is ILiquidationModule {
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
+    bytes32 private constant _LIQUIDATE_FEATURE_FLAG = "liquidate";
+    bytes32 private constant _LIQUIDATE_VAULT_FEATURE_FLAG = "liquidateVault";
+
     /**
      * @inheritdoc ILiquidationModule
      */
@@ -42,6 +47,7 @@ contract LiquidationModule is ILiquidationModule {
         address collateralType,
         uint128 liquidateAsAccountId
     ) external override returns (LiquidationData memory liquidationData) {
+        FeatureFlag.ensureAccessToFeature(_LIQUIDATE_FEATURE_FLAG);
         // Ensure the account receiving rewards exists
         Account.exists(liquidateAsAccountId);
 
@@ -126,6 +132,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 liquidateAsAccountId,
         uint256 maxUsd
     ) external override returns (LiquidationData memory liquidationData) {
+        FeatureFlag.ensureAccessToFeature(_LIQUIDATE_VAULT_FEATURE_FLAG);
         // Ensure the account receiving collateral exists
         Account.exists(liquidateAsAccountId);
 
@@ -154,7 +161,7 @@ contract LiquidationModule is ILiquidationModule {
             );
         }
 
-        uint256 vaultDebt = rawVaultDebt < 0 ? 0 : rawVaultDebt.toUint();
+        uint256 vaultDebt = rawVaultDebt.toUint();
 
         if (vaultDebt <= maxUsd) {
             // Conduct a full vault liquidation
@@ -196,7 +203,7 @@ contract LiquidationModule is ILiquidationModule {
         Account.load(liquidateAsAccountId).collaterals[collateralType].increaseAvailableCollateral(
             liquidationData.collateralLiquidated
         );
-        liquidationData.amountRewarded = liquidationData.debtLiquidated;
+        liquidationData.amountRewarded = liquidationData.collateralLiquidated;
 
         emit VaultLiquidation(
             poolId,

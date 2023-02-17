@@ -418,17 +418,6 @@ describe('PoolModule Admin', function () {
           // to go below max debt, we have to get user to invest
           // in the market, and then reset the market
 
-          // aquire USD from the zero pool
-          await systems()
-            .Core.connect(user1)
-            .delegateCollateral(
-              accountId,
-              0,
-              collateralAddress(),
-              depositAmount,
-              ethers.utils.parseEther('1')
-            );
-
           await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), Hundred);
           await systems().USD.connect(user1).approve(MockMarket().address, Hundred);
           await MockMarket().connect(user1).buySynth(Hundred);

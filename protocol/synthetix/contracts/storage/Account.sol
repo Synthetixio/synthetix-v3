@@ -35,6 +35,15 @@ library Account {
      */
     error InsufficientAccountCollateral(uint256 requestedAmount);
 
+    /**
+     * @dev Thrown when the requested operation requires an activity timeout before the
+     */
+    error AccountActivityTimeoutPending(
+        uint128 accountId,
+        uint256 currentTime,
+        uint256 requiredTime
+    );
+
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
@@ -45,8 +54,9 @@ library Account {
          * @dev Role based access control data for the account.
          */
         AccountRBAC.Data rbac;
-        // solhint-disable-next-line private-vars-leading-underscore
-        bytes32 __slotAvailableForFutureUse;
+        uint64 lastInteraction;
+        uint64 __slotAvailableForFutureUse;
+        uint128 __slot2AvailableForFutureUse;
         /**
          * @dev Address set of collaterals that are being used in the system by this account.
          */
@@ -76,16 +86,19 @@ library Account {
     }
 
     /**
-     * @dev Returns if an account exists for the given id.
+     * @dev Reverts if the account does not exist with appropriate error. Otherwise, returns the account.
      */
-    function exists(uint128 id) internal view {
-        if (load(id).rbac.owner == address(0)) {
+    function exists(uint128 id) internal view returns (Data storage account) {
+        Data storage a = load(id);
+        if (a.rbac.owner == address(0)) {
             revert AccountNotFound(id);
         }
+
+        return a;
     }
 
     /**
-     * @dev Returns information about the total collateral assigned, deposited, and locked by the account, and the given collateral type.
+     * @dev Given a collateral type, returns information about the total collateral assigned, deposited, and locked by the account
      */
     function getCollateralTotals(
         Data storage self,
@@ -130,17 +143,54 @@ library Account {
         return totalAssignedD18;
     }
 
+    function recordInteraction(Data storage self) internal {
+        // solhint-disable-next-line numcast/safe-cast
+        self.lastInteraction = uint64(block.timestamp);
+    }
+
     /**
-     * @dev Loads the Account object for the specified accountId, and validates that sender has the specified permission. These are two different actions but they are merged in a single function because loading an account and checking for a permission is a very common use case in other parts of the code.
+     * @dev Loads the Account object for the specified accountId,
+     * and validates that sender has the specified permission. It also resets
+     * the interaction timeout. These
+     * are different actions but they are merged in a single function
+     * because loading an account and checking for a permission is a very
+     * common use case in other parts of the code.
      */
     function loadAccountAndValidatePermission(
         uint128 accountId,
         bytes32 permission
+    ) internal returns (Data storage account) {
+        account = Account.load(accountId);
+
+        if (!account.rbac.authorized(permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        recordInteraction(account);
+    }
+
+    /**
+     * @dev Loads the Account object for the specified accountId,
+     * and validates that sender has the specified permission. It also resets
+     * the interaction timeout. These
+     * are different actions but they are merged in a single function
+     * because loading an account and checking for a permission is a very
+     * common use case in other parts of the code.
+     */
+    function loadAccountAndValidatePermissionAndTimeout(
+        uint128 accountId,
+        bytes32 permission,
+        uint256 timeout
     ) internal view returns (Data storage account) {
         account = Account.load(accountId);
 
         if (!account.rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        uint256 endWaitingPeriod = account.lastInteraction + timeout;
+        if (block.timestamp < endWaitingPeriod) {
+            revert AccountActivityTimeoutPending(accountId, block.timestamp, endWaitingPeriod);
         }
     }
 

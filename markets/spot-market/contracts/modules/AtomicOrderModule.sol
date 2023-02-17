@@ -23,7 +23,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
     /**
      * @inheritdoc IAtomicOrderModule
      */
-    function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
+    function buy(
+        uint128 marketId,
+        uint usdAmount,
+        uint minAmountReceived
+    ) external override returns (uint) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -35,11 +39,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             msg.sender,
             usdAmount,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY),
             SpotMarketFactory.TransactionType.BUY
         );
 
-        // TODO: processFees deposits fees into the market manager
-        // and so does this, need to consolidate for effeciency
         spotMarketFactory.depositToMarketManager(marketId, amountUsable);
 
         // Exchange amount after fees into synths to buyer
@@ -48,6 +51,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
             amountUsable,
             SpotMarketFactory.TransactionType.BUY
         );
+
+        if (synthAmount < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, synthAmount);
+        }
+
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
         emit SynthBought(marketId, synthAmount, totalFees, collectedFees);
@@ -58,7 +66,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
     /**
      * @inheritdoc IAtomicOrderModule
      */
-    function sell(uint128 marketId, uint256 synthAmount) external override returns (uint256) {
+    function sell(
+        uint128 marketId,
+        uint256 synthAmount,
+        uint minAmountReceived
+    ) external override returns (uint256) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -69,35 +81,47 @@ contract AtomicOrderModule is IAtomicOrderModule {
             SpotMarketFactory.TransactionType.SELL
         );
 
-        // Withdraw USD amount
-        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-            marketId,
-            address(this),
-            usdAmount
-        );
-
-        // Calculate fees
-        (uint256 returnAmount, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
+        // calculate fees
+        (uint256 returnAmount, int256 totalFees) = FeeUtil.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.SELL),
             SpotMarketFactory.TransactionType.SELL
         );
 
+        if (returnAmount < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, returnAmount);
+        }
+
         // Burn synths provided
+        // Burn after calculation because skew is calculating using total supply prior to fill
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
-        if (returnAmount > usdAmount) {
+        uint collectedFees;
+
+        if (totalFees > 0) {
+            // withdraw fees
             IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
-                msg.sender,
-                returnAmount - usdAmount
+                address(this),
+                totalFees.toUint()
             );
 
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, usdAmount);
-        } else {
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, returnAmount);
+            // collect fees
+            collectedFees = FeeUtil.collectFees(
+                marketId,
+                totalFees,
+                msg.sender,
+                SpotMarketFactory.TransactionType.SELL
+            );
         }
+
+        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            marketId,
+            msg.sender,
+            returnAmount
+        );
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees);
 

@@ -5,23 +5,22 @@ import "./AsyncOrderConfiguration.sol";
 import "./SpotMarketFactory.sol";
 
 library AsyncOrderClaim {
-    error OrderNotWithinSettlementWindow(
-        uint256 timestamp,
-        uint256 startTime,
-        uint256 expirationTime
-    );
-    error OrderNotEligibleForCancellation(uint256 timestamp, uint256 expirationTime);
-
-    error InvalidVerificationResponse();
+    error OutsideSettlementWindow(uint256 timestamp, uint256 startTime, uint256 expirationTime);
+    error IneligibleForCancellation(uint256 timestamp, uint256 expirationTime);
+    error OrderAlreadySettled(uint256 asyncOrderId, uint256 settledAt);
+    error InvalidClaim(uint256 asyncOrderId);
 
     struct Data {
+        uint128 id;
+        address owner;
         SpotMarketFactory.TransactionType orderType;
         uint256 amountEscrowed; // Amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
         uint256 settlementStrategyId;
-        uint256 commitmentTime;
+        uint256 settlementTime;
         int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
         uint256 commitmentBlockNum;
+        uint256 settledAt;
     }
 
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -35,37 +34,53 @@ library AsyncOrderClaim {
 
     function create(
         uint128 marketId,
-        uint256 claimId,
+        uint128 claimId,
         SpotMarketFactory.TransactionType orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
-        uint256 commitmentTime,
+        uint256 settlementTime,
         int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
-        uint256 commitmentBlockNum
+        address owner
     ) internal returns (Data storage) {
         Data storage self = load(marketId, claimId);
+        self.id = claimId;
         self.orderType = orderType;
         self.amountEscrowed = amountEscrowed;
         self.settlementStrategyId = settlementStrategyId;
-        self.commitmentTime = commitmentTime;
+        self.settlementTime = settlementTime;
         self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
-        self.commitmentBlockNum = commitmentBlockNum;
-
+        self.owner = owner;
         return self;
+    }
+
+    function checkClaimValidity(Data storage claim) internal view {
+        checkIfValidClaim(claim);
+        checkIfAlreadySettled(claim);
+    }
+
+    function checkIfValidClaim(Data storage claim) internal view {
+        if (claim.owner == address(0) || claim.committedAmountUsd == 0) {
+            revert InvalidClaim(claim.id);
+        }
+    }
+
+    function checkIfAlreadySettled(Data storage claim) internal view {
+        if (claim.settledAt != 0) {
+            revert OrderAlreadySettled(claim.id, claim.settledAt);
+        }
     }
 
     function checkWithinSettlementWindow(
         Data storage claim,
-        SettlementStrategy.Data storage settlementStrategy,
-        uint256 timestamp
+        SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint startTime = claim.commitmentTime + settlementStrategy.settlementDelay;
+        uint startTime = claim.settlementTime;
         uint expirationTime = startTime + settlementStrategy.settlementWindowDuration;
 
-        if (timestamp < startTime || timestamp >= expirationTime) {
-            revert OrderNotWithinSettlementWindow(timestamp, startTime, expirationTime);
+        if (block.timestamp < startTime || block.timestamp >= expirationTime) {
+            revert OutsideSettlementWindow(block.timestamp, startTime, expirationTime);
         }
     }
 
@@ -73,12 +88,10 @@ library AsyncOrderClaim {
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint expirationTime = claim.commitmentTime +
-            settlementStrategy.settlementDelay +
-            settlementStrategy.settlementWindowDuration;
+        uint expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < expirationTime) {
-            revert OrderNotEligibleForCancellation(block.timestamp, expirationTime);
+            revert IneligibleForCancellation(block.timestamp, expirationTime);
         }
     }
 }

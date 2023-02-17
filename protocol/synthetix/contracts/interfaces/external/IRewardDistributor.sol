@@ -9,6 +9,7 @@ interface IRewardDistributor is IERC165 {
     function name() external returns (string memory);
 
     /// @notice This function should revert if msg.sender is not the Synthetix CoreProxy address.
+    /// @return whether or not the payout was executed
     function payout(
         uint128 accountId,
         uint128 poolId,

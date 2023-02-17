@@ -29,6 +29,8 @@ contract MarketManagerModule is IMarketManagerModule {
 
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
+    bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
+    bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
     /**
      * @inheritdoc IMarketManagerModule
@@ -51,9 +53,10 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function getWithdrawableMarketUsd(uint128 marketId) public view override returns (uint256) {
-        return
-            Market.load(marketId).creditCapacityD18 +
-            Market.load(marketId).getDepositedCollateralValue();
+        int256 withdrawable = Market.load(marketId).creditCapacityD18 +
+            Market.load(marketId).getDepositedCollateralValue().toInt();
+
+        return withdrawable < 0 ? 0 : withdrawable.toUint();
     }
 
     /**
@@ -106,6 +109,7 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+        FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
@@ -115,7 +119,7 @@ contract MarketManagerModule is IMarketManagerModule {
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting.
-        market.creditCapacityD18 += amount.to128();
+        market.creditCapacityD18 += amount.toInt().to128();
         market.netIssuanceD18 -= amount.toInt().to128();
 
         // Burn the incoming USD.
@@ -131,6 +135,7 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+        FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
         // Call must come from the market itself.
@@ -141,7 +146,7 @@ contract MarketManagerModule is IMarketManagerModule {
             revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting.
-        marketData.creditCapacityD18 -= amount.to128();
+        marketData.creditCapacityD18 -= amount.toInt().to128();
         marketData.netIssuanceD18 += amount.toInt().to128();
 
         // Mint the requested USD.
@@ -155,7 +160,7 @@ contract MarketManagerModule is IMarketManagerModule {
      */
     function distributeDebtToPools(
         uint128 marketId,
-        uint maxIter
+        uint256 maxIter
     ) external override returns (bool) {
         return Market.load(marketId).distributeDebtToPools(maxIter);
     }

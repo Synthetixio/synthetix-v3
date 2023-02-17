@@ -4,6 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('LiquidationModule', function () {
   const {
@@ -74,6 +75,15 @@ describe('LiquidationModule', function () {
           systems().Core
         );
       });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'liquidate',
+        () =>
+          systems()
+            .Core.connect(user1)
+            .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId)
+      );
 
       // a second account is required to "absorb" the debt which is coming from the first account
       describe('another account joins', () => {
@@ -228,6 +238,15 @@ describe('LiquidationModule', function () {
         );
       });
 
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'liquidateVault',
+        () =>
+          systems()
+            .Core.connect(user1)
+            .liquidateVault(poolId, collateralAddress(), accountId, debtAmount.div(4))
+      );
+
       describe('successful partial liquidation', () => {
         const liquidatorAccountId = 384572397362837;
 
@@ -318,9 +337,7 @@ describe('LiquidationModule', function () {
             txn,
             `VaultLiquidation(${poolId}, "${collateralAddress()}", [${debtAmount.div(
               4
-            )}, ${sentAmount}, ${debtAmount.div(
-              4
-            )}], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
+            )}, ${sentAmount}, ${sentAmount}], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -360,9 +377,9 @@ describe('LiquidationModule', function () {
               txn,
               `VaultLiquidation(${poolId}, "${collateralAddress()}", [${
                 debtAmount.sub(debtAmount.div(4)).sub(1) // precious rounding
-              }, ${sentAmount.mul(3)}, ${
-                debtAmount.sub(debtAmount.div(4)).sub(1) // precious rounding
-              }], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
+              }, ${sentAmount.mul(3)}, ${sentAmount.mul(
+                3
+              )}], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
               systems().Core
             );
           });

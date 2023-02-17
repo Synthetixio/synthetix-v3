@@ -7,6 +7,8 @@ import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "../../interfaces/IMarketCollateralModule.sol";
 import "../../storage/Market.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 /**
  * @title Module for allowing markets to directly increase their credit capacity by providing their own collateral.
  * @dev See IMarketCollateralModule.
@@ -16,6 +18,9 @@ contract MarketCollateralModule is IMarketCollateralModule {
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Market for Market.Data;
 
+    bytes32 private constant _DEPOSIT_MARKET_COLLATERAL_FEATURE_FLAG = "depositMarketCollateral";
+    bytes32 private constant _WITHDRAW_MARKET_COLLATERAL_FEATURE_FLAG = "withdrawMarketCollateral";
+
     /**
      * @inheritdoc IMarketCollateralModule
      */
@@ -24,14 +29,17 @@ contract MarketCollateralModule is IMarketCollateralModule {
         address collateralType,
         uint256 tokenAmount
     ) public override {
+        FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_COLLATERAL_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
+
+        // Ensure the sender is the market address associated with the specified marketId
+        if (msg.sender != marketData.marketAddress) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
 
         uint256 systemAmount = CollateralConfiguration
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
-
-        // Ensure the sender is the market address associated with the specified marketId
-        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         uint256 maxDepositable = marketData.maximumDepositableD18[collateralType];
         uint256 depositedCollateralEntryIndex = _findOrCreateDepositEntryIndex(
@@ -61,6 +69,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         address collateralType,
         uint256 tokenAmount
     ) public override {
+        FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_COLLATERAL_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
         uint256 systemAmount = CollateralConfiguration

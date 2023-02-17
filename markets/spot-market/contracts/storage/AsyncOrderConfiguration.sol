@@ -21,6 +21,7 @@ library AsyncOrderConfiguration {
     }
 
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
+    error InvalidCommitmentAmount(uint amount, uint settlementReward);
 
     function isValidSettlementStrategy(
         Data storage self,
@@ -28,6 +29,21 @@ library AsyncOrderConfiguration {
     ) internal view {
         if (settlementStrategyId >= self.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
+        }
+
+        if (self.settlementStrategies[settlementStrategyId].disabled) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
+    }
+
+    function isValidAmount(
+        Data storage self,
+        uint256 settlementStrategyId,
+        uint256 amount
+    ) internal view {
+        uint settlementReward = self.settlementStrategies[settlementStrategyId].settlementReward;
+        if (amount <= settlementReward) {
+            revert InvalidCommitmentAmount(amount, settlementReward);
         }
     }
 }

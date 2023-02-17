@@ -1,6 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.11<0.9.0;
 
+// @custom:artifact @synthetixio/core-contracts/contracts/ownership/AuthorizableStorage.sol:AuthorizableStorage
+library AuthorizableStorage {
+    bytes32 private constant _SLOT_AUTHORIZABLE_STORAGE = keccak256(abi.encode("io.synthetix.synthetix.Authorizable"));
+    struct Data {
+        address authorized;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = _SLOT_AUTHORIZABLE_STORAGE;
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));

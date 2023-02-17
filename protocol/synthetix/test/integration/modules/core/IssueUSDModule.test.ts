@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
+import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../verifications';
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
@@ -99,6 +100,40 @@ describe('IssueUSDModule', function () {
       );
     });
 
+    it('verifies pool exists', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).mintUsd(
+          accountId,
+          845628, // invalid pool id
+          collateralAddress(),
+          depositAmount.div(10) // should be enough
+        ),
+        'PoolNotFound("845628")',
+        systems().Core
+      );
+    });
+
+    verifyChecksCollateralEnabled(
+      () => systems().Core.connect(owner),
+      collateralAddress,
+      () =>
+        systems().Core.connect(user1).mintUsd(
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.div(10) // should be enough
+        )
+    );
+
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'mintUsd',
+      () =>
+        systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
+    );
+
     describe('successful mint', () => {
       before('mint', async () => {
         await systems().Core.connect(user1).mintUsd(
@@ -160,6 +195,15 @@ describe('IssueUSDModule', function () {
         .Core.connect(user1)
         .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
     });
+
+    verifyUsesFeatureFlag(
+      () => systems().Core,
+      'burnUsd',
+      () =>
+        systems()
+          .Core.connect(user1)
+          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
+    );
 
     describe('burn from other account', async () => {
       before('transfer burn collateral', async () => {

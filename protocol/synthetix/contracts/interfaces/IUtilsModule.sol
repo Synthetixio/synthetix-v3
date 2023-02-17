@@ -18,4 +18,18 @@ interface IUtilsModule {
      * @param oracleManagerAddress The address of the oracle manager.
      */
     function configureOracleManager(address oracleManagerAddress) external;
+
+    /**
+     * @notice Configure a generic value in the KV system
+     * @param k the key of the value to set
+     * @param v the value that the key should be set to
+     */
+    function setConfig(bytes32 k, bytes32 v) external;
+
+    /**
+     * @notice Read a generic value from the KV system
+     * @param k the key to read
+     * @return v the value set on the specified k
+     */
+    function getConfig(bytes32 k) external view returns (bytes32 v);
 }

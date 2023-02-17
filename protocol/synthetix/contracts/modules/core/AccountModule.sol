@@ -7,6 +7,8 @@ import "../../interfaces/IAccountModule.sol";
 import "../../interfaces/IAccountTokenModule.sol";
 import "../../storage/Account.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 /**
  * @title Module for managing accounts.
  * @dev See IAccountModule.
@@ -18,6 +20,8 @@ contract AccountModule is IAccountModule {
     using Account for Account.Data;
 
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
+
+    bytes32 private constant _CREATE_ACCOUNT_FEATURE_FLAG = "createAccount";
 
     /**
      * @inheritdoc IAccountModule
@@ -31,14 +35,14 @@ contract AccountModule is IAccountModule {
      */
     function getAccountPermissions(
         uint128 accountId
-    ) external view returns (AccountPermissions[] memory permissions) {
+    ) external view returns (AccountPermissions[] memory accountPerms) {
         AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
 
         uint256 allPermissionsLength = accountRbac.permissionAddresses.length();
-        permissions = new AccountPermissions[](allPermissionsLength);
+        accountPerms = new AccountPermissions[](allPermissionsLength);
         for (uint256 i = 1; i <= allPermissionsLength; i++) {
             address permissionAddress = accountRbac.permissionAddresses.valueAt(i);
-            permissions[i - 1] = AccountPermissions({
+            accountPerms[i - 1] = AccountPermissions({
                 user: permissionAddress,
                 permissions: accountRbac.permissions[permissionAddress].values()
             });
@@ -49,8 +53,9 @@ contract AccountModule is IAccountModule {
      * @inheritdoc IAccountModule
      */
     function createAccount(uint128 requestedAccountId) external override {
+        FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
-        accountTokenModule.mint(msg.sender, requestedAccountId);
+        accountTokenModule.safeMint(msg.sender, requestedAccountId, "");
 
         Account.create(requestedAccountId, msg.sender);
 
@@ -65,7 +70,11 @@ contract AccountModule is IAccountModule {
 
         Account.Data storage account = Account.load(accountId);
 
-        account.rbac.revokeAllPermissions(account.rbac.owner);
+        address[] memory permissionedAddresses = account.rbac.permissionAddresses.values();
+        for (uint i = 0; i < permissionedAddresses.length; i++) {
+            account.rbac.revokeAllPermissions(permissionedAddresses[i]);
+        }
+
         account.rbac.setOwner(to);
     }
 
@@ -150,11 +159,18 @@ contract AccountModule is IAccountModule {
     }
 
     /**
+     * @inheritdoc IAccountModule
+     */
+    function getAccountLastInteraction(uint128 accountId) external view returns (uint256) {
+        return Account.load(accountId).lastInteraction;
+    }
+
+    /**
      * @dev Reverts if the caller is not the account token managed by this module.
      */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
-    function _onlyAccountToken() internal {
+    function _onlyAccountToken() internal view {
         if (msg.sender != address(getAccountTokenAddress())) {
             revert OnlyAccountTokenProxy(msg.sender);
         }
