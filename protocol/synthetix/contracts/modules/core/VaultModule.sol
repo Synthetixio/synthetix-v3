@@ -47,7 +47,7 @@ contract VaultModule is IVaultModule {
         uint256 leverage
     ) external override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
@@ -97,7 +97,12 @@ contract VaultModule is IVaultModule {
             leverage
         );
 
-        _ensureAccountCollateralsContainsPool(accountId, poolId, collateralType);
+        _updateAccountCollateralPools(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18 > 0
+        );
 
         // If decreasing the delegated collateral amount,
         // check the account's collateralization ratio.
@@ -130,12 +135,12 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
-    function getPositionCollateralizationRatio(
+    function getPositionCollateralRatio(
         uint128 accountId,
         uint128 poolId,
         address collateralType
     ) external override returns (uint256) {
-        return Pool.load(poolId).currentAccountCollateralizationRatio(collateralType, accountId);
+        return Pool.load(poolId).currentAccountCollateralRatio(collateralType, accountId);
     }
 
     /**
@@ -183,10 +188,7 @@ contract VaultModule is IVaultModule {
             collateralType,
             accountId
         );
-        collateralizationRatio = pool.currentAccountCollateralizationRatio(
-            collateralType,
-            accountId
-        );
+        collateralizationRatio = pool.currentAccountCollateralRatio(collateralType, accountId);
     }
 
     /**
@@ -248,13 +250,9 @@ contract VaultModule is IVaultModule {
             collateral.increaseAvailableCollateral(oldCollateralAmount - newCollateralAmount);
         }
 
-        // If the collateral amount is positive, make sure that the pool exists
+        // If the collateral amount is not negative, make sure that the pool exists
         // in the collateral entry's pool array. Otherwise remove it.
-        if (newCollateralAmount > 0 && !collateral.pools.contains(poolId)) {
-            collateral.pools.add(poolId);
-        } else if (collateral.pools.contains((poolId))) {
-            collateral.pools.remove(poolId);
-        }
+        _updateAccountCollateralPools(accountId, poolId, collateralType, newCollateralAmount > 0);
 
         // Update the account's position in the vault data structure.
         pool.vaults[collateralType].currentEpoch().updateAccountPosition(
@@ -281,17 +279,21 @@ contract VaultModule is IVaultModule {
     /**
      * @dev Registers the pool in the given account's collaterals array.
      */
-    function _ensureAccountCollateralsContainsPool(
+    function _updateAccountCollateralPools(
         uint128 accountId,
         uint128 poolId,
-        address collateralType
+        address collateralType,
+        bool added
     ) internal {
         Collateral.Data storage depositedCollateral = Account.load(accountId).collaterals[
             collateralType
         ];
 
-        if (!depositedCollateral.pools.contains(poolId)) {
+        bool containsPool = depositedCollateral.pools.contains(poolId);
+        if (added && !containsPool) {
             depositedCollateral.pools.add(poolId);
+        } else if (!added && containsPool) {
+            depositedCollateral.pools.remove(poolId);
         }
     }
 }

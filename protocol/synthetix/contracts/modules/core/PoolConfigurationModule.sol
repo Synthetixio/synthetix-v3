@@ -23,7 +23,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
      */
     function setPreferredPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
 
         SystemPoolConfiguration.load().preferredPool = poolId;
 
@@ -33,7 +33,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     /**
      * @inheritdoc IPoolConfigurationModule
      */
-    function getPreferredPool() external view override returns (uint) {
+    function getPreferredPool() external view override returns (uint128) {
         return SystemPoolConfiguration.load().preferredPool;
     }
 
@@ -42,7 +42,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
      */
     function addApprovedPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
 
         SystemPoolConfiguration.load().approvedPools.add(poolId);
 
@@ -54,7 +54,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
      */
     function removeApprovedPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
-        Pool.requireExists(poolId);
+        Pool.loadExisting(poolId);
 
         SystemPoolConfiguration.load().approvedPools.remove(poolId);
 
@@ -64,7 +64,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     /**
      * @inheritdoc IPoolConfigurationModule
      */
-    function getApprovedPools() external view override returns (uint[] memory) {
+    function getApprovedPools() external view override returns (uint256[] memory) {
         return SystemPoolConfiguration.load().approvedPools.values();
     }
 }

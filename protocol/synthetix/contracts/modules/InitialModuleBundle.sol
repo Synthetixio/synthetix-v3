@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/modules/OwnerModule.sol";
-import "@synthetixio/core-modules/contracts/modules/UpgradeModule.sol";
+import "./common/OwnerModule.sol";
+import "./common/UpgradeModule.sol";
 
 // The below contract is only used during initialization as a kernel for the first release which the system can be upgraded onto.
 // Subsequent upgrades will not need this module bundle

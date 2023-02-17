@@ -61,6 +61,8 @@ describe('CollateralModule', function () {
         });
 
         describe('when accounts provide allowance', function () {
+          const depositAmount = ethers.utils.parseUnits('1', 6);
+          const systemDepositAmount = ethers.utils.parseEther('1');
           before('approve', async () => {
             await (
               await Collateral.connect(user1).approve(
@@ -96,10 +98,15 @@ describe('CollateralModule', function () {
             () => systems().Core.connect(user1).deposit(1, Collateral.address, 1)
           );
 
-          describe('when depositing collateral', () => {
-            const depositAmount = ethers.utils.parseUnits('1', 6);
-            const systemDepositAmount = ethers.utils.parseEther('1');
+          it('fails when depositing to nonexistant account', async () => {
+            await assertRevert(
+              systems().Core.connect(user1).deposit(283729, Collateral.address, depositAmount),
+              'AccountNotFound("283729")',
+              systems().Core
+            );
+          });
 
+          describe('when depositing collateral', () => {
             before('deposit some collateral', async () => {
               const tx = await systems()
                 .Core.connect(user1)

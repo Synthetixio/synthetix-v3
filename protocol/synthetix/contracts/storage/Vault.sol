@@ -31,6 +31,11 @@ library Vault {
     using SafeCastI256 for int256;
     using SetUtil for SetUtil.Bytes32Set;
 
+    /**
+     * @dev Thrown when a non-existent reward distributor is referenced
+     */
+    error RewardDistributorNotFound();
+
     struct Data {
         /**
          * @dev The vault's current epoch number.
@@ -82,14 +87,7 @@ library Vault {
     ) internal returns (uint256 usdWeightD18, int256 totalDebtD18, int256 deltaDebtD18) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        uint256 scaleModifierD27 = (epochData.collateralAmounts.scaleModifierD27 +
-            DecimalMath.UNIT_PRECISE_INT).toUint();
-
-        // This calculation upscales to 45,
-        // so downscale back to 18 (45 - 27 = 18).
-        usdWeightD18 = (
-            (epochData.accountsDebtDistribution.totalSharesD18 * scaleModifierD27).downscale(27)
-        ).mulDecimal(collateralPriceD18);
+        usdWeightD18 = (epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18);
 
         totalDebtD18 = epochData.totalDebt();
 
@@ -126,7 +124,7 @@ library Vault {
         uint256[] memory rewards = new uint256[](self.rewardIds.length());
         address[] memory distributors = new address[](self.rewardIds.length());
 
-        uint numRewards = self.rewardIds.length();
+        uint256 numRewards = self.rewardIds.length();
         for (uint256 i = 0; i < numRewards; i++) {
             RewardDistribution.Data storage dist = self.rewards[self.rewardIds.valueAt(i + 1)];
 
@@ -158,7 +156,7 @@ library Vault {
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
         if (address(dist.distributor) == address(0)) {
-            revert("No distributor");
+            revert RewardDistributorNotFound();
         }
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();

@@ -5,6 +5,9 @@ import "./ERC721.sol";
 import "../ownership/Ownable.sol";
 
 contract ERC721Owned is ERC721, Ownable {
+    // solhint-disable-next-line no-empty-blocks
+    constructor(address initialOwner) Ownable(initialOwner) {}
+
     function transferFrom(
         address from,
         address to,
