@@ -84,24 +84,16 @@ describe('CollateralConfiguration', function () {
 
   describe('convertTokenToSystemAmount()', async () => {
     describe('scaling tokens with 0 decimals to system amount', async () => {
-      const DECIMALS = 0;
+      it('reverts', async function () {
+        const CollateralMock = await hre.ethers.getContractFactory('CollateralMock');
+        fakeCollateral = await CollateralMock.deploy();
+        await fakeCollateral.deployed();
 
-      before('initialize fake collateral config', async () => {
-        await initFakeCollateralConfig(DECIMALS);
-      });
-
-      it('correctly scales token', async () => {
-        const amountD18 = await systems().Core.CollateralConfiguration_convertTokenToSystemAmount(
-          fakeCollateral.address,
-          ONE
+        await assertRevert(
+          fakeCollateral.initialize('token', 'TOKEN', 0),
+          'InvalidParameter("tokenName|tokenSymbol|tokenDecimals", "At least one is zero")',
+          fakeCollateral
         );
-
-        const expectedAmountD18 = ONE.mul(ethers.BigNumber.from(10).pow(18)).div(
-          ethers.BigNumber.from(10).pow(DECIMALS)
-        );
-
-        // expect 1 * 10^36
-        assertBn.equal(amountD18, expectedAmountD18);
       });
     });
 
