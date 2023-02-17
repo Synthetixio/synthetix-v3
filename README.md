@@ -74,7 +74,9 @@ To prepare for system upgrades, this repository is used to release new versions 
   - If you're upgrading the synthetix package, also run `npm run build && npx hardhat cannon:build cannonfile.test.toml` to generate the testable package.
 - Confirm the private key that owns the corresponding namespace in the package registry is set in the `.env` file as `DEPLOYER_PRIVATE_KEY`.
 - Publish the release to Cannon package registry with `npx hardhat cannon:publish --network mainnet`.
-- Increment the version in the relevant `package.json` files. _The repositories should always contain the version number of the next release._ **Also bump the version of the oracle manager in the synthetix toml file after you've upgraded oracle manager.**
+- Increment the version in the relevant `package.json` files. _The repositories should always contain the version number of the next release._
+  - If you've upgraded synthetix, also increment the version of the `package.json` file in the root directory.
+  - If you've upgraded the oracle manager, bump the version of the oracle manager in `protocol/synthetix/cannonfile.toml` and `protocol/synthetix/cannonfile.test.toml`.
 - Run `npm i` in the root directory.
 - Commit and push the change to this repository.
 
