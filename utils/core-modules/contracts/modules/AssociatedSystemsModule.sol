@@ -20,6 +20,14 @@ import "../storage/AssociatedSystem.sol";
 contract AssociatedSystemsModule is IAssociatedSystemsModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
+    modifier onlyIfAssociated(bytes32 id) {
+        if (address(AssociatedSystem.load(id).proxy) == address(0)) {
+            revert MissingAssociatedSystem(id);
+        }
+
+        _;
+    }
+
     /**
      * @inheritdoc IAssociatedSystemsModule
      */
@@ -67,14 +75,6 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
     ) external view override returns (address addr, bytes32 kind) {
         addr = AssociatedSystem.load(id).proxy;
         kind = AssociatedSystem.load(id).kind;
-    }
-
-    modifier onlyIfAssociated(bytes32 id) {
-        if (address(AssociatedSystem.load(id).proxy) == address(0)) {
-            revert MissingAssociatedSystem(id);
-        }
-
-        _;
     }
 
     function _setAssociatedSystem(bytes32 id, bytes32 kind, address proxy, address impl) internal {

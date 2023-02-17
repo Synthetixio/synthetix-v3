@@ -13,16 +13,16 @@ library AssociatedSystem {
 
     error MismatchAssociatedSystemKind(bytes32 expected, bytes32 actual);
 
+    bytes32 public constant KIND_ERC20 = "erc20";
+    bytes32 public constant KIND_ERC721 = "erc721";
+    bytes32 public constant KIND_UNMANAGED = "unmanaged";
+
     function load(bytes32 id) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.AssociatedSystem", id));
         assembly {
             store.slot := s
         }
     }
-
-    bytes32 public constant KIND_ERC20 = "erc20";
-    bytes32 public constant KIND_ERC721 = "erc721";
-    bytes32 public constant KIND_UNMANAGED = "unmanaged";
 
     function getAddress(Data storage self) internal view returns (address) {
         return self.proxy;
