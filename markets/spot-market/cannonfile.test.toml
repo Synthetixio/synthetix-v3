@@ -50,13 +50,6 @@ abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
-[invoke.acquire_ownership]
-target = ["InitialSpotMarketProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["contract.InitialSpotMarketProxy"]
-
 # Core
 [router.SpotMarketRouter]
 contracts = [
@@ -88,7 +81,7 @@ args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.SpotMarketProxy.event = "Upgraded"
 factory.SpotMarketProxy.arg = 0
-depends = ["invoke.acquire_ownership", "router.SpotMarketRouter"]
+depends = ["contract.InitialSpotMarketProxy", "router.SpotMarketRouter"]
 
 # create synth router
 [router.SynthRouter]
