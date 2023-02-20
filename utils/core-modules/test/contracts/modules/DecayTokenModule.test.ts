@@ -5,7 +5,7 @@ import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import { DecayTokenModule } from '../../../typechain-types';
-import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForward, fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 const parseEther = ethers.utils.parseEther;
 
@@ -155,6 +155,33 @@ describe('DecayTokenModule', () => {
       });
     });
   });
+
+  describe('check decay after 1 day', async () => {
+    before(restore);
+
+    before('update interest rate to 1% per day', async () => {
+      await TokenModule.setInterestRate(parseEther('3.65'));
+    });
+    before('100 tokens is minted to user1 at timestamp 0', async () => {
+      await TokenModule.connect(owner).mint(await user1.getAddress(), amount);
+    });
+    before('fast forward to timestamp 86400 (1day)', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 86400, getProvider());
+    });
+
+    it('totalSupply is 100 * (1 - (1 - 0) * 0.01) = 99', async () => {
+      assertBn.equal(await TokenModule.totalSupply(), parseEther('99.004983317622197'));
+    });
+    it('token per share is (99 / 100) = 0.99 ', async () => {
+      assertBn.equal(await TokenModule.tokensPerShare(), parseEther('0.99'));
+    });
+
+    it('user 1 balance is 100 * 0.99 = 99', async () => {
+      assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), parseEther('99'));
+    });
+  });
+
   describe('changing interest rate over time', async () => {
     before(restore);
 
@@ -237,9 +264,37 @@ describe('DecayTokenModule', () => {
       );
     });
   });
-  describe('optimized pow function', () => {
-    it('5.1 ** 3', async () => {
-      assertBn.equal(await TokenModule.pow(parseEther('5.1'), 3), parseEther('132.651'));
+
+  describe('gas check', async () => {
+    it('mint after 1 minute', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 60, getProvider());
+      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
+    });
+    it('mint after 1 hour', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 3600, getProvider());
+      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
+    });
+    it('mint after 1 day', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 60 * 60 * 24, getProvider());
+      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
+    });
+    it('mint after 1 month', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 60 * 60 * 24 * 30, getProvider());
+      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
+    });
+    it('mint after 1 year', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 60 * 60 * 24 * 30 * 12, getProvider());
+      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
+    });
+    it('mint after 2 years', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 60 * 60 * 24 * 30 * 12 * 2, getProvider());
+      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
     });
   });
 });

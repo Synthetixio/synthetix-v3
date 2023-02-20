@@ -73,7 +73,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         }
         uint t = (block.timestamp - _epochStart());
         supply = _totalSupplyAtEpochStart();
-        uint r = pow(((10 ** 18) - _ratePerSecond()), t);
+        uint r = _pow(((10 ** 18) - _ratePerSecond()), t);
         supply = supply.mulDecimal(r);
 
         return (supply);
@@ -160,7 +160,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return (tokenPerShare > 0 ? amount.divDecimal(tokenPerShare) : amount);
     }
 
-    function pow(uint256 x, uint n) public pure returns (uint256 r) {
+    function _pow(uint256 x, uint n) internal pure returns (uint256 r) {
         r = 1e18;
         while (n > 0) {
             if (n % 2 == 1) {
