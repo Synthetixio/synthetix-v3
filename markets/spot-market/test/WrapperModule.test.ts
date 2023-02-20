@@ -8,7 +8,7 @@ import { SynthRouter } from '../generated/typechain';
 
 const bn = (n: number) => wei(n).toBN();
 
-describe.only('WrapperModule', () => {
+describe('WrapperModule', () => {
   const { systems, signers, marketId } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );

@@ -91,6 +91,16 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.WRAP
         );
 
+        amountToMint = Price.usdSynthExchangeRate(
+            marketId,
+            returnAmountUsd,
+            SpotMarketFactory.TransactionType.WRAP
+        );
+
+        if (amountToMint < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, amountToMint);
+        }
+
         uint collectedFees;
         if (totalFees > 0) {
             IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
@@ -104,16 +114,6 @@ contract WrapperModule is IWrapperModule {
                 msg.sender,
                 SpotMarketFactory.TransactionType.WRAP
             );
-        }
-
-        amountToMint = Price.usdSynthExchangeRate(
-            marketId,
-            returnAmountUsd,
-            SpotMarketFactory.TransactionType.WRAP
-        );
-
-        if (amountToMint < minAmountReceived) {
-            revert InsufficientAmountReceived(minAmountReceived, amountToMint);
         }
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
@@ -155,6 +155,16 @@ contract WrapperModule is IWrapperModule {
             SpotMarketFactory.TransactionType.UNWRAP
         );
 
+        returnCollateralAmount = Price.usdSynthExchangeRate(
+            marketId,
+            returnAmountUsd,
+            SpotMarketFactory.TransactionType.UNWRAP
+        );
+
+        if (returnCollateralAmount < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
+        }
+
         uint collectedFees = 0;
         if (totalFees > 0) {
             IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
@@ -168,16 +178,6 @@ contract WrapperModule is IWrapperModule {
                 msg.sender,
                 SpotMarketFactory.TransactionType.UNWRAP
             );
-        }
-
-        returnCollateralAmount = Price.usdSynthExchangeRate(
-            marketId,
-            returnAmountUsd,
-            SpotMarketFactory.TransactionType.UNWRAP
-        );
-
-        if (returnCollateralAmount < minAmountReceived) {
-            revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
         }
 
         IMarketCollateralModule(spotMarketFactory.synthetix).withdrawMarketCollateral(
