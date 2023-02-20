@@ -20,11 +20,11 @@ interface IUSDTokenModule is ITokenModule {
      * @param destChainId The id of the chain where tokens are to be transferred to.
      * @param to The destination address in the target chain.
      * @param amount The amount of tokens to be transferred, denominated with 18 decimals of precision.
-     * @return feesPaid The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
+     * @return feesPaidD18 The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
      */
     function transferCrossChain(
         uint256 destChainId,
         address to,
         uint256 amount
-    ) external returns (uint256 feesPaid);
+    ) external returns (uint256 feesPaidD18);
 }

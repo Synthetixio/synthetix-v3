@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithMockMarketAndPool } from '../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 
 describe('AssociateDebtModule', function () {
   const {
@@ -49,6 +49,16 @@ describe('AssociateDebtModule', function () {
           .connect(user2)
           .callAssociateDebt(828374, collateralAddress(), accountId, amount),
         `NotFundedByPool("${marketId()}", "828374")`,
+        systems().Core
+      );
+    });
+
+    it('only works when the account exists', async () => {
+      await assertRevert(
+        MockMarket()
+          .connect(user2)
+          .callAssociateDebt(marketId(), collateralAddress(), 327823912, amount),
+        'AccountNotFound("327823912")',
         systems().Core
       );
     });

@@ -1,6 +1,6 @@
 {
   "name": "synthetix-v3",
-  "version": "3.0.0-alpha.13",
+  "version": "3.0.0-alpha.16",
   "private": true,
   "description": "Mono Repo with Contracts and JS tooling",
   "repository": {
@@ -14,7 +14,7 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
-    "build": "npm run -w @synthetixio/core-utils -w @synthetixio/hardhat-storage -w @synthetixio/router -w @synthetixio/oracle-manager -w @synthetixio/synthetix build",
+    "build": "npm run -w @synthetixio/core-utils -w @synthetixio/hardhat-storage -w @synthetixio/router -w @synthetixio/sample-project -w @synthetixio/oracle-manager -w @synthetixio/synthetix build",
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
     "lint:js": "prettier --check '**/*.{t,j}s' && eslint --max-warnings=0 '**/*.{t,j}s'",

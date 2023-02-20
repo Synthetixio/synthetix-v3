@@ -8,7 +8,6 @@ library OwnableStorage {
         keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
 
     struct Data {
-        bool initialized;
         address owner;
         address nominatedOwner;
     }

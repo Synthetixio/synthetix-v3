@@ -31,10 +31,7 @@ library AsyncOrderConfiguration {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
 
-        if (
-            self.settlementStrategies[settlementStrategyId].strategyType ==
-            SettlementStrategy.Type.ONCHAIN
-        ) {
+        if (self.settlementStrategies[settlementStrategyId].disabled) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
     }

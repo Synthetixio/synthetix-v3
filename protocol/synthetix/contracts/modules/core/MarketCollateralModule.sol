@@ -14,6 +14,7 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
  * @dev See IMarketCollateralModule.
  */
 contract MarketCollateralModule is IMarketCollateralModule {
+    using SafeCastU256 for uint256;
     using ERC20Helper for address;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Market for Market.Data;
@@ -32,12 +33,14 @@ contract MarketCollateralModule is IMarketCollateralModule {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_COLLATERAL_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
+        // Ensure the sender is the market address associated with the specified marketId
+        if (msg.sender != marketData.marketAddress) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
         uint256 systemAmount = CollateralConfiguration
             .load(collateralType)
             .convertTokenToSystemAmount(tokenAmount);
-
-        // Ensure the sender is the market address associated with the specified marketId
-        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         uint256 maxDepositable = marketData.maximumDepositableD18[collateralType];
         uint256 depositedCollateralEntryIndex = _findOrCreateDepositEntryIndex(
@@ -90,8 +93,17 @@ contract MarketCollateralModule is IMarketCollateralModule {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
         }
 
-        // Transfer the collateral out of the system and account for it
+        // Account for transferring out collateral
         collateralEntry.amountD18 -= systemAmount;
+
+        // Ensure that the market is not withdrawing collateral such that it results in a negative getWithdrawableMarketUsd
+        int256 newWithdrawableMarketUsd = marketData.creditCapacityD18 +
+            marketData.getDepositedCollateralValue().toInt();
+        if (newWithdrawableMarketUsd < 0) {
+            revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
+        }
+
+        // Transfer the collateral to the market
         collateralType.safeTransfer(marketData.marketAddress, tokenAmount);
 
         emit MarketCollateralWithdrawn(marketId, collateralType, tokenAmount, msg.sender);
