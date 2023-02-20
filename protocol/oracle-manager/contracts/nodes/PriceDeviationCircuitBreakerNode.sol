@@ -2,12 +2,14 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 
 library PriceDeviationCircuitBreakerNode {
     using SafeCastU256 for uint256;
+    using DecimalMath for int256;
 
     error InvalidPrice();
     error DeviationToleranceExceeded(int256 deviation);
@@ -25,7 +27,7 @@ library PriceDeviationCircuitBreakerNode {
             int256 difference = abs(primaryPrice - comparisonPrice);
             if (
                 primaryPrice == 0 ||
-                deviationTolerance.toInt() < ((difference * 1e18) / primaryPrice)
+                deviationTolerance.toInt() < ((difference.upscale(18)) / primaryPrice)
             ) {
                 if (parentNodeOutputs.length > 2) {
                     return parentNodeOutputs[2];

@@ -11,6 +11,7 @@ library ReducerNode {
     using SafeCastU256 for uint256;
 
     error UnsupportedOperation(Operations operation);
+    error InvalidPrice(int256 price);
 
     enum Operations {
         RECENT,
@@ -92,9 +93,7 @@ library ReducerNode {
     function max(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory maxPrice) {
-        if (parentNodeOutputs.length > 0) {
-            maxPrice = parentNodeOutputs[0];
-        }
+        maxPrice = parentNodeOutputs[0];
         for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
             if (parentNodeOutputs[i].price > maxPrice.price) {
                 maxPrice = parentNodeOutputs[i];
@@ -132,7 +131,7 @@ library ReducerNode {
         divPrice.timestamp = parentNodeOutputs[0].timestamp;
         for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
             if (parentNodeOutputs[i].price == 0) {
-                revert("parent price is zero");
+                revert InvalidPrice(parentNodeOutputs[i].price);
             }
             divPrice.price /= parentNodeOutputs[i].price;
             divPrice.timestamp += parentNodeOutputs[i].timestamp;
