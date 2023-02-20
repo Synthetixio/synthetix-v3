@@ -40,15 +40,23 @@ interface IDecayTokenModule is IERC20 {
      * @notice Allows an address that holds tokens to provide allowance to another.
      * @param from The address that is providing allowance.
      * @param spender The address that is given allowance.
-     * @param amount The amount of allowance being given.
+     * @param amount The amount of shares as allowance being given.
      */
     function setAllowance(address from, address spender, uint256 amount) external;
 
-    function setInterestRate(uint256 _rate) external;
+    /**
+     * @notice Updates the decay rate for a year
+     * @param _rate The decay rate with 18 decimals (1e16 means 1% decay per year).
+     */
+    function setDecayRate(uint256 _rate) external;
 
-    function interestRate() external returns (uint256);
+    /**
+     * @notice get decay rate for a year
+     */
+    function decayRate() external returns (uint256);
 
-    function tokensPerShare() external returns (uint256);
-
-    function totalSupplyAtEpochStart() external returns (uint256);
+    /**
+     * @notice advance epoch manually in order to avoid precision loss
+     */
+    function advanceEpoch() external returns (uint256);
 }

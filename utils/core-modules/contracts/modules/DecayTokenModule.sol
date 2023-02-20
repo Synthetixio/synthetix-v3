@@ -12,14 +12,15 @@ import "../storage/DecayToken.sol";
 contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     using DecimalMath for uint256;
 
-    // DOCS: use existing super.totalSupply() for total shares, super.balanceOf() for account share balance, etc.
-
-    modifier advanceEpoch() {
+    modifier _advanceEpoch() {
         _;
         DecayToken.Data storage store = DecayToken.load();
         store.epochStart = block.timestamp;
     }
 
+    /**
+     * @inheritdoc IDecayTokenModule
+     */
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -32,11 +33,17 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         store.epochStart = block.timestamp;
     }
 
+    /**
+     * @inheritdoc IDecayTokenModule
+     */
     function isInitialized() external view returns (bool) {
         return _isInitialized();
     }
 
-    function burn(address from, uint256 amount) external override advanceEpoch {
+    /**
+     * @inheritdoc IDecayTokenModule
+     */
+    function burn(address from, uint256 amount) external override _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -46,7 +53,10 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         super._burn(from, shareAmount);
     }
 
-    function mint(address to, uint256 amount) external override advanceEpoch {
+    /**
+     * @inheritdoc IDecayTokenModule
+     */
+    function mint(address to, uint256 amount) external override _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -56,11 +66,21 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         super._mint(to, shareAmount);
     }
 
-    function setInterestRate(uint256 _rate) external advanceEpoch {
+    /**
+     * @inheritdoc IDecayTokenModule
+     */
+    function setDecayRate(uint256 _rate) external _advanceEpoch {
         OwnableStorage.onlyOwner();
         DecayToken.Data storage store = DecayToken.load();
         store.totalSupplyAtEpochStart = totalSupply();
-        store.interestRate = _rate;
+        store.decayRate = _rate;
+    }
+
+    /**
+     * @inheritdoc IDecayTokenModule
+     */
+    function advanceEpoch() external _advanceEpoch returns (uint256) {
+        return _tokensPerShare();
     }
 
     function totalShares() public view virtual returns (uint256) {
@@ -105,6 +125,9 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return super._transferFrom(from, to, _tokensPerShare().mulDecimal(amount));
     }
 
+    /**
+     * @inheritdoc IDecayTokenModule
+     */
     function setAllowance(address from, address spender, uint256 amount) external override {
         ERC20Storage.load().allowance[from][spender] = amount;
     }
@@ -116,16 +139,8 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return super.transfer(to, _tokenToShare(amount));
     }
 
-    function tokensPerShare() public view virtual returns (uint256) {
-        return _tokensPerShare();
-    }
-
-    function interestRate() public view returns (uint256) {
-        return DecayToken.load().interestRate;
-    }
-
-    function totalSupplyAtEpochStart() public view returns (uint256) {
-        return _totalSupplyAtEpochStart();
+    function decayRate() public view returns (uint256) {
+        return DecayToken.load().decayRate;
     }
 
     function _isInitialized() internal view override returns (bool) {
@@ -141,7 +156,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     function _ratePerSecond() internal view returns (uint256) {
-        return interestRate() / 31536000;
+        return decayRate() / 31536000;
     }
 
     function _tokensPerShare() internal view returns (uint256) {
