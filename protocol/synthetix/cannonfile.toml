@@ -176,8 +176,8 @@ from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
   "0x6163636f756e744e667400000000000000000000000000000000000000000000",
-  "Synthetix Account",
-  "SACCT",
+  "Synthetix Account Token",
+  "snxAccount",
   "https://synthetix.io",
   "<%= contracts.AccountRouter.address %>"
 ]
@@ -195,7 +195,7 @@ from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = [
   "0x555344546f6b656e000000000000000000000000000000000000000000000000",
-  "Synthetic USD Token v3",
+  "Synthetix V3 Stablecoin",
   "snxUSD",
   18,
   "<%= contracts.USDRouter.address %>"
