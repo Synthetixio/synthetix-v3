@@ -72,7 +72,6 @@ describe('ScalableMapping', () => {
 
       it('has correct total amount', async () => {
         totalAmount = await FakeScalableMapping.ScalableMapping_totalAmount();
-        console.log('TOTAL AMOUNT: ', totalAmount.toString());
         assertBn.near(totalAmount, bn(1500), 1); // precision off by 1; just dust
       });
 

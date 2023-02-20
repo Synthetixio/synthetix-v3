@@ -31,6 +31,11 @@ library Vault {
     using SafeCastI256 for int256;
     using SetUtil for SetUtil.Bytes32Set;
 
+    /**
+     * @dev Thrown when a non-existent reward distributor is referenced
+     */
+    error RewardDistributorNotFound();
+
     struct Data {
         /**
          * @dev The vault's current epoch number.
@@ -151,7 +156,7 @@ library Vault {
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
         if (address(dist.distributor) == address(0)) {
-            revert("No distributor");
+            revert RewardDistributorNotFound();
         }
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();

@@ -5,7 +5,6 @@ pragma solidity >=0.8.11<0.9.0;
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
-        bool initialized;
         address owner;
         address nominatedOwner;
     }
@@ -233,6 +232,17 @@ interface ILiquidationModule {
     }
 }
 
+// @custom:artifact contracts/interfaces/external/IAny2EVMMessageReceiverInterface.sol:IAny2EVMMessageReceiverInterface
+interface IAny2EVMMessageReceiverInterface {
+    struct Any2EVMMessage {
+        uint256 srcChainId;
+        bytes sender;
+        bytes data;
+        address[] destTokens;
+        uint256[] amounts;
+    }
+}
+
 // @custom:artifact contracts/interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol:IEVM2AnySubscriptionOnRampRouterInterface
 interface IEVM2AnySubscriptionOnRampRouterInterface {
     struct EVM2AnySubscriptionMessage {
@@ -401,7 +411,7 @@ library CollateralLock {
 // @custom:artifact contracts/storage/Config.sol:Config
 library Config {
     struct Data {
-        uint __unused;
+        uint256 __unused;
     }
 }
 
@@ -428,7 +438,7 @@ library Market {
         uint128 id;
         address marketAddress;
         int128 netIssuanceD18;
-        uint128 creditCapacityD18;
+        int128 creditCapacityD18;
         int128 lastDistributedMarketBalanceD18;
         HeapUtil.Data inRangePools;
         HeapUtil.Data outRangePools;
@@ -551,7 +561,7 @@ library ScalableMapping {
 library SystemPoolConfiguration {
     bytes32 private constant _SLOT_SYSTEM_POOL_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemPoolConfiguration"));
     struct Data {
-        uint minLiquidityRatioD18;
+        uint256 minLiquidityRatioD18;
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
         SetUtil.UintSet approvedPools;

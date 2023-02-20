@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-contracts/contracts/proxy/UUPSProxyWithOwner.sol";
 import "../interfaces/IAssociatedSystemsModule.sol";
 
 import "@synthetixio/core-contracts/contracts/interfaces/IUUPSImplementation.sol";
@@ -123,9 +123,8 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
             _upgradeToken(id, impl);
         } else {
             // create a new proxy and own it
-            address proxy = address(new UUPSProxy(impl));
+            address proxy = address(new UUPSProxyWithOwner(impl, address(this)));
 
-            IOwnerModule(proxy).initializeOwnerModule(address(this));
             ITokenModule(proxy).initialize(name, symbol, decimals);
 
             _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
@@ -146,9 +145,8 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
             _upgradeNft(id, impl);
         } else {
             // create a new proxy and own it
-            address proxy = address(new UUPSProxy(impl));
+            address proxy = address(new UUPSProxyWithOwner(impl, address(this)));
 
-            IOwnerModule(proxy).initializeOwnerModule(address(this));
             INftModule(proxy).initialize(name, symbol, uri);
 
             _setAssociatedSystem(id, AssociatedSystem.KIND_ERC721, proxy, impl);

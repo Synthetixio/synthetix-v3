@@ -31,8 +31,24 @@ interface ILegacyMarket {
     event ConvertedUSD(address indexed account, uint256 amount);
 
     /**
+     * @notice Emitted after a call to `setPauseStablecoinConversion`
+     * @param sender the address setting the stablecoin conversion pause status
+     * @param paused whether stablecoin conversion is being paused or unpaused
+     */
+    event PauseStablecoinConversionSet(address indexed sender, bool paused);
+
+    /**
+     * @notice Emitted after a call to `setPauseMigration`
+     * @param sender the address setting the migration pause status
+     * @param paused whether migration is being paused or unpaused
+     */
+    event PauseMigrationSet(address indexed sender, bool paused);
+
+    /**
      * @notice Called by anyone with {amount} sUSD to convert {amount} sUSD to {amount} snxUSD.
-     The sUSD will be burned (thereby reducing the sUSD total supply and v2x system size), and snxUSD will be minted.
+     * The sUSD will be burned (thereby reducing the sUSD total supply and v2x system size), and snxUSD will be minted.
+     * Any user who has sUSD can call this function. If you have migrated to v3 and there is insufficient sUSD liquidity
+     * to convert, consider buying snxUSD on the open market, since that means most snxUSD has already been migrated.
      * Requirements:
      * * User must first approve() the legacy market contract to spend the user's sUSD
      * * LegacyMarket must have already sufficient migrated collateral

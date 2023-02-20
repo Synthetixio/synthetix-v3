@@ -51,6 +51,14 @@ contract MockMarket is IMarket {
         IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
+    function depositUsd(uint256 amount) external {
+        IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, amount);
+    }
+
+    function withdrawUsd(uint256 amount) external {
+        IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, amount);
+    }
+
     function setReportedDebt(uint256 newReportedDebt) external {
         _reportedDebt = newReportedDebt;
     }
@@ -79,13 +87,13 @@ contract MockMarket is IMarket {
         return _price;
     }
 
-    function deposit(address collateralType, uint256 amount) external {
+    function depositCollateral(address collateralType, uint256 amount) external {
         IERC20(collateralType).transferFrom(msg.sender, address(this), amount);
         IERC20(collateralType).approve(_proxy, amount);
         IMarketCollateralModule(_proxy).depositMarketCollateral(_marketId, collateralType, amount);
     }
 
-    function withdraw(address collateralType, uint256 amount) external {
+    function withdrawCollateral(address collateralType, uint256 amount) external {
         IMarketCollateralModule(_proxy).withdrawMarketCollateral(_marketId, collateralType, amount);
         IERC20(collateralType).transfer(msg.sender, amount);
     }

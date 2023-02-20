@@ -122,12 +122,17 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         // get synthetix v2x addresses
         IERC20 oldUSD = IERC20(v2xResolver.getAddress("ProxysUSD"));
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("Synthetix"));
+        IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
 
         // retrieve the sUSD from the user so we can burn it
         oldUSD.transferFrom(msg.sender, address(this), amount);
 
         // now burn it
+        uint beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
         oldSynthetix.burnSynths(amount);
+        if (iss.debtBalanceOf(address(this), "sUSD") != beforeDebt - amount) {
+            revert Paused();
+        }
 
         // now mint same amount of snxUSD (called a "withdraw" in v3 land)
         v3System.withdrawMarketUsd(marketId, msg.sender, amount);
@@ -271,6 +276,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      */
     function setPauseStablecoinConversion(bool paused) external onlyOwner {
         pauseStablecoinConversion = paused;
+
+        emit PauseStablecoinConversionSet(msg.sender, paused);
     }
 
     /**
@@ -278,14 +285,19 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      */
     function setPauseMigration(bool paused) external onlyOwner {
         pauseMigration = paused;
+
+        emit PauseMigrationSet(msg.sender, paused);
     }
 
     /**
      * @dev Returns the amount of dollar-denominated debt associated with {debtSharesMigrated} in the V2 system.
      */
-    function _calculateDebtValueMigrated(uint256 debtSharesMigrated) internal view returns (uint256 portionMigrated) {
-        (uint256 totalSystemDebt, uint256 totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer"))
-            .allNetworksDebtInfo();
+    function _calculateDebtValueMigrated(
+        uint256 debtSharesMigrated
+    ) internal view returns (uint256 portionMigrated) {
+        (uint256 totalSystemDebt, uint256 totalDebtShares, ) = IIssuer(
+            v2xResolver.getAddress("Issuer")
+        ).allNetworksDebtInfo();
 
         return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
     }
