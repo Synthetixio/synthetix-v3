@@ -16,6 +16,11 @@ interface IWrapperModule {
     error InsufficientAllowance(uint expected, uint current);
 
     /**
+     * @notice Thrown when a trade doesn't meet minimum expected return amount.
+     */
+    error InsufficientAmountReceived(uint expected, uint current);
+
+    /**
      * @notice Thrown when user tries to wrap more than the set supply cap for the market.
      */
     error WrapperExceedsMaxAmount(uint maxWrappableAmount, uint currentSupply, uint amountToWrap);
@@ -79,16 +84,26 @@ interface IWrapperModule {
      * @dev Fees are collected from the user by way of the contract returning less synth than specified amount of collateral.
      * @param marketId Id of the market used for the trade.
      * @param wrapAmount Amount of collateral to wrap.  This amount gets deposited into the market collateral manager.
+     * @param minAmountReceived The minimum amount of synths the trader is expected to receive, otherwise the transaction will revert.
      * @return amountReturned Amount of synth returned to user.
      */
-    function wrap(uint128 marketId, uint wrapAmount) external returns (uint);
+    function wrap(
+        uint128 marketId,
+        uint wrapAmount,
+        uint minAmountReceived
+    ) external returns (uint);
 
     /**
      * @notice Unwraps the synth and returns similar value of collateral minus the fees.
      * @dev Transfers the specified synth, collects fees through configured fee collector, returns collateral minus fees to trader.
      * @param marketId Id of the market used for the trade.
      * @param unwrapAmount Amount of synth trader is unwrapping.
+     * @param minAmountReceived The minimum amount of collateral the trader is expected to receive, otherwise the transaction will revert.
      * @return amountReturned Amount of collateral returned.
      */
-    function unwrap(uint128 marketId, uint unwrapAmount) external returns (uint);
+    function unwrap(
+        uint128 marketId,
+        uint unwrapAmount,
+        uint minAmountReceived
+    ) external returns (uint);
 }
