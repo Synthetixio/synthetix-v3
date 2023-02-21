@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 /**
  * @title Module wrapping an ERC20 token implementation.
+ * @notice the contract uses A = P(1 + r/n)**nt formula compounded every second to calculate decay amount at any moment
  */
 interface IDecayTokenModule is IERC20 {
     /**

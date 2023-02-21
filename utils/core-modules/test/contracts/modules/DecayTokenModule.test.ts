@@ -215,8 +215,23 @@ describe('DecayTokenModule', () => {
       await fastForwardTo(start + 86400, getProvider());
     });
 
-    it('totalSupply is 100 * ((1 - (0.01/86400)) ** 86400) = 99.004983317622197', async () => {
+    it('totalSupply is 100 * ((1 - (0.01/86400)) ** 86400) ~ 99.004983317622197', async () => {
+      // continues compound interest rate
+      // continues = 100 * Math.pow(Math.E, -3.65 / 365);
+      // continues = 99.0049833749168
+
+      // compound interest rate
+      // seconds in a year = 31536000
+      // rate per second = 3.65 / 31536000 = 0.000000115740741
+      // seconds in a 86400 = 31536000
+      // compound = 100 * Math.pow(1 - 0.000000115740741, 86400);
+      // compound = 99.00498331547897
+
       assertBn.equal(await TokenModule.totalSupply(), parseEther('99.004983317622197'));
+
+      //99.0049833749168 > 99.004983317622197 > 99.00498331547897
+      //continues formula >    contract       > compound formula
+      //difference is very small so it's acceptable
     });
 
     it('user 1 balance is 100 * 0.99004983317622197 = 99.004983317622197', async () => {
@@ -243,8 +258,22 @@ describe('DecayTokenModule', () => {
       await fastForwardTo(start + 31536000, getProvider());
     });
 
-    it('totalSupply is 100 * ((1 - (0.02/31536000)) ** 31536000) = 98.0198673305761728', async () => {
+    it('totalSupply is 100 * ((1 - (0.02/31536000)) ** 31536000) ~ 98.0198673305761728', async () => {
+      // continues compound interest rate
+      // continues = 100 * Math.pow(Math.E, -0.02 * 1);
+      // continues = 98.01986733067552
+
+      // compound interest rate
+      // seconds in a year = 31536000
+      // rate per second = 0.02 / 31536000 = 0.000000000634196
+      // compound = 100 * Math.pow(1 - 0.000000115740741, 31536000);
+      // compound = 98.0198668344654
+
       assertBn.equal(await TokenModule.totalSupply(), parseEther('98.0198673305761728'));
+
+      //98.01986733067552 > 98.0198673305761728   > 98.0198668344654
+      //continues formula > contract calculation > compound formula
+      //difference is very small so it's acceptable
     });
 
     it('user 1 balance is 100 * 0.980198673305761728 = 98.0198673305761728', async () => {
