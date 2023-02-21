@@ -95,8 +95,8 @@ library UniswapNode {
         (
             address token,
             address stablecoin,
-            uint8 decimals0,
-            uint8 decimals1,
+            uint8 decimalsToken,
+            uint8 decimalsStablecoin,
             address pool,
             uint32 secondsAgo
         ) = abi.decode(
@@ -104,11 +104,11 @@ library UniswapNode {
                 (address, address, uint8, uint8, address, uint32)
             );
 
-        if (IERC20(token).decimals() != decimals0) {
+        if (IERC20(token).decimals() != decimalsToken) {
             return false;
         }
 
-        if (IERC20(stablecoin).decimals() != decimals1) {
+        if (IERC20(stablecoin).decimals() != decimalsStablecoin) {
             return false;
         }
 
@@ -122,7 +122,7 @@ library UniswapNode {
             return false;
         }
 
-        if (decimals0 > 18 || decimals1 > 18) {
+        if (decimalsToken > 18 || decimalsStablecoin > 18) {
             return false;
         }
 
