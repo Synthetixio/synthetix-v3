@@ -40,6 +40,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: |
+        set -o pipefail
         cd ${{ matrix.project }}
         npx hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
           --network ${{ matrix.network }} --dry-run \
