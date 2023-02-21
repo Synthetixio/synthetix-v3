@@ -14,8 +14,6 @@ import "../utils/FeeUtil.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Module to process asyncronous orders
  * @notice See README.md for an overview of asyncronous orders
