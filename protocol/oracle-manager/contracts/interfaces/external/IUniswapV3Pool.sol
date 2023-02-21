@@ -11,4 +11,8 @@ interface IUniswapV3Pool {
             int56[] memory tickCumulatives,
             uint160[] memory secondsPerLiquidityCumulativeX128s
         );
+
+    function token0() external view returns (address);
+
+    function token1() external view returns (address);
 }
