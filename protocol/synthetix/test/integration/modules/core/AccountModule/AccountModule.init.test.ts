@@ -15,8 +15,8 @@ describe('AccountModule', function () {
       });
 
       it('initializes the account system correctly', async function () {
-        assert.equal(await systems().Account.name(), 'Synthetix Account');
-        assert.equal(await systems().Account.symbol(), 'SACCT');
+        assert.equal(await systems().Account.name(), 'Synthetix Account Token');
+        assert.equal(await systems().Account.symbol(), 'snxAccount');
       });
     });
   });

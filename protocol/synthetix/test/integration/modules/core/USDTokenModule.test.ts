@@ -13,7 +13,7 @@ describe('USDTokenModule', function () {
   });
 
   it('applied the USD parameters', async () => {
-    assert.equal(await systems().USD.name(), 'Synthetic USD Token v3');
+    assert.equal(await systems().USD.name(), 'Synthetix V3 Stablecoin');
     assert.equal(await systems().USD.symbol(), 'snxUSD');
     assert.equal(await systems().USD.decimals(), 18);
   });
