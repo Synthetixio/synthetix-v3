@@ -6,7 +6,7 @@ library DecayToken {
         keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
 
     struct Data {
-        uint256 interestRate;
+        uint256 decayRate;
         uint256 epochStart;
         uint256 totalSupplyAtEpochStart;
     }
