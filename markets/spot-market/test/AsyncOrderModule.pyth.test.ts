@@ -87,9 +87,9 @@ describe('AsyncOrderModule pyth', () => {
       const functionSig = systems().SpotMarket.interface.getSighash('settlePythOrder');
       await assertRevert(
         systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
-        `OffchainLookup("${systems().SpotMarket.address}", ["${
+        `OffchainLookup("${systems().SpotMarket.address}", "${
           pythSettlementStrategy.url
-        }"], "${pythCallData}", "${functionSig}", "${extraData}")`
+        }", "${pythCallData}", "${functionSig}", "${extraData}")`
       );
     });
   });
