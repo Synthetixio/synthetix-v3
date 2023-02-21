@@ -9,14 +9,27 @@ describe('AccountModule', function () {
 
   let user1: ethers.Signer;
   let user2: ethers.Signer;
+  let user3: ethers.Signer;
 
   describe('AccountModule - Account transfering', function () {
     before('identify signers', async () => {
-      [, user1, user2] = signers();
+      [, user1, user2, user3] = signers();
     });
 
     before('create the account', async function () {
       await systems().Core.connect(user1).createAccount(1);
+    });
+
+    before('grant some permissions', async () => {
+      await systems()
+        .Core.connect(user1)
+        .grantPermission(1, Permissions.REWARDS, await user1.getAddress());
+      await systems()
+        .Core.connect(user1)
+        .grantPermission(1, Permissions.WITHDRAW, await user3.getAddress());
+      await systems()
+        .Core.connect(user1)
+        .grantPermission(1, Permissions.DELEGATE, await user3.getAddress());
     });
 
     describe('when an account NFT is transferred', function () {
@@ -45,6 +58,17 @@ describe('AccountModule', function () {
       it('shows the previous owner permissions have been revoked', async () => {
         assert.equal(
           await systems().Core.hasPermission(1, Permissions.DELEGATE, await user1.getAddress()),
+          false
+        );
+      });
+
+      it('shows that other accounts permissions have been revoked', async () => {
+        assert.equal(
+          await systems().Core.hasPermission(1, Permissions.WITHDRAW, await user3.getAddress()),
+          false
+        );
+        assert.equal(
+          await systems().Core.hasPermission(1, Permissions.ADMIN, await user3.getAddress()),
           false
         );
       });

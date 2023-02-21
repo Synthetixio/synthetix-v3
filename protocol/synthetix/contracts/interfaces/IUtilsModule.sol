@@ -29,6 +29,7 @@ interface IUtilsModule {
     /**
      * @notice Read a generic value from the KV system
      * @param k the key to read
+     * @return v the value set on the specified k
      */
     function getConfig(bytes32 k) external view returns (bytes32 v);
 }

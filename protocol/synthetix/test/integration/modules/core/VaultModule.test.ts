@@ -20,6 +20,8 @@ describe('VaultModule', function () {
     collateralAddress,
   } = bootstrapWithStakedPool();
 
+  const MAX_UINT = ethers.constants.MaxUint256;
+
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let MockMarket: ethers.Contract;
@@ -66,6 +68,21 @@ describe('VaultModule', function () {
 
   const restore = snapshotCheckpoint(provider);
 
+  function getExpectedCollateralizationRatio(
+    collateralAmount: ethers.BigNumberish,
+    debt: ethers.BigNumberish
+  ) {
+    const debtBN = ethers.BigNumber.from(debt);
+    if (debtBN.isZero()) {
+      return MAX_UINT;
+    }
+
+    const collateralBN = ethers.BigNumber.from(collateralAmount);
+    const decimalBN = ethers.BigNumber.from(10).pow(18);
+
+    return collateralBN.mul(decimalBN).div(debtBN);
+  }
+
   // eslint-disable-next-line max-params
   function verifyAccountState(
     accountId: number,
@@ -81,6 +98,14 @@ describe('VaultModule', function () {
       assertBn.equal(
         await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
         debt
+      );
+      assertBn.equal(
+        await systems().Core.callStatic.getPositionCollateralRatio(
+          accountId,
+          poolId,
+          collateralAddress()
+        ),
+        getExpectedCollateralizationRatio(collateralAmount, debt)
       );
     };
   }
@@ -124,6 +149,17 @@ describe('VaultModule', function () {
       'after bootstrap have correct amounts',
       verifyAccountState(accountId, poolId, depositAmount, 0)
     );
+
+    it('has max cratio', async function () {
+      assertBn.equal(
+        await systems().Core.callStatic.getPositionCollateralRatio(
+          accountId,
+          poolId,
+          collateralAddress()
+        ),
+        MAX_UINT
+      );
+    });
 
     it('after bootstrap liquidity is delegated all the way back to the market', async () => {
       assertBn.gt(await systems().Core.callStatic.getMarketCollateral(marketId), 0);
@@ -283,6 +319,13 @@ describe('VaultModule', function () {
         'user1 has become indebted',
         verifyAccountState(accountId, poolId, depositAmount, startingDebt)
       );
+
+      it('vault c-ratio is affected', async () => {
+        assertBn.equal(
+          await systems().Core.callStatic.getVaultCollateralRatio(poolId, collateralAddress()),
+          depositAmount.mul(ethers.utils.parseEther('1')).div(startingDebt)
+        );
+      });
 
       describe('second user delegates', async () => {
         const user2AccountId = 283847;
@@ -615,8 +658,6 @@ describe('VaultModule', function () {
         });
       });
     });
-
-    // TODO: also test that user can pull outstanding USD out of position with 0 collateral
 
     describe('first user leaves', async () => {
       before(restore);

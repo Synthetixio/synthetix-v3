@@ -34,12 +34,12 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         SetUtil.AddressSet storage collateralTypes = CollateralConfiguration
             .loadAvailableCollaterals();
 
-        uint numCollaterals = collateralTypes.length();
+        uint256 numCollaterals = collateralTypes.length();
         CollateralConfiguration.Data[]
             memory filteredCollaterals = new CollateralConfiguration.Data[](numCollaterals);
 
-        uint collateralsIdx;
-        for (uint i = 1; i <= numCollaterals; i++) {
+        uint256 collateralsIdx;
+        for (uint256 i = 1; i <= numCollaterals; i++) {
             address collateralType = collateralTypes.valueAt(i);
 
             CollateralConfiguration.Data storage collateral = CollateralConfiguration.load(
@@ -68,7 +68,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
-    function getCollateralPrice(address collateralType) external view override returns (uint) {
+    function getCollateralPrice(address collateralType) external view override returns (uint256) {
         return
             CollateralConfiguration.getCollateralPrice(
                 CollateralConfiguration.load(collateralType)

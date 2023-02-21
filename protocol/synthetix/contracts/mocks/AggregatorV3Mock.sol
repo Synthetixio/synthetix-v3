@@ -5,8 +5,8 @@ import "../interfaces/external/IAggregatorV3Interface.sol";
 
 contract AggregatorV3Mock is IAggregatorV3Interface {
     uint80 private _roundId;
-    uint private _timestamp;
-    uint private _price;
+    uint256 private _timestamp;
+    uint256 private _price;
 
     function decimals() external pure override returns (uint8) {
         return 18;
@@ -20,7 +20,7 @@ contract AggregatorV3Mock is IAggregatorV3Interface {
         return 3;
     }
 
-    function mockSetCurrentPrice(uint currentPrice) external {
+    function mockSetCurrentPrice(uint256 currentPrice) external {
         _price = currentPrice;
         _timestamp = block.timestamp;
         _roundId++;
@@ -59,14 +59,14 @@ contract AggregatorV3Mock is IAggregatorV3Interface {
         )
     {
         // solhint-disable-next-line numcast/safe-cast
-        return (_roundId, int(_price), _timestamp, _timestamp, _roundId);
+        return (_roundId, int256(_price), _timestamp, _timestamp, _roundId);
     }
 
     function setRoundId(uint80 roundId) external {
         _roundId = roundId;
     }
 
-    function setTimestamp(uint timestamp) external {
+    function setTimestamp(uint256 timestamp) external {
         _timestamp = timestamp;
     }
 }

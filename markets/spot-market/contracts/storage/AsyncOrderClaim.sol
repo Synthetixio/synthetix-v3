@@ -1,9 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./AsyncOrderConfiguration.sol";
-import "./SpotMarketFactory.sol";
+import "./SettlementStrategy.sol";
+import "../utils/TransactionUtil.sol";
 
+/**
+ * @title Async order claim data storage
+ */
 library AsyncOrderClaim {
     error OutsideSettlementWindow(uint256 timestamp, uint256 startTime, uint256 expirationTime);
     error IneligibleForCancellation(uint256 timestamp, uint256 expirationTime);
@@ -11,15 +14,42 @@ library AsyncOrderClaim {
     error InvalidClaim(uint256 asyncOrderId);
 
     struct Data {
+        /**
+         * @dev unique id for claim
+         */
         uint128 id;
+        /**
+         * @dev address that gets the final settlement amount, also the address that committed the order
+         */
         address owner;
-        SpotMarketFactory.TransactionType orderType;
-        uint256 amountEscrowed; // Amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
+        /**
+         * @dev can only be async buy or async sell (see: Transaction.Type)
+         */
+        Transaction.Type orderType;
+        /**
+         * @dev amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
+         */
+        uint256 amountEscrowed;
+        /**
+         * @dev id of settlement strategy used for this claim
+         */
         uint256 settlementStrategyId;
+        /**
+         * @dev settlementTime = commitment block time + settlement delay
+         */
         uint256 settlementTime;
+        /**
+         * @dev this is the amountProvided during commitment by trader.  we track this value so we can remove it
+         * from the totalCommittedUsdAmount in the AsyncOrder.Data when the claim is settled.
+         */
         int256 committedAmountUsd;
+        /**
+         * @dev minimum amount trader is willing to accept on settlement.
+         */
         uint256 minimumSettlementAmount;
-        uint256 commitmentBlockNum;
+        /**
+         * @dev timestamp of when the claim was settled.  this is used to prevent double settlement.
+         */
         uint256 settledAt;
     }
 
@@ -35,7 +65,7 @@ library AsyncOrderClaim {
     function create(
         uint128 marketId,
         uint128 claimId,
-        SpotMarketFactory.TransactionType orderType,
+        Transaction.Type orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
         uint256 settlementTime,

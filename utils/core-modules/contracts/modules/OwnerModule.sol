@@ -9,25 +9,11 @@ import "../interfaces/IOwnerModule.sol";
  * @title Module for giving a system owner based access control.
  * See IOwnerModule.
  */
-contract OwnerModule is Ownable, IOwnerModule, InitializableMixin {
-    /**
-     * @inheritdoc IOwnerModule
-     */
-    function isOwnerModuleInitialized() external view override returns (bool) {
-        return _isInitialized();
+contract OwnerModule is Ownable, IOwnerModule {
+    // solhint-disable-next-line no-empty-blocks
+    constructor() Ownable(address(0)) {
+        // empty intentionally
     }
 
-    /**
-     * @inheritdoc IOwnerModule
-     */
-    function initializeOwnerModule(address initialOwner) external override onlyIfNotInitialized {
-        nominateNewOwner(initialOwner);
-        acceptOwnership();
-
-        OwnableStorage.load().initialized = true;
-    }
-
-    function _isInitialized() internal view override returns (bool) {
-        return OwnableStorage.load().initialized;
-    }
+    // no impl intentionally
 }

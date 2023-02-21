@@ -23,10 +23,5 @@ jobs:
       # forgot to update it.
       - name: Check package-lock.json was correctly submmitted by the user
         run: |
-          cp package-lock.json package-lock.original.json
           npm i --package-lock-only
-      - uses: GuillaumeFalourd/diff-action@v1
-        with:
-          first_file_path: package-lock.json
-          second_file_path: package-lock.original.json
-          expected_result: PASSED
+          git diff --exit-code -- package-lock.json

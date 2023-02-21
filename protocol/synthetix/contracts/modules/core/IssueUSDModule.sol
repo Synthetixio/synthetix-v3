@@ -49,13 +49,21 @@ contract IssueUSDModule is IIssueUSDModule {
         FeatureFlag.ensureAccessToFeature(_MINT_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._MINT_PERMISSION);
 
-        Pool.Data storage pool = Pool.load(poolId);
+        // disabled collateralType cannot be used for minting
+        CollateralConfiguration.collateralEnabled(collateralType);
+
+        Pool.Data storage pool = Pool.loadExisting(poolId);
 
         int256 debt = pool.updateAccountDebt(collateralType, accountId);
         int256 newDebt = debt + amount.toInt();
 
         // Ensure minting stablecoins is increasing the debt of the position
-        require(newDebt > debt, "Incorrect new debt");
+        if (newDebt <= debt) {
+            revert ParameterError.InvalidParameter(
+                "newDebt",
+                "should be greater than current debt"
+            );
+        }
 
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);

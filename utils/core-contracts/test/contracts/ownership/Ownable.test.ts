@@ -19,12 +19,12 @@ describe('Ownable', function () {
 
   before('deploy the contract', async function () {
     const factory = await hre.ethers.getContractFactory('Ownable');
-    Ownable = await factory.deploy();
+    Ownable = await factory.deploy(await owner.getAddress());
   });
 
   describe('before an owner is set', function () {
     it('shows that the  owner is 0x0', async function () {
-      assert.equal(await Ownable.owner(), '0x0000000000000000000000000000000000000000');
+      assert.equal(await Ownable.owner(), await owner.getAddress());
     });
 
     it('shows that no new owner is nominated', async function () {
@@ -33,13 +33,6 @@ describe('Ownable', function () {
   });
 
   describe('after an owner is set', function () {
-    before('nominate and accept ownership NewOwner', async function () {
-      let tx = await Ownable.connect(owner).nominateNewOwner(await owner.getAddress());
-      await tx.wait();
-      tx = await Ownable.connect(owner).acceptOwnership();
-      await tx.wait();
-    });
-
     describe('Nominating a new owner', function () {
       let receipt: TransactionReceipt;
 

@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForward, fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
@@ -460,6 +460,20 @@ describe('RewardsManagerModule', function () {
     describe('wallets joining and leaving', () => {});
   });
 
+  describe('updateRewards()', async () => {
+    before(restore);
+
+    it('only works with existing account', async () => {
+      await assertRevert(
+        systems().Core.connect(owner).updateRewards(poolId, collateralAddress(), 276823567823),
+        'AccountNotFound(',
+        systems().Core
+      );
+    });
+
+    // the results of this function are verified elsewhere
+  });
+
   describe('claimRewards()', async () => {
     before(restore);
 
@@ -491,6 +505,26 @@ describe('RewardsManagerModule', function () {
           .Core.connect(user1)
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address)
     );
+
+    describe('when distributor payout returns false', async () => {
+      before('set fail', async () => {
+        await RewardDistributor.connect(owner).setShouldFailPayout(true);
+      });
+
+      after('set fail', async () => {
+        await RewardDistributor.connect(owner).setShouldFailPayout(false);
+      });
+
+      it('reverts', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
+          `RewardUnavailable("${RewardDistributor.address}")`,
+          systems().Core
+        );
+      });
+    });
 
     describe('successful claim', () => {
       before('claim', async () => {
@@ -586,24 +620,68 @@ describe('RewardsManagerModule', function () {
       );
     });
 
-    it('pool owner can remove reward distributor', async () => {
-      await systems()
-        .Core.connect(owner)
-        .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);
-    });
-
-    it('make sure distributor is removed', async () => {
-      await assertRevert(
-        RewardDistributor.connect(owner).distributeRewards(
+    describe('successful invoke', async () => {
+      before('distribute some reward', async () => {
+        const time = await getTime(provider());
+        await RewardDistributor.connect(owner).distributeRewards(
           poolId,
           collateralAddress(),
           rewardAmount,
-          0, // timestamp
-          0
-        ),
-        'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")',
-        systems().Core
-      );
+          time,
+          time + 100
+        );
+      });
+
+      before('remove', async () => {
+        await systems()
+          .Core.connect(owner)
+          .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);
+      });
+
+      it('make sure distributor is removed', async () => {
+        await assertRevert(
+          RewardDistributor.connect(owner).distributeRewards(
+            poolId,
+            collateralAddress(),
+            rewardAmount,
+            0, // timestamp
+            0
+          ),
+          'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")',
+          systems().Core
+        );
+      });
+
+      it('can still claim accumulated rewards', async () => {
+        const beforeBalance = await Collateral.balanceOf(await user1.getAddress());
+
+        await systems()
+          .Core.connect(user1)
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+
+        // make sure some rewards were actually distributed from the over time distribution
+        const afterBalance = await Collateral.balanceOf(await user1.getAddress());
+        assertBn.gt(afterBalance, beforeBalance);
+
+        await fastForward(1000, provider());
+
+        await systems()
+          .Core.connect(user1)
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+
+        // after first claim there should be no more additional rewards to claim
+        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), afterBalance);
+      });
+
+      it('cannot be re-registered', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(owner)
+            .registerRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address),
+          'InvalidParameter("distributor", "cant be re-registered")',
+          systems().Core
+        );
+      });
     });
   });
 });

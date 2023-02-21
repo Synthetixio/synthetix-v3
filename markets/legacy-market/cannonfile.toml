@@ -40,7 +40,7 @@ args = []
 [contract.InitialProxy]
 artifact = "Proxy"
 
-args = ["<%= contracts.InitialModuleBundle.address %>"]
+args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
 
 depends = ["contract.InitialModuleBundle"]
@@ -50,14 +50,6 @@ depends = ["contract.InitialModuleBundle"]
 artifact = "LegacyMarket"
 
 depends = ["import.v2x", "import.v3"]
-
-[invoke.acquireOwnership]
-target = ["InitialProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-
-depends = ["contract.InitialProxy"]
 
 [invoke.upgradeProxy]
 target = ["InitialProxy"]
@@ -70,7 +62,7 @@ factory.Proxy.abiOf = ["Market"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 
-depends = ["contract.Market", "invoke.acquireOwnership"]
+depends = ["contract.Market"]
 
 [invoke.setSystemAddresses]
 target = ["Proxy"]

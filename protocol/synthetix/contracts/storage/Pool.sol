@@ -44,7 +44,7 @@ library Pool {
     struct Data {
         /**
          * @dev Numeric identifier for the pool. Must be unique.
-         * @dev A pool with id zero exists! (See Pool.exists()). Users can delegate to this pool to be able to mint USD without being exposed to fluctuating debt.
+         * @dev A pool with id zero exists! (See Pool.loadExisting()). Users can delegate to this pool to be able to mint USD without being exposed to fluctuating debt.
          */
         uint128 id;
         /**
@@ -118,7 +118,7 @@ library Pool {
      * Reverts if the specified pool already exists.
      */
     function create(uint128 id, address owner) internal returns (Pool.Data storage pool) {
-        if (Pool.exists(id)) {
+        if (id == 0 || load(id).id == id) {
             revert PoolAlreadyExists(id);
         }
 
@@ -145,9 +145,13 @@ library Pool {
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
         uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
-        int128 totalDebtD18 = self.totalVaultDebtsD18;
+        int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
+            ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+            : int128(0);
 
         int256 cumulativeDebtChangeD18 = 0;
+
+        uint256 minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
         // This debt extracted from markets is then applied to the pool's vault debt distribution, which thus exposes debt to the pool's vaults.
@@ -161,17 +165,15 @@ library Pool {
 
             uint256 marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) /
                 totalWeightsD18;
-            int256 marketDebtD18 = (totalDebtD18 * weightD18.toInt()) / totalWeightsD18.toInt();
 
             Market.Data storage marketData = Market.load(marketConfiguration.marketId);
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
             int256 effectiveMaxShareValueD18 = getSystemMaxValuePerShare(
-                self,
                 marketData.id,
-                marketCreditCapacityD18,
-                marketDebtD18
+                minLiquidityRatioD18,
+                debtPerShareD18
             );
             // Imposed by pool.
             int256 configuredMaxShareValueD18 = marketConfiguration.maxDebtShareValueD18;
@@ -201,44 +203,18 @@ library Pool {
      * See `SystemPoolConfiguration.minLiquidityRatio`.
      */
     function getSystemMaxValuePerShare(
-        Data storage self,
         uint128 marketId,
-        uint256 creditCapacityD18,
-        int256 debtD18
+        uint256 minLiquidityRatioD18,
+        int256 debtPerShareD18
     ) internal view returns (int256) {
-        // Get the system-wide minimum liquidity ratio.
-        uint256 minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
-
-        // Retrieve the total shares of the pool's debt distribution.
-        uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
-
         // Retrieve the current value per share of the market.
         Market.Data storage marketData = Market.load(marketId);
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
-        // If there are no shares in the pool's debt distribution,
-        // (and the minimum liquidity setting is not set),
-        // then the maximum value per share is the market's current value per share.
-        if (totalSharesD18 == 0 && minLiquidityRatioD18 != 0) {
-            return valuePerShareD18;
-        }
-
-        // Calculate the *debt* per share of the pool's debt distribution.
-        // solhint-disable-next-line numcast/safe-cast
-        int256 debtPerShareD18 = debtD18 > 0 ? debtD18.divDecimal(totalSharesD18.toInt()) : int(0);
-
-        // If the system-wide setting is not set (unlikely),
-        // then the resulting maximum value per share is the distribution's value per share,
-        // plus a margin of 100% (see how `marginD18` is calculated below),
-        // minus the current debt per share.
-        if (minLiquidityRatioD18 == 0) {
-            return valuePerShareD18 + DecimalMath.UNIT_INT - debtPerShareD18;
-        }
-
         // Calculate the margin of debt that the market would incur if it hit the system wide limit.
-        uint256 marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
-            totalSharesD18
-        );
+        uint256 marginD18 = minLiquidityRatioD18 == 0
+            ? DecimalMath.UNIT
+            : DecimalMath.UNIT.divDecimal(minLiquidityRatioD18);
 
         // The resulting maximum value per share is the distribution's value per share,
         // plus the margin to hit the limit, minus the current debt per share.
@@ -246,12 +222,15 @@ library Pool {
     }
 
     /**
-     * @dev Returns true if a pool with the specified id exists.
-     *
-     * Note: Pool zero always exists, see "Pool.id".
+     * @dev Reverts if the pool does not exist with appropriate error. Otherwise, returns the pool.
      */
-    function exists(uint128 id) internal view returns (bool) {
-        return id == 0 || load(id).id == id;
+    function loadExisting(uint128 id) internal view returns (Data storage) {
+        Data storage p = load(id);
+        if (id != 0 && p.id != id) {
+            revert PoolNotFound(id);
+        }
+
+        return p;
     }
 
     /**
@@ -341,12 +320,10 @@ library Pool {
         Data storage self,
         address collateralType
     ) internal returns (uint256) {
-        recalculateVaultCollateral(self, collateralType);
-
-        int256 debtD18 = self.vaults[collateralType].currentDebt();
+        int256 vaultDebtD18 = currentVaultDebt(self, collateralType);
         (, uint256 collateralValueD18) = currentVaultCollateral(self, collateralType);
 
-        return debtD18 > 0 ? debtD18.toUint().divDecimal(collateralValueD18) : 0;
+        return vaultDebtD18 > 0 ? collateralValueD18.divDecimal(vaultDebtD18.toUint()) : 0;
     }
 
     /**
@@ -356,7 +333,7 @@ library Pool {
      */
     function findMarketWithCapacityLocked(
         Data storage self
-    ) internal view returns (Market.Data storage lockedMarketId) {
+    ) internal view returns (Market.Data storage lockedMarket) {
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
@@ -415,32 +392,25 @@ library Pool {
 
     /**
      * @dev Returns the specified account's collateralization ratio (collateral / debt).
+     * @dev If the account's debt is negative or zero, returns an "infinite" c-ratio.
      */
-    function currentAccountCollateralizationRatio(
+    function currentAccountCollateralRatio(
         Data storage self,
         address collateralType,
         uint128 accountId
     ) internal returns (uint256) {
-        (, uint256 getPositionCollateralValueD18) = currentAccountCollateral(
+        int256 positionDebtD18 = updateAccountDebt(self, collateralType, accountId);
+        if (positionDebtD18 <= 0) {
+            return type(uint256).max;
+        }
+
+        (, uint256 positionCollateralValueD18) = currentAccountCollateral(
             self,
             collateralType,
             accountId
         );
-        int256 getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
-        return
-            getPositionDebtD18 > 0
-                ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
-                : 1e20;
-    }
-
-    /**
-     * @dev Reverts if the specified pool does not exist.
-     */
-    function requireExists(uint128 poolId) internal view {
-        if (!Pool.exists(poolId)) {
-            revert PoolNotFound(poolId);
-        }
+        return positionCollateralValueD18.divDecimal(positionDebtD18.toUint());
     }
 
     /**

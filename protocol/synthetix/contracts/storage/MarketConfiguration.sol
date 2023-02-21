@@ -15,9 +15,9 @@ pragma solidity >=0.8.11 <0.9.0;
 library MarketConfiguration {
     struct Data {
         /**
-         * @dev Numeric identifier for the pool.
+         * @dev Numeric identifier for the market.
          *
-         * Must be unique.
+         * Must be unique, and in a list of `MarketConfiguration[]`, must be increasing.
          */
         uint128 marketId;
         /**

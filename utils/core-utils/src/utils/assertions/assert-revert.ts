@@ -14,7 +14,10 @@ export default async function assertRevert(
   let error;
   try {
     const txResponse = (await txResponsePromise) as ethers.providers.TransactionResponse;
-    await txResponse.wait(); // txReceipt.
+
+    if (txResponse.wait) {
+      await txResponse.wait(); // txReceipt.
+    }
   } catch (err) {
     error = err as { [k: string]: unknown };
   }

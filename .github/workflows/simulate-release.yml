@@ -46,6 +46,6 @@ jobs:
           --impersonate ${{ matrix.impersonate}} | tee deployment.txt
     # verify that a new proxy has not been deployed, we cannot edit the proxy
     # this is kind of hacky but sufficient for the time being
-    - run: '! grep "exec: contract.InitialProxy" ${{ matrix.project }}/deployment.txt'
+    - run: '! grep "exec: contract.InitialProxy\|exec: contract.InitialCoreProxy" ${{ matrix.project }}/deployment.txt'
 
         

@@ -40,7 +40,7 @@ npx hardhat storage:verify
 
 Which will do the following steps:
 
-1. It will execute the static storage validations on the contracts located at `contracts/modules/**`.
+1. It will execute the static storage validations on the contracts located at `contracts/**`.
 2. If it exists, it will load the `storage.dump.sol` file and check for invalid storage mutations.
 3. And, if all the previous validations passed, it will create or update the `storage.dump.sol` file, including the all the storage usage from your contracts.
 

@@ -18,15 +18,8 @@ describe('ERC721Owned', function () {
 
   before('deploy the contract', async function () {
     const factory = await hre.ethers.getContractFactory('ERC721OwnedMock');
-    ERC721 = await factory.deploy();
+    ERC721 = await factory.deploy(await owner.getAddress());
     const tx = await ERC721.initialize('Synthetix NFT', 'snxNFT', '');
-    await tx.wait();
-  });
-
-  before('set owner', async function () {
-    let tx = await ERC721.connect(owner).nominateNewOwner(await owner.getAddress());
-    await tx.wait();
-    tx = await ERC721.connect(owner).acceptOwnership();
     await tx.wait();
   });
 

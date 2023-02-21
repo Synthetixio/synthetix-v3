@@ -1,4 +1,5 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
@@ -36,6 +37,50 @@ describe('CollateralConfiguration', function () {
         })
     ).wait();
   };
+
+  describe('verifyIssuanceRatio()', async () => {
+    before('initialize fake collateral config', async () => {
+      await initFakeCollateralConfig(18);
+    });
+
+    it('fails if debt is too low for c-ratio', async () => {
+      await assertRevert(
+        systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+          fakeCollateral.address,
+          100,
+          499
+        ),
+        'InsufficientCollateralRatio("499", "100", "4990000000000000000", "5000000000000000000")',
+        systems().Core
+      );
+    });
+
+    it('succeeds when c-ratio is good', async () => {
+      await systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+        fakeCollateral.address,
+        100,
+        500
+      );
+      await systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+        fakeCollateral.address,
+        100,
+        1000
+      );
+      await systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+        fakeCollateral.address,
+        0,
+        1000
+      );
+    });
+
+    it('edge case: fails if positive debt with no collateral', async () => {
+      await assertRevert(
+        systems().Core.CollateralConfiguration_verifyIssuanceRatio(fakeCollateral.address, 100, 0),
+        'InsufficientCollateralRatio("0", "100", "0", "5000000000000000000")',
+        systems().Core
+      );
+    });
+  });
 
   describe('convertTokenToSystemAmount()', async () => {
     describe('scaling tokens with 0 decimals to system amount', async () => {
@@ -131,7 +176,7 @@ describe('CollateralConfiguration', function () {
             fakeCollateral.address,
             ONE_HUNDRED.add(1) // with 20 decimals, this is 1.00000000000000000001, or in the context of the system 1.00000000000000000001 * 10^18
           ),
-          `PrecisionLost(${ONE_HUNDRED.add(1)}, ${DECIMALS})`,
+          `PrecisionLost("${ONE_HUNDRED.add(1)}", "${DECIMALS}")`,
           systems().Core
         );
       });
@@ -144,7 +189,7 @@ describe('CollateralConfiguration', function () {
             fakeCollateral.address,
             TOKEN_AMOUNT // 100 would not result in a revert, but [99, 98, 97, ... 2, 1] would
           ),
-          `PrecisionLost(${TOKEN_AMOUNT}, ${DECIMALS})`,
+          `PrecisionLost("${TOKEN_AMOUNT}", "${DECIMALS}")`,
           systems().Core
         );
       });

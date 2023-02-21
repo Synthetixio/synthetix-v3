@@ -27,7 +27,7 @@ task(
   .addOptionalParam(
     'contracts',
     'Optional whitelist of contracts to get the storage values from',
-    ['contracts/modules/**'],
+    ['contracts/**', '!contracts/routers/**', '!contracts/generated/**', '!contracts/mocks/**'],
     types.stringArray
   )
   .addOptionalParam(
