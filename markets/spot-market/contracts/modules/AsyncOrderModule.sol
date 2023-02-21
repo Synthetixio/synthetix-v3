@@ -141,6 +141,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     /**
      * @inheritdoc IAsyncOrderModule
      */
+    /*
     function settleChainlinkOrder(
         bytes calldata result,
         bytes calldata extraData
@@ -182,6 +183,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 settlementStrategy
             );
     }
+    */
 
     /**
      * @inheritdoc IAsyncOrderModule
@@ -430,7 +432,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         bytes4 selector;
         if (settlementStrategy.strategyType == SettlementStrategy.Type.CHAINLINK) {
-            selector = AsyncOrderModule.settleChainlinkOrder.selector;
+            //selector = AsyncOrderModule.settleChainlinkOrder.selector;
         } else if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
             selector = AsyncOrderModule.settlePythOrder.selector;
         } else {

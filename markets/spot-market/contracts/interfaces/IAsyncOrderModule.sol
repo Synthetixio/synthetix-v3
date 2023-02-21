@@ -130,10 +130,12 @@ interface IAsyncOrderModule {
      * @return totalFees total fees for the transaction.
      * @return collectedFees fees collected by the configured fee collector.
      */
+    /*
     function settleChainlinkOrder(
         bytes calldata result,
         bytes calldata extraData
     ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
+    */
 
     /**
      * @notice Callback function for Pyth settlement strategy
