@@ -42,7 +42,6 @@ jobs:
     - run: |
         set -o pipefail
         cd ${{ matrix.project }}
-        false | tee test.txt
         npx hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
           --network ${{ matrix.network }} --dry-run \
           --impersonate ${{ matrix.impersonate}} | tee deployment.txt
