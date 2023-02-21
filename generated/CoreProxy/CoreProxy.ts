@@ -332,6 +332,66 @@ export class AssociatedSystemSet__Params {
   }
 }
 
+export class CollateralLockCreated extends ethereum.Event {
+  get params(): CollateralLockCreated__Params {
+    return new CollateralLockCreated__Params(this);
+  }
+}
+
+export class CollateralLockCreated__Params {
+  _event: CollateralLockCreated;
+
+  constructor(event: CollateralLockCreated) {
+    this._event = event;
+  }
+
+  get accountId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+
+  get tokenAmount(): BigInt {
+    return this._event.parameters[2].value.toBigInt();
+  }
+
+  get expireTimestamp(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class CollateralLockExpired extends ethereum.Event {
+  get params(): CollateralLockExpired__Params {
+    return new CollateralLockExpired__Params(this);
+  }
+}
+
+export class CollateralLockExpired__Params {
+  _event: CollateralLockExpired;
+
+  constructor(event: CollateralLockExpired) {
+    this._event = event;
+  }
+
+  get accountId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+
+  get tokenAmount(): BigInt {
+    return this._event.parameters[2].value.toBigInt();
+  }
+
+  get expireTimestamp(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
 export class Deposited extends ethereum.Event {
   get params(): Deposited__Params {
     return new Deposited__Params(this);
@@ -1190,7 +1250,7 @@ export class DelegationUpdated__Params {
   }
 }
 
-export class CoreProxy__getAccountPermissionsResultPermissionsStruct extends ethereum.Tuple {
+export class CoreProxy__getAccountPermissionsResultAccountPermsStruct extends ethereum.Tuple {
   get user(): Address {
     return this[0].toAddress();
   }
@@ -1254,6 +1314,16 @@ export class CoreProxy__getAccountCollateralResult {
 
   getTotalLocked(): BigInt {
     return this.value2;
+  }
+}
+
+export class CoreProxy__getLocksResultLocksStruct extends ethereum.Tuple {
+  get amountD18(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get lockExpirationTime(): BigInt {
+    return this[1].toBigInt();
   }
 }
 
@@ -1493,21 +1563,6 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
-  isOwnerModuleInitialized(): boolean {
-    let result = super.call('isOwnerModuleInitialized', 'isOwnerModuleInitialized():(bool)', []);
-
-    return result[0].toBoolean();
-  }
-
-  try_isOwnerModuleInitialized(): ethereum.CallResult<boolean> {
-    let result = super.tryCall('isOwnerModuleInitialized', 'isOwnerModuleInitialized():(bool)', []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBoolean());
-  }
-
   nominatedOwner(): Address {
     let result = super.call('nominatedOwner', 'nominatedOwner():(address)', []);
 
@@ -1683,19 +1738,19 @@ export class CoreProxy extends ethereum.SmartContract {
 
   getAccountPermissions(
     accountId: BigInt
-  ): Array<CoreProxy__getAccountPermissionsResultPermissionsStruct> {
+  ): Array<CoreProxy__getAccountPermissionsResultAccountPermsStruct> {
     let result = super.call(
       'getAccountPermissions',
       'getAccountPermissions(uint128):((address,bytes32[])[])',
       [ethereum.Value.fromUnsignedBigInt(accountId)]
     );
 
-    return result[0].toTupleArray<CoreProxy__getAccountPermissionsResultPermissionsStruct>();
+    return result[0].toTupleArray<CoreProxy__getAccountPermissionsResultAccountPermsStruct>();
   }
 
   try_getAccountPermissions(
     accountId: BigInt
-  ): ethereum.CallResult<Array<CoreProxy__getAccountPermissionsResultPermissionsStruct>> {
+  ): ethereum.CallResult<Array<CoreProxy__getAccountPermissionsResultAccountPermsStruct>> {
     let result = super.tryCall(
       'getAccountPermissions',
       'getAccountPermissions(uint128):((address,bytes32[])[])',
@@ -1706,7 +1761,7 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      value[0].toTupleArray<CoreProxy__getAccountPermissionsResultPermissionsStruct>()
+      value[0].toTupleArray<CoreProxy__getAccountPermissionsResultAccountPermsStruct>()
     );
   }
 
@@ -1851,6 +1906,49 @@ export class CoreProxy extends ethereum.SmartContract {
     );
   }
 
+  cleanExpiredLocks(
+    accountId: BigInt,
+    collateralType: Address,
+    offset: BigInt,
+    count: BigInt
+  ): BigInt {
+    let result = super.call(
+      'cleanExpiredLocks',
+      'cleanExpiredLocks(uint128,address,uint256,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(offset),
+        ethereum.Value.fromUnsignedBigInt(count),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_cleanExpiredLocks(
+    accountId: BigInt,
+    collateralType: Address,
+    offset: BigInt,
+    count: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'cleanExpiredLocks',
+      'cleanExpiredLocks(uint128,address,uint256,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(offset),
+        ethereum.Value.fromUnsignedBigInt(count),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getAccountAvailableCollateral(accountId: BigInt, collateralType: Address): BigInt {
     let result = super.call(
       'getAccountAvailableCollateral',
@@ -1913,6 +2011,51 @@ export class CoreProxy extends ethereum.SmartContract {
         value[1].toBigInt(),
         value[2].toBigInt()
       )
+    );
+  }
+
+  getLocks(
+    accountId: BigInt,
+    collateralType: Address,
+    offset: BigInt,
+    count: BigInt
+  ): Array<CoreProxy__getLocksResultLocksStruct> {
+    let result = super.call(
+      'getLocks',
+      'getLocks(uint128,address,uint256,uint256):((uint128,uint64)[])',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(offset),
+        ethereum.Value.fromUnsignedBigInt(count),
+      ]
+    );
+
+    return result[0].toTupleArray<CoreProxy__getLocksResultLocksStruct>();
+  }
+
+  try_getLocks(
+    accountId: BigInt,
+    collateralType: Address,
+    offset: BigInt,
+    count: BigInt
+  ): ethereum.CallResult<Array<CoreProxy__getLocksResultLocksStruct>> {
+    let result = super.tryCall(
+      'getLocks',
+      'getLocks(uint128,address,uint256,uint256):((uint128,uint64)[])',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(offset),
+        ethereum.Value.fromUnsignedBigInt(count),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      value[0].toTupleArray<CoreProxy__getLocksResultLocksStruct>()
     );
   }
 
@@ -2756,14 +2899,10 @@ export class CoreProxy extends ethereum.SmartContract {
     );
   }
 
-  getPositionCollateralizationRatio(
-    accountId: BigInt,
-    poolId: BigInt,
-    collateralType: Address
-  ): BigInt {
+  getPositionCollateralRatio(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
     let result = super.call(
-      'getPositionCollateralizationRatio',
-      'getPositionCollateralizationRatio(uint128,uint128,address):(uint256)',
+      'getPositionCollateralRatio',
+      'getPositionCollateralRatio(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -2774,14 +2913,14 @@ export class CoreProxy extends ethereum.SmartContract {
     return result[0].toBigInt();
   }
 
-  try_getPositionCollateralizationRatio(
+  try_getPositionCollateralRatio(
     accountId: BigInt,
     poolId: BigInt,
     collateralType: Address
   ): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
-      'getPositionCollateralizationRatio',
-      'getPositionCollateralizationRatio(uint128,uint128,address):(uint256)',
+      'getPositionCollateralRatio',
+      'getPositionCollateralRatio(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -2928,36 +3067,6 @@ export class AcceptOwnershipCall__Outputs {
   _call: AcceptOwnershipCall;
 
   constructor(call: AcceptOwnershipCall) {
-    this._call = call;
-  }
-}
-
-export class InitializeOwnerModuleCall extends ethereum.Call {
-  get inputs(): InitializeOwnerModuleCall__Inputs {
-    return new InitializeOwnerModuleCall__Inputs(this);
-  }
-
-  get outputs(): InitializeOwnerModuleCall__Outputs {
-    return new InitializeOwnerModuleCall__Outputs(this);
-  }
-}
-
-export class InitializeOwnerModuleCall__Inputs {
-  _call: InitializeOwnerModuleCall;
-
-  constructor(call: InitializeOwnerModuleCall) {
-    this._call = call;
-  }
-
-  get initialOwner(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-}
-
-export class InitializeOwnerModuleCall__Outputs {
-  _call: InitializeOwnerModuleCall;
-
-  constructor(call: InitializeOwnerModuleCall) {
     this._call = call;
   }
 }
@@ -3627,7 +3736,7 @@ export class CleanExpiredLocksCall__Inputs {
     return this._call.inputValues[2].value.toBigInt();
   }
 
-  get items(): BigInt {
+  get count(): BigInt {
     return this._call.inputValues[3].value.toBigInt();
   }
 }
@@ -3637,6 +3746,10 @@ export class CleanExpiredLocksCall__Outputs {
 
   constructor(call: CleanExpiredLocksCall) {
     this._call = call;
+  }
+
+  get cleared(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
 
@@ -5214,20 +5327,20 @@ export class GetPositionCall__Outputs {
   }
 }
 
-export class GetPositionCollateralizationRatioCall extends ethereum.Call {
-  get inputs(): GetPositionCollateralizationRatioCall__Inputs {
-    return new GetPositionCollateralizationRatioCall__Inputs(this);
+export class GetPositionCollateralRatioCall extends ethereum.Call {
+  get inputs(): GetPositionCollateralRatioCall__Inputs {
+    return new GetPositionCollateralRatioCall__Inputs(this);
   }
 
-  get outputs(): GetPositionCollateralizationRatioCall__Outputs {
-    return new GetPositionCollateralizationRatioCall__Outputs(this);
+  get outputs(): GetPositionCollateralRatioCall__Outputs {
+    return new GetPositionCollateralRatioCall__Outputs(this);
   }
 }
 
-export class GetPositionCollateralizationRatioCall__Inputs {
-  _call: GetPositionCollateralizationRatioCall;
+export class GetPositionCollateralRatioCall__Inputs {
+  _call: GetPositionCollateralRatioCall;
 
-  constructor(call: GetPositionCollateralizationRatioCall) {
+  constructor(call: GetPositionCollateralRatioCall) {
     this._call = call;
   }
 
@@ -5244,10 +5357,10 @@ export class GetPositionCollateralizationRatioCall__Inputs {
   }
 }
 
-export class GetPositionCollateralizationRatioCall__Outputs {
-  _call: GetPositionCollateralizationRatioCall;
+export class GetPositionCollateralRatioCall__Outputs {
+  _call: GetPositionCollateralRatioCall;
 
-  constructor(call: GetPositionCollateralizationRatioCall) {
+  constructor(call: GetPositionCollateralRatioCall) {
     this._call = call;
   }
 
