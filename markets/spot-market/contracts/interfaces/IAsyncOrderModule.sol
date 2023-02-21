@@ -140,6 +140,8 @@ interface IAsyncOrderModule {
      * @dev This is the selector specified as callback when settlement strategy is pyth offchain.
      * @dev The data returned from the offchain lookup should be sent as "result"
      * @dev The extraData is the same as the one sent during the offchain lookup revert error. It is used to retrieve the commitment claim.
+     * @dev this function expects ETH that is passed through to the Pyth contract for the fee it's charging.
+     * @dev To determine the fee, the client should first call getUpdateFee() from Pyth's verifier contract.
      * @param result result returned from the offchain lookup.
      * @param extraData extra data sent during the offchain lookup revert error.
      * @return finalOrderAmount amount returned to trader after fees.
@@ -149,7 +151,7 @@ interface IAsyncOrderModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
+    ) external payable returns (uint finalOrderAmount, int totalFees, uint collectedFees);
 
     /**
      * @notice Cancel an async order via this function

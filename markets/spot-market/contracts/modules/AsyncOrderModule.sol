@@ -189,7 +189,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external override returns (uint, int, uint) {
+    ) external payable returns (uint, int, uint) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -204,13 +204,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates(
-                updateData,
-                priceIds,
-                asyncOrderClaim.settlementTime.to64(),
-                (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration)
-                    .to64()
-            );
+        ).parsePriceFeedUpdates{value: msg.value}(
+            updateData,
+            priceIds,
+            asyncOrderClaim.settlementTime.to64(),
+            (asyncOrderClaim.settlementTime + settlementStrategy.settlementWindowDuration).to64()
+        );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
         uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
@@ -219,8 +218,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             offchainPrice,
             Price.getCurrentPrice(marketId, asyncOrderClaim.orderType)
         );
-
-        uint publishTime = uint(priceFeeds[0].price.publishTime);
 
         return
             _settleOrder(
@@ -250,6 +247,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     /**
      * @inheritdoc IAsyncOrderModule
      */
+    // solc-ignore-next-line func-mutability
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -98,7 +98,7 @@ library AssociatedSystem {
 library DecayToken {
     bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
     struct Data {
-        uint256 interestRate;
+        uint256 decayRate;
         uint256 epochStart;
         uint256 totalSupplyAtEpochStart;
     }
@@ -342,4 +342,9 @@ library Transaction {
         WRAP,
         UNWRAP
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

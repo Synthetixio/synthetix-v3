@@ -8,6 +8,8 @@ import { glob, runTypeChain } from 'typechain';
 
 interface Params {
   cannonfile?: string;
+  dryRun?: boolean;
+  impersonate?: string;
 }
 
 // Deployments path added by hardhat-cannon
@@ -17,20 +19,20 @@ declare module 'hardhat/types/config' {
   }
 }
 
-export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Params = {}) {
+export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonfile.toml' }) {
   let outputs: ChainBuilderContext;
   let provider: ethers.providers.JsonRpcProvider;
   let signers: ethers.Signer[];
 
   before(async function prepareNode() {
-    this.timeout(90000);
+    this.timeout(900000);
 
     const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
     const typechainFolder = path.resolve(generatedPath, 'typechain');
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
     const cannonOpts =
-      hre.network.name === 'cannon' ? { cannonfile } : { cannonfile, noVerify: true };
+      hre.network.name === 'cannon' ? { ...params } : { ...params, noVerify: true };
 
     const cannonInfo = await hre.run('cannon:build', {
       writeDeployments,

@@ -44,4 +44,8 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
         int192 priceFormatted = int192(price) * 10 ** 18;
         verifierResponse = abi.encode("ETH-USD", block.timestamp, 10, priceFormatted);
     }
+
+    function getUpdateFee(uint updateDataSize) external view override returns (uint) {
+        return 1;
+    }
 }
