@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IAtomicOrderModule.sol";
@@ -39,8 +38,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             msg.sender,
             usdAmount,
-            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY),
-            SpotMarketFactory.TransactionType.BUY
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            Transaction.Type.BUY
         );
 
         spotMarketFactory.depositToMarketManager(marketId, amountUsable);
@@ -49,7 +48,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount = Price.usdSynthExchangeRate(
             marketId,
             amountUsable,
-            SpotMarketFactory.TransactionType.BUY
+            Transaction.Type.BUY
         );
 
         if (synthAmount < minAmountReceived) {
@@ -78,7 +77,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 usdAmount = Price.synthUsdExchangeRate(
             marketId,
             synthAmount,
-            SpotMarketFactory.TransactionType.SELL
+            Transaction.Type.SELL
         );
 
         // calculate fees
@@ -86,8 +85,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             msg.sender,
             usdAmount,
-            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.SELL),
-            SpotMarketFactory.TransactionType.SELL
+            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            Transaction.Type.SELL
         );
 
         if (returnAmount < minAmountReceived) {
@@ -113,7 +112,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                SpotMarketFactory.TransactionType.SELL
+                Transaction.Type.SELL
             );
         }
 

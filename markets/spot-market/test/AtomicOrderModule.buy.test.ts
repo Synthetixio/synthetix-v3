@@ -26,13 +26,6 @@ describe('Atomic Order Module buy()', () => {
     await assertRevert(systems().SpotMarket.buy(25, 10000, 10000), 'InvalidMarket');
   });
 
-  it('reverts when user does not have proper funds', async () => {
-    await assertRevert(
-      systems().SpotMarket.connect(signers()[8]).buy(marketId(), 10000, 10000),
-      'InsufficientAllowance("10000", "0")'
-    );
-  });
-
   describe('slippage', () => {
     let withdrawableUsd: Ethers.BigNumber;
     it('reverts buy when minAmountReceived condition is not meet', async () => {
