@@ -49,26 +49,25 @@ library UniswapNode {
         }
 
         uint256 baseAmount = 10 ** decimalsToken;
-        int256 price = getQuoteAtTick(tick, baseAmount.to128(), token, stablecoin).toInt();
+        int256 price = getQuoteAtTick(tick, baseAmount, token, stablecoin).toInt();
 
-        uint256 factor = (PRECISION - decimalsStablecoin);
-        int256 finalPrice = factor > 0
-            ? price.upscale(factor)
-            : price.downscale((-factor.toInt()).toUint());
+        int256 finalPrice = PRECISION > decimalsStablecoin
+            ? price.upscale(PRECISION - decimalsStablecoin)
+            : price.downscale(decimalsStablecoin - PRECISION);
 
         return NodeOutput.Data(finalPrice, 0, 0, 0);
     }
 
     function getQuoteAtTick(
         int24 tick,
-        uint128 baseAmount,
+        uint256 baseAmount,
         address baseToken,
         address quoteToken
     ) internal pure returns (uint256 quoteAmount) {
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
 
         // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by itself
-        if (sqrtRatioX96 <= type(uint128).max) {
+        if (sqrtRatioX96 <= type(uint256).max) {
             uint256 ratioX192 = sqrtRatioX96.to256() * sqrtRatioX96;
             quoteAmount = baseToken < quoteToken
                 ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)

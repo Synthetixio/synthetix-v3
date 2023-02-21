@@ -27,11 +27,13 @@ export function bootstrapWithNodes() {
   let aggregator2: ethers.Contract;
   let aggregator3: ethers.Contract;
   let aggregator4: ethers.Contract;
+  let aggregator5: ethers.Contract;
 
   let nodeId1: string;
   let nodeId2: string;
   let nodeId3: string;
   let nodeId4: string;
+  let nodeId5: string;
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.getSigners();
@@ -48,6 +50,9 @@ export function bootstrapWithNodes() {
 
     aggregator4 = await factory.connect(owner).deploy();
     await aggregator4.mockSetCurrentPrice(ethers.utils.parseUnits('1.6', 6), 6);
+
+    aggregator5 = await factory.connect(owner).deploy();
+    await aggregator5.mockSetCurrentPrice(ethers.utils.parseUnits('0', 6), 6);
   });
 
   before('register leaf nodes', async function () {
@@ -57,6 +62,7 @@ export function bootstrapWithNodes() {
     const params2 = abi.encode(['address', 'uint256', 'uint8'], [aggregator2.address, 0, 6]);
     const params3 = abi.encode(['address', 'uint256', 'uint8'], [aggregator3.address, 0, 6]);
     const params4 = abi.encode(['address', 'uint256', 'uint8'], [aggregator4.address, 0, 6]);
+    const params5 = abi.encode(['address', 'uint256', 'uint8'], [aggregator5.address, 0, 6]);
 
     const registerNode = async (params: string) => {
       const tx = await NodeModule.registerNode(NodeTypes.CHAINLINK, params, []);
@@ -68,6 +74,7 @@ export function bootstrapWithNodes() {
     nodeId2 = await registerNode(params2);
     nodeId3 = await registerNode(params3);
     nodeId4 = await registerNode(params4);
+    nodeId5 = await registerNode(params5);
   });
 
   return {
@@ -76,6 +83,7 @@ export function bootstrapWithNodes() {
     nodeId2: () => nodeId2,
     nodeId3: () => nodeId3,
     nodeId4: () => nodeId4,
+    nodeId5: () => nodeId5,
   };
 }
 

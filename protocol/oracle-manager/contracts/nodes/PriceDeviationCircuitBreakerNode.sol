@@ -20,19 +20,21 @@ library PriceDeviationCircuitBreakerNode {
     ) internal pure returns (NodeOutput.Data memory) {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
-        int256 primaryPrice = abs(parentNodeOutputs[0].price);
-        int256 comparisonPrice = abs(parentNodeOutputs[1].price);
+        int256 primaryPrice = parentNodeOutputs[0].price;
+        int256 comparisonPrice = parentNodeOutputs[1].price;
 
         if (primaryPrice != comparisonPrice) {
             int256 difference = abs(primaryPrice - comparisonPrice);
             if (
                 primaryPrice == 0 ||
-                deviationTolerance.toInt() < ((difference.upscale(18)) / primaryPrice)
+                deviationTolerance.toInt() < ((difference.upscale(18)) / abs(primaryPrice))
             ) {
                 if (parentNodeOutputs.length > 2) {
                     return parentNodeOutputs[2];
                 } else {
-                    revert DeviationToleranceExceeded(difference / primaryPrice);
+                    revert DeviationToleranceExceeded(
+                        primaryPrice == 0 ? type(int256).max : difference / primaryPrice
+                    );
                 }
             }
         }

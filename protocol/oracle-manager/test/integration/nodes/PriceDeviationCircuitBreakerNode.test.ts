@@ -6,7 +6,7 @@ import { bn, bootstrapWithNodes } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 
 describe('PriceDeviationCircuitBreakerNode', function () {
-  const { getContract, nodeId1, nodeId3, nodeId4 } = bootstrapWithNodes();
+  const { getContract, nodeId1, nodeId3, nodeId4, nodeId5 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;
   let NodeModule: ethers.Contract;
@@ -68,6 +68,29 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     it('expect process to return first node price since prices are 50% different', async () => {
       const priceData = await NodeModule.process(nodeId);
       assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
+    });
+  });
+
+  describe('register a circuit breaker with primary price 0', async () => {
+    let nodeId;
+    before(async () => {
+      // 50% Deviation Tolerance
+      // nodeId5 is 0
+      const deviationTolerance = bn(0.5);
+      const params = abi.encode(['uint256'], [deviationTolerance]);
+
+      await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, [
+        nodeId5(),
+        nodeId3(),
+      ]);
+      nodeId = await NodeModule.getNodeId(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, [
+        nodeId5(),
+        nodeId3(),
+      ]);
+    });
+
+    it('expect process to return first node price since prices are 50% different', async () => {
+      await assertRevert(NodeModule.process(nodeId), 'DeviationToleranceExceeded', NodeModule);
     });
   });
 
