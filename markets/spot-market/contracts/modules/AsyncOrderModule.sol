@@ -11,7 +11,6 @@ import "../storage/AsyncOrder.sol";
 import "../storage/SettlementStrategy.sol";
 import "../interfaces/IAsyncOrderModule.sol";
 import "../utils/FeeUtil.sol";
-import "../utils/TransactionUtil.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 

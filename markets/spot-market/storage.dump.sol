@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
-        bool initialized;
         address owner;
         address nominatedOwner;
     }
@@ -163,6 +162,15 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact contracts/Router.sol:Router
+contract Router {
+    address private constant _OWNER_MODULE = 0x3200aBf4B3d6C868fe70b428dC3e898c32b3663E;
+    address private constant _SPOT_MARKET_MODULE = 0x91c427931Ed73c19A5FA5bEDd57527B34e93339e;
+    address private constant _SYNTH_MODULE = 0xC0521D30b16E249e0d85B1206e451092f385BFA9;
+    address private constant _UPGRADE_MODULE = 0xA68d83542cA7e0CFF43bFC14B0d73e0947C60CB8;
+    address private constant _WRAPPER_MODULE = 0xA206a1719366E051d4462b65A1838De89D82A6ba;
+}
+
 // @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
 interface IPythVerifier {
     struct Price {
@@ -208,13 +216,12 @@ library AsyncOrderClaim {
     struct Data {
         uint128 id;
         address owner;
-        SpotMarketFactory.TransactionType orderType;
+        Transaction.Type orderType;
         uint256 amountEscrowed;
         uint256 settlementStrategyId;
         uint256 settlementTime;
         int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
-        uint256 commitmentBlockNum;
         uint256 settledAt;
     }
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -295,14 +302,6 @@ library SettlementStrategy {
 // @custom:artifact contracts/storage/SpotMarketFactory.sol:SpotMarketFactory
 library SpotMarketFactory {
     bytes32 private constant _SLOT_SPOT_MARKET_FACTORY = keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
-    enum TransactionType {
-        BUY,
-        SELL,
-        ASYNC_BUY,
-        ASYNC_SELL,
-        WRAP,
-        UNWRAP
-    }
     struct Data {
         address usdToken;
         address oracle;
@@ -322,8 +321,8 @@ library SpotMarketFactory {
 // @custom:artifact contracts/storage/Wrapper.sol:Wrapper
 library Wrapper {
     struct Data {
-        address collateralType;
-        bool wrappingEnabled;
+        address wrapCollateralType;
+        uint256 maxWrappableAmount;
     }
     function load(uint128 marketId) internal pure returns (Data storage wrapper) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Wrapper", marketId));
@@ -343,9 +342,4 @@ library Transaction {
         WRAP,
         UNWRAP
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

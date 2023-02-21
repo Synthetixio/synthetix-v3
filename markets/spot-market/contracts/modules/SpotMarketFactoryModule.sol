@@ -3,17 +3,13 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
-import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-
 import "../utils/SynthUtil.sol";
-import "../utils/TransactionUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 

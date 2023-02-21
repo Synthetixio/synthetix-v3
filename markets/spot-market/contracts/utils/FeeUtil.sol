@@ -5,6 +5,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../storage/FeeConfiguration.sol";
+import "../storage/AsyncOrder.sol";
+import "../utils/SynthUtil.sol";
 
 library FeeUtil {
     using SpotMarketFactory for SpotMarketFactory.Data;

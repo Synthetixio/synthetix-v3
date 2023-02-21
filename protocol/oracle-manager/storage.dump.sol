@@ -5,6 +5,7 @@ pragma solidity >=0.8.0;
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
+        bool initialized;
         address owner;
         address nominatedOwner;
     }

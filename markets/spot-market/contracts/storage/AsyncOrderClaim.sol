@@ -1,8 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./AsyncOrderConfiguration.sol";
-import "./SpotMarketFactory.sol";
+import "./SettlementStrategy.sol";
 import "../utils/TransactionUtil.sol";
 
 /**

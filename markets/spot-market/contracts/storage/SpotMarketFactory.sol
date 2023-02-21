@@ -3,11 +3,9 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import "../interfaces/ISpotMarketFactoryModule.sol";
-import "../utils/TransactionUtil.sol";
 import "./Price.sol";
-import "./Wrapper.sol";
 
 /**
  * @title Main factory library that registers synths.  Also houses global configuration for all synths.

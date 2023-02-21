@@ -3,13 +3,11 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 import "../utils/FeeUtil.sol";
-import "../utils/TransactionUtil.sol";
 
 /**
  * @title Module for buying and selling atomically registered synths.
