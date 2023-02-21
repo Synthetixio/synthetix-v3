@@ -39,6 +39,8 @@ jobs:
         run_daemon: true
     - run: npm ci
     - run: npm run build
+    # for testing
+    - run: ipfs cat Qmc146E4WKpR8bUNwgsu4fjJKJBUEu5J7NBnxtSyvRRb9H
     - run: |
         cd ${{ matrix.project }}
         npx hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
