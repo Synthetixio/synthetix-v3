@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -162,15 +162,6 @@ library NodeOutput {
     }
 }
 
-// @custom:artifact contracts/Router.sol:Router
-contract Router {
-    address private constant _OWNER_MODULE = 0x3200aBf4B3d6C868fe70b428dC3e898c32b3663E;
-    address private constant _SPOT_MARKET_MODULE = 0x91c427931Ed73c19A5FA5bEDd57527B34e93339e;
-    address private constant _SYNTH_MODULE = 0xC0521D30b16E249e0d85B1206e451092f385BFA9;
-    address private constant _UPGRADE_MODULE = 0xA68d83542cA7e0CFF43bFC14B0d73e0947C60CB8;
-    address private constant _WRAPPER_MODULE = 0xA206a1719366E051d4462b65A1838De89D82A6ba;
-}
-
 // @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
 interface IPythVerifier {
     struct Price {
@@ -186,8 +177,8 @@ interface IPythVerifier {
     }
 }
 
-// @custom:artifact contracts/modules/AsyncOrderModule.sol:AsyncOrderModule
-contract AsyncOrderModule {
+// @custom:artifact contracts/modules/AsyncOrderSettlementModule.sol:AsyncOrderSettlementModule
+contract AsyncOrderSettlementModule {
     int256 public constant PRECISION = 18;
 }
 
@@ -342,9 +333,4 @@ library Transaction {
         WRAP,
         UNWRAP
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
