@@ -5,6 +5,7 @@ import commonConfig from '@synthetixio/common-config/hardhat.config';
 const config = {
   ...commonConfig,
   solidity: '0.8.17',
+  allowUnlimitedContractSize: true,
   docgen: {
     exclude: [
       './interfaces/external',

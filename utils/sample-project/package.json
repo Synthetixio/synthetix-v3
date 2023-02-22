@@ -4,6 +4,7 @@
   "description": "Sample project implemeting Proxy architecture",
   "private": true,
   "scripts": {
+    "clean": "hardhat clean",
     "build": "hardhat storage:verify",
     "test": "hardhat test",
     "coverage": "hardhat test"
@@ -13,6 +14,6 @@
     "@synthetixio/core-contracts": "*",
     "@synthetixio/core-modules": "*",
     "@synthetixio/hardhat-storage": "*",
-    "hardhat-cannon": "^2.0.9-alpha.1"
+    "hardhat-cannon": "^2.1.3"
   }
 }
