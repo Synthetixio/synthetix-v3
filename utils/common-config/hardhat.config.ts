@@ -92,10 +92,7 @@ const config = {
     username: 'synthetix-services',
   },
   cannon: {
-    ipfsEndpoint: 'https://ipfs.infura.io:5001',
-    ipfsAuthorizationHeader: `Basic ${Buffer.from(
-      process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
-    ).toString('base64')}`,
+    publicSourceCode: true
   },
 };
 
