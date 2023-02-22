@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
-import { SynthRouter } from '../generated/typechain';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -30,14 +29,11 @@ describe('AsyncOrdersModule.e2e.test', function () {
     verifier: ethers.Contract,
     trader1: ethers.Signer,
     keeper: ethers.Signer,
-    synth: SynthRouter,
     startTime: number,
     strategyId: number;
 
   before('identify', async () => {
     [, , marketOwner, trader1, , keeper] = signers();
-    const synthAddress = await systems().SpotMarket.getSynth(marketId());
-    synth = systems().Synth(synthAddress);
     verifier = await hre.ethers.getContractAt('IPythVerifier', feedAddress);
   });
 
@@ -84,7 +80,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
       try {
         const tx = await systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1);
         await tx.wait(); // txReceipt.
-      } catch (err: any) {
+      } catch (err) {
         const parseString = (str: string) => str.trim().replace('"', '').replace('"', '');
         const parsedError = formatErrorMessage(err)
           .replace('OffchainLookup(', '')
@@ -108,7 +104,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
       //There is a delay on pyth service
       await new Promise((resolve) => setTimeout(resolve, 30000));
 
-      const response = await fetch(parsedURL).then((res: any) => res.json());
+      const response = await fetch(parsedURL).then((res) => res.json());
 
       await systems().SpotMarket.connect(keeper).settlePythOrder(response.data, extraData, {
         value: fee.toString(),

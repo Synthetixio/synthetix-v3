@@ -5,14 +5,14 @@ import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import {
+  FeeCollectorMock,
+  OracleVerifierMock,
   SpotMarketProxy,
   SynthetixCollateralMock,
   SynthetixCoreProxy,
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
   SynthRouter,
-  FeeCollectorMock,
-  OracleVerifierMock,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -38,14 +38,17 @@ export type Systems = {
   Synth: (address: string) => SynthRouter;
 };
 
-const params =
-  hre.network.name === 'cannon'
-    ? { cannonfile: 'cannonfile.test.toml' }
-    : {
-        dryRun: true,
-        impersonate: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-        cannonfile: 'cannonfile.test.toml',
-      };
+const params = { cannonfile: 'cannonfile.test.toml' };
+
+// TODO: find an alternative way for custom config on fork tests. Probably having
+//       another bootstrap.ts on the test-fork/ folder would be best.
+// hre.network.name === 'cannon'
+//   ? { cannonfile: 'cannonfile.test.toml' }
+//   : {
+//       dryRun: true,
+//       impersonate: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+//       cannonfile: 'cannonfile.test.toml',
+//     };
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>(params);
 
