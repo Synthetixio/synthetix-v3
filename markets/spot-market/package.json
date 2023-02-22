@@ -6,6 +6,7 @@
   "scripts": {
     "build": "hardhat storage:verify && hardhat cannon:build",
     "start": "npm run build && npm run cannon",
+    "clean": "hardhat clean",
     "cannon": "npx cannon spot-market:0.0.3-alpha",
     "test": "hardhat test",
     "coverage": "npm run build && hardhat coverage --network hardhat",

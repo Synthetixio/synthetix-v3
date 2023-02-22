@@ -4,6 +4,7 @@
   "description": "Sample project implemeting Proxy architecture",
   "private": true,
   "scripts": {
+    "clean": "hardhat clean",
     "build": "hardhat storage:verify",
     "test": "hardhat test",
     "coverage": "hardhat test"
