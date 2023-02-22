@@ -1,6 +1,7 @@
 import {
   ChainArtifacts,
   ChainBuilderContext,
+  ChainBuilderRuntime,
   ChainBuilderRuntimeInfo,
   registerAction,
 } from '@usecannon/builder';
@@ -12,9 +13,11 @@ import { JTDDataType } from 'ajv/dist/core';
 import Debug from 'debug';
 import { ethers } from 'ethers';
 import _ from 'lodash';
-import { compileContract } from '../compile';
+import { compileContract, getCompileInput } from '../compile';
 import { generateRouter } from '../generate';
 import { DeployedContractData } from '../types';
+
+import solc from 'solc';
 
 const debug = Debug('router:cannon');
 
@@ -85,7 +88,7 @@ const routerAction = {
   },
 
   async exec(
-    runtime: ChainBuilderRuntimeInfo,
+    runtime: ChainBuilderRuntime,
     ctx: ChainBuilderContext,
     config: Config,
     currentLabel: string
@@ -118,7 +121,23 @@ const routerAction = {
 
     debug('router source code', sourceCode);
 
+    const inputData = await getCompileInput(contractName, sourceCode);
     const solidityInfo = await compileContract(contractName, sourceCode);
+
+    // the abi is entirely basedon the fallback call so we have to generate ABI here
+    const routableAbi = getMergedAbiFromContractPaths(ctx, config.contracts);
+
+    runtime.reportContractArtifact(`${contractName}.sol:${contractName}`, {
+      contractName,
+      sourceName: `${contractName}.sol`,
+      abi: routableAbi,
+      bytecode: solidityInfo.bytecode,
+      linkReferences: {},
+      source: {
+        solcVersion: solc.version().match(/(^.*commit\.[0-9a-f]*)\..*/)[1],
+        input: JSON.stringify(inputData),
+      },
+    });
 
     const deployTxn = await ethers.ContractFactory.fromSolidity(
       solidityInfo
@@ -138,7 +157,7 @@ const routerAction = {
       contracts: {
         [contractName]: {
           address: receipt.contractAddress,
-          abi: getMergedAbiFromContractPaths(ctx, config.contracts), // the abi is entirely basedon the fallback call so we have to generate ABI here
+          abi: routableAbi,
           deployedOn: currentLabel,
           deployTxnHash: deployedRouterContractTxn.hash,
           contractName,
