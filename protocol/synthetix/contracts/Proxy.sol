@@ -5,9 +5,9 @@ import {UUPSProxyWithOwner} from "@synthetixio/core-contracts/contracts/proxy/UU
 
 /**
  * Synthetix V3 Official Proxy Contract
- * 
+ *
  * If you are wondering how to interact with this contract or what functions are available, you can
- * view and download the full, up-to-date ABI implementation, list of implementation contracts, 
+ * view and download the full, up-to-date ABI implementation, list of implementation contracts,
  * and a UI for reading/writing the proxy at https://usecannon.com/packages/synthetix/interact
  */
 contract Proxy is UUPSProxyWithOwner {

@@ -92,7 +92,7 @@ const config = {
     username: 'synthetix-services',
   },
   cannon: {
-    publicSourceCode: true
+    publicSourceCode: true,
   },
 };
 

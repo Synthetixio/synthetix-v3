@@ -135,8 +135,8 @@ const routerAction = {
       linkReferences: {},
       source: {
         solcVersion: solc.version().match(/(^.*commit\.[0-9a-f]*)\..*/)[1],
-        input: JSON.stringify(inputData)
-      }
+        input: JSON.stringify(inputData),
+      },
     });
 
     const deployTxn = await ethers.ContractFactory.fromSolidity(
@@ -157,7 +157,7 @@ const routerAction = {
       contracts: {
         [contractName]: {
           address: receipt.contractAddress,
-          abi: routableAbi, 
+          abi: routableAbi,
           deployedOn: currentLabel,
           deployTxnHash: deployedRouterContractTxn.hash,
           contractName,
