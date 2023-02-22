@@ -5,11 +5,9 @@ import {UUPSProxyWithOwner} from "@synthetixio/core-contracts/contracts/proxy/UU
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 /**
- * Synthetix Oracle Manager Official Proxy Contract
+ * Synthetix Oracle Manager Proxy Contract
  *
- * If you are wondering how to interact with this contract or what functions are available, you can
- * view and download the full, up-to-date ABI implementation, list of implementation contracts,
- * and a UI for reading/writing the proxy at https://usecannon.com/packages/oracle-manager/interact
+ * Visit https://usecannon.com/packages/oracle-manager to interact with this protocol
  */
 contract Proxy is UUPSProxyWithOwner {
     // solhint-disable-next-line no-empty-blocks
