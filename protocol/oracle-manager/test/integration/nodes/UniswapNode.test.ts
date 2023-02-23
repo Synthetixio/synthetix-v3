@@ -62,4 +62,35 @@ describe('UniswapNode', function () {
     assertBn.equal(output.price, 1000000);
     assertBn.equal(output.timestamp, 0);
   });
+
+  it('test tokens with large decimals', async () => {
+    before(async () => {
+      NodeModule = getContract('NodeModule');
+      [owner] = getSigners();
+
+      token1 = await ERC20MockFactory.connect(owner).deploy();
+      await token1.initialize('Synthetix Network Token', 'snx', 26);
+
+      // Deploy the mock V3 Pool
+      const factory = await hre.ethers.getContractFactory('MockObservable');
+      MockObservable = await factory
+        .connect(owner)
+        .deploy([4, 0], [12, 12], [10, 20], token0.address, token1.address);
+    }, []);
+
+    it('register the uniswap node the latest price', async () => {
+      const NodeParameters = abi.encode(
+        ['address', 'address', 'uint8', 'uint8', 'address', 'uint32'],
+        [token0.address, token1.address, 6, 26, MockObservable.address, 4]
+      );
+      await NodeModule.registerNode(NodeTypes.UNISWAP, NodeParameters, []);
+      nodeId = await NodeModule.getNodeId(NodeTypes.UNISWAP, NodeParameters, []);
+    });
+
+    it('retrieves the latest price', async () => {
+      const output = await NodeModule.process(nodeId);
+      assertBn.equal(output.price, 1000000);
+      assertBn.equal(output.timestamp, 0);
+    });
+  });
 });
