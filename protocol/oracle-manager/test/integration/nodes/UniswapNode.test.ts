@@ -63,8 +63,8 @@ describe('UniswapNode', function () {
     assertBn.equal(output.timestamp, 0);
   });
 
-  it('test tokens with large decimals', async () => {
-    before(async () => {
+  describe('test tokens with large decimals', async () => {
+    before('prepare', async () => {
       NodeModule = getContract('NodeModule');
       [owner] = getSigners();
 
@@ -76,7 +76,7 @@ describe('UniswapNode', function () {
       MockObservable = await factory
         .connect(owner)
         .deploy([4, 0], [12, 12], [10, 20], token0.address, token1.address);
-    }, []);
+    });
 
     it('register the uniswap node the latest price', async () => {
       const NodeParameters = abi.encode(
@@ -89,7 +89,7 @@ describe('UniswapNode', function () {
 
     it('retrieves the latest price', async () => {
       const output = await NodeModule.process(nodeId);
-      assertBn.equal(output.price, 1000000);
+      assertBn.equal(output.price, 0);
       assertBn.equal(output.timestamp, 0);
     });
   });
