@@ -129,6 +129,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
      * @inheritdoc IDecayTokenModule
      */
     function setAllowance(address from, address spender, uint256 amount) external override {
+        OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }
 
