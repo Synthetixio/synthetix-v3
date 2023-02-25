@@ -14,57 +14,30 @@ import "../storage/PerpsMarketFactory.sol";
 import "../interfaces/IPerpsMarketFactoryModule.sol";
 
 /**
- * @title Module for registering perpetual futures markets. The factory tracks all synths in the system and consolidates implementation for all markets.
+ * @title Module for registering perpetual futures markets. The factory tracks all markets in the system and consolidates implementation.
  * @dev See IPerpsMarketFactoryModule.
  */
 contract PerpsMarketFactoryModule is
     IPerpsMarketFactoryModule,
-    AssociatedSystemsModule,
-    InitializableMixin
 {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
 
-    function _isInitialized() internal view override returns (bool) {
-        PerpsMarketFactory.Data storage PerpsMarketFactory = PerpsMarketFactory.load();
-        return
-            PerpsMarketFactory.synthetix != address(0) &&
-            PerpsMarketFactory.usdToken != ITokenModule(address(0));
-    }
-
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function isInitialized() external view returns (bool) {
-        return _isInitialized();
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function initialize(
-        address snxAddress,
-        address usdTokenAddress,
-        address oracleManager,
-        address initialAccountTokenImplementation
+    function setSynthetix(
+        ISynthetixSystem synthetixAddress
     ) external override {
         OwnableStorage.onlyOwner();
-        PerpsMarketFactory.Data storage PerpsMarketFactory = PerpsMarketFactory.load();
+        PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
 
-        PerpsMarketFactory.synthetix = snxAddress;
-        PerpsMarketFactory.initialAccountTokenImplementation = initialAccountTokenImplementation;
-        PerpsMarketFactory.usdToken = ITokenModule(usdTokenAddress);
-        PerpsMarketFactory.oracle = INodeModule(oracleManager);
+        store.synthetix = synthetixAddress;
+        store.usdToken = ITokenModule(synthetixAddress.getAssociatedSystem("USDToken"));
+        store.oracle = synthetix.getOracleManager();
 
-        _initOrUpgradeNft(
-            SynthUtil.getSystemId(perpsMarketId), // bytes32 id
-            marketName,
-            marketSymbol,
-            "uri",
-            PerpsMarketFactory.initialAccountTokenImplementation
-        );
     }
 
     /**
@@ -73,7 +46,7 @@ contract PerpsMarketFactoryModule is
     function createMarket(
         string memory marketName,
         string memory marketSymbol,
-        address synthOwner
+        address marketOwner
     ) external override onlyIfInitialized returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
 
@@ -82,9 +55,9 @@ contract PerpsMarketFactoryModule is
             address(this)
         );
 
-        PerpsMarketFactory.marketOwners[perpsMarketId] = synthOwner;
+        PerpsMarketFactory.marketOwners[perpsMarketId] = marketOwner;
 
-        emit SynthRegistered(perpsMarketId);
+        emit MarketRegistered(perpsMarketId);
 
         return perpsMarketId;
     }
@@ -105,20 +78,20 @@ contract PerpsMarketFactoryModule is
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function getSynth(uint128 marketId) external view override returns (address) {
-        return address(SynthUtil.getToken(marketId));
+    function getAccountToken(uint128 marketId) external view override returns (address) {
+        //return address(SynthUtil.getToken(marketId));
     }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
-        PerpsMarketFactory.load().onlyMarketOwner(marketId);
+    function upgradeAccountTokenImpl(uint128 marketId, address accountTokenImpl) external override {
+        OwnableStorage.onlyOwner();
 
         bytes32 synthId = SynthUtil.getSystemId(marketId);
         _upgradeToken(synthId, synthImpl);
 
-        emit SynthImplementationUpgraded(
+        emit AccountTokenImplementationUpgraded(
             marketId,
             address(SynthUtil.getToken(marketId)),
             synthImpl

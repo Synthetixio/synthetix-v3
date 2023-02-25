@@ -1,13 +1,13 @@
 name = "synthetix-perps-market"
 version = "<%= package.version %>-testable"
-description = "Spot market implementation"
+description = "Perps market implementation"
 
 [setting.coreProxyOwner]
 description = "owner of v3 core proxy"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.owner]
-description = "spot market owner"
+description = "perps market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
@@ -16,37 +16,34 @@ defaultValue = "synthetix:3.0.0-testable"
 [provision.synthetix]
 source = "<%= settings.synthetixPackage %>"
 
-[contract.SpotMarketFactoryModule]
-artifact = "SpotMarketFactoryModule"
+[contract.PerpsMarketFactoryModule]
+artifact = "PerpsMarketFactoryModule"
 
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
+[contract.CollateralModule]
+artifact = "CollateralModule"
 
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AsyncOrderSettlementModule]
-artifact = "AsyncOrderSettlementModule"
+[contract.AtomicOrderModule]
+artifact = "AtomicOrderModule"
 
-[contract.AsyncOrderConfigurationModule]
-artifact = "AsyncOrderConfigurationModule"
+[contract.LimitOrderModule]
+artifact = "LimitOrderModule"
 
-[contract.WrapperModule]
-artifact = "WrapperModule"
-
-[contract.FeeConfigurationModule]
-artifact = "FeeConfigurationModule"
-
-[contract.SynthTokenModule]
-artifact = "SynthTokenModule"
-
-[contract.CoreModule]
-artifact = "contracts/modules/CoreModule.sol:CoreModule"
+[contract.LiquidationModule]
+artifact = "LiquidationModule"
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
-[contract.InitialSpotMarketProxy]
+[contract.AccountTokenModule]
+artifact = "AccountTokenModule"
+
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
+[contract.InitialPerpsMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
@@ -57,89 +54,56 @@ depends = ["contract.CoreModule"]
 [router.SpotMarketRouter]
 contracts = [
   "CoreModule",
-  "SpotMarketFactoryModule",
+  "PerpsMarketFactoryModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
-  "AsyncOrderSettlementModule",
-  "AsyncOrderConfigurationModule",
-  "WrapperModule",
-  "FeeConfigurationModule",
-  "FeatureFlagModule"
+  "CollateralModule",
+  "FeatureFlagModule",
+  "LimitOrderModule",
+  "LiquidationModule"
 ]
 depends = [
   "contract.CoreModule",
-  "contract.SpotMarketFactoryModule",
+  "contract.PerpsMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
-  "contract.AsyncOrderSettlementModule",
-  "contract.AsyncOrderConfigurationModule",
-  "contract.WrapperModule",
-  "contract.FeeConfigurationModule",
+  "contract.CollateralModule",
   "contract.FeatureFlagModule",
+  "contract.LimitOrderModule",
+  "contract.LiquidationModule"
 ]
 
-[invoke.upgrade_spot_market_proxy]
-target = ["InitialSpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
+[invoke.upgrade_proxy]
+target = ["InitialPerpsMarketProxy"]
+fromCall.func= "owner"
 func = "upgradeTo"
 args = ["<%= contracts.SpotMarketRouter.address %>"]
-factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
-factory.SpotMarketProxy.event = "Upgraded"
-factory.SpotMarketProxy.arg = 0
-depends = ["contract.InitialSpotMarketProxy", "router.SpotMarketRouter"]
+factory.PerpsMarketProxy.abiOf = ["SpotMarketRouter"]
+factory.PerpsMarketProxy.event = "Upgraded"
+factory.PerpsMarketProxy.arg = 0
+depends = ["contract.InitialPerpsMarketProxy", "router.AccountTokenRouter"]
 
-# create synth router
-[router.SynthRouter]
-contracts = [
-  "CoreModule",
-  "SynthTokenModule"
-]
-depends = [
-  "contract.CoreModule",
-  "contract.SynthTokenModule"
-]
-
-[invoke.initialize_spot_market_factory]
-target = ["SpotMarketProxy"]
+[invoke.initialize_perps_market_factory]
+target = ["PerpsMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
 func = "initialize"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
-  "<%= imports.synthetix.contracts.USDProxy.address %>",
-  "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
-  "<%= contracts.SynthRouter.address %>"
+  "<%= imports.synthetix.contracts.AccountTokenRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix", "router.SynthRouter"]
+depends = ["invoke.upgrade_perps_market_proxy", "import.synthetix"]
 
-# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
-[invoke.addSpotMarketToFeatureFlag]
+# add pool owner to feature flag allow list
+[invoke.addPerpsMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
-depends = ['provision.synthetix', 'invoke.upgrade_spot_market_proxy']
+args = ["<%= formatBytes32String('registerMarket') %>", "<%= contracts.PerpsMarketProxy.address %>"]
+depends = ['import.synthetix', 'invoke.upgrade_perps_market_proxy']
 
-[invoke.addCreateSynthToFeatureFlag]
+[invoke.addCreateMarketToFeatureFlag]
 target = ["SpotMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
-args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
+args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 depends = ['invoke.initialize_spot_market_factory']
-
-[contract.FeeCollectorMock]
-artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
-
-[contract.OracleVerifierMock]
-artifact = "contracts/mocks/OracleVerifierMock.sol:OracleVerifierMock"
-
-[invoke.set_usd_token_for_fee_collector]
-target = ["FeeCollectorMock"]
-func = "setUsdToken"
-args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
-depends = ["contract.FeeCollectorMock", "provision.synthetix"]
-
-[invoke.set_initial_price]
-target = ["OracleVerifierMock"]
-func = "setPrice"
-args = ["2000"]
-depends = ["contract.OracleVerifierMock"]
