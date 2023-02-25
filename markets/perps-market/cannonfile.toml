@@ -1,13 +1,13 @@
-name = "synthetix-spot-market"
+name = "synthetix-perps-market"
 version = "<%= package.version %>"
-description = "Spot market implementation"
+description = "Perps market implementation"
 
 [setting.coreProxyOwner]
 description = "owner of v3 core proxy"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.owner]
-description = "spot market owner"
+description = "perps market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
@@ -16,29 +16,17 @@ defaultValue = "synthetix:latest"
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 
-[contract.SpotMarketFactoryModule]
-artifact = "SpotMarketFactoryModule"
+[contract.PerpsMarketFactoryModule]
+artifact = "PerpsMarketFactoryModule"
 
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
+[contract.PositionModule]
+artifact = "PositionModule"
 
-[contract.AsyncOrderModule]
-artifact = "AsyncOrderModule"
+[contract.LiquidationModule]
+artifact = "LiquidationModule"
 
-[contract.AsyncOrderSettlementModule]
-artifact = "AsyncOrderSettlementModule"
-
-[contract.AsyncOrderConfigurationModule]
-artifact = "AsyncOrderConfigurationModule"
-
-[contract.WrapperModule]
-artifact = "WrapperModule"
-
-[contract.FeeConfigurationModule]
-artifact = "FeeConfigurationModule"
-
-[contract.SynthTokenModule]
-artifact = "SynthTokenModule"
+[contract.PositionTokenModule]
+artifact = "PositionTokenModule"
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
@@ -46,7 +34,7 @@ artifact = "contracts/modules/CoreModule.sol:CoreModule"
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
-[contract.InitialSpotMarketProxy]
+[contract.InitialPerpsMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
@@ -79,14 +67,14 @@ depends = [
 ]
 
 [invoke.upgrade_spot_market_proxy]
-target = ["InitialSpotMarketProxy"]
+target = ["InitialPerpsMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
 func = "upgradeTo"
 args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.SpotMarketProxy.event = "Upgraded"
 factory.SpotMarketProxy.arg = 0
-depends = ["contract.InitialSpotMarketProxy", "router.SpotMarketRouter"]
+depends = ["contract.InitialPerpsMarketProxy", "router.SpotMarketRouter"]
 
 # create synth router
 [router.SynthRouter]

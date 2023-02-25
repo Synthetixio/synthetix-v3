@@ -1,5 +1,5 @@
-name = "synthetix-spot-market"
-version = "<%= package.version %>"
+name = "synthetix-perps-market"
+version = "<%= package.version %>-testable"
 description = "Spot market implementation"
 
 [setting.coreProxyOwner]
@@ -11,9 +11,9 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:latest"
+defaultValue = "synthetix:3.0.0-testable"
 
-[import.synthetix]
+[provision.synthetix]
 source = "<%= settings.synthetixPackage %>"
 
 [contract.SpotMarketFactoryModule]
@@ -109,15 +109,15 @@ args = [
   "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
   "<%= contracts.SynthRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "router.SynthRouter"]
+depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix", "router.SynthRouter"]
 
-# add pool owner to feature flag allow list
+# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
-depends = ['import.synthetix', 'invoke.upgrade_spot_market_proxy']
+depends = ['provision.synthetix', 'invoke.upgrade_spot_market_proxy']
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
@@ -125,3 +125,21 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
 depends = ['invoke.initialize_spot_market_factory']
+
+[contract.FeeCollectorMock]
+artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+
+[contract.OracleVerifierMock]
+artifact = "contracts/mocks/OracleVerifierMock.sol:OracleVerifierMock"
+
+[invoke.set_usd_token_for_fee_collector]
+target = ["FeeCollectorMock"]
+func = "setUsdToken"
+args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
+depends = ["contract.FeeCollectorMock", "provision.synthetix"]
+
+[invoke.set_initial_price]
+target = ["OracleVerifierMock"]
+func = "setPrice"
+args = ["2000"]
+depends = ["contract.OracleVerifierMock"]
