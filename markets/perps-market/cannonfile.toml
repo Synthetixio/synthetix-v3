@@ -50,6 +50,7 @@ depends = ["contract.CoreModule"]
 # Core
 [router.SpotMarketRouter]
 contracts = [
+  "synthetix.AccountModule",
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
   "PerpsMarketFactoryModule",

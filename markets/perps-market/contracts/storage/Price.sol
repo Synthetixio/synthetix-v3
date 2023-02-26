@@ -6,8 +6,6 @@ import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./PerpsMarketFactory.sol";
-import "../utils/TransactionUtil.sol";
-import "./Wrapper.sol";
 
 /**
  * @title Price storage for a specific synth market.
@@ -42,7 +40,7 @@ library Price {
     }
 
     function update(Data storage self, bytes32 feedId) internal {
-        self.feedId = feedId
+        self.feedId = feedId;
     }
 
     /**
