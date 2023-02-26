@@ -11,7 +11,7 @@ description = "perps market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:latest"
+defaultValue = "synthetix:3.0.1"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
@@ -37,13 +37,10 @@ artifact = "LiquidationModule"
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
-[contract.AccountTokenModule]
-artifact = "AccountTokenModule"
-
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
-[contract.InitialPerpsMarketProxy]
+[contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
@@ -53,6 +50,7 @@ depends = ["contract.CoreModule"]
 # Core
 [router.SpotMarketRouter]
 contracts = [
+  "synthetix.AssociatedSystemsModule",
   "CoreModule",
   "PerpsMarketFactoryModule",
   "AtomicOrderModule",
@@ -63,6 +61,7 @@ contracts = [
   "LiquidationModule"
 ]
 depends = [
+  "import.synthetix",
   "contract.CoreModule",
   "contract.PerpsMarketFactoryModule",
   "contract.AtomicOrderModule",
@@ -74,26 +73,26 @@ depends = [
 ]
 
 [invoke.upgrade_proxy]
-target = ["InitialPerpsMarketProxy"]
+target = ["InitialProxy"]
 fromCall.func= "owner"
 func = "upgradeTo"
 args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.PerpsMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
-depends = ["contract.InitialPerpsMarketProxy", "router.AccountTokenRouter"]
+depends = ["contract.InitialProxy", "router.SpotMarketRouter"]
 
-[invoke.initialize_perps_market_factory]
+[invoke.setSynthetix]
 target = ["PerpsMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
 func = "setSynthetix"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
 ]
-depends = ["invoke.upgrade_proxy", "import.synthetix"]
+depends = ["invoke.upgrade_proxy"]
 
 [invoke.init_account]
-target = ["CoreProxy"]
+target = ["PerpsMarketProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
@@ -104,8 +103,7 @@ args = [
   "<%= imports.synthetix.contracts.AccountRouter.address %>"
 ]
 depends = [
-  "invoke.upgrade_proxy",
-  "import.synthetix"
+  "invoke.upgrade_proxy"
 ]
 factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
@@ -117,11 +115,11 @@ target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = ["<%= formatBytes32String('registerMarket') %>", "<%= contracts.PerpsMarketProxy.address %>"]
-depends = ['import.synthetix', 'invoke.upgrade_perps_market_proxy']
+depends = ['invoke.upgrade_proxy']
 
 [invoke.addCreateMarketToFeatureFlag]
-target = ["SpotMarketProxy"]
+target = ["PerpsMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
-depends = ['invoke.initialize_spot_market_factory']
+depends = ['invoke.setSynthetix']
