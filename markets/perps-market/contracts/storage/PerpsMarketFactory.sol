@@ -22,10 +22,11 @@ library PerpsMarketFactory {
          * @dev oracle manager address used for price feeds
          */
         INodeModule oracle;
+        ITokenModule usdToken;
         /**
          * @dev Synthetix core v3 proxy address
          */
-        address synthetix;
+        ISynthetixSystem synthetix;
     }
 
     function load() internal pure returns (Data storage perpsMarketFactory) {

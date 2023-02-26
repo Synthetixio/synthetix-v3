@@ -1,9 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../utils/MathUtil.sol";
 
 library LiquidationConfiguration {
+    using DecimalMath for int256;
+    using DecimalMath for uint256;
+
     struct Data {
         uint liquidationPremiumMultiplier;
         uint maxLiquidationDelta;
@@ -35,9 +39,9 @@ library LiquidationConfiguration {
             config.liquidationBufferRatio
         );
         return
-            liquidationBuffer.add(liquidationFee(positionSize, price, config)).add(
-                config.desiredLiquidationRewardPercentage
-            );
+            liquidationBuffer +
+            liquidationFee(config, positionSize, price) +
+            config.desiredLiquidationRewardPercentage;
     }
 
     function liquidationFee(
@@ -46,7 +50,7 @@ library LiquidationConfiguration {
         uint price
     ) internal view returns (uint lFee) {
         // size * price * fee-ratio
-        uint proportionalFee = MathUtil.abs(positionSize).multiplyDecimal(price).multiplyDecimal(
+        uint proportionalFee = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
             config.liquidationBufferRatio
         );
         uint maxFee = config.maxLiquidationRewardUsd;

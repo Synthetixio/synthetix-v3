@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "../storage/AsyncOrder.sol";
+
 /**
  * @title Module for committing and settling async orders.
  */
@@ -20,6 +22,8 @@ interface IAsyncOrderModule {
         address indexed sender
     );*/
 
+    error InvalidOrder(AsyncOrder.Status status);
+
     function commitOrder(
         uint128 marketId,
         uint256 accountId,
@@ -27,12 +31,12 @@ interface IAsyncOrderModule {
         uint256 settlementStrategyId,
         uint256 acceptablePrice,
         bytes32 trackingCode
-    ) external returns (uint128 asyncOrderId/*, AsyncOrderClaim.Data memory asyncOrderClaim*/);
+    ) external returns (AsyncOrder.Data memory order, uint fees);
 
-    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
+    // function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
 
-    function getAsyncOrderClaim(
-        uint128 marketId,
-        uint128 asyncOrderId
-    ) external view /*returns (AsyncOrderClaim.Data memory)*/;
+    // function getAsyncOrderClaim(
+    //     uint128 marketId,
+    //     uint128 asyncOrderId /*returns (AsyncOrderClaim.Data memory)*/
+    // ) external view;
 }

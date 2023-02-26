@@ -1,15 +1,25 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./SettlementStrategy.sol";
 import "./Position.sol";
 import "./MarketConfiguration.sol";
+import "./LiquidationConfiguration.sol";
 import "./PerpsMarket.sol";
 import "../utils/MathUtil.sol";
 
 library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for uint256;
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using MarketConfiguration for MarketConfiguration.Data;
+    using LiquidationConfiguration for LiquidationConfiguration.Data;
+    using PerpsMarket for PerpsMarket.Data;
+    using Position for Position.Data;
 
     struct Data {
         int256 sizeDelta;
@@ -17,6 +27,8 @@ library AsyncOrder {
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
+        uint liqPremium;
+        uint liqMargin;
     }
 
     enum Status {
@@ -32,29 +44,41 @@ library AsyncOrder {
         PositionFlagged
     }
 
-    function create(
+    function update(
         Data storage self,
-        uint marketId,
         int256 sizeDelta,
         uint256 settlementStrategyId,
+        uint256 settlementTime,
         uint256 acceptablePrice,
         bytes32 trackingCode
-    ) internal returns (Data storage order) {
-        self = Data({
-            sizeDelta: sizeDelta,
-            settlementStrategyId: settlementStrategyId,
-            acceptablePrice: acceptablePrice,
-            trackingCode: trackingCode
-        });
+    ) internal {
+        self.sizeDelta = sizeDelta;
+        self.settlementStrategyId = settlementStrategyId;
+        self.settlementTime = settlementTime;
+        self.acceptablePrice = acceptablePrice;
+        self.trackingCode = trackingCode;
+    }
+
+    struct SimulateDataRuntime {
+        uint fillPrice;
+        uint fees;
+        uint newMargin;
+        Position.Data newPos;
+        bool positionDecreasing;
+        int leverage;
+        int marketSkew;
+        uint liqPremium;
+        uint liqMargin;
     }
 
     function simulateOrderSettlement(
         Data storage order,
-        uint marketId,
+        uint128 marketId,
         Position.Data storage oldPosition,
         uint256 orderPrice,
         MarketConfiguration.OrderType orderType
-    ) internal returns (Position.Data memory newPosition, uint fees, Status status) {
+    ) internal view returns (Position.Data memory newPosition, uint fees, Status status) {
+        SimulateDataRuntime memory runtime;
         // Reverts if the user is trying to submit a size-zero order.
         if (order.sizeDelta == 0) {
             return (oldPosition, 0, Status.ZeroSizeOrder);
@@ -67,14 +91,11 @@ library AsyncOrder {
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(marketId);
         // usd value of the difference in position (using the p/d-adjusted price).
-        int marketSkew = perpsMarketData.skew;
+        runtime.marketSkew = perpsMarketData.skew;
         MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(marketId);
 
-        OrderFee.Data orderFeeData = marketConfig.orderFees[orderType];
-
         // calculate fill price
-        uint fillPrice = calculateFillPrice(
-            marketId,
+        runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,
             marketConfig.skewScale,
             order.sizeDelta,
@@ -82,7 +103,12 @@ library AsyncOrder {
         );
 
         // calculate the total fee for exchange
-        fees = orderFee(order, marketId, fillPrice, marketSkew, orderFeeData);
+        runtime.fees = orderFee(
+            order,
+            runtime.fillPrice,
+            runtime.marketSkew,
+            marketConfig.orderFees[orderType]
+        );
 
         LiquidationConfiguration.Data storage liquidationConfig = LiquidationConfiguration.load(
             marketId
@@ -90,24 +116,23 @@ library AsyncOrder {
 
         // Deduct the fee.
         // It is an error if the realised margin minus the fee is negative or subject to liquidation.
-        uint newMargin;
-        (newMargin, status) = recomputeMarginWithDelta(
+        (runtime.newMargin, status) = recomputeMarginWithDelta(
             liquidationConfig,
             oldPosition,
-            fillPrice,
-            -int(fees)
+            runtime.fillPrice,
+            -(fees).toInt()
         );
-        if (status != Status.Ok) {
+        if (status != Status.Success) {
             return (oldPosition, 0, status);
         }
 
         // construct new position
-        Position memory newPos = Position({
+        runtime.newPos = Position.Data({
             marketId: marketId,
-            latestInteractionPrice: uint128(fillPrice),
-            latestInteractionMargin: uint128(newMargin),
-            latestInteractionFunding: perpsMarketData.lastFundingValue,
-            sizeDelta: int128(int(oldPosition.sizeDelta).add(order.sizeDelta))
+            latestInteractionPrice: runtime.fillPrice.to128(),
+            latestInteractionMargin: runtime.newMargin.to128(),
+            latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
+            sizeDelta: (oldPosition.sizeDelta + order.sizeDelta).to128()
         });
 
         // always allow to decrease a position, otherwise a margin of minInitialMargin can never
@@ -116,12 +141,14 @@ library AsyncOrder {
         // is never the actual minMargin, because the first trade will always deduct
         // a fee (so the margin that otherwise would need to be transferred would have to include the future
         // fee as well, making the UX and definition of min-margin confusing).
-        bool positionDecreasing = MathUtil.sameSide(oldPosition.sizeDelta, newPos.sizeDelta) &&
-            MathUtil.abs(newPos.sizeDelta) < MathUtil.abs(oldPosition.size);
+        bool positionDecreasing = MathUtil.sameSide(
+            oldPosition.sizeDelta,
+            runtime.newPos.sizeDelta
+        ) && MathUtil.abs(runtime.newPos.sizeDelta) < MathUtil.abs(oldPosition.sizeDelta);
         if (!positionDecreasing) {
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
             // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
-            if (uint(newPos.latestInteractionMargin).add(fees) < marketConfig.minInitialMargin) {
+            if (runtime.newPos.latestInteractionMargin + fees < marketConfig.minInitialMargin) {
                 return (oldPosition, 0, Status.InsufficientMargin);
             }
         }
@@ -133,40 +160,40 @@ library AsyncOrder {
         // a trade that will make the position liquidatable.
         //
         // note: we use `oraclePrice` here as `liquidationPremium` calcs premium based not current skew.
-        uint liqPremium = marketConfig.liquidationPremium(newPos.size, params.oraclePrice);
-        uint liqMargin = liquidationConfig.liquidationMargin(newPos.size, params.oraclePrice).add(
-            liqPremium
-        );
-        if (newMargin <= liqMargin) {
-            return (newPos, 0, Status.CanLiquidate);
+        runtime.liqPremium = marketConfig.liquidationPremium(runtime.newPos.sizeDelta, orderPrice);
+        runtime.liqMargin =
+            liquidationConfig.liquidationMargin(runtime.newPos.sizeDelta, orderPrice) +
+            runtime.liqPremium;
+        if (runtime.newMargin <= runtime.liqMargin) {
+            return (runtime.newPos, 0, Status.CanLiquidate);
         }
 
         // Check that the maximum leverage is not exceeded when considering new margin including the paid fee.
         // The paid fee is considered for the benefit of UX of allowed max leverage, otherwise, the actual
         // max leverage is always below the max leverage parameter since the fee paid for a trade reduces the margin.
         // We'll allow a little extra headroom for rounding errors.
-        {
-            // stack too deep
-            int leverage = int(newPos.size).mulDecimal(int(fillPrice)).divDecimal(
-                int(newMargin.add(fees))
-            );
-            if (_maxLeverage(_marketKey()).add(DecimalMath.UNIT / 100) < MathUtil.abs(leverage)) {
-                return (oldPosition, 0, Status.MaxLeverageExceeded);
-            }
+        runtime.leverage = runtime
+            .newPos
+            .sizeDelta
+            .to256()
+            .mulDecimal(runtime.fillPrice.toInt())
+            .divDecimal((runtime.newMargin + fees).toInt());
+        if (marketConfig.maxLeverage + (DecimalMath.UNIT / 100) < MathUtil.abs(runtime.leverage)) {
+            return (oldPosition, 0, Status.MaxLeverageExceeded);
         }
 
         // Check that the order isn't too large for the markets.
         if (
-            perpsMarket.orderSizeTooLarge(
+            perpsMarketData.orderSizeTooLarge(
                 marketConfig.maxMarketValue,
                 oldPosition.sizeDelta,
-                newPos.sizeDelta
+                runtime.newPos.sizeDelta
             )
         ) {
-            return (oldPosition, 0, Status.MaxMarketSizeExceeded);
+            return (oldPosition, 0, Status.MaxMarketValueExceeded);
         }
 
-        return (newPos, fee, Status.Ok);
+        return (runtime.newPos, fees, Status.Success);
     }
 
     function orderFee(
@@ -175,21 +202,21 @@ library AsyncOrder {
         int marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint) {
-        uint sizeDelta = order.sizeDelta;
+        int sizeDelta = order.sizeDelta;
 
-        int notionalDiff = sizeDelta.multiplyDecimal(int(fillPrice));
+        int notionalDiff = sizeDelta.mulDecimal(int(fillPrice));
 
         // does this trade keep the skew on one side?
-        if (_sameSide(marketSkew + sizeDelta, marketSkew)) {
+        if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
             // use a flat maker/taker fee for the entire size depending on whether the skew is increased or reduced.
             //
             // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
 
-            uint staticRate = _sameSide(notionalDiff, marketSkew)
+            uint staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
-            return MathUtil.abs(notionalDiff.multiplyDecimal(int(staticRate)));
+            return MathUtil.abs(notionalDiff.mulDecimal(int(staticRate)));
         }
 
         // this trade flips the skew.
@@ -199,9 +226,7 @@ library AsyncOrder {
         // a different fee is applied on the proportion increasing the skew.
 
         // proportion of size that's on the other direction
-        uint takerSize = MathUtil.abs(
-            (marketSkew + order.sizeDelta).divideDecimal(order.sizeDelta)
-        );
+        uint takerSize = MathUtil.abs((marketSkew + order.sizeDelta).divDecimal(order.sizeDelta));
         uint makerSize = DecimalMath.UNIT - takerSize;
         uint takerFee = MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(
             orderFeeData.takerFee
@@ -210,7 +235,7 @@ library AsyncOrder {
             orderFeeData.makerFee
         );
 
-        return baseFee + takerFee + makerFee;
+        return takerFee + makerFee;
     }
 
     // TODO: refactor possibly
@@ -220,10 +245,10 @@ library AsyncOrder {
         int size,
         uint price
     ) internal view returns (uint) {
-        int pdBefore = skew.divDecimal(skewScale);
-        int pdAfter = skew.add(size).divDecimal(skewScale);
-        int priceBefore = int(price).add(int(price).mulDecimal(pdBefore));
-        int priceAfter = int(price).add(int(price).mulDecimal(pdAfter));
+        int pdBefore = skew.divDecimal(skewScale.toInt());
+        int pdAfter = (skew + size).divDecimal(skewScale.toInt());
+        int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
+        int priceAfter = (price.toInt() + price.toInt()).mulDecimal(pdAfter);
 
         // How is the p/d-adjusted price calculated using an example:
         //
@@ -252,7 +277,7 @@ library AsyncOrder {
         // fill_price = (price_before + price_after) / 2
         //            = (1200 + 1200.12) / 2
         //            = 1200.06
-        return uint(priceBefore.add(priceAfter).divDecimal(DecimalMath.UNIT * 2));
+        return uint(priceBefore + priceAfter).divDecimal(DecimalMath.UNIT * 2);
     }
 
     function recomputeMarginWithDelta(
@@ -261,19 +286,20 @@ library AsyncOrder {
         uint price,
         int marginDelta
     ) internal view returns (uint margin, Status statusCode) {
-        int newMargin = position.marginPlusProfitFunding(price).add(marginDelta);
+        (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(price);
+        int newMargin = marginProfitFunding + marginDelta;
         if (newMargin < 0) {
             return (0, Status.InsufficientMargin);
         }
 
-        uint uMargin = uint(newMargin);
-        int positionSize = int(position.size);
+        uint uMargin = newMargin.toUint();
+        int positionSize = position.sizeDelta;
         // minimum margin beyond which position can be liquidated
-        uint lMargin = liquidationConfig.liquidationMargin(position.marketId, positionSize, price);
+        uint lMargin = liquidationConfig.liquidationMargin(positionSize, price);
         if (positionSize != 0 && uMargin <= lMargin) {
             return (uMargin, Status.CanLiquidate);
         }
 
-        return (uMargin, Status.Ok);
+        return (uMargin, Status.Success);
     }
 }

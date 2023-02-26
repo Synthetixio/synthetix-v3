@@ -1,15 +1,26 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "./PerpsMarket.sol";
 
 library Position {
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastU128 for uint128;
+    using DecimalMath for int256;
+    using DecimalMath for uint256;
+    using DecimalMath for int128;
+    using PerpsMarket for PerpsMarket.Data;
+
     struct Data {
         uint128 marketId;
         int128 sizeDelta; // TODO: rename to size
         uint128 latestInteractionPrice;
         uint128 latestInteractionMargin;
-        uint128 latestInteractionFunding;
+        int128 latestInteractionFunding;
     }
 
     function load(uint128 marketId, uint256 accountId) internal pure returns (Data storage store) {
@@ -21,29 +32,71 @@ library Position {
         }
     }
 
-    function marginPlusProfitFunding(Data storage self, uint price) internal view returns (int) {
-        int funding = accruedFunding(self, price);
-        return int(self.latestInteractionMargin).add(profitLoss(self, price)).add(funding);
+    /*
+        1. latestInteractionPric
+        2. latestInteractionMargin
+        3. sizeDelta
+        4. latestInteractionFunding
+        5. marketId
+    */
+
+    function calculateExpectedPosition(
+        Data storage self,
+        uint price
+    ) internal view returns (int, int, int, int, int) {
+        return
+            _calculateExpectedPosition(
+                self.marketId,
+                self.sizeDelta,
+                self.latestInteractionPrice,
+                self.latestInteractionMargin,
+                self.latestInteractionFunding,
+                price
+            );
     }
 
-    function profitLoss(Data storage self, uint price) internal pure returns (int pnl) {
-        int priceShift = int(price).sub(int(self.latestInteractionPrice));
-        return int(self.sizeDelta).mulDecimal(priceShift);
+    function calculateExpectedPosition(
+        Data memory self,
+        uint price
+    ) internal view returns (int, int, int, int, int) {
+        return
+            _calculateExpectedPosition(
+                self.marketId,
+                self.sizeDelta,
+                self.latestInteractionPrice,
+                self.latestInteractionMargin,
+                self.latestInteractionFunding,
+                price
+            );
     }
 
-    function accruedFunding(Data storage self, uint price) internal view returns (int funding) {
-        int net = netFundingPerUnit(self, price);
-        return int(self.sizeDelta).mulDecimal(net);
-    }
+    function _calculateExpectedPosition(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint128 latestInteractionPrice,
+        uint128 latestInteractionMargin,
+        int128 latestInteractionFunding,
+        uint price
+    )
+        private
+        view
+        returns (
+            int marginProfitFunding,
+            int pnl,
+            int accruedFunding,
+            int netFundingPerUnit,
+            int nextFunding
+        )
+    {
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+        nextFunding = perpsMarket.lastFundingValue + perpsMarket.unrecordedFunding(price);
+        netFundingPerUnit = nextFunding - latestInteractionFunding;
 
-    function netFundingPerUnit(Data storage self, uint price) internal view returns (int) {
-        // Compute the net difference between start and end indices.
+        accruedFunding = sizeDelta.mulDecimal(netFundingPerUnit);
 
-        return nextFundingEntry(self, price).sub(self.latestInteractionFunding);
-    }
+        int priceShift = price.toInt() - latestInteractionPrice.toInt();
+        pnl = sizeDelta.mulDecimal(priceShift);
 
-    function nextFundingEntry(Data storage self, uint price) internal view returns (int) {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(self.marketId);
-        return int(perpsMarket.lastFundingValue).add(perpsMarket.unrecordedFunding(price));
+        marginProfitFunding = latestInteractionMargin.toInt() + pnl + accruedFunding;
     }
 }

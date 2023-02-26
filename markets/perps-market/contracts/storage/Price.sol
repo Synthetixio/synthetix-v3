@@ -36,7 +36,7 @@ library Price {
     }
 
     function getCurrentPrice(uint128 marketId) internal view returns (uint price) {
-        return getCurrentPriceData(marketId, transactionType).price.toUint();
+        return getCurrentPriceData(marketId).price.toUint();
     }
 
     function update(Data storage self, bytes32 feedId) internal {

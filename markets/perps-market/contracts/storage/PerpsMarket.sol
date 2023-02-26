@@ -1,11 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./Account.sol";
 import "./Position.sol";
 import "./AsyncOrder.sol";
 import "./MarketConfiguration.sol";
 import "../utils/MathUtil.sol";
+import "./SettlementStrategy.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
@@ -13,6 +16,11 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
  * @title Data for a single perps market
  */
 library PerpsMarket {
+    using DecimalMath for int256;
+    using DecimalMath for uint256;
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+
     struct Data {
         address owner;
         address nominatedOwner;
@@ -43,10 +51,22 @@ library PerpsMarket {
         }
     }
 
+    function loadWithVerifiedOwner(
+        uint128 id,
+        address possibleOwner
+    ) internal view returns (Data storage market) {
+        market = load(id);
+
+        if (market.owner != possibleOwner) {
+            revert AccessError.Unauthorized(possibleOwner);
+        }
+    }
+
     function unrecordedFunding(Data storage self, uint price) internal view returns (int) {
         // note the minus sign: funding flows in the opposite direction to the skew.
-        int avgFundingRate = -(int(self.latestFundingRate).add(currentFundingRate(self)))
-            .divDecimal(DecimalMath.UNIT * 2);
+        int avgFundingRate = -(int(self.lastFundingRate) + currentFundingRate(self)).divDecimal(
+            (DecimalMath.UNIT * 2).toInt()
+        );
         return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(int(price));
     }
 
@@ -71,8 +91,8 @@ library PerpsMarket {
         //              = 0.00083912
 
         return
-            int(self.lastFundingRate).add(
-                currentFundingVelocity(self).mulDecimal(proportionalElapsed(self))
+            (int(self.lastFundingRate) + currentFundingVelocity(self)).mulDecimal(
+                proportionalElapsed(self)
             );
     }
 
@@ -82,14 +102,14 @@ library PerpsMarket {
         int pSkew = int(self.skew).divDecimal(int(marketConfig.skewScale));
         // Ensures the proportionalSkew is between -1 and 1.
         int proportionalSkew = MathUtil.min(
-            MathUtil.max(-DecimalMath.UNIT, pSkew),
-            DecimalMath.UNIT
+            MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
+            (DecimalMath.UNIT).toInt()
         );
         return proportionalSkew.mulDecimal(maxFundingVelocity);
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
-        return int(block.timestamp.sub(self.lastFundingTime)).divideDecimal(1 days);
+        return int(block.timestamp - self.lastFundingTime).divDecimal(1 days);
     }
 
     // TODO: David will refactor this
@@ -106,26 +126,26 @@ library PerpsMarket {
 
         // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
         // we check that the side of the market their order is on would not break the limit.
-        int newSkew = int(self.skew).sub(oldSize).add(newSize);
-        int newMarketSize = int(self.size).sub(MathUtil.signedAbs(oldSize)).add(
-            MathUtil.signedAbs(newSize)
-        );
+        int newSkew = int(self.skew) - oldSize + newSize;
+        int newMarketSize = int(self.size) -
+            MathUtil.abs(oldSize).toInt() +
+            MathUtil.abs(newSize).toInt();
 
         int newSideSize;
         if (0 < newSize) {
             // long case: marketSize + skew
             //            = (|longSize| + |shortSize|) + (longSize + shortSize)
             //            = 2 * longSize
-            newSideSize = newMarketSize.add(newSkew);
+            newSideSize = newMarketSize + newSkew;
         } else {
             // short case: marketSize - skew
             //            = (|longSize| + |shortSize|) - (longSize + shortSize)
             //            = 2 * -shortSize
-            newSideSize = newMarketSize.sub(newSkew);
+            newSideSize = newMarketSize - newSkew;
         }
 
         // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
-        if (maxSize < MathUtil.abs(newSideSize.div(2))) {
+        if (maxSize < MathUtil.abs(newSideSize / 2)) {
             return true;
         }
 

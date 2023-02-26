@@ -1,11 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "./OrderFee.sol";
 import "./SettlementStrategy.sol";
 import "../utils/MathUtil.sol";
 
 library MarketConfiguration {
+    using DecimalMath for int256;
+    using DecimalMath for uint256;
+
     enum OrderType {
         ASYNC_ONCHAIN,
         ASYNC_OFFCHAIN,
