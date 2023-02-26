@@ -1,23 +1,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./Account.sol"
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 /**
  * @title Data for a single perps market
  */
 library Account {
-
     struct Data {
-        address owner;
-        address nominatedOwner;
-        uint128 id;
-        bytes32 oracleNodeId;
-        mapping (uint => Position) positions;
+        mapping (uint => SetUtil.AddressSet) depositedCollaterals;
+        mapping (uint => SetUtil.UintSet) positions;
     }
 
-    function create(uint128 id) internal returns (Data storage market) {
-        market = load(id);
-        market.id = id;
-    } 
+    function load(uint128 id) internal pure returns (Data storage account) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
+
+        assembly {
+            account.slot := s
+        }
+    }
 }
