@@ -7,13 +7,11 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import "../storage/PerpsMarketFactory.sol";
 import "../storage/PerpsMarket.sol";
 import "../interfaces/IPerpsMarketFactoryModule.sol";
-
 
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
@@ -32,9 +30,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function setSynthetix(
-        ISynthetixSystem synthetix
-    ) external override {
+    function setSynthetix(ISynthetixSystem synthetix) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
 
@@ -55,9 +51,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
 
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
-        uint128 perpsMarketId = store.synthetix.registerMarket(
-            address(this)
-        );
+        uint128 perpsMarketId = store.synthetix.registerMarket(address(this));
 
         PerpsMarket.Data storage market = PerpsMarket.create(perpsMarketId);
 
@@ -103,8 +97,14 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external override {
-        PerpsMarket.Data storage market = PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
+    function nominateMarketOwner(
+        uint128 perpsMarketId,
+        address newNominatedOwner
+    ) external override {
+        PerpsMarket.Data storage market = PerpsMarket.loadWithVerifiedOwner(
+            perpsMarketId,
+            msg.sender
+        );
 
         if (newNominatedOwner == address(0)) {
             revert AddressError.ZeroAddress();
@@ -125,11 +125,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             revert NotNominated(msg.sender);
         }
 
-        emit MarketOwnerChanged(
-            perpsMarketId,
-            market.owner,
-            currentNominatedOwner
-        );
+        emit MarketOwnerChanged(perpsMarketId, market.owner, currentNominatedOwner);
 
         market.owner = currentNominatedOwner;
         market.nominatedOwner = address(0);

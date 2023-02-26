@@ -22,7 +22,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             3. create order
         */
 
-        AsyncAccountOrder.Data storage order = AsyncOrder.create(
+        AsyncOrder.Data storage order = AsyncOrder.create(
             marketId,
             accountId,
             sizeDelta,
