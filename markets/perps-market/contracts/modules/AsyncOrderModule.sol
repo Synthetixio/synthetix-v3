@@ -36,17 +36,17 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy memory strategy = settlementStrategies[settlementStrategyId];
 
 
-        revert "not implemented";
+        revert("not implemented");
     }
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
-        revert "not implemented";
+        revert("not implemented");
     }
 
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
     ) external view override returns (AsyncOrderClaim.Data memory) {
-        revert "not implemented";
+        revert("not implemented");
     }
 }
