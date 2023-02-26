@@ -1,19 +1,19 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./Account.sol"
+import "./Account.sol";
 
 /**
  * @title Data for a single perps market
  */
 library PerpsMarket {
-
     struct Data {
         address owner;
         address nominatedOwner;
         uint128 id;
-        bytes32 oracleNodeId;
-        mapping (uint => Position) positions;
+        int256 skew;
+        uint256 size;
+        mapping(uint => Position) positions;
     }
 
     function create(uint128 id) internal returns (Data storage market) {
@@ -29,11 +29,15 @@ library PerpsMarket {
         }
     }
 
-    function adjustPosition(Data storage self, uint128 accountId, Position memory position) internal {
+    function adjustPosition(
+        Data storage self,
+        uint128 accountId,
+        Position memory position
+    ) internal {
         // set mapping
         self.positions[account] = position;
 
         // update account
         Account.load(accountId).perpsMarkets.add(self.id);
-    }   
+    }
 }

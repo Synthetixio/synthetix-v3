@@ -18,17 +18,13 @@ library PerpsMarketFactory {
 
     struct Data {
         /**
-         * @dev snxUSD token address
-         */
-        ITokenModule usdToken;
-        /**
          * @dev oracle manager address used for price feeds
          */
         INodeModule oracle;
         /**
          * @dev Synthetix core v3 proxy address
          */
-        ISynthetixSystem synthetix;
+        address synthetix;
     }
 
     function load() internal pure returns (Data storage perpsMarketFactory) {
