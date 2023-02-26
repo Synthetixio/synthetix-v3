@@ -7,37 +7,41 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthtixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import "../utils/SynthUtil.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import "../storage/PerpsMarketFactory.sol";
+import "../storage/PerpsMarket.sol";
 import "../interfaces/IPerpsMarketFactoryModule.sol";
+
+
+import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /**
  * @title Module for registering perpetual futures markets. The factory tracks all markets in the system and consolidates implementation.
  * @dev See IPerpsMarketFactoryModule.
  */
-contract PerpsMarketFactoryModule is
-    IPerpsMarketFactoryModule,
-{
+contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
 
+    bytes32 private constant _ACCOUNT_TOKEN_SYSTEM = "accountNft";
+
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
     function setSynthetix(
-        ISynthetixSystem synthetixAddress
+        ISynthetixSystem synthetix
     ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
 
-        store.synthetix = synthetixAddress;
-        store.usdToken = ITokenModule(synthetixAddress.getAssociatedSystem("USDToken"));
+        store.synthetix = synthetix;
+        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
+        store.usdToken = ITokenModule(usdTokenAddress);
         store.oracle = synthetix.getOracleManager();
-
     }
 
     /**
@@ -47,31 +51,34 @@ contract PerpsMarketFactoryModule is
         string memory marketName,
         string memory marketSymbol,
         address marketOwner
-    ) external override onlyIfInitialized returns (uint128) {
+    ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
 
-        PerpsMarketFactory.Data storage PerpsMarketFactory = PerpsMarketFactory.load();
-        uint128 perpsMarketId = IMarketManagerModule(PerpsMarketFactory.synthetix).registerMarket(
+        PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
+        uint128 perpsMarketId = store.synthetix.registerMarket(
             address(this)
         );
 
-        PerpsMarketFactory.marketOwners[perpsMarketId] = marketOwner;
+        PerpsMarket.Data storage market = PerpsMarket.create(perpsMarketId);
 
-        emit MarketRegistered(perpsMarketId);
+        market.owner = marketOwner;
+        market.name = marketName;
+        market.symbol = marketSymbol;
+
+        emit MarketRegistered(perpsMarketId, marketOwner, marketName, marketSymbol);
 
         return perpsMarketId;
     }
 
-    function name(uint128 marketId) external view returns (string memory) {
-        string memory marketName = SynthUtil.getToken(marketId).name();
-        return string.concat(marketName, " Perps Market");
+    function name(uint128 marketId) external view override returns (string memory) {
+        return string.concat(PerpsMarket.load(marketId).name, " Perps Market");
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
         // skew
     }
 
-    function locked(uint128 marketId) external view returns (uint256) {
+    function locked(uint128 marketId) external view override returns (uint256) {
         // t.b.d.
     }
 
@@ -79,76 +86,60 @@ contract PerpsMarketFactoryModule is
      * @inheritdoc IPerpsMarketFactoryModule
      */
     function getAccountToken(uint128 marketId) external view override returns (address) {
-        //return address(SynthUtil.getToken(marketId));
+        return AssociatedSystem.load(_ACCOUNT_TOKEN_SYSTEM).proxy;
     }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function upgradeAccountTokenImpl(uint128 marketId, address accountTokenImpl) external override {
-        OwnableStorage.onlyOwner();
-
-        bytes32 synthId = SynthUtil.getSystemId(marketId);
-        _upgradeToken(synthId, synthImpl);
-
-        emit AccountTokenImplementationUpgraded(
-            marketId,
-            address(SynthUtil.getToken(marketId)),
-            synthImpl
-        );
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
-        PerpsMarketFactory.load().onlyMarketOwner(perpsMarketId);
+    /*function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+        PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
 
         Price.load(perpsMarketId).update(feedId);
 
         emit MarketPriceDataUpdated(perpsMarketId, feedId);
-    }
+    }*/
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) public override {
-        PerpsMarketFactory.load().onlyMarketOwner(perpsMarketId);
+    function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external override {
+        PerpsMarket.Data storage market = PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
 
         if (newNominatedOwner == address(0)) {
             revert AddressError.ZeroAddress();
         }
 
-        PerpsMarketFactory.load().nominatedMarketOwners[perpsMarketId] = newNominatedOwner;
+        market.nominatedOwner = newNominatedOwner;
+
         emit MarketOwnerNominated(perpsMarketId, newNominatedOwner);
     }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function acceptMarketOwnership(uint128 perpsMarketId) public override {
-        PerpsMarketFactory.Data storage PerpsMarketFactory = PerpsMarketFactory.load();
-        address currentNominatedOwner = PerpsMarketFactory.nominatedMarketOwners[perpsMarketId];
+    function acceptMarketOwnership(uint128 perpsMarketId) external override {
+        PerpsMarket.Data storage market = PerpsMarket.load(perpsMarketId);
+        address currentNominatedOwner = market.nominatedOwner;
         if (msg.sender != currentNominatedOwner) {
             revert NotNominated(msg.sender);
         }
 
         emit MarketOwnerChanged(
             perpsMarketId,
-            PerpsMarketFactory.marketOwners[perpsMarketId],
+            market.owner,
             currentNominatedOwner
         );
 
-        PerpsMarketFactory.marketOwners[perpsMarketId] = currentNominatedOwner;
-        PerpsMarketFactory.nominatedMarketOwners[perpsMarketId] = address(0);
+        market.owner = currentNominatedOwner;
+        market.nominatedOwner = address(0);
     }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function getMarketOwner(uint128 perpsMarketId) public view override returns (address) {
-        PerpsMarketFactory.Data storage PerpsMarketFactory = PerpsMarketFactory.load();
-        return PerpsMarketFactory.marketOwners[perpsMarketId];
+    function getMarketOwner(uint128 perpsMarketId) external view override returns (address) {
+        return PerpsMarket.load(perpsMarketId).owner;
     }
 
     /**
