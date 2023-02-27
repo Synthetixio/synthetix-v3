@@ -1,8 +1,8 @@
 const path = require('path');
 const dotenv = require('dotenv');
 
-// Load common .env file at ./packages/config-common/.env
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// Load common .env file at ../../.env
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
 require('@nomiclabs/hardhat-ethers');
 require('hardhat-contract-sizer');
