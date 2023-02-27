@@ -17,7 +17,7 @@ library Position {
 
     struct Data {
         uint128 marketId;
-        int128 sizeDelta; // TODO: rename to size
+        int128 size;
         uint128 latestInteractionPrice;
         uint128 latestInteractionMargin;
         int128 latestInteractionFunding;
@@ -47,7 +47,7 @@ library Position {
         return
             _calculateExpectedPosition(
                 self.marketId,
-                self.sizeDelta,
+                self.size,
                 self.latestInteractionPrice,
                 self.latestInteractionMargin,
                 self.latestInteractionFunding,
@@ -62,7 +62,7 @@ library Position {
         return
             _calculateExpectedPosition(
                 self.marketId,
-                self.sizeDelta,
+                self.size,
                 self.latestInteractionPrice,
                 self.latestInteractionMargin,
                 self.latestInteractionFunding,
@@ -72,7 +72,7 @@ library Position {
 
     function _calculateExpectedPosition(
         uint128 marketId,
-        int128 sizeDelta,
+        int128 size,
         uint128 latestInteractionPrice,
         uint128 latestInteractionMargin,
         int128 latestInteractionFunding,
@@ -92,10 +92,10 @@ library Position {
         nextFunding = perpsMarket.lastFundingValue + perpsMarket.unrecordedFunding(price);
         netFundingPerUnit = nextFunding - latestInteractionFunding;
 
-        accruedFunding = sizeDelta.mulDecimal(netFundingPerUnit);
+        accruedFunding = size.mulDecimal(netFundingPerUnit);
 
         int priceShift = price.toInt() - latestInteractionPrice.toInt();
-        pnl = sizeDelta.mulDecimal(priceShift);
+        pnl = size.mulDecimal(priceShift);
 
         marginProfitFunding = latestInteractionMargin.toInt() + pnl + accruedFunding;
     }

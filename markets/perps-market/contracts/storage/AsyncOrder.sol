@@ -132,7 +132,7 @@ library AsyncOrder {
             latestInteractionPrice: runtime.fillPrice.to128(),
             latestInteractionMargin: runtime.newMargin.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
-            sizeDelta: (oldPosition.sizeDelta + order.sizeDelta).to128()
+            size: (oldPosition.size + order.sizeDelta).to128()
         });
 
         // always allow to decrease a position, otherwise a margin of minInitialMargin can never
@@ -142,9 +142,9 @@ library AsyncOrder {
         // a fee (so the margin that otherwise would need to be transferred would have to include the future
         // fee as well, making the UX and definition of min-margin confusing).
         bool positionDecreasing = MathUtil.sameSide(
-            oldPosition.sizeDelta,
-            runtime.newPos.sizeDelta
-        ) && MathUtil.abs(runtime.newPos.sizeDelta) < MathUtil.abs(oldPosition.sizeDelta);
+            oldPosition.size,
+            runtime.newPos.size
+        ) && MathUtil.abs(runtime.newPos.size) < MathUtil.abs(oldPosition.size);
         if (!positionDecreasing) {
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
             // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
@@ -160,9 +160,9 @@ library AsyncOrder {
         // a trade that will make the position liquidatable.
         //
         // note: we use `oraclePrice` here as `liquidationPremium` calcs premium based not current skew.
-        runtime.liqPremium = marketConfig.liquidationPremium(runtime.newPos.sizeDelta, orderPrice);
+        runtime.liqPremium = marketConfig.liquidationPremium(runtime.newPos.size, orderPrice);
         runtime.liqMargin =
-            liquidationConfig.liquidationMargin(runtime.newPos.sizeDelta, orderPrice) +
+            liquidationConfig.liquidationMargin(runtime.newPos.size, orderPrice) +
             runtime.liqPremium;
         if (runtime.newMargin <= runtime.liqMargin) {
             return (runtime.newPos, 0, Status.CanLiquidate);
@@ -174,7 +174,7 @@ library AsyncOrder {
         // We'll allow a little extra headroom for rounding errors.
         runtime.leverage = runtime
             .newPos
-            .sizeDelta
+            .size
             .to256()
             .mulDecimal(runtime.fillPrice.toInt())
             .divDecimal((runtime.newMargin + fees).toInt());
@@ -186,8 +186,8 @@ library AsyncOrder {
         if (
             perpsMarketData.orderSizeTooLarge(
                 marketConfig.maxMarketValue,
-                oldPosition.sizeDelta,
-                runtime.newPos.sizeDelta
+                oldPosition.size,
+                runtime.newPos.size
             )
         ) {
             return (oldPosition, 0, Status.MaxMarketValueExceeded);
@@ -293,7 +293,7 @@ library AsyncOrder {
         }
 
         uint uMargin = newMargin.toUint();
-        int positionSize = position.sizeDelta;
+        int positionSize = position.size;
         // minimum margin beyond which position can be liquidated
         uint lMargin = liquidationConfig.liquidationMargin(positionSize, price);
         if (positionSize != 0 && uMargin <= lMargin) {
