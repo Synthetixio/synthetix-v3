@@ -244,7 +244,7 @@ library AsyncOrder {
         uint skewScale,
         int size,
         uint price
-    ) internal view returns (uint) {
+    ) internal pure returns (uint) {
         int pdBefore = skew.divDecimal(skewScale.toInt());
         int pdAfter = (skew + size).divDecimal(skewScale.toInt());
         int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
