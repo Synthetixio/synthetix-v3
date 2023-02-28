@@ -48,12 +48,14 @@ library UniswapNode {
             tick--;
         }
 
-        uint256 baseAmount = 10 ** decimalsToken;
+        uint256 baseAmount = 10 ** PRECISION;
         int256 price = getQuoteAtTick(tick, baseAmount, token, stablecoin).toInt();
 
-        int256 finalPrice = PRECISION > decimalsStablecoin
-            ? price.upscale(PRECISION - decimalsStablecoin)
-            : price.downscale(decimalsStablecoin - PRECISION);
+        int256 scale = int256(uint256(decimalsToken)) - int256(uint256(decimalsStablecoin));
+
+        int256 finalPrice = scale > 0
+            ? price.upscale(scale.toUint())
+            : price.downscale((-scale).toUint());
 
         return NodeOutput.Data(finalPrice, 0, 0, 0);
     }

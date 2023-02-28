@@ -33,7 +33,7 @@ library PriceDeviationCircuitBreakerNode {
                     return parentNodeOutputs[2];
                 } else {
                     revert DeviationToleranceExceeded(
-                        primaryPrice == 0 ? type(int256).max : difference / primaryPrice
+                        primaryPrice == 0 ? type(int256).max : difference.upscale(18) / primaryPrice
                     );
                 }
             }
