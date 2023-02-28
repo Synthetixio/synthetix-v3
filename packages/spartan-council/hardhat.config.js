@@ -25,8 +25,8 @@ module.exports = {
             runs: 1,
           },
         },
-      }
-    }
+      },
+    },
   },
   deployer: {
     proxyContract: 'SpartanCouncil',
