@@ -21,7 +21,17 @@ library AsyncOrder {
     using PerpsMarket for PerpsMarket.Data;
     using Position for Position.Data;
 
+    error SettlementWindowExpired(
+        uint256 timestamp,
+        uint256 settlementTime,
+        uint256 settlementExpiration
+    );
+
+    error OrderNotValid();
+
     struct Data {
+        uint128 accountId;
+        uint128 marketId;
         int256 sizeDelta;
         uint256 settlementStrategyId;
         uint256 settlementTime;
@@ -50,18 +60,23 @@ library AsyncOrder {
         uint256 settlementStrategyId,
         uint256 settlementTime,
         uint256 acceptablePrice,
-        bytes32 trackingCode
+        bytes32 trackingCode,
+        uint128 marketId,
+        uint128 accountId
     ) internal {
         self.sizeDelta = sizeDelta;
         self.settlementStrategyId = settlementStrategyId;
         self.settlementTime = settlementTime;
         self.acceptablePrice = acceptablePrice;
         self.trackingCode = trackingCode;
+        self.marketId = marketId;
+        self.accountId = accountId;
     }
 
     struct SimulateDataRuntime {
         uint fillPrice;
         uint fees;
+        uint settlementReward;
         uint newMargin;
         Position.Data newPos;
         bool positionDecreasing;
@@ -71,28 +86,44 @@ library AsyncOrder {
         uint liqMargin;
     }
 
+    function checkWithinSettlementWindow(
+        Data storage self,
+        SettlementStrategy.Data storage settlementStrategy
+    ) internal view {
+        uint settlementExpiration = settlementTime + settlementStrategy.settlementWindowDuration;
+        if (block.timestamp < settlementTime || block.timestamp > settlementExpiration) {
+            revert SettlementWindowExpired(block.timestamp, settlementTime, settlementExpiration);
+        }
+    }
+
+    function checkValidity(Data storage self) internal view {
+        if (self.sizeDelta == 0) {
+            revert OrderNotValid();
+        }
+    }
+
     function simulateOrderSettlement(
         Data storage order,
-        uint128 marketId,
         Position.Data storage oldPosition,
+        SettlementStrategy.Data storage settlementStrategy,
         uint256 orderPrice,
         MarketConfiguration.OrderType orderType
-    ) internal view returns (Position.Data memory newPosition, uint fees, Status status) {
+    ) internal view returns (Position.Data memory, uint, uint, Status) {
         SimulateDataRuntime memory runtime;
         // Reverts if the user is trying to submit a size-zero order.
         if (order.sizeDelta == 0) {
-            return (oldPosition, 0, Status.ZeroSizeOrder);
+            return (oldPosition, 0, 0, Status.ZeroSizeOrder);
         }
 
         // The order is not submitted if the user's existing position needs to be liquidated.
         // if (_canLiquidate(oldPos, params.oraclePrice)) {
-        //     return (oldPos, 0, Status.CanLiquidate);
+        //     return (oldPos, 0 0,, 0, Status.CanLiquidate);
         // }
 
-        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(marketId);
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
         // usd value of the difference in position (using the p/d-adjusted price).
         runtime.marketSkew = perpsMarketData.skew;
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(marketId);
+        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(order.marketId);
 
         // calculate fill price
         runtime.fillPrice = calculateFillPrice(
@@ -110,8 +141,12 @@ library AsyncOrder {
             marketConfig.orderFees[orderType]
         );
 
+        runtime.settlementReward = settlementStrategy.settlementReward;
+
+        uint totalFees = runtime.fees + runtime.settlementReward;
+
         LiquidationConfiguration.Data storage liquidationConfig = LiquidationConfiguration.load(
-            marketId
+            order.marketId
         );
 
         // Deduct the fee.
@@ -120,15 +155,15 @@ library AsyncOrder {
             liquidationConfig,
             oldPosition,
             runtime.fillPrice,
-            -(fees).toInt()
+            -(totalFees).toInt()
         );
         if (status != Status.Success) {
-            return (oldPosition, 0, status);
+            return (oldPosition, 0, 0, status);
         }
 
         // construct new position
         runtime.newPos = Position.Data({
-            marketId: marketId,
+            marketId: order.marketId,
             latestInteractionPrice: runtime.fillPrice.to128(),
             latestInteractionMargin: runtime.newMargin.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
@@ -141,15 +176,15 @@ library AsyncOrder {
         // is never the actual minMargin, because the first trade will always deduct
         // a fee (so the margin that otherwise would need to be transferred would have to include the future
         // fee as well, making the UX and definition of min-margin confusing).
-        bool positionDecreasing = MathUtil.sameSide(
-            oldPosition.size,
-            runtime.newPos.size
-        ) && MathUtil.abs(runtime.newPos.size) < MathUtil.abs(oldPosition.size);
+        bool positionDecreasing = MathUtil.sameSide(oldPosition.size, runtime.newPos.size) &&
+            MathUtil.abs(runtime.newPos.size) < MathUtil.abs(oldPosition.size);
         if (!positionDecreasing) {
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
             // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
-            if (runtime.newPos.latestInteractionMargin + fees < marketConfig.minInitialMargin) {
-                return (oldPosition, 0, Status.InsufficientMargin);
+            if (
+                runtime.newPos.latestInteractionMargin + totalFees < marketConfig.minInitialMargin
+            ) {
+                return (oldPosition, 0, 0, Status.InsufficientMargin);
             }
         }
 
@@ -165,7 +200,7 @@ library AsyncOrder {
             liquidationConfig.liquidationMargin(runtime.newPos.size, orderPrice) +
             runtime.liqPremium;
         if (runtime.newMargin <= runtime.liqMargin) {
-            return (runtime.newPos, 0, Status.CanLiquidate);
+            return (runtime.newPos, 0, 0, Status.CanLiquidate);
         }
 
         // Check that the maximum leverage is not exceeded when considering new margin including the paid fee.
@@ -177,9 +212,9 @@ library AsyncOrder {
             .size
             .to256()
             .mulDecimal(runtime.fillPrice.toInt())
-            .divDecimal((runtime.newMargin + fees).toInt());
+            .divDecimal((runtime.newMargin + totalFees).toInt());
         if (marketConfig.maxLeverage + (DecimalMath.UNIT / 100) < MathUtil.abs(runtime.leverage)) {
-            return (oldPosition, 0, Status.MaxLeverageExceeded);
+            return (oldPosition, 0, 0, Status.MaxLeverageExceeded);
         }
 
         // Check that the order isn't too large for the markets.
@@ -190,10 +225,10 @@ library AsyncOrder {
                 runtime.newPos.size
             )
         ) {
-            return (oldPosition, 0, Status.MaxMarketValueExceeded);
+            return (oldPosition, 0, 0, Status.MaxMarketValueExceeded);
         }
 
-        return (runtime.newPos, fees, Status.Success);
+        return (runtime.newPos, runtime.fees, runtime.settlementReward, Status.Success);
     }
 
     function orderFee(

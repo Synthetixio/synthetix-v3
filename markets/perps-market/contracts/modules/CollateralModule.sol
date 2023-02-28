@@ -1,23 +1,55 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/main/contracts/storage/Account.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../interfaces/ICollateralModule.sol";
+import "../storage/PerpsMarketFactory.sol";
+import "../storage/PerpsAccount.sol";
 
 contract CollateralModule is ICollateralModule {
-    function modifyCollateral(uint128 accountId, address collateralType, uint amount) external {
-        // RBAC check for permission of msg.sender for account id
+    using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
 
-        // currentAmount = check collateral associated with the account
+    bytes32 private constant _MODIFY_COLLATERAL_FEATURE_FLAG = "modifyCollateral";
 
-        // if collateralType == snxUSD token
-            // if greater
-            // else
-        // else
-            // if greater
-            // else
+    function modifyCollateral(
+        uint128 accountId,
+        uint128 synthMarketId,
+        int amountDelta
+    ) external override {
+        // TODO: check amountDelta is non-zero
+        // TODO: RBAC check for permission of msg.sender for account id
 
-        // record change
-        
-        // emit event
+        FeatureFlag.ensureAccessToFeature(_MODIFY_COLLATERAL_FEATURE_FLAG);
+        Account.exists(accountId);
+        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
+        perpsMarketFactory.checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
+
+        PerpsAccount.Data storage accountData = PerpsAccount.load(accountId);
+
+        ITokenModule synth = synthMarketId == 0
+            ? perpsMarketFactory.usdToken
+            : perpsMarketFactory.spotMarket.getSynth(synthMarketId);
+
+        if (amountDelta > 0) {
+            // adding collateral
+            accountData.collateralAmounts[synthMarketId] += amountDelta.toUint();
+
+            synth.transferFrom(msg.sender, address(this), amountDelta.toUint());
+        } else {
+            uint amountAbs = (-amountDelta).toUint();
+            // removing collateral
+            accountData.checkAvailableCollateralAmount(synthMarketId, amountAbs);
+            accountData.checkAvailableWithdrawalValue(amountDelta);
+
+            accountData.collateralAmounts[synthMarketId] -= amountAbs;
+
+            synth.transfer(msg.sender, amountAbs);
+        }
+
+        // TODO: emit event
     }
 }

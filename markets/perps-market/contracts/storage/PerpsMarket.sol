@@ -32,10 +32,11 @@ library PerpsMarket {
         // TODO: move to new data structure?
         int lastFundingRate;
         int lastFundingValue;
-        int lastFundingVelocity;
         uint256 lastFundingTime;
         // accountId => asyncOrder
         mapping(uint => AsyncOrder.Data) asyncOrders;
+        // accountId => position
+        mapping(uint => Position.Data) positions;
     }
 
     function create(uint128 id) internal returns (Data storage market) {
@@ -62,12 +63,39 @@ library PerpsMarket {
         }
     }
 
-    function unrecordedFunding(Data storage self, uint price) internal view returns (int) {
+    function recomputeFunding(
+        Data storage self,
+        uint price
+    ) internal returns (int fundingRate, int fundingValue) {
+        int fundingRate = currentFundingRate(self);
+        (int fundingValue, ) = calculateNextFunding(self, fundingRate, price);
+
+        self.lastFundingRate = fundingRate;
+        self.lastFundingValue = fundingValue;
+        self.lastFundingTime = block.timestamp;
+
+        return (fundingRate, fundingValue);
+    }
+
+    function calculateNextFunding(
+        Data storage self,
+        int fundingRate,
+        uint price
+    ) internal view returns (int nextFunding, int nextFundingPerUnit) {
+        nextFunding = self.lastFundingValue + unrecordedFunding(self, fundingRate, price);
+        netFundingPerUnit = nextFunding - latestInteractionFunding;
+    }
+
+    function unrecordedFunding(
+        Data storage self,
+        int fundingRate,
+        uint price
+    ) internal view returns (int) {
         // note the minus sign: funding flows in the opposite direction to the skew.
-        int avgFundingRate = -(int(self.lastFundingRate) + currentFundingRate(self)).divDecimal(
+        int avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
-        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(int(price));
+        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
     }
 
     function currentFundingRate(Data storage self) internal view returns (int) {

@@ -12,6 +12,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import "../storage/PerpsMarketFactory.sol";
 import "../storage/PerpsMarket.sol";
 import "../interfaces/IPerpsMarketFactoryModule.sol";
+import "@synthetixio/spot-market/contracts/interfaces/IAtomicOrderModule.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
@@ -38,6 +39,12 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
         store.usdToken = ITokenModule(usdTokenAddress);
         store.oracle = synthetix.getOracleManager();
+    }
+
+    function setSpotMarket(IAtomicOrderModule spotMarket) external override {
+        OwnableStorage.onlyOwner();
+
+        PerpsMarketFactory.load().spotMarket = spotMarket;
     }
 
     /**

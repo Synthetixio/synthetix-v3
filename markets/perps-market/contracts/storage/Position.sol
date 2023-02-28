@@ -32,13 +32,13 @@ library Position {
         }
     }
 
-    /*
-        1. latestInteractionPric
-        2. latestInteractionMargin
-        3. sizeDelta
-        4. latestInteractionFunding
-        5. marketId
-    */
+    function updatePosition(Data storage self, Data memory newPosition) internal {
+        self.size = newPosition.size;
+        self.marketId = newPosition.marketId;
+        self.latestInteractionPrice = newPosition.latestInteractionPrice;
+        self.latestInteractionMargin = newPosition.latestInteractionMargin;
+        self.latestInteractionFunding = newPosition.latestInteractionFunding;
+    }
 
     function calculateExpectedPosition(
         Data storage self,

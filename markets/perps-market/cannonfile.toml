@@ -13,8 +13,14 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.synthetixPackage]
 defaultValue = "synthetix:3.0.1"
 
+[setting.spotMarketPackage]
+defaultValue = "synthetix-spot-market:latest"
+
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+
+[import.spotMarket]
+source = "<%= settings.spotMarketPackage %>"
 
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
@@ -91,6 +97,15 @@ args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
 ]
 depends = ["invoke.upgrade_proxy"]
+
+[invoke.setSpotMarket]
+target = ["PerpsMarketProxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "setSpotMarket"
+args = [
+  "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
+]
+depends = ["invoke.upgrade_proxy", "import.spotMarket"]
 
 [invoke.init_account]
 target = ["PerpsMarketProxy"]

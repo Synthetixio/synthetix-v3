@@ -78,4 +78,9 @@ interface IAtomicOrderModule {
         uint sellAmount,
         uint minAmountReceived
     ) external returns (uint);
+
+    function quoteSell(
+        uint128 marketId,
+        uint synthAmount
+    ) external view returns (uint256 returnAmount, int256 totalFees)
 }
