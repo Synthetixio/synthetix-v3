@@ -1,4 +1,4 @@
-const { equal } = require('assert/strict');
+const { equal, rejects } = require('assert/strict');
 const prompter = require('../../../utils/io/prompter');
 
 describe('utils/io/prompter.js', function () {
@@ -45,16 +45,9 @@ describe('utils/io/prompter.js', function () {
       it('halts execution when responding negatively', async function () {
         prompter._prompt = async () => ({ confirmation: false });
 
-        let exited = false;
-        const exitCache = process.exit;
-        process.exit = () => (exited = true);
-
-        try {
+        await rejects(async () => {
           await prompter.confirmAction('something?');
-          equal(exited, true);
-        } finally {
-          process.exit = exitCache;
-        }
+        }, prompter.PromptCancelled);
       });
     });
   });
