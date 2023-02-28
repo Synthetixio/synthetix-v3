@@ -7,7 +7,7 @@ import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../interfaces/external/ISynthetixSystem.sol";
-import "@synthetixio/spot-market/contracts/interfaces/IAtomicOrderModule.sol";
+import "../interfaces/external/ISpotMarketSystem.sol";
 import "../utils/MathUtil.sol";
 
 /**
@@ -35,7 +35,7 @@ library PerpsMarketFactory {
          * @dev Synthetix core v3 proxy address
          */
         ISynthetixSystem synthetix;
-        IAtomicOrderModule spotMarket;
+        ISpotMarketSystem spotMarket;
         // max collateral amounts / market
         mapping(uint128 => uint) maxCollateralAmounts;
         uint128[] deductionMarketOrder;

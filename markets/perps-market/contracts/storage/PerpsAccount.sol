@@ -1,13 +1,27 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import "../interfaces/external/ISpotMarketSystem.sol";
 import "./Position.sol";
+import "./PerpsMarket.sol";
+import "../utils/MathUtil.sol";
+import "./PerpsPrice.sol";
 
 /**
  * @title Data for a single perps market
  */
 library PerpsAccount {
+    using SetUtil for SetUtil.UintSet;
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+    using Position for Position.Data;
+    using PerpsPrice for PerpsPrice.Data;
+    using DecimalMath for int256;
+    using DecimalMath for uint256;
+
     struct Data {
         // synth marketId => amount
         mapping(uint128 => uint) collateralAmounts;
@@ -17,6 +31,8 @@ library PerpsAccount {
 
     error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
 
+    error InsufficientMarginError(uint leftover);
+
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
 
@@ -25,7 +41,7 @@ library PerpsAccount {
         }
     }
 
-    function updatePositionMarket(Data storage self, uint positionMarketId, int size) internal {
+    function updatePositionMarkets(Data storage self, uint positionMarketId, int size) internal {
         if (size == 0) {
             self.openPositionMarketIds.remove(positionMarketId);
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
@@ -48,12 +64,16 @@ library PerpsAccount {
     // Checks available withdrawable value across all positions
     function checkAvailableWithdrawalValue(
         Data storage self,
+        uint128 accountId,
         int amount
-    ) internal view returns (uint) {
-        uint availableWithdrawableCollateralUsd = getAvailableWithdrawableCollateralUsd(self);
-        if (availableWithdrawableValue < MathUtil.abs(amount)) {
+    ) internal returns (uint) {
+        uint availableWithdrawableCollateralUsd = getAvailableWithdrawableCollateralUsd(
+            self,
+            accountId
+        );
+        if (availableWithdrawableCollateralUsd < MathUtil.abs(amount)) {
             revert InsufficientCollateralAvailableForWithdraw(
-                availableWithdrawableValue,
+                availableWithdrawableCollateralUsd,
                 MathUtil.abs(amount)
             );
         }
@@ -63,32 +83,37 @@ library PerpsAccount {
     function getAvailableWithdrawableCollateralUsd(
         Data storage self,
         uint128 accountId
-    ) internal view returns (uint) {
+    ) internal returns (uint) {
         int totalAccountOpenInterest;
-        for (int i = 0; i < self.openPositionMarketIds.length; i++) {
-            uint marketId = self.openPositionMarketIds.get(i);
+        for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
+            uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
-            (int marginProfitFunding, , , , ) = Position
-                .load(marketId, accountId)
-                .calculateExpectedPosition(Price.getCurrentPrice(marketId));
+            Position.Data memory position = PerpsMarket.load(marketId).positions[accountId];
+            (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(
+                PerpsPrice.getCurrentPrice(marketId)
+            );
             totalAccountOpenInterest += marginProfitFunding;
         }
         uint totalCollateralValue;
 
-        IAtomicOrderModule storage spotMarket = PerpsMarketFactory.load().spotMarket;
-        for (int i = 0; i < self.activeCollateralTypes.length; i++) {
-            uint synthMarketId = self.activeCollateralTypes.get(i);
+        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
+        for (uint i = 0; i < self.activeCollateralTypes.length(); i++) {
+            uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
 
-            uint amount = self.collateralAmounts[collateralType];
+            uint amount = self.collateralAmounts[synthMarketId];
 
-            totalCollateralValue += synthMarketId == 0
-                ? amount
-                : spotMarket.quoteSell(synthMarketId, amount);
+            uint amountToAdd;
+            if (synthMarketId == 0) {
+                amountToAdd = amount;
+            } else {
+                (amountToAdd, ) = spotMarket.quoteSell(synthMarketId, amount);
+            }
+            totalCollateralValue += amountToAdd;
         }
         uint maxLeverage = PerpsMarketFactory.load().maxLeverage;
         uint accountMaxOpenInterest = totalCollateralValue.mulDecimal(maxLeverage);
 
-        return accountMaxOpenInterest - totalAccountOpenInterest;
+        return (accountMaxOpenInterest.toInt() - totalAccountOpenInterest).toUint();
     }
 
     function deductFromAccount(
@@ -96,7 +121,8 @@ library PerpsAccount {
         uint amount // snxUSD
     ) internal {
         uint leftoverAmount = amount;
-        for (int i = 0; i < PerpsMarketFactory.load().deductionMarketOrder; i++) {
+        uint128[] storage deductionMarketOrder = PerpsMarketFactory.load().deductionMarketOrder;
+        for (uint i = 0; i < deductionMarketOrder.length; i++) {
             uint128 marketId = deductionMarketOrder[i];
             uint availableAmount = self.collateralAmounts[marketId];
             if (availableAmount == 0) {
@@ -114,9 +140,9 @@ library PerpsAccount {
                 }
             } else {
                 // TODO: check if market is paused; if not, continue
-                IAtomicOrderModule storage spotMarket = PerpsMarketFactory.load().spotMarket;
+                ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
                 // TODO: sell $2 worth of synth
-                uint availableAmountUsd = spotMarket.quoteSell(marketId, availableAmount);
+                (uint availableAmountUsd, ) = spotMarket.quoteSell(marketId, availableAmount);
                 if (availableAmountUsd >= leftoverAmount) {
                     uint amountToDeduct = spotMarket.sellExactOut(marketId, leftoverAmount);
                     self.collateralAmounts[marketId] = availableAmount - amountToDeduct;
@@ -129,8 +155,8 @@ library PerpsAccount {
             }
         }
 
-        if (leftoverFees > 0) {
-            revert InsufficientMarginError(leftoverFees);
+        if (leftoverAmount > 0) {
+            revert InsufficientMarginError(leftoverAmount);
         }
     }
 }

@@ -10,7 +10,7 @@ import "./PerpsMarketFactory.sol";
 /**
  * @title Price storage for a specific synth market.
  */
-library Price {
+library PerpsPrice {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;

@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "./Account.sol";
+import "./PerpsAccount.sol";
 import "./Position.sol";
 import "./AsyncOrder.sol";
 import "./MarketConfiguration.sol";
@@ -52,6 +52,11 @@ library PerpsMarket {
         }
     }
 
+    function updatePositionData(Data storage self, Position.Data memory newPosition) internal {
+        self.size += MathUtil.abs(newPosition.size);
+        self.skew += newPosition.size;
+    }
+
     function loadWithVerifiedOwner(
         uint128 id,
         address possibleOwner
@@ -67,8 +72,8 @@ library PerpsMarket {
         Data storage self,
         uint price
     ) internal returns (int fundingRate, int fundingValue) {
-        int fundingRate = currentFundingRate(self);
-        (int fundingValue, ) = calculateNextFunding(self, fundingRate, price);
+        fundingRate = currentFundingRate(self);
+        fundingValue = calculateNextFunding(self, price);
 
         self.lastFundingRate = fundingRate;
         self.lastFundingValue = fundingValue;
@@ -79,18 +84,13 @@ library PerpsMarket {
 
     function calculateNextFunding(
         Data storage self,
-        int fundingRate,
         uint price
-    ) internal view returns (int nextFunding, int nextFundingPerUnit) {
-        nextFunding = self.lastFundingValue + unrecordedFunding(self, fundingRate, price);
-        netFundingPerUnit = nextFunding - latestInteractionFunding;
+    ) internal view returns (int nextFunding) {
+        nextFunding = self.lastFundingValue + unrecordedFunding(self, price);
     }
 
-    function unrecordedFunding(
-        Data storage self,
-        int fundingRate,
-        uint price
-    ) internal view returns (int) {
+    function unrecordedFunding(Data storage self, uint price) internal view returns (int) {
+        int fundingRate = currentFundingRate(self);
         // note the minus sign: funding flows in the opposite direction to the skew.
         int avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
@@ -127,7 +127,7 @@ library PerpsMarket {
     function currentFundingVelocity(Data storage self) internal view returns (int) {
         MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(self.id);
         int maxFundingVelocity = int(marketConfig.maxFundingVelocity);
-        int pSkew = int(self.skew).divDecimal(int(marketConfig.skewScale));
+        int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
         // Ensures the proportionalSkew is between -1 and 1.
         int proportionalSkew = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),

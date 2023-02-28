@@ -10,6 +10,7 @@ import "../storage/PerpsAccount.sol";
 
 contract CollateralModule is ICollateralModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using PerpsAccount for PerpsAccount.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
@@ -32,7 +33,7 @@ contract CollateralModule is ICollateralModule {
 
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
-            : perpsMarketFactory.spotMarket.getSynth(synthMarketId);
+            : ITokenModule(perpsMarketFactory.spotMarket.getSynth(synthMarketId));
 
         if (amountDelta > 0) {
             // adding collateral
@@ -43,7 +44,7 @@ contract CollateralModule is ICollateralModule {
             uint amountAbs = (-amountDelta).toUint();
             // removing collateral
             accountData.checkAvailableCollateralAmount(synthMarketId, amountAbs);
-            accountData.checkAvailableWithdrawalValue(amountDelta);
+            accountData.checkAvailableWithdrawalValue(accountId, amountDelta);
 
             accountData.collateralAmounts[synthMarketId] -= amountAbs;
 

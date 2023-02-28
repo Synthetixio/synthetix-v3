@@ -23,15 +23,6 @@ library Position {
         int128 latestInteractionFunding;
     }
 
-    function load(uint128 marketId, uint256 accountId) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(
-            abi.encode("io.synthetix.perps-market.AsyncOrder", marketId, accountId)
-        );
-        assembly {
-            store.slot := s
-        }
-    }
-
     function updatePosition(Data storage self, Data memory newPosition) internal {
         self.size = newPosition.size;
         self.marketId = newPosition.marketId;

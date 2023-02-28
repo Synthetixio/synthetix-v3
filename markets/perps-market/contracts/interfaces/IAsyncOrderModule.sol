@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../storage/AsyncOrder.sol";
+import "../storage/SettlementStrategy.sol";
 
 /**
  * @title Module for committing and settling async orders.
@@ -23,15 +24,18 @@ interface IAsyncOrderModule {
     );*/
 
     error InvalidOrder(AsyncOrder.Status status);
+    error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
+    error OffchainLookup(
+        address sender,
+        string[] urls,
+        bytes callData,
+        bytes4 callbackFunction,
+        bytes extraData
+    );
 
     function commitOrder(
-        uint128 marketId,
-        uint256 accountId,
-        int256 sizeDelta,
-        uint256 settlementStrategyId,
-        uint256 acceptablePrice,
-        bytes32 trackingCode
-    ) external returns (AsyncOrder.Data memory order, uint fees);
+        AsyncOrder.OrderCommitmentRequest memory commitment
+    ) external returns (AsyncOrder.Data memory retOrder, uint fees);
 
     // function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
 

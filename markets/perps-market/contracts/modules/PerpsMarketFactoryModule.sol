@@ -12,7 +12,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import "../storage/PerpsMarketFactory.sol";
 import "../storage/PerpsMarket.sol";
 import "../interfaces/IPerpsMarketFactoryModule.sol";
-import "@synthetixio/spot-market/contracts/interfaces/IAtomicOrderModule.sol";
+import "../interfaces/external/ISpotMarketSystem.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
@@ -41,7 +41,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         store.oracle = synthetix.getOracleManager();
     }
 
-    function setSpotMarket(IAtomicOrderModule spotMarket) external override {
+    function setSpotMarket(ISpotMarketSystem spotMarket) external override {
         OwnableStorage.onlyOwner();
 
         PerpsMarketFactory.load().spotMarket = spotMarket;
@@ -76,11 +76,13 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        // skew
+        // TODO: reported debt
+        return 0;
     }
 
     function locked(uint128 marketId) external view override returns (uint256) {
-        // t.b.d.
+        // TODO .
+        return 0;
     }
 
     /**

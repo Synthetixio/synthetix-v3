@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "../interfaces/IAsyncOrderModule.sol";
 import "./SettlementStrategy.sol";
 import "./Position.sol";
 import "./MarketConfiguration.sol";
@@ -13,6 +14,7 @@ import "../utils/MathUtil.sol";
 library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for uint256;
+    using DecimalMath for int64;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
@@ -54,31 +56,37 @@ library AsyncOrder {
         PositionFlagged
     }
 
+    struct OrderCommitmentRequest {
+        uint128 marketId;
+        uint128 accountId;
+        int256 sizeDelta;
+        uint256 settlementStrategyId;
+        uint256 acceptablePrice;
+        bytes32 trackingCode;
+    }
+
     function update(
         Data storage self,
-        int256 sizeDelta,
-        uint256 settlementStrategyId,
-        uint256 settlementTime,
-        uint256 acceptablePrice,
-        bytes32 trackingCode,
-        uint128 marketId,
-        uint128 accountId
+        OrderCommitmentRequest memory commitment,
+        uint256 settlementTime
     ) internal {
-        self.sizeDelta = sizeDelta;
-        self.settlementStrategyId = settlementStrategyId;
+        self.sizeDelta = commitment.sizeDelta;
+        self.settlementStrategyId = commitment.settlementStrategyId;
         self.settlementTime = settlementTime;
-        self.acceptablePrice = acceptablePrice;
-        self.trackingCode = trackingCode;
-        self.marketId = marketId;
-        self.accountId = accountId;
+        self.acceptablePrice = commitment.acceptablePrice;
+        self.trackingCode = commitment.trackingCode;
+        self.marketId = commitment.marketId;
+        self.accountId = commitment.accountId;
     }
 
     struct SimulateDataRuntime {
         uint fillPrice;
         uint fees;
+        uint totalFees;
         uint settlementReward;
         uint newMargin;
         Position.Data newPos;
+        Status status;
         bool positionDecreasing;
         int leverage;
         int marketSkew;
@@ -90,9 +98,14 @@ library AsyncOrder {
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint settlementExpiration = settlementTime + settlementStrategy.settlementWindowDuration;
-        if (block.timestamp < settlementTime || block.timestamp > settlementExpiration) {
-            revert SettlementWindowExpired(block.timestamp, settlementTime, settlementExpiration);
+        uint settlementExpiration = self.settlementTime +
+            settlementStrategy.settlementWindowDuration;
+        if (block.timestamp < self.settlementTime || block.timestamp > settlementExpiration) {
+            revert SettlementWindowExpired(
+                block.timestamp,
+                self.settlementTime,
+                settlementExpiration
+            );
         }
     }
 
@@ -143,7 +156,7 @@ library AsyncOrder {
 
         runtime.settlementReward = settlementStrategy.settlementReward;
 
-        uint totalFees = runtime.fees + runtime.settlementReward;
+        runtime.totalFees = runtime.fees + runtime.settlementReward;
 
         LiquidationConfiguration.Data storage liquidationConfig = LiquidationConfiguration.load(
             order.marketId
@@ -151,14 +164,14 @@ library AsyncOrder {
 
         // Deduct the fee.
         // It is an error if the realised margin minus the fee is negative or subject to liquidation.
-        (runtime.newMargin, status) = recomputeMarginWithDelta(
+        (runtime.newMargin, runtime.status) = recomputeMarginWithDelta(
             liquidationConfig,
             oldPosition,
             runtime.fillPrice,
-            -(totalFees).toInt()
+            -(runtime.totalFees).toInt()
         );
-        if (status != Status.Success) {
-            return (oldPosition, 0, 0, status);
+        if (runtime.status != Status.Success) {
+            return (oldPosition, 0, 0, runtime.status);
         }
 
         // construct new position
@@ -182,7 +195,8 @@ library AsyncOrder {
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
             // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
             if (
-                runtime.newPos.latestInteractionMargin + totalFees < marketConfig.minInitialMargin
+                runtime.newPos.latestInteractionMargin + runtime.totalFees <
+                marketConfig.minInitialMargin
             ) {
                 return (oldPosition, 0, 0, Status.InsufficientMargin);
             }
@@ -212,7 +226,7 @@ library AsyncOrder {
             .size
             .to256()
             .mulDecimal(runtime.fillPrice.toInt())
-            .divDecimal((runtime.newMargin + totalFees).toInt());
+            .divDecimal((runtime.newMargin + runtime.totalFees).toInt());
         if (marketConfig.maxLeverage + (DecimalMath.UNIT / 100) < MathUtil.abs(runtime.leverage)) {
             return (oldPosition, 0, 0, Status.MaxLeverageExceeded);
         }
