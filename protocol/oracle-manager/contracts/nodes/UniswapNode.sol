@@ -51,7 +51,8 @@ library UniswapNode {
         uint256 baseAmount = 10 ** PRECISION;
         int256 price = getQuoteAtTick(tick, baseAmount, token, stablecoin).toInt();
 
-        int256 scale = int256(uint256(decimalsToken)) - int256(uint256(decimalsStablecoin));
+        // solhint-disable-next-line numcast/safe-cast
+        int256 scale = uint256(decimalsToken).toInt() - uint256(decimalsStablecoin).toInt();
 
         int256 finalPrice = scale > 0
             ? price.upscale(scale.toUint())
