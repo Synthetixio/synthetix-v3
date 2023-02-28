@@ -8,6 +8,20 @@ requireAll(`${__dirname}/tasks`);
 
 const config = {
   ...commonConfig,
+  solidity: {
+    compilers: [commonConfig.solidity],
+    overrides: {
+      'contracts/modules/ElectionModule.sol': {
+        version: '0.8.11',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1,
+          },
+        },
+      },
+    },
+  },
   cannon: {},
 };
 
