@@ -19,7 +19,7 @@ const config = {
             runs: 1,
           },
         },
-      }
+      },
     },
   },
   cannon: {},
