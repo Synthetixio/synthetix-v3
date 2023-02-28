@@ -1,6 +1,10 @@
 const prompts = require('prompts');
 
+class PromptCancelled extends Error {}
+
 module.exports = {
+  PromptCancelled,
+
   // Auto-responds all prompts as 'yes'
   // when enabled.
   noConfirm: false,
@@ -42,8 +46,7 @@ module.exports = {
     const confirmed = await this.ask(message);
 
     if (!confirmed) {
-      console.log('User cancelled');
-      process.exit(0);
+      throw new PromptCancelled();
     }
   },
 };
