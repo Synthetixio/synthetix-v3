@@ -208,7 +208,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         address trader = asyncOrderClaim.owner;
 
         uint finalAmountUsd;
-        (finalAmountUsd, totalFees, collectedFees) = FeeUtil.processFees(
+        (finalAmountUsd, totalFees, , collectedFees) = FeeUtil.processFees(
             marketId,
             trader,
             amountUsable,

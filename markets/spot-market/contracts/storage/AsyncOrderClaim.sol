@@ -121,7 +121,6 @@ library AsyncOrderClaim {
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        checkClaimValidity(claim);
         uint expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < expirationTime) {

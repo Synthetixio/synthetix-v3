@@ -34,7 +34,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
+        (uint256 amountUsable, int256 totalFees, , uint collectedFees) = FeeUtil.processFees(
             marketId,
             msg.sender,
             usdAmount,

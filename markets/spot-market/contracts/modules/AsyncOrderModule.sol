@@ -107,6 +107,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
+        asyncOrderClaim.checkClaimValidity();
         asyncOrderClaim.isEligibleForCancellation(
             AsyncOrderConfiguration.load(marketId).settlementStrategies[
                 asyncOrderClaim.settlementStrategyId

@@ -7,6 +7,7 @@ import "../storage/SpotMarketFactory.sol";
 import "../storage/FeeConfiguration.sol";
 import "../storage/AsyncOrder.sol";
 import "../utils/SynthUtil.sol";
+import "./TransactionUtil.sol";
 
 library FeeUtil {
     using SpotMarketFactory for SpotMarketFactory.Data;
@@ -24,7 +25,10 @@ library FeeUtil {
         uint256 usdAmount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
+    )
+        internal
+        returns (uint256 amountUsable, int256 totalFees, int256 remainingFees, uint collectedFees)
+    {
         (amountUsable, totalFees) = calculateFees(
             marketId,
             transactor,
@@ -34,6 +38,7 @@ library FeeUtil {
         );
 
         collectedFees = collectFees(marketId, totalFees, transactor, transactionType);
+        remainingFees = totalFees - collectedFees.toInt();
     }
 
     /**
