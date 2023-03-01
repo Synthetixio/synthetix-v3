@@ -5,9 +5,9 @@ import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../storage/FeeConfiguration.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
-import "../utils/FeeUtil.sol";
 
 /**
  * @title Module for buying and selling atomically registered synths.
@@ -34,13 +34,14 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, int256 totalFees, , uint collectedFees) = FeeUtil.processFees(
-            marketId,
-            msg.sender,
-            usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
-            Transaction.Type.BUY
-        );
+        (uint256 amountUsable, int256 totalFees, , uint collectedFees) = FeeConfiguration
+            .processFees(
+                marketId,
+                msg.sender,
+                usdAmount,
+                Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+                Transaction.Type.BUY
+            );
 
         spotMarketFactory.depositToMarketManager(marketId, amountUsable);
 
@@ -81,7 +82,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         // calculate fees
-        (uint256 returnAmount, int256 totalFees) = FeeUtil.calculateFees(
+        (uint256 returnAmount, int256 totalFees) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -108,7 +109,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             );
 
             // collect fees
-            collectedFees = FeeUtil.collectFees(
+            collectedFees = FeeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
