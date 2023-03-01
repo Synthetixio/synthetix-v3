@@ -26,7 +26,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint128 marketId,
         uint usdAmount,
         uint minAmountReceived
-    ) external override returns (uint) {
+    ) external override returns (uint, int) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -59,7 +59,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         emit SynthBought(marketId, synthAmount, totalFees, collectedFees);
 
-        return synthAmount;
+        return (synthAmount, totalFees);
     }
 
     /**
@@ -69,7 +69,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint128 marketId,
         uint256 synthAmount,
         uint minAmountReceived
-    ) external override returns (uint256) {
+    ) external override returns (uint256, int) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -124,6 +124,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees);
 
-        return returnAmount;
+        return (returnAmount, totalFees);
     }
 }

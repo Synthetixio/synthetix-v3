@@ -80,7 +80,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // Adjust async order data
         AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
-        asyncOrderId = ++asyncOrderData.totalClaims;
         asyncOrderData.totalCommittedUsdAmount += committedAmountUsd;
 
         uint settlementDelay = AsyncOrderConfiguration
@@ -90,7 +89,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         asyncOrderClaim = AsyncOrderClaim.create(
             marketId,
-            asyncOrderId,
             orderType,
             amountEscrowed,
             settlementStrategyId,
@@ -101,7 +99,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
 
         // Emit event
-        emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderId, msg.sender);
+        emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderClaim.id, msg.sender);
     }
 
     /**
@@ -109,7 +107,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
-        asyncOrderClaim.checkClaimValidity();
         asyncOrderClaim.isEligibleForCancellation(
             AsyncOrderConfiguration.load(marketId).settlementStrategies[
                 asyncOrderClaim.settlementStrategyId
@@ -126,7 +123,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external view override returns (AsyncOrderClaim.Data memory) {
+    ) external pure override returns (AsyncOrderClaim.Data memory) {
         return AsyncOrderClaim.load(marketId, asyncOrderId);
     }
 
