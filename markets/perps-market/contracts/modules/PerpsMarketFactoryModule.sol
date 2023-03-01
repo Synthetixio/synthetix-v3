@@ -9,6 +9,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../storage/PerpsMarketFactory.sol";
 import "../storage/PerpsMarket.sol";
 import "../interfaces/IPerpsMarketFactoryModule.sol";
@@ -23,6 +24,7 @@ import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
+    using DecimalMath for uint256;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
 
@@ -76,13 +78,14 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        // TODO: reported debt
-        return 0;
+        return MathUtil.abs(PerpsMarket.load(marketId).skew);
     }
 
     function locked(uint128 marketId) external view override returns (uint256) {
-        // TODO .
-        return 0;
+        return
+            PerpsMarket.load(marketId).size.mulDecimal(
+                MarketConfiguration.load(marketId).lockedOiPercent
+            );
     }
 
     /**

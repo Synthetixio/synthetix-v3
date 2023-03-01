@@ -31,6 +31,13 @@ library Position {
         self.latestInteractionFunding = newPosition.latestInteractionFunding;
     }
 
+    function clear(Data storage self) internal {
+        self.size = 0;
+        self.latestInteractionPrice = 0;
+        self.latestInteractionMargin = 0;
+        self.latestInteractionFunding = 0;
+    }
+
     function calculateExpectedPosition(
         Data storage self,
         uint price

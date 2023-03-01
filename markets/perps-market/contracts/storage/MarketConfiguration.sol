@@ -25,6 +25,12 @@ library MarketConfiguration {
         uint256 skewScale;
         uint256 minInitialMargin;
         uint256 liquidationPremiumMultiplier;
+        uint256 lockedOiPercent;
+        // liquidation params
+        uint256 maxLiquidationLimitAccumulationMultiplier;
+        // liquidation rewards
+        uint liquidationRewardPercentage;
+        uint maxLiquidationReward;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -34,6 +40,17 @@ library MarketConfiguration {
         assembly {
             store.slot := s
         }
+    }
+
+    function calculateSettlementReward(
+        Data storage self,
+        uint liquidatedUsd
+    ) internal view returns (uint) {
+        uint amountBasedOnLiquidatedAmount = liquidatedUsd.mulDecimal(
+            self.liquidationRewardPercentage
+        );
+
+        return MathUtil.min(amountBasedOnLiquidatedAmount, self.maxLiquidationReward);
     }
 
     function liquidationPremium(

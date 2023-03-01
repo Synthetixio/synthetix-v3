@@ -41,6 +41,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
             3. check valid settlement strategy
         */
 
+        PerpsAccount.load(commitment.accountId).checkLiquidationFlag();
+
         // TODO: recompute funding
         RuntimeCommitData memory runtime;
 
@@ -69,6 +71,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
     }
 
     function settle(uint128 marketId, uint128 accountId) external {
+        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
+        perpsAccount.checkLiquidationFlag();
         // 1. get order
         (
             AsyncOrder.Data storage order,
@@ -84,7 +88,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // 3. calculate fees
 
         // 4. deduct from account
-        PerpsAccount.load(accountId).deductFromAccount(settlementStrategy.settlementReward);
+        perpsAccount.deductFromAccount(settlementStrategy.settlementReward);
 
         // 5. commit to position
 

@@ -6,7 +6,7 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../interfaces/ICollateralModule.sol";
 import "../storage/PerpsMarketFactory.sol";
-import "../storage/PerpsAccount.sol";
+import {PerpsAccount} from "../storage/PerpsAccount.sol";
 
 contract CollateralModule is ICollateralModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
@@ -30,6 +30,7 @@ contract CollateralModule is ICollateralModule {
         perpsMarketFactory.checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
 
         PerpsAccount.Data storage accountData = PerpsAccount.load(accountId);
+        accountData.checkLiquidationFlag();
 
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
@@ -44,7 +45,7 @@ contract CollateralModule is ICollateralModule {
             uint amountAbs = (-amountDelta).toUint();
             // removing collateral
             accountData.checkAvailableCollateralAmount(synthMarketId, amountAbs);
-            accountData.checkAvailableWithdrawalValue(accountId, amountDelta);
+            accountData.checkAvailableWithdrawableValue(accountId, amountDelta);
 
             accountData.collateralAmounts[synthMarketId] -= amountAbs;
 

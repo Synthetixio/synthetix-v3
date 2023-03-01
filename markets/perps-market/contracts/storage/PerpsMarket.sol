@@ -9,6 +9,7 @@ import "./AsyncOrder.sol";
 import "./MarketConfiguration.sol";
 import "../utils/MathUtil.sol";
 import "./SettlementStrategy.sol";
+import "./OrderFee.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
@@ -20,6 +21,7 @@ library PerpsMarket {
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
 
     struct Data {
         address owner;
@@ -33,6 +35,9 @@ library PerpsMarket {
         int lastFundingRate;
         int lastFundingValue;
         uint256 lastFundingTime;
+        // liquidation params
+        uint128 lastTimeLiquidationCapacityUpdated;
+        uint128 lastUtilizedLiquidationCapacity;
         // accountId => asyncOrder
         mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
@@ -50,6 +55,35 @@ library PerpsMarket {
         assembly {
             market.slot := s
         }
+    }
+
+    function maxLiquidatableAmount(uint128 marketId) internal returns (uint) {
+        Data storage self = load(marketId);
+        uint maxLiquidationValue = maxLiquidationPerSecond(marketId);
+        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
+
+        self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+        uint unlockedLiquidationCapacity = timeSinceLastUpdate * maxLiquidationValue;
+        if (unlockedLiquidationCapacity > self.lastUtilizedLiquidationCapacity) {
+            self.lastUtilizedLiquidationCapacity = 0;
+        } else {
+            self.lastUtilizedLiquidationCapacity =
+                self.lastUtilizedLiquidationCapacity -
+                unlockedLiquidationCapacity.to128();
+        }
+
+        return
+            (maxLiquidationValue *
+                MarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
+            self.lastUtilizedLiquidationCapacity;
+    }
+
+    function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
+        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(marketId);
+        OrderFee.Data storage orderFeeData = marketConfig.orderFees[
+            MarketConfiguration.OrderType.ASYNC_OFFCHAIN
+        ];
+        return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
     }
 
     function updatePositionData(Data storage self, Position.Data memory newPosition) internal {

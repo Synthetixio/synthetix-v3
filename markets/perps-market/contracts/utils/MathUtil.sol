@@ -19,6 +19,10 @@ library MathUtil {
         return x < y ? x : y;
     }
 
+    function min(uint x, uint y) internal pure returns (uint) {
+        return x < y ? x : y;
+    }
+
     function sameSide(int a, int b) internal pure returns (bool) {
         return (a == 0) || (b == 0) || (a > 0) == (b > 0);
     }

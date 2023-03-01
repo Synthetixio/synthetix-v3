@@ -5,6 +5,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 import "../interfaces/external/ISynthetixSystem.sol";
 import "../interfaces/external/ISpotMarketSystem.sol";
@@ -40,6 +41,7 @@ library PerpsMarketFactory {
         mapping(uint128 => uint) maxCollateralAmounts;
         uint128[] deductionMarketOrder;
         uint maxLeverage;
+        SetUtil.UintSet liquidatableAccounts;
         // collateral amounts running total
         mapping(uint128 => uint) collateralAmounts;
     }
