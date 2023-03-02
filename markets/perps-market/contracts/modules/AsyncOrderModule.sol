@@ -22,6 +22,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
     using SettlementStrategy for SettlementStrategy.Data;
+    using PerpsMarketFactory for PerpsMarketFactory.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
@@ -195,8 +196,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // pay keeper
         factory.usdToken.transfer(msg.sender, settlementReward);
         // deposit into market manager
-        factory.usdToken.approve(address(this), fees);
-        factory.synthetix.depositMarketUsd(asyncOrder.marketId, address(this), fees);
+        factory.depositToMarketManager(asyncOrder.marketId, fees);
 
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(asyncOrder.marketId);
 

@@ -75,4 +75,9 @@ library PerpsMarketFactory {
             self.collateralAmounts[synthMarketId] -= MathUtil.abs(synthAmount);
         }
     }
+
+    function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {
+        self.usdToken.approve(address(this), amount);
+        self.synthetix.depositMarketUsd(marketId, address(this), amount);
+    }
 }

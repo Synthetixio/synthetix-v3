@@ -23,6 +23,7 @@ library PerpsAccount {
     using Position for Position.Data;
     using PerpsPrice for PerpsPrice.Data;
     using PerpsMarket for PerpsMarket.Data;
+    using PerpsMarketFactory for PerpsMarketFactory.Data;
     using MarketConfiguration for MarketConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -238,7 +239,8 @@ library PerpsAccount {
 
             amountToDeposit = amountToDeposit - liquidationReward;
             runtime.totalLiquidationRewards += liquidationReward;
-            factory.synthetix.depositMarketUsd(positionMarketId, address(this), amountToDeposit);
+
+            factory.depositToMarketManager(positionMarketId, amountToDeposit);
         }
 
         factory.usdToken.transfer(msg.sender, runtime.totalLiquidationRewards);
