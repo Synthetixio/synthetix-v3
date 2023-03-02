@@ -70,7 +70,7 @@ library UniswapNode {
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
 
         // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by itself
-        if (sqrtRatioX96 <= type(uint256).max) {
+        if (sqrtRatioX96 <= type(uint128).max) {
             uint256 ratioX192 = sqrtRatioX96.to256() * sqrtRatioX96;
             quoteAmount = baseToken < quoteToken
                 ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
