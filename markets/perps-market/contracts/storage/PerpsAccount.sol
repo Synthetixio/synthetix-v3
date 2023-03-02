@@ -11,6 +11,7 @@ import "../utils/MathUtil.sol";
 import "./PerpsPrice.sol";
 import "./MarketConfiguration.sol";
 
+uint128 constant SNX_USD_MARKET_ID = 0;
 /**
  * @title Data for a single perps market
  */
@@ -69,8 +70,10 @@ library PerpsAccount {
     }
 
     function flagForLiquidation(Data storage self, uint128 accountId) internal {
-        PerpsMarketFactory.load().liquidatableAccounts.add(accountId);
-        convertAllCollateralToUsd(self);
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        
+        factory.liquidatableAccounts.add(accountId);
+        convertAllCollateralToUsd(self, factory);
         self.flaggedForLiquidation = true;
     }
 
@@ -182,7 +185,7 @@ library PerpsAccount {
 
             // withdraw from market
             factory.synthetix.withdrawMarketUsd(positionMarketId, address(this), totalPnl.toUint());
-            self.collateralTypes[0] += totalPnl.toUint();
+            self.collateralAmounts[SNX_USD_MARKET_ID] += totalPnl.toUint();
             totalLiquidationRewards += liquidationReward;
             collectedPnlFromProfitableMarkets += (totalPnl.toUint() - liquidationReward);
         }
@@ -304,7 +307,7 @@ library PerpsAccount {
             uint amount = self.collateralAmounts[synthMarketId];
 
             uint amountToAdd;
-            if (synthMarketId == 0) {
+            if (synthMarketId == SNX_USD_MARKET_ID) {
                 amountToAdd = amount;
             } else {
                 (amountToAdd, ) = spotMarket.quoteSell(synthMarketId, amount);
@@ -314,9 +317,16 @@ library PerpsAccount {
         return totalCollateralValue;
     }
 
-    function convertAllCollateralToUsd(Data storage self) internal {
-        // sell it all
-        // set activeCollateralTypes appropriately
+    function convertAllCollateralToUsd(Data storage self, PerpsMarketFactory.Data storage factory) internal {
+        ISpotMarketSystem spotMarket = factory.spotMarket;
+        for (uint i = 0; i < self.activeCollateralTypes.length(); i++) {
+            uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
+            if (synthMarketId != SNX_USD_MARKET_ID) {
+                uint amount = self.collateralAmounts[synthMarketId];
+                (uint amountSold) = spotMarket.sellExactIn(synthMarketId, amount);
+                self.collateralAmounts[SNX_USD_MARKET_ID] = amountSold;
+            } 
+        }
     }
 
     function deductFromAccount(
@@ -332,7 +342,7 @@ library PerpsAccount {
                 continue;
             }
 
-            if (marketId == 0) {
+            if (marketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
                     self.collateralAmounts[marketId] = availableAmount - leftoverAmount;
