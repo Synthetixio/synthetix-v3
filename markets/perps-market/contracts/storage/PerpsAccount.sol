@@ -323,8 +323,8 @@ library PerpsAccount {
             uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
             if (synthMarketId != SNX_USD_MARKET_ID) {
                 uint amount = self.collateralAmounts[synthMarketId];
-                (uint amountSold) = spotMarket.sellExactIn(synthMarketId, amount);
-                self.collateralAmounts[SNX_USD_MARKET_ID] = amountSold;
+                uint amountSold = spotMarket.sellExactIn(synthMarketId, amount);
+                self.collateralAmounts[SNX_USD_MARKET_ID] += amountSold;
             } 
         }
     }
