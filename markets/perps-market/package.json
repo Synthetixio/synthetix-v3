@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "0.0.3-alpha",
+  "version": "0.0.2",
   "description": "Spot Market implementation",
   "private": true,
   "scripts": {
@@ -20,7 +20,7 @@
     "@synthetixio/common-config": "*",
     "@synthetixio/core-contracts": "1.1.1",
     "@synthetixio/core-modules": "*",
-    "@synthetixio/main": "3.0.1",
+    "@synthetixio/main": "*",
     "@synthetixio/router": "*",
     "node-fetch": "2.6.9",
     "solidity-docgen": "0.6.0-beta.22",

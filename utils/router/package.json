@@ -27,14 +27,14 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "@usecannon/builder": "^2.1.3",
+    "@usecannon/builder": "^2.1.7",
     "hardhat": "^2.0.0"
   },
   "devDependencies": {
     "@types/debug": "4.1.7",
     "@types/lodash": "4.14.191",
     "@types/mustache": "4.2.1",
-    "@usecannon/builder": "^2.1.3",
+    "@usecannon/builder": "^2.1.7",
     "mocha": "9.1.1",
     "nyc": "15.1.0"
   },
