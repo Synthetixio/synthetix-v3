@@ -55,7 +55,7 @@ library PerpsAccount {
             (
                 int totalAccountOpenInterest,
                 uint accountMaxOpenInterest
-            ) = _calculateOpenInterestValues(self);
+            ) = _calculateOpenInterestValues(self, accountId);
             /*  TODO:
                 available collateral needs to take into consideration the liquidation premium & liquidation buffer for each market
                 when calculating the marginProfitFunding of each market to check against the total collateral value
@@ -69,7 +69,9 @@ library PerpsAccount {
     }
 
     function flagForLiquidation(Data storage self, uint128 accountId) internal {
-        PerpsMarketFactory.load().liquidatableAccounts.add(accountId);
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+
+        factory.liquidatableAccounts.add(accountId);
         convertAllCollateralToUsd(self);
         self.flaggedForLiquidation = true;
     }
@@ -132,18 +134,25 @@ library PerpsAccount {
         return (amountToLiquidate, totalPnl, liquidationReward, position);
     }
 
+    struct RuntimeLiquidationData {
+        uint totalLosingPnl;
+        uint totalLiquidationRewards;
+        uint losingMarketsLength;
+        uint profitableMarketsLength;
+        uint128[] profitableMarkets;
+        uint128[] losingMarkets;
+    }
+
     function liquidateAccount(
         Data storage self,
         uint128 accountId,
         uint accountCollateralValue
     ) internal {
+        RuntimeLiquidationData memory runtime;
         // loop through all positions
         // profitable / unprofitable
-        SetUtil.UintSet storage profitableMarkets;
-        SetUtil.UintSet storage losingMarkets;
-
-        uint totalLosingPnl;
-        uint totalLiquidationRewards;
+        runtime.profitableMarkets = new uint128[](self.openPositionMarketIds.length());
+        runtime.losingMarkets = new uint128[](self.openPositionMarketIds.length());
 
         for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
             uint128 positionMarketId = self.openPositionMarketIds.valueAt(i).to128();
@@ -156,10 +165,12 @@ library PerpsAccount {
             int totalPnl = pnl + accruedFunding;
 
             if (totalPnl > 0) {
-                profitableMarkets.add(positionMarketId);
+                runtime.profitableMarkets[runtime.profitableMarketsLength] = positionMarketId;
+                runtime.profitableMarketsLength++;
             } else {
-                losingMarkets.add(positionMarketId);
-                totalLosingPnl += MathUtil.abs(totalPnl);
+                runtime.losingMarkets[runtime.losingMarketsLength] = positionMarketId;
+                runtime.losingMarketsLength++;
+                runtime.totalLosingPnl += MathUtil.abs(totalPnl);
             }
         }
 
@@ -171,19 +182,18 @@ library PerpsAccount {
         uint collectedPnlFromProfitableMarkets;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        for (uint i = 0; i < profitableMarkets.length(); i++) {
-            uint128 positionMarketId = losingMarkets.valueAt(i).to128();
-            (
-                ,
-                int totalPnl,
-                uint liquidationReward,
-                Position.Data storage position
-            ) = _processMarketLiquidation(self, profitableMarkets.valueAt(i).to128(), accountId);
+        for (uint i = 0; i < runtime.profitableMarkets.length; i++) {
+            uint128 positionMarketId = runtime.profitableMarkets[i];
+            (, int totalPnl, uint liquidationReward, ) = _processMarketLiquidation(
+                self,
+                positionMarketId,
+                accountId
+            );
 
             // withdraw from market
             factory.synthetix.withdrawMarketUsd(positionMarketId, address(this), totalPnl.toUint());
-            self.collateralTypes[0] += totalPnl.toUint();
-            totalLiquidationRewards += liquidationReward;
+            self.collateralAmounts[0] += totalPnl.toUint();
+            runtime.totalLiquidationRewards += liquidationReward;
             collectedPnlFromProfitableMarkets += (totalPnl.toUint() - liquidationReward);
         }
 
@@ -201,21 +211,23 @@ library PerpsAccount {
 
         uint totalAvailableUsd = accountCollateralValue + collectedPnlFromProfitableMarkets;
 
-        for (uint i = 0; i < losingMarkets.length(); i++) {
-            uint128 positionMarketId = losingMarkets.valueAt(i).to128();
+        for (uint i = 0; i < runtime.losingMarkets.length; i++) {
+            uint128 positionMarketId = runtime.losingMarkets[i];
 
             (
                 uint amountToLiquidate,
                 int totalPnl,
                 uint liquidationReward,
-                Position.Data storage position
+                Position.Data memory position
             ) = _processMarketLiquidation(self, positionMarketId, accountId);
 
             uint amountToLiquidatePercentage = amountToLiquidate.divDecimal(
                 MathUtil.abs(position.size)
             );
 
-            uint percentageOfTotalLosingPnl = totalPnl.divDecimal(totalLosingPnl);
+            uint percentageOfTotalLosingPnl = MathUtil.abs(totalPnl).divDecimal(
+                runtime.totalLosingPnl
+            );
             uint totalAvailableForDeposit = totalAvailableUsd.mulDecimal(
                 percentageOfTotalLosingPnl
             );
@@ -223,11 +235,11 @@ library PerpsAccount {
             uint amountToDeposit = totalAvailableForDeposit.mulDecimal(amountToLiquidatePercentage);
 
             amountToDeposit = amountToDeposit - liquidationReward;
-            totalLiquidationRewards += liquidationReward;
+            runtime.totalLiquidationRewards += liquidationReward;
             factory.synthetix.depositMarketUsd(positionMarketId, address(this), amountToDeposit);
         }
 
-        factory.usdToken.transfer(msg.sender, totalLiquidationRewards);
+        factory.usdToken.transfer(msg.sender, runtime.totalLiquidationRewards);
     }
 
     // Checks current collateral amounts
@@ -261,18 +273,23 @@ library PerpsAccount {
         return availableWithdrawableCollateralUsd;
     }
 
-    function getAvailableWithdrawableCollateralUsd(Data storage self) internal returns (uint) {
+    function getAvailableWithdrawableCollateralUsd(
+        Data storage self,
+        uint128 accountId
+    ) internal returns (uint) {
         (int totalAccountOpenInterest, uint accountMaxOpenInterest) = _calculateOpenInterestValues(
-            self
+            self,
+            accountId
         );
 
         return (accountMaxOpenInterest.toInt() - totalAccountOpenInterest).toUint();
     }
 
     function _calculateOpenInterestValues(
-        Data storage self
+        Data storage self,
+        uint128 accountId
     ) private returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
-        totalAccountOpenInterest = getTotalAccountOpenInterest(self);
+        totalAccountOpenInterest = getTotalAccountOpenInterest(self, accountId);
 
         uint totalCollateralValue = getTotalCollateralValue(self);
 
