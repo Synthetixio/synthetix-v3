@@ -12,6 +12,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../storage/PerpsMarketFactory.sol";
 import "../storage/PerpsMarket.sol";
+import "../storage/PerpsPrice.sol";
 import "../interfaces/IPerpsMarketFactoryModule.sol";
 import "../interfaces/external/ISpotMarketSystem.sol";
 
@@ -24,6 +25,7 @@ import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
+    using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
@@ -98,13 +100,13 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    /*function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
         PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
 
-        Price.load(perpsMarketId).update(feedId);
+        PerpsPrice.load(perpsMarketId).update(feedId);
 
         emit MarketPriceDataUpdated(perpsMarketId, feedId);
-    }*/
+    }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule

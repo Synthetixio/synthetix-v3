@@ -44,6 +44,7 @@ library PerpsMarketFactory {
         SetUtil.UintSet liquidatableAccounts;
         // collateral amounts running total
         mapping(uint128 => uint) collateralAmounts;
+        mapping(uint128 => address) marketOwners;
     }
 
     function load() internal pure returns (Data storage perpsMarketFactory) {
@@ -79,5 +80,13 @@ library PerpsMarketFactory {
     function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {
         self.usdToken.approve(address(this), amount);
         self.synthetix.depositMarketUsd(marketId, address(this), amount);
+    }
+
+    function onlyMarketOwner(Data storage self, uint128 marketId) internal view {
+        address marketOwner = self.marketOwners[marketId];
+
+        if (marketOwner != msg.sender) {
+            revert OnlyMarketOwner(marketOwner, msg.sender);
+        }
     }
 }

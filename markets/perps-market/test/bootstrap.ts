@@ -5,14 +5,12 @@ import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import {
-  FeeCollectorMock,
-  OracleVerifierMock,
-  SpotMarketProxy,
+  SpotMarketSpotMarketProxy,
   SynthetixCollateralMock,
   SynthetixCoreProxy,
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
-  SynthRouter,
+  PerpsMarketProxy,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -21,21 +19,17 @@ type Proxies = {
   ['synthetix.USDProxy']: SynthetixUSDProxy;
   ['synthetix.CollateralMock']: SynthetixCollateralMock;
   ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
-  SpotMarketProxy: SpotMarketProxy;
-  SynthRouter: SynthRouter;
-  FeeCollectorMock: FeeCollectorMock;
-  OracleVerifierMock: OracleVerifierMock;
+  ['spotMarket.SpotMarketProxy']: SpotMarketSpotMarketProxy;
+  PerpsMarketProxy: PerpsMarketProxy;
 };
 
 export type Systems = {
-  SpotMarket: SpotMarketProxy;
+  SpotMarket: SpotMarketSpotMarketProxy;
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
-  OracleVerifierMock: OracleVerifierMock;
-  FeeCollectorMock: FeeCollectorMock;
-  Synth: (address: string) => SynthRouter;
+  PerpsMarket: PerpsMarketProxy;
 };
 
 const params = { cannonfile: 'cannonfile.test.toml' };
@@ -59,12 +53,10 @@ before('load contracts', () => {
   contracts = {
     Core: getContract('synthetix.CoreProxy'),
     USD: getContract('synthetix.USDProxy'),
-    SpotMarket: getContract('SpotMarketProxy'),
+    SpotMarket: getContract('spotMarket.SpotMarketProxy'),
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
-    FeeCollectorMock: getContract('FeeCollectorMock'),
-    OracleVerifierMock: getContract('OracleVerifierMock'),
-    Synth: (address: string) => getContract('SynthRouter', address),
+    PerpsMarket: getContract('PerpsMarketProxy'),
   };
 });
 
@@ -176,48 +168,24 @@ export function bootstrapWithStakedPool() {
   };
 }
 
-export function bootstrapWithSynth(name: string, token: string) {
+export function bootstrapPerpsMarket(name: string, token: string) {
   const r = bootstrapWithStakedPool();
-  let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
-  let marketId: string;
-  let aggregator: AggregatorV3Mock;
+  let coreOwner: ethers.Signer, marketOwner: ethers.Signer, marketId: string;
 
   before('identify market owner', async () => {
     [coreOwner, , marketOwner] = r.signers();
   });
 
-  before('register synth', async () => {
+  before('register perps market', async () => {
     marketId = await r
       .systems()
-      .SpotMarket.callStatic.createSynth(name, token, marketOwner.getAddress());
-    await r.systems().SpotMarket.createSynth(name, token, marketOwner.getAddress());
+      .PerpsMarket.callStatic.createMarket(name, token, marketOwner.getAddress());
+    await r.systems().PerpsMarket.createMarket(name, token, marketOwner.getAddress());
   });
 
-  before('configure market collateral supply cap', async () => {
-    await r
-      .systems()
-      .Core.connect(coreOwner)
-      .configureMaximumMarketCollateral(
-        marketId,
-        r.systems().CollateralMock.address,
-        ethers.constants.MaxUint256
-      );
+  before('setup feed', async () => {
+    await r.systems().PerpsMarket.connect(marketOwner).updatePriceData(marketId, r.oracleNodeId());
   });
-
-  before('setup buy and sell feeds', async () => {
-    const result = await createOracleNode(
-      r.signers()[0],
-      ethers.utils.parseEther('900'),
-      r.systems().OracleManager
-    );
-    aggregator = result.aggregator;
-    await r
-      .systems()
-      .SpotMarket.connect(marketOwner)
-      .updatePriceData(marketId, r.oracleNodeId(), result.oracleNodeId);
-  });
-
-  // add weight to market from pool
 
   before('delegate pool collateral to market', async () => {
     await r
@@ -238,10 +206,76 @@ export function bootstrapWithSynth(name: string, token: string) {
     ...r,
     marketId: () => marketId,
     marketOwner: () => marketOwner,
-    aggregator: () => aggregator,
     restore,
   };
 }
+
+// export function bootstrapWithSynth(name: string, token: string) {
+//   const r = bootstrapWithStakedPool();
+//   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
+//   let marketId: string;
+//   let aggregator: AggregatorV3Mock;
+
+//   before('identify market owner', async () => {
+//     [coreOwner, , marketOwner] = r.signers();
+//   });
+
+//   before('register synth', async () => {
+//     marketId = await r
+//       .systems()
+//       .SpotMarket.callStatic.createSynth(name, token, marketOwner.getAddress());
+//     await r.systems().SpotMarket.createSynth(name, token, marketOwner.getAddress());
+//   });
+
+//   before('configure market collateral supply cap', async () => {
+//     await r
+//       .systems()
+//       .Core.connect(coreOwner)
+//       .configureMaximumMarketCollateral(
+//         marketId,
+//         r.systems().CollateralMock.address,
+//         ethers.constants.MaxUint256
+//       );
+//   });
+
+//   before('setup buy and sell feeds', async () => {
+//     const result = await createOracleNode(
+//       r.signers()[0],
+//       ethers.utils.parseEther('900'),
+//       r.systems().OracleManager
+//     );
+//     aggregator = result.aggregator;
+//     await r
+//       .systems()
+//       .SpotMarket.connect(marketOwner)
+//       .updatePriceData(marketId, r.oracleNodeId(), result.oracleNodeId);
+//   });
+
+//   // add weight to market from pool
+
+//   before('delegate pool collateral to market', async () => {
+//     await r
+//       .systems()
+//       .Core.connect(coreOwner)
+//       .setPoolConfiguration(r.poolId, [
+//         {
+//           marketId,
+//           weightD18: ethers.utils.parseEther('1'),
+//           maxDebtShareValueD18: ethers.utils.parseEther('1'),
+//         },
+//       ]);
+//   });
+
+//   const restore = snapshotCheckpoint(r.provider);
+
+//   return {
+//     ...r,
+//     marketId: () => marketId,
+//     marketOwner: () => marketOwner,
+//     aggregator: () => aggregator,
+//     restore,
+//   };
+// }
 
 /*
   1. creates a new pool
@@ -250,7 +284,7 @@ export function bootstrapWithSynth(name: string, token: string) {
   4. mint max USD
   5. traders now have USD to trade with
 */
-export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
+export function bootstrapTraders(r: ReturnType<typeof bootstrapPerpsMarket>) {
   const { signers, systems, provider } = r;
 
   // separate pool so doesn't mess with existing pool accounting

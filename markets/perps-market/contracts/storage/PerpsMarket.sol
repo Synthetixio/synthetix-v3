@@ -23,6 +23,8 @@ library PerpsMarket {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
 
+    error OnlyMarketOwner(address marketOwner, address sender);
+
     struct Data {
         address owner;
         address nominatedOwner;
@@ -54,6 +56,12 @@ library PerpsMarket {
 
         assembly {
             market.slot := s
+        }
+    }
+
+    function onlyMarketOwner(Data storage self) internal view {
+        if (self.owner != msg.sender) {
+            revert OnlyMarketOwner(self.owner, msg.sender);
         }
     }
 

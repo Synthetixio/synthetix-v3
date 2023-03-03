@@ -14,6 +14,7 @@ interface IPerpsMarketFactoryModule is IMarket {
     );
     event MarketOwnerNominated(uint128 indexed perpsMarketId, address newNominatedOwner);
     event MarketOwnerChanged(uint128 indexed perpsMarketId, address oldOwner, address newOwner);
+    event MarketPriceDataUpdated(uint128 indexed perpsMarketId, bytes32 feedId);
 
     error NotNominated(address notNominatedAddress);
 
@@ -26,6 +27,8 @@ interface IPerpsMarketFactoryModule is IMarket {
         string memory marketSymbol,
         address marketOwner
     ) external returns (uint128);
+
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
 
     function getAccountToken(uint128 marketId) external view returns (address);
 
