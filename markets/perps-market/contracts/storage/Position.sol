@@ -5,6 +5,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "./PerpsMarket.sol";
 
+import "hardhat/console.sol";
+
 library Position {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
@@ -39,44 +41,11 @@ library Position {
     }
 
     function calculateExpectedPosition(
-        Data storage self,
-        uint price
-    ) internal view returns (int, int, int, int, int) {
-        return
-            _calculateExpectedPosition(
-                self.marketId,
-                self.size,
-                self.latestInteractionPrice,
-                self.latestInteractionMargin,
-                self.latestInteractionFunding,
-                price
-            );
-    }
-
-    function calculateExpectedPosition(
         Data memory self,
-        uint price
-    ) internal view returns (int, int, int, int, int) {
-        return
-            _calculateExpectedPosition(
-                self.marketId,
-                self.size,
-                self.latestInteractionPrice,
-                self.latestInteractionMargin,
-                self.latestInteractionFunding,
-                price
-            );
-    }
-
-    function _calculateExpectedPosition(
         uint128 marketId,
-        int128 size,
-        uint128 latestInteractionPrice,
-        uint128 latestInteractionMargin,
-        int128 latestInteractionFunding,
         uint price
     )
-        private
+        internal
         view
         returns (
             int marginProfitFunding,
@@ -87,14 +56,17 @@ library Position {
         )
     {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+
         nextFunding = perpsMarket.lastFundingValue + perpsMarket.unrecordedFunding(price);
-        netFundingPerUnit = nextFunding - latestInteractionFunding;
+        netFundingPerUnit = nextFunding - self.latestInteractionFunding;
 
-        accruedFunding = size.mulDecimal(netFundingPerUnit);
+        accruedFunding = self.size.mulDecimal(netFundingPerUnit);
 
-        int priceShift = price.toInt() - latestInteractionPrice.toInt();
-        pnl = size.mulDecimal(priceShift);
+        int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
+        pnl = self.size.mulDecimal(priceShift);
 
-        marginProfitFunding = latestInteractionMargin.toInt() + pnl + accruedFunding;
+        console.log("pnl", self.size.toUint(), pnl.toUint());
+
+        marginProfitFunding = self.latestInteractionMargin.toInt() + pnl + accruedFunding;
     }
 }

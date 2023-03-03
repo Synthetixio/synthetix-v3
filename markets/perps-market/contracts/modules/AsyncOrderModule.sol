@@ -11,6 +11,8 @@ import "../storage/AsyncOrder.sol";
 import "../storage/Position.sol";
 import "../storage/PerpsPrice.sol";
 
+import "hardhat/console.sol";
+
 contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -63,6 +65,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
             PerpsPrice.getCurrentPrice(commitment.marketId),
             MarketConfiguration.OrderType.ASYNC_OFFCHAIN
         );
+
+        console.log("STATUS", uint(runtime.status));
 
         if (runtime.status != AsyncOrder.Status.Success) {
             revert InvalidOrder(runtime.status);

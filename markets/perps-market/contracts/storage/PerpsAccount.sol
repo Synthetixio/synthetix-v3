@@ -117,7 +117,10 @@ library PerpsAccount {
             amountToLiquidate.mulDecimal(marketConfig.liquidationRewardPercentage)
         );
 
-        (, int pnl, int accruedFunding, , ) = position.calculateExpectedPosition(price);
+        (, int pnl, int accruedFunding, , ) = position.calculateExpectedPosition(
+            positionMarketId,
+            price
+        );
 
         totalPnl = pnl + accruedFunding;
 
@@ -163,7 +166,10 @@ library PerpsAccount {
 
             uint price = PerpsPrice.getCurrentPrice(positionMarketId);
 
-            (, int pnl, int accruedFunding, , ) = position.calculateExpectedPosition(price);
+            (, int pnl, int accruedFunding, , ) = position.calculateExpectedPosition(
+                positionMarketId,
+                price
+            );
 
             int totalPnl = pnl + accruedFunding;
 
@@ -310,6 +316,7 @@ library PerpsAccount {
 
             Position.Data memory position = PerpsMarket.load(marketId).positions[accountId];
             (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(
+                marketId,
                 PerpsPrice.getCurrentPrice(marketId)
             );
             totalAccountOpenInterest += marginProfitFunding;

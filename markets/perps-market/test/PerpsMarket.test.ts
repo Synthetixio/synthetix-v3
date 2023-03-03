@@ -36,6 +36,10 @@ describe.only('perps test', () => {
       });
   });
 
+  before('set skew scale', async () => {
+    await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId(), bn(100_000));
+  });
+
   before('commit order', async () => {
     const [, , , trader1] = signers();
     await systems()

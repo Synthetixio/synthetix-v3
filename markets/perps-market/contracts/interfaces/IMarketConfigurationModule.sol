@@ -11,4 +11,6 @@ interface IMarketConfigurationModule {
         uint128 marketId,
         SettlementStrategy.Data memory strategy
     ) external returns (uint256 strategyId);
+
+    function setSkewScale(uint128 marketId, uint256 skewScale) external;
 }

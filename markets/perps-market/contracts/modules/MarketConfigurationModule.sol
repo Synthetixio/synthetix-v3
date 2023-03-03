@@ -22,4 +22,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         config.settlementStrategies.push(strategy);
     }
+
+    function setSkewScale(uint128 marketId, uint256 skewScale) external override {
+        PerpsMarket.load(marketId).onlyMarketOwner();
+        MarketConfiguration.load(marketId).skewScale = skewScale;
+    }
 }

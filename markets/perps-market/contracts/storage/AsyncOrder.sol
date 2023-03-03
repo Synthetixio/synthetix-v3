@@ -11,6 +11,8 @@ import "./LiquidationConfiguration.sol";
 import "./PerpsMarket.sol";
 import "../utils/MathUtil.sol";
 
+import "hardhat/console.sol";
+
 library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -39,8 +41,6 @@ library AsyncOrder {
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
-        uint liqPremium;
-        uint liqMargin;
     }
 
     enum Status {
@@ -59,7 +59,7 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta;
+        int256 sizeDelta; // TODO: change to int128
         uint256 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -167,9 +167,11 @@ library AsyncOrder {
         (runtime.newMargin, runtime.status) = recomputeMarginWithDelta(
             liquidationConfig,
             oldPosition,
+            order.marketId,
             runtime.fillPrice,
             -(runtime.totalFees).toInt()
         );
+
         if (runtime.status != Status.Success) {
             return (oldPosition, 0, 0, runtime.status);
         }
@@ -183,6 +185,8 @@ library AsyncOrder {
             size: (oldPosition.size + order.sizeDelta).to128()
         });
 
+        console.log("new size", uint(int256(runtime.newPos.size)));
+
         // always allow to decrease a position, otherwise a margin of minInitialMargin can never
         // decrease a position as the price goes against them.
         // we also add the paid out fee for the minInitialMargin because otherwise minInitialMargin
@@ -194,6 +198,9 @@ library AsyncOrder {
         if (!positionDecreasing) {
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
             // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
+            console.log("boom");
+            console.log(runtime.newPos.latestInteractionMargin, runtime.totalFees);
+            console.log(marketConfig.minInitialMargin);
             if (
                 runtime.newPos.latestInteractionMargin + runtime.totalFees <
                 marketConfig.minInitialMargin
@@ -332,10 +339,11 @@ library AsyncOrder {
     function recomputeMarginWithDelta(
         LiquidationConfiguration.Data storage liquidationConfig,
         Position.Data memory position,
+        uint128 marketId,
         uint price,
         int marginDelta
     ) internal view returns (uint margin, Status statusCode) {
-        (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(price);
+        (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(marketId, price);
         int newMargin = marginProfitFunding + marginDelta;
         if (newMargin < 0) {
             return (0, Status.InsufficientMargin);

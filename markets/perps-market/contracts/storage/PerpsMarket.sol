@@ -13,6 +13,8 @@ import "./OrderFee.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Data for a single perps market
  */
