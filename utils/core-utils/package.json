@@ -23,8 +23,8 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/prompts": "2.0.14",
-    "ethers": "5.7.2",
-    "hardhat": "2.12.3",
+    "ethers": "^5.0.0",
+    "hardhat": "^2.13.0",
     "mocha": "9.1.1",
     "multimatch": "6.0.0",
     "nyc": "15.1.0",

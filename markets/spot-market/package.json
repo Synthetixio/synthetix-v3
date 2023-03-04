@@ -4,10 +4,10 @@
   "description": "Spot Market implementation",
   "private": true,
   "scripts": {
-    "build": "hardhat storage:verify && hardhat cannon:build",
+    "build": "hardhat storage:verify && hardhat compile",
+    "cannon": "npx hardhat cannon:build",
     "start": "npm run build && npm run cannon",
     "clean": "hardhat clean",
-    "cannon": "npx cannon spot-market:0.0.3-alpha",
     "test": "hardhat test",
     "test:fork": "hardhat test test-fork/AsyncOrdersModule.e2e.test.ts",
     "coverage": "npm run test # npm run build && hardhat coverage --network hardhat",
@@ -18,14 +18,16 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "*",
-    "@synthetixio/core-contracts": "*",
-    "@synthetixio/core-modules": "*",
-    "@synthetixio/router": "*",
+    "@synthetixio/common-config": "1.0.0",
+    "@synthetixio/core-contracts": "1.1.1",
+    "@synthetixio/core-modules": "1.0.0",
+    "@synthetixio/main": "3.0.1",
+    "@synthetixio/oracle-manager": "1.2.10",
+    "@synthetixio/router": "1.1.2",
     "node-fetch": "2.6.9",
     "solidity-docgen": "0.6.0-beta.22",
-    "ts-node": "10.9.1",
-    "typechain": "8.1.1",
-    "typescript": "4.7.4"
+    "ts-node": "^10.9.1",
+    "typechain": "^8.1.1",
+    "typescript": "4.9.3"
   }
 }

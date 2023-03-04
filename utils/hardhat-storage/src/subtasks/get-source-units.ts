@@ -1,5 +1,6 @@
 import { getContractsAsts } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import { subtask } from 'hardhat/config';
+import { Statement } from 'solidity-ast';
 import { iterateFunctions } from '../internal/iterators';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS } from '../task-names';
 
@@ -18,13 +19,13 @@ subtask(SUBTASK_STORAGE_GET_SOURCE_UNITS).setAction(async ({ contracts }, hre) =
     for (const [, contractNode, functionNode] of iterateFunctions(sourceUnits)) {
       // Remove function added to the contract
       if (functionNode.name.startsWith('c_')) {
-        contractNode.nodes = contractNode.nodes.filter((node) => node !== functionNode);
+        contractNode.nodes = contractNode.nodes.filter((node: typeof contractNode.nodes[0]) => node !== functionNode);
         continue;
       }
 
       // Remove the function calls to the previously deleted coverage functions
       if (Array.isArray(functionNode.body?.statements)) {
-        functionNode.body!.statements = functionNode.body!.statements.filter((node) => {
+        functionNode.body!.statements = functionNode.body!.statements.filter((node: Statement) => {
           if (node.nodeType !== 'ExpressionStatement') return true;
           const e = node.expression;
           const isCoverage =

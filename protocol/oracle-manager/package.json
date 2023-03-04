@@ -7,7 +7,8 @@
     "test": "hardhat test",
     "coverage": "npm run build && hardhat --network hardhat coverage",
     "clean": "hardhat clean",
-    "build": "hardhat storage:verify && hardhat cannon:build",
+    "build": "hardhat storage:verify && hardhat compile",
+    "cannon": "npx hardhat cannon:build",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
@@ -17,9 +18,10 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "*",
-    "@synthetixio/core-contracts": "*",
-    "@synthetixio/core-modules": "*",
-    "solidity-docgen": "0.6.0-beta.22"
+    "@synthetixio/common-config": "1.0.0",
+    "@synthetixio/core-contracts": "1.1.1",
+    "@synthetixio/core-modules": "1.0.0",
+    "solidity-docgen": "0.6.0-beta.22",
+    "ts-node": "^10.9.1"
   }
 }

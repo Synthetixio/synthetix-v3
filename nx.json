@@ -1,0 +1,40 @@
+{
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "@nrwl/nx-cloud",
+      "options": {
+        "cacheableOperations": [
+          "test",
+          "coverage",
+          "size-contracts",
+          "build",
+          "lint"
+        ],
+        "accessToken": "ZmM3ODc0NzItZmMyMi00OTVjLThmNTQtYWFmNTFiMzY1OTkzfHJlYWQtd3JpdGU="
+      }
+    }
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/artifacts",
+        "{projectRoot}/cache",
+        "{projectRoot}/typechain-types",
+        "{projectRoot}/dist"
+      ]
+    },
+    "cannon": {
+      "dependsOn": [
+        "^cannon"
+      ]
+    },
+    "prepublishOnly": {
+      "dependsOn": [
+        "^prepublishOnly"
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "packages": [
+    "protocol/*",
+    "utils/*",
+    "markets/*"
+  ],
+  "command": {
+    "bootstrap": {
+      "hoist": true
+    }
+  },
+  "version": "independent"
+}

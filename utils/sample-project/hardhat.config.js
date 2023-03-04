@@ -1,6 +1,7 @@
 require('@nomiclabs/hardhat-ethers');
 require('hardhat-cannon');
 require('@synthetixio/hardhat-storage');
+
 require('@synthetixio/router/utils/cannon');
 
 module.exports = {

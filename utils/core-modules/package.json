@@ -17,6 +17,6 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "*"
+    "@synthetixio/common-config": "1.0.0"
   }
 }

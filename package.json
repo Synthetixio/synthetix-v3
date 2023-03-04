@@ -14,10 +14,6 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
-    "clean": "npm run --workspaces --if-present clean",
-    "build": "npm run -w @synthetixio/core-utils -w @synthetixio/hardhat-storage -w @synthetixio/router -w @synthetixio/sample-project -w @synthetixio/oracle-manager -w @synthetixio/main build",
-    "test": "npm run --workspaces --if-present test",
-    "coverage": "npm run --workspaces --if-present coverage",
     "lint:js": "prettier --check '**/*.{t,j}s' && eslint --max-warnings=0 '**/*.{t,j}s'",
     "lint:js:fix": "prettier --write '**/*.{t,j}s' && eslint --max-warnings=0 --fix '**/*.{t,j}s'",
     "lint:sol": "prettier --check '(protocol|utils)/**/*.sol' && solhint utils/*/contracts/**/*.sol protocol/*/contracts/**/*.sol",
@@ -28,6 +24,7 @@
     "check-packages": "node .github/check-packages.js"
   },
   "devDependencies": {
+    "@nrwl/nx-cloud": "15.1.1",
     "@types/mocha": "10.0.1",
     "@types/node": "18.11.10",
     "@typescript-eslint/eslint-plugin": "5.45.0",
@@ -35,22 +32,18 @@
     "eslint": "8.29.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-no-only-tests": "3.1.0",
+    "lerna": "^6.5.1",
     "pre-commit": "1.2.2",
     "prettier": "2.8.0",
     "prettier-plugin-solidity": "1.0.0",
     "pretty-quick": "3.1.3",
     "solhint": "3.3.7",
-    "solhint-plugin-numcast": "*",
+    "solhint-plugin-numcast": "0.0.1",
     "typescript": "4.9.3"
   },
   "pre-commit": [
     "lint:quick",
     "check-packages"
-  ],
-  "workspaces": [
-    "utils/*",
-    "protocol/*",
-    "markets/*"
   ],
   "engines": {
     "node": "^16.16.0",
