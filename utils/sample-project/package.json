@@ -13,7 +13,10 @@
     "@nomiclabs/hardhat-ethers": "2.2.1",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/hardhat-storage": "workspace:*",
+    "@synthetixio/router": "workspace:*",
+    "hardhat": "^2.13.0",
     "hardhat-cannon": "^2.1.7"
   }
 }
