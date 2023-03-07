@@ -7,15 +7,15 @@ Governance cotracts for on chain voting.
 Local node spin up can be done using [`Cannon`](https://usecannon.com/), simply run the following command to startup a development hardhat node with all the Governance Modules deployed:
 
 ```bash
-npx hardhat cannon
+yarn hardhat cannon
 ```
 
 ### Periods
 
 Then, for development purposes, you can for example fast forward to the nomination period on the current running node (remember to use the `Proxy` address as the `--address` paramenter):
 
-```basSh
-npx hardhat --network local fast-forward-to --address 0x866cf0358C0514D4E63fCef80fD4B57C2eE5Fbe0 nomination
+```bash
+yarn hardhat --network local fast-forward-to --address 0x866cf0358C0514D4E63fCef80fD4B57C2eE5Fbe0 nomination
 ```
 
 ### Fixtures
@@ -23,7 +23,7 @@ npx hardhat --network local fast-forward-to --address 0x866cf0358C0514D4E63fCef8
 Also, you can simulate complete epochs:
 
 ```bash
-npx hardhat --network local fixture:epoch --address 0x866cf0358C0514D4E63fCef80fD4B57C2eE5Fbe0
+yarn hardhat --network local fixture:epoch --address 0x866cf0358C0514D4E63fCef80fD4B57C2eE5Fbe0
 ```
 
 Which will do the following steps

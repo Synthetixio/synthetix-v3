@@ -57,19 +57,25 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "16.16.0"
-          cache: "npm"
+          cache: "yarn"
       - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
         with:
           run_daemon: true
-      - run: npm ci
-      - run: npm run build
+
+      - run: yarn install --immutable --immutable-cache
+
+      - run: yarn build
+
       - if: matrix.size-contracts
         name: Execute size command
-        run: npm run --workspace=${{ matrix.workspace }} size-contracts
+        run: yarn workspace ${{ matrix.workspace }} run size-contracts
+
       - name: Check storage.dump.sol is up-to-date
-        run: npm explore ${{ matrix.workspace }} -- git diff --exit-code -- storage.dump.sol
+        run: yarn workspace ${{ matrix.workspace }} exec git diff --exit-code storage.dump.sol
+
       - name: Execute tests
-        run: REPORT_GAS=true npm run --workspace=${{ matrix.workspace }} coverage
+        run: REPORT_GAS=true yarn workspace ${{ matrix.workspace }} run coverage
+
       - if: ${{ matrix.coverage-file }}
         name: Upload ${{ matrix.workspace }} coverage to Codecov
         uses: codecov/codecov-action@v2

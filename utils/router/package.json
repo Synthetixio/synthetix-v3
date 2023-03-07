@@ -20,11 +20,11 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "watch": "npm run build -- --watch",
+    "watch": "yarn build -- --watch",
     "test": "mocha --require ts-node/register",
-    "coverage": "nyc npm run test",
-    "test:watch": "npm run test -- --watch",
-    "prepublishOnly": "npm run build"
+    "coverage": "nyc yarn test",
+    "test:watch": "yarn test -- --watch",
+    "prepublishOnly": "yarn build"
   },
   "peerDependencies": {
     "@usecannon/builder": "^2.1.7",

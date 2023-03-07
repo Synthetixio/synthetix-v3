@@ -8,6 +8,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "16.16.0"
-          cache: "npm"
-      - run: npm ci
-      - run: npm run lint
+          cache: "yarn"
+      - run: yarn install --immutable --immutable-cache
+      - run: yarn lint

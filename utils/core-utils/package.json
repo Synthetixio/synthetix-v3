@@ -10,11 +10,11 @@
   ],
   "scripts": {
     "build": "tsc --project src/tsconfig.json",
-    "watch": "npm run build -- --watch",
+    "watch": "yarn build -- --watch",
     "test": "mocha --require ts-node/register",
-    "coverage": "nyc npm run test",
-    "test:watch": "npm run test -- --watch",
-    "prepublishOnly": "npm run build"
+    "coverage": "nyc yarn test",
+    "test:watch": "yarn test -- --watch",
+    "prepublishOnly": "yarn build"
   },
   "peerDependencies": {
     "ethers": "^5.0.0",

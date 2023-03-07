@@ -20,11 +20,11 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc --project src/tsconfig.json",
-    "watch": "npm run build -- --watch",
+    "watch": "yarn build -- --watch",
     "test": "jest",
-    "coverage": "npm run test -- --coverage",
-    "test:watch": "npm run test -- --watch",
-    "prepublishOnly": "npm run build"
+    "coverage": "yarn test -- --coverage",
+    "test:watch": "yarn test -- --watch",
+    "prepublishOnly": "yarn build"
   },
   "dependencies": {
     "@synthetixio/core-utils": "*",
