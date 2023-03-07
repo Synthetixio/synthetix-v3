@@ -21,7 +21,6 @@ library Position {
         uint128 marketId;
         int128 size;
         uint128 latestInteractionPrice;
-        uint128 latestInteractionMargin;
         int128 latestInteractionFunding;
     }
 
@@ -29,26 +28,24 @@ library Position {
         self.size = newPosition.size;
         self.marketId = newPosition.marketId;
         self.latestInteractionPrice = newPosition.latestInteractionPrice;
-        self.latestInteractionMargin = newPosition.latestInteractionMargin;
         self.latestInteractionFunding = newPosition.latestInteractionFunding;
     }
 
     function clear(Data storage self) internal {
         self.size = 0;
         self.latestInteractionPrice = 0;
-        self.latestInteractionMargin = 0;
         self.latestInteractionFunding = 0;
     }
 
-    function calculateExpectedPosition(
-        Data memory self,
+    function getPositionData(
+        Data storage self,
         uint128 marketId,
         uint price
     )
         internal
         view
         returns (
-            int marginProfitFunding,
+            int openInterest,
             int pnl,
             int accruedFunding,
             int netFundingPerUnit,
@@ -63,10 +60,8 @@ library Position {
         accruedFunding = self.size.mulDecimal(netFundingPerUnit);
 
         int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
-        pnl = self.size.mulDecimal(priceShift);
+        pnl = self.size.mulDecimal(priceShift) + accruedFunding;
 
-        console.log("pnl", self.size.toUint(), pnl.toUint());
-
-        marginProfitFunding = self.latestInteractionMargin.toInt() + pnl + accruedFunding;
+        openInterest = self.size.mulDecimal(price.toInt()) + accruedFunding;
     }
 }

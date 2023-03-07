@@ -21,7 +21,6 @@ library MarketConfiguration {
     struct Data {
         mapping(OrderType => OrderFee.Data) orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint16 maxLeverage;
         uint256 maxMarketValue; // oi cap
         uint256 maxFundingVelocity;
         uint256 skewScale;

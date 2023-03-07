@@ -40,24 +40,27 @@ library LiquidationConfiguration {
         );
         return
             liquidationBuffer +
-            liquidationFee(config, positionSize, price) +
+            MathUtil.max(
+                MathUtil.min(liquidationBuffer, config.maxLiquidationRewardUsd),
+                config.minLiquidationRewardUsd
+            ) +
             config.desiredLiquidationRewardPercentage;
     }
 
-    function liquidationFee(
-        LiquidationConfiguration.Data storage config,
-        int positionSize,
-        uint price
-    ) internal view returns (uint lFee) {
-        // size * price * fee-ratio
-        uint proportionalFee = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
-            config.liquidationBufferRatio
-        );
-        uint maxFee = config.maxLiquidationRewardUsd;
-        uint cappedProportionalFee = proportionalFee > maxFee ? maxFee : proportionalFee;
-        uint minFee = config.minLiquidationRewardUsd;
+    // function liquidationFee(
+    //     LiquidationConfiguration.Data storage config,
+    //     int positionSize,
+    //     uint price
+    // ) internal view returns (uint lFee) {
+    //     // size * price * fee-ratio
+    //     uint proportionalFee = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
+    //         config.liquidationBufferRatio
+    //     );
+    //     uint maxFee = config.maxLiquidationRewardUsd;
+    //     uint cappedProportionalFee = proportionalFee > maxFee ? maxFee : proportionalFee;
+    //     uint minFee = config.minLiquidationRewardUsd;
 
-        // max(proportionalFee, minFee) - to prevent not incentivising liquidations enough
-        return cappedProportionalFee > minFee ? cappedProportionalFee : minFee; // not using _max() helper because it's for signed ints
-    }
+    //     // max(proportionalFee, minFee) - to prevent not incentivising liquidations enough
+    //     return cappedProportionalFee > minFee ? cappedProportionalFee : minFee; // not using _max() helper because it's for signed ints
+    // }
 }

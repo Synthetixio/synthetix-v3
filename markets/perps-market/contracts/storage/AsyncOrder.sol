@@ -23,6 +23,7 @@ library AsyncOrder {
     using MarketConfiguration for MarketConfiguration.Data;
     using LiquidationConfiguration for LiquidationConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
+    using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
 
     error SettlementWindowExpired(
@@ -162,6 +163,10 @@ library AsyncOrder {
             order.marketId
         );
 
+        uint availableAccountMargin = PerpsAccount.load(order.accountId).getAvailableMargin(
+            order.accountId
+        );
+
         // Deduct the fee.
         // It is an error if the realised margin minus the fee is negative or subject to liquidation.
         (runtime.newMargin, runtime.status) = recomputeMarginWithDelta(
@@ -180,7 +185,6 @@ library AsyncOrder {
         runtime.newPos = Position.Data({
             marketId: order.marketId,
             latestInteractionPrice: runtime.fillPrice.to128(),
-            latestInteractionMargin: runtime.newMargin.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             size: (oldPosition.size + order.sizeDelta).to128()
         });
@@ -343,7 +347,7 @@ library AsyncOrder {
         uint price,
         int marginDelta
     ) internal view returns (uint margin, Status statusCode) {
-        (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(marketId, price);
+        (int marginProfitFunding, , , , ) = position.getPositionData(marketId, price);
         int newMargin = marginProfitFunding + marginDelta;
         if (newMargin < 0) {
             return (0, Status.InsufficientMargin);

@@ -55,15 +55,7 @@ library PerpsAccount {
     function markForLiquidation(uint128 accountId) internal returns (uint availableCollateralUsd) {
         Data storage self = load(accountId);
         if (!self.flaggedForLiquidation) {
-            (
-                int totalAccountOpenInterest,
-                uint accountMaxOpenInterest
-            ) = _calculateOpenInterestValues(self, accountId);
-            /*  TODO:
-                available collateral needs to take into consideration the liquidation premium & liquidation buffer for each market
-                when calculating the marginProfitFunding of each market to check against the total collateral value
-            */
-            if (totalAccountOpenInterest > accountMaxOpenInterest.toInt()) {
+            if (isEligibleForLiquidation(self, accountId)) {
                 flagForLiquidation(self, accountId);
             } else {
                 revert IneligibleForLiquidation(availableCollateralUsd);
@@ -71,12 +63,30 @@ library PerpsAccount {
         }
     }
 
+    function isEligibleForLiquidation(
+        Data storage self,
+        uint128 accountId
+    ) internal returns (bool) {
+        /*  TODO:
+            available collateral needs to take into consideration the liquidation premium & liquidation buffer for each market
+            when calculating the marginProfitFunding of each market to check against the total collateral value
+        */
+        (int totalAccountOpenInterest, uint accountMaxOpenInterest) = calculateOpenInterestValues(
+            self,
+            accountId
+        );
+
+        return totalAccountOpenInterest > accountMaxOpenInterest.toInt();
+    }
+
     function flagForLiquidation(Data storage self, uint128 accountId) internal {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
-        factory.liquidatableAccounts.add(accountId);
-        convertAllCollateralToUsd(self, factory);
-        self.flaggedForLiquidation = true;
+        if (!factory.liquidatableAccounts.contains(accountId)) {
+            factory.liquidatableAccounts.add(accountId);
+            convertAllCollateralToUsd(self, factory);
+            self.flaggedForLiquidation = true;
+        }
     }
 
     function checkLiquidationFlag(Data storage self) internal view {
@@ -91,53 +101,6 @@ library PerpsAccount {
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.add(positionMarketId);
         }
-    }
-
-    function _processMarketLiquidation(
-        Data storage self,
-        uint128 positionMarketId,
-        uint128 accountId
-    )
-        private
-        returns (uint amountToLiquidate, int totalPnl, uint liquidationReward, Position.Data memory)
-    {
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(positionMarketId);
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
-
-        uint maxLiquidatableAmount = PerpsMarket.maxLiquidatableAmount(positionMarketId);
-
-        Position.Data memory position = perpsMarket.positions[accountId];
-        uint price = PerpsPrice.getCurrentPrice(positionMarketId);
-
-        // in market units
-        amountToLiquidate = MathUtil.min(maxLiquidatableAmount, MathUtil.abs(position.size));
-
-        liquidationReward = MathUtil.min(
-            marketConfig.maxLiquidationReward,
-            amountToLiquidate.mulDecimal(marketConfig.liquidationRewardPercentage)
-        );
-
-        (, int pnl, int accruedFunding, , ) = position.calculateExpectedPosition(
-            positionMarketId,
-            price
-        );
-
-        totalPnl = pnl + accruedFunding;
-
-        // reduce position size
-        position.size = position.size > 0
-            ? position.size - amountToLiquidate.toInt().to128()
-            : position.size + amountToLiquidate.toInt().to128();
-
-        // update position markets
-        updatePositionMarkets(self, positionMarketId, position.size);
-
-        // if position is closed, remove from open position markets
-        if (position.size == 0) {
-            self.openPositionMarketIds.remove(positionMarketId);
-        }
-
-        return (amountToLiquidate, totalPnl, liquidationReward, position);
     }
 
     struct RuntimeLiquidationData {
@@ -162,16 +125,13 @@ library PerpsAccount {
 
         for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
             uint128 positionMarketId = self.openPositionMarketIds.valueAt(i).to128();
-            Position.Data memory position = PerpsMarket.load(positionMarketId).positions[accountId];
+            Position.Data storage position = PerpsMarket.load(positionMarketId).positions[
+                accountId
+            ];
 
             uint price = PerpsPrice.getCurrentPrice(positionMarketId);
 
-            (, int pnl, int accruedFunding, , ) = position.calculateExpectedPosition(
-                positionMarketId,
-                price
-            );
-
-            int totalPnl = pnl + accruedFunding;
+            (, int totalPnl, , , ) = position.getPositionData(positionMarketId, price);
 
             if (totalPnl > 0) {
                 runtime.profitableMarkets[runtime.profitableMarketsLength] = positionMarketId;
@@ -269,11 +229,16 @@ library PerpsAccount {
         Data storage self,
         uint128 accountId,
         int amount
+<<<<<<< HEAD
     ) internal view returns (uint) {
         uint availableWithdrawableCollateralUsd = getAvailableWithdrawableCollateralUsd(
             self,
             accountId
         );
+=======
+    ) internal returns (uint) {
+        uint availableWithdrawableCollateralUsd = getAvailableMargin(self, accountId);
+>>>>>>> 90a4fd6c (wip)
         if (availableWithdrawableCollateralUsd < MathUtil.abs(amount)) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
@@ -283,11 +248,16 @@ library PerpsAccount {
         return availableWithdrawableCollateralUsd;
     }
 
+<<<<<<< HEAD
     function getAvailableWithdrawableCollateralUsd(
         Data storage self,
         uint128 accountId
     ) internal view returns (uint) {
         (int totalAccountOpenInterest, uint accountMaxOpenInterest) = _calculateOpenInterestValues(
+=======
+    function getAvailableMargin(Data storage self, uint128 accountId) internal returns (uint) {
+        (int totalAccountOpenInterest, uint accountMaxOpenInterest) = calculateOpenInterestValues(
+>>>>>>> 90a4fd6c (wip)
             self,
             accountId
         );
@@ -295,10 +265,14 @@ library PerpsAccount {
         return (accountMaxOpenInterest.toInt() - totalAccountOpenInterest).toUint();
     }
 
-    function _calculateOpenInterestValues(
+    function calculateOpenInterestValues(
         Data storage self,
         uint128 accountId
+<<<<<<< HEAD
     ) private view returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
+=======
+    ) internal returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
+>>>>>>> 90a4fd6c (wip)
         totalAccountOpenInterest = getTotalAccountOpenInterest(self, accountId);
 
         uint totalCollateralValue = getTotalCollateralValue(self);
@@ -314,12 +288,12 @@ library PerpsAccount {
         for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
-            Position.Data memory position = PerpsMarket.load(marketId).positions[accountId];
-            (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(
+            Position.Data storage position = PerpsMarket.load(marketId).positions[accountId];
+            (int openInterest, , , , ) = position.getPositionData(
                 marketId,
                 PerpsPrice.getCurrentPrice(marketId)
             );
-            totalAccountOpenInterest += marginProfitFunding;
+            totalAccountOpenInterest += openInterest;
         }
     }
 
@@ -402,5 +376,47 @@ library PerpsAccount {
         if (leftoverAmount > 0) {
             revert InsufficientMarginError(leftoverAmount);
         }
+    }
+
+    function _processMarketLiquidation(
+        Data storage self,
+        uint128 positionMarketId,
+        uint128 accountId
+    )
+        private
+        returns (uint amountToLiquidate, int totalPnl, uint liquidationReward, Position.Data memory)
+    {
+        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(positionMarketId);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
+
+        uint maxLiquidatableAmount = PerpsMarket.maxLiquidatableAmount(positionMarketId);
+
+        Position.Data storage position = perpsMarket.positions[accountId];
+        uint price = PerpsPrice.getCurrentPrice(positionMarketId);
+
+        // in market units
+        amountToLiquidate = MathUtil.min(maxLiquidatableAmount, MathUtil.abs(position.size));
+
+        liquidationReward = MathUtil.min(
+            marketConfig.maxLiquidationReward,
+            amountToLiquidate.mulDecimal(marketConfig.liquidationRewardPercentage)
+        );
+
+        (, totalPnl, , , ) = position.getPositionData(positionMarketId, price);
+
+        // reduce position size
+        position.size = position.size > 0
+            ? position.size - amountToLiquidate.toInt().to128()
+            : position.size + amountToLiquidate.toInt().to128();
+
+        // update position markets
+        updatePositionMarkets(self, positionMarketId, position.size);
+
+        // if position is closed, remove from open position markets
+        if (position.size == 0) {
+            self.openPositionMarketIds.remove(positionMarketId);
+        }
+
+        return (amountToLiquidate, totalPnl, liquidationReward, position);
     }
 }
