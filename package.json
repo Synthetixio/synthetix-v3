@@ -25,9 +25,14 @@
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|ts|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol",
-    "check-packages": "node .github/check-packages.js"
+    "check-packages": "node .github/check-packages.js",
+    "deps": "deps",
+    "deps:fix": "deps --fix",
+    "deps:mismatched": "deps-mismatched",
+    "deps:circular": "deps-circular"
   },
   "devDependencies": {
+    "@snx-private/deps": "workspace:*",
     "@types/mocha": "10.0.1",
     "@types/node": "18.11.10",
     "@typescript-eslint/eslint-plugin": "5.45.0",
