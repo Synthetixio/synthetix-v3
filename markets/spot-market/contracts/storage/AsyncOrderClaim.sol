@@ -51,6 +51,10 @@ library AsyncOrderClaim {
          * @dev timestamp of when the claim was settled.  this is used to prevent double settlement.
          */
         uint256 settledAt;
+        /**
+         * @dev address of the referrer for the order
+         */
+        address referrer;
     }
 
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -71,7 +75,8 @@ library AsyncOrderClaim {
         uint256 settlementTime,
         int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
-        address owner
+        address owner,
+        address referrer
     ) internal returns (Data storage) {
         Data storage self = load(marketId, claimId);
         self.id = claimId;
@@ -82,6 +87,7 @@ library AsyncOrderClaim {
         self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
         self.owner = owner;
+        self.referrer = referrer;
         return self;
     }
 

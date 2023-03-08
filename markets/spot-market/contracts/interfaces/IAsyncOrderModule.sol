@@ -16,13 +16,15 @@ interface IAsyncOrderModule {
      * @param amountProvided amount of value provided by the user for trade.
      * @param asyncOrderId id of the async order created (used for settlements).
      * @param sender trader address.
+     * @param referrer Optional address of the referrer, for fee share
      */
     event OrderCommitted(
         uint128 indexed marketId,
         Transaction.Type indexed orderType,
         uint256 amountProvided,
         uint128 asyncOrderId,
-        address indexed sender
+        address indexed sender,
+        address referrer
     );
 
     /**
@@ -47,6 +49,7 @@ interface IAsyncOrderModule {
      * @param amountProvided amount of value provided by the user for trade. Should have enough allowance.
      * @param settlementStrategyId id of the settlement strategy used for trade.
      * @param minimumSettlementAmount minimum amount of value returned to trader after fees.
+     * @param referrer Optional address of the referrer, for fee share
      * @return asyncOrderId id of the async order created (used for settlements).
      * @return asyncOrderClaim claim details (see AsyncOrderClaim.Data struct).
      */
@@ -55,7 +58,8 @@ interface IAsyncOrderModule {
         Transaction.Type orderType,
         uint256 amountProvided,
         uint256 settlementStrategyId,
-        uint256 minimumSettlementAmount
+        uint256 minimumSettlementAmount,
+        address referrer
     ) external returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim);
 
     /**

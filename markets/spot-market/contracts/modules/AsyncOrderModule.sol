@@ -33,7 +33,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         Transaction.Type orderType,
         uint256 amountProvided,
         uint256 settlementStrategyId,
-        uint256 minimumSettlementAmount
+        uint256 minimumSettlementAmount,
+        address referrer
     )
         external
         override
@@ -97,11 +98,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
             block.timestamp + settlementDelay,
             committedAmountUsd,
             minimumSettlementAmount,
-            msg.sender
+            msg.sender,
+            referrer
         );
 
         // Emit event
-        emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderId, msg.sender);
+        emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderId, msg.sender, referrer);
     }
 
     /**

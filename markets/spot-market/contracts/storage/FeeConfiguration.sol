@@ -44,6 +44,10 @@ library FeeConfiguration {
          * The rest of the fees are deposited into the market manager.
          */
         IFeeCollector feeCollector;
+        /**
+         * @dev Percentage share for each referrer address
+         */
+        mapping(address => uint) referrerShare;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {

@@ -43,12 +43,14 @@ interface IWrapperModule {
      * @param amountWrapped amount of synth wrapped.
      * @param totalFees total fees applied on the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
+     * @param referrer Optional address of the referrer, for fee share
      */
     event SynthWrapped(
         uint indexed synthMarketId,
         uint amountWrapped,
         int totalFees,
-        uint feesCollected
+        uint feesCollected,
+        address referrer
     );
 
     /**
@@ -57,12 +59,14 @@ interface IWrapperModule {
      * @param amountUnwrapped amount of synth unwrapped.
      * @param totalFees total fees applied on the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
+     * @param referrer Optional address of the referrer, for fee share
      */
     event SynthUnwrapped(
         uint indexed synthMarketId,
         uint amountUnwrapped,
         int totalFees,
-        uint feesCollected
+        uint feesCollected,
+        address referrer
     );
 
     /**
@@ -85,12 +89,14 @@ interface IWrapperModule {
      * @param marketId Id of the market used for the trade.
      * @param wrapAmount Amount of collateral to wrap.  This amount gets deposited into the market collateral manager.
      * @param minAmountReceived The minimum amount of synths the trader is expected to receive, otherwise the transaction will revert.
+     * @param referrer Optional address of the referrer, for fee share
      * @return amountReturned Amount of synth returned to user.
      */
     function wrap(
         uint128 marketId,
         uint wrapAmount,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external returns (uint);
 
     /**
@@ -99,11 +105,13 @@ interface IWrapperModule {
      * @param marketId Id of the market used for the trade.
      * @param unwrapAmount Amount of synth trader is unwrapping.
      * @param minAmountReceived The minimum amount of collateral the trader is expected to receive, otherwise the transaction will revert.
+     * @param referrer Optional address of the referrer, for fee share
      * @return amountReturned Amount of collateral returned.
      */
     function unwrap(
         uint128 marketId,
         uint unwrapAmount,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external returns (uint);
 }

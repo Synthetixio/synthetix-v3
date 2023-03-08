@@ -213,7 +213,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             trader,
             amountUsable,
             price,
-            Transaction.Type.ASYNC_BUY
+            Transaction.Type.ASYNC_BUY,
+            asyncOrderClaim.referrer
         );
 
         finalOrderAmount = finalAmountUsd.divDecimal(price);
@@ -288,7 +289,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.ASYNC_SELL
+                Transaction.Type.ASYNC_SELL,
+                asyncOrderClaim.referrer
             );
         }
 

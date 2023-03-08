@@ -25,7 +25,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function buy(
         uint128 marketId,
         uint usdAmount,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external override returns (uint) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
@@ -39,7 +40,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
             msg.sender,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.BUY),
-            Transaction.Type.BUY
+            Transaction.Type.BUY,
+            referrer
         );
 
         spotMarketFactory.depositToMarketManager(marketId, amountUsable);
@@ -57,7 +59,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, synthAmount, totalFees, collectedFees);
+        emit SynthBought(marketId, synthAmount, totalFees, collectedFees, referrer);
 
         return synthAmount;
     }
@@ -76,7 +78,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function sell(
         uint128 marketId,
         uint256 synthAmount,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external override returns (uint256) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
@@ -106,7 +109,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.SELL
+                Transaction.Type.SELL,
+                referrer
             );
         }
 
@@ -116,16 +120,16 @@ contract AtomicOrderModule is IAtomicOrderModule {
             returnAmount
         );
 
-        emit SynthSold(marketId, returnAmount, totalFees, collectedFees);
+        emit SynthSold(marketId, returnAmount, totalFees, collectedFees, referrer);
 
         return returnAmount;
     }
 
-    function sellExactOut(uint128 marketId, uint usdAmount) external override returns (uint) {
+    function sellExactOut(uint128 marketId, uint usdAmount, address referrer) external override returns (uint) {
         return usdAmount;
     }
 
-    function sellExactIn(uint128 marketId, uint synthAmount) external override returns (uint) {
+    function sellExactIn(uint128 marketId, uint synthAmount, address referrer) external override returns (uint) {
         return synthAmount;
     }
 

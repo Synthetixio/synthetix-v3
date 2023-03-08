@@ -23,7 +23,8 @@ library FeeUtil {
         address transactor,
         uint256 usdAmount,
         uint256 synthPrice,
-        Transaction.Type transactionType
+        Transaction.Type transactionType,
+        address referrer
     ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
         (amountUsable, totalFees) = calculateFees(
             marketId,
@@ -33,7 +34,7 @@ library FeeUtil {
             transactionType
         );
 
-        collectedFees = collectFees(marketId, totalFees, transactor, transactionType);
+        collectedFees = collectFees(marketId, totalFees, transactor, transactionType, referrer);
     }
 
     /**
@@ -295,7 +296,8 @@ library FeeUtil {
         uint128 marketId,
         int totalFees,
         address transactor,
-        Transaction.Type transactionType
+        Transaction.Type transactionType,
+        address referrer
     ) internal returns (uint collectedFees) {
         if (totalFees <= 0) {
             return 0;

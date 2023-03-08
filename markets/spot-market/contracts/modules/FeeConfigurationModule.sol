@@ -100,6 +100,9 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit FeeCollectorSet(synthMarketId, feeCollector);
     }
 
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -108,5 +111,21 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         feeConfiguration.unwrapFixedFee = unwrapFee;
 
         emit WrapperFeesSet(synthMarketId, wrapFee, unwrapFee);
+    }
+
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
+    function updateReferrerShare(
+        uint128 synthMarketId,
+        address referrer,
+        uint sharePercentage
+    ) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.referrerShare[referrer] = sharePercentage;
+
+        emit ReferrerShareUpdated(synthMarketId, referrer, sharePercentage);
     }
 }

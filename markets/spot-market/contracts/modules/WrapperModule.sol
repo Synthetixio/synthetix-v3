@@ -45,7 +45,8 @@ contract WrapperModule is IWrapperModule {
     function wrap(
         uint128 marketId,
         uint256 wrapAmount,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external override returns (uint256 amountToMint) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
@@ -106,13 +107,14 @@ contract WrapperModule is IWrapperModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.WRAP
+                Transaction.Type.WRAP,
+                referrer
             );
         }
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
-        emit SynthWrapped(marketId, amountToMint, totalFees, collectedFees);
+        emit SynthWrapped(marketId, amountToMint, totalFees, collectedFees,referrer);
     }
 
     /**
@@ -121,7 +123,8 @@ contract WrapperModule is IWrapperModule {
     function unwrap(
         uint128 marketId,
         uint256 unwrapAmount,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external override returns (uint256 returnCollateralAmount) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
@@ -170,7 +173,8 @@ contract WrapperModule is IWrapperModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.UNWRAP
+                Transaction.Type.UNWRAP,
+                referrer
             );
         }
 
@@ -182,6 +186,6 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule(wrapperStore.wrapCollateralType).transfer(msg.sender, returnCollateralAmount);
 
-        emit SynthUnwrapped(marketId, returnCollateralAmount, totalFees, collectedFees);
+        emit SynthUnwrapped(marketId, returnCollateralAmount, totalFees, collectedFees,referrer);
     }
 }
