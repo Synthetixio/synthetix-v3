@@ -201,11 +201,10 @@ library FeeUtil {
 
         uint skewScaleValue = feeConfiguration.skewScale.mulDecimal(synthPrice);
 
-        uint totalSynthValue = (SynthUtil
+        uint totalSynthValue = SynthUtil
             .getToken(marketId)
             .totalSupply()
-            .mulDecimal(synthPrice)
-            .toInt() + AsyncOrder.load(marketId).totalCommittedUsdAmount).toUint(); // add async order commitment amount in escrow
+            .mulDecimal(synthPrice);
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
         uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
@@ -263,8 +262,7 @@ library FeeUtil {
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
 
         // Note: take into account the async order commitment amount in escrow
-        uint totalValueBeforeFill = (totalBalance.mulDecimal(synthPrice).toInt() +
-            AsyncOrder.load(marketId).totalCommittedUsdAmount).toUint();
+        uint totalValueBeforeFill = totalBalance.mulDecimal(synthPrice);
         uint totalValueAfterFill = totalValueBeforeFill + amount;
 
         // utilization is below 100%

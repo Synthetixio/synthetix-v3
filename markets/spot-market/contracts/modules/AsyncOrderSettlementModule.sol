@@ -159,8 +159,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
-        // adjust commitment amount prior to fee calculation (used for skew/utilization calcs)
-        AsyncOrder.load(marketId).totalCommittedUsdAmount -= asyncOrderClaim.committedAmountUsd;
         // set settledAt to avoid any potential reentrancy
         asyncOrderClaim.settledAt = block.timestamp;
 

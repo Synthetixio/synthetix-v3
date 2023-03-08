@@ -39,11 +39,6 @@ library AsyncOrderClaim {
          */
         uint256 settlementTime;
         /**
-         * @dev this is the amountProvided during commitment by trader.  we track this value so we can remove it
-         * from the totalCommittedUsdAmount in the AsyncOrder.Data when the claim is settled.
-         */
-        int256 committedAmountUsd;
-        /**
          * @dev minimum amount trader is willing to accept on settlement.
          */
         uint256 minimumSettlementAmount;
@@ -73,7 +68,6 @@ library AsyncOrderClaim {
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
         uint256 settlementTime,
-        int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
         address owner,
         address referrer
@@ -84,7 +78,6 @@ library AsyncOrderClaim {
         self.amountEscrowed = amountEscrowed;
         self.settlementStrategyId = settlementStrategyId;
         self.settlementTime = settlementTime;
-        self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
         self.owner = owner;
         self.referrer = referrer;
@@ -97,7 +90,7 @@ library AsyncOrderClaim {
     }
 
     function checkIfValidClaim(Data storage claim) internal view {
-        if (claim.owner == address(0) || claim.committedAmountUsd == 0) {
+        if (claim.owner == address(0) || claim.amountEscrowed == 0) {
             revert InvalidClaim(claim.id);
         }
     }

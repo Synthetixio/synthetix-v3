@@ -48,7 +48,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
         asyncOrderConfiguration.isValidSettlementStrategy(settlementStrategyId);
 
-        int256 committedAmountUsd;
         uint amountEscrowed;
         // setup data to create async order based on transaction type
         if (orderType == Transaction.Type.ASYNC_BUY) {
@@ -59,7 +58,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 amountProvided
             );
 
-            committedAmountUsd = amountProvided.toInt();
             amountEscrowed = amountProvided;
         }
 
@@ -75,14 +73,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
             asyncOrderConfiguration.isValidAmount(settlementStrategyId, usdAmount);
             // using escrow in case of decaying token value
             amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
-
-            committedAmountUsd = -1 * usdAmount.toInt();
         }
 
         // Adjust async order data
         AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
         asyncOrderId = ++asyncOrderData.totalClaims;
-        asyncOrderData.totalCommittedUsdAmount += committedAmountUsd;
 
         uint settlementDelay = AsyncOrderConfiguration
             .load(marketId)
@@ -96,7 +91,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             amountEscrowed,
             settlementStrategyId,
             block.timestamp + settlementDelay,
-            committedAmountUsd,
             minimumSettlementAmount,
             msg.sender,
             referrer
@@ -144,8 +138,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // claim is no longer valid
         asyncOrderClaim.settledAt = block.timestamp;
-        // Commitment amount accounting
-        AsyncOrder.load(marketId).totalCommittedUsdAmount -= asyncOrderClaim.committedAmountUsd;
 
         // Return escrowed funds after keeping the fee
         if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_BUY) {

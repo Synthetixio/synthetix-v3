@@ -53,28 +53,30 @@ contract WrapperModule is IWrapperModule {
         spotMarketFactory.isValidMarket(marketId);
         wrapperStore.isValidWrapper();
 
-        IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
+        {
+            IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
 
-        uint currentDepositedCollateral = IMarketCollateralModule(spotMarketFactory.synthetix)
-            .getMarketCollateralAmount(marketId, wrapperStore.wrapCollateralType);
+            uint currentDepositedCollateral = IMarketCollateralModule(spotMarketFactory.synthetix)
+                .getMarketCollateralAmount(marketId, wrapperStore.wrapCollateralType);
 
-        // revert when wrapping more than the supply cap
-        if (currentDepositedCollateral + wrapAmount > wrapperStore.maxWrappableAmount) {
-            revert WrapperExceedsMaxAmount(
-                wrapperStore.maxWrappableAmount,
-                currentDepositedCollateral,
+            // revert when wrapping more than the supply cap
+            if (currentDepositedCollateral + wrapAmount > wrapperStore.maxWrappableAmount) {
+                revert WrapperExceedsMaxAmount(
+                    wrapperStore.maxWrappableAmount,
+                    currentDepositedCollateral,
+                    wrapAmount
+                );
+            }
+
+            // safe transfer?
+            wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
+            wrappingCollateral.approve(spotMarketFactory.synthetix, wrapAmount);
+            IMarketCollateralModule(spotMarketFactory.synthetix).depositMarketCollateral(
+                marketId,
+                wrapperStore.wrapCollateralType,
                 wrapAmount
             );
         }
-
-        // safe transfer?
-        wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
-        wrappingCollateral.approve(spotMarketFactory.synthetix, wrapAmount);
-        IMarketCollateralModule(spotMarketFactory.synthetix).depositMarketCollateral(
-            marketId,
-            wrapperStore.wrapCollateralType,
-            wrapAmount
-        );
 
         uint256 wrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
