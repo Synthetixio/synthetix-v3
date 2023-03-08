@@ -122,7 +122,20 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         address to,
         uint256 amount
     ) external virtual override(ERC20, IERC20) returns (bool) {
-        return super._transferFrom(from, to, _tokensPerShare().mulDecimal(amount));
+        ERC20Storage.Data storage store = ERC20Storage.load();
+
+        uint256 currentAllowance = store.allowance[from][msg.sender];
+        if (currentAllowance < amount) {
+            revert InsufficientAllowance(amount, currentAllowance);
+        }
+
+        unchecked {
+            store.allowance[from][msg.sender] -= amount;
+        }
+
+        _transfer(from, to, _tokenToShare(amount));
+
+        return true;
     }
 
     /**

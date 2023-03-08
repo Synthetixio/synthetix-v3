@@ -183,7 +183,12 @@ describe('DecayTokenModule', () => {
       await TokenModule.connect(user1).approve(await owner.getAddress(), parseEther('100'));
     });
 
-    it('check owner allowance for user1 at', async () => {
+    before('fast forward to timestamp 86400 (1day)', async () => {
+      const start = await getTime(getProvider());
+      await fastForwardTo(start + 86400, getProvider());
+    });
+
+    it('check owner allowance for user1 after 1day', async () => {
       assertBn.equal(
         await TokenModule.allowance(await user1.getAddress(), await owner.getAddress()),
         parseEther('100')
