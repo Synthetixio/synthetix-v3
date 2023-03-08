@@ -11,7 +11,7 @@ import "../storage/SettlementStrategy.sol";
 import "../storage/AsyncOrderConfiguration.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../storage/AsyncOrder.sol";
-import "../utils/FeeUtil.sol";
+import "../storage/FeeConfiguration.sol";
 
 /**
  * @title Module to settle asyncronous orders
@@ -208,7 +208,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         address trader = asyncOrderClaim.owner;
 
         uint finalAmountUsd;
-        (finalAmountUsd, totalFees, collectedFees) = FeeUtil.processFees(
+        (finalAmountUsd, totalFees, , collectedFees) = FeeConfiguration.processFees(
             marketId,
             trader,
             amountUsable,
@@ -256,7 +256,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.settlementReward;
 
-        (finalOrderAmount, totalFees) = FeeUtil.calculateFees(
+        (finalOrderAmount, totalFees) = FeeConfiguration.calculateFees(
             marketId,
             trader,
             usableAmount,
@@ -284,7 +284,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             );
 
             // collect fees
-            collectedFees = FeeUtil.collectFees(
+            collectedFees = FeeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,

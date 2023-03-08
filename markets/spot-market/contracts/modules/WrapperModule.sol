@@ -9,8 +9,8 @@ import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IWrapperModule.sol";
 import "../storage/Wrapper.sol";
 import "../storage/Price.sol";
+import "../storage/FeeConfiguration.sol";
 import "../utils/SynthUtil.sol";
-import "../utils/FeeUtil.sol";
 
 /**
  * @title Module for wrapping and unwrapping collateral for synths.
@@ -81,7 +81,7 @@ contract WrapperModule is IWrapperModule {
             Transaction.Type.WRAP
         );
 
-        (uint256 returnAmountUsd, int256 totalFees) = FeeUtil.calculateFees(
+        (uint256 returnAmountUsd, int256 totalFees) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
@@ -102,7 +102,7 @@ contract WrapperModule is IWrapperModule {
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeUtil.collectFees(
+            collectedFees = FeeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
@@ -141,7 +141,7 @@ contract WrapperModule is IWrapperModule {
             unwrapAmount,
             Transaction.Type.UNWRAP
         );
-        (uint256 returnAmountUsd, int256 totalFees) = FeeUtil.calculateFees(
+        (uint256 returnAmountUsd, int256 totalFees) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
@@ -166,7 +166,7 @@ contract WrapperModule is IWrapperModule {
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeUtil.collectFees(
+            collectedFees = FeeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
