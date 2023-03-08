@@ -316,7 +316,7 @@ library PerpsAccount {
         }
     }
 
-    function getTotalCollateralValue(Data storage self) internal returns (uint) {
+    function getTotalCollateralValue(Data storage self) internal view returns (uint) {
         uint totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint i = 0; i < self.activeCollateralTypes.length(); i++) {
