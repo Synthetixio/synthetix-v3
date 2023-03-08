@@ -77,7 +77,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function quoteSell(
         uint128 marketId,
         uint synthAmount
-    ) external override returns (uint256 returnAmount, int256 totalFees) {
+    ) external view override returns (uint256 returnAmount, int256 totalFees) {
         SpotMarketFactory.load().isValidMarket(marketId);
         (returnAmount, totalFees) = _getQuote(marketId, synthAmount);
     }
@@ -154,7 +154,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function _getQuote(
         uint128 marketId,
         uint synthAmount
-    ) private returns (uint256 returnAmount, int256 totalFees) {
+    ) private view returns (uint256 returnAmount, int256 totalFees) {
         // Exchange synths provided into dollar amount
         uint256 usdAmount = Price.synthUsdExchangeRate(
             marketId,
