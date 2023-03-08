@@ -139,7 +139,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // claim is no longer valid
         asyncOrderClaim.settledAt = block.timestamp;
 
-        // Return escrowed funds after keeping the fee
+        // Return escrowed funds
         if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_BUY) {
             ITokenModule(SpotMarketFactory.load().usdToken).transfer(
                 trader,

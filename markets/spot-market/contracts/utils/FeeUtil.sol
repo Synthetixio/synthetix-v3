@@ -25,8 +25,10 @@ library FeeUtil {
         uint256 synthPrice,
         Transaction.Type transactionType,
         address referrer
-    ) internal returns (uint256 amountUsable, int256 totalFees, uint collectedFees) {
-        (amountUsable, totalFees) = calculateFees(
+    ) internal returns (uint256 amountUsable, int256 totalFees, uint256 collectedFees) {
+        uint256 fixedFee;
+
+        (amountUsable, totalFees, fixedFee) = calculateFees(
             marketId,
             transactor,
             usdAmount,
@@ -34,7 +36,7 @@ library FeeUtil {
             transactionType
         );
 
-        collectedFees = collectFees(marketId, totalFees, transactor, transactionType, referrer);
+        collectedFees = collectFees(marketId, totalFees, transactor, transactionType,fixedFee, referrer);
     }
 
     /**
@@ -46,11 +48,11 @@ library FeeUtil {
         uint256 usdAmount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal returns (uint256 amountUsable, int256 feesCollected) {
+    ) internal returns (uint256 amountUsable, int256 feesCollected, uint256 fixedFee) {
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
 
         if (Transaction.isBuy(transactionType)) {
-            (amountUsable, feesCollected) = calculateBuyFees(
+            (amountUsable, feesCollected, fixedFee) = calculateBuyFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -59,7 +61,7 @@ library FeeUtil {
                 transactionType == Transaction.Type.ASYNC_BUY
             );
         } else if (Transaction.isSell(transactionType)) {
-            (amountUsable, feesCollected) = calculateSellFees(
+            (amountUsable, feesCollected, fixedFee) = calculateSellFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -68,12 +70,11 @@ library FeeUtil {
                 transactionType == Transaction.Type.ASYNC_SELL
             );
         } else if (transactionType == Transaction.Type.WRAP) {
-            (amountUsable, feesCollected) = calculateWrapFees(feeConfiguration, usdAmount);
+            (amountUsable, feesCollected, fixedFee) = calculateWrapFees(feeConfiguration, usdAmount);
         } else if (transactionType == Transaction.Type.UNWRAP) {
-            (amountUsable, feesCollected) = calculateUnwrapFees(feeConfiguration, usdAmount);
+            (amountUsable, feesCollected, fixedFee) = calculateUnwrapFees(feeConfiguration, usdAmount);
         } else {
             amountUsable = usdAmount;
-            feesCollected = 0;
         }
     }
 
@@ -83,8 +84,9 @@ library FeeUtil {
     function calculateWrapFees(
         FeeConfiguration.Data storage feeConfiguration,
         uint256 amount
-    ) internal view returns (uint amountUsable, int feesCollected) {
+    ) internal view returns (uint amountUsable, int feesCollected, uint fixedFee) {
         (amountUsable, feesCollected) = _applyFees(amount, feeConfiguration.wrapFixedFee);
+        fixedFee = feesCollected.toUint();
     }
 
     /**
@@ -93,8 +95,9 @@ library FeeUtil {
     function calculateUnwrapFees(
         FeeConfiguration.Data storage feeConfiguration,
         uint256 amount
-    ) internal view returns (uint amountUsable, int feesCollected) {
+    ) internal view returns (uint amountUsable, int feesCollected, uint fixedFee) {
         (amountUsable, feesCollected) = _applyFees(amount, feeConfiguration.unwrapFixedFee);
+        fixedFee = feesCollected.toUint();
     }
 
     /**
@@ -113,7 +116,7 @@ library FeeUtil {
         uint256 amount,
         uint256 synthPrice,
         bool async
-    ) internal returns (uint amountUsable, int calculatedFees) {
+    ) internal returns (uint amountUsable, int calculatedFees, uint fixedFee) {
         uint utilizationFee = calculateUtilizationRateFee(
             feeConfiguration,
             marketId,
@@ -129,7 +132,7 @@ library FeeUtil {
             Transaction.Type.BUY
         );
 
-        uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
+        fixedFee = _getFixedFee(feeConfiguration, transactor, async);
 
         int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
 
@@ -152,7 +155,7 @@ library FeeUtil {
         uint256 amount,
         uint256 synthPrice,
         bool async
-    ) internal returns (uint amountUsable, int feesCollected) {
+    ) internal returns (uint amountUsable, int feesCollected, uint fixedFee) {
         int skewFee = calculateSkewFee(
             feeConfiguration,
             marketId,
@@ -161,7 +164,7 @@ library FeeUtil {
             Transaction.Type.SELL
         );
 
-        uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
+        fixedFee = _getFixedFee(feeConfiguration, transactor, async);
 
         int totalFees = skewFee + fixedFee.toInt();
 
@@ -295,6 +298,7 @@ library FeeUtil {
         int totalFees,
         address transactor,
         Transaction.Type transactionType,
+        uint fixedFee,
         address referrer
     ) internal returns (uint collectedFees) {
         if (totalFees <= 0) {
