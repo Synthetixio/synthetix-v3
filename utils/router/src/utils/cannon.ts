@@ -13,11 +13,10 @@ import { JTDDataType } from 'ajv/dist/core';
 import Debug from 'debug';
 import { ethers } from 'ethers';
 import _ from 'lodash';
+import solc from 'solc';
 import { compileContract, getCompileInput } from '../compile';
 import { generateRouter } from '../generate';
 import { DeployedContractData } from '../types';
-
-import solc from 'solc';
 
 const debug = Debug('router:cannon');
 
@@ -132,6 +131,7 @@ const routerAction = {
       sourceName: `${contractName}.sol`,
       abi: routableAbi,
       bytecode: solidityInfo.bytecode,
+      deployedBytecode: solidityInfo.deployedBytecode,
       linkReferences: {},
       source: {
         solcVersion: solc.version().match(/(^.*commit\.[0-9a-f]*)\..*/)[1],
