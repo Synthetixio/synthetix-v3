@@ -29,6 +29,6 @@
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "ethers": "^5.0.0",
-    "hardhat": "^2.13.0"
+    "hardhat": "2.13.0"
   }
 }

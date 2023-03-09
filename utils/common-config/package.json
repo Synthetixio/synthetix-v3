@@ -11,7 +11,7 @@
     "@typechain/ethers-v5": "10.1.0",
     "@typechain/hardhat": "6.1.3",
     "dotenv": "16.0.1",
-    "hardhat": "2.12.3",
+    "hardhat": "2.13.0",
     "hardhat-cannon": "^2.1.7",
     "hardhat-contract-sizer": "2.1.1",
     "hardhat-gas-reporter": "1.0.9",
