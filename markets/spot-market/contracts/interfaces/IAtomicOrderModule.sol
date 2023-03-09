@@ -68,7 +68,7 @@ interface IAtomicOrderModule {
         uint amountUsd,
         uint minAmountReceived,
         address referrer
-    ) external returns (uint);
+    ) external returns (uint, int);
 
     /**
      * @notice Initiates a sell trade returning snxUSD for the specified amount of synth, sellAmount.
@@ -85,7 +85,7 @@ interface IAtomicOrderModule {
         uint sellAmount,
         uint minAmountReceived,
         address referrer
-    ) external returns (uint);
+    ) external returns (uint, int);
 
     function quoteSell(
         uint128 marketId,

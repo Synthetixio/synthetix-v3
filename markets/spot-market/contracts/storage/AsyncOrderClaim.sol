@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./SettlementStrategy.sol";
+import "./AsyncOrder.sol";
 import "../utils/TransactionUtil.sol";
 
 /**
@@ -63,7 +64,6 @@ library AsyncOrderClaim {
 
     function create(
         uint128 marketId,
-        uint128 claimId,
         Transaction.Type orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
@@ -72,6 +72,9 @@ library AsyncOrderClaim {
         address owner,
         address referrer
     ) internal returns (Data storage) {
+        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        uint128 claimId = ++asyncOrderData.totalClaims;
+
         Data storage self = load(marketId, claimId);
         self.id = claimId;
         self.orderType = orderType;

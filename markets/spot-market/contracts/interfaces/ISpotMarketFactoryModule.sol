@@ -49,6 +49,13 @@ interface ISpotMarketFactoryModule is IMarket {
     event MarketOwnerNominated(uint128 indexed marketId, address newOwner);
 
     /**
+     * @notice Emitted when market nominee renounces nomination.
+     * @param marketId id of the market
+     * @param nominee The address that has been nominated.
+     */
+    event MarketNominationRenounced(uint128 indexed marketId, address nominee);
+
+    /**
      * @notice Emitted when the owner of the market has changed.
      * @param marketId id of the market
      * @param oldOwner The previous owner of the market.
@@ -135,6 +142,13 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param marketId id of the market
      */
     function acceptMarketOwnership(uint128 marketId) external;
+
+    /**
+     * @notice Allows a nominated address to renounce ownership of the market.
+     * @dev Reverts if the caller is not nominated.
+     * @param marketId id of the market
+     */
+    function renounceMarketNomination(uint128 marketId) external;
 
     /**
      * @notice Returns market owner.

@@ -5,9 +5,9 @@ import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../storage/FeeConfiguration.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
-import "../utils/FeeUtil.sol";
 
 /**
  * @title Module for buying and selling atomically registered synths.
@@ -27,7 +27,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint usdAmount,
         uint minAmountReceived,
         address referrer
-    ) external override returns (uint) {
+    ) external override returns (uint synthAmount, int totalFees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -35,19 +35,20 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, int256 totalFees, uint collectedFees) = FeeUtil.processFees(
-            marketId,
-            msg.sender,
-            usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
-            Transaction.Type.BUY,
-            referrer
-        );
+        (uint256 amountUsable, int256 totalFees, , uint collectedFees) = FeeConfiguration
+            .processFees(
+                marketId,
+                msg.sender,
+                usdAmount,
+                Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+                Transaction.Type.BUY,
+                referrer
+            );
 
         spotMarketFactory.depositToMarketManager(marketId, amountUsable);
 
         // Exchange amount after fees into synths to buyer
-        uint256 synthAmount = Price.usdSynthExchangeRate(
+        synthAmount = Price.usdSynthExchangeRate(
             marketId,
             amountUsable,
             Transaction.Type.BUY
@@ -61,7 +62,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         emit SynthBought(marketId, synthAmount, totalFees, collectedFees, referrer);
 
-        return synthAmount;
+        return (synthAmount, totalFees);
     }
 
     function quoteSell(
@@ -80,11 +81,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint minAmountReceived,
         address referrer
-    ) external override returns (uint256) {
+    ) external override returns (uint256 returnAmount, int totalFees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
-        (uint256 returnAmount, int256 totalFees) = _getQuote(marketId, synthAmount);
+        (returnAmount, totalFees) = _getQuote(marketId, synthAmount);
 
         if (returnAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnAmount);
@@ -105,7 +106,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             );
 
             // collect fees
-            collectedFees = FeeUtil.collectFees(
+            collectedFees = FeeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
@@ -122,7 +123,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         emit SynthSold(marketId, returnAmount, totalFees, collectedFees, referrer);
 
-        return returnAmount;
+        return (returnAmount, totalFees);
     }
 
     function sellExactOut(uint128 marketId, uint usdAmount, address referrer) external override returns (uint) {
@@ -145,7 +146,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         // calculate fees
-        (returnAmount, totalFees) = FeeUtil.calculateFees(
+        (returnAmount, totalFees) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             usdAmount,

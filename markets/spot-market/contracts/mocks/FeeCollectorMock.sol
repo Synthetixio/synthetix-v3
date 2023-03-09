@@ -23,6 +23,16 @@ contract FeeCollectorMock is IFeeCollector {
         usdToken.transferFrom(msg.sender, address(this), feeToCollect);
     }
 
+    function quoteFees(
+        uint128 marketId,
+        uint256 feeAmount,
+        address sender,
+        uint8 tradeType
+    ) external override returns (uint256) {
+        uint feeToCollect = feeAmount / 2;
+        return feeToCollect;
+    }
+
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
