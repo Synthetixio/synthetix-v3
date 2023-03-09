@@ -113,10 +113,8 @@ library FeeConfiguration {
             );
         } else if (transactionType == Transaction.Type.WRAP) {
             (amountAfterFees, feesCollected) = calculateWrapFees(feeConfiguration, usdAmount);
-            referrerShareableFees = feesCollected.toUint();
         } else if (transactionType == Transaction.Type.UNWRAP) {
             (amountAfterFees, feesCollected) = calculateUnwrapFees(feeConfiguration, usdAmount);
-            referrerShareableFees = feesCollected.toUint();
         } else {
             amountAfterFees = usdAmount;
         }
@@ -246,10 +244,7 @@ library FeeConfiguration {
 
         uint skewScaleValue = feeConfiguration.skewScale.mulDecimal(synthPrice);
 
-        uint totalSynthValue = SynthUtil
-            .getToken(marketId)
-            .totalSupply()
-            .mulDecimal(synthPrice);
+        uint totalSynthValue = SynthUtil.getToken(marketId).totalSupply().mulDecimal(synthPrice);
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
         uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)

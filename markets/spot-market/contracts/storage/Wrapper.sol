@@ -1,11 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
+
 /**
  * @title Wrapper library servicing the wrapper module
  */
 library Wrapper {
     error InvalidCollateralType();
+    /**
+     * @notice Thrown when user tries to wrap more than the set supply cap for the market.
+     */
+    error WrapperExceedsMaxAmount(uint maxWrappableAmount, uint currentSupply, uint amountToWrap);
 
     struct Data {
         /**
@@ -23,6 +29,25 @@ library Wrapper {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Wrapper", marketId));
         assembly {
             wrapper.slot := s
+        }
+    }
+
+    function checkMaxWrappableAmount(
+        Data storage self,
+        uint128 marketId,
+        uint256 wrapAmount,
+        IMarketCollateralModule synthetix
+    ) internal {
+        uint currentDepositedCollateral = synthetix.getMarketCollateralAmount(
+            marketId,
+            self.wrapCollateralType
+        );
+        if (currentDepositedCollateral + wrapAmount > self.maxWrappableAmount) {
+            revert WrapperExceedsMaxAmount(
+                self.maxWrappableAmount,
+                currentDepositedCollateral,
+                wrapAmount
+            );
         }
     }
 

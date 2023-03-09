@@ -35,11 +35,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 settlementStrategyId,
         uint256 minimumSettlementAmount,
         address referrer
-    )
-        external
-        override
-        returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
-    {
+    ) external override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
         // validation checks
         Transaction.isAsyncTransaction(orderType);
         SpotMarketFactory.load().isValidMarket(marketId);
@@ -95,7 +91,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
 
         // Emit event
-        emit OrderCommitted(marketId, orderType, amountProvided, asyncOrderClaim.id, msg.sender, referrer);
+        emit OrderCommitted(
+            marketId,
+            orderType,
+            amountProvided,
+            asyncOrderClaim.id,
+            msg.sender,
+            referrer
+        );
     }
 
     /**

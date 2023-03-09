@@ -50,7 +50,6 @@ interface IAsyncOrderModule {
      * @param settlementStrategyId id of the settlement strategy used for trade.
      * @param minimumSettlementAmount minimum amount of value returned to trader after fees.
      * @param referrer Optional address of the referrer, for fee share
-     * @return asyncOrderId id of the async order created (used for settlements).
      * @return asyncOrderClaim claim details (see AsyncOrderClaim.Data struct).
      */
     function commitOrder(
@@ -60,7 +59,7 @@ interface IAsyncOrderModule {
         uint256 settlementStrategyId,
         uint256 minimumSettlementAmount,
         address referrer
-    ) external returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim);
+    ) external returns (AsyncOrderClaim.Data memory asyncOrderClaim);
 
     /**
      * @notice Cancel an async order via this function

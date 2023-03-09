@@ -21,11 +21,6 @@ interface IWrapperModule {
     error InsufficientAmountReceived(uint expected, uint current);
 
     /**
-     * @notice Thrown when user tries to wrap more than the set supply cap for the market.
-     */
-    error WrapperExceedsMaxAmount(uint maxWrappableAmount, uint currentSupply, uint amountToWrap);
-
-    /**
      * @notice Gets fired when wrapper supply is set for a given market, collateral type.
      * @param synthMarketId Id of the market the wrapper is initialized for.
      * @param wrapCollateralType the collateral used to wrap the synth.
@@ -43,14 +38,12 @@ interface IWrapperModule {
      * @param amountWrapped amount of synth wrapped.
      * @param totalFees total fees applied on the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
-     * @param referrer Optional address of the referrer, for fee share
      */
     event SynthWrapped(
         uint indexed synthMarketId,
         uint amountWrapped,
         int totalFees,
-        uint feesCollected,
-        address referrer
+        uint feesCollected
     );
 
     /**
@@ -59,14 +52,12 @@ interface IWrapperModule {
      * @param amountUnwrapped amount of synth unwrapped.
      * @param totalFees total fees applied on the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
-     * @param referrer Optional address of the referrer, for fee share
      */
     event SynthUnwrapped(
         uint indexed synthMarketId,
         uint amountUnwrapped,
         int totalFees,
-        uint feesCollected,
-        address referrer
+        uint feesCollected
     );
 
     /**
@@ -89,14 +80,12 @@ interface IWrapperModule {
      * @param marketId Id of the market used for the trade.
      * @param wrapAmount Amount of collateral to wrap.  This amount gets deposited into the market collateral manager.
      * @param minAmountReceived The minimum amount of synths the trader is expected to receive, otherwise the transaction will revert.
-     * @param referrer Optional address of the referrer, for fee share
      * @return amountReturned Amount of synth returned to user.
      */
     function wrap(
         uint128 marketId,
         uint wrapAmount,
-        uint minAmountReceived,
-        address referrer
+        uint minAmountReceived
     ) external returns (uint);
 
     /**
@@ -105,13 +94,11 @@ interface IWrapperModule {
      * @param marketId Id of the market used for the trade.
      * @param unwrapAmount Amount of synth trader is unwrapping.
      * @param minAmountReceived The minimum amount of collateral the trader is expected to receive, otherwise the transaction will revert.
-     * @param referrer Optional address of the referrer, for fee share
      * @return amountReturned Amount of collateral returned.
      */
     function unwrap(
         uint128 marketId,
         uint unwrapAmount,
-        uint minAmountReceived,
-        address referrer
+        uint minAmountReceived
     ) external returns (uint);
 }

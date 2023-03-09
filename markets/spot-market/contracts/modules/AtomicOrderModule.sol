@@ -36,7 +36,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 usdAmountAfterFees, int256 totalFees, uint referrerShareableFees) = FeeConfiguration.calculateFees(
+        uint256 usdAmountAfterFees;
+        (usdAmountAfterFees, totalFees, ) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -44,9 +45,14 @@ contract AtomicOrderModule is IAtomicOrderModule {
             Transaction.Type.BUY
         );
 
-        uint collectedFees = FeeConfiguration.collectFees(marketId, totalFees, msg.sender, Transaction.Type.BUY, referrer);
+        uint collectedFees = FeeConfiguration.collectFees(
+            marketId,
+            totalFees,
+            msg.sender,
+            Transaction.Type.BUY,
+            referrer
+        );
         int remainingFees = totalFees - collectedFees.toInt();
-
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees);
 
@@ -129,11 +135,19 @@ contract AtomicOrderModule is IAtomicOrderModule {
         return (returnAmount, totalFees);
     }
 
-    function sellExactOut(uint128 marketId, uint usdAmount, address referrer) external override returns (uint) {
+    function sellExactOut(
+        uint128 marketId,
+        uint usdAmount,
+        address referrer
+    ) external override returns (uint) {
         return usdAmount;
     }
 
-    function sellExactIn(uint128 marketId, uint synthAmount, address referrer) external override returns (uint) {
+    function sellExactIn(
+        uint128 marketId,
+        uint synthAmount,
+        address referrer
+    ) external override returns (uint) {
         return synthAmount;
     }
 
