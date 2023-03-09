@@ -160,7 +160,7 @@ library PerpsMarket {
 
     function currentFundingVelocity(Data storage self) internal view returns (int) {
         MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(self.id);
-        int maxFundingVelocity = int(marketConfig.maxFundingVelocity);
+        int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
         // Ensures the proportionalSkew is between -1 and 1.
         int proportionalSkew = MathUtil.min(
@@ -171,7 +171,7 @@ library PerpsMarket {
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
-        return int(block.timestamp - self.lastFundingTime).divDecimal(1 days);
+        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
     // TODO: David will refactor this
