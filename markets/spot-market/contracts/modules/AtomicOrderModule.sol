@@ -14,6 +14,7 @@ import "../utils/SynthUtil.sol";
  * @dev See IAtomicOrderModule.
  */
 contract AtomicOrderModule is IAtomicOrderModule {
+    using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
@@ -35,22 +36,24 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, int256 totalFees, , uint collectedFees) = FeeConfiguration
-            .processFees(
-                marketId,
-                msg.sender,
-                usdAmount,
-                Price.getCurrentPrice(marketId, Transaction.Type.BUY),
-                Transaction.Type.BUY,
-                referrer
-            );
+        (uint256 usdAmountAfterFees, int256 totalFees, uint referrerShareableFees) = FeeConfiguration.calculateFees(
+            marketId,
+            msg.sender,
+            usdAmount,
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            Transaction.Type.BUY
+        );
 
-        spotMarketFactory.depositToMarketManager(marketId, amountUsable);
+        uint collectedFees = FeeConfiguration.collectFees(marketId, totalFees, msg.sender, Transaction.Type.BUY, referrer);
+        int remainingFees = totalFees - collectedFees.toInt();
+
+
+        spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees);
 
         // Exchange amount after fees into synths to buyer
         synthAmount = Price.usdSynthExchangeRate(
             marketId,
-            amountUsable,
+            usdAmountAfterFees,
             Transaction.Type.BUY
         );
 
@@ -146,7 +149,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         // calculate fees
-        (returnAmount, totalFees) = FeeConfiguration.calculateFees(
+        uint referrerShareableFees;
+        (returnAmount, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             usdAmount,

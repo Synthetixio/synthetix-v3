@@ -84,7 +84,7 @@ contract WrapperModule is IWrapperModule {
             Transaction.Type.WRAP
         );
 
-        (uint256 returnAmountUsd, int256 totalFees) = FeeConfiguration.calculateFees(
+        (uint256 returnAmountUsd, int256 totalFees,) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
@@ -146,7 +146,7 @@ contract WrapperModule is IWrapperModule {
             unwrapAmount,
             Transaction.Type.UNWRAP
         );
-        (uint256 returnAmountUsd, int256 totalFees) = FeeConfiguration.calculateFees(
+        (uint256 returnAmountUsd, int256 totalFees,) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,

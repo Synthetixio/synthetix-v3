@@ -82,33 +82,6 @@ library FeeConfiguration {
     }
 
     /**
-     * @dev Calculates fees then runs the fees through a fee collector before returning the computed data.
-     */
-    function processFees(
-        uint128 marketId,
-        address transactor,
-        uint256 usdAmount,
-        uint256 synthPrice,
-        Transaction.Type transactionType,
-        address referrer
-    )
-        internal
-        returns (uint256 amountUsable, int256 totalFees, int256 remainingFees, uint collectedFees)
-    {
-        uint fixedFee;
-        (amountUsable, totalFees, fixedFee) = calculateFees(
-            marketId,
-            transactor,
-            usdAmount,
-            synthPrice,
-            transactionType
-        );
-
-        collectedFees = collectFees(marketId, totalFees, transactor, transactionType);
-        remainingFees = totalFees - collectedFees.toInt();
-    }
-
-    /**
      * @dev Calculates fees for a given transaction type.
      */
     function calculateFees(
@@ -117,11 +90,11 @@ library FeeConfiguration {
         uint256 usdAmount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal returns (uint256 amountUsable, int256 feesCollected, uint fixedFee) {
+    ) internal returns (uint256 amountAfterFees, int256 feesCollected, uint referrerShareableFees) {
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
 
         if (Transaction.isBuy(transactionType)) {
-            (amountUsable, feesCollected, fixedFee) = calculateBuyFees(
+            (amountAfterFees, feesCollected, referrerShareableFees) = calculateBuyFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -130,7 +103,7 @@ library FeeConfiguration {
                 transactionType == Transaction.Type.ASYNC_BUY
             );
         } else if (Transaction.isSell(transactionType)) {
-            (amountUsable, feesCollected, fixedFee) = calculateSellFees(
+            (amountAfterFees, feesCollected, referrerShareableFees) = calculateSellFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -139,13 +112,13 @@ library FeeConfiguration {
                 transactionType == Transaction.Type.ASYNC_SELL
             );
         } else if (transactionType == Transaction.Type.WRAP) {
-            (amountUsable, feesCollected) = calculateWrapFees(feeConfiguration, usdAmount);
-            fixedFee = feesCollected.toUint();
+            (amountAfterFees, feesCollected) = calculateWrapFees(feeConfiguration, usdAmount);
+            referrerShareableFees = feesCollected.toUint();
         } else if (transactionType == Transaction.Type.UNWRAP) {
-            (amountUsable, feesCollected) = calculateUnwrapFees(feeConfiguration, usdAmount);
-            fixedFee = feesCollected.toUint();
+            (amountAfterFees, feesCollected) = calculateUnwrapFees(feeConfiguration, usdAmount);
+            referrerShareableFees = feesCollected.toUint();
         } else {
-            amountUsable = usdAmount;
+            amountAfterFees = usdAmount;
         }
     }
 
@@ -366,7 +339,8 @@ library FeeConfiguration {
         uint128 marketId,
         int totalFees,
         address transactor,
-        Transaction.Type transactionType
+        Transaction.Type transactionType,
+        address referrer
     ) internal returns (uint collectedFees) {
         if (totalFees <= 0) {
             return 0;

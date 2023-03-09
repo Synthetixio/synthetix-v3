@@ -205,17 +205,20 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint amountUsable = asyncOrderClaim.amountEscrowed - settlementStrategy.settlementReward;
         address trader = asyncOrderClaim.owner;
 
-        uint finalAmountUsd;
-        (finalAmountUsd, totalFees, , collectedFees) = FeeConfiguration.processFees(
+        uint usdAmountAfterFees;
+        uint referrerShareableFees;
+        (usdAmountAfterFees, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
             marketId,
-            trader,
+            msg.sender,
             amountUsable,
             price,
-            Transaction.Type.ASYNC_BUY,
-            asyncOrderClaim.referrer
+            Transaction.Type.ASYNC_BUY
         );
 
-        finalOrderAmount = finalAmountUsd.divDecimal(price);
+        collectedFees = FeeConfiguration.collectFees(marketId, totalFees, msg.sender, Transaction.Type.ASYNC_BUY, asyncOrderClaim.referrer);
+        int remainingFees = totalFees - collectedFees.toInt();
+    
+        finalOrderAmount = usdAmountAfterFees.divDecimal(price);
 
         if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
             revert MinimumSettlementAmountNotMet(
@@ -229,7 +232,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             settlementStrategy.settlementReward
         );
 
-        spotMarketFactory.depositToMarketManager(marketId, finalAmountUsd);
+        spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees);
 
         SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
     }
@@ -254,8 +257,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         address trader = asyncOrderClaim.owner;
 
         uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.settlementReward;
-
-        (finalOrderAmount, totalFees) = FeeConfiguration.calculateFees(
+uint referrerShareableFees;
+        (finalOrderAmount, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
             marketId,
             trader,
             usableAmount,
