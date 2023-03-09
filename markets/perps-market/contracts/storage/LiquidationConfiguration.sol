@@ -34,7 +34,7 @@ library LiquidationConfiguration {
         LiquidationConfiguration.Data storage config,
         int positionSize,
         uint price
-    ) internal view returns (uint lMargin) {
+    ) internal view returns (uint) {
         uint liquidationBuffer = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
             config.liquidationBufferRatio
         );

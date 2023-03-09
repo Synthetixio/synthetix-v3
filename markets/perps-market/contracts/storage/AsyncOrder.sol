@@ -8,6 +8,7 @@ import "./SettlementStrategy.sol";
 import "./Position.sol";
 import "./MarketConfiguration.sol";
 import "./LiquidationConfiguration.sol";
+import "./SettlementStrategy.sol";
 import "./PerpsMarket.sol";
 import "../utils/MathUtil.sol";
 
@@ -114,6 +115,51 @@ library AsyncOrder {
         if (self.sizeDelta == 0) {
             revert OrderNotValid();
         }
+    }
+
+    error ZeroSizeOrder();
+
+    function simulateOrder(
+        Data storage self,
+        OrderCommitmentRequest memory order,
+        uint256 orderPrice
+    ) internal {
+        if (order.sizeDelta == 0) {
+            revert ZeroSizeOrder();
+        }
+
+        SimulateDataRuntime memory runtime;
+
+        SettlementStrategy.Data storage strategy = MarketConfiguration
+            .load(order.marketId)
+            .settlementStrategies[order.settlementStrategyId];
+
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
+        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(order.marketId);
+
+        // 1. calculate fees
+        runtime.fillPrice = calculateFillPrice(
+            perpsMarketData.skew,
+            marketConfig.skewScale,
+            order.sizeDelta,
+            orderPrice
+        );
+        runtime.fees =
+            calculateOrderFee(
+                order.sizeDelta,
+                runtime.fillPrice,
+                runtime.marketSkew,
+                marketConfig.orderFees[MarketConfiguration.OrderType.ASYNC_OFFCHAIN]
+            ) +
+            strategy.settlementReward;
+
+        // 2. check for margin requirements
+
+        // total open interest (includes current position) + order size
+        int totalAccountOpenInterest = PerpsAccount
+            .load(order.accountId)
+            .getTotalAccountOpenInterest(order.accountId) +
+            (order.sizeDelta.mulDecimal(orderPrice));
     }
 
     function simulateOrderSettlement(
@@ -256,15 +302,13 @@ library AsyncOrder {
         return (runtime.newPos, runtime.fees, runtime.settlementReward, Status.Success);
     }
 
-    function orderFee(
-        Data storage order,
+    function calculateOrderFee(
+        int sizeDelta,
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint) {
-        int sizeDelta = order.sizeDelta;
-
-        int notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
+        int notionalDiff = sizeDelta.mulDecimal(int(fillPrice));
 
         // does this trade keep the skew on one side?
         if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
@@ -286,7 +330,7 @@ library AsyncOrder {
         // a different fee is applied on the proportion increasing the skew.
 
         // proportion of size that's on the other direction
-        uint takerSize = MathUtil.abs((marketSkew + order.sizeDelta).divDecimal(order.sizeDelta));
+        uint takerSize = MathUtil.abs((marketSkew + sizeDelta).divDecimal(sizeDelta));
         uint makerSize = DecimalMath.UNIT - takerSize;
         uint takerFee = MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(
             orderFeeData.takerFee

@@ -44,13 +44,7 @@ library Position {
     )
         internal
         view
-        returns (
-            int openInterest,
-            int pnl,
-            int accruedFunding,
-            int netFundingPerUnit,
-            int nextFunding
-        )
+        returns (int notional, int pnl, int accruedFunding, int netFundingPerUnit, int nextFunding)
     {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
 
@@ -62,6 +56,6 @@ library Position {
         int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
         pnl = self.size.mulDecimal(priceShift) + accruedFunding;
 
-        openInterest = self.size.mulDecimal(price.toInt()) + accruedFunding;
+        notional = self.size.mulDecimal(price);
     }
 }

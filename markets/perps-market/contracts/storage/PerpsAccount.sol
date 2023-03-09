@@ -229,16 +229,11 @@ library PerpsAccount {
         Data storage self,
         uint128 accountId,
         int amount
-<<<<<<< HEAD
     ) internal view returns (uint) {
         uint availableWithdrawableCollateralUsd = getAvailableWithdrawableCollateralUsd(
             self,
             accountId
         );
-=======
-    ) internal returns (uint) {
-        uint availableWithdrawableCollateralUsd = getAvailableMargin(self, accountId);
->>>>>>> 90a4fd6c (wip)
         if (availableWithdrawableCollateralUsd < MathUtil.abs(amount)) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
@@ -248,16 +243,11 @@ library PerpsAccount {
         return availableWithdrawableCollateralUsd;
     }
 
-<<<<<<< HEAD
     function getAvailableWithdrawableCollateralUsd(
         Data storage self,
         uint128 accountId
     ) internal view returns (uint) {
         (int totalAccountOpenInterest, uint accountMaxOpenInterest) = _calculateOpenInterestValues(
-=======
-    function getAvailableMargin(Data storage self, uint128 accountId) internal returns (uint) {
-        (int totalAccountOpenInterest, uint accountMaxOpenInterest) = calculateOpenInterestValues(
->>>>>>> 90a4fd6c (wip)
             self,
             accountId
         );
@@ -268,12 +258,8 @@ library PerpsAccount {
     function calculateOpenInterestValues(
         Data storage self,
         uint128 accountId
-<<<<<<< HEAD
-    ) private view returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
-=======
     ) internal returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
->>>>>>> 90a4fd6c (wip)
-        totalAccountOpenInterest = getTotalAccountOpenInterest(self, accountId);
+        totalAccountOpenInterest = getTotalNotionalOpenInterest(self, accountId);
 
         uint totalCollateralValue = getTotalCollateralValue(self);
 
@@ -281,7 +267,7 @@ library PerpsAccount {
         accountMaxOpenInterest = totalCollateralValue.mulDecimal(maxLeverage);
     }
 
-    function getTotalAccountOpenInterest(
+    function getTotalNotionalOpenInterest(
         Data storage self,
         uint128 accountId
     ) internal view returns (int totalAccountOpenInterest) {

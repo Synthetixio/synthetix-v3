@@ -44,6 +44,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
             3. check valid settlement strategy
         */
 
+        // order checks
+        /*
+            1. check if size is 0
+            2. check with fees if sufficient margin
+            3. check for liquidation with new position size
+            4. check that initial margin reqs are met
+            5. check order size against max order size
+            6. 
+        */
+
         PerpsAccount.load(commitment.accountId).checkLiquidationFlag();
 
         // TODO: recompute funding
