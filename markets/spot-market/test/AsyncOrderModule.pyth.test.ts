@@ -58,7 +58,7 @@ describe('AsyncOrderModule pyth', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8));
+        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8), ethers.constants.AddressZero);
       startTime = await getTime(provider());
     });
 

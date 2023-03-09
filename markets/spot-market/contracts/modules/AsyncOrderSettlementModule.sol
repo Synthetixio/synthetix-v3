@@ -159,8 +159,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
     ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
-        // adjust commitment amount prior to fee calculation (used for skew/utilization calcs)
-        AsyncOrder.load(marketId).totalCommittedUsdAmount -= asyncOrderClaim.committedAmountUsd;
         // set settledAt to avoid any potential reentrancy
         asyncOrderClaim.settledAt = block.timestamp;
 
@@ -207,16 +205,20 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint amountUsable = asyncOrderClaim.amountEscrowed - settlementStrategy.settlementReward;
         address trader = asyncOrderClaim.owner;
 
-        uint finalAmountUsd;
-        (finalAmountUsd, totalFees, , collectedFees) = FeeConfiguration.processFees(
+        uint usdAmountAfterFees;
+        uint referrerShareableFees;
+        (usdAmountAfterFees, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
             marketId,
-            trader,
+            msg.sender,
             amountUsable,
             price,
             Transaction.Type.ASYNC_BUY
         );
 
-        finalOrderAmount = finalAmountUsd.divDecimal(price);
+        collectedFees = FeeConfiguration.collectFees(marketId, totalFees, msg.sender, Transaction.Type.ASYNC_BUY, asyncOrderClaim.referrer);
+        int remainingFees = totalFees - collectedFees.toInt();
+    
+        finalOrderAmount = usdAmountAfterFees.divDecimal(price);
 
         if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
             revert MinimumSettlementAmountNotMet(
@@ -230,7 +232,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             settlementStrategy.settlementReward
         );
 
-        spotMarketFactory.depositToMarketManager(marketId, finalAmountUsd);
+        spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees);
 
         SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
     }
@@ -255,8 +257,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         address trader = asyncOrderClaim.owner;
 
         uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.settlementReward;
-
-        (finalOrderAmount, totalFees) = FeeConfiguration.calculateFees(
+uint referrerShareableFees;
+        (finalOrderAmount, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
             marketId,
             trader,
             usableAmount,
@@ -288,7 +290,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.ASYNC_SELL
+                Transaction.Type.ASYNC_SELL,
+                asyncOrderClaim.referrer
             );
         }
 

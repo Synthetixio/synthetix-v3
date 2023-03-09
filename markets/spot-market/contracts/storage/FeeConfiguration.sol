@@ -57,6 +57,10 @@ library FeeConfiguration {
          * The rest of the fees are deposited into the market manager.
          */
         IFeeCollector feeCollector;
+        /**
+         * @dev Percentage share for each referrer address
+         */
+        mapping(address => uint) referrerShare;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {
@@ -78,31 +82,6 @@ library FeeConfiguration {
     }
 
     /**
-     * @dev Calculates fees then runs the fees through a fee collector before returning the computed data.
-     */
-    function processFees(
-        uint128 marketId,
-        address transactor,
-        uint256 usdAmount,
-        uint256 synthPrice,
-        Transaction.Type transactionType
-    )
-        internal
-        returns (uint256 amountUsable, int256 totalFees, int256 remainingFees, uint collectedFees)
-    {
-        (amountUsable, totalFees) = calculateFees(
-            marketId,
-            transactor,
-            usdAmount,
-            synthPrice,
-            transactionType
-        );
-
-        collectedFees = collectFees(marketId, totalFees, transactor, transactionType);
-        remainingFees = totalFees - collectedFees.toInt();
-    }
-
-    /**
      * @dev Calculates fees for a given transaction type.
      */
     function calculateFees(
@@ -111,11 +90,11 @@ library FeeConfiguration {
         uint256 usdAmount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal returns (uint256 amountUsable, int256 feesCollected) {
+    ) internal returns (uint256 amountAfterFees, int256 feesCollected, uint referrerShareableFees) {
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
 
         if (Transaction.isBuy(transactionType)) {
-            (amountUsable, feesCollected) = calculateBuyFees(
+            (amountAfterFees, feesCollected, referrerShareableFees) = calculateBuyFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -124,7 +103,7 @@ library FeeConfiguration {
                 transactionType == Transaction.Type.ASYNC_BUY
             );
         } else if (Transaction.isSell(transactionType)) {
-            (amountUsable, feesCollected) = calculateSellFees(
+            (amountAfterFees, feesCollected, referrerShareableFees) = calculateSellFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -133,12 +112,11 @@ library FeeConfiguration {
                 transactionType == Transaction.Type.ASYNC_SELL
             );
         } else if (transactionType == Transaction.Type.WRAP) {
-            (amountUsable, feesCollected) = calculateWrapFees(feeConfiguration, usdAmount);
+            (amountAfterFees, feesCollected) = calculateWrapFees(feeConfiguration, usdAmount);
         } else if (transactionType == Transaction.Type.UNWRAP) {
-            (amountUsable, feesCollected) = calculateUnwrapFees(feeConfiguration, usdAmount);
+            (amountAfterFees, feesCollected) = calculateUnwrapFees(feeConfiguration, usdAmount);
         } else {
-            amountUsable = usdAmount;
-            feesCollected = 0;
+            amountAfterFees = usdAmount;
         }
     }
 
@@ -178,7 +156,7 @@ library FeeConfiguration {
         uint256 amount,
         uint256 synthPrice,
         bool async
-    ) internal returns (uint amountUsable, int calculatedFees) {
+    ) internal returns (uint amountUsable, int calculatedFees, uint fixedFee) {
         uint utilizationFee = calculateUtilizationRateFee(
             feeConfiguration,
             marketId,
@@ -194,7 +172,7 @@ library FeeConfiguration {
             Transaction.Type.BUY
         );
 
-        uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
+        fixedFee = _getFixedFee(feeConfiguration, transactor, async);
 
         int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
 
@@ -217,7 +195,7 @@ library FeeConfiguration {
         uint256 amount,
         uint256 synthPrice,
         bool async
-    ) internal returns (uint amountUsable, int feesCollected) {
+    ) internal returns (uint amountUsable, int feesCollected, uint fixedFee) {
         int skewFee = calculateSkewFee(
             feeConfiguration,
             marketId,
@@ -226,7 +204,7 @@ library FeeConfiguration {
             Transaction.Type.SELL
         );
 
-        uint fixedFee = _getFixedFee(feeConfiguration, transactor, async);
+        fixedFee = _getFixedFee(feeConfiguration, transactor, async);
 
         int totalFees = skewFee + fixedFee.toInt();
 
@@ -266,11 +244,7 @@ library FeeConfiguration {
 
         uint skewScaleValue = feeConfiguration.skewScale.mulDecimal(synthPrice);
 
-        uint totalSynthValue = (SynthUtil
-            .getToken(marketId)
-            .totalSupply()
-            .mulDecimal(synthPrice)
-            .toInt() + AsyncOrder.load(marketId).totalCommittedUsdAmount).toUint(); // add async order commitment amount in escrow
+        uint totalSynthValue = SynthUtil.getToken(marketId).totalSupply().mulDecimal(synthPrice);
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
         uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
@@ -328,8 +302,7 @@ library FeeConfiguration {
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
 
         // Note: take into account the async order commitment amount in escrow
-        uint totalValueBeforeFill = (totalBalance.mulDecimal(synthPrice).toInt() +
-            AsyncOrder.load(marketId).totalCommittedUsdAmount).toUint();
+        uint totalValueBeforeFill = totalBalance.mulDecimal(synthPrice);
         uint totalValueAfterFill = totalValueBeforeFill + amount;
 
         // utilization is below 100%
@@ -361,7 +334,8 @@ library FeeConfiguration {
         uint128 marketId,
         int totalFees,
         address transactor,
-        Transaction.Type transactionType
+        Transaction.Type transactionType,
+        address referrer
     ) internal returns (uint collectedFees) {
         if (totalFees <= 0) {
             return 0;

@@ -26,12 +26,14 @@ interface IAtomicOrderModule {
      * @param synthReturned Synth received on the trade based on amount provided by trader.
      * @param totalFees total fees charged to the trader on the transaction.
      * @param collectedFees Fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
+     * @param referrer Optional address of the referrer, for fee share
      */
     event SynthBought(
         uint indexed synthMarketId,
         uint synthReturned,
         int totalFees,
-        uint collectedFees
+        uint collectedFees,
+        address referrer
     );
 
     /**
@@ -40,12 +42,14 @@ interface IAtomicOrderModule {
      * @param amountReturned Amount of snxUSD returned to user based on synth provided by trader.
      * @param totalFees total fees charged to the trader on the transaction.
      * @param collectedFees Fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
+     * @param referrer Optional address of the referrer, for fee share
      */
     event SynthSold(
         uint indexed synthMarketId,
         uint amountReturned,
         int totalFees,
-        uint collectedFees
+        uint collectedFees,
+        address referrer
     );
 
     /**
@@ -56,12 +60,14 @@ interface IAtomicOrderModule {
      * @param synthMarketId Id of the market used for the trade.
      * @param amountUsd Amount of snxUSD trader is providing allownace to for the trade.
      * @param minAmountReceived Min Amount of synth is expected the trader to receive otherwise the transaction will revert.
+     * @param referrer Optional address of the referrer, for fee share
      * @return synthReturned Synth received on the trade based on amount provided by trader.
      */
     function buy(
         uint128 synthMarketId,
         uint amountUsd,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external returns (uint, int);
 
     /**
@@ -71,12 +77,14 @@ interface IAtomicOrderModule {
      * @param synthMarketId Id of the market used for the trade.
      * @param sellAmount Amount of synth trader is trading for snxUSD.
      * @param minAmountReceived Min Amount of snxUSD is expected the trader to receive otherwise the transaction will revert.
+     * @param referrer Optional address of the referrer, for fee share
      * @return amountReturned Amount of snxUSD returned to user based on synth provided by trader.
      */
     function sell(
         uint128 synthMarketId,
         uint sellAmount,
-        uint minAmountReceived
+        uint minAmountReceived,
+        address referrer
     ) external returns (uint, int);
 
     function quoteSell(
@@ -84,7 +92,7 @@ interface IAtomicOrderModule {
         uint synthAmount
     ) external returns (uint256 returnAmount, int256 totalFees);
 
-    function sellExactOut(uint128 marketId, uint usdAmount) external returns (uint);
+    function sellExactOut(uint128 marketId, uint usdAmount, address referrer) external returns (uint);
 
-    function sellExactIn(uint128 marketId, uint synthAmount) external returns (uint);
+    function sellExactIn(uint128 marketId, uint synthAmount, address referrer) external returns (uint);
 }
