@@ -253,7 +253,7 @@ library AsyncOrder {
     ) internal view returns (uint) {
         int sizeDelta = order.sizeDelta;
 
-        int notionalDiff = sizeDelta.mulDecimal(int(fillPrice));
+        int notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // does this trade keep the skew on one side?
         if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
@@ -265,7 +265,7 @@ library AsyncOrder {
             uint staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
                 ? orderFeeData.takerFee
                 : orderFeeData.makerFee;
-            return MathUtil.abs(notionalDiff.mulDecimal(int(staticRate)));
+            return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
         }
 
         // this trade flips the skew.
@@ -326,7 +326,7 @@ library AsyncOrder {
         // fill_price = (price_before + price_after) / 2
         //            = (1200 + 1200.12) / 2
         //            = 1200.06
-        return uint(priceBefore + priceAfter).divDecimal(DecimalMath.UNIT * 2);
+        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
     function recomputeMarginWithDelta(
