@@ -70,6 +70,11 @@ interface IAtomicOrderModule {
         address referrer
     ) external returns (uint, int);
 
+    function quoteBuy(
+        uint128 marketId,
+        uint usdAmount
+    ) external view returns (uint256 returnAmount, int256 totalFees);
+
     /**
      * @notice Initiates a sell trade returning snxUSD for the specified amount of synth, sellAmount.
      * @dev Transfers the specified synth, collects fees through configured fee collector, returns snxUSD to the trader.
@@ -92,7 +97,15 @@ interface IAtomicOrderModule {
         uint synthAmount
     ) external view returns (uint256 returnAmount, int256 totalFees);
 
-    function sellExactOut(uint128 marketId, uint usdAmount, address referrer) external returns (uint);
+    function sellExactOut(
+        uint128 marketId,
+        uint usdAmount,
+        address referrer
+    ) external returns (uint);
 
-    function sellExactIn(uint128 marketId, uint synthAmount, address referrer) external returns (uint);
+    function sellExactIn(
+        uint128 marketId,
+        uint synthAmount,
+        address referrer
+    ) external returns (uint);
 }

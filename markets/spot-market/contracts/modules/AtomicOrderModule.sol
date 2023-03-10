@@ -20,6 +20,14 @@ contract AtomicOrderModule is IAtomicOrderModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
 
+    function quoteBuy(
+        uint128 marketId,
+        uint usdAmount
+    ) external view override returns (uint256 returnAmount, int256 totalFees) {
+        SpotMarketFactory.load().isValidMarket(marketId);
+        (returnAmount, totalFees) = _getQuoteBuy(marketId, usdAmount);
+    }
+
     /**
      * @inheritdoc IAtomicOrderModule
      */
@@ -35,15 +43,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
         // transfer usd from buyer
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
-        // Calculate fees
         uint256 usdAmountAfterFees;
-        (usdAmountAfterFees, totalFees, ) = FeeConfiguration.calculateFees(
-            marketId,
-            msg.sender,
-            usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
-            Transaction.Type.BUY
-        );
+        (usdAmountAfterFees, totalFees) = _getQuoteBuy(marketId, usdAmount);
 
         uint collectedFees = FeeConfiguration.collectFees(
             marketId,
@@ -79,7 +80,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint synthAmount
     ) external view override returns (uint256 returnAmount, int256 totalFees) {
         SpotMarketFactory.load().isValidMarket(marketId);
-        (returnAmount, totalFees) = _getQuote(marketId, synthAmount);
+        (returnAmount, totalFees) = _getQuoteSell(marketId, synthAmount);
     }
 
     /**
@@ -94,7 +95,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
-        (returnAmount, totalFees) = _getQuote(marketId, synthAmount);
+        (returnAmount, totalFees) = _getQuoteSell(marketId, synthAmount);
 
         if (returnAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnAmount);
@@ -151,7 +152,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         return synthAmount;
     }
 
-    function _getQuote(
+    function _getQuoteSell(
         uint128 marketId,
         uint synthAmount
     ) private view returns (uint256 returnAmount, int256 totalFees) {
@@ -161,15 +162,25 @@ contract AtomicOrderModule is IAtomicOrderModule {
             synthAmount,
             Transaction.Type.SELL
         );
-
-        // calculate fees
-        uint referrerShareableFees;
-        (returnAmount, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
+        (returnAmount, totalFees, ) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.SELL),
             Transaction.Type.SELL
+        );
+    }
+
+    function _getQuoteBuy(
+        uint128 marketId,
+        uint usdAmount
+    ) private view returns (uint256 returnAmount, int256 totalFees) {
+        (returnAmount, totalFees, ) = FeeConfiguration.calculateFees(
+            marketId,
+            msg.sender,
+            usdAmount,
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            Transaction.Type.BUY
         );
     }
 }
