@@ -10,32 +10,35 @@ import "../interfaces/IPerpsMarketModule.sol";
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
 
-    function skew(uint128 marketId ) external view override returns (int256){
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
-        return perpsMarket.skew;
+    function skew(uint128 marketId) external view override returns (int256) {
+        return PerpsMarket.load(marketId).skew;
     }
-    function size(uint128 marketId ) external view override returns (uint256){
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
-        return perpsMarket.size;
+
+    function size(uint128 marketId) external view override returns (uint256) {
+        return PerpsMarket.load(marketId).size;
     }
-    function maxOpenInterest(uint128 marketId ) external view override returns (uint256){
-        MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(marketId);
-        return marketConfiguration.maxMarketValue;
+
+    function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
+        return MarketConfiguration.load(marketId).maxMarketValue;
     }
-    function currentFundingRate(uint128 marketId ) external view override returns (int){
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
-        return perpsMarket.currentFundingRate();
+
+    function currentFundingRate(uint128 marketId) external view override returns (int) {
+        return PerpsMarket.load(marketId).currentFundingRate();
     }
-    function indexPrice(uint128 marketId ) external view override returns (uint){
+
+    function indexPrice(uint128 marketId) external view override returns (uint) {
         return PerpsPrice.getCurrentPrice(marketId);
     }
-    function fillPrice(uint128 marketId ) external view override returns (uint){
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
-        MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(marketId);
-        
+
+    function fillPrice(uint128 marketId) external view override returns (uint) {
         // To get the current fill price we pass in size 0
         int sizeToUse = 0;
-
-        return AsyncOrder.calculateFillPrice(perpsMarket.skew,marketConfiguration.skewScale, sizeToUse, PerpsPrice.getCurrentPrice(marketId) );
+        return
+            AsyncOrder.calculateFillPrice(
+                PerpsMarket.load(marketId).skew,
+                MarketConfiguration.load(marketId).skewScale,
+                sizeToUse,
+                PerpsPrice.getCurrentPrice(marketId)
+            );
     }
 }
