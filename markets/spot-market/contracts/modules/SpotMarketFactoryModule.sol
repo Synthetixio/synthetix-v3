@@ -168,6 +168,22 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    function renounceMarketNomination(uint128 synthMarketId) external override {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        address nominee = spotMarketFactory.nominatedMarketOwners[synthMarketId];
+
+        if (nominee != msg.sender) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
+        spotMarketFactory.nominatedMarketOwners[synthMarketId] = address(0);
+
+        emit MarketNominationRenounced(synthMarketId, msg.sender);
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
     function acceptMarketOwnership(uint128 synthMarketId) public override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         address currentNominatedOwner = spotMarketFactory.nominatedMarketOwners[synthMarketId];

@@ -62,6 +62,14 @@ interface IFeeConfigurationModule {
     event WrapperFeesSet(uint indexed synthMarketId, int wrapFee, int unwrapFee);
 
     /**
+     * @notice Emitted when the owner of the market has changed.
+     * @param marketId Id of the market
+     * @param referrer The address of the referrer
+     * @param sharePercentage The new share percentage for the referrer
+     */
+    event ReferrerShareUpdated(uint128 indexed marketId, address referrer, uint sharePercentage);
+
+    /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
      */
     error InvalidFeeCollectorInterface(address invalidFeeCollector);
@@ -133,4 +141,12 @@ interface IFeeConfigurationModule {
      * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
      */
     function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external;
+
+    /**
+     * @notice Update the referral share percentage for a given market
+     * @param marketId id of the market
+     * @param referrer The address of the referrer
+     * @param sharePercentage The new share percentage for the referrer
+     */
+    function updateReferrerShare(uint128 marketId, address referrer, uint sharePercentage) external;
 }
