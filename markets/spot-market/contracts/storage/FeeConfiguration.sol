@@ -354,7 +354,7 @@ library FeeConfiguration {
             uint previousUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
 
             spotMarketFactory.usdToken.approve(address(feeCollector), totalFeesUint);
-            feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
+            feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType)); // TODO dont think we have safe casts for uint8
 
             uint currentUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;

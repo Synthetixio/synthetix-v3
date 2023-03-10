@@ -222,7 +222,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             Transaction.Type.ASYNC_BUY,
             asyncOrderClaim.referrer
         );
-        int remainingFees = totalFees - collectedFees.toInt();
+        // TODO unused, leaving in case it's WIP
+        // int remainingFees = totalFees - collectedFees.toInt();
 
         finalOrderAmount = usdAmountAfterFees.divDecimal(price);
 
