@@ -92,7 +92,15 @@ interface IAtomicOrderModule {
         uint synthAmount
     ) external view returns (uint256 returnAmount, int256 totalFees);
 
-    function sellExactOut(uint128 marketId, uint usdAmount, address referrer) external returns (uint);
+    function sellExactOut(
+        uint128 marketId,
+        uint usdAmount,
+        address referrer
+    ) external returns (uint);
 
-    function sellExactIn(uint128 marketId, uint synthAmount, address referrer) external returns (uint);
+    function sellExactIn(
+        uint128 marketId,
+        uint synthAmount,
+        address referrer
+    ) external returns (uint);
 }
