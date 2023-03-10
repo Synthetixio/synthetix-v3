@@ -4,7 +4,7 @@
   "description": "Spot Market implementation",
   "private": true,
   "scripts": {
-    "build": "hardhat storage:verify && hardhat cannon:build",
+    "build1": "hardhat storage:verify && hardhat cannon:build",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean",
     "cannon-build": "cannon perps-market:0.0.3-alpha",
