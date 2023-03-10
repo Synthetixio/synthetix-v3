@@ -25,7 +25,6 @@ export async function fastForward(seconds: number, provider: ethers.providers.Js
 
 export async function fastForwardTo(time: number, provider: ethers.providers.JsonRpcProvider) {
   await provider.send('evm_setNextBlockTimestamp', [time]);
-
   await mineBlock(provider);
 }
 

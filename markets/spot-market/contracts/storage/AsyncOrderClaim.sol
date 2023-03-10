@@ -1,9 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./AsyncOrderConfiguration.sol";
-import "./SpotMarketFactory.sol";
+import "./SettlementStrategy.sol";
+import "./AsyncOrder.sol";
+import "../utils/TransactionUtil.sol";
 
+/**
+ * @title Async order claim data storage
+ */
 library AsyncOrderClaim {
     error OutsideSettlementWindow(uint256 timestamp, uint256 startTime, uint256 expirationTime);
     error IneligibleForCancellation(uint256 timestamp, uint256 expirationTime);
@@ -11,16 +15,42 @@ library AsyncOrderClaim {
     error InvalidClaim(uint256 asyncOrderId);
 
     struct Data {
+        /**
+         * @dev unique id for claim
+         */
         uint128 id;
+        /**
+         * @dev address that gets the final settlement amount, also the address that committed the order
+         */
         address owner;
-        SpotMarketFactory.TransactionType orderType;
-        uint256 amountEscrowed; // Amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
+        /**
+         * @dev can only be async buy or async sell (see: Transaction.Type)
+         */
+        Transaction.Type orderType;
+        /**
+         * @dev amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
+         */
+        uint256 amountEscrowed;
+        /**
+         * @dev id of settlement strategy used for this claim
+         */
         uint256 settlementStrategyId;
+        /**
+         * @dev settlementTime = commitment block time + settlement delay
+         */
         uint256 settlementTime;
-        int256 committedAmountUsd;
+        /**
+         * @dev minimum amount trader is willing to accept on settlement.
+         */
         uint256 minimumSettlementAmount;
-        uint256 commitmentBlockNum;
+        /**
+         * @dev timestamp of when the claim was settled.  this is used to prevent double settlement.
+         */
         uint256 settledAt;
+        /**
+         * @dev address of the referrer for the order
+         */
+        address referrer;
     }
 
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -34,24 +64,26 @@ library AsyncOrderClaim {
 
     function create(
         uint128 marketId,
-        uint128 claimId,
-        SpotMarketFactory.TransactionType orderType,
+        Transaction.Type orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
         uint256 settlementTime,
-        int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
-        address owner
+        address owner,
+        address referrer
     ) internal returns (Data storage) {
+        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        uint128 claimId = ++asyncOrderData.totalClaims;
+
         Data storage self = load(marketId, claimId);
         self.id = claimId;
         self.orderType = orderType;
         self.amountEscrowed = amountEscrowed;
         self.settlementStrategyId = settlementStrategyId;
         self.settlementTime = settlementTime;
-        self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
         self.owner = owner;
+        self.referrer = referrer;
         return self;
     }
 
@@ -61,7 +93,7 @@ library AsyncOrderClaim {
     }
 
     function checkIfValidClaim(Data storage claim) internal view {
-        if (claim.owner == address(0) || claim.committedAmountUsd == 0) {
+        if (claim.owner == address(0) || claim.amountEscrowed == 0) {
             revert InvalidClaim(claim.id);
         }
     }

@@ -45,6 +45,8 @@ All projects in this monorepo that involve contracts use a proxy architecture de
 
 See the [Router README](utils/router/README.md) for more details.
 
+⚠️ When using the Router as an implementation of a UUPS [Universal Upgradeable Proxy Standard](https://eips.ethereum.org/EIPS/eip-1822) be aware that any of the public functions defined in the Proxy could clash and override any of the Router modules functions. A malicious proxy owner could use this type of obfuscation to have users run code which they do not want to run. You can imagine scenarios where the function names do not look similar but share a function selector. ⚠️
+
 ## Information for Developers
 
 If you intend to develop in this repository, please read the following items.
@@ -71,10 +73,12 @@ To prepare for system upgrades, this repository is used to release new versions 
 - After installing for the first time, run `cannon setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
 - Run `npm i` and `npm run build` in the root directory of the repository.
 - From the directory of the package you're releasing, run `npx hardhat cannon:build`.
-  - If you're upgrading the synthetix package, also run `npx hardhat cannon:build cannonfile.test.toml` to generate the testable package.
+  - If you're upgrading the synthetix package, also run `npm run build && npx hardhat cannon:build cannonfile.test.toml` to generate the testable package.
 - Confirm the private key that owns the corresponding namespace in the package registry is set in the `.env` file as `DEPLOYER_PRIVATE_KEY`.
 - Publish the release to Cannon package registry with `npx hardhat cannon:publish --network mainnet`.
-- Increment the version in the relevant `package.json` files. _The repositories should always contain the version number of the next release._ **Also bump the version of the oracle manager in the synthetix toml file after you've upgraded oracle manager.**
+- Increment the version in the relevant `package.json` files. _The repositories should always contain the version number of the next release._
+  - If you've upgraded synthetix, also increment the version of the `package.json` file in the root directory. Also upgrade the version in `markets/spot-market/cannonfile.toml` and `markets/spot-market/cannonfile.test.toml`.
+  - If you've upgraded the oracle manager, bump the version of the oracle manager in `protocol/synthetix/cannonfile.toml` and `protocol/synthetix/cannonfile.test.toml`.
 - Run `npm i` in the root directory.
 - Commit and push the change to this repository.
 

@@ -1,10 +1,11 @@
-import { ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { ethers } from 'ethers';
+import hre from 'hardhat';
+import { SynthRouter } from '../generated/typechain';
+import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 
 describe('AsyncOrderModule pyth', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -57,7 +58,7 @@ describe('AsyncOrderModule pyth', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8));
+        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8), ethers.constants.AddressZero);
       startTime = await getTime(provider());
     });
 
@@ -85,11 +86,18 @@ describe('AsyncOrderModule pyth', () => {
 
     it('reverts with offchain error', async () => {
       const functionSig = systems().SpotMarket.interface.getSighash('settlePythOrder');
+
+      // Coverage tests use hardhat provider, and hardhat provider stringifies array differently
+      const expectedUrl =
+        hre.network.name === 'hardhat'
+          ? `[${pythSettlementStrategy.url}]`
+          : pythSettlementStrategy.url;
+
       await assertRevert(
         systems().SpotMarket.connect(keeper).settleOrder(marketId(), 1),
-        `OffchainLookup("${systems().SpotMarket.address}", "${
-          pythSettlementStrategy.url
-        }", "${pythCallData}", "${functionSig}", "${extraData}")`
+        `OffchainLookup("${
+          systems().SpotMarket.address
+        }", "${expectedUrl}", "${pythCallData}", "${functionSig}", "${extraData}")`
       );
     });
   });

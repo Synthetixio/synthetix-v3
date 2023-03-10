@@ -232,6 +232,17 @@ interface ILiquidationModule {
     }
 }
 
+// @custom:artifact contracts/interfaces/external/IAny2EVMMessageReceiverInterface.sol:IAny2EVMMessageReceiverInterface
+interface IAny2EVMMessageReceiverInterface {
+    struct Any2EVMMessage {
+        uint256 srcChainId;
+        bytes sender;
+        bytes data;
+        address[] destTokens;
+        uint256[] amounts;
+    }
+}
+
 // @custom:artifact contracts/interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol:IEVM2AnySubscriptionOnRampRouterInterface
 interface IEVM2AnySubscriptionOnRampRouterInterface {
     struct EVM2AnySubscriptionMessage {

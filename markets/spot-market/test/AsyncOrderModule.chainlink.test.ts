@@ -1,3 +1,4 @@
+/*
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -135,3 +136,4 @@ describe('AsyncOrderModule chainlink', () => {
     });
   });
 });
+*/

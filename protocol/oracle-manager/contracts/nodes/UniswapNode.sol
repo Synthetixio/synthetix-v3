@@ -26,10 +26,10 @@ library UniswapNode {
 
     function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
         (
-            address token0,
-            address token1,
-            uint8 decimals0,
-            uint8 decimals1,
+            address token,
+            address stablecoin,
+            uint8 decimalsToken,
+            uint8 decimalsStablecoin,
             address pool,
             uint32 secondsAgo
         ) = abi.decode(parameters, (address, address, uint8, uint8, address, uint32));
@@ -48,27 +48,26 @@ library UniswapNode {
             tick--;
         }
 
-        uint256 baseAmount = 10 ** decimals0;
-        int256 price = getQuoteAtTick(tick, baseAmount.to128(), token0, token1).toInt();
+        uint256 baseAmount = 10 ** decimalsToken;
+        int256 price = getQuoteAtTick(tick, baseAmount, token, stablecoin).toInt();
 
-        uint256 factor = (PRECISION - decimals1);
-        int256 finalPrice = factor > 0
-            ? price.upscale(factor)
-            : price.downscale((-factor.toInt()).toUint());
+        int256 finalPrice = PRECISION > decimalsStablecoin
+            ? price.upscale(PRECISION - decimalsStablecoin)
+            : price.downscale(decimalsStablecoin - PRECISION);
 
         return NodeOutput.Data(finalPrice, 0, 0, 0);
     }
 
     function getQuoteAtTick(
         int24 tick,
-        uint128 baseAmount,
+        uint256 baseAmount,
         address baseToken,
         address quoteToken
     ) internal pure returns (uint256 quoteAmount) {
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
 
         // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by itself
-        if (sqrtRatioX96 <= type(uint128).max) {
+        if (sqrtRatioX96 <= type(uint256).max) {
             uint256 ratioX192 = sqrtRatioX96.to256() * sqrtRatioX96;
             quoteAmount = baseToken < quoteToken
                 ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
@@ -93,10 +92,10 @@ library UniswapNode {
         }
 
         (
-            address token0,
-            address token1,
-            uint8 decimals0,
-            uint8 decimals1,
+            address token,
+            address stablecoin,
+            uint8 decimalsToken,
+            uint8 decimalsStablecoin,
             address pool,
             uint32 secondsAgo
         ) = abi.decode(
@@ -104,11 +103,25 @@ library UniswapNode {
                 (address, address, uint8, uint8, address, uint32)
             );
 
-        if (IERC20(token0).decimals() != decimals0) {
+        if (IERC20(token).decimals() != decimalsToken) {
             return false;
         }
 
-        if (IERC20(token1).decimals() != decimals1) {
+        if (IERC20(stablecoin).decimals() != decimalsStablecoin) {
+            return false;
+        }
+
+        address poolToken0 = IUniswapV3Pool(pool).token0();
+        address poolToken1 = IUniswapV3Pool(pool).token1();
+
+        if (
+            !(poolToken0 == token && poolToken1 == stablecoin) &&
+            !(poolToken0 == stablecoin && poolToken1 == token)
+        ) {
+            return false;
+        }
+
+        if (decimalsToken > 18 || decimalsStablecoin > 18) {
             return false;
         }
 

@@ -4,15 +4,13 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../storage/FeeConfiguration.sol";
 import "../interfaces/IWrapperModule.sol";
 import "../storage/Wrapper.sol";
 import "../storage/Price.sol";
+import "../storage/FeeConfiguration.sol";
 import "../utils/SynthUtil.sol";
-import "../utils/FeeUtil.sol";
 
 /**
  * @title Module for wrapping and unwrapping collateral for synths.
@@ -46,28 +44,22 @@ contract WrapperModule is IWrapperModule {
      */
     function wrap(
         uint128 marketId,
-        uint256 wrapAmount
+        uint256 wrapAmount,
+        uint minAmountReceived
     ) external override returns (uint256 amountToMint) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.isValidMarket(marketId);
         wrapperStore.isValidWrapper();
 
-        IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
-
-        uint currentDepositedCollateral = IMarketCollateralModule(spotMarketFactory.synthetix)
-            .getMarketCollateralAmount(marketId, wrapperStore.wrapCollateralType);
-
         // revert when wrapping more than the supply cap
-        if (currentDepositedCollateral + wrapAmount > wrapperStore.maxWrappableAmount) {
-            revert WrapperExceedsMaxAmount(
-                wrapperStore.maxWrappableAmount,
-                currentDepositedCollateral,
-                wrapAmount
-            );
-        }
+        wrapperStore.checkMaxWrappableAmount(
+            marketId,
+            wrapAmount,
+            IMarketCollateralModule(spotMarketFactory.synthetix)
+        );
 
-        // safe transfer?
+        IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
         wrappingCollateral.approve(spotMarketFactory.synthetix, wrapAmount);
         IMarketCollateralModule(spotMarketFactory.synthetix).depositMarketCollateral(
@@ -79,16 +71,22 @@ contract WrapperModule is IWrapperModule {
         uint256 wrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             wrapAmount,
-            SpotMarketFactory.TransactionType.WRAP
+            Transaction.Type.WRAP
         );
 
-        (uint256 returnAmountUsd, int256 totalFees) = FeeUtil.calculateFees(
+        (uint256 returnAmountUsd, int256 totalFees, ) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
-            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.WRAP),
-            SpotMarketFactory.TransactionType.WRAP
+            Price.getCurrentPrice(marketId, Transaction.Type.WRAP),
+            Transaction.Type.WRAP
         );
+
+        amountToMint = Price.usdSynthExchangeRate(marketId, returnAmountUsd, Transaction.Type.WRAP);
+
+        if (amountToMint < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, amountToMint);
+        }
 
         uint collectedFees;
         if (totalFees > 0) {
@@ -97,19 +95,14 @@ contract WrapperModule is IWrapperModule {
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeUtil.collectFees(
+            collectedFees = FeeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
-                SpotMarketFactory.TransactionType.WRAP
+                Transaction.Type.WRAP,
+                address(0)
             );
         }
-
-        amountToMint = Price.usdSynthExchangeRate(
-            marketId,
-            returnAmountUsd,
-            SpotMarketFactory.TransactionType.WRAP
-        );
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
@@ -121,7 +114,8 @@ contract WrapperModule is IWrapperModule {
      */
     function unwrap(
         uint128 marketId,
-        uint256 unwrapAmount
+        uint256 unwrapAmount,
+        uint minAmountReceived
     ) external override returns (uint256 returnCollateralAmount) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
@@ -139,36 +133,40 @@ contract WrapperModule is IWrapperModule {
         uint256 unwrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             unwrapAmount,
-            SpotMarketFactory.TransactionType.UNWRAP
+            Transaction.Type.UNWRAP
         );
-        (uint256 returnAmountUsd, int256 totalFees) = FeeUtil.calculateFees(
+        (uint256 returnAmountUsd, int256 totalFees, ) = FeeConfiguration.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
-            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.UNWRAP),
-            SpotMarketFactory.TransactionType.UNWRAP
+            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP),
+            Transaction.Type.UNWRAP
         );
 
-        uint collectedFees = 0;
+        returnCollateralAmount = Price.usdSynthExchangeRate(
+            marketId,
+            returnAmountUsd,
+            Transaction.Type.UNWRAP
+        );
+
+        if (returnCollateralAmount < minAmountReceived) {
+            revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
+        }
+        uint collectedFees;
         if (totalFees > 0) {
             IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeUtil.collectFees(
+            collectedFees = FeeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
-                SpotMarketFactory.TransactionType.UNWRAP
+                Transaction.Type.UNWRAP,
+                address(0)
             );
         }
-
-        returnCollateralAmount = Price.usdSynthExchangeRate(
-            marketId,
-            returnAmountUsd,
-            SpotMarketFactory.TransactionType.UNWRAP
-        );
 
         IMarketCollateralModule(spotMarketFactory.synthetix).withdrawMarketCollateral(
             marketId,

@@ -70,7 +70,7 @@ The Reducer Node combines the data from multiple parents using the specified ope
     - 1 - `MIN`: Return the data of the parent with the lowest price.
     - 2 - `MAX`: Return the data of the parent with the highest price.
     - 3 - `MEAN`: Return the mean average of all the values in the parents' data.
-    - 4 - `MEDIAN`: Return the data of the parent that has the median price.
+    - 4 - `MEDIAN`: Return the data of the parent that has the median price. (notice: this operation will return the average of the two most middle nodes when the length of the array is even)
     - 5 - `MUL`: Return the price of the parents after multiplying them. The timestamp is averaged.
     - 6 - `DIV`: Return the price of the parents after dividing them. The timestamp is averaged.
 - Expected Parents: >1

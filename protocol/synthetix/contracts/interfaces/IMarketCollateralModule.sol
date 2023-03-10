@@ -121,7 +121,7 @@ interface IMarketCollateralModule {
     function getMarketCollateralAmount(
         uint128 marketId,
         address collateralType
-    ) external returns (uint256 amountD18);
+    ) external view returns (uint256 amountD18);
 
     /**
      * @notice Return the total value of collateral that a specified market has deposited.

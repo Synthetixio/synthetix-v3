@@ -1,11 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
-
+import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import "../interfaces/IFeeConfigurationModule.sol";
-import "../interfaces/ISynthTokenModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../storage/FeeConfiguration.sol";
@@ -102,6 +100,9 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit FeeCollectorSet(synthMarketId, feeCollector);
     }
 
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
     function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -110,5 +111,21 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         feeConfiguration.unwrapFixedFee = unwrapFee;
 
         emit WrapperFeesSet(synthMarketId, wrapFee, unwrapFee);
+    }
+
+    /**
+     * @inheritdoc IFeeConfigurationModule
+     */
+    function updateReferrerShare(
+        uint128 synthMarketId,
+        address referrer,
+        uint sharePercentage
+    ) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
+        feeConfiguration.referrerShare[referrer] = sharePercentage;
+
+        emit ReferrerShareUpdated(synthMarketId, referrer, sharePercentage);
     }
 }

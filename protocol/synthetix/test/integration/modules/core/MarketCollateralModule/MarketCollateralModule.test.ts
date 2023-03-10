@@ -98,13 +98,14 @@ describe('MarketCollateralModule', function () {
         );
       });
 
-      // temp skipped because this test succeeds but does not work on anvil for some reason
-      it.skip('does not work when depositing over max amount', async () => {
+      it('does not work when depositing over max amount', async () => {
         await assertRevert(
-          MockMarket().connect(user1).deposit(collateralAddress(), configuredMaxAmount.add(1)),
-          `InsufficientMarketCollateralDepositable(${marketId()}, "${collateralAddress()}", ${configuredMaxAmount.add(
+          MockMarket()
+            .connect(user1)
+            .depositCollateral(collateralAddress(), configuredMaxAmount.add(1)),
+          `InsufficientMarketCollateralDepositable("${marketId()}", "${collateralAddress()}", "${configuredMaxAmount.add(
             1
-          )})`,
+          )}")`,
           systems().Core
         );
       });
@@ -112,13 +113,16 @@ describe('MarketCollateralModule', function () {
       verifyUsesFeatureFlag(
         () => systems().Core,
         'depositMarketCollateral',
-        () => MockMarket().connect(user1).deposit(collateralAddress(), configuredMaxAmount)
+        () =>
+          MockMarket().connect(user1).depositCollateral(collateralAddress(), configuredMaxAmount)
       );
 
       describe('invoked successfully', () => {
         let tx: ethers.providers.TransactionReceipt;
         before('deposit', async () => {
-          tx = await MockMarket().connect(user1).deposit(collateralAddress(), configuredMaxAmount);
+          tx = await MockMarket()
+            .connect(user1)
+            .depositCollateral(collateralAddress(), configuredMaxAmount);
         });
 
         it('pulls in collateral', async () => {
@@ -184,7 +188,9 @@ describe('MarketCollateralModule', function () {
         await collateralContract()
           .connect(user1)
           .approve(MockMarket().address, ethers.constants.MaxUint256);
-        await MockMarket().connect(user1).deposit(collateralAddress(), configuredMaxAmount.div(2));
+        await MockMarket()
+          .connect(user1)
+          .depositCollateral(collateralAddress(), configuredMaxAmount.div(2));
       });
 
       let beforeCollateralBalance: ethers.BigNumber;
@@ -202,16 +208,15 @@ describe('MarketCollateralModule', function () {
         );
       });
 
-      // temp skipped because this test succeeds but fails on anvil due to parsing failure
-      it.skip('cannot release more than the deposited amount', async () => {
+      it('cannot release more than the deposited amount', async () => {
         await assertRevert(
           MockMarket()
             .connect(user1)
-            .withdraw(collateralAddress(), configuredMaxAmount.div(2).add(1)),
-          `InsufficientMarketCollateralWithdrawable(${marketId()}, "${collateralAddress()}", ${configuredMaxAmount
+            .withdrawCollateral(collateralAddress(), configuredMaxAmount.div(2).add(1)),
+          `InsufficientMarketCollateralWithdrawable("${marketId()}", "${collateralAddress()}", "${configuredMaxAmount
             .div(2)
             .add(1)
-            .toString()})`,
+            .toString()}")`,
           systems().Core
         );
       });
@@ -222,7 +227,7 @@ describe('MarketCollateralModule', function () {
         () =>
           MockMarket()
             .connect(user1)
-            .withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
+            .withdrawCollateral(collateralAddress(), configuredMaxAmount.div(2).div(4))
       );
 
       describe('successful withdraw partial', async () => {
@@ -231,7 +236,7 @@ describe('MarketCollateralModule', function () {
           tx = await (
             await MockMarket()
               .connect(user1)
-              .withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
+              .withdrawCollateral(collateralAddress(), configuredMaxAmount.div(2).div(4))
           ).wait();
         });
 
@@ -277,7 +282,7 @@ describe('MarketCollateralModule', function () {
             // this should be the amount remaining
             await MockMarket()
               .connect(user1)
-              .withdraw(
+              .withdrawCollateral(
                 collateralAddress(),
                 configuredMaxAmount.div(2).sub(configuredMaxAmount.div(2).div(4))
               );
@@ -291,6 +296,32 @@ describe('MarketCollateralModule', function () {
               0
             );
           });
+        });
+      });
+
+      describe('cannot withdraw collateral when credit capacity is over-utilized', async () => {
+        before('deposit collateral and withdraw maximum amount of USD', async () => {
+          await MockMarket()
+            .connect(user1)
+            .depositCollateral(collateralAddress(), configuredMaxAmount);
+
+          const totalWithdrawableUsd = await systems()
+            .Core.connect(user1)
+            .getWithdrawableMarketUsd(marketId());
+          await MockMarket().connect(user1).withdrawUsd(totalWithdrawableUsd);
+        });
+
+        it('reverts when attempting to withdraw collateral', async () => {
+          const totalWithdrawableCollateral = await systems()
+            .Core.connect(user1)
+            .getMarketCollateralAmount(marketId(), collateralAddress());
+          await assertRevert(
+            MockMarket()
+              .connect(user1)
+              .withdrawCollateral(collateralAddress(), totalWithdrawableCollateral),
+            `InsufficientMarketCollateralWithdrawable("${marketId()}", "${collateralAddress()}", "${totalWithdrawableCollateral}")`,
+            systems().Core
+          );
         });
       });
     });

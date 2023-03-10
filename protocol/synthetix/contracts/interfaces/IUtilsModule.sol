@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "./external/IOracleManager.sol";
+
 /**
  * @title Module with assorted utility functions.
  */
@@ -18,6 +20,11 @@ interface IUtilsModule {
      * @param oracleManagerAddress The address of the oracle manager.
      */
     function configureOracleManager(address oracleManagerAddress) external;
+
+    /**
+     * @notice Retrieve the systems' configured oracle manager address
+     */
+    function getOracleManager() external returns (IOracleManager);
 
     /**
      * @notice Configure a generic value in the KV system

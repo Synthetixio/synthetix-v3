@@ -1,4 +1,4 @@
-name = "spot-market"
+name = "synthetix-spot-market"
 version = "<%= package.version %>"
 description = "Spot market implementation"
 
@@ -11,7 +11,7 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:3.0.0-alpha.10"
+defaultValue = "synthetix:latest"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
@@ -24,6 +24,9 @@ artifact = "AtomicOrderModule"
 
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
+
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
 
 [contract.AsyncOrderConfigurationModule]
 artifact = "AsyncOrderConfigurationModule"
@@ -57,6 +60,7 @@ contracts = [
   "SpotMarketFactoryModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
+  "AsyncOrderSettlementModule",
   "AsyncOrderConfigurationModule",
   "WrapperModule",
   "FeeConfigurationModule",
@@ -67,6 +71,7 @@ depends = [
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
   "contract.AsyncOrderConfigurationModule",
   "contract.WrapperModule",
   "contract.FeeConfigurationModule",
@@ -106,7 +111,7 @@ args = [
 ]
 depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "router.SynthRouter"]
 
-# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
+# add pool owner to feature flag allow list
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"

@@ -258,12 +258,15 @@ contract RewardsManagerModule is IRewardsManagerModule {
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
         // ensure rewards emission is stopped (users can still come in to claim rewards after the fact)
-        reward.distribute(
-            pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
-            0,
-            0,
-            0
-        );
+        reward.rewardPerShareD18 += reward
+            .distribute(
+                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+                0,
+                0,
+                0
+            )
+            .toUint()
+            .to128();
 
         emit RewardsDistributorRemoved(poolId, collateralType, distributor);
     }

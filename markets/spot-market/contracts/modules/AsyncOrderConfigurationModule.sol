@@ -6,9 +6,16 @@ import "../storage/AsyncOrderConfiguration.sol";
 import "../storage/SettlementStrategy.sol";
 import "../storage/SpotMarketFactory.sol";
 
+/**
+ * @title Module for configuring settings for async order module.
+ * @dev See IAsyncOrderConfigurationModule.
+ */
 contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
 
+    /**
+     * @inheritdoc IAsyncOrderConfigurationModule
+     */
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
@@ -25,6 +32,9 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
         emit SettlementStrategyAdded(marketId, strategyId);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
@@ -36,6 +46,9 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
         emit SettlementStrategyUpdated(marketId, strategyId, enabled);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderConfigurationModule
+     */
     function getSettlementStrategy(
         uint128 marketId,
         uint256 strategyId

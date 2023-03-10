@@ -145,9 +145,13 @@ library Pool {
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
         uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
-        int128 totalDebtD18 = self.totalVaultDebtsD18;
+        int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
+            ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+            : int128(0);
 
         int256 cumulativeDebtChangeD18 = 0;
+
+        uint256 minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
         // This debt extracted from markets is then applied to the pool's vault debt distribution, which thus exposes debt to the pool's vaults.
@@ -161,17 +165,15 @@ library Pool {
 
             uint256 marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) /
                 totalWeightsD18;
-            int256 marketDebtD18 = (totalDebtD18 * weightD18.toInt()) / totalWeightsD18.toInt();
 
             Market.Data storage marketData = Market.load(marketConfiguration.marketId);
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
             int256 effectiveMaxShareValueD18 = getSystemMaxValuePerShare(
-                self,
                 marketData.id,
-                marketCreditCapacityD18,
-                marketDebtD18
+                minLiquidityRatioD18,
+                debtPerShareD18
             );
             // Imposed by pool.
             int256 configuredMaxShareValueD18 = marketConfiguration.maxDebtShareValueD18;
@@ -201,45 +203,18 @@ library Pool {
      * See `SystemPoolConfiguration.minLiquidityRatio`.
      */
     function getSystemMaxValuePerShare(
-        Data storage self,
         uint128 marketId,
-        uint256 creditCapacityD18,
-        int256 debtD18
+        uint256 minLiquidityRatioD18,
+        int256 debtPerShareD18
     ) internal view returns (int256) {
-        // Get the system-wide minimum liquidity ratio.
-        uint256 minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
-
-        // Retrieve the total shares of the pool's debt distribution.
-        uint256 totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
-
         // Retrieve the current value per share of the market.
         Market.Data storage marketData = Market.load(marketId);
         int256 valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
-        // If there are no shares in the pool's debt distribution,
-        // (and the minimum liquidity setting is not set),
-        // then the maximum value per share is the market's current value per share.
-        if (totalSharesD18 == 0 && minLiquidityRatioD18 != 0) {
-            return valuePerShareD18;
-        }
-
-        // Calculate the *debt* per share of the pool's debt distribution.
-        int256 debtPerShareD18 = debtD18 > 0
-            ? debtD18.divDecimal(totalSharesD18.toInt()) // solhint-disable-next-line numcast/safe-cast
-            : int256(0);
-
-        // If the system-wide setting is not set (unlikely),
-        // then the resulting maximum value per share is the distribution's value per share,
-        // plus a margin of 100% (see how `marginD18` is calculated below),
-        // minus the current debt per share.
-        if (minLiquidityRatioD18 == 0) {
-            return valuePerShareD18 + DecimalMath.UNIT_INT - debtPerShareD18;
-        }
-
         // Calculate the margin of debt that the market would incur if it hit the system wide limit.
-        uint256 marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
-            totalSharesD18
-        );
+        uint256 marginD18 = minLiquidityRatioD18 == 0
+            ? DecimalMath.UNIT
+            : DecimalMath.UNIT.divDecimal(minLiquidityRatioD18);
 
         // The resulting maximum value per share is the distribution's value per share,
         // plus the margin to hit the limit, minus the current debt per share.
@@ -417,23 +392,25 @@ library Pool {
 
     /**
      * @dev Returns the specified account's collateralization ratio (collateral / debt).
+     * @dev If the account's debt is negative or zero, returns an "infinite" c-ratio.
      */
     function currentAccountCollateralRatio(
         Data storage self,
         address collateralType,
         uint128 accountId
     ) internal returns (uint256) {
-        (, uint256 getPositionCollateralValueD18) = currentAccountCollateral(
+        int256 positionDebtD18 = updateAccountDebt(self, collateralType, accountId);
+        if (positionDebtD18 <= 0) {
+            return type(uint256).max;
+        }
+
+        (, uint256 positionCollateralValueD18) = currentAccountCollateral(
             self,
             collateralType,
             accountId
         );
-        int256 getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
-        return
-            getPositionDebtD18 > 0
-                ? getPositionCollateralValueD18.divDecimal(getPositionDebtD18.toUint())
-                : 0;
+        return positionCollateralValueD18.divDecimal(positionDebtD18.toUint());
     }
 
     /**

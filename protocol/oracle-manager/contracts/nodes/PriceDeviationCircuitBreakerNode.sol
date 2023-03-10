@@ -2,12 +2,14 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../storage/NodeDefinition.sol";
 import "../storage/NodeOutput.sol";
 
 library PriceDeviationCircuitBreakerNode {
     using SafeCastU256 for uint256;
+    using DecimalMath for int256;
 
     error InvalidPrice();
     error DeviationToleranceExceeded(int256 deviation);
@@ -19,19 +21,20 @@ library PriceDeviationCircuitBreakerNode {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
         int256 primaryPrice = parentNodeOutputs[0].price;
-        int256 fallbackPrice = parentNodeOutputs[1].price;
+        int256 comparisonPrice = parentNodeOutputs[1].price;
 
-        if (primaryPrice == 0) {
-            revert InvalidPrice();
-        }
-
-        if (primaryPrice != fallbackPrice) {
-            int256 difference = abs(primaryPrice - fallbackPrice);
-            if (deviationTolerance.toInt() < ((difference * 100) / primaryPrice)) {
-                if (parentNodeOutputs.length > 2 && parentNodeOutputs[2].price != 0) {
+        if (primaryPrice != comparisonPrice) {
+            int256 difference = abs(primaryPrice - comparisonPrice);
+            if (
+                primaryPrice == 0 ||
+                deviationTolerance.toInt() < ((difference.upscale(18)) / abs(primaryPrice))
+            ) {
+                if (parentNodeOutputs.length > 2) {
                     return parentNodeOutputs[2];
                 } else {
-                    revert DeviationToleranceExceeded(difference / primaryPrice);
+                    revert DeviationToleranceExceeded(
+                        primaryPrice == 0 ? type(int256).max : difference / primaryPrice
+                    );
                 }
             }
         }
