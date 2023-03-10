@@ -8,12 +8,10 @@ contract AccountModule is IAccountModule {
     using PerpsAccount for PerpsAccount.Data;
 
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
-        return perpsAccount.getTotalCollateralValue();
+        return PerpsAccount.load(accountId).getTotalCollateralValue();
     }
 
     function totalAccountOpenInterest(uint128 accountId) external view override returns (int) {
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
-        return perpsAccount.getTotalAccountOpenInterest(accountId);
+        return PerpsAccount.load(accountId).getTotalAccountOpenInterest(accountId);
     }
 }
