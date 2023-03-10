@@ -51,21 +51,35 @@ describe('AsyncOrderModule onchain', () => {
   describe('commitOrder', () => {
     it('reverts on invalid market', async () => {
       await assertRevert(
-        systems().SpotMarket.commitOrder(25, 2, bn(1000), 1, bn(1)),
+        systems().SpotMarket.commitOrder(25, 2, bn(1000), 1, bn(1), ethers.constants.AddressZero),
         'InvalidMarket'
       );
     });
 
     it('reverts on invalid strategy', async () => {
       await assertRevert(
-        systems().SpotMarket.commitOrder(marketId(), 2, bn(1000), 5, bn(1)),
+        systems().SpotMarket.commitOrder(
+          marketId(),
+          2,
+          bn(1000),
+          5,
+          bn(1),
+          ethers.constants.AddressZero
+        ),
         'InvalidSettlementStrategy'
       );
     });
 
     it('reverts on invalid order type', async () => {
       await assertRevert(
-        systems().SpotMarket.commitOrder(marketId(), 0, bn(1000), 5, bn(1)),
+        systems().SpotMarket.commitOrder(
+          marketId(),
+          0,
+          bn(1000),
+          5,
+          bn(1),
+          ethers.constants.AddressZero
+        ),
         'InvalidAsyncTransactionType'
       );
     });
@@ -75,7 +89,7 @@ describe('AsyncOrderModule onchain', () => {
         await assertRevert(
           systems()
             .SpotMarket.connect(trader1)
-            .commitOrder(marketId(), 2, bn(1), strategyId, bn(1)),
+            .commitOrder(marketId(), 2, bn(1), strategyId, bn(1), ethers.constants.AddressZero),
           'InvalidCommitmentAmount'
         );
       });
@@ -88,7 +102,7 @@ describe('AsyncOrderModule onchain', () => {
           await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
           commitTxn = await systems()
             .SpotMarket.connect(trader1)
-            .commitOrder(marketId(), 2, bn(1000), 0, bn(0.8));
+            .commitOrder(marketId(), 2, bn(1000), 0, bn(0.8), ethers.constants.AddressZero);
         });
 
         it('emits event', async () => {
@@ -170,7 +184,7 @@ describe('AsyncOrderModule onchain', () => {
         await synth.connect(trader1).approve(systems().SpotMarket.address, bn(0.5));
         commitTxn = await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 3, bn(0.5), strategyId, bn(200));
+          .commitOrder(marketId(), 3, bn(0.5), strategyId, bn(200), ethers.constants.AddressZero);
       });
 
       it('emits event', async () => {

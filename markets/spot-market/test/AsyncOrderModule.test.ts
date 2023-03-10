@@ -50,7 +50,9 @@ describe('AsyncOrderModule chainlink', () => {
   describe('cancel order', () => {
     before('commit', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-      await systems().SpotMarket.connect(trader1).commitOrder(marketId(), 2, bn(1000), 0, bn(0.8));
+      await systems()
+        .SpotMarket.connect(trader1)
+        .commitOrder(marketId(), 2, bn(1000), 0, bn(0.8), ethers.constants.AddressZero);
     });
 
     before('fast forward', async () => {
@@ -108,11 +110,11 @@ describe('AsyncOrderModule chainlink', () => {
         // order # 2
         await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.99));
+          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.99), ethers.constants.AddressZero);
         // order # 3
         await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.98));
+          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.98), ethers.constants.AddressZero);
       });
 
       before('fast forward', async () => {
@@ -139,9 +141,13 @@ describe('AsyncOrderModule chainlink', () => {
         traderBalance = await systems().USD.balanceOf(await trader1.getAddress());
         await synth.connect(trader1).approve(systems().SpotMarket.address, bn(0.5));
         // order # 4
-        await systems().SpotMarket.connect(trader1).commitOrder(marketId(), 3, bn(0.1), 0, bn(85)); // actual return is 84.15
+        await systems()
+          .SpotMarket.connect(trader1)
+          .commitOrder(marketId(), 3, bn(0.1), 0, bn(85), ethers.constants.AddressZero); // actual return is 84.15
         // order # 5
-        await systems().SpotMarket.connect(trader1).commitOrder(marketId(), 3, bn(0.1), 0, bn(83));
+        await systems()
+          .SpotMarket.connect(trader1)
+          .commitOrder(marketId(), 3, bn(0.1), 0, bn(83), ethers.constants.AddressZero);
       });
 
       before('fast forward', async () => {

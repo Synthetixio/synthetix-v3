@@ -14,10 +14,6 @@ library AsyncOrder {
          */
         uint256 totalEscrowedSynthShares;
         /**
-         * @dev tracks total escrowed value in USD for use in fee calculation.
-         */
-        int256 totalCommittedUsdAmount;
-        /**
          * @dev # of total claims; used to generate a unique claim Id on commitment.
          */
         uint128 totalClaims;
