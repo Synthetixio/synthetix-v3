@@ -263,7 +263,7 @@ library PerpsAccount {
         Data storage self,
         uint128 accountId,
         int amount
-    ) internal returns (uint) {
+    ) internal view returns (uint) {
         uint availableWithdrawableCollateralUsd = getAvailableWithdrawableCollateralUsd(
             self,
             accountId
@@ -280,7 +280,7 @@ library PerpsAccount {
     function getAvailableWithdrawableCollateralUsd(
         Data storage self,
         uint128 accountId
-    ) internal returns (uint) {
+    ) internal view returns (uint) {
         (int totalAccountOpenInterest, uint accountMaxOpenInterest) = _calculateOpenInterestValues(
             self,
             accountId
@@ -292,7 +292,7 @@ library PerpsAccount {
     function _calculateOpenInterestValues(
         Data storage self,
         uint128 accountId
-    ) private returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
+    ) private view returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
         totalAccountOpenInterest = getTotalAccountOpenInterest(self, accountId);
 
         uint totalCollateralValue = getTotalCollateralValue(self);
@@ -304,7 +304,7 @@ library PerpsAccount {
     function getTotalAccountOpenInterest(
         Data storage self,
         uint128 accountId
-    ) private view returns (int totalAccountOpenInterest) {
+    ) internal view returns (int totalAccountOpenInterest) {
         for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
@@ -316,7 +316,7 @@ library PerpsAccount {
         }
     }
 
-    function getTotalCollateralValue(Data storage self) internal returns (uint) {
+    function getTotalCollateralValue(Data storage self) internal view returns (uint) {
         uint totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint i = 0; i < self.activeCollateralTypes.length(); i++) {

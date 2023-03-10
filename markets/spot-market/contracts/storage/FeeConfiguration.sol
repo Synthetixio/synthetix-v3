@@ -90,7 +90,11 @@ library FeeConfiguration {
         uint256 usdAmount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal returns (uint256 amountAfterFees, int256 feesCollected, uint referrerShareableFees) {
+    )
+        internal
+        view
+        returns (uint256 amountAfterFees, int256 feesCollected, uint referrerShareableFees)
+    {
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
 
         if (Transaction.isBuy(transactionType)) {
@@ -156,7 +160,7 @@ library FeeConfiguration {
         uint256 amount,
         uint256 synthPrice,
         bool async
-    ) internal returns (uint amountUsable, int calculatedFees, uint fixedFee) {
+    ) internal view returns (uint amountUsable, int calculatedFees, uint fixedFee) {
         uint utilizationFee = calculateUtilizationRateFee(
             feeConfiguration,
             marketId,
@@ -195,7 +199,7 @@ library FeeConfiguration {
         uint256 amount,
         uint256 synthPrice,
         bool async
-    ) internal returns (uint amountUsable, int feesCollected, uint fixedFee) {
+    ) internal view returns (uint amountUsable, int feesCollected, uint fixedFee) {
         int skewFee = calculateSkewFee(
             feeConfiguration,
             marketId,
@@ -230,7 +234,7 @@ library FeeConfiguration {
         uint amount,
         uint synthPrice,
         Transaction.Type transactionType
-    ) internal returns (int skewFee) {
+    ) internal view returns (int skewFee) {
         if (feeConfiguration.skewScale == 0) {
             return 0;
         }
