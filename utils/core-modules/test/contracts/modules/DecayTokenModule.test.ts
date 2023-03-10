@@ -22,7 +22,7 @@ describe('DecayTokenModule', () => {
 
   const decimal = 18;
 
-  //1% decay per 1 seconds
+  //1% decay per 1 second
   const decayRate = parseEther('315360');
   const amount = parseEther('100');
 
@@ -173,34 +173,113 @@ describe('DecayTokenModule', () => {
   });
 
   describe('transferFrom', async () => {
-    before(restore);
+    describe('check approval and transfer from after 1 second', () => {
+      before(restore);
 
-    before('1000 tokens is minted to user1 at timestamp 0', async () => {
-      await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
+      before('1000 tokens is minted to user1 at timestamp 0', async () => {
+        await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
+      });
+
+      it('user1 approves 100 tokens to be spent by the owner', async () => {
+        await TokenModule.connect(user1).approve(await owner.getAddress(), parseEther('100'));
+      });
+
+      it('check owner allowance for user1 after 1 second', async () => {
+        assertBn.equal(
+          await TokenModule.allowance(await user1.getAddress(), await owner.getAddress()),
+          parseEther('100')
+        );
+      });
+
+      it('owner transfer 100 tokens from user1 to user2', async () => {
+        await TokenModule.connect(owner).transferFrom(
+          await user1.getAddress(),
+          await user2.getAddress(),
+          parseEther('100')
+        );
+      });
+
+      it('check owner allowance for user1 after transfer', async () => {
+        assertBn.equal(
+          await TokenModule.allowance(await user1.getAddress(), await owner.getAddress()),
+          parseEther('0')
+        );
+      });
+
+      it('check user 2 balance', async () => {
+        assertBn.equal(
+          await TokenModule.balanceOf(await user2.getAddress()),
+          parseEther('99.999999999999999999')
+        );
+      });
     });
 
-    it('user1 approves 100 tokens to be spent by the owner', async () => {
-      await TokenModule.connect(user1).approve(await owner.getAddress(), parseEther('100'));
+    describe('check approval and transfer from after 1 day', () => {
+      before(restore);
+
+      before('1000 tokens is minted to user1 at timestamp 0', async () => {
+        await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
+      });
+
+      it('user1 approves 100 tokens to be spent by the owner', async () => {
+        await TokenModule.connect(user1).approve(await owner.getAddress(), parseEther('100'));
+      });
+
+      before('fast forward to timestamp 86400 (1day)', async () => {
+        const start = await getTime(getProvider());
+        await fastForwardTo(start + 86400, getProvider());
+      });
+
+      it('check owner allowance for user1 after 1day', async () => {
+        assertBn.equal(
+          await TokenModule.allowance(await user1.getAddress(), await owner.getAddress()),
+          parseEther('100')
+        );
+      });
+
+      it('owner transfer 100 tokens from user1 to user2', async () => {
+        await TokenModule.connect(owner).transferFrom(
+          await user1.getAddress(),
+          await user2.getAddress(),
+          parseEther('100')
+        );
+      });
+
+      it('check user 2 balance', async () => {
+        assertBn.equal(await TokenModule.balanceOf(await user2.getAddress()), parseEther('100'));
+      });
     });
 
-    before('fast forward to timestamp 86400 (1day)', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 86400, getProvider());
-    });
+    describe('check approval and transfer from after 1 year', () => {
+      before(restore);
 
-    it('check owner allowance for user1 after 1day', async () => {
-      assertBn.equal(
-        await TokenModule.allowance(await user1.getAddress(), await owner.getAddress()),
-        parseEther('100')
-      );
-    });
+      before('1000 tokens is minted to user1 at timestamp 0', async () => {
+        await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
+      });
 
-    it('owner transfer 100 tokens from user1 to user2', async () => {
-      await TokenModule.connect(owner).transferFrom(
-        await user1.getAddress(),
-        await user2.getAddress(),
-        parseEther('100')
-      );
+      it('user1 approves 100 tokens to be spent by the owner', async () => {
+        await TokenModule.connect(user1).approve(await owner.getAddress(), parseEther('100'));
+      });
+
+      before('fast forward to timestamp 31536000 (1year)', async () => {
+        const start = await getTime(getProvider());
+        await fastForwardTo(start + 31536000, getProvider());
+      });
+
+      it('check owner allowance for user1 after 1year', async () => {
+        assertBn.equal(
+          await TokenModule.allowance(await user1.getAddress(), await owner.getAddress()),
+          parseEther('100')
+        );
+      });
+
+      it('owner transfer 100 tokens from user1 to user2', async () => {
+        await TokenModule.connect(owner).transferFrom(
+          await user1.getAddress(),
+          await user2.getAddress(),
+          parseEther('100')
+        );
+      });
     });
   });
 
