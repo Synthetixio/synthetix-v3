@@ -14,8 +14,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "*",
-    "@synthetixio/main": "*",
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/main": "workspace:*",
     "@synthetixio/wei": "2.74.4",
     "solidity-docgen": "0.6.0-beta.22",
     "synthetix": "2.77.0-alpha"

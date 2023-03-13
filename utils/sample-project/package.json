@@ -11,9 +11,9 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.2.1",
-    "@synthetixio/core-contracts": "*",
-    "@synthetixio/core-modules": "*",
-    "@synthetixio/hardhat-storage": "*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/hardhat-storage": "workspace:*",
     "hardhat-cannon": "^2.1.7"
   }
 }

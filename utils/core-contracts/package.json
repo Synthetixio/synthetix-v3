@@ -21,6 +21,6 @@
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "devDependencies": {
-    "@synthetixio/common-config": "*"
+    "@synthetixio/common-config": "workspace:*"
   }
 }

@@ -27,8 +27,9 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@synthetixio/core-utils": "*",
-    "mustache": "4.2.0"
+    "@synthetixio/core-utils": "workspace:*",
+    "mustache": "4.2.0",
+    "solidity-ast": "0.4.46"
   },
   "devDependencies": {
     "@types/jest": "29.2.3",
