@@ -52,7 +52,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
             Transaction.Type.BUY,
             referrer
         );
-        int remainingFees = totalFees - collectedFees.toInt();
+        // TODO this is unsued, leaving in case it's work in progress
+        // int remainingFees = totalFees - collectedFees.toInt();
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees);
 

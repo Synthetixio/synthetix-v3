@@ -215,9 +215,16 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             Transaction.Type.ASYNC_BUY
         );
 
-        collectedFees = FeeConfiguration.collectFees(marketId, totalFees, msg.sender, Transaction.Type.ASYNC_BUY, asyncOrderClaim.referrer);
-        int remainingFees = totalFees - collectedFees.toInt();
-    
+        collectedFees = FeeConfiguration.collectFees(
+            marketId,
+            totalFees,
+            msg.sender,
+            Transaction.Type.ASYNC_BUY,
+            asyncOrderClaim.referrer
+        );
+        // TODO unused, leaving in case it's WIP
+        // int remainingFees = totalFees - collectedFees.toInt();
+
         finalOrderAmount = usdAmountAfterFees.divDecimal(price);
 
         if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
@@ -257,7 +264,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         address trader = asyncOrderClaim.owner;
 
         uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.settlementReward;
-uint referrerShareableFees;
+        uint referrerShareableFees;
         (finalOrderAmount, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
             marketId,
             trader,

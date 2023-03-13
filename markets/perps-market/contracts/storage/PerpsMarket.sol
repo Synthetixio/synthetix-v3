@@ -153,14 +153,14 @@ library PerpsMarket {
         //              = 0.00083912
 
         return
-            (int(self.lastFundingRate) + currentFundingVelocity(self)).mulDecimal(
+            (self.lastFundingRate + currentFundingVelocity(self)).mulDecimal(
                 proportionalElapsed(self)
             );
     }
 
     function currentFundingVelocity(Data storage self) internal view returns (int) {
         MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(self.id);
-        int maxFundingVelocity = int(marketConfig.maxFundingVelocity);
+        int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
         // Ensures the proportionalSkew is between -1 and 1.
         int proportionalSkew = MathUtil.min(
@@ -171,7 +171,7 @@ library PerpsMarket {
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
-        return int(block.timestamp - self.lastFundingTime).divDecimal(1 days);
+        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
     // TODO: David will refactor this
@@ -188,8 +188,8 @@ library PerpsMarket {
 
         // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
         // we check that the side of the market their order is on would not break the limit.
-        int newSkew = int(self.skew) - oldSize + newSize;
-        int newMarketSize = int(self.size) -
+        int newSkew = self.skew - oldSize + newSize;
+        int newMarketSize = self.size.toInt() -
             MathUtil.abs(oldSize).toInt() +
             MathUtil.abs(newSize).toInt();
 
