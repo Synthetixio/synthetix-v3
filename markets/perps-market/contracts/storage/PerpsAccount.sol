@@ -344,6 +344,7 @@ library PerpsAccount {
             uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
             if (synthMarketId != SNX_USD_MARKET_ID) {
                 uint amount = self.collateralAmounts[synthMarketId];
+                // TODO what do we use for referer here?
                 uint amountSold = spotMarket.sellExactIn(synthMarketId, amount);
                 self.collateralAmounts[SNX_USD_MARKET_ID] += amountSold;
             }
@@ -378,10 +379,12 @@ library PerpsAccount {
                 // TODO: sell $2 worth of synth
                 (uint availableAmountUsd, ) = spotMarket.quoteSell(marketId, availableAmount);
                 if (availableAmountUsd >= leftoverAmount) {
+                    // TODO referer
                     uint amountToDeduct = spotMarket.sellExactOut(marketId, leftoverAmount);
                     self.collateralAmounts[marketId] = availableAmount - amountToDeduct;
                     break;
                 } else {
+                    // TODO referer
                     uint amountToDeduct = spotMarket.sellExactIn(marketId, availableAmount);
                     self.collateralAmounts[marketId] = 0;
                     leftoverAmount -= amountToDeduct;
