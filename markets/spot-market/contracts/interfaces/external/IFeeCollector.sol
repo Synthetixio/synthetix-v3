@@ -9,13 +9,13 @@ interface IFeeCollector is IERC165 {
         uint128 marketId,
         uint256 feeAmount,
         address transactor,
-        uint8 tradeType
+        uint tradeType
     ) external;
 
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,
         address transactor,
-        uint8 tradeType
+        uint tradeType
     ) external returns (uint256);
 }
