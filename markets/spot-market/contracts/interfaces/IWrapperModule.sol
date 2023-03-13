@@ -21,11 +21,6 @@ interface IWrapperModule {
     error InsufficientAmountReceived(uint expected, uint current);
 
     /**
-     * @notice Thrown when user tries to wrap more than the set supply cap for the market.
-     */
-    error WrapperExceedsMaxAmount(uint maxWrappableAmount, uint currentSupply, uint amountToWrap);
-
-    /**
      * @notice Gets fired when wrapper supply is set for a given market, collateral type.
      * @param synthMarketId Id of the market the wrapper is initialized for.
      * @param wrapCollateralType the collateral used to wrap the synth.
