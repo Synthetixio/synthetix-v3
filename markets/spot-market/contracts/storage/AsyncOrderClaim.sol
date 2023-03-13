@@ -16,39 +16,39 @@ library AsyncOrderClaim {
 
     struct Data {
         /**
-         * @dev unique id for claim
+         * @dev Unique ID associated with this claim
          */
         uint128 id;
         /**
-         * @dev address that gets the final settlement amount, also the address that committed the order
+         * @dev The address that committed the order and received the exchanged amount on settlement
          */
         address owner;
         /**
-         * @dev can only be async buy or async sell (see: Transaction.Type)
+         * @dev ASYNC_BUY or ASYNC_SELL. (See Transaction.Type in TransactionUtil.sol)
          */
         Transaction.Type orderType;
         /**
-         * @dev amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
+         * @dev The amount of assets from the trader added to escrow. This is USD denominated for buy orders and synth shares denominated for sell orders. (Synth shares are necessary in case the Decay Token has a non-zero decay rate.)
          */
         uint256 amountEscrowed;
         /**
-         * @dev id of settlement strategy used for this claim
+         * @dev The ID of the settlement strategy used for this claim
          */
         uint256 settlementStrategyId;
         /**
-         * @dev settlementTime = commitment block time + settlement delay
+         * @dev The time at which this order should be settleable. This is the sum of the commitment block time and the settlement delay. Settlement strategies should use the price at this time whenever possible.
          */
         uint256 settlementTime;
         /**
-         * @dev minimum amount trader is willing to accept on settlement.
+         * @dev The minimum amount trader is willing to accept on settlement. This is USD denominated for buy orders and synth denominated for sell orders.
          */
         uint256 minimumSettlementAmount;
         /**
-         * @dev timestamp of when the claim was settled.  this is used to prevent double settlement.
+         * @dev The timestamp at which the claim has been settled. (The same order cannont be settled twice.)
          */
         uint256 settledAt;
         /**
-         * @dev address of the referrer for the order
+         * @dev The address of the referrer for the order
          */
         address referrer;
     }
