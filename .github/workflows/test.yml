@@ -61,7 +61,7 @@ jobs:
 
       - run: yarn install --immutable --immutable-cache
 
-      - run: yarn build
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build
 
       - name: Execute size-contracts command
         run: |
