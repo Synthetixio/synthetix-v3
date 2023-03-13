@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  extends: ['eslint:recommended', 'prettier'],
+  extends: ['eslint:recommended'],
   env: {
     es2020: true,
     node: true,
@@ -20,14 +20,13 @@ module.exports = {
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
-    indent: 'off',
+    indent: 'off', // prettier
     'no-only-tests/no-only-tests': 'error',
-    indent: ['error', 2],
-    'linebreak-style': 0,
-    quotes: ['error', 'single'],
-    semi: ['error', 'always'],
+    'linebreak-style': 'off', // prettier
+    quotes: 'off', // prettier
+    semi: 'off', // prettier
     'no-inner-declarations': 'off',
-    'max-len': ['error', { code: 160, comments: 100 }],
+    'max-len': 'off', // prettier
   },
   overrides: [
     {
@@ -37,7 +36,6 @@ module.exports = {
         project: ['./tsconfig.json'],
       },
       rules: {
-        indent: 'off', // Indentation is handled by Prettier
         '@typescript-eslint/no-floating-promises': 'error',
         '@typescript-eslint/no-var-requires': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
