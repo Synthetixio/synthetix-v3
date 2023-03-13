@@ -25,6 +25,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     using DecimalMath for int64;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using SettlementStrategy for SettlementStrategy.Data;
+    using FeeConfiguration for FeeConfiguration.Data;
     using AsyncOrder for AsyncOrder.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
 
@@ -207,7 +208,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         uint usdAmountAfterFees;
         uint referrerShareableFees;
-        (usdAmountAfterFees, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
+        (usdAmountAfterFees, totalFees, referrerShareableFees) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             amountUsable,
@@ -215,15 +217,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             Transaction.Type.ASYNC_BUY
         );
 
-        collectedFees = FeeConfiguration.collectFees(
+        collectedFees = feeConfiguration.collectFees(
             marketId,
             totalFees,
             msg.sender,
-            Transaction.Type.ASYNC_BUY,
-            asyncOrderClaim.referrer
+            spotMarketFactory,
+            Transaction.Type.ASYNC_BUY
         );
-        // TODO unused, leaving in case it's WIP
-        // int remainingFees = totalFees - collectedFees.toInt();
+        int remainingFees = totalFees - collectedFees.toInt();
 
         finalOrderAmount = usdAmountAfterFees.divDecimal(price);
 
@@ -265,7 +266,12 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         uint usableAmount = synthAmount.mulDecimal(price) - settlementStrategy.settlementReward;
         uint referrerShareableFees;
+<<<<<<< HEAD
         (finalOrderAmount, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
+=======
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
+        (finalOrderAmount, totalFees, referrerShareableFees) = feeConfiguration.calculateFees(
+>>>>>>> 75cbfce6 (wip)
             marketId,
             trader,
             usableAmount,
@@ -286,35 +292,31 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         if (totalFees > 0) {
             // withdraw fees
-            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            spotMarketFactory.synthetix.withdrawMarketUsd(
                 marketId,
                 address(this),
                 totalFees.toUint()
             );
 
             // collect fees
-            collectedFees = FeeConfiguration.collectFees(
+            collectedFees = feeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.ASYNC_SELL,
-                asyncOrderClaim.referrer
+                spotMarketFactory,
+                Transaction.Type.ASYNC_SELL
             );
         }
 
         // send keeper it's reward
-        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+        spotMarketFactory.synthetix.withdrawMarketUsd(
             marketId,
             msg.sender,
             settlementStrategy.settlementReward
         );
 
         // send trader final amount
-        IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
-            marketId,
-            trader,
-            finalOrderAmount
-        );
+        spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);
     }
 
     /**

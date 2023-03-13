@@ -5,8 +5,10 @@ library Transaction {
     error InvalidAsyncTransactionType(Type transactionType);
 
     enum Type {
-        BUY,
-        SELL,
+        BUY_EXACT_IN,
+        BUY_EXACT_OUT,
+        SELL_EXACT_IN,
+        SELL_EXACT_OUT,
         ASYNC_BUY,
         ASYNC_SELL,
         WRAP,
@@ -20,11 +22,17 @@ library Transaction {
     }
 
     function isBuy(Type orderType) internal pure returns (bool) {
-        return orderType == Type.BUY || orderType == Type.ASYNC_BUY;
+        return
+            orderType == Type.BUY_EXACT_IN ||
+            orderType == Type.BUY_EXACT_OUT ||
+            orderType == Type.ASYNC_BUY;
     }
 
     function isSell(Type orderType) internal pure returns (bool) {
-        return orderType == Type.SELL || orderType == Type.ASYNC_SELL;
+        return
+            orderType == Type.SELL_EXACT_IN ||
+            orderType == Type.SELL_EXACT_OUT ||
+            orderType == Type.ASYNC_SELL;
     }
 
     function isAsync(Type orderType) internal pure returns (bool) {

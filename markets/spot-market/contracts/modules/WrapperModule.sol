@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IWrapperModule.sol";
@@ -19,6 +18,7 @@ import "../utils/SynthUtil.sol";
 contract WrapperModule is IWrapperModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
+    using FeeConfiguration for FeeConfiguration.Data;
     using Price for Price.Data;
     using Wrapper for Wrapper.Data;
     using SafeCastU256 for uint256;
@@ -53,16 +53,12 @@ contract WrapperModule is IWrapperModule {
         wrapperStore.isValidWrapper();
 
         // revert when wrapping more than the supply cap
-        wrapperStore.checkMaxWrappableAmount(
-            marketId,
-            wrapAmount,
-            IMarketCollateralModule(spotMarketFactory.synthetix)
-        );
+        wrapperStore.checkMaxWrappableAmount(marketId, wrapAmount, spotMarketFactory.synthetix);
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
-        wrappingCollateral.approve(spotMarketFactory.synthetix, wrapAmount);
-        IMarketCollateralModule(spotMarketFactory.synthetix).depositMarketCollateral(
+        wrappingCollateral.approve(address(spotMarketFactory.synthetix), wrapAmount);
+        spotMarketFactory.synthetix.depositMarketCollateral(
             marketId,
             wrapperStore.wrapCollateralType,
             wrapAmount
@@ -74,7 +70,8 @@ contract WrapperModule is IWrapperModule {
             Transaction.Type.WRAP
         );
 
-        (uint256 returnAmountUsd, int256 totalFees, ) = FeeConfiguration.calculateFees(
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
+        (uint256 returnAmountUsd, int256 totalFees, ) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
@@ -90,17 +87,17 @@ contract WrapperModule is IWrapperModule {
 
         uint collectedFees;
         if (totalFees > 0) {
-            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            spotMarketFactory.synthetix.withdrawMarketUsd(
                 marketId,
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeConfiguration.collectFees(
+            collectedFees = feeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.WRAP,
-                address(0)
+                spotMarketFactory,
+                Transaction.Type.WRAP
             );
         }
 
@@ -135,7 +132,9 @@ contract WrapperModule is IWrapperModule {
             unwrapAmount,
             Transaction.Type.UNWRAP
         );
-        (uint256 returnAmountUsd, int256 totalFees, ) = FeeConfiguration.calculateFees(
+
+        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
+        (uint256 returnAmountUsd, int256 totalFees, ) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
@@ -154,21 +153,21 @@ contract WrapperModule is IWrapperModule {
         }
         uint collectedFees;
         if (totalFees > 0) {
-            IMarketManagerModule(spotMarketFactory.synthetix).withdrawMarketUsd(
+            spotMarketFactory.synthetix.withdrawMarketUsd(
                 marketId,
                 address(this),
                 totalFees.toUint()
             );
-            collectedFees = FeeConfiguration.collectFees(
+            collectedFees = feeConfiguration.collectFees(
                 marketId,
                 totalFees,
                 msg.sender,
-                Transaction.Type.UNWRAP,
-                address(0)
+                spotMarketFactory,
+                Transaction.Type.UNWRAP
             );
         }
 
-        IMarketCollateralModule(spotMarketFactory.synthetix).withdrawMarketCollateral(
+        spotMarketFactory.synthetix.withdrawMarketCollateral(
             marketId,
             wrapperStore.wrapCollateralType,
             returnCollateralAmount

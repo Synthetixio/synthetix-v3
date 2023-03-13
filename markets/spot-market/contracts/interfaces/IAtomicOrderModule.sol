@@ -15,6 +15,7 @@ interface IAtomicOrderModule {
      * @notice Thrown when trader has not provided allowance for the market to transfer the underlying asset.
      */
     error InsufficientAllowance(uint expected, uint current);
+    error ExceedsMaxUsdAmount(uint maxUsdAmount, uint usdAmountCharged);
     /**
      * @notice Thrown when a trade doesn't meet minimum expected return amount.
      */
@@ -67,6 +68,13 @@ interface IAtomicOrderModule {
         uint128 synthMarketId,
         uint amountUsd,
         uint minAmountReceived,
+        address referrer
+    ) external returns (uint, int);
+
+    function buyExactOut(
+        uint128 synthMarketId,
+        uint synthAmount,
+        uint maxUsdAmount,
         address referrer
     ) external returns (uint, int);
 

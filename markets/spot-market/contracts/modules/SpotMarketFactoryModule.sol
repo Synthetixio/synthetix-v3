@@ -32,7 +32,7 @@ contract SpotMarketFactoryModule is
     function _isInitialized() internal view override returns (bool) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         return
-            spotMarketFactory.synthetix != address(0) &&
+            address(spotMarketFactory.synthetix) != address(0) &&
             spotMarketFactory.usdToken != ITokenModule(address(0));
     }
 
@@ -46,8 +46,9 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    // TODO: remove and make this cannon friendly
     function initialize(
-        address snxAddress,
+        ISynthetixSystem snxAddress,
         address usdTokenAddress,
         address oracleManager,
         address initialSynthImplementation
@@ -72,9 +73,7 @@ contract SpotMarketFactoryModule is
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        uint128 synthMarketId = IMarketManagerModule(spotMarketFactory.synthetix).registerMarket(
-            address(this)
-        );
+        uint128 synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
 
         _initOrUpgradeToken(
             SynthUtil.getSystemId(synthMarketId),
@@ -97,18 +96,17 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL_EXACT_IN);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
 
     function locked(uint128 marketId) external view returns (uint256) {
-        uint delegatedCollateral = IMarketManagerModule(SpotMarketFactory.load().synthetix)
-            .getMarketCollateral(marketId);
+        uint delegatedCollateral = SpotMarketFactory.load().synthetix.getMarketCollateral(marketId);
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint totalValue = totalBalance.mulDecimal(
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY)
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY_EXACT_IN)
         );
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }

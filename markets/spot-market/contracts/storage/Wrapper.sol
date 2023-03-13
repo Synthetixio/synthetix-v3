@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
+import "../interfaces/external/ISynthetixSystem.sol";
 
 /**
  * @title Wrapper library servicing the wrapper module
@@ -36,7 +37,7 @@ library Wrapper {
         Data storage self,
         uint128 marketId,
         uint256 wrapAmount,
-        IMarketCollateralModule synthetix
+        ISynthetixSystem synthetix
     ) internal {
         uint currentDepositedCollateral = synthetix.getMarketCollateralAmount(
             marketId,
