@@ -56,6 +56,7 @@ contract MockPyth is AbstractPyth {
                 priceFeeds[priceFeed.id] = priceFeed;
                 emit PriceFeedUpdate(
                     priceFeed.id,
+                    // solhint-disable-next-line numcast/safe-cast
                     uint64(lastPublishTime),
                     priceFeed.price.price,
                     priceFeed.price.conf
