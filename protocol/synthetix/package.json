@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build cannonfile.test.toml",
+    "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "yarn build && hardhat test",
     "coverage": "yarn build && hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",

@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "build": "hardhat storage:verify",
+    "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "hardhat test",
     "coverage": "hardhat test"
   },

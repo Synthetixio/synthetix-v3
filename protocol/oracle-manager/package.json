@@ -8,10 +8,9 @@
     "coverage": "yarn build && hardhat --network hardhat coverage",
     "clean": "hardhat clean",
     "build": "hardhat storage:verify && hardhat cannon:build",
+    "check:storage": "git diff --exit-code storage.dump.sol",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts",
-    "lint:fix": "yarn lint:js:fix && yarn lint:sol:fix",
-    "lint": "yarn lint:js && yarn lint:sol"
+    "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "keywords": [],
   "author": "",

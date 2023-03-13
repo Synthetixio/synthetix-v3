@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build1": "hardhat storage:verify && hardhat cannon:build",
+    "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean",
     "cannon-build": "cannon perps-market:0.0.3-alpha",
