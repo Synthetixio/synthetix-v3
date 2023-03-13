@@ -1979,6 +1979,7 @@ __metadata:
     "@synthetixio/main": "workspace:*"
     "@synthetixio/router": "workspace:*"
     ethers: ^5.0.0
+    hardhat: 2.13.0
   languageName: unknown
   linkType: soft
 

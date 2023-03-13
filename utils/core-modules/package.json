@@ -24,6 +24,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/router": "workspace:*",
-    "ethers": "^5.0.0"
+    "ethers": "^5.0.0",
+    "hardhat": "2.13.0"
   }
 }
