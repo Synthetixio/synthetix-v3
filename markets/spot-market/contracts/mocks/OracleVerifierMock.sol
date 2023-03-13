@@ -41,6 +41,7 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
     function verify(
         bytes memory chainlinkBlob
     ) external view override returns (bytes memory verifierResponse) {
+        // solhint-disable-next-line numcast/safe-cast
         int192 priceFormatted = int192(price) * 10 ** 18;
         verifierResponse = abi.encode("ETH-USD", block.timestamp, 10, priceFormatted);
     }

@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./OrderFee.sol";
 import "./SettlementStrategy.sol";
 import "../utils/MathUtil.sol";
@@ -9,6 +10,7 @@ import "../utils/MathUtil.sol";
 library MarketConfiguration {
     using DecimalMath for int256;
     using DecimalMath for uint256;
+    using SafeCastU256 for uint256;
 
     enum OrderType {
         ASYNC_ONCHAIN,
@@ -63,7 +65,7 @@ library MarketConfiguration {
         }
 
         // note: this is the same as fillPrice() where the skew is 0.
-        int notionalValue = positionSize.mulDecimal(int(currentPrice));
+        int notionalValue = positionSize.mulDecimal(currentPrice.toInt());
         uint notionalAbsValue = MathUtil.abs(notionalValue);
 
         return

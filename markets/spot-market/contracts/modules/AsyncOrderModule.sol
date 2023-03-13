@@ -71,9 +71,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
         }
 
-        // Adjust async order data
-        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
-
         uint settlementDelay = AsyncOrderConfiguration
             .load(marketId)
             .settlementStrategies[settlementStrategyId]
