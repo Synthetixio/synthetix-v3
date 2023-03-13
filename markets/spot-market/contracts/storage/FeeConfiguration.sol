@@ -354,7 +354,8 @@ library FeeConfiguration {
             uint previousUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
 
             spotMarketFactory.usdToken.approve(address(feeCollector), totalFeesUint);
-            feeCollector.collectFees(marketId, totalFeesUint, transactor, uint(transactionType));
+            // solhint-disable-next-line numcast/safe-cast
+            feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
 
             uint currentUsdBalance = spotMarketFactory.usdToken.balanceOf(address(this));
             collectedFees = previousUsdBalance - currentUsdBalance;
@@ -385,7 +386,8 @@ library FeeConfiguration {
                 marketId,
                 totalFeesUint,
                 transactor,
-                uint(transactionType)
+                // solhint-disable-next-line numcast/safe-cast
+                uint8(transactionType)
             );
         }
     }
