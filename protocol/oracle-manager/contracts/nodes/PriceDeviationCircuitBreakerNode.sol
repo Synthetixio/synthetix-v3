@@ -24,10 +24,9 @@ library PriceDeviationCircuitBreakerNode {
         int256 comparisonPrice = parentNodeOutputs[1].price;
 
         if (primaryPrice != comparisonPrice) {
-            int256 difference = abs(primaryPrice - comparisonPrice);
+            int256 difference = abs(primaryPrice - comparisonPrice).upscale(18);
             if (
-                primaryPrice == 0 ||
-                deviationTolerance.toInt() < ((difference.upscale(18)) / abs(primaryPrice))
+                primaryPrice == 0 || deviationTolerance.toInt() < (difference / abs(primaryPrice))
             ) {
                 if (parentNodeOutputs.length > 2) {
                     return parentNodeOutputs[2];
