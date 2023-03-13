@@ -4,7 +4,7 @@ Solidity router generator.
 
 ## Description
 
-This hardhat plugin generates a router contract which simply merges multiple contracts (modules) behind a single proxy.
+This plugin generates a router contract which simply merges multiple contracts (modules) behind a single proxy.
 
 The router proxy receives incoming calls and forwards them to the appropriate implementation or module, depending on which one contains the incoming function selector.
 
@@ -211,7 +211,7 @@ Since the router `DELEGATECALL`s to its modules, they storage will never be used
 
 If the router is used as the implementation of a UUPS [Universal Upgradeable Proxy Standard](https://eips.ethereum.org/EIPS/eip-1822) proxy, and includes an UpgradeModule, it can be used to design complex systems which are upgradeable until the main proxy is upgraded to a router implementation that no longer has an UpgradeModule.
 
-This plugin will deploy a proxy and set its implementation as the router.
+⚠️ Make sure that the UUPS contract does not contain public facing functions becuase they could clash with function signatures from the implementation modules. ⚠️
 
 ### Plugin configuration
 

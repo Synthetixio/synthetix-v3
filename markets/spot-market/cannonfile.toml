@@ -111,7 +111,7 @@ args = [
 ]
 depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "router.SynthRouter"]
 
-# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
+# add pool owner to feature flag allow list
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"

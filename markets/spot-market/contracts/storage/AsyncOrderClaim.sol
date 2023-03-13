@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./SettlementStrategy.sol";
+import "./AsyncOrder.sol";
 import "../utils/TransactionUtil.sol";
 
 /**
@@ -39,11 +40,6 @@ library AsyncOrderClaim {
          */
         uint256 settlementTime;
         /**
-         * @dev this is the amountProvided during commitment by trader.  we track this value so we can remove it
-         * from the totalCommittedUsdAmount in the AsyncOrder.Data when the claim is settled.
-         */
-        int256 committedAmountUsd;
-        /**
          * @dev minimum amount trader is willing to accept on settlement.
          */
         uint256 minimumSettlementAmount;
@@ -51,6 +47,10 @@ library AsyncOrderClaim {
          * @dev timestamp of when the claim was settled.  this is used to prevent double settlement.
          */
         uint256 settledAt;
+        /**
+         * @dev address of the referrer for the order
+         */
+        address referrer;
     }
 
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -64,24 +64,26 @@ library AsyncOrderClaim {
 
     function create(
         uint128 marketId,
-        uint128 claimId,
         Transaction.Type orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
         uint256 settlementTime,
-        int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
-        address owner
+        address owner,
+        address referrer
     ) internal returns (Data storage) {
+        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        uint128 claimId = ++asyncOrderData.totalClaims;
+
         Data storage self = load(marketId, claimId);
         self.id = claimId;
         self.orderType = orderType;
         self.amountEscrowed = amountEscrowed;
         self.settlementStrategyId = settlementStrategyId;
         self.settlementTime = settlementTime;
-        self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
         self.owner = owner;
+        self.referrer = referrer;
         return self;
     }
 
@@ -91,7 +93,7 @@ library AsyncOrderClaim {
     }
 
     function checkIfValidClaim(Data storage claim) internal view {
-        if (claim.owner == address(0) || claim.committedAmountUsd == 0) {
+        if (claim.owner == address(0) || claim.amountEscrowed == 0) {
             revert InvalidClaim(claim.id);
         }
     }
