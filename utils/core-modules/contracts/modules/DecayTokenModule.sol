@@ -80,6 +80,8 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
      * @inheritdoc IDecayTokenModule
      */
     function advanceEpoch() external _advanceEpoch returns (uint256) {
+        DecayToken.Data storage store = DecayToken.load();
+        store.totalSupplyAtEpochStart = totalSupply();
         return _tokensPerShare();
     }
 
@@ -99,15 +101,15 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return (supply);
     }
 
-    function balanceOf(address owner) public view override(ERC20, IERC20) returns (uint256) {
-        return super.balanceOf(owner).mulDecimal(_tokensPerShare());
+    function balanceOf(address user) public view override(ERC20, IERC20) returns (uint256) {
+        return super.balanceOf(user).mulDecimal(_tokensPerShare());
     }
 
     function allowance(
-        address owner,
+        address user,
         address spender
     ) public view virtual override(ERC20, IERC20) returns (uint256) {
-        return super.allowance(owner, spender);
+        return super.allowance(user, spender);
     }
 
     function approve(
@@ -122,7 +124,20 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         address to,
         uint256 amount
     ) external virtual override(ERC20, IERC20) returns (bool) {
-        return super._transferFrom(from, to, _tokensPerShare().mulDecimal(amount));
+        ERC20Storage.Data storage store = ERC20Storage.load();
+
+        uint256 currentAllowance = store.allowance[from][msg.sender];
+        if (currentAllowance < amount) {
+            revert InsufficientAllowance(amount, currentAllowance);
+        }
+
+        unchecked {
+            store.allowance[from][msg.sender] -= amount;
+        }
+
+        _transfer(from, to, _tokenToShare(amount));
+
+        return true;
     }
 
     /**
@@ -162,7 +177,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     function _tokensPerShare() internal view returns (uint256) {
         uint256 shares = totalShares();
 
-        if (_totalSupplyAtEpochStart() == 0 || shares == 0) {
+        if (_totalSupplyAtEpochStart() == 0 || totalSupply() == 0 || shares == 0) {
             return DecimalMath.UNIT;
         }
 
@@ -186,5 +201,25 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
                 n /= 2;
             }
         }
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal virtual override {
+        ERC20Storage.Data storage store = ERC20Storage.load();
+
+        uint256 accountBalance = store.balanceOf[from];
+        if (accountBalance < amount) {
+            revert InsufficientBalance(amount, accountBalance);
+        }
+
+        // We are now sure that we can perform this operation safely
+        // since it didn't revert in the previous step.
+        // The total supply cannot exceed the maximum value of uint256,
+        // thus we can now perform accounting operations in unchecked mode.
+        unchecked {
+            store.balanceOf[from] -= amount;
+            store.balanceOf[to] += amount;
+        }
+
+        emit Transfer(from, to, amount);
     }
 }
