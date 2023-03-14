@@ -1,6 +1,6 @@
 {
   "name": "synthetix-v3",
-  "version": "3.0.2",
+  "version": "0.0.0",
   "private": true,
   "description": "Mono Repo with Contracts and JS tooling",
   "repository": {
@@ -28,7 +28,8 @@
     "deps": "deps",
     "deps:fix": "deps --fix",
     "deps:mismatched": "deps-mismatched",
-    "deps:circular": "deps-circular"
+    "deps:circular": "deps-circular",
+    "version": "yarn install && git stage yarn.lock"
   },
   "devDependencies": {
     "@synthetixio/deps": "workspace:*",

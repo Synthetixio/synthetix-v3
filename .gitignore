@@ -16,6 +16,7 @@ dist
 node_modules
 Router.sol
 typechain-types
+lerna-debug.log
 
 # Yarn v3
 .yarn/*
