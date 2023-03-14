@@ -11,7 +11,7 @@
     "cannon-build": "cannon spot-market:0.0.3-alpha",
     "test": "hardhat test",
     "test:fork": "hardhat test test-fork/AsyncOrdersModule.e2e.test.ts",
-    "coverage": "yarn test # yarn build && hardhat coverage --network hardhat",
+    "coverage": "yarn test",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },
