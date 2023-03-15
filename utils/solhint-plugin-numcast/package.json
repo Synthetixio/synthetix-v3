@@ -1,6 +1,9 @@
 {
   "name": "solhint-plugin-numcast",
   "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Solhint plugin for detecting overflows in numeric (uint/int) casts",
   "main": "index.js",
   "scripts": {
@@ -15,5 +18,8 @@
   "license": "MIT",
   "peerDependencies": {
     "solhint": "^3.0.0"
+  },
+  "devDependencies": {
+    "solhint": "3.3.7"
   }
 }

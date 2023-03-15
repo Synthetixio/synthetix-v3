@@ -1,6 +1,6 @@
 {
   "name": "synthetix-v3",
-  "version": "3.0.2",
+  "version": "0.0.0",
   "private": true,
   "description": "Mono Repo with Contracts and JS tooling",
   "repository": {
@@ -28,7 +28,8 @@
     "deps": "deps",
     "deps:fix": "deps --fix",
     "deps:mismatched": "deps-mismatched",
-    "deps:circular": "deps-circular"
+    "deps:circular": "deps-circular",
+    "version": "yarn install && git stage yarn.lock"
   },
   "devDependencies": {
     "@synthetixio/deps": "workspace:*",
@@ -39,6 +40,7 @@
     "eslint": "8.29.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-no-only-tests": "3.1.0",
+    "lerna": "6.5.1",
     "pre-commit": "1.2.2",
     "prettier": "2.8.0",
     "prettier-plugin-solidity": "1.0.0",
