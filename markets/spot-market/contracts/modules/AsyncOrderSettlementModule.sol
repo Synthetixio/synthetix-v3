@@ -26,6 +26,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
     using SettlementStrategy for SettlementStrategy.Data;
     using FeeConfiguration for FeeConfiguration.Data;
+    using OrderFees for OrderFees.Data;
     using AsyncOrder for AsyncOrder.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
 
@@ -37,7 +38,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external override returns (uint, int, uint) {
+    ) external override returns (uint, OrderFees.Data memory) {
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
             SettlementStrategy.Data storage settlementStrategy
@@ -63,7 +64,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint, int, uint) {
+    ) external payable returns (uint, OrderFees.Data memory) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -159,12 +160,13 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint price,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
+    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees) {
         // set settledAt to avoid any potential reentrancy
         asyncOrderClaim.settledAt = block.timestamp;
 
+        uint collectedFees;
         if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_BUY) {
-            (finalOrderAmount, totalFees, collectedFees) = _settleBuyOrder(
+            (finalOrderAmount, fees, collectedFees) = _settleBuyOrder(
                 marketId,
                 price,
                 settlementStrategy.settlementReward,
@@ -173,7 +175,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         }
 
         if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_SELL) {
-            (finalOrderAmount, totalFees, collectedFees) = _settleSellOrder(
+            (finalOrderAmount, fees, collectedFees) = _settleSellOrder(
                 marketId,
                 price,
                 settlementStrategy.settlementReward,
@@ -186,7 +188,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             marketId,
             asyncOrderId,
             finalOrderAmount,
-            totalFees, // TODO: should this include settlement reward?
+            fees, // TODO: should this include settlement reward?
             collectedFees,
             msg.sender
         );
@@ -200,16 +202,15 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint price,
         uint settlementReward,
         AsyncOrderClaim.Data storage asyncOrderClaim
-    ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
+    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees, uint collectedFees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         // remove keeper fee
         uint amountUsable = asyncOrderClaim.amountEscrowed - settlementReward;
         address trader = asyncOrderClaim.owner;
 
         uint usdAmountAfterFees;
-        uint referrerShareableFees;
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (usdAmountAfterFees, totalFees, referrerShareableFees) = feeConfiguration.calculateFees(
+        (usdAmountAfterFees, fees) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             amountUsable,
@@ -228,14 +229,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         collectedFees = feeConfiguration.collectFees(
             marketId,
-            totalFees,
+            fees.total(),
             msg.sender,
             spotMarketFactory,
             Transaction.Type.ASYNC_BUY
         );
 
         ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, settlementReward);
-        spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees);
+        spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees - collectedFees);
         SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
     }
 
@@ -247,7 +248,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint price,
         uint settlementReward,
         AsyncOrderClaim.Data storage asyncOrderClaim
-    ) private returns (uint finalOrderAmount, int totalFees, uint collectedFees) {
+    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees, uint collectedFees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         // get amount of synth from escrow
         // can't use amountEscrowed directly because the token could have decayed
@@ -255,13 +256,11 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             marketId,
             asyncOrderClaim.amountEscrowed
         );
-
         address trader = asyncOrderClaim.owner;
-
         uint usableAmount = synthAmount.mulDecimal(price) - settlementReward;
-        uint referrerShareableFees;
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (finalOrderAmount, totalFees, referrerShareableFees) = feeConfiguration.calculateFees(
+
+        (finalOrderAmount, fees) = feeConfiguration.calculateFees(
             marketId,
             trader,
             usableAmount,
@@ -282,7 +281,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         // collect fees
         collectedFees = feeConfiguration.collectFees(
             marketId,
-            totalFees,
+            fees.total(),
             msg.sender,
             spotMarketFactory,
             Transaction.Type.ASYNC_SELL
@@ -301,7 +300,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint, int256, uint256) {
+    ) private view returns (uint, OrderFees.Data memory) {
         string[] memory urls = new string[](1);
         urls[0] = settlementStrategy.url;
 

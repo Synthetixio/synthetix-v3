@@ -7,6 +7,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../interfaces/external/IFeeCollector.sol";
 import "./SpotMarketFactory.sol";
 import "./AsyncOrder.sol";
+import "./OrderFees.sol";
 import "../utils/SynthUtil.sol";
 import "../utils/TransactionUtil.sol";
 
@@ -105,13 +106,9 @@ library FeeConfiguration {
         uint256 amount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    )
-        internal
-        view
-        returns (uint256 amountAfterFees, int256 feesCollected, uint referrerShareableFees)
-    {
+    ) internal view returns (uint256 amountAfterFees, OrderFees.Data memory fees) {
         if (Transaction.isBuy(transactionType)) {
-            (amountAfterFees, feesCollected, referrerShareableFees) = calculateBuyFees(
+            (amountAfterFees, fees) = calculateBuyFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -120,7 +117,7 @@ library FeeConfiguration {
                 transactionType
             );
         } else if (Transaction.isSell(transactionType)) {
-            (amountAfterFees, feesCollected, referrerShareableFees) = calculateSellFees(
+            (amountAfterFees, fees) = calculateSellFees(
                 feeConfiguration,
                 transactor,
                 marketId,
@@ -129,13 +126,13 @@ library FeeConfiguration {
                 transactionType
             );
         } else if (transactionType == Transaction.Type.WRAP) {
-            (amountAfterFees, feesCollected) = _applyFees(
+            (amountAfterFees, fees.wrapperFees) = _applyFees(
                 amount,
                 feeConfiguration.wrapFixedFee,
                 transactionType
             );
         } else if (transactionType == Transaction.Type.UNWRAP) {
-            (amountAfterFees, feesCollected) = _applyFees(
+            (amountAfterFees, fees.wrapperFees) = _applyFees(
                 amount,
                 feeConfiguration.unwrapFixedFee,
                 transactionType
@@ -161,19 +158,25 @@ library FeeConfiguration {
         uint256 amount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal view returns (uint amountAfterFees, int calculatedFees, uint fixedFee) {
+    ) internal view returns (uint amountAfterFees, OrderFees.Data memory fees) {
+        uint fixedFee = _getFixedFee(
+            feeConfiguration,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
+        (amountAfterFees, fees.fixedFees) = _applyFees(amount, fixedFee.toInt(), transactionType);
+
         uint utilizationFee = calculateUtilizationRateFee(
             feeConfiguration,
             marketId,
             amount,
             synthPrice
         );
-
-        fixedFee = _getFixedFee(feeConfiguration, transactor, Transaction.isAsync(transactionType));
-
-        int totalFees = utilizationFee.toInt() + fixedFee.toInt();
-
-        (amountAfterFees, calculatedFees) = _applyFees(amount, totalFees, transactionType);
+        (amountAfterFees, fees.utilizationFees) = _applyFees(
+            amountAfterFees,
+            utilizationFee.toInt(),
+            transactionType
+        );
 
         // only run skew fee after other fees have been applied
         int skewFee;
@@ -189,13 +192,13 @@ library FeeConfiguration {
             skewFee = calculateSkewFeeExact(
                 feeConfiguration,
                 marketId,
-                amountAfterFees,
+                amountAfterFees.toInt(),
                 synthPrice,
                 transactionType
             );
         }
 
-        (amountAfterFees, calculatedFees) = _applyFees(amountAfterFees, skewFee, transactionType);
+        (amountAfterFees, fees.skewFees) = _applyFees(amountAfterFees, skewFee, transactionType);
     }
 
     /**
@@ -214,14 +217,17 @@ library FeeConfiguration {
         uint256 amount,
         uint synthPrice,
         Transaction.Type transactionType
-    ) internal view returns (uint amountAfterFees, int totalFees, uint fixedFee) {
-        fixedFee = _getFixedFee(feeConfiguration, transactor, Transaction.isAsync(transactionType));
-
-        (amountAfterFees, totalFees) = _applyFees(amount, fixedFee.toInt(), transactionType);
+    ) internal view returns (uint amountAfterFees, OrderFees.Data memory fees) {
+        uint fixedFee = _getFixedFee(
+            feeConfiguration,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
+        (amountAfterFees, fees.fixedFees) = _applyFees(amount, fixedFee.toInt(), transactionType);
 
         int skewFee;
+        int amountOut = amountAfterFees.toInt() * -1;
         if (transactionType == Transaction.Type.SELL_EXACT_OUT) {
-            int amountOut = amountAfterFees.toInt() * -1;
             skewFee = calculateSkewFee(
                 feeConfiguration,
                 marketId,
@@ -233,29 +239,24 @@ library FeeConfiguration {
             skewFee = calculateSkewFeeExact(
                 feeConfiguration,
                 marketId,
-                amount,
+                amountOut,
                 synthPrice,
                 transactionType
             );
         }
-        (amountAfterFees, totalFees) = _applyFees(amount, skewFee, transactionType);
+        (amountAfterFees, fees.skewFees) = _applyFees(amountAfterFees, skewFee, transactionType);
     }
 
     function calculateSkewFeeExact(
         Data storage self,
         uint128 marketId,
-        uint amount,
+        int amount,
         uint synthPrice,
         Transaction.Type transactionType
     ) internal view returns (int skewFee) {
         if (self.skewScale == 0) {
             return 0;
         }
-
-        int amountInt = amount.toInt();
-
-        bool isBuyTrade = Transaction.isBuy(transactionType);
-        bool isSellTrade = Transaction.isSell(transactionType);
 
         int skewScaleValue = self.skewScale.mulDecimal(synthPrice).toInt();
 
@@ -273,17 +274,12 @@ library FeeConfiguration {
 
         int initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
-        int skewAfterFill = initialSkew;
-        if (isBuyTrade) {
-            skewAfterFill += amountInt;
-        } else if (isSellTrade) {
-            skewAfterFill -= amountInt;
-        }
+        int skewAfterFill = initialSkew + amount;
 
         int skewAfterFillAdjustment = skewAfterFill.divDecimal(skewScaleValue);
         int skewAdjustmentAveragePercentage = (skewAfterFillAdjustment + initialSkewAdjustment) / 2;
 
-        skewFee = isSellTrade
+        skewFee = Transaction.isSell(transactionType)
             ? skewAdjustmentAveragePercentage * -1
             : skewAdjustmentAveragePercentage;
     }
@@ -403,7 +399,8 @@ library FeeConfiguration {
             uint8(transactionType)
         );
 
-        if (Transaction.isSell(transactionType)) {
+        // if transaction is a sell or a wrapper type, we need to withdraw the fees from the market manager
+        if (Transaction.isSell(transactionType) || Transaction.isWrapper(transactionType)) {
             factory.synthetix.withdrawMarketUsd(marketId, address(this), feeCollectorQuote);
         }
 

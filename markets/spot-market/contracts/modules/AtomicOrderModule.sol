@@ -20,6 +20,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using FeeConfiguration for FeeConfiguration.Data;
+    using OrderFees for OrderFees.Data;
     using Price for Price.Data;
 
     function buyExactOut(
@@ -27,12 +28,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint synthAmount,
         uint maxUsdAmount,
         address referrer
-    ) external override returns (uint usdAmountCharged, int totalFees) {
+    ) external override returns (uint usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (usdAmountCharged, totalFees, feeConfiguration) = _quoteBuy(
+        (usdAmountCharged, fees, feeConfiguration) = _quoteBuy(
             marketId,
             synthAmount,
             Transaction.Type.BUY_EXACT_OUT
@@ -46,7 +47,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            totalFees,
+            fees.total(),
             msg.sender,
             spotMarketFactory,
             Transaction.Type.BUY_EXACT_OUT
@@ -56,9 +57,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.depositToMarketManager(marketId, usdAmountCharged - collectedFees);
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, synthAmount, totalFees, collectedFees, referrer);
+        emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer);
 
-        return (synthAmount, totalFees);
+        return (synthAmount, fees);
     }
 
     /**
@@ -69,7 +70,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint usdAmount,
         uint minAmountReceived,
         address referrer
-    ) external override returns (uint synthAmount, int totalFees) {
+    ) external override returns (uint synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -77,7 +78,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (synthAmount, totalFees, feeConfiguration) = _quoteBuy(
+        (synthAmount, fees, feeConfiguration) = _quoteBuy(
             marketId,
             usdAmount,
             Transaction.Type.BUY_EXACT_IN
@@ -89,7 +90,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            totalFees,
+            fees.total(),
             msg.sender,
             spotMarketFactory,
             Transaction.Type.BUY_EXACT_IN
@@ -98,27 +99,27 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.depositToMarketManager(marketId, usdAmount - collectedFees);
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, synthAmount, totalFees, collectedFees, referrer);
+        emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer);
 
-        return (synthAmount, totalFees);
+        return (synthAmount, fees);
     }
 
     function quoteBuyExactIn(
         uint128 marketId,
         uint usdAmount
-    ) external view override returns (uint256 synthAmount, int256 totalFees) {
+    ) external view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (synthAmount, totalFees, ) = _quoteBuy(marketId, usdAmount, Transaction.Type.BUY_EXACT_IN);
+        (synthAmount, fees, ) = _quoteBuy(marketId, usdAmount, Transaction.Type.BUY_EXACT_IN);
     }
 
     function quoteBuyExactOut(
         uint128 marketId,
         uint synthAmount
-    ) external view override returns (uint256 usdAmountCharged, int256 totalFees) {
+    ) external view override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (usdAmountCharged, totalFees, ) = _quoteBuy(
+        (usdAmountCharged, fees, ) = _quoteBuy(
             marketId,
             synthAmount,
             Transaction.Type.BUY_EXACT_OUT
@@ -128,27 +129,19 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function quoteSellExactIn(
         uint128 marketId,
         uint synthAmount
-    ) external view override returns (uint256 returnAmount, int256 totalFees) {
+    ) external view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (returnAmount, totalFees, ) = _quoteSell(
-            marketId,
-            synthAmount,
-            Transaction.Type.SELL_EXACT_IN
-        );
+        (returnAmount, fees, ) = _quoteSell(marketId, synthAmount, Transaction.Type.SELL_EXACT_IN);
     }
 
     function quoteSellExactOut(
         uint128 marketId,
         uint usdAmount
-    ) external view override returns (uint256 synthToBurn, int totalFees) {
+    ) external view override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (synthToBurn, totalFees, ) = _quoteSell(
-            marketId,
-            usdAmount,
-            Transaction.Type.SELL_EXACT_OUT
-        );
+        (synthToBurn, fees, ) = _quoteSell(marketId, usdAmount, Transaction.Type.SELL_EXACT_OUT);
     }
 
     /**
@@ -159,12 +152,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint minAmountReceived,
         address referrer
-    ) external override returns (uint256 returnAmount, int totalFees, uint collectedFees) {
+    ) external override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (returnAmount, totalFees, feeConfiguration) = _quoteSell(
+        (returnAmount, fees, feeConfiguration) = _quoteSell(
             marketId,
             synthAmount,
             Transaction.Type.SELL_EXACT_IN
@@ -178,9 +171,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         // Burn after calculation because skew is calculating using total supply prior to fill
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
-        collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            totalFees,
+            fees.total(),
             msg.sender,
             spotMarketFactory,
             Transaction.Type.SELL_EXACT_IN
@@ -188,7 +181,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, returnAmount);
 
-        emit SynthSold(marketId, returnAmount, totalFees, collectedFees, referrer);
+        emit SynthSold(marketId, returnAmount, fees, collectedFees, referrer);
     }
 
     function sellExactOut(
@@ -196,12 +189,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint usdAmount,
         uint maxAmountBurned,
         address referrer
-    ) external override returns (uint synthToBurn, int totalFees, uint collectedFees) {
+    ) external override returns (uint synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (synthToBurn, totalFees, feeConfiguration) = _quoteSell(
+        (synthToBurn, fees, feeConfiguration) = _quoteSell(
             marketId,
             usdAmount,
             Transaction.Type.SELL_EXACT_OUT
@@ -212,9 +205,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         }
 
         SynthUtil.getToken(marketId).burn(msg.sender, synthToBurn);
-        collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            totalFees,
+            fees.total(),
             msg.sender,
             spotMarketFactory,
             Transaction.Type.SELL_EXACT_IN
@@ -222,21 +215,29 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, usdAmount);
 
-        emit SynthSold(marketId, usdAmount, totalFees, collectedFees, referrer);
+        emit SynthSold(marketId, usdAmount, fees, collectedFees, referrer);
     }
 
     function _quoteSell(
         uint128 marketId,
         uint amount, // based on transaction type, either synthAmount or usdAmount
         Transaction.Type transactionType
-    ) private view returns (uint256, int256, FeeConfiguration.Data storage) {
+    )
+        private
+        view
+        returns (
+            uint256 returnAmount,
+            OrderFees.Data memory fees,
+            FeeConfiguration.Data storage feeConfiguration
+        )
+    {
         uint usdAmount = amount;
         if (transactionType == Transaction.Type.SELL_EXACT_IN) {
             usdAmount = Price.synthUsdExchangeRate(marketId, amount, transactionType);
         }
 
-        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (uint amountAfterFees, int totalFees, ) = feeConfiguration.calculateFees(
+        feeConfiguration = FeeConfiguration.load(marketId);
+        (returnAmount, fees) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -244,43 +245,46 @@ contract AtomicOrderModule is IAtomicOrderModule {
             transactionType
         );
 
-        uint returnAmount = amountAfterFees;
         // in the case of SELL_EXACT_OUT, we return the synth that will be burned
         // from the user for the given usd amount.  Otherwise, we return the USD
         // amount the user receives based on the synth amount they are selling
         if (transactionType == Transaction.Type.SELL_EXACT_OUT) {
-            returnAmount = Price.usdSynthExchangeRate(marketId, amountAfterFees, transactionType);
+            returnAmount = Price.usdSynthExchangeRate(marketId, returnAmount, transactionType);
         }
-
-        return (returnAmount, totalFees, feeConfiguration);
     }
 
     function _quoteBuy(
         uint128 marketId,
         uint amount, // based on transaction type, either synthAmount or usdAmount
         Transaction.Type transactionType
-    ) private view returns (uint, int, FeeConfiguration.Data storage) {
+    )
+        private
+        view
+        returns (
+            uint returnAmount,
+            OrderFees.Data memory fees,
+            FeeConfiguration.Data storage feeConfiguration
+        )
+    {
         uint usdAmount = amount;
         if (transactionType == Transaction.Type.BUY_EXACT_OUT) {
             usdAmount = Price.synthUsdExchangeRate(marketId, amount, transactionType);
         }
 
-        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (uint amountAfterFees, int totalFees, ) = feeConfiguration.calculateFees(
+        feeConfiguration = FeeConfiguration.load(marketId);
+        (returnAmount, fees) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
             Price.getCurrentPrice(marketId, transactionType),
             transactionType
         );
-
-        uint returnAmount = amountAfterFees;
         // in the case of BUY_EXACT_IN, we return the synth to mint to the user
         // in the case of BUY_EXACT_OUT, we return the USD amount to charge user
         if (transactionType == Transaction.Type.BUY_EXACT_IN) {
-            returnAmount = Price.usdSynthExchangeRate(marketId, amountAfterFees, transactionType);
+            returnAmount = Price.usdSynthExchangeRate(marketId, returnAmount, transactionType);
         }
 
-        return (returnAmount, totalFees, feeConfiguration);
+        return (returnAmount, fees, feeConfiguration);
     }
 }

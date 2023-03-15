@@ -38,7 +38,7 @@ library Wrapper {
         uint128 marketId,
         uint256 wrapAmount,
         ISynthetixSystem synthetix
-    ) internal {
+    ) internal view {
         uint currentDepositedCollateral = synthetix.getMarketCollateralAmount(
             marketId,
             self.wrapCollateralType

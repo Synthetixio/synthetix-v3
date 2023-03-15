@@ -19,6 +19,7 @@ contract WrapperModule is IWrapperModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using FeeConfiguration for FeeConfiguration.Data;
+    using OrderFees for OrderFees.Data;
     using Price for Price.Data;
     using Wrapper for Wrapper.Data;
     using SafeCastU256 for uint256;
@@ -71,7 +72,7 @@ contract WrapperModule is IWrapperModule {
         );
 
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (uint256 returnAmountUsd, int256 totalFees, ) = feeConfiguration.calculateFees(
+        (uint256 returnAmountUsd, OrderFees.Data memory fees) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
@@ -85,25 +86,17 @@ contract WrapperModule is IWrapperModule {
             revert InsufficientAmountReceived(minAmountReceived, amountToMint);
         }
 
-        uint collectedFees;
-        if (totalFees > 0) {
-            spotMarketFactory.synthetix.withdrawMarketUsd(
-                marketId,
-                address(this),
-                totalFees.toUint()
-            );
-            collectedFees = feeConfiguration.collectFees(
-                marketId,
-                totalFees,
-                msg.sender,
-                spotMarketFactory,
-                Transaction.Type.WRAP
-            );
-        }
+        uint collectedFees = feeConfiguration.collectFees(
+            marketId,
+            fees.total(),
+            msg.sender,
+            spotMarketFactory,
+            Transaction.Type.WRAP
+        );
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
-        emit SynthWrapped(marketId, amountToMint, totalFees, collectedFees);
+        emit SynthWrapped(marketId, amountToMint, fees, collectedFees);
     }
 
     /**
@@ -134,7 +127,7 @@ contract WrapperModule is IWrapperModule {
         );
 
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (uint256 returnAmountUsd, int256 totalFees, ) = feeConfiguration.calculateFees(
+        (uint256 returnAmountUsd, OrderFees.Data memory fees) = feeConfiguration.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
@@ -151,21 +144,13 @@ contract WrapperModule is IWrapperModule {
         if (returnCollateralAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
         }
-        uint collectedFees;
-        if (totalFees > 0) {
-            spotMarketFactory.synthetix.withdrawMarketUsd(
-                marketId,
-                address(this),
-                totalFees.toUint()
-            );
-            collectedFees = feeConfiguration.collectFees(
-                marketId,
-                totalFees,
-                msg.sender,
-                spotMarketFactory,
-                Transaction.Type.UNWRAP
-            );
-        }
+        uint collectedFees = feeConfiguration.collectFees(
+            marketId,
+            fees.total(),
+            msg.sender,
+            spotMarketFactory,
+            Transaction.Type.UNWRAP
+        );
 
         spotMarketFactory.synthetix.withdrawMarketCollateral(
             marketId,
@@ -175,6 +160,6 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule(wrapperStore.wrapCollateralType).transfer(msg.sender, returnCollateralAmount);
 
-        emit SynthUnwrapped(marketId, returnCollateralAmount, totalFees, collectedFees);
+        emit SynthUnwrapped(marketId, returnCollateralAmount, fees, collectedFees);
     }
 }

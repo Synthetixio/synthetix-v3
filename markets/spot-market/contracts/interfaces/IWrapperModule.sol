@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "../storage/OrderFees.sol";
+
 /**
  * @title Module for synth wrappers
  */
@@ -36,13 +38,13 @@ interface IWrapperModule {
      * @notice Gets fired after user wraps synth
      * @param synthMarketId Id of the market.
      * @param amountWrapped amount of synth wrapped.
-     * @param totalFees total fees applied on the transaction.
+     * @param fees breakdown of all the fees incurred for the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      */
     event SynthWrapped(
         uint indexed synthMarketId,
         uint amountWrapped,
-        int totalFees,
+        OrderFees.Data fees,
         uint feesCollected
     );
 
@@ -50,13 +52,13 @@ interface IWrapperModule {
      * @notice Gets fired after user unwraps synth
      * @param synthMarketId Id of the market.
      * @param amountUnwrapped amount of synth unwrapped.
-     * @param totalFees total fees applied on the transaction.
+     * @param fees breakdown of all the fees incurred for the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      */
     event SynthUnwrapped(
         uint indexed synthMarketId,
         uint amountUnwrapped,
-        int totalFees,
+        OrderFees.Data fees,
         uint feesCollected
     );
 
