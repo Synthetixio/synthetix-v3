@@ -15,5 +15,8 @@
   "license": "MIT",
   "peerDependencies": {
     "solhint": "^3.0.0"
+  },
+  "devDependencies": {
+    "solhint": "3.3.7"
   }
 }

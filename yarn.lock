@@ -13608,6 +13608,8 @@ __metadata:
 "solhint-plugin-numcast@*, solhint-plugin-numcast@workspace:utils/solhint-plugin-numcast":
   version: 0.0.0-use.local
   resolution: "solhint-plugin-numcast@workspace:utils/solhint-plugin-numcast"
+  dependencies:
+    solhint: 3.3.7
   peerDependencies:
     solhint: ^3.0.0
   languageName: unknown
