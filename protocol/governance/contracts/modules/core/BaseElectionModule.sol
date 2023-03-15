@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../submodules/election/ElectionSchedule.sol";
@@ -20,6 +21,7 @@ contract BaseElectionModule is
 {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
+    using SafeCastU256 for uint256;
 
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
@@ -47,7 +49,7 @@ contract BaseElectionModule is
         uint64 epochEndDate
     ) internal {
         Council.Data storage store = Council.load();
-
+        // solhint-disable-next-line numcast/safe-cast
         uint8 seatCount = uint8(firstCouncil.length);
         if (minimumActiveMembers == 0 || minimumActiveMembers > seatCount) {
             revert InvalidMinimumActiveMembers();
@@ -58,6 +60,7 @@ contract BaseElectionModule is
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
+        // solhint-disable-next-line numcast/safe-cast
         settings.nextEpochSeatCount = uint8(firstCouncil.length);
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
@@ -65,7 +68,7 @@ contract BaseElectionModule is
         store.newElection();
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
-        uint64 epochStartDate = uint64(block.timestamp);
+        uint64 epochStartDate = block.timestamp.to64();
         _configureEpochSchedule(
             firstEpoch,
             epochStartDate,
@@ -374,6 +377,7 @@ contract BaseElectionModule is
     }
 
     function getCurrentPeriod() external view override returns (uint) {
+        // solhint-disable-next-line numcast/safe-cast
         return uint(Council.load().getCurrentPeriod());
     }
 

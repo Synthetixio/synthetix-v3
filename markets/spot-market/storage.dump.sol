@@ -191,7 +191,6 @@ contract SpotMarketFactoryModule {
 library AsyncOrder {
     struct Data {
         uint256 totalEscrowedSynthShares;
-        int256 totalCommittedUsdAmount;
         uint128 totalClaims;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -211,9 +210,9 @@ library AsyncOrderClaim {
         uint256 amountEscrowed;
         uint256 settlementStrategyId;
         uint256 settlementTime;
-        int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
         uint256 settledAt;
+        address referrer;
     }
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrderClaim", marketId, claimId));
@@ -247,6 +246,7 @@ library FeeConfiguration {
         int unwrapFixedFee;
         uint skewScale;
         address feeCollector;
+        mapping(address => uint) referrerShare;
     }
     function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));

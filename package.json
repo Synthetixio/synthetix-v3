@@ -14,20 +14,24 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
-    "clean": "npm run --workspaces --if-present clean",
-    "build": "npm run -w @synthetixio/core-utils -w @synthetixio/hardhat-storage -w @synthetixio/router -w @synthetixio/sample-project -w @synthetixio/oracle-manager -w @synthetixio/main build",
-    "test": "npm run --workspaces --if-present test",
-    "coverage": "npm run --workspaces --if-present coverage",
+    "clean": "yarn workspaces foreach --parallel --verbose run clean",
+    "build": "yarn workspaces foreach --topological-dev --verbose run build",
+    "test": "yarn workspaces foreach --parallel --verbose run test",
+    "coverage": "yarn workspaces foreach --verbose run coverage",
     "lint:js": "prettier --check '**/*.{t,j}s' && eslint --max-warnings=0 '**/*.{t,j}s'",
     "lint:js:fix": "prettier --write '**/*.{t,j}s' && eslint --max-warnings=0 --fix '**/*.{t,j}s'",
     "lint:sol": "prettier --check '(protocol|utils|markets)/**/*.sol' && solhint utils/*/contracts/**/*.sol protocol/*/contracts/**/*.sol  markets/*/contracts/**/*.sol",
     "lint:sol:fix": "prettier --write '(protocol|utils|markets)/**/*.sol' && solhint --fix utils/*/contracts/**/*.sol protocol/*/contracts/**/*.sol markets/*/contracts/**/*.sol",
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|ts|sol)'",
-    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "lint": "npm run lint:js && npm run lint:sol",
-    "check-packages": "node .github/check-packages.js"
+    "lint:fix": "yarn lint:js:fix && yarn lint:sol:fix",
+    "lint": "yarn lint:js && yarn lint:sol",
+    "deps": "deps",
+    "deps:fix": "deps --fix",
+    "deps:mismatched": "deps-mismatched",
+    "deps:circular": "deps-circular"
   },
   "devDependencies": {
+    "@synthetixio/deps": "workspace:*",
     "@types/mocha": "10.0.1",
     "@types/node": "18.11.10",
     "@typescript-eslint/eslint-plugin": "5.45.0",
@@ -44,8 +48,7 @@
     "typescript": "4.9.3"
   },
   "pre-commit": [
-    "lint:quick",
-    "check-packages"
+    "lint:quick"
   ],
   "workspaces": [
     "utils/*",
@@ -55,5 +58,6 @@
   "engines": {
     "node": "^16.16.0",
     "npm": "^8.11.0"
-  }
+  },
+  "packageManager": "yarn@3.4.1"
 }

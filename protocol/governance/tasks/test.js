@@ -4,7 +4,7 @@ const { glob } = require('hardhat/internal/util/glob');
 const { TASK_TEST_GET_TEST_FILES } = require('hardhat/builtin-tasks/task-names');
 
 // Allow glob patterns on testFiles parameter for 'hardhat test' task
-// e.g.: npx hardhat test test/unit/**/*.test.js
+// e.g.: yarn hardhat test test/unit/**/*.test.js
 subtask(TASK_TEST_GET_TEST_FILES).setAction(async (args, { config }, runSuper) => {
   const testFiles = (
     await Promise.all(

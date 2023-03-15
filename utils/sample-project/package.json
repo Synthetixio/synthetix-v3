@@ -6,14 +6,18 @@
   "scripts": {
     "clean": "hardhat clean",
     "build": "hardhat storage:verify",
+    "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "hardhat test",
     "coverage": "hardhat test"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.2.1",
-    "@synthetixio/core-contracts": "*",
-    "@synthetixio/core-modules": "*",
-    "@synthetixio/hardhat-storage": "*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/hardhat-storage": "workspace:*",
+    "@synthetixio/router": "workspace:*",
+    "hardhat": "2.13.0",
     "hardhat-cannon": "^2.1.7"
   }
 }

@@ -104,13 +104,13 @@ The External Node allows a custom node to be defined in an smart contract at a s
 
 ## Development
 
-To run the oracle manager (after running `npm i && npm run build` in the project root):
+To run the oracle manager (after running `yarn && yarn build` in the project root):
 
-`npx hardhat cannon:build && npx hardhat cannon:run`
+`yarn hardhat cannon:build && yarn hardhat cannon:run`
 
 To run the tests:
 
-`npm run test`
+`yarn test`
 
 ### New Node Type Checklist
 

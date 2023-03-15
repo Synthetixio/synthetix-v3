@@ -125,4 +125,4 @@ Though synth decay may complicate composability, this incentivizes liquidity pro
 
 ## Development
 
-`npm start`
+`yarn start`

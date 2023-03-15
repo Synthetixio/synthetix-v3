@@ -75,6 +75,7 @@ contract CollateralModule is ICollateralModule {
         Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
             AccountRBAC._WITHDRAW_PERMISSION,
+            // solhint-disable-next-line numcast/safe-cast
             uint256(Config.read(_CONFIG_TIMEOUT_WITHDRAW))
         );
 
