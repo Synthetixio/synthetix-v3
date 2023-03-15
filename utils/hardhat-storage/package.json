@@ -1,6 +1,9 @@
 {
   "name": "@synthetixio/hardhat-storage",
   "version": "1.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Solidity Contracts Storage Validation",
   "main": "dist/index.js",
   "source": "src/index.ts",

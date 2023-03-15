@@ -1,6 +1,9 @@
 {
   "name": "@synthetixio/router",
   "version": "1.1.2",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Synthetix Router Proxy Architecture Manager",
   "main": "dist/index.js",
   "source": "src/index.ts",

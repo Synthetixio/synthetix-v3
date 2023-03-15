@@ -1,7 +1,7 @@
 {
   "name": "@synthetixio/sample-project",
   "version": "1.0.0",
-  "description": "Sample project implemeting Proxy architecture",
+  "description": "Sample project implementing Proxy architecture",
   "private": true,
   "scripts": {
     "clean": "hardhat clean",

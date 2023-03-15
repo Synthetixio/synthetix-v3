@@ -1,6 +1,9 @@
 {
   "name": "@synthetixio/core-modules",
   "version": "1.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Commmon contracts for Synthetix",
   "files": [
     "contracts",
