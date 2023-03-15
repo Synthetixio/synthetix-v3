@@ -260,12 +260,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         uint usableAmount = synthAmount.mulDecimal(price) - settlementReward;
         uint referrerShareableFees;
-<<<<<<< HEAD
-        (finalOrderAmount, totalFees, referrerShareableFees) = FeeConfiguration.calculateFees(
-=======
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
         (finalOrderAmount, totalFees, referrerShareableFees) = feeConfiguration.calculateFees(
->>>>>>> 75cbfce6 (wip)
             marketId,
             trader,
             usableAmount,
