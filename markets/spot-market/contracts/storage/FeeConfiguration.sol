@@ -22,6 +22,8 @@ library FeeConfiguration {
     using DecimalMath for uint256;
     using DecimalMath for int256;
 
+    error InvalidUtilizationLeverage();
+
     struct Data {
         /**
          * @dev The atomic fixed fee rate for a specific transactor.  Useful for direct integrations to set custom fees for specific addresses.
@@ -40,6 +42,10 @@ library FeeConfiguration {
          * applied on buy trades only.
          */
         uint utilizationFeeRate;
+        /**
+         * @dev a configurable leverage % that is applied to delegated collateral which is used as a ratio for determining utilization. D18
+         */
+        uint utilizationLeveragePercentage;
         /**
          * @dev wrapping fee rate represented as a percent, 18 decimals
          */
@@ -69,6 +75,12 @@ library FeeConfiguration {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
         assembly {
             feeConfiguration.slot := s
+        }
+    }
+
+    function checkUtilizationLeverage(Data storage feeConfiguration) internal view {
+        if (feeConfiguration.utilizationLeveragePercentage == 0) {
+            revert InvalidUtilizationLeverage();
         }
     }
 
@@ -305,7 +317,7 @@ library FeeConfiguration {
 
     /**
      * @dev Calculates utilization rate fee
-     *
+     * TODO: change readme based on leverage
      * If no utilizationFeeRate is set, then the fee is 0
      * The utilization rate fee is determined based on the ratio of outstanding synth value to the delegated collateral to the market.
      * Example:
@@ -320,16 +332,20 @@ library FeeConfiguration {
      *
      */
     function calculateUtilizationRateFee(
-        FeeConfiguration.Data storage feeConfiguration,
+        Data storage self,
         uint128 marketId,
         uint amount,
         uint256 synthPrice
     ) internal view returns (uint utilFee) {
-        if (feeConfiguration.utilizationFeeRate == 0) {
+        if (self.utilizationFeeRate == 0) {
             return 0;
         }
 
-        uint delegatedCollateral = SpotMarketFactory.load().synthetix.getMarketCollateral(marketId);
+        uint leveragedDelegatedCollateralValue = SpotMarketFactory
+            .load()
+            .synthetix
+            .getMarketCollateral(marketId)
+            .mulDecimal(self.utilizationLeveragePercentage);
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
 
@@ -338,20 +354,24 @@ library FeeConfiguration {
         uint totalValueAfterFill = totalValueBeforeFill + amount;
 
         // utilization is below 100%
-        if (delegatedCollateral > totalValueAfterFill) {
+        if (leveragedDelegatedCollateralValue > totalValueAfterFill) {
             return 0;
         } else {
-            uint preUtilization = totalValueBeforeFill.divDecimal(delegatedCollateral);
+            uint preUtilization = totalValueBeforeFill.divDecimal(
+                leveragedDelegatedCollateralValue
+            );
             // use 100% utilization if pre-fill utilization was less than 100%
             // no fees charged below 100% utilization
             uint preUtilizationDelta = preUtilization > 1e18 ? preUtilization - 1e18 : 0;
-            uint postUtilization = totalValueAfterFill.divDecimal(delegatedCollateral);
+            uint postUtilization = totalValueAfterFill.divDecimal(
+                leveragedDelegatedCollateralValue
+            );
             uint postUtilizationDelta = postUtilization - 1e18;
 
             // utilization is represented as the # of percentage points above 100%
             uint utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(100e18) / 2;
 
-            utilFee = utilization.mulDecimal(feeConfiguration.utilizationFeeRate);
+            utilFee = utilization.mulDecimal(self.utilizationFeeRate);
         }
     }
 

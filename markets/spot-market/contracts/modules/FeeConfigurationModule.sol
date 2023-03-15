@@ -56,12 +56,14 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
      */
     function setMarketUtilizationFees(
         uint128 synthMarketId,
-        uint utilizationFeeRate
+        uint utilizationFeeRate,
+        uint utilizationLeveragePercentage
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(synthMarketId);
         feeConfiguration.utilizationFeeRate = utilizationFeeRate;
+        feeConfiguration.utilizationLeveragePercentage = utilizationLeveragePercentage;
 
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
     }
