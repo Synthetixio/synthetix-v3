@@ -74,6 +74,19 @@ interface IAtomicOrderModule {
         address referrer
     ) external returns (uint, OrderFees.Data memory);
 
+    function buy(
+        uint128 marketId,
+        uint usdAmount,
+        uint minAmountReceived
+    ) external returns (uint synthAmount, OrderFees.Data memory fees);
+
+    function buy(
+        uint128 marketId,
+        uint usdAmount,
+        uint minAmountReceived,
+        address referrer
+    ) external returns (uint synthAmount, OrderFees.Data memory fees);
+
     function buyExactOut(
         uint128 synthMarketId,
         uint synthAmount,
@@ -115,6 +128,19 @@ interface IAtomicOrderModule {
         uint maxAmountReceived,
         address referrer
     ) external returns (uint, OrderFees.Data memory);
+
+    function sell(
+        uint128 marketId,
+        uint synthAmount,
+        uint minUsdAmount,
+        address referrer
+    ) external returns (uint usdAmountReceived, OrderFees.Data memory fees);
+
+    function sell(
+        uint128 marketId,
+        uint synthAmount,
+        uint minUsdAmount
+    ) external returns (uint usdAmountReceived, OrderFees.Data memory fees);
 
     function quoteSellExactIn(
         uint128 marketId,

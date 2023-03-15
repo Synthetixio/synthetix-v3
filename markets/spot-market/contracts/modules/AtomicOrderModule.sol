@@ -62,6 +62,23 @@ contract AtomicOrderModule is IAtomicOrderModule {
         return (synthAmount, fees);
     }
 
+    function buy(
+        uint128 marketId,
+        uint usdAmount,
+        uint minAmountReceived,
+        address referrer
+    ) external override returns (uint synthAmount, OrderFees.Data memory fees) {
+        return buyExactIn(marketId, usdAmount, minAmountReceived, referrer);
+    }
+
+    function buy(
+        uint128 marketId,
+        uint usdAmount,
+        uint minAmountReceived
+    ) external override returns (uint synthAmount, OrderFees.Data memory fees) {
+        return buyExactIn(marketId, usdAmount, minAmountReceived, address(0));
+    }
+
     /**
      * @inheritdoc IAtomicOrderModule
      */
@@ -70,7 +87,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint usdAmount,
         uint minAmountReceived,
         address referrer
-    ) external override returns (uint synthAmount, OrderFees.Data memory fees) {
+    ) public override returns (uint synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -145,6 +162,23 @@ contract AtomicOrderModule is IAtomicOrderModule {
         (synthToBurn, fees, ) = _quoteSell(marketId, usdAmount, Transaction.Type.SELL_EXACT_OUT);
     }
 
+    function sell(
+        uint128 marketId,
+        uint synthAmount,
+        uint minUsdAmount,
+        address referrer
+    ) external override returns (uint usdAmountReceived, OrderFees.Data memory fees) {
+        return sellExactIn(marketId, synthAmount, minUsdAmount, referrer);
+    }
+
+    function sell(
+        uint128 marketId,
+        uint synthAmount,
+        uint minUsdAmount
+    ) external override returns (uint usdAmountReceived, OrderFees.Data memory fees) {
+        return sellExactIn(marketId, synthAmount, minUsdAmount, address(0));
+    }
+
     /**
      * @inheritdoc IAtomicOrderModule
      */
@@ -153,7 +187,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint minAmountReceived,
         address referrer
-    ) external override returns (uint256 returnAmount, OrderFees.Data memory fees) {
+    ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
