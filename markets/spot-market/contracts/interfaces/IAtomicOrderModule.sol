@@ -16,6 +16,7 @@ interface IAtomicOrderModule {
      */
     error InsufficientAllowance(uint expected, uint current);
     error ExceedsMaxUsdAmount(uint maxUsdAmount, uint usdAmountCharged);
+    error ExceedsMaxSynthAmount(uint maxSynthAmount, uint synthAmountCharged);
     /**
      * @notice Thrown when a trade doesn't meet minimum expected return amount.
      */
@@ -64,7 +65,7 @@ interface IAtomicOrderModule {
      * @param referrer Optional address of the referrer, for fee share
      * @return synthReturned Synth received on the trade based on amount provided by trader.
      */
-    function buy(
+    function buyExactIn(
         uint128 synthMarketId,
         uint amountUsd,
         uint minAmountReceived,
@@ -78,6 +79,16 @@ interface IAtomicOrderModule {
         address referrer
     ) external returns (uint, int);
 
+    function quoteBuyExactIn(
+        uint128 synthMarketId,
+        uint usdAmount
+    ) external view returns (uint256 synthAmount, int256 totalFees);
+
+    function quoteBuyExactOut(
+        uint128 synthMarketId,
+        uint synthAmount
+    ) external view returns (uint256 usdAmountCharged, int totalFees);
+
     /**
      * @notice Initiates a sell trade returning snxUSD for the specified amount of synth, sellAmount.
      * @dev Transfers the specified synth, collects fees through configured fee collector, returns snxUSD to the trader.
@@ -88,27 +99,27 @@ interface IAtomicOrderModule {
      * @param referrer Optional address of the referrer, for fee share
      * @return amountReturned Amount of snxUSD returned to user based on synth provided by trader.
      */
-    function sell(
+    function sellExactIn(
         uint128 synthMarketId,
         uint sellAmount,
         uint minAmountReceived,
         address referrer
-    ) external returns (uint, int);
-
-    function quoteSell(
-        uint128 marketId,
-        uint synthAmount
-    ) external view returns (uint256 returnAmount, int256 totalFees);
+    ) external returns (uint, int, uint);
 
     function sellExactOut(
         uint128 marketId,
         uint usdAmount,
+        uint maxAmountReceived,
         address referrer
-    ) external returns (uint);
+    ) external returns (uint, int, uint);
 
-    function sellExactIn(
+    function quoteSellExactIn(
         uint128 marketId,
-        uint synthAmount,
-        address referrer
-    ) external returns (uint);
+        uint synthAmount
+    ) external view returns (uint256 returnAmount, int256 totalFees);
+
+    function quoteSellExactOut(
+        uint128 marketId,
+        uint usdAmount
+    ) external view returns (uint256 synthToBurn, int totalFees);
 }

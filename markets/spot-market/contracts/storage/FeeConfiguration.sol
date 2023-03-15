@@ -113,35 +113,24 @@ library FeeConfiguration {
                 transactor,
                 marketId,
                 amount,
+                synthPrice,
                 transactionType
             );
         } else if (transactionType == Transaction.Type.WRAP) {
-            (amountAfterFees, feesCollected) = calculateWrapFees(feeConfiguration, amount);
+            (amountAfterFees, feesCollected) = _applyFees(
+                amount,
+                feeConfiguration.wrapFixedFee,
+                transactionType
+            );
         } else if (transactionType == Transaction.Type.UNWRAP) {
-            (amountAfterFees, feesCollected) = calculateUnwrapFees(feeConfiguration, amount);
+            (amountAfterFees, feesCollected) = _applyFees(
+                amount,
+                feeConfiguration.unwrapFixedFee,
+                transactionType
+            );
         } else {
             amountAfterFees = amount;
         }
-    }
-
-    /**
-     * @dev Calculates wrap fees based on the wrapFixedFee.
-     */
-    function calculateWrapFees(
-        FeeConfiguration.Data storage feeConfiguration,
-        uint256 amount
-    ) internal view returns (uint amountUsable, int feesCollected) {
-        (amountUsable, feesCollected) = _applyFees(amount, feeConfiguration.wrapFixedFee);
-    }
-
-    /**
-     * @dev Calculates wrap fees based on the unwrapFixedFee.
-     */
-    function calculateUnwrapFees(
-        FeeConfiguration.Data storage feeConfiguration,
-        uint256 amount
-    ) internal view returns (uint amountUsable, int feesCollected) {
-        (amountUsable, feesCollected) = _applyFees(amount, feeConfiguration.unwrapFixedFee);
     }
 
     /**
@@ -160,7 +149,7 @@ library FeeConfiguration {
         uint256 amount,
         uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal view returns (uint amountUsable, int calculatedFees, uint fixedFee) {
+    ) internal view returns (uint amountAfterFees, int calculatedFees, uint fixedFee) {
         uint utilizationFee = calculateUtilizationRateFee(
             feeConfiguration,
             marketId,
@@ -170,30 +159,31 @@ library FeeConfiguration {
 
         fixedFee = _getFixedFee(feeConfiguration, transactor, Transaction.isAsync(transactionType));
 
+        int totalFees = utilizationFee.toInt() + fixedFee.toInt();
+
+        (amountAfterFees, calculatedFees) = _applyFees(amount, totalFees, transactionType);
+
+        // only run skew fee after other fees have been applied
         int skewFee;
         if (transactionType == Transaction.Type.BUY_EXACT_IN) {
-            skewFee = calculateSkewFeeByUsd(
+            skewFee = calculateSkewFee(
                 feeConfiguration,
                 marketId,
-                amount,
+                amountAfterFees.toInt(),
                 synthPrice,
                 transactionType
             );
         } else if (transactionType == Transaction.Type.BUY_EXACT_OUT) {
-            skewFee = calculateSkewFeeBySynthAmount(
+            skewFee = calculateSkewFeeExact(
                 feeConfiguration,
                 marketId,
-                amount,
+                amountAfterFees,
+                synthPrice,
                 transactionType
             );
-
-            amount = amount.mulDecimal(synthPrice);
-            feesCollected = fees.mulDecimal(amount.toInt());
         }
 
-        int totalFees = utilizationFee.toInt() + skewFee + fixedFee.toInt();
-
-        (amountUsable, calculatedFees) = _applyFees(amount, totalFees);
+        (amountAfterFees, calculatedFees) = _applyFees(amountAfterFees, skewFee, transactionType);
     }
 
     /**
@@ -209,22 +199,34 @@ library FeeConfiguration {
         FeeConfiguration.Data storage feeConfiguration,
         address transactor,
         uint128 marketId,
-        uint256 synthAmount,
+        uint256 amount,
         uint synthPrice,
         Transaction.Type transactionType
-    ) internal view returns (uint amountUsable, int feesCollected, uint fixedFee) {
-        int skewFee = calculateSkewFeeExact(
-            feeConfiguration,
-            marketId,
-            synthAmount,
-            transactionType
-        );
-
+    ) internal view returns (uint amountAfterFees, int totalFees, uint fixedFee) {
         fixedFee = _getFixedFee(feeConfiguration, transactor, Transaction.isAsync(transactionType));
 
-        int totalFees = skewFee + fixedFee.toInt();
+        (amountAfterFees, totalFees) = _applyFees(amount, fixedFee.toInt(), transactionType);
 
-        (amountUsable, feesCollected) = _applyFees(synthAmount, totalFees);
+        int skewFee;
+        if (transactionType == Transaction.Type.SELL_EXACT_OUT) {
+            int amountOut = amountAfterFees.toInt() * -1;
+            skewFee = calculateSkewFee(
+                feeConfiguration,
+                marketId,
+                amountOut,
+                synthPrice,
+                transactionType
+            );
+        } else if (transactionType == Transaction.Type.SELL_EXACT_IN) {
+            skewFee = calculateSkewFeeExact(
+                feeConfiguration,
+                marketId,
+                amount,
+                synthPrice,
+                transactionType
+            );
+        }
+        (amountAfterFees, totalFees) = _applyFees(amount, skewFee, transactionType);
     }
 
     function calculateSkewFeeExact(
@@ -243,9 +245,7 @@ library FeeConfiguration {
         bool isBuyTrade = Transaction.isBuy(transactionType);
         bool isSellTrade = Transaction.isSell(transactionType);
 
-        if (!isBuyTrade && !isSellTrade) {
-            return 0;
-        }
+        int skewScaleValue = self.skewScale.mulDecimal(synthPrice).toInt();
 
         uint wrappedCollateralAmount = SpotMarketFactory
             .load()
@@ -259,21 +259,27 @@ library FeeConfiguration {
             .mulDecimal(synthPrice)
             .toInt() - wrappedCollateralAmount.toInt();
 
-        int skew = Transaction.isBuy(transactionType)
-            ? initialSkew + amountInt
-            : initialSkew - amountInt;
+        int initialSkewAdjustment = initialSkew.divDecimal(skewScaleValue);
 
-        int avgSkew = (skew + initialSkew) / 2;
-        skewFee = avgSkew.divDecimal(self.skewScale.toInt());
-        if (Transaction.isSell(transactionType)) {
-            skewFee = skewFee * -1;
+        int skewAfterFill = initialSkew;
+        if (isBuyTrade) {
+            skewAfterFill += amountInt;
+        } else if (isSellTrade) {
+            skewAfterFill -= amountInt;
         }
+
+        int skewAfterFillAdjustment = skewAfterFill.divDecimal(skewScaleValue);
+        int skewAdjustmentAveragePercentage = (skewAfterFillAdjustment + initialSkewAdjustment) / 2;
+
+        skewFee = isSellTrade
+            ? skewAdjustmentAveragePercentage * -1
+            : skewAdjustmentAveragePercentage;
     }
 
-    function calculateSkewFeeByUsd(
+    function calculateSkewFee(
         Data storage feeConfiguration,
         uint128 marketId,
-        uint amount,
+        int amount,
         uint synthPrice,
         Transaction.Type transactionType
     ) internal view returns (int skewFee) {
@@ -281,25 +287,20 @@ library FeeConfiguration {
             return 0;
         }
 
-        bool isBuyTrade = Transaction.isBuy(transactionType);
-        bool isSellTrade = Transaction.isSell(transactionType);
-
-        if (!isBuyTrade && !isSellTrade) {
-            return 0;
-        }
-
         uint wrappedCollateralAmount = SpotMarketFactory.load().synthetix.getMarketCollateralAmount(
             marketId,
             Wrapper.load(marketId).wrapCollateralType
         );
-
         int initialSkew = SynthUtil.getToken(marketId).totalSupply().toInt() -
             wrappedCollateralAmount.toInt();
 
         int amountOut = _calculateSkewAmountOut(feeConfiguration, amount, synthPrice, initialSkew);
-        int amountOutWithoutSkew = (amount.divDecimal(synthPrice)).toInt();
+        int amountOutWithoutSkew = amount.divDecimal(synthPrice.toInt());
 
-        return (amountOutWithoutSkew - amountOut).divDecimal(amountOutWithoutSkew);
+        skewFee = (amountOutWithoutSkew - amountOut).divDecimal(amountOutWithoutSkew);
+        if (Transaction.isSell(transactionType)) {
+            skewFee = skewFee * -1;
+        }
     }
 
     /**
@@ -416,10 +417,22 @@ library FeeConfiguration {
 
     function _applyFees(
         uint amount,
-        int fees // 18 decimals
-    ) private pure returns (uint amountUsable, int feesCollected) {
+        int fees,
+        Transaction.Type transactionType
+    ) private pure returns (uint amountAfterFees, int feesCollected) {
         feesCollected = fees.mulDecimal(amount.toInt());
-        amountUsable = (amount.toInt() - feesCollected).toUint();
+
+        /*
+            when transaction is requesting exact out, we want to add the fees to the 
+            amount that is charged to the user. 
+            in the case of exact in, we want to subtract the fees from the amount
+            to return to user.
+        */
+        if (Transaction.isExactOut(transactionType)) {
+            amountAfterFees = (amount.toInt() + feesCollected).toUint();
+        } else {
+            amountAfterFees = (amount.toInt() - feesCollected).toUint();
+        }
     }
 
     /*
@@ -438,20 +451,33 @@ library FeeConfiguration {
         }
     }
 
+    /*
+     * @dev This equation allows us to calculate skew fee % from any given point on the skew scale
+     * to where we should end up after a fill.  The equation is derived from the following:
+     *  K*2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
+     *  K = configured skew scale
+     *  C = amount (cost in USD)
+     *  Ni = initial skew
+     *  P = price
+     *
+     *  For a given amount in USD, this equation spits out the synth amount to be returned based on skew scale/price/initial skew
+     */
     function _calculateSkewAmountOut(
         Data storage self,
-        uint amount,
+        int amount,
         uint price,
         int initialSkew
     ) private view returns (int amountOut) {
         uint skewPriceRatio = self.skewScale.divDecimal(2 * price);
-        uint costPriceSkewRatio = (8 * amount.mulDecimal(price)).divDecimal(self.skewScale);
+        int costPriceSkewRatio = (8 * amount.mulDecimal(price.toInt())).divDecimal(
+            self.skewScale.toInt()
+        );
         int initialSkewPriceRatio = (2 * initialSkew.mulDecimal(price.toInt())).divDecimal(
             self.skewScale.toInt()
         );
 
         int ratioSquared = _pow(initialSkewPriceRatio + 2 * price.toInt(), 2);
-        int sqrt = _sqrt(costPriceSkewRatio.toInt() + ratioSquared);
+        int sqrt = _sqrt(costPriceSkewRatio + ratioSquared);
 
         return skewPriceRatio.toInt().mulDecimal(sqrt) - self.skewScale.toInt() - initialSkew;
     }

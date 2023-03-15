@@ -38,4 +38,12 @@ library Transaction {
     function isAsync(Type orderType) internal pure returns (bool) {
         return orderType == Type.ASYNC_BUY || orderType == Type.ASYNC_SELL;
     }
+
+    function isExactOut(Type orderType) internal pure returns (bool) {
+        return orderType == Type.BUY_EXACT_OUT || orderType == Type.SELL_EXACT_OUT;
+    }
+
+    function isExactIn(Type orderType) internal pure returns (bool) {
+        return orderType == Type.BUY_EXACT_IN || orderType == Type.SELL_EXACT_IN;
+    }
 }
