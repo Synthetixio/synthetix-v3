@@ -18,6 +18,7 @@ import "hardhat/console.sol";
  */
 library FeeConfiguration {
     using SpotMarketFactory for SpotMarketFactory.Data;
+    using OrderFees for OrderFees.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using DecimalMath for uint256;
@@ -372,27 +373,37 @@ library FeeConfiguration {
     }
 
     /**
-     * @dev Runs the calculated fees through the Fee collector if it exists.
-     *
-     * The rest of the fees not collected by fee collector is deposited into the market manager
-     * If no fee collector is specified, all fees are deposited into the market manager to help staker c-ratios.
-     *
+     * @dev First sends referrer fees based on fixed fee amount and configured %
+     * Then if total fees for transaction are greater than 0, gets quote from
+     * fee collector and calls collectFees to send fees to fee collector
      */
     function collectFees(
         Data storage self,
         uint128 marketId,
-        int totalFees,
+        OrderFees.Data memory fees,
         address transactor,
+        address referrer,
         SpotMarketFactory.Data storage factory,
         Transaction.Type transactionType
-    ) internal returns (uint feeCollectorQuote) {
-        if (totalFees <= 0 || address(self.feeCollector) == address(0)) {
-            return 0;
-        }
+    ) internal returns (uint collectedFees) {
+        uint referrerFeesCollected = _collectReferrerFees(
+            self,
+            marketId,
+            fees,
+            referrer,
+            factory,
+            transactionType
+        );
 
+        int totalFees = fees.total();
+        if (totalFees <= 0 || address(self.feeCollector) == address(0)) {
+            return referrerFeesCollected;
+        }
+        // remove fees sent to referrer when calculating fees to collect
+        totalFees -= referrerFeesCollected.toInt();
         uint totalFeesUint = totalFees.toUint();
 
-        feeCollectorQuote = self.feeCollector.quoteFees(
+        uint feeCollectorQuote = self.feeCollector.quoteFees(
             marketId,
             totalFeesUint,
             transactor,
@@ -405,6 +416,32 @@ library FeeConfiguration {
         }
 
         self.feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
+
+        return referrerFeesCollected + feeCollectorQuote;
+    }
+
+    function _collectReferrerFees(
+        Data storage self,
+        uint128 marketId,
+        OrderFees.Data memory fees,
+        address referrer,
+        SpotMarketFactory.Data storage factory,
+        Transaction.Type transactionType
+    ) private returns (uint referrerFeesCollected) {
+        if (referrer == address(0) || fees.wrapperFees == 0) {
+            return 0;
+        }
+
+        uint referrerPercentage = self.referrerShare[referrer];
+        referrerFeesCollected = fees.fixedFees.toUint().mulDecimal(referrerPercentage);
+
+        if (referrerFeesCollected > 0) {
+            if (Transaction.isSell(transactionType)) {
+                factory.synthetix.withdrawMarketUsd(marketId, referrer, referrerFeesCollected);
+            } else {
+                factory.usdToken.transfer(referrer, referrerFeesCollected);
+            }
+        }
     }
 
     function _applyFees(

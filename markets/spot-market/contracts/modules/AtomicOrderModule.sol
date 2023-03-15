@@ -47,13 +47,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            referrer,
             spotMarketFactory,
             Transaction.Type.BUY_EXACT_OUT
         );
 
-        // TODO: send to referrer first
         spotMarketFactory.depositToMarketManager(marketId, usdAmountCharged - collectedFees);
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
@@ -90,8 +90,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            referrer,
             spotMarketFactory,
             Transaction.Type.BUY_EXACT_IN
         );
@@ -173,8 +174,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            referrer,
             spotMarketFactory,
             Transaction.Type.SELL_EXACT_IN
         );
@@ -207,8 +209,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SynthUtil.getToken(marketId).burn(msg.sender, synthToBurn);
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            referrer,
             spotMarketFactory,
             Transaction.Type.SELL_EXACT_IN
         );

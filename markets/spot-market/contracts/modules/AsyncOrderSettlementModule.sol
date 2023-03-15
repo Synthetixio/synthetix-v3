@@ -229,8 +229,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            asyncOrderClaim.referrer,
             spotMarketFactory,
             Transaction.Type.ASYNC_BUY
         );
@@ -281,8 +282,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         // collect fees
         collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            asyncOrderClaim.referrer,
             spotMarketFactory,
             Transaction.Type.ASYNC_SELL
         );

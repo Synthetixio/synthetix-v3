@@ -88,8 +88,9 @@ contract WrapperModule is IWrapperModule {
 
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            address(0),
             spotMarketFactory,
             Transaction.Type.WRAP
         );
@@ -146,8 +147,9 @@ contract WrapperModule is IWrapperModule {
         }
         uint collectedFees = feeConfiguration.collectFees(
             marketId,
-            fees.total(),
+            fees,
             msg.sender,
+            address(0),
             spotMarketFactory,
             Transaction.Type.UNWRAP
         );
