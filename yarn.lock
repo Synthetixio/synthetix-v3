@@ -1907,20 +1907,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@snx-private/deps@workspace:*, @snx-private/deps@workspace:utils/deps":
-  version: 0.0.0-use.local
-  resolution: "@snx-private/deps@workspace:utils/deps"
-  dependencies:
-    depcheck: 1.4.3
-    prettier: 2.8.0
-    typescript: 4.9.3
-  bin:
-    deps: ./deps.js
-    deps-circular: ./circular.js
-    deps-mismatched: ./mismatched.js
-  languageName: unknown
-  linkType: soft
-
 "@solidity-parser/parser@npm:^0.14.0, @solidity-parser/parser@npm:^0.14.1, @solidity-parser/parser@npm:^0.14.5":
   version: 0.14.5
   resolution: "@solidity-parser/parser@npm:0.14.5"
@@ -2006,6 +1992,20 @@ __metadata:
   peerDependencies:
     ethers: ^5.0.0
     solidity-ast: ^0.4.0
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio/deps@workspace:*, @synthetixio/deps@workspace:utils/deps":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/deps@workspace:utils/deps"
+  dependencies:
+    depcheck: 1.4.3
+    prettier: 2.8.0
+    typescript: 4.9.3
+  bin:
+    deps: ./deps.js
+    deps-circular: ./circular.js
+    deps-mismatched: ./mismatched.js
   languageName: unknown
   linkType: soft
 
@@ -11850,7 +11850,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "synthetix-v3@workspace:."
   dependencies:
-    "@snx-private/deps": "workspace:*"
+    "@synthetixio/deps": "workspace:*"
     "@types/mocha": 10.0.1
     "@types/node": 18.11.10
     "@typescript-eslint/eslint-plugin": 5.45.0
