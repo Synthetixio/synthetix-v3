@@ -410,31 +410,6 @@ library FeeConfiguration {
         self.feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
     }
 
-    function quoteFees(
-        uint128 marketId,
-        int totalFees,
-        address transactor,
-        Transaction.Type transactionType
-    ) internal returns (uint collectedFees) {
-        if (totalFees <= 0) {
-            return 0;
-        }
-
-        uint totalFeesUint = totalFees.toUint();
-
-        IFeeCollector feeCollector = FeeConfiguration.load(marketId).feeCollector;
-
-        if (address(feeCollector) != address(0)) {
-            collectedFees = feeCollector.quoteFees(
-                marketId,
-                totalFeesUint,
-                transactor,
-                // solhint-disable-next-line numcast/safe-cast
-                uint8(transactionType)
-            );
-        }
-    }
-
     function _applyFees(
         uint amount,
         int fees,
