@@ -52,14 +52,18 @@ contract WrapperModule is IWrapperModule {
         spotMarketFactory.isValidMarket(marketId);
         wrapperStore.isValidWrapper();
 
+        IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
+        uint256 wrapAmount18 = Price
+            .scale(wrapAmount.toInt(), wrappingCollateral.decimals())
+            .toUint();
+
         // revert when wrapping more than the supply cap
         wrapperStore.checkMaxWrappableAmount(
             marketId,
-            wrapAmount,
+            wrapAmount18,
             IMarketCollateralModule(spotMarketFactory.synthetix)
         );
 
-        IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
         wrappingCollateral.approve(spotMarketFactory.synthetix, wrapAmount);
         IMarketCollateralModule(spotMarketFactory.synthetix).depositMarketCollateral(
@@ -70,7 +74,7 @@ contract WrapperModule is IWrapperModule {
 
         uint256 wrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
-            wrapAmount,
+            wrapAmount18,
             Transaction.Type.WRAP
         );
 
@@ -143,11 +147,17 @@ contract WrapperModule is IWrapperModule {
             Transaction.Type.UNWRAP
         );
 
-        returnCollateralAmount = Price.usdSynthExchangeRate(
+        uint256 returnCollateralAmount18 = Price.usdSynthExchangeRate(
             marketId,
             returnAmountUsd,
             Transaction.Type.UNWRAP
         );
+
+        uint8 collateralDecimals = IERC20(wrapperStore.wrapCollateralType).decimals();
+
+        returnCollateralAmount = Price
+            .scaleTo(returnCollateralAmount18.toInt(), collateralDecimals)
+            .toUint();
 
         if (returnCollateralAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);

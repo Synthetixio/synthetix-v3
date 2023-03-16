@@ -18,6 +18,8 @@ library Price {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
+    uint public constant PRECISION = 18;
+
     struct Data {
         /**
          * @dev The oracle manager node id used for buy transactions.
@@ -98,5 +100,28 @@ library Price {
     ) internal view returns (uint256 amountUsd) {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
+    }
+
+    /**
+     * @dev Utility function that returns the amount denominated with 18 decimals of precision.
+     */
+    function scale(int256 amount, uint decimals) internal view returns (int256) {
+        return (
+            decimals > PRECISION
+                ? amount.downscale(decimals - PRECISION)
+                : amount.upscale(PRECISION - decimals)
+        );
+    }
+
+    /**
+     * @dev Utility function that receive amount with 18 decimals
+     * returns the amount denominated with number of decimals as arg of precision.
+     */
+    function scaleTo(int256 amount, uint decimals) internal view returns (int256) {
+        return (
+            decimals > PRECISION
+                ? amount.upscale(decimals - PRECISION)
+                : amount.downscale(PRECISION - decimals)
+        );
     }
 }
