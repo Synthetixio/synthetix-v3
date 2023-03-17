@@ -29,7 +29,11 @@
     "deps:fix": "deps --fix",
     "deps:mismatched": "deps-mismatched",
     "deps:circular": "deps-circular",
-    "version": "yarn install && git stage yarn.lock"
+    "version": "yarn install && git stage yarn.lock",
+    "cannon:setup": "cannon setup",
+    "publish:release": "lerna publish --force-publish",
+    "publish:alpha": "lerna publish --force-publish --canary",
+    "postpublish": "yarn workspaces foreach --verbose run publish-contracts"
   },
   "devDependencies": {
     "@synthetixio/deps": "workspace:*",
@@ -37,6 +41,7 @@
     "@types/node": "18.11.10",
     "@typescript-eslint/eslint-plugin": "5.45.0",
     "@typescript-eslint/parser": "5.45.0",
+    "@usecannon/cli": "2.1.7",
     "eslint": "8.29.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-no-only-tests": "3.1.0",
