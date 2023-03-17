@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "Commmon contracts for Synthetix",
+  "description": "Common contracts for Synthetix",
   "files": [
     "contracts",
     "!contracts/routers",
