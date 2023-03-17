@@ -1,5 +1,5 @@
 name = "synthetix-legacy-market"
-version = "0.1.0"
+version = "<%= package.version %>"
 description = "Representation of Synthetix v2x, v3, and the LegacyMarket which allows for migration between them"
 
 [setting.sc_pool_id]
@@ -18,7 +18,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "synthetix:2.79.0-alpha"
 
 [setting.v3_package]
-defaultValue = "synthetix:3.0.0-alpha.9"
+defaultValue = "synthetix:<%= package.version %>"
 
 [setting.oracle_package]
 defaultValue = "chainlink:0.7-mock"
