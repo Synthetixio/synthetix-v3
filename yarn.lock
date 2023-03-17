@@ -13608,7 +13608,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solhint-plugin-numcast@*, solhint-plugin-numcast@workspace:utils/solhint-plugin-numcast":
+"solhint-plugin-numcast@workspace:*, solhint-plugin-numcast@workspace:utils/solhint-plugin-numcast":
   version: 0.0.0-use.local
   resolution: "solhint-plugin-numcast@workspace:utils/solhint-plugin-numcast"
   dependencies:
@@ -14332,7 +14332,7 @@ __metadata:
     prettier-plugin-solidity: 1.0.0
     pretty-quick: 3.1.3
     solhint: 3.3.7
-    solhint-plugin-numcast: "*"
+    solhint-plugin-numcast: "workspace:*"
     typescript: 4.9.3
   languageName: unknown
   linkType: soft
