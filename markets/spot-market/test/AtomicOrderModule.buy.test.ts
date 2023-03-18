@@ -23,8 +23,9 @@ describe('Atomic Order Module buy()', () => {
   });
 
   it('reverts on invalid market', async () => {
+    console.log('SYSTEMSS', Object.keys(systems()));
     await assertRevert(
-      systems().SpotMarket.buy(25, 10000, 10000, Ethers.constants.AddressZero),
+      systems().SpotMarket.buyExactIn(25, 10000, 10000, Ethers.constants.AddressZero),
       'InvalidMarket'
     );
   });
@@ -131,7 +132,7 @@ describe('Atomic Order Module buy()', () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems()
         .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.001)); // 0.1% charged for each % above utilization
+        .setMarketUtilizationFees(marketId(), bn(0.001), bn(1)); // 0.1% charged for each % above utilization
     });
 
     before('buy 50 snxETH', async () => {

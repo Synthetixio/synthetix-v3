@@ -71,14 +71,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
         return buyExactIn(marketId, usdAmount, minAmountReceived, referrer);
     }
 
-    function buy(
-        uint128 marketId,
-        uint usdAmount,
-        uint minAmountReceived
-    ) external override returns (uint synthAmount, OrderFees.Data memory fees) {
-        return buyExactIn(marketId, usdAmount, minAmountReceived, address(0));
-    }
-
     /**
      * @inheritdoc IAtomicOrderModule
      */
@@ -169,14 +161,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) external override returns (uint usdAmountReceived, OrderFees.Data memory fees) {
         return sellExactIn(marketId, synthAmount, minUsdAmount, referrer);
-    }
-
-    function sell(
-        uint128 marketId,
-        uint synthAmount,
-        uint minUsdAmount
-    ) external override returns (uint usdAmountReceived, OrderFees.Data memory fees) {
-        return sellExactIn(marketId, synthAmount, minUsdAmount, address(0));
     }
 
     /**

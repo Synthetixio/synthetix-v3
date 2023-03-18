@@ -1,12 +1,10 @@
 import { ethers as Ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { SynthRouter } from '../generated/typechain';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.only('buy exact in skew test', () => {
+describe.only('testing skew', () => {
   const { systems, signers, marketId, aggregator, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -28,6 +26,17 @@ describe.only('buy exact in skew test', () => {
     await systems().SpotMarket.connect(marketOwner).setMarketSkewScale(marketId(), bn(1000));
   });
 
+  before('unlimited approval', async () => {
+    await systems()
+      .USD.connect(trader1)
+      .approve(systems().SpotMarket.address, Ethers.constants.MaxUint256);
+    await systems()
+      .USD.connect(trader2)
+      .approve(systems().SpotMarket.address, Ethers.constants.MaxUint256);
+    await synth.connect(trader1).approve(systems().SpotMarket.address, Ethers.constants.MaxUint256);
+    await synth.connect(trader2).approve(systems().SpotMarket.address, Ethers.constants.MaxUint256);
+  });
+
   const restore = snapshotCheckpoint(provider);
 
   let boughtSynth: Ethers.BigNumber;
@@ -35,7 +44,6 @@ describe.only('buy exact in skew test', () => {
   describe('neutral buy sell', () => {
     describe('buy', () => {
       before('buy $10000 worth', async () => {
-        await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(10_000));
         await systems()
           .SpotMarket.connect(trader1)
           .buyExactIn(marketId(), bn(10_000), bn(9.5), Ethers.constants.AddressZero);
@@ -51,7 +59,6 @@ describe.only('buy exact in skew test', () => {
       let previousTrader1Balance: Ethers.BigNumber;
       before('sell all bought synth', async () => {
         previousTrader1Balance = await systems().USD.balanceOf(trader1.getAddress());
-        await synth.connect(trader1).approve(systems().SpotMarket.address, boughtSynth);
         await systems()
           .SpotMarket.connect(trader1)
           .sellExactIn(marketId(), boughtSynth, 0, Ethers.constants.AddressZero);
@@ -74,7 +81,6 @@ describe.only('buy exact in skew test', () => {
 
     before('buy exact out', async () => {
       startingTrader2Balance = await systems().USD.balanceOf(trader2.getAddress());
-      await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
       await systems()
         .SpotMarket.connect(trader2)
         .buyExactOut(marketId(), boughtSynth, bn(11_000), Ethers.constants.AddressZero);
@@ -89,28 +95,101 @@ describe.only('buy exact in skew test', () => {
     });
   });
 
-  describe('sell exact out', () => {
+  describe('buy path independence with fixed fee', () => {
     before(restore);
 
-    let startingSynthBalance: Ethers.BigNumber;
+    let startingSynthBalance: Ethers.BigNumber, startingTrader2Balance: Ethers.BigNumber;
 
-    before('buy', async () => {
-      await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-      await systems()
-        .SpotMarket.connect(trader2)
-        .buyExactIn(marketId(), bn(10_000), 0, Ethers.constants.AddressZero);
-      startingSynthBalance = await synth.balanceOf(trader2.getAddress());
+    before('set atomic fee', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.2));
     });
 
-    before('sell exactly $10000 worth', async () => {
-      await synth.connect(trader2).approve(systems().SpotMarket.address, startingSynthBalance);
-      await systems()
-        .SpotMarket.connect(trader2)
-        .sellExactOut(marketId(), bn(10_000), bn(15), Ethers.constants.AddressZero);
+    const restoreToFee = snapshotCheckpoint(provider);
+
+    describe('buy exact in', () => {
+      before(async () => {
+        await systems()
+          .SpotMarket.connect(trader1)
+          .buyExactIn(marketId(), bn(10_000), bn(0), Ethers.constants.AddressZero);
+        startingSynthBalance = await synth.balanceOf(trader1.getAddress());
+      });
+
+      it('has correct synth balance', async () => {
+        assertBn.near(await synth.balanceOf(trader1.getAddress()), bn(7.96825), bn(0.0001));
+      });
     });
 
-    it('should provide same amount of usd as when bought exact in', async () => {
-      assertBn.near(await synth.balanceOf(trader2.getAddress()), 0, bn(0.0001));
+    describe('buy exact out', () => {
+      before(restoreToFee);
+
+      before('buy exact out', async () => {
+        startingTrader2Balance = await systems().USD.balanceOf(trader2.getAddress());
+        await systems()
+          .SpotMarket.connect(trader2)
+          .buyExactOut(marketId(), startingSynthBalance, bn(5000000), Ethers.constants.AddressZero);
+      });
+
+      it('should charge same amount as buy exact in', async () => {
+        assertBn.near(
+          await systems().USD.balanceOf(trader2.getAddress()),
+          startingTrader2Balance.sub(bn(10000)),
+          bn(0.000001)
+        );
+      });
+    });
+  });
+
+  describe('sell path indenpendent with fixed fee', () => {
+    before(restore);
+
+    before('buy 10 ETH exact', async () => {
+      await systems()
+        .SpotMarket.connect(trader1)
+        .buyExactOut(marketId(), bn(20), bn(30000), Ethers.constants.AddressZero);
+    });
+
+    before('set atomic fee', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.2));
+    });
+
+    // 10 ETH skew with fee set to 20%
+    const restorePointForSell = snapshotCheckpoint(provider);
+
+    let usdReceivedAfterFirstSell: Ethers.BigNumber;
+    before('sell exact in', async () => {
+      const initialTraderUsdBalance = await systems().USD.balanceOf(trader1.getAddress());
+      await systems()
+        .SpotMarket.connect(trader1)
+        .sellExactIn(marketId(), bn(10), bn(0), Ethers.constants.AddressZero);
+      usdReceivedAfterFirstSell = (await systems().USD.balanceOf(trader1.getAddress())).sub(
+        initialTraderUsdBalance
+      );
+    });
+
+    describe('sell exact out', () => {
+      before(restorePointForSell);
+
+      let startingSynthBalance: Ethers.BigNumber;
+
+      before('sell exact out', async () => {
+        startingSynthBalance = await synth.balanceOf(trader1.getAddress());
+        await systems()
+          .SpotMarket.connect(trader1)
+          .sellExactOut(
+            marketId(),
+            usdReceivedAfterFirstSell,
+            Ethers.constants.MaxUint256,
+            Ethers.constants.AddressZero
+          );
+      });
+
+      it('should charge 10 eth', async () => {
+        assertBn.near(
+          await synth.balanceOf(trader1.getAddress()),
+          startingSynthBalance.sub(bn(10)),
+          bn(0.0001)
+        );
+      });
     });
   });
 });

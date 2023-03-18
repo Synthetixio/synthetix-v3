@@ -1,15 +1,23 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 library OrderFees {
+    using SafeCastU256 for uint256;
+
     struct Data {
-        int256 fixedFees;
-        int256 utilizationFees;
+        uint256 fixedFees;
+        uint256 utilizationFees;
         int256 skewFees;
         int256 wrapperFees;
     }
 
     function total(Data memory self) internal pure returns (int256) {
-        return self.fixedFees + self.utilizationFees + self.skewFees + self.wrapperFees;
+        return
+            self.fixedFees.toInt() +
+            self.utilizationFees.toInt() +
+            self.skewFees +
+            self.wrapperFees;
     }
 }
