@@ -2,15 +2,19 @@
   "name": "@synthetixio/main",
   "version": "3.0.2",
   "description": "Core Synthetix Protocol Contracts",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "hardhat clean",
-    "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build cannonfile.test.toml",
+    "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build",
+    "build-testable": "hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "yarn build && hardhat test",
     "coverage": "yarn build && hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "publish-contracts": "cannon publish synthetix:$(node -p 'require(`./package.json`).version') --quiet --private-key $DEPLOYER_PRIVATE_KEY"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +27,7 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/builder": "^2.1.7",
+    "@usecannon/builder": "2.1.10",
     "ethers": "^5.0.0",
     "handlebars": "^4.7.7",
     "hardhat": "2.13.0",

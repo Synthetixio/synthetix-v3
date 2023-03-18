@@ -69,18 +69,12 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 ### Preparing a Release
 
-- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `npm install -g @usecannon/cli` and `hardhat-cannon` is upgraded to the latest through the repository.
-- After installing for the first time, run `cannon setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
-- Run `yarn install --immutable --immutable-cache` and `yarn build` in the root directory of the repository.
-- From the directory of the package you're releasing, run `yarn hardhat cannon:build`.
-  - If you're upgrading the synthetix package, also run `yarn build && yarn hardhat cannon:build cannonfile.test.toml` to generate the testable package.
-- Confirm the private key that owns the corresponding namespace in the package registry is set in the `.env` file as `DEPLOYER_PRIVATE_KEY`.
-- Publish the release to Cannon package registry with `yarn hardhat cannon:publish --network mainnet`.
-- Increment the version in the relevant `package.json` files. _The repositories should always contain the version number of the next release._
-  - If you've upgraded synthetix, also increment the version of the `package.json` file in the root directory. Also upgrade the version in `markets/spot-market/cannonfile.toml` and `markets/spot-market/cannonfile.test.toml`.
-  - If you've upgraded the oracle manager, bump the version of the oracle manager in `protocol/synthetix/cannonfile.toml` and `protocol/synthetix/cannonfile.test.toml`.
-- Run `yarn install --immutable --immutable-cache` in the root directory.
-- Commit and push the change to this repository.
+- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `@usecannon/cli` and `hardhat-cannon` are upgraded to the latest through the repository (use `yarn upgrade-interactive` command).
+- After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
+- Confirm the private key that owns the corresponding namespace in the package registry is available as `$DEPLOYER_PRIVATE_KEY`.
+- Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
+- Publish the release with `yarn publish:canary` for the alpha pre-release and `yarn publish:release` for the proper semver release.
+- In case cannon publish fails you can run `yarn postpublish`  in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
 
