@@ -175,7 +175,7 @@ library FeeConfiguration {
             amountAfterFees = amountAfterFees - fees.fixedFees - fees.utilizationFees;
 
             int amountAfterFeesInt = amountAfterFees.toInt();
-            (int skewFee, int amountOut) = calculateSkewFee(
+            int skewFee = calculateSkewFee(
                 feeConfiguration,
                 marketId,
                 amountAfterFeesInt,
@@ -184,7 +184,7 @@ library FeeConfiguration {
             );
 
             fees.skewFees = skewFee.mulDecimal(amountAfterFeesInt);
-            amountAfterFees = amountOut.mulDecimal(synthPrice.toInt()).toUint();
+            amountAfterFees = (amountAfterFeesInt - fees.skewFees).toUint();
         } else if (transactionType == Transaction.Type.BUY_EXACT_OUT) {
             int amountAfterFeesInt = amountAfterFees.toInt();
             int skewFee = calculateSkewFeeExact(
@@ -250,7 +250,7 @@ library FeeConfiguration {
             amountAfterFees = (amountAfterFeesInt - fees.skewFees).toUint();
         } else if (transactionType == Transaction.Type.SELL_EXACT_OUT) {
             int amountAfterFeesInt = amountAfterFees.toInt();
-            (int skewFee, ) = calculateSkewFee(
+            int skewFee = calculateSkewFee(
                 feeConfiguration,
                 marketId,
                 amountAfterFeesInt * -1,
@@ -311,9 +311,9 @@ library FeeConfiguration {
         int amount,
         uint synthPrice,
         Transaction.Type transactionType
-    ) internal view returns (int skewFee, int amountOut) {
+    ) internal view returns (int skewFee) {
         if (feeConfiguration.skewScale == 0) {
-            return (0, amount.mulDecimal(synthPrice.toInt()));
+            return 0;
         }
 
         uint wrappedCollateralAmount = SpotMarketFactory.load().synthetix.getMarketCollateralAmount(
@@ -323,7 +323,7 @@ library FeeConfiguration {
         int initialSkew = SynthUtil.getToken(marketId).totalSupply().toInt() -
             wrappedCollateralAmount.toInt();
 
-        amountOut = _calculateSkewAmountOut(feeConfiguration, amount, synthPrice, initialSkew);
+        int amountOut = _calculateSkewAmountOut(feeConfiguration, amount, synthPrice, initialSkew);
         int amountOutWithoutSkew = amount.divDecimal(synthPrice.toInt());
 
         skewFee = (amountOutWithoutSkew - amountOut).divDecimal(amountOutWithoutSkew);
