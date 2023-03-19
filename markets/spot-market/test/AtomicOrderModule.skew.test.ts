@@ -4,7 +4,7 @@ import { SynthRouter } from '../generated/typechain';
 import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
-describe.only('testing skew', () => {
+describe('testing skew', () => {
   const { systems, signers, marketId, aggregator, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD

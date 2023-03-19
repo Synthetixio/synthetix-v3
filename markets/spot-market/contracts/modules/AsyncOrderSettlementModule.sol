@@ -13,6 +13,8 @@ import "../storage/SpotMarketFactory.sol";
 import "../storage/AsyncOrder.sol";
 import "../storage/FeeConfiguration.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Module to settle asyncronous orders
  * @notice See README.md for an overview of asyncronous orders
@@ -188,7 +190,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             marketId,
             asyncOrderId,
             finalOrderAmount,
-            fees, // TODO: should this include settlement reward?
+            fees,
             collectedFees,
             msg.sender
         );
@@ -202,29 +204,25 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint price,
         uint settlementReward,
         AsyncOrderClaim.Data storage asyncOrderClaim
-    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees, uint collectedFees) {
+    ) private returns (uint returnSynthAmount, OrderFees.Data memory fees, uint collectedFees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         // remove keeper fee
         uint amountUsable = asyncOrderClaim.amountEscrowed - settlementReward;
         address trader = asyncOrderClaim.owner;
 
-        uint usdAmountAfterFees;
         FeeConfiguration.Data storage feeConfig;
-
-        (usdAmountAfterFees, fees, feeConfig) = FeeConfiguration.quoteBuyExactIn(
+        (returnSynthAmount, fees, feeConfig) = FeeConfiguration.quoteBuyExactIn(
             marketId,
             amountUsable,
             price,
             trader,
-            Transaction.Type.BUY
+            Transaction.Type.ASYNC_BUY
         );
 
-        finalOrderAmount = usdAmountAfterFees.divDecimal(price);
-
-        if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
+        if (returnSynthAmount < asyncOrderClaim.minimumSettlementAmount) {
             revert MinimumSettlementAmountNotMet(
                 asyncOrderClaim.minimumSettlementAmount,
-                finalOrderAmount
+                returnSynthAmount
             );
         }
 
@@ -238,8 +236,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         );
 
         ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, settlementReward);
-        spotMarketFactory.depositToMarketManager(marketId, usdAmountAfterFees - collectedFees);
-        SynthUtil.getToken(marketId).mint(trader, finalOrderAmount);
+        spotMarketFactory.depositToMarketManager(marketId, amountUsable - collectedFees);
+        SynthUtil.getToken(marketId).mint(trader, returnSynthAmount);
     }
 
     /**
@@ -266,7 +264,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             synthAmount,
             price,
             trader,
-            Transaction.Type.SELL
+            Transaction.Type.ASYNC_SELL
         );
 
         // check slippage tolerance
@@ -290,12 +288,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         );
 
         // send keeper it's reward then send trader final amount
+        finalOrderAmount -= settlementReward;
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
-        spotMarketFactory.synthetix.withdrawMarketUsd(
-            marketId,
-            trader,
-            finalOrderAmount - settlementReward
-        );
+        spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);
     }
 
     /**

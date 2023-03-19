@@ -17,7 +17,7 @@ const settlementStrategy = {
   priceDeviationTolerance: bn(0.01),
 };
 
-describe('AsyncOrderModule onchain', () => {
+describe.only('AsyncOrderModule onchain', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -158,9 +158,9 @@ describe('AsyncOrderModule onchain', () => {
         it('emitted event', async () => {
           await assertEvent(
             settleTxn,
-            `OrderSettled(${marketId()}, 1, ${expectedSynthAmount}, ${bn(
+            `OrderSettled(${marketId()}, 1, ${expectedSynthAmount}, [${bn(
               9.95
-            )}, 0, "${await keeper.getAddress()}"`,
+            )}, 0, 0, 0], 0, "${await keeper.getAddress()}"`,
             systems().SpotMarket
           );
         });
@@ -218,7 +218,8 @@ describe('AsyncOrderModule onchain', () => {
           settleTxn = await systems().SpotMarket.connect(keeper).settleOrder(marketId(), 2);
         });
 
-        const expectedReturnAmt = bn(440.55);
+        // $900/eth: 0.5 * 900 - 5 keeper fee - 1% async fixed fee = $440.5
+        const expectedReturnAmt = bn(440.5);
         it('sent correct amount to trader', async () => {
           assertBn.equal(
             await systems().USD.balanceOf(await trader1.getAddress()),
@@ -233,16 +234,16 @@ describe('AsyncOrderModule onchain', () => {
         it('withdrew correct usd amt into market manager', async () => {
           assertBn.equal(
             await systems().Core.getWithdrawableMarketUsd(marketId()),
-            withdrawableUsd.sub(bn(450 - 4.45))
+            withdrawableUsd.sub(bn(450 - 4.5))
           );
         });
 
         it('emitted event', async () => {
           await assertEvent(
             settleTxn,
-            `OrderSettled(${marketId()}, 2, ${expectedReturnAmt}, ${bn(
-              4.45
-            )}, 0, "${await keeper.getAddress()}"`,
+            `OrderSettled(${marketId()}, 2, ${expectedReturnAmt}, [${bn(
+              4.5
+            )}, 0, 0, 0], 0, "${await keeper.getAddress()}"`,
             systems().SpotMarket
           );
         });

@@ -251,6 +251,7 @@ library FeeConfiguration {
 
         uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
         fees.fixedFees = fixedFee.mulDecimal(usdAmount);
+
         // apply fixed fee by removing from the amount that gets returned to user in exchange
         usdAmount -= fees.fixedFees;
 
@@ -397,7 +398,7 @@ library FeeConfiguration {
      * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
      */
     function _getFixedFee(
-        FeeConfiguration.Data storage feeConfiguration,
+        Data storage feeConfiguration,
         address transactor,
         bool async
     ) private view returns (uint fixedFee) {
