@@ -33,10 +33,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.isValidMarket(marketId);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (usdAmountCharged, fees, feeConfiguration) = _quoteBuy(
+        (usdAmountCharged, fees, feeConfiguration) = FeeConfiguration.quoteBuyExactOut(
             marketId,
             synthAmount,
-            Transaction.Type.BUY_EXACT_OUT
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            msg.sender,
+            Transaction.Type.BUY
         );
 
         if (usdAmountCharged > maxUsdAmount) {
@@ -51,7 +53,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             msg.sender,
             referrer,
             spotMarketFactory,
-            Transaction.Type.BUY_EXACT_OUT
+            Transaction.Type.BUY
         );
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmountCharged - collectedFees);
@@ -87,10 +89,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (synthAmount, fees, feeConfiguration) = _quoteBuy(
+        (synthAmount, fees, feeConfiguration) = FeeConfiguration.quoteBuyExactIn(
             marketId,
             usdAmount,
-            Transaction.Type.BUY_EXACT_IN
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            msg.sender,
+            Transaction.Type.BUY
         );
 
         if (synthAmount < minAmountReceived) {
@@ -103,7 +107,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             msg.sender,
             referrer,
             spotMarketFactory,
-            Transaction.Type.BUY_EXACT_IN
+            Transaction.Type.BUY
         );
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmount - collectedFees);
@@ -120,7 +124,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (synthAmount, fees, ) = _quoteBuy(marketId, usdAmount, Transaction.Type.BUY_EXACT_IN);
+        (synthAmount, fees, ) = FeeConfiguration.quoteBuyExactIn(
+            marketId,
+            usdAmount,
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            msg.sender,
+            Transaction.Type.BUY
+        );
     }
 
     function quoteBuyExactOut(
@@ -129,10 +139,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (usdAmountCharged, fees, ) = _quoteBuy(
+        (usdAmountCharged, fees, ) = FeeConfiguration.quoteBuyExactOut(
             marketId,
             synthAmount,
-            Transaction.Type.BUY_EXACT_OUT
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            msg.sender,
+            Transaction.Type.BUY
         );
     }
 
@@ -142,7 +154,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (returnAmount, fees, ) = _quoteSell(marketId, synthAmount, Transaction.Type.SELL_EXACT_IN);
+        (returnAmount, fees, ) = FeeConfiguration.quoteSellExactIn(
+            marketId,
+            synthAmount,
+            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            msg.sender,
+            Transaction.Type.SELL
+        );
     }
 
     function quoteSellExactOut(
@@ -151,7 +169,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (synthToBurn, fees, ) = _quoteSell(marketId, usdAmount, Transaction.Type.SELL_EXACT_OUT);
+        (synthToBurn, fees, ) = FeeConfiguration.quoteSellExactOut(
+            marketId,
+            usdAmount,
+            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            msg.sender,
+            Transaction.Type.SELL
+        );
     }
 
     function sell(
@@ -176,10 +200,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.isValidMarket(marketId);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (returnAmount, fees, feeConfiguration) = _quoteSell(
+        (returnAmount, fees, feeConfiguration) = FeeConfiguration.quoteSellExactIn(
             marketId,
             synthAmount,
-            Transaction.Type.SELL_EXACT_IN
+            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            msg.sender,
+            Transaction.Type.SELL
         );
 
         if (returnAmount < minAmountReceived) {
@@ -196,7 +222,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             msg.sender,
             referrer,
             spotMarketFactory,
-            Transaction.Type.SELL_EXACT_IN
+            Transaction.Type.SELL
         );
 
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, returnAmount);
@@ -214,10 +240,12 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.isValidMarket(marketId);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (synthToBurn, fees, feeConfiguration) = _quoteSell(
+        (synthToBurn, fees, feeConfiguration) = FeeConfiguration.quoteSellExactOut(
             marketId,
             usdAmount,
-            Transaction.Type.SELL_EXACT_OUT
+            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            msg.sender,
+            Transaction.Type.SELL
         );
 
         if (synthToBurn > maxAmountBurned) {
@@ -231,7 +259,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             msg.sender,
             referrer,
             spotMarketFactory,
-            Transaction.Type.SELL_EXACT_IN
+            Transaction.Type.SELL
         );
 
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, usdAmount);
@@ -239,73 +267,77 @@ contract AtomicOrderModule is IAtomicOrderModule {
         emit SynthSold(marketId, usdAmount, fees, collectedFees, referrer);
     }
 
-    function _quoteSell(
-        uint128 marketId,
-        uint amount, // based on transaction type, either synthAmount or usdAmount
-        Transaction.Type transactionType
-    )
-        private
-        view
-        returns (
-            uint256 returnAmount,
-            OrderFees.Data memory fees,
-            FeeConfiguration.Data storage feeConfiguration
-        )
-    {
-        uint usdAmount = amount;
-        if (transactionType == Transaction.Type.SELL_EXACT_IN) {
-            usdAmount = Price.synthUsdExchangeRate(marketId, amount, transactionType);
-        }
+    // function _quoteSell(
+    //     uint128 marketId,
+    //     uint amount, // based on transaction type, either synthAmount or usdAmount
+    //     Transaction.Type transactionType
+    // )
+    //     private
+    //     view
+    //     returns (
+    //         uint256 returnAmount,
+    //         OrderFees.Data memory fees,
+    //         FeeConfiguration.Data storage feeConfiguration
+    //     )
+    // {
+    //     uint usdAmount = amount;
+    //     if (transactionType == Transaction.Type.SELL_EXACT_IN) {
+    //         usdAmount = Price.synthUsdExchangeRate(marketId, amount, transactionType);
+    //     }
 
-        feeConfiguration = FeeConfiguration.load(marketId);
-        (returnAmount, fees) = feeConfiguration.calculateFees(
-            marketId,
-            msg.sender,
-            usdAmount,
-            Price.getCurrentPrice(marketId, transactionType),
-            transactionType
-        );
+    //     feeConfiguration = FeeConfiguration.load(marketId);
+    //     (returnAmount, fees) = feeConfiguration.calculateFees(
+    //         marketId,
+    //         msg.sender,
+    //         usdAmount,
+    //         Price.getCurrentPrice(marketId, transactionType),
+    //         transactionType
+    //     );
 
-        // in the case of SELL_EXACT_OUT, we return the synth that will be burned
-        // from the user for the given usd amount.  Otherwise, we return the USD
-        // amount the user receives based on the synth amount they are selling
-        if (transactionType == Transaction.Type.SELL_EXACT_OUT) {
-            returnAmount = Price.usdSynthExchangeRate(marketId, returnAmount, transactionType);
-        }
-    }
+    //     // in the case of SELL_EXACT_OUT, we return the synth that will be burned
+    //     // from the user for the given usd amount.  Otherwise, we return the USD
+    //     // amount the user receives based on the synth amount they are selling
+    //     if (transactionType == Transaction.Type.SELL_EXACT_OUT) {
+    //         returnAmount = Price.usdSynthExchangeRate(marketId, returnAmount, transactionType);
+    //     }
+    // }
 
-    function _quoteBuy(
-        uint128 marketId,
-        uint amount, // based on transaction type, either synthAmount or usdAmount
-        Transaction.Type transactionType
-    )
-        private
-        view
-        returns (
-            uint returnAmount,
-            OrderFees.Data memory fees,
-            FeeConfiguration.Data storage feeConfiguration
-        )
-    {
-        uint usdAmount = amount;
-        if (transactionType == Transaction.Type.BUY_EXACT_OUT) {
-            usdAmount = Price.synthUsdExchangeRate(marketId, amount, transactionType);
-        }
+    // function _quoteBuyExactOut(uint128 marketId, uint synthAmount) private view (uint synthToCharge, OrderFees.Data memory fees, FeeConfiguration.Data storage feeConfiguration) {
 
-        feeConfiguration = FeeConfiguration.load(marketId);
-        (returnAmount, fees) = feeConfiguration.calculateFees(
-            marketId,
-            msg.sender,
-            usdAmount,
-            Price.getCurrentPrice(marketId, transactionType),
-            transactionType
-        );
-        // in the case of BUY_EXACT_IN, we return the synth to mint to the user
-        // in the case of BUY_EXACT_OUT, we return the USD amount to charge user
-        if (transactionType == Transaction.Type.BUY_EXACT_IN) {
-            returnAmount = Price.usdSynthExchangeRate(marketId, returnAmount, transactionType);
-        }
+    // }
 
-        return (returnAmount, fees, feeConfiguration);
-    }
+    // function _quoteBuy(
+    //     uint128 marketId,
+    //     uint amount, // based on transaction type, either synthAmount or usdAmount
+    //     Transaction.Type transactionType
+    // )
+    //     private
+    //     view
+    //     returns (
+    //         uint returnAmount,
+    //         OrderFees.Data memory fees,
+    //         FeeConfiguration.Data storage feeConfiguration
+    //     )
+    // {
+    //     uint usdAmount = amount;
+    //     if (transactionType == Transaction.Type.BUY_EXACT_OUT) {
+    //         usdAmount = Price.synthUsdExchangeRate(marketId, amount, transactionType);
+    //     }
+
+    //     feeConfiguration = FeeConfiguration.load(marketId);
+    //     (returnAmount, fees) = feeConfiguration.calculateFees(
+    //         marketId,
+    //         msg.sender,
+    //         usdAmount,
+    //         Price.getCurrentPrice(marketId, transactionType),
+    //         transactionType
+    //     );
+    //     // in the case of BUY_EXACT_IN, we return the synth to mint to the user
+    //     // in the case of BUY_EXACT_OUT, we return the USD amount to charge user
+    //     if (transactionType == Transaction.Type.BUY_EXACT_IN) {
+    //         returnAmount = Price.usdSynthExchangeRate(marketId, returnAmount, transactionType);
+    //     }
+
+    //     return (returnAmount, fees, feeConfiguration);
+    // }
 }

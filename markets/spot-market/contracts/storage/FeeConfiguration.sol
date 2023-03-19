@@ -98,174 +98,174 @@ library FeeConfiguration {
     }
 
     /**
-     * @dev Calculates fees for a given transaction type.
+     * @dev Get quote for amount of collateral (`amount`) to receive in synths (`synthAmount`)
      */
-    function calculateFees(
-        Data storage self,
+    function quoteWrap(
         uint128 marketId,
-        address transactor,
-        uint256 amount,
-        uint256 synthPrice,
-        Transaction.Type transactionType
-    ) internal view returns (uint256 amountAfterFees, OrderFees.Data memory fees) {
-        if (Transaction.isBuy(transactionType)) {
-            (amountAfterFees, fees) = calculateBuyFees(
-                self,
-                transactor,
-                marketId,
-                amount,
-                synthPrice,
-                transactionType
-            );
-        } else if (Transaction.isSell(transactionType)) {
-            (amountAfterFees, fees) = calculateSellFees(
-                self,
-                transactor,
-                marketId,
-                amount,
-                synthPrice,
-                transactionType
-            );
-        } else if (transactionType == Transaction.Type.WRAP) {
-            fees.wrapperFees = self.wrapFixedFee.mulDecimal(amount.toInt());
-            amountAfterFees = (amount.toInt() - fees.wrapperFees).toUint();
-        } else if (transactionType == Transaction.Type.UNWRAP) {
-            fees.wrapperFees = self.unwrapFixedFee.mulDecimal(amount.toInt());
-            amountAfterFees = (amount.toInt() - fees.wrapperFees).toUint();
-        } else {
-            amountAfterFees = amount;
-        }
+        uint amount,
+        uint synthPrice
+    ) internal view returns (uint synthAmount, OrderFees.Data memory fees, Data storage config) {
+        config = load(marketId);
+        uint usdAmount = amount.mulDecimal(synthPrice);
+        fees.wrapperFees = config.wrapFixedFee.mulDecimal(usdAmount.toInt());
+        usdAmount = (usdAmount.toInt() - fees.wrapperFees).toUint();
+
+        synthAmount = usdAmount.divDecimal(synthPrice);
     }
 
     /**
-     * @dev Calculates fees for a buy transaction.
-     *
-     * Fees are calculated as follows:
-     *
-     * 1. Utilization fee (bips):  The utilization fee is a fee that's applied based on the ratio of delegated collateral to total outstanding synth exposure.
-     * 2. Skew fee (bips): The skew fee is a fee that's applied based on the ratio of outstanding synths to the skew scale.
-     * 3. Fixed fee (bips): The fixed fee is a fee that's applied to every transaction.
+     * @dev Get quote for amount of synth (`synthAmount`) to receive in collateral (`amount`)
      */
-    function calculateBuyFees(
-        FeeConfiguration.Data storage feeConfiguration,
-        address transactor,
+    function quoteUnwrap(
         uint128 marketId,
-        uint256 amount,
-        uint256 synthPrice,
-        Transaction.Type transactionType
-    ) internal view returns (uint amountAfterFees, OrderFees.Data memory fees) {
-        amountAfterFees = amount;
+        uint synthAmount,
+        uint synthPrice
+    ) internal view returns (uint amount, OrderFees.Data memory fees, Data storage config) {
+        config = load(marketId);
+        uint usdAmount = synthAmount.mulDecimal(synthPrice);
+        fees.wrapperFees = config.unwrapFixedFee.mulDecimal(usdAmount.toInt());
+        usdAmount = (usdAmount.toInt() - fees.wrapperFees).toUint();
 
-        uint utilizationFee = calculateUtilizationRateFee(
-            feeConfiguration,
-            marketId,
-            amountAfterFees,
-            synthPrice
-        );
-
-        uint fixedFee = _getFixedFee(
-            feeConfiguration,
-            transactor,
-            Transaction.isAsync(transactionType)
-        );
-
-        if (transactionType == Transaction.Type.BUY_EXACT_IN) {
-            fees.utilizationFees = utilizationFee.mulDecimal(amountAfterFees);
-            fees.fixedFees = fixedFee.mulDecimal(amountAfterFees);
-            amountAfterFees = amountAfterFees - fees.fixedFees - fees.utilizationFees;
-
-            int amountAfterFeesInt = amountAfterFees.toInt();
-            int skewFee = calculateSkewFee(
-                feeConfiguration,
-                marketId,
-                amountAfterFeesInt,
-                synthPrice,
-                transactionType
-            );
-
-            fees.skewFees = skewFee.mulDecimal(amountAfterFeesInt);
-            amountAfterFees = (amountAfterFeesInt - fees.skewFees).toUint();
-        } else if (transactionType == Transaction.Type.BUY_EXACT_OUT) {
-            int amountAfterFeesInt = amountAfterFees.toInt();
-            int skewFee = calculateSkewFeeExact(
-                feeConfiguration,
-                marketId,
-                amountAfterFeesInt,
-                synthPrice,
-                transactionType
-            );
-
-            fees.skewFees = skewFee.mulDecimal(amountAfterFeesInt);
-            amountAfterFees = (amountAfterFeesInt + fees.skewFees).toUint();
-
-            fees.utilizationFees =
-                amountAfterFees.divDecimal(DecimalMath.UNIT - utilizationFee) -
-                amountAfterFees;
-            amountAfterFees += fees.utilizationFees;
-            fees.fixedFees =
-                amountAfterFees.divDecimal(DecimalMath.UNIT - fixedFee) -
-                amountAfterFees;
-            amountAfterFees += fees.fixedFees;
-        }
+        amount = usdAmount.divDecimal(synthPrice);
     }
 
     /**
-     * @dev Calculates fees for a sell transaction.
-     *
-     * Fees are calculated as follows:
-     *
-     * 1. Skew fee (bips): The skew fee is a fee that's applied based on the ratio of outstanding synths to the skew scale.
-     *    When a sell trade is executed, the skew fee is applied as a negative value to create incentive to bring market to equilibrium.
-     * 3. Fixed fee (bips): The fixed fee is a fee that's applied to every transaction.
+     * @dev Get quote for amount of usd (`usdAmount`) to charge trader for the specified synth amount (`synthAmount`)
      */
-    function calculateSellFees(
-        FeeConfiguration.Data storage feeConfiguration,
-        address transactor,
+    function quoteBuyExactOut(
         uint128 marketId,
-        uint256 amount,
+        uint synthAmount,
         uint synthPrice,
+        address transactor,
         Transaction.Type transactionType
-    ) internal view returns (uint amountAfterFees, OrderFees.Data memory fees) {
-        amountAfterFees = amount;
-        uint fixedFee = _getFixedFee(
-            feeConfiguration,
-            transactor,
-            Transaction.isAsync(transactionType)
+    ) internal view returns (uint usdAmount, OrderFees.Data memory fees, Data storage config) {
+        config = load(marketId);
+        // this amount gets fees applied below and is the return amount to charge user
+        usdAmount = synthAmount.mulDecimal(synthPrice);
+
+        int amountInt = usdAmount.toInt();
+
+        // compute skew fee based on amount out
+        int skewFee = calculateSkewFeeExact(
+            config,
+            marketId,
+            amountInt,
+            synthPrice,
+            transactionType
         );
 
-        if (transactionType == Transaction.Type.SELL_EXACT_IN) {
-            fees.fixedFees = fixedFee.mulDecimal(amountAfterFees);
-            // add fees when selling
-            amountAfterFees -= fees.fixedFees;
+        fees.skewFees = skewFee.mulDecimal(amountInt);
+        // apply fees by adding to the amount
+        usdAmount = (amountInt + fees.skewFees).toUint();
 
-            int amountAfterFeesInt = amountAfterFees.toInt();
-            int skewFee = calculateSkewFeeExact(
-                feeConfiguration,
-                marketId,
-                amountAfterFeesInt * -1, // removing value so negative
-                synthPrice,
-                transactionType
-            );
-            fees.skewFees = skewFee.mulDecimal(amountAfterFeesInt);
-            amountAfterFees = (amountAfterFeesInt - fees.skewFees).toUint();
-        } else if (transactionType == Transaction.Type.SELL_EXACT_OUT) {
-            int amountAfterFeesInt = amountAfterFees.toInt();
-            int skewFee = calculateSkewFee(
-                feeConfiguration,
-                marketId,
-                amountAfterFeesInt * -1,
-                synthPrice,
-                transactionType
-            );
+        uint utilizationFee = calculateUtilizationRateFee(config, marketId, usdAmount, synthPrice);
+        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        // apply utilization and fixed fees
+        // Note: when calculating exact out, we need to apply fees in reverse order.  so instead of
+        // multiplying by %, we divide by %
+        fees.utilizationFees = usdAmount.divDecimal(DecimalMath.UNIT - utilizationFee) - usdAmount;
+        fees.fixedFees = usdAmount.divDecimal(DecimalMath.UNIT - fixedFee) - usdAmount;
 
-            fees.skewFees = skewFee.mulDecimal(amountAfterFeesInt);
-            amountAfterFees = (amountAfterFeesInt + fees.skewFees).toUint();
+        usdAmount += fees.fixedFees + fees.utilizationFees;
+    }
 
-            fees.fixedFees =
-                amountAfterFees.divDecimal(DecimalMath.UNIT - fixedFee) -
-                amountAfterFees;
-            amountAfterFees += fees.fixedFees;
-        }
+    /**
+     * @dev Get quote for amount of synths (`synthAmount`) to receive for a given amount of USD (`usdAmount`)
+     */
+    function quoteBuyExactIn(
+        uint128 marketId,
+        uint usdAmount,
+        uint synthPrice,
+        address transactor,
+        Transaction.Type transactionType
+    ) internal view returns (uint synthAmount, OrderFees.Data memory fees, Data storage config) {
+        config = load(marketId);
+
+        uint utilizationFee = calculateUtilizationRateFee(config, marketId, usdAmount, synthPrice);
+        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+
+        fees.utilizationFees = utilizationFee.mulDecimal(usdAmount);
+        fees.fixedFees = fixedFee.mulDecimal(usdAmount);
+        // apply utilization and fixed fees by removing from the amount to be returned to trader.
+        usdAmount = usdAmount - fees.fixedFees - fees.utilizationFees;
+
+        int usdAmountInt = usdAmount.toInt();
+        int skewFee = calculateSkewFee(config, marketId, usdAmountInt, synthPrice, transactionType);
+
+        fees.skewFees = skewFee.mulDecimal(usdAmountInt);
+        // apply skew fee
+        usdAmount = (usdAmountInt - fees.skewFees).toUint();
+        // convert usd amount to synth amount to return to trader
+        synthAmount = usdAmount.divDecimal(synthPrice);
+    }
+
+    /**
+     * @dev Get quote for amount of synth (`synthAmount`) burn from trader for the specified amount of USD (`usdAmount`)
+     */
+    function quoteSellExactOut(
+        uint128 marketId,
+        uint usdAmount,
+        uint synthPrice,
+        address transactor,
+        Transaction.Type transactionType
+    ) internal view returns (uint synthAmount, OrderFees.Data memory fees, Data storage config) {
+        config = load(marketId);
+
+        int usdAmountInt = usdAmount.toInt();
+        int skewFee = calculateSkewFee(
+            config,
+            marketId,
+            usdAmountInt * -1, // when selling, use negative amount
+            synthPrice,
+            transactionType
+        );
+
+        fees.skewFees = skewFee.mulDecimal(usdAmountInt);
+        // apply skew by adding to the amount
+        usdAmount = (usdAmountInt + fees.skewFees).toUint();
+
+        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+
+        // use the usd amount _after_ skew fee is applied to the amount
+        // when exact out, fees are applied by dividing by %
+        fees.fixedFees = usdAmount.divDecimal(DecimalMath.UNIT - fixedFee) - usdAmount;
+        // apply fixed fee
+        usdAmount += fees.fixedFees;
+        // convert usd amount to synth amount to return to trader
+        synthAmount = usdAmount.divDecimal(synthPrice);
+    }
+
+    /**
+     * @dev Get quote for amount of USD (`usdAmount`) to receive for a given amount of synths (`synthAmount`)
+     */
+    function quoteSellExactIn(
+        uint128 marketId,
+        uint synthAmount,
+        uint synthPrice,
+        address transactor,
+        Transaction.Type transactionType
+    ) internal view returns (uint usdAmount, OrderFees.Data memory fees, Data storage config) {
+        config = load(marketId);
+
+        usdAmount = synthAmount.mulDecimal(synthPrice);
+
+        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        fees.fixedFees = fixedFee.mulDecimal(usdAmount);
+        // apply fixed fee by removing from the amount that gets returned to user in exchange
+        usdAmount -= fees.fixedFees;
+
+        // use the amount _after_ fixed fee is applied to the amount
+        // skew is calcuated based on amount after all other fees applied, to get accurate skew fee
+        int usdAmountInt = usdAmount.toInt();
+        int skewFee = calculateSkewFeeExact(
+            config,
+            marketId,
+            usdAmountInt * -1, // removing value so negative
+            synthPrice,
+            transactionType
+        );
+        fees.skewFees = skewFee.mulDecimal(usdAmountInt);
+        usdAmount = (usdAmountInt - fees.skewFees).toUint();
     }
 
     function calculateSkewFeeExact(
@@ -392,6 +392,22 @@ library FeeConfiguration {
         }
     }
 
+    /*
+     * @dev if special fee is set for a given transactor that takes precedence over the global fixed fees
+     * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
+     */
+    function _getFixedFee(
+        FeeConfiguration.Data storage feeConfiguration,
+        address transactor,
+        bool async
+    ) private view returns (uint fixedFee) {
+        if (feeConfiguration.atomicFixedFeeOverrides[transactor] > 0) {
+            fixedFee = feeConfiguration.atomicFixedFeeOverrides[transactor];
+        } else {
+            fixedFee = async ? feeConfiguration.asyncFixedFee : feeConfiguration.atomicFixedFee;
+        }
+    }
+
     /**
      * @dev First sends referrer fees based on fixed fee amount and configured %
      * Then if total fees for transaction are greater than 0, gets quote from
@@ -461,22 +477,6 @@ library FeeConfiguration {
             } else {
                 factory.usdToken.transfer(referrer, referrerFeesCollected);
             }
-        }
-    }
-
-    /*
-     * @dev if special fee is set for a given transactor that takes precedence over the global fixed fees
-     * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
-     */
-    function _getFixedFee(
-        FeeConfiguration.Data storage feeConfiguration,
-        address transactor,
-        bool async
-    ) private view returns (uint fixedFee) {
-        if (feeConfiguration.atomicFixedFeeOverrides[transactor] > 0) {
-            fixedFee = feeConfiguration.atomicFixedFeeOverrides[transactor];
-        } else {
-            fixedFee = async ? feeConfiguration.asyncFixedFee : feeConfiguration.atomicFixedFee;
         }
     }
 

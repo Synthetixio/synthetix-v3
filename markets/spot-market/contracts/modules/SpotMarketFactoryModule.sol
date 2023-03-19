@@ -98,7 +98,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.BUY_EXACT_IN);
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.BUY);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -111,7 +111,7 @@ contract SpotMarketFactoryModule is
             utilizationLeverage == 0
                 ? 0
                 : totalBalance
-                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY_EXACT_IN))
+                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY))
                     .divDecimal(utilizationLeverage);
     }
 

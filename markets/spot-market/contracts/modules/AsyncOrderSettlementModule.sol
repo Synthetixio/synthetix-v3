@@ -209,13 +209,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         address trader = asyncOrderClaim.owner;
 
         uint usdAmountAfterFees;
-        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (usdAmountAfterFees, fees) = feeConfiguration.calculateFees(
+        FeeConfiguration.Data storage feeConfig;
+
+        (usdAmountAfterFees, fees, feeConfig) = FeeConfiguration.quoteBuyExactIn(
             marketId,
-            msg.sender,
             amountUsable,
             price,
-            Transaction.Type.ASYNC_BUY
+            trader,
+            Transaction.Type.BUY
         );
 
         finalOrderAmount = usdAmountAfterFees.divDecimal(price);
@@ -227,7 +228,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             );
         }
 
-        collectedFees = feeConfiguration.collectFees(
+        collectedFees = feeConfig.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -258,15 +259,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             asyncOrderClaim.amountEscrowed
         );
         address trader = asyncOrderClaim.owner;
-        uint usableAmount = synthAmount.mulDecimal(price) - settlementReward;
-        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
+        FeeConfiguration.Data storage feeConfiguration;
 
-        (finalOrderAmount, fees) = feeConfiguration.calculateFees(
+        (finalOrderAmount, fees, feeConfiguration) = FeeConfiguration.quoteSellExactIn(
             marketId,
-            trader,
-            usableAmount,
+            synthAmount,
             price,
-            Transaction.Type.ASYNC_SELL
+            trader,
+            Transaction.Type.SELL
         );
 
         // check slippage tolerance
@@ -291,7 +291,11 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
         // send keeper it's reward then send trader final amount
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
-        spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);
+        spotMarketFactory.synthetix.withdrawMarketUsd(
+            marketId,
+            trader,
+            finalOrderAmount - settlementReward
+        );
     }
 
     /**

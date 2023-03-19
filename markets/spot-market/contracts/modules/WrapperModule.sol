@@ -47,7 +47,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 wrapAmount,
         uint minAmountReceived
-    ) external override returns (uint256 amountToMint) {
+    ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.isValidMarket(marketId);
@@ -65,22 +65,13 @@ contract WrapperModule is IWrapperModule {
             wrapAmount
         );
 
-        uint256 wrapAmountInUsd = Price.synthUsdExchangeRate(
+        FeeConfiguration.Data storage feeConfiguration;
+
+        (amountToMint, fees, feeConfiguration) = FeeConfiguration.quoteWrap(
             marketId,
             wrapAmount,
-            Transaction.Type.WRAP
+            Price.getCurrentPrice(marketId, Transaction.Type.WRAP)
         );
-
-        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (uint256 returnAmountUsd, OrderFees.Data memory fees) = feeConfiguration.calculateFees(
-            marketId,
-            msg.sender,
-            wrapAmountInUsd,
-            Price.getCurrentPrice(marketId, Transaction.Type.WRAP),
-            Transaction.Type.WRAP
-        );
-
-        amountToMint = Price.usdSynthExchangeRate(marketId, returnAmountUsd, Transaction.Type.WRAP);
 
         if (amountToMint < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, amountToMint);
@@ -107,7 +98,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 unwrapAmount,
         uint minAmountReceived
-    ) external override returns (uint256 returnCollateralAmount) {
+    ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.isValidMarket(marketId);
@@ -121,25 +112,11 @@ contract WrapperModule is IWrapperModule {
         // TODO: do i need to transfer to burn?
         synth.burn(address(this), unwrapAmount);
 
-        uint256 unwrapAmountInUsd = Price.synthUsdExchangeRate(
+        FeeConfiguration.Data storage feeConfiguration;
+        (returnCollateralAmount, fees, feeConfiguration) = FeeConfiguration.quoteUnwrap(
             marketId,
             unwrapAmount,
-            Transaction.Type.UNWRAP
-        );
-
-        FeeConfiguration.Data storage feeConfiguration = FeeConfiguration.load(marketId);
-        (uint256 returnAmountUsd, OrderFees.Data memory fees) = feeConfiguration.calculateFees(
-            marketId,
-            msg.sender,
-            unwrapAmountInUsd,
-            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP),
-            Transaction.Type.UNWRAP
-        );
-
-        returnCollateralAmount = Price.usdSynthExchangeRate(
-            marketId,
-            returnAmountUsd,
-            Transaction.Type.UNWRAP
+            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP)
         );
 
         if (returnCollateralAmount < minAmountReceived) {
