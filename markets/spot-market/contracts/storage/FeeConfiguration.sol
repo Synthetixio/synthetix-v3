@@ -146,13 +146,7 @@ library FeeConfiguration {
         int amountInt = usdAmount.toInt();
 
         // compute skew fee based on amount out
-        int skewFee = calculateSkewFeeExact(
-            config,
-            marketId,
-            amountInt,
-            synthPrice,
-            transactionType
-        );
+        int skewFee = calculateSkewFeeExact(config, marketId, amountInt, synthPrice);
 
         fees.skewFees = skewFee.mulDecimal(amountInt);
         // apply fees by adding to the amount
@@ -262,8 +256,7 @@ library FeeConfiguration {
             config,
             marketId,
             usdAmountInt * -1, // removing value so negative
-            synthPrice,
-            transactionType
+            synthPrice
         );
         fees.skewFees = skewFee.mulDecimal(usdAmountInt);
         usdAmount = (usdAmountInt - fees.skewFees).toUint();
@@ -273,8 +266,7 @@ library FeeConfiguration {
         Data storage self,
         uint128 marketId,
         int amount,
-        uint synthPrice,
-        Transaction.Type transactionType
+        uint synthPrice
     ) internal view returns (int skewFee) {
         if (self.skewScale == 0) {
             return 0;
@@ -301,9 +293,8 @@ library FeeConfiguration {
         int skewAfterFillAdjustment = skewAfterFill.divDecimal(skewScaleValue);
         int skewAdjustmentAveragePercentage = (skewAfterFillAdjustment + initialSkewAdjustment) / 2;
 
-        skewFee = Transaction.isSell(transactionType)
-            ? skewAdjustmentAveragePercentage * -1
-            : skewAdjustmentAveragePercentage;
+        // this subtraction allows for skew fee to be negative as skew is removed, and positive as skew is added
+        skewFee = skewAfterFillAdjustment - skewAdjustmentAveragePercentage;
     }
 
     function calculateSkewFee(
@@ -467,7 +458,7 @@ library FeeConfiguration {
         SpotMarketFactory.Data storage factory,
         Transaction.Type transactionType
     ) private returns (uint referrerFeesCollected) {
-        if (referrer == address(0) || fees.wrapperFees == 0) {
+        if (referrer == address(0)) {
             return 0;
         }
 
