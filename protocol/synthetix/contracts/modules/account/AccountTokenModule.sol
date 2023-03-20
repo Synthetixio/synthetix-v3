@@ -17,11 +17,9 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
     /**
      * @dev Updates account RBAC storage to track the current owner of the token.
      */
-    function _postTransfer(
-        address, // from (unused)
-        address to,
-        uint256 tokenId
-    ) internal virtual override {
-        IAccountModule(OwnableStorage.getOwner()).notifyAccountTransfer(to, tokenId.to128());
+    function _postTransfer(address from, address to, uint256 tokenId) internal virtual override {
+        if (from != address(0)) {
+            IAccountModule(OwnableStorage.getOwner()).notifyAccountTransfer(to, tokenId.to128());
+        }
     }
 }
