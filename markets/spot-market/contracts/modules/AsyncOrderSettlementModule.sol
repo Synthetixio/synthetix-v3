@@ -267,6 +267,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             Transaction.Type.ASYNC_SELL
         );
 
+        // remove settlment reward from final order
+        finalOrderAmount -= settlementReward;
+
         // check slippage tolerance
         if (finalOrderAmount < asyncOrderClaim.minimumSettlementAmount) {
             revert MinimumSettlementAmountNotMet(
@@ -287,8 +290,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             Transaction.Type.ASYNC_SELL
         );
 
-        // send keeper it's reward then send trader final amount
-        finalOrderAmount -= settlementReward;
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);
     }

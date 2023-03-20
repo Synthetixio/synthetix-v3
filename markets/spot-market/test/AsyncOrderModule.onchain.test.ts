@@ -17,7 +17,7 @@ const settlementStrategy = {
   priceDeviationTolerance: bn(0.01),
 };
 
-describe.only('AsyncOrderModule onchain', () => {
+describe('AsyncOrderModule onchain', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
