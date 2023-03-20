@@ -444,6 +444,7 @@ library FeeConfiguration {
             marketId,
             totalFeesUint,
             transactor,
+            // solhint-disable-next-line numcast/safe-cast
             uint8(transactionType)
         );
 
@@ -452,6 +453,7 @@ library FeeConfiguration {
             factory.synthetix.withdrawMarketUsd(marketId, address(this), feeCollectorQuote);
         }
 
+        // solhint-disable-next-line numcast/safe-cast
         self.feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
 
         return referrerFeesCollected + feeCollectorQuote;
