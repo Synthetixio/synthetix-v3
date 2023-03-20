@@ -260,8 +260,8 @@ library FeeConfiguration {
 // @custom:artifact contracts/storage/OrderFees.sol:OrderFees
 library OrderFees {
     struct Data {
-        int256 fixedFees;
-        int256 utilizationFees;
+        uint256 fixedFees;
+        uint256 utilizationFees;
         int256 skewFees;
         int256 wrapperFees;
     }
