@@ -35,8 +35,7 @@ This is a monorepo with the following folder structure and packages:
     ├── core-utils               // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
     ├── router                   // Cannon plugin that merges multiple modules into a router contract.
     ├── hardhat-storage          // Hardhat plugin used to detect storage collisions between proxy implementations.
-    ├── sample-project           // Sample project based on router proxy and cannon.
-    └── solhint-plugin-numcast   // Solidity linter plugin to avoid low level numeric casts which can lead to silent overflows.
+    └── sample-project           // Sample project based on router proxy and cannon.
 ```
 
 ## Router Proxy
@@ -74,7 +73,7 @@ To prepare for system upgrades, this repository is used to release new versions 
 - Confirm the private key that owns the corresponding namespace in the package registry is available as `$DEPLOYER_PRIVATE_KEY`.
 - Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
 - Publish the release with `yarn publish:canary` for the alpha pre-release and `yarn publish:release` for the proper semver release.
-- In case cannon publish fails you can run `yarn postpublish`  in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
+- In case cannon publish fails you can run `yarn postpublish` in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
 
