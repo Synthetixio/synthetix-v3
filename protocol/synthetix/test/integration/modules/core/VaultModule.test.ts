@@ -1,11 +1,11 @@
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
-import Permissions from '../../mixins/AccountRBACMixin.permissions';
+import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('VaultModule', function () {
