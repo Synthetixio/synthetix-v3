@@ -133,9 +133,9 @@ describe('AsyncOrderModule pyth', () => {
       it('emits settled event', async () => {
         await assertEvent(
           settleTxn,
-          `OrderSettled(${marketId()}, 1, ${expectedReturnAmt}, ${bn(
+          `OrderSettled(${marketId()}, 1, ${expectedReturnAmt}, [${bn(
             9.95
-          )}, 0, "${await keeper.getAddress()}"`,
+          )}, 0, 0, 0], 0, "${await keeper.getAddress()}"`,
           systems().SpotMarket
         );
       });

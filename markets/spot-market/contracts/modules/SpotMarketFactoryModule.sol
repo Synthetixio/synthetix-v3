@@ -11,6 +11,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../storage/FeeConfiguration.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
 /**
@@ -25,6 +26,7 @@ contract SpotMarketFactoryModule is
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
+    using FeeConfiguration for FeeConfiguration.Data;
     using Price for Price.Data;
 
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
@@ -32,7 +34,7 @@ contract SpotMarketFactoryModule is
     function _isInitialized() internal view override returns (bool) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         return
-            spotMarketFactory.synthetix != address(0) &&
+            address(spotMarketFactory.synthetix) != address(0) &&
             spotMarketFactory.usdToken != ITokenModule(address(0));
     }
 
@@ -46,8 +48,9 @@ contract SpotMarketFactoryModule is
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
+    // TODO: remove and make this cannon friendly
     function initialize(
-        address snxAddress,
+        ISynthetixSystem snxAddress,
         address usdTokenAddress,
         address oracleManager,
         address initialSynthImplementation
@@ -72,9 +75,7 @@ contract SpotMarketFactoryModule is
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        uint128 synthMarketId = IMarketManagerModule(spotMarketFactory.synthetix).registerMarket(
-            address(this)
-        );
+        uint128 synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
 
         _initOrUpgradeToken(
             SynthUtil.getSystemId(synthMarketId),
@@ -103,14 +104,15 @@ contract SpotMarketFactoryModule is
     }
 
     function locked(uint128 marketId) external view returns (uint256) {
-        uint delegatedCollateral = IMarketManagerModule(SpotMarketFactory.load().synthetix)
-            .getMarketCollateral(marketId);
-
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
-        uint totalValue = totalBalance.mulDecimal(
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY)
-        );
-        return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
+        uint utilizationLeverage = FeeConfiguration.load(marketId).utilizationLeveragePercentage;
+
+        return
+            utilizationLeverage == 0
+                ? 0
+                : totalBalance
+                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY))
+                    .divDecimal(utilizationLeverage);
     }
 
     /**

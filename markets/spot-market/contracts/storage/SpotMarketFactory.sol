@@ -3,8 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
-import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
+import "../interfaces/external/ISynthetixSystem.sol";
 import "./Price.sol";
 
 /**
@@ -29,9 +28,9 @@ library SpotMarketFactory {
          */
         INodeModule oracle;
         /**
-         * @dev Synthetix core v3 proxy address
+         * @dev Synthetix core v3 proxy
          */
-        address synthetix;
+        ISynthetixSystem synthetix;
         /**
          * @dev when synth is registered, this is the initial implementation address the proxy services.
          */
@@ -72,6 +71,6 @@ library SpotMarketFactory {
      */
     function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {
         self.usdToken.approve(address(this), amount);
-        IMarketManagerModule(self.synthetix).depositMarketUsd(marketId, address(this), amount);
+        self.synthetix.depositMarketUsd(marketId, address(this), amount);
     }
 }

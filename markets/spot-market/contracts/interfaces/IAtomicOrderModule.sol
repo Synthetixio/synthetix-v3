@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import "../storage/OrderFees.sol";
 
 /**
  * @title Module for atomic buy and sell orders for traders.
@@ -15,6 +16,8 @@ interface IAtomicOrderModule {
      * @notice Thrown when trader has not provided allowance for the market to transfer the underlying asset.
      */
     error InsufficientAllowance(uint expected, uint current);
+    error ExceedsMaxUsdAmount(uint maxUsdAmount, uint usdAmountCharged);
+    error ExceedsMaxSynthAmount(uint maxSynthAmount, uint synthAmountCharged);
     /**
      * @notice Thrown when a trade doesn't meet minimum expected return amount.
      */
@@ -24,14 +27,14 @@ interface IAtomicOrderModule {
      * @notice Gets fired when buy trade is complete
      * @param synthMarketId Id of the market used for the trade.
      * @param synthReturned Synth received on the trade based on amount provided by trader.
-     * @param totalFees total fees charged to the trader on the transaction.
+     * @param fees breakdown of all fees incurred for transaction.
      * @param collectedFees Fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      * @param referrer Optional address of the referrer, for fee share
      */
     event SynthBought(
         uint indexed synthMarketId,
         uint synthReturned,
-        int totalFees,
+        OrderFees.Data fees,
         uint collectedFees,
         address referrer
     );
@@ -40,14 +43,14 @@ interface IAtomicOrderModule {
      * @notice Gets fired when buy trade is complete
      * @param synthMarketId Id of the market used for the trade.
      * @param amountReturned Amount of snxUSD returned to user based on synth provided by trader.
-     * @param totalFees total fees charged to the trader on the transaction.
+     * @param fees breakdown of all fees incurred for transaction.
      * @param collectedFees Fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      * @param referrer Optional address of the referrer, for fee share
      */
     event SynthSold(
         uint indexed synthMarketId,
         uint amountReturned,
-        int totalFees,
+        OrderFees.Data fees,
         uint collectedFees,
         address referrer
     );
@@ -62,13 +65,38 @@ interface IAtomicOrderModule {
      * @param minAmountReceived Min Amount of synth is expected the trader to receive otherwise the transaction will revert.
      * @param referrer Optional address of the referrer, for fee share
      * @return synthReturned Synth received on the trade based on amount provided by trader.
+     * @return fees breakdown of all the fees incurred for the transaction.
      */
-    function buy(
+    function buyExactIn(
         uint128 synthMarketId,
         uint amountUsd,
         uint minAmountReceived,
         address referrer
-    ) external returns (uint, int);
+    ) external returns (uint, OrderFees.Data memory);
+
+    function buy(
+        uint128 marketId,
+        uint usdAmount,
+        uint minAmountReceived,
+        address referrer
+    ) external returns (uint synthAmount, OrderFees.Data memory fees);
+
+    function buyExactOut(
+        uint128 synthMarketId,
+        uint synthAmount,
+        uint maxUsdAmount,
+        address referrer
+    ) external returns (uint, OrderFees.Data memory);
+
+    function quoteBuyExactIn(
+        uint128 synthMarketId,
+        uint usdAmount
+    ) external view returns (uint256 synthAmount, OrderFees.Data memory);
+
+    function quoteBuyExactOut(
+        uint128 synthMarketId,
+        uint synthAmount
+    ) external view returns (uint256 usdAmountCharged, OrderFees.Data memory);
 
     /**
      * @notice Initiates a sell trade returning snxUSD for the specified amount of synth, sellAmount.
@@ -79,28 +107,36 @@ interface IAtomicOrderModule {
      * @param minAmountReceived Min Amount of snxUSD is expected the trader to receive otherwise the transaction will revert.
      * @param referrer Optional address of the referrer, for fee share
      * @return amountReturned Amount of snxUSD returned to user based on synth provided by trader.
+     * @return fees breakdown of all the fees incurred for the transaction.
      */
-    function sell(
+    function sellExactIn(
         uint128 synthMarketId,
         uint sellAmount,
         uint minAmountReceived,
         address referrer
-    ) external returns (uint, int);
-
-    function quoteSell(
-        uint128 marketId,
-        uint synthAmount
-    ) external view returns (uint256 returnAmount, int256 totalFees);
+    ) external returns (uint, OrderFees.Data memory);
 
     function sellExactOut(
         uint128 marketId,
         uint usdAmount,
+        uint maxAmountReceived,
         address referrer
-    ) external returns (uint);
+    ) external returns (uint, OrderFees.Data memory);
 
-    function sellExactIn(
+    function sell(
         uint128 marketId,
         uint synthAmount,
+        uint minUsdAmount,
         address referrer
-    ) external returns (uint);
+    ) external returns (uint usdAmountReceived, OrderFees.Data memory fees);
+
+    function quoteSellExactIn(
+        uint128 marketId,
+        uint synthAmount
+    ) external view returns (uint256 returnAmount, OrderFees.Data memory);
+
+    function quoteSellExactOut(
+        uint128 marketId,
+        uint usdAmount
+    ) external view returns (uint256 synthToBurn, OrderFees.Data memory);
 }
