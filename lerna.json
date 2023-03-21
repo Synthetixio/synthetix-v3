@@ -9,7 +9,7 @@
     "**/*.md"
   ],
   "private": false,
-  "push": false,
+  "push": true,
   "command": {
     "version": {
       "allowBranch": [
