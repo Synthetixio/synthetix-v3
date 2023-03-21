@@ -131,7 +131,7 @@ depends = ["contract.InitialModuleBundle"]
 [invoke.upgrade_core_proxy]
 target = ["InitialCoreProxy"]
 abi = "UpgradeModule"
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
 
@@ -172,7 +172,7 @@ depends = [
 
 [invoke.init_account]
 target = ["CoreProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "initOrUpgradeNft"
 args = [
   "0x6163636f756e744e667400000000000000000000000000000000000000000000",
@@ -191,7 +191,7 @@ factory.AccountProxy.arg = 2
 
 [invoke.init_usd]
 target = ["CoreProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "initOrUpgradeToken"
 args = [
   "0x555344546f6b656e000000000000000000000000000000000000000000000000",
@@ -210,7 +210,7 @@ factory.USDProxy.arg = 2
 
 [invoke.set_oracle_manager]
 target = ["CoreProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "configureOracleManager"
 args = [
   "<%= imports.oracle_manager.contracts.Proxy.address %>",
