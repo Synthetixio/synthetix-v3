@@ -32,7 +32,7 @@
     "version": "yarn install && git stage yarn.lock",
     "cannon:setup": "cannon setup",
     "publish:release": "lerna publish --force-publish",
-    "publish:alpha": "lerna publish --force-publish --canary",
+    "publish:dev": "lerna publish --force-publish --canary --dist-tag dev --preid $(git rev-parse --short HEAD)",
     "postpublish": "yarn workspaces foreach --verbose run publish-contracts"
   },
   "devDependencies": {
