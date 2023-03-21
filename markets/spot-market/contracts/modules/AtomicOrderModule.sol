@@ -8,8 +8,6 @@ import "../storage/FeeConfiguration.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Module for buying and selling atomically registered synths.
  * @dev See IAtomicOrderModule.

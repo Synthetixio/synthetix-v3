@@ -12,8 +12,6 @@ import "../utils/SynthUtil.sol";
 import "../utils/MathUtil.sol";
 import "../utils/TransactionUtil.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Fee storage that tracks all fees for a given market Id.
  */
@@ -497,17 +495,12 @@ library FeeConfiguration {
         int costPriceSkewRatio = (8 * amount.mulDecimal(price.toInt())).divDecimal(
             self.skewScale.toInt()
         );
-        console.logInt(costPriceSkewRatio);
         int initialSkewPriceRatio = (2 * initialSkew.mulDecimal(price.toInt())).divDecimal(
             self.skewScale.toInt()
         );
-        console.logInt(initialSkewPriceRatio);
 
         int ratioSquared = MathUtil.pow(initialSkewPriceRatio + 2 * price.toInt(), 2);
-        console.logInt(ratioSquared);
         int sqrt = MathUtil.sqrt(costPriceSkewRatio + ratioSquared);
-        console.logInt(sqrt);
-        console.log("BLAH");
 
         return skewPriceRatio.toInt().mulDecimal(sqrt) - self.skewScale.toInt() - initialSkew;
     }

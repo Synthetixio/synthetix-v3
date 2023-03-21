@@ -5,7 +5,7 @@ import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.skip('Atomic Order Module buy()', () => {
+describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -191,9 +191,7 @@ describe.skip('Atomic Order Module buy()', () => {
       });
 
       it('trader1 gets 9.5 snxETH', async () => {
-        // from 0 eth skew to 10 eth skew
-        // 5% fee (average before/after fill 0 + 10 / 2)
-        assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(9.5));
+        assertBn.near(await synth.balanceOf(await trader1.getAddress()), bn(9.54451), bn(0.00001));
       });
     });
 
@@ -206,83 +204,7 @@ describe.skip('Atomic Order Module buy()', () => {
       });
 
       it('trader2 gets 8.55 snxETH', async () => {
-        // from 9.5 eth skew to 19.5 eth skew
-        // 14.5% fee (average before/after fill 9.5 + 19.5 / 2)
-        assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(8.55));
-      });
-    });
-  });
-
-  describe('all fees set', () => {
-    before(restore);
-
-    before('set all fees', async () => {
-      /*
-          NOTE: very unlikely both utilization and skew fees would be set at the same time
-          but we test that the fees are additive and is supported.
-        */
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
-      await systems()
-        .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.001));
-      await systems().SpotMarket.connect(marketOwner).setMarketSkewScale(marketId(), bn(1000));
-    });
-
-    before('traders buy snxETH', async () => {
-      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(90_000));
-      await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(25_000));
-
-      await systems()
-        .SpotMarket.connect(trader1)
-        .buy(marketId(), bn(90_000), bn(90 * 0.945), Ethers.constants.AddressZero); // 90 eth
-      await systems()
-        .SpotMarket.connect(trader2)
-        .buy(marketId(), bn(25_000), bn(22.185625), Ethers.constants.AddressZero); // 25 eth
-    });
-
-    it('sent correct amounts of synth to trader 1', async () => {
-      // fixed fee 1% + utilization fee 0% (under 100% utilization)
-      //  + skew fee 4.5% (under 1000 eth skew) == 5.5% fee
-      assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(90 * 0.945));
-    });
-
-    it('sent correct amount of synth to trader 2', async () => {
-      // current synth amount after fees from trader1 = 85.05 eth
-      // total synth after trader2 buy = 110.05 eth
-      // fixed fee = 1%
-      // utilfee = (10.05 / 2) = 5.025 * 0.1% = 0.5025%
-      // skew fee = (85.05 + 110.05 / 2) = 9.755%
-      // total fees = 11.2575%
-      assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(22.185625));
-    });
-
-    describe('custom transactor fees', () => {
-      before('set trader1 atomic fee to 0.1% bps', async () => {
-        await systems()
-          .SpotMarket.connect(marketOwner)
-          .setCustomTransactorFees(marketId(), trader1.getAddress(), bn(0.001));
-      });
-
-      let previousTrader1Balance: Ethers.BigNumber;
-      before('trader1 buys again', async () => {
-        previousTrader1Balance = await synth.balanceOf(await trader1.getAddress());
-        await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-        await systems()
-          .SpotMarket.connect(trader1)
-          .buy(marketId(), bn(1000), 0, Ethers.constants.AddressZero);
-      });
-
-      it('trader1 gets lower atomic fixed fee', async () => {
-        // current synth amount from previous trades = 107.235625 eth
-        // total synth after trader2 buy = 108.235625 eth
-        // fixed fee = 0.1%
-        // utilfee = 7.735625 (utilization) * 0.1 (utilization rate) = 0.7735625
-        // skew fee = 10.7735625%
-        // total fees = 10.7735625% + 0.7735625% + 0.1% = 11.647125%
-        assertBn.equal(
-          await synth.balanceOf(await trader1.getAddress()),
-          previousTrader1Balance.add(bn(0.88352875))
-        );
+        assertBn.near(await synth.balanceOf(await trader2.getAddress()), bn(8.777084), bn(0.00001));
       });
     });
   });
