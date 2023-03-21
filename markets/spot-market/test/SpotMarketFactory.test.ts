@@ -5,7 +5,7 @@ import assert from 'assert';
 import assertBignumber from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import { SynthRouter } from '../generated/typechain';
 
-describe.skip('SpotMarketFactory', () => {
+describe('SpotMarketFactory', () => {
   const { systems, signers, marketId, aggregator } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD

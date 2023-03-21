@@ -98,7 +98,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.BUY);
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
