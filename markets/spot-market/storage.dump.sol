@@ -337,10 +337,8 @@ library Wrapper {
 // @custom:artifact contracts/utils/TransactionUtil.sol:Transaction
 library Transaction {
     enum Type {
-        BUY_EXACT_IN,
-        BUY_EXACT_OUT,
-        SELL_EXACT_IN,
-        SELL_EXACT_OUT,
+        BUY,
+        SELL,
         ASYNC_BUY,
         ASYNC_SELL,
         WRAP,
