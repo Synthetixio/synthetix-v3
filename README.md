@@ -72,7 +72,7 @@ To prepare for system upgrades, this repository is used to release new versions 
 - After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
 - Confirm the private key that owns the corresponding namespace in the package registry is available as `$DEPLOYER_PRIVATE_KEY`.
 - Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
-- Publish the release with `yarn publish:canary` for the alpha pre-release and `yarn publish:release` for the proper semver release.
+- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
 - In case cannon publish fails you can run `yarn postpublish` in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
