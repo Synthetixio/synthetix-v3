@@ -80,7 +80,7 @@ depends = [
 
 [invoke.upgrade_spot_market_proxy]
 target = ["InitialSpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]

@@ -95,7 +95,7 @@ describe('Atomic Order Module sell()', () => {
     it('emits SynthSold event', async () => {
       await assertEvent(
         txn,
-        `SynthSold(${marketId()}, ${bn(900)}, 0, 0, "${Ethers.constants.AddressZero}")`,
+        `SynthSold(${marketId()}, ${bn(900)}, [0, 0, 0, 0], 0, "${Ethers.constants.AddressZero}")`,
         systems().SpotMarket
       );
     });
@@ -107,7 +107,7 @@ describe('Atomic Order Module sell()', () => {
     before('set utilization fee to 1%', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.01));
+        .setMarketUtilizationFees(marketId(), bn(0.01), bn(1));
     });
 
     before('sell 1 snxETH', async () => {
@@ -162,7 +162,9 @@ describe('Atomic Order Module sell()', () => {
     it('emits SynthSold event', async () => {
       await assertEvent(
         txn,
-        `SynthSold(${marketId()}, ${bn(891)}, ${bn(9)}, 0, "${Ethers.constants.AddressZero}")`,
+        `SynthSold(${marketId()}, ${bn(891)}, [${bn(9)}, 0, 0, 0], 0, "${
+          Ethers.constants.AddressZero
+        }")`,
         systems().SpotMarket
       );
     });
@@ -193,8 +195,6 @@ describe('Atomic Order Module sell()', () => {
   describe('all fees', () => {
     before(restore);
 
-    // 20 snxETH outstanding from initial trader purchases
-
     before('set fixed fee to 1%', async () => {
       await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
@@ -207,18 +207,13 @@ describe('Atomic Order Module sell()', () => {
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(5));
       await systems()
         .SpotMarket.connect(trader1)
-        .sell(marketId(), bn(5), bn(5242.5), Ethers.constants.AddressZero);
+        .sell(marketId(), bn(5), bn(5235.73875), Ethers.constants.AddressZero);
     });
 
     it('trader1 gets extra snxUSD back for selling', async () => {
-      // before fill value = 20 eth * 900 usd/eth = 18_000 usd
-      // after fill value = 18_000 - 5 * 900 = 13_500 usd
-      // -17.5% fee (average before/after fill 20 + 15 / 2)
-      // 1% fixed fee
-      // $900 eth price * 5 eth skew * -16.5% fee =
       assertBn.equal(
         await systems().USD.balanceOf(await trader1.getAddress()),
-        initialTrader1Balance.add(bn(5242.5))
+        initialTrader1Balance.add(bn(5235.73875))
       );
     });
   });

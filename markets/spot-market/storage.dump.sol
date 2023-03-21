@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -242,6 +242,7 @@ library FeeConfiguration {
         uint atomicFixedFee;
         uint asyncFixedFee;
         uint utilizationFeeRate;
+        uint utilizationLeveragePercentage;
         int wrapFixedFee;
         int unwrapFixedFee;
         uint skewScale;
@@ -253,6 +254,16 @@ library FeeConfiguration {
         assembly {
             feeConfiguration.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/OrderFees.sol:OrderFees
+library OrderFees {
+    struct Data {
+        uint256 fixedFees;
+        uint256 utilizationFees;
+        int256 skewFees;
+        int256 wrapperFees;
     }
 }
 
@@ -333,4 +344,9 @@ library Transaction {
         WRAP,
         UNWRAP
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../storage/SettlementStrategy.sol";
+import "../storage/OrderFees.sol";
 
 /**
  * @title Module for committing and settling async orders.
@@ -12,7 +13,7 @@ interface IAsyncOrderSettlementModule {
      * @param marketId Id of the market used for the trade.
      * @param asyncOrderId id of the async order.
      * @param finalOrderAmount amount returned to trader after fees.
-     * @param totalFees total fees for the transaction.
+     * @param fees breakdown of all the fees incurred for the transaction.
      * @param collectedFees fees collected by the configured fee collector.
      * @param sender trader address.
      */
@@ -20,7 +21,7 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
         uint256 finalOrderAmount,
-        int totalFees,
+        OrderFees.Data fees,
         uint collectedFees,
         address indexed sender
     );
@@ -60,13 +61,12 @@ interface IAsyncOrderSettlementModule {
      * @param marketId Id of the market used for the trade.
      * @param asyncOrderId id of the async order created during commitment.
      * @return finalOrderAmount amount returned to trader after fees.
-     * @return totalFees total fees for the transaction.
-     * @return collectedFees fees collected by the configured fee collector.
+     * @return fees breakdown of all the fees incurred for the transaction.
      */
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
+    ) external returns (uint finalOrderAmount, OrderFees.Data memory fees);
 
     /**
      * @notice Callback function for chainlink settlement strategy
@@ -95,11 +95,10 @@ interface IAsyncOrderSettlementModule {
      * @param result result returned from the offchain lookup.
      * @param extraData extra data sent during the offchain lookup revert error.
      * @return finalOrderAmount amount returned to trader after fees.
-     * @return totalFees total fees for the transaction.
-     * @return collectedFees fees collected by the configured fee collector.
+     * @return fees breakdown of all the fees incurred for the transaction.
      */
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint finalOrderAmount, int totalFees, uint collectedFees);
+    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory fees);
 }

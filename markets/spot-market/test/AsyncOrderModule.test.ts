@@ -158,15 +158,16 @@ describe('AsyncOrderModule chainlink', () => {
         // due to fees, user doesn't receive full 1 ether
         await assertRevert(
           systems().SpotMarket.settleOrder(marketId(), 4),
-          `MinimumSettlementAmountNotMet(${bn(85)}, ${bn(84.15)})`
+          `MinimumSettlementAmountNotMet(${bn(85)}, ${bn(84.1)})`
         );
       });
 
       it('settles on minimum amount met', async () => {
         await systems().SpotMarket.settleOrder(marketId(), 5);
+        console.log((await systems().USD.balanceOf(await trader1.getAddress())).sub(traderBalance));
         assertBn.equal(
           await systems().USD.balanceOf(await trader1.getAddress()),
-          traderBalance.add(bn(84.15))
+          traderBalance.add(bn(84.1))
         );
       });
     });

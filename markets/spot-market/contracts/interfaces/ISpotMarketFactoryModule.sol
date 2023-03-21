@@ -81,7 +81,7 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param initialSynthImplementation initial synth implementation used to initialize new synths when registering.
      */
     function initialize(
-        address snxAddress,
+        ISynthetixSystem snxAddress,
         address usdTokenAddress,
         address oracleManager,
         address initialSynthImplementation

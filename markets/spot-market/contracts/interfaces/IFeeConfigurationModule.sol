@@ -104,8 +104,13 @@ interface IFeeConfigurationModule {
      * @dev 100% utilization means the fee is 0.  120% utilization means the fee is 20% * this fee rate (in bips).
      * @param synthMarketId Id of the market the utilization fee applies to.
      * @param utilizationFeeRate the rate is represented in bips with 18 decimals and is the rate at which fee increases based on the % above 100% utilization of the delegated collateral for the market.
+     * @param utilizationLeveragePercentage the leverage percentage is represented in bips with 18 decimals and is the % leverage applied to delegated collateral to determine the utilization rate of the outstanding synths.
      */
-    function setMarketUtilizationFees(uint128 synthMarketId, uint utilizationFeeRate) external;
+    function setMarketUtilizationFees(
+        uint128 synthMarketId,
+        uint utilizationFeeRate,
+        uint utilizationLeveragePercentage
+    ) external;
 
     /**
      * @notice sets the fixed fee for a given market and transactor
