@@ -53,10 +53,14 @@ contract WrapperModule is IWrapperModule {
         spotMarketFactory.isValidMarket(marketId);
         wrapperStore.isValidWrapper();
 
-        // revert when wrapping more than the supply cap
-        wrapperStore.checkMaxWrappableAmount(marketId, wrapAmount, spotMarketFactory.synthetix);
-
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
+        uint256 wrapAmountD18 = Price
+            .scale(wrapAmount.toInt(), wrappingCollateral.decimals())
+            .toUint();
+
+        // revert when wrapping more than the supply cap
+        wrapperStore.checkMaxWrappableAmount(marketId, wrapAmountD18, spotMarketFactory.synthetix);
+
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
         wrappingCollateral.approve(address(spotMarketFactory.synthetix), wrapAmount);
         spotMarketFactory.synthetix.depositMarketCollateral(
@@ -69,7 +73,7 @@ contract WrapperModule is IWrapperModule {
 
         (amountToMint, fees, feeConfiguration) = FeeConfiguration.quoteWrap(
             marketId,
-            wrapAmount,
+            wrapAmountD18,
             Price.getCurrentPrice(marketId, Transaction.Type.WRAP)
         );
 
@@ -113,11 +117,18 @@ contract WrapperModule is IWrapperModule {
         synth.burn(address(this), unwrapAmount);
 
         FeeConfiguration.Data storage feeConfiguration;
-        (returnCollateralAmount, fees, feeConfiguration) = FeeConfiguration.quoteUnwrap(
+        uint returnCollateralAmountD18;
+        (returnCollateralAmountD18, fees, feeConfiguration) = FeeConfiguration.quoteUnwrap(
             marketId,
             unwrapAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP)
         );
+
+        uint8 collateralDecimals = ITokenModule(wrapperStore.wrapCollateralType).decimals();
+
+        returnCollateralAmount = Price
+            .scaleTo(returnCollateralAmountD18.toInt(), collateralDecimals)
+            .toUint();
 
         if (returnCollateralAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
