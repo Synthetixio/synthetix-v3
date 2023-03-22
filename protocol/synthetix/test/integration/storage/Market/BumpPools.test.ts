@@ -1,8 +1,8 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { MockMarket } from '../../../../typechain-types/contracts/mocks/MockMarket';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
 import { bootstrap } from '../../bootstrap';
 
 // thanks to iosiro for providing this test during their audit!

@@ -1,12 +1,11 @@
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { ethers as Ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import assert from 'assert/strict';
+import { ethers as Ethers } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
-import { snapshotCheckpoint } from '../../../../utils/snapshot';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider, accountId, collateralAddress, depositAmount } =

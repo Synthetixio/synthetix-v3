@@ -1,9 +1,9 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { Contract, ethers, BigNumber } from 'ethers';
-import { bootstrap } from '../bootstrap';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { wei } from '@synthetixio/wei';
-import { snapshotCheckpoint } from '../../utils/snapshot';
+import { BigNumber, Contract, ethers } from 'ethers';
+import { bootstrap } from '../bootstrap';
 
 const distUtils = {
   getActor: (id: string) => ethers.utils.formatBytes32String(id),
