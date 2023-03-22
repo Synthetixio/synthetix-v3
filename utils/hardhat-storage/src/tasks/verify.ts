@@ -51,7 +51,7 @@ task(
       logger.info(contract);
     }
 
-    await hre.run('compile', { quiet: true });
+    await hre.run('compile', { quiet: true, force: true });
 
     const sourceUnits = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, { contracts });
     const prevSourceUnits = await hre.run(SUBTASK_STORAGE_PARSE_DUMP, { output });
