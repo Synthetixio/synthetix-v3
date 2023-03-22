@@ -339,7 +339,7 @@ library MarketConfiguration {
         uint amount,
         uint256 synthPrice
     ) internal view returns (uint utilFee) {
-        if (self.utilizationFeeRate == 0) {
+        if (self.utilizationFeeRate == 0 || self.collateralLeverage == 0) {
             return 0;
         }
 

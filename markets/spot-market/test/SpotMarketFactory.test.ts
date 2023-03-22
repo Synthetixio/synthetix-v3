@@ -119,6 +119,10 @@ describe('SpotMarketFactory', () => {
     });
 
     describe('when collateral leverage is zero', () => {
+      before('set collateral leverage', async () => {
+        await systems().SpotMarket.connect(marketOwner).setCollateralLeverage(marketId(), bn(0));
+      });
+
       it('should return zero', async () => {
         assertBn.equal(await systems().SpotMarket.locked(marketId()), 0);
       });
