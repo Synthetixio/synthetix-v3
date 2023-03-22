@@ -11,7 +11,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../storage/FeeConfiguration.sol";
+import "../storage/MarketConfiguration.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
 /**
@@ -26,7 +26,7 @@ contract SpotMarketFactoryModule is
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
-    using FeeConfiguration for FeeConfiguration.Data;
+    using MarketConfiguration for MarketConfiguration.Data;
     using Price for Price.Data;
 
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
@@ -105,14 +105,14 @@ contract SpotMarketFactoryModule is
 
     function locked(uint128 marketId) external view returns (uint256) {
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
-        uint utilizationLeverage = FeeConfiguration.load(marketId).utilizationLeveragePercentage;
+        uint collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;
 
         return
-            utilizationLeverage == 0
+            collateralLeverage == 0
                 ? 0
                 : totalBalance
                     .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY))
-                    .divDecimal(utilizationLeverage);
+                    .divDecimal(collateralLeverage);
     }
 
     /**
