@@ -235,24 +235,24 @@ library AsyncOrderConfiguration {
     }
 }
 
-// @custom:artifact contracts/storage/FeeConfiguration.sol:FeeConfiguration
-library FeeConfiguration {
+// @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
+library MarketConfiguration {
     struct Data {
         mapping(address => uint) atomicFixedFeeOverrides;
         uint atomicFixedFee;
         uint asyncFixedFee;
         uint utilizationFeeRate;
-        uint utilizationLeveragePercentage;
+        uint collateralLeverage;
         int wrapFixedFee;
         int unwrapFixedFee;
         uint skewScale;
         address feeCollector;
         mapping(address => uint) referrerShare;
     }
-    function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {
+    function load(uint128 marketId) internal pure returns (Data storage marketConfig) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
         assembly {
-            feeConfiguration.slot := s
+            marketConfig.slot := s
         }
     }
 }
