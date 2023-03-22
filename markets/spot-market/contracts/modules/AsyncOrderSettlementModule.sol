@@ -13,8 +13,6 @@ import "../storage/SpotMarketFactory.sol";
 import "../storage/AsyncOrder.sol";
 import "../storage/MarketConfiguration.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Module to settle asyncronous orders
  * @notice See README.md for an overview of asyncronous orders
