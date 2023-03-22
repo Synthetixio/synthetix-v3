@@ -11,7 +11,7 @@ import "../storage/SettlementStrategy.sol";
 import "../storage/AsyncOrderConfiguration.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../storage/AsyncOrder.sol";
-import "../storage/FeeConfiguration.sol";
+import "../storage/MarketConfiguration.sol";
 
 import "hardhat/console.sol";
 
@@ -27,7 +27,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     using DecimalMath for int64;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using SettlementStrategy for SettlementStrategy.Data;
-    using FeeConfiguration for FeeConfiguration.Data;
+    using MarketConfiguration for MarketConfiguration.Data;
     using OrderFees for OrderFees.Data;
     using AsyncOrder for AsyncOrder.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
@@ -210,8 +210,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint amountUsable = asyncOrderClaim.amountEscrowed - settlementReward;
         address trader = asyncOrderClaim.owner;
 
-        FeeConfiguration.Data storage feeConfig;
-        (returnSynthAmount, fees, feeConfig) = FeeConfiguration.quoteBuyExactIn(
+        MarketConfiguration.Data storage config;
+        (returnSynthAmount, fees, config) = MarketConfiguration.quoteBuyExactIn(
             marketId,
             amountUsable,
             price,
@@ -226,7 +226,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             );
         }
 
-        collectedFees = feeConfig.collectFees(
+        collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -257,9 +257,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             asyncOrderClaim.amountEscrowed
         );
         address trader = asyncOrderClaim.owner;
-        FeeConfiguration.Data storage feeConfiguration;
+        MarketConfiguration.Data storage config;
 
-        (finalOrderAmount, fees, feeConfiguration) = FeeConfiguration.quoteSellExactIn(
+        (finalOrderAmount, fees, config) = MarketConfiguration.quoteSellExactIn(
             marketId,
             synthAmount,
             price,
@@ -281,7 +281,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         AsyncOrder.burnFromEscrow(marketId, asyncOrderClaim.amountEscrowed);
 
         // collect fees
-        collectedFees = feeConfiguration.collectFees(
+        collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,

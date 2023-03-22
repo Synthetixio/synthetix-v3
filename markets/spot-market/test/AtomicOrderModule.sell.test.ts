@@ -107,7 +107,7 @@ describe('Atomic Order Module sell()', () => {
     before('set utilization fee to 1%', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.01), bn(1));
+        .setMarketUtilizationFees(marketId(), bn(0.01));
     });
 
     before('sell 1 snxETH', async () => {

@@ -189,8 +189,8 @@ export function bootstrapWithSynth(name: string, token: string) {
   before('register synth', async () => {
     marketId = await r
       .systems()
-      .SpotMarket.callStatic.createSynth(name, token, marketOwner.getAddress());
-    await r.systems().SpotMarket.createSynth(name, token, marketOwner.getAddress());
+      .SpotMarket.callStatic.createSynth(name, token, await marketOwner.getAddress());
+    await r.systems().SpotMarket.createSynth(name, token, await marketOwner.getAddress());
   });
 
   before('configure market collateral supply cap', async () => {

@@ -15,7 +15,7 @@ The owner of a market may call `function updatePriceData(uint128 marketId, bytes
 
 ### Configuring Fees
 
-The owner of the market may set fees configurations using the functions exposed by the [IFeeConfigurationModule interface](./contracts/interfaces/IFeeConfigurationModule.sol).
+The owner of the market may set market configurations containing fees using the functions exposed by the [IMarketConfigurationModule interface](./contracts/interfaces/IMarketConfigurationModule.sol).
 
 ## Types of Transactions
 
@@ -38,7 +38,7 @@ Traders may simulate calling these functions with `callStatic` to retrieve a quo
 
 ### Asyncronous Orders
 
-Asyncronous orders involve two transactions: a _commitment_ and a _settlement_. This reduces composability, but allows for front-running mitigation such that lower fees can be offered to traders via `FeeConfiguration.asyncFixedFee`. Asynchronous orders may only be cancelled prior to settlement if it is outside of the settlement window. The relevant logic is included in the [Async Order Module](./contracts/modules/AsyncOrderModule.sol).
+Asyncronous orders involve two transactions: a _commitment_ and a _settlement_. This reduces composability, but allows for front-running mitigation such that lower fees can be offered to traders via `MarketConfiguration.asyncFixedFee`. Asynchronous orders may only be cancelled prior to settlement if it is outside of the settlement window. The relevant logic is included in the [Async Order Module](./contracts/modules/AsyncOrderModule.sol).
 
 The market owner can configure various _settlement strategies_ for asyncronous orders. Each settlement strategy can be defined with the following properties:
 

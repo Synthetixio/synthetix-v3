@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../storage/FeeConfiguration.sol";
+import "../storage/MarketConfiguration.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 
@@ -17,7 +17,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     using SafeCastI256 for int256;
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using FeeConfiguration for FeeConfiguration.Data;
+    using MarketConfiguration for MarketConfiguration.Data;
     using OrderFees for OrderFees.Data;
     using Price for Price.Data;
 
@@ -30,8 +30,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
-        FeeConfiguration.Data storage feeConfiguration;
-        (usdAmountCharged, fees, feeConfiguration) = FeeConfiguration.quoteBuyExactOut(
+        MarketConfiguration.Data storage config;
+        (usdAmountCharged, fees, config) = MarketConfiguration.quoteBuyExactOut(
             marketId,
             synthAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.BUY),
@@ -45,7 +45,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmountCharged);
 
-        uint collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -86,8 +86,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
         // transfer usd funds
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
-        FeeConfiguration.Data storage feeConfiguration;
-        (synthAmount, fees, feeConfiguration) = FeeConfiguration.quoteBuyExactIn(
+        MarketConfiguration.Data storage config;
+        (synthAmount, fees, config) = MarketConfiguration.quoteBuyExactIn(
             marketId,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.BUY),
@@ -99,7 +99,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, synthAmount);
         }
 
-        uint collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -122,7 +122,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (synthAmount, fees, ) = FeeConfiguration.quoteBuyExactIn(
+        (synthAmount, fees, ) = MarketConfiguration.quoteBuyExactIn(
             marketId,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.BUY),
@@ -137,7 +137,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (usdAmountCharged, fees, ) = FeeConfiguration.quoteBuyExactOut(
+        (usdAmountCharged, fees, ) = MarketConfiguration.quoteBuyExactOut(
             marketId,
             synthAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.BUY),
@@ -152,7 +152,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (returnAmount, fees, ) = FeeConfiguration.quoteSellExactIn(
+        (returnAmount, fees, ) = MarketConfiguration.quoteSellExactIn(
             marketId,
             synthAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.SELL),
@@ -167,7 +167,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     ) external view override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
-        (synthToBurn, fees, ) = FeeConfiguration.quoteSellExactOut(
+        (synthToBurn, fees, ) = MarketConfiguration.quoteSellExactOut(
             marketId,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.SELL),
@@ -197,8 +197,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
-        FeeConfiguration.Data storage feeConfiguration;
-        (returnAmount, fees, feeConfiguration) = FeeConfiguration.quoteSellExactIn(
+        MarketConfiguration.Data storage config;
+        (returnAmount, fees, config) = MarketConfiguration.quoteSellExactIn(
             marketId,
             synthAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.SELL),
@@ -214,7 +214,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         // Burn after calculation because skew is calculating using total supply prior to fill
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
-        uint collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -237,8 +237,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
-        FeeConfiguration.Data storage feeConfiguration;
-        (synthToBurn, fees, feeConfiguration) = FeeConfiguration.quoteSellExactOut(
+        MarketConfiguration.Data storage config;
+        (synthToBurn, fees, config) = MarketConfiguration.quoteSellExactOut(
             marketId,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.SELL),
@@ -251,7 +251,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         }
 
         SynthUtil.getToken(marketId).burn(msg.sender, synthToBurn);
-        uint collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
