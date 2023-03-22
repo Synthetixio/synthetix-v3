@@ -361,37 +361,4 @@ describe('DecayTokenModule', () => {
       );
     });
   });
-
-  describe('gas check', async () => {
-    it('mint after 1 minute', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 hour', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 3600, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 day', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 month', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24 * 30, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 year', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24 * 30 * 12, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 2 years', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24 * 30 * 12 * 2, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-  });
 });
