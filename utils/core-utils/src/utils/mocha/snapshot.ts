@@ -6,13 +6,17 @@ export function snapshotCheckpoint(
 ) {
   let snapshotId: number;
 
-  before('snapshot', async () => {
+  const snapshot = async () => {
     snapshotId = await provider().send('evm_snapshot', []);
+  };
+
+  before('snapshot', async () => {
+    await snapshot();
   });
 
   const restore = async () => {
     await provider().send('evm_revert', [snapshotId]);
-    snapshotId = await provider().send('evm_snapshot', []);
+    await snapshot();
   };
 
   return restore;
