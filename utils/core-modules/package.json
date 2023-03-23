@@ -25,7 +25,6 @@
     "@nomiclabs/hardhat-ethers": "2.2.1",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/main": "workspace:*",
     "@synthetixio/router": "workspace:*",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0"

@@ -8,7 +8,7 @@ import "../storage/SpotMarketFactory.sol";
 import "../interfaces/IWrapperModule.sol";
 import "../storage/Wrapper.sol";
 import "../storage/Price.sol";
-import "../storage/FeeConfiguration.sol";
+import "../storage/MarketConfiguration.sol";
 import "../utils/SynthUtil.sol";
 
 /**
@@ -18,7 +18,7 @@ import "../utils/SynthUtil.sol";
 contract WrapperModule is IWrapperModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using FeeConfiguration for FeeConfiguration.Data;
+    using MarketConfiguration for MarketConfiguration.Data;
     using OrderFees for OrderFees.Data;
     using Price for Price.Data;
     using Wrapper for Wrapper.Data;
@@ -69,9 +69,8 @@ contract WrapperModule is IWrapperModule {
             wrapAmount
         );
 
-        FeeConfiguration.Data storage feeConfiguration;
-
-        (amountToMint, fees, feeConfiguration) = FeeConfiguration.quoteWrap(
+        MarketConfiguration.Data storage config;
+        (amountToMint, fees, config) = MarketConfiguration.quoteWrap(
             marketId,
             wrapAmountD18,
             Price.getCurrentPrice(marketId, Transaction.Type.WRAP)
@@ -81,7 +80,7 @@ contract WrapperModule is IWrapperModule {
             revert InsufficientAmountReceived(minAmountReceived, amountToMint);
         }
 
-        uint collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -116,9 +115,9 @@ contract WrapperModule is IWrapperModule {
         // TODO: do i need to transfer to burn?
         synth.burn(address(this), unwrapAmount);
 
-        FeeConfiguration.Data storage feeConfiguration;
-        uint returnCollateralAmountD18;
-        (returnCollateralAmountD18, fees, feeConfiguration) = FeeConfiguration.quoteUnwrap(
+        MarketConfiguration.Data storage config;
+        uint256 returnCollateralAmountD18;
+        (returnCollateralAmountD18, fees, config) = MarketConfiguration.quoteUnwrap(
             marketId,
             unwrapAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP)
@@ -133,7 +132,7 @@ contract WrapperModule is IWrapperModule {
         if (returnCollateralAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
         }
-        uint collectedFees = feeConfiguration.collectFees(
+        uint collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
