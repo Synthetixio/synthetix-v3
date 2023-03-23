@@ -15,8 +15,7 @@ The owner of a market may call `function updatePriceData(uint128 marketId, bytes
 
 ### Configuring Synth Market
 
-The owner of the market may set market configurations which includes different fee structures, leverage
-values and more. See [IMarketConfigurationModule interface](./contracts/interfaces/IMarketConfigurationModule.sol) for a list of configurable values.
+The owner of the market may set market configurations which includes different fee structures, leverage values and more. See [IMarketConfigurationModule interface](./contracts/interfaces/IMarketConfigurationModule.sol) for a list of configurable values.
 
 ## Types of Transactions
 
@@ -114,7 +113,7 @@ If the utilization rate exceeds 100%, the market can apply a supply target fee o
 
 For instance, if a buy order would move the utilization rate from 90% to 120%, only utilization above 100% incurs fee, so the fee rate here would be (100% + 120% / 2) = 110%. Based on this calculation, we apply the configured feeRate to the average utilization above 100%, which in this case is 110%. If the fee rate is set to 0.1%, we would multiple 10 (percentage points above utilization) \* 0.1% = 1%.
 
-There is also a configurable value called `collateralLeverage` where the market owner can specify to which extend the delegated collateral can be leveraged. When creating a new synth market, the default is set to 1x leverage. When set to 2x, the market utilization % is based on the ratio of total outstanding synth supply to _2x_ the delegated collateral.
+There is also a configurable value called `collateralLeverage` where the market owner can specify to which extent the delegated collateral can be leveraged. When creating a new synth market, the default is set to 1x leverage. When set to 2x, the market utilization % is based on the ratio of total outstanding synth supply to _2x_ the delegated collateral.
 
 ### Auto-Rebalancing Skew Fee
 
@@ -159,7 +158,7 @@ When a custom fee collector has been set, after each transaction, the market wil
 
 ### Referral Fees
 
-Market owner can set different addresses (referrers) to receive a portion (or all) of the exchange (fixed: async/atomic) fees. Once a referrer is set, on any trade, via the optional `referrer` parameter, the trader or trade initiator can specify a referrer and a portion of the fees get sent to the referrer during the transaction. ONLY exchange fees are eligible for referrers.
+Market owner can set different addresses (referrers) to receive a portion (or all) of the exchange (fixed: async/atomic) fees. Once a referrer is set, on any trade, via the optional `referrer` parameter, the trader or trade initiator can specify a referrer and a portion of the fees get sent to the referrer during the transaction. **Only** exchange fees are eligible for referrers.
 
 ### Interest Rate
 
