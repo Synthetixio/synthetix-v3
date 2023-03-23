@@ -30,8 +30,6 @@ library Price {
         bytes32 sellFeedId;
     }
 
-    uint public constant PRECISION = 18;
-
     function load(uint128 marketId) internal pure returns (Data storage price) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
         assembly {
@@ -106,22 +104,14 @@ library Price {
      * @dev Utility function that returns the amount denominated with 18 decimals of precision.
      */
     function scale(int256 amount, uint decimals) internal pure returns (int256) {
-        return (
-            decimals > PRECISION
-                ? amount.downscale(decimals - PRECISION)
-                : amount.upscale(PRECISION - decimals)
-        );
+        return (decimals > 18 ? amount.downscale(decimals - 18) : amount.upscale(18 - decimals));
     }
 
     /**
      * @dev Utility function that receive amount with 18 decimals
-     * returns the amount denominated with number of decimals as arg of precision.
+     * returns the amount denominated with number of decimals as arg of 18.
      */
     function scaleTo(int256 amount, uint decimals) internal pure returns (int256) {
-        return (
-            decimals > PRECISION
-                ? amount.upscale(decimals - PRECISION)
-                : amount.downscale(PRECISION - decimals)
-        );
+        return (decimals > 18 ? amount.upscale(decimals - 18) : amount.downscale(18 - decimals));
     }
 }
