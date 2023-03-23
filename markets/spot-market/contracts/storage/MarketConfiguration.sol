@@ -24,6 +24,7 @@ library MarketConfiguration {
     using DecimalMath for int256;
 
     error InvalidUtilizationLeverage();
+    error InvalidCollateralLeverage(uint);
 
     struct Data {
         /**
@@ -56,7 +57,7 @@ library MarketConfiguration {
          */
         int unwrapFixedFee;
         /**
-         * @dev skewScale is used to determine % of fees that get applied based on the ratio of outsanding synths to skewScale.
+         * @dev skewScale is used to determine % of fees that get applied based on the ratio of outstanding synths to skewScale.
          * if outstanding synths = skew scale, then 100% premium is applied to the trade.
          * A negative skew, derived based on the mentioned ratio, is applied on sell trades
          */
@@ -76,6 +77,13 @@ library MarketConfiguration {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
         assembly {
             marketConfig.slot := s
+        }
+    }
+
+    function isValidLeverage(uint leverage) internal pure {
+        // add upper bounds for leverage here
+        if (leverage == 0) {
+            revert InvalidCollateralLeverage(leverage);
         }
     }
 
@@ -253,6 +261,21 @@ library MarketConfiguration {
         usdAmount = (usdAmountInt - fees.skewFees).toUint();
     }
 
+    /**
+     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`amount`)
+     * @dev This function is used when we call `buyExactOut` or `sellExactIn` where we know the exact synth leaving/added to the system.
+     * @dev When we only know the USD amount and need to calculate expected synth after fees, we have to use
+     *      `calculateSkew` instead.
+     *
+     * Example:
+     *  Skew scale set to 1000 snxETH
+     *  Before fill outstanding snxETH (minus any wrapped collateral): 100 snxETH
+     *  If buy trade:
+     *    - user is buying 10 ETH
+     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1005 bips
+     *  On a sell, the amount is negative, and so if there's positive skew in the system, the fee is negative to incentize selling
+     *  and if the skew is negative, then the fee for a sell would be positive to incentivize neutralizing the skew.
+     */
     function calculateSkewFeeExact(
         Data storage self,
         uint128 marketId,
@@ -289,7 +312,8 @@ library MarketConfiguration {
     }
 
     /**
-     * @dev For a given USD amount, this function calculates the return synth amount and the skew fees
+     * @dev For a given USD amount, based on the skew scale, returns the exact synth amount to return or charge the trader
+     * @dev This function is used when we call `buyExactIn` or `sellExactOut` where we know the USD amount and need to calculate the synth amount
      */
     function calculateSkew(
         Data storage self,
@@ -443,6 +467,11 @@ library MarketConfiguration {
         return referrerFeesCollected + feeCollectorQuote;
     }
 
+    /**
+     * @dev Referrer fees are a % of the fixed fee amount.  The % is retrieved from `referrerShare` and can be configured by market owner.
+     * @dev If this is a sell transaction, the fee to send to referrer is withdrawn from market, otherwise it's directly transferred from the contract
+     *      since funds were transferred here first.
+     */
     function _collectReferrerFees(
         Data storage self,
         uint128 marketId,

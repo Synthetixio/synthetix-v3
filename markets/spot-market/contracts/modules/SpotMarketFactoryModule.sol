@@ -86,6 +86,8 @@ contract SpotMarketFactoryModule is
         );
 
         spotMarketFactory.marketOwners[synthMarketId] = synthOwner;
+        // default collateral leverage to 1
+        MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
         emit SynthRegistered(synthMarketId);
 
@@ -103,6 +105,10 @@ contract SpotMarketFactoryModule is
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
 
+    /**
+     * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
+     * @dev collateral leverage is defaulted to 1 on registration of a new market
+     */
     function locked(uint128 marketId) external view returns (uint256) {
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;
