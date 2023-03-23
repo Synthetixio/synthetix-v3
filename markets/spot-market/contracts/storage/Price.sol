@@ -18,8 +18,6 @@ library Price {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
-    uint public constant PRECISION = 18;
-
     struct Data {
         /**
          * @dev The oracle manager node id used for buy transactions.
@@ -31,6 +29,8 @@ library Price {
          */
         bytes32 sellFeedId;
     }
+
+    uint public constant PRECISION = 18;
 
     function load(uint128 marketId) internal pure returns (Data storage price) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
