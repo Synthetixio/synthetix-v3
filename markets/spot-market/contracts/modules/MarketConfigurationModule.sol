@@ -71,6 +71,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint collateralLeverage
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+        MarketConfiguration.isValidLeverage(collateralLeverage);
 
         MarketConfiguration.load(synthMarketId).collateralLeverage = collateralLeverage;
 

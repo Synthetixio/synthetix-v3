@@ -39,7 +39,7 @@ library MathUtil {
     }
 
     function pow(int x, uint n) internal pure returns (int r) {
-        r = 1e18;
+        r = DecimalMath.UNIT_INT;
         while (n > 0) {
             if (n % 2 == 1) {
                 r = r.mulDecimal(x);

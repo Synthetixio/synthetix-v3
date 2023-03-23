@@ -217,10 +217,6 @@ export function bootstrapWithSynth(name: string, token: string) {
       .updatePriceData(marketId, r.oracleNodeId(), result.oracleNodeId);
   });
 
-  before('set collateral leverage', async () => {
-    await r.systems().SpotMarket.connect(marketOwner).setCollateralLeverage(marketId, bn(1));
-  });
-
   // add weight to market from pool
 
   before('delegate pool collateral to market', async () => {

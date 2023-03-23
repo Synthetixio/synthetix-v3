@@ -21,6 +21,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
     using OrderFees for OrderFees.Data;
     using Price for Price.Data;
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function buyExactOut(
         uint128 marketId,
         uint synthAmount,
@@ -62,6 +65,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         return (synthAmount, fees);
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function buy(
         uint128 marketId,
         uint usdAmount,
@@ -116,6 +122,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         return (synthAmount, fees);
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function quoteBuyExactIn(
         uint128 marketId,
         uint usdAmount
@@ -131,6 +140,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function quoteBuyExactOut(
         uint128 marketId,
         uint synthAmount
@@ -146,6 +158,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function quoteSellExactIn(
         uint128 marketId,
         uint synthAmount
@@ -161,6 +176,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function quoteSellExactOut(
         uint128 marketId,
         uint usdAmount
@@ -176,6 +194,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function sell(
         uint128 marketId,
         uint synthAmount,
@@ -228,10 +249,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
         emit SynthSold(marketId, returnAmount, fees, collectedFees, referrer);
     }
 
+    /**
+     * @inheritdoc IAtomicOrderModule
+     */
     function sellExactOut(
         uint128 marketId,
         uint usdAmount,
-        uint maxAmountBurned,
+        uint maxSynthAmount,
         address referrer
     ) external override returns (uint synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
@@ -246,8 +270,8 @@ contract AtomicOrderModule is IAtomicOrderModule {
             Transaction.Type.SELL
         );
 
-        if (synthToBurn > maxAmountBurned) {
-            revert ExceedsMaxSynthAmount(maxAmountBurned, synthToBurn);
+        if (synthToBurn > maxSynthAmount) {
+            revert ExceedsMaxSynthAmount(maxSynthAmount, synthToBurn);
         }
 
         SynthUtil.getToken(marketId).burn(msg.sender, synthToBurn);
