@@ -99,4 +99,19 @@ library Price {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
     }
+
+    /**
+     * @dev Utility function that returns the amount denominated with 18 decimals of precision.
+     */
+    function scale(int256 amount, uint decimals) internal pure returns (int256) {
+        return (decimals > 18 ? amount.downscale(decimals - 18) : amount.upscale(18 - decimals));
+    }
+
+    /**
+     * @dev Utility function that receive amount with 18 decimals
+     * returns the amount denominated with number of decimals as arg of 18.
+     */
+    function scaleTo(int256 amount, uint decimals) internal pure returns (int256) {
+        return (decimals > 18 ? amount.upscale(decimals - 18) : amount.downscale(18 - decimals));
+    }
 }
