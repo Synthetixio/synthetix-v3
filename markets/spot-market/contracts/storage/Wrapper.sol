@@ -21,7 +21,7 @@ library Wrapper {
          */
         address wrapCollateralType;
         /**
-         * @dev amount of collateral that can be wrapped
+         * @dev amount of collateral that can be wrapped, denominated with 18 decimals of precision.
          */
         uint256 maxWrappableAmount;
     }
