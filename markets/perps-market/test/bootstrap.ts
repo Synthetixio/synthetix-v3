@@ -1,4 +1,4 @@
-import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
@@ -74,7 +74,7 @@ export function bootstrap() {
 
   before('set up accounts', async () => {
     const provider = getProvider();
-    for (let i = 1; i < 8; i++) {
+    for (let i = getSigners().length; i < 8; i++) {
       const signer = ethers.Wallet.fromMnemonic(
         'test test test test test test test test test test test junk',
         `m/44'/60'/0'/0/${i}`

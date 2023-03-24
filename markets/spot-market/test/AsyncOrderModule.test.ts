@@ -5,7 +5,7 @@ import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('AsyncOrderModule chainlink', () => {
+describe('AsyncOrderModule', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
@@ -164,7 +164,6 @@ describe('AsyncOrderModule chainlink', () => {
 
       it('settles on minimum amount met', async () => {
         await systems().SpotMarket.settleOrder(marketId(), 5);
-        console.log((await systems().USD.balanceOf(await trader1.getAddress())).sub(traderBalance));
         assertBn.equal(
           await systems().USD.balanceOf(await trader1.getAddress()),
           traderBalance.add(bn(84.1))

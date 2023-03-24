@@ -1,10 +1,10 @@
-import { ethers as Ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter } from '../generated/typechain';
-import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { ethers as Ethers } from 'ethers';
+import { SynthRouter } from '../generated/typechain';
+import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 
 describe('Atomic Order Module sell()', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -107,7 +107,7 @@ describe('Atomic Order Module sell()', () => {
     before('set utilization fee to 1%', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.01), bn(1));
+        .setMarketUtilizationFees(marketId(), bn(0.01));
     });
 
     before('sell 1 snxETH', async () => {
