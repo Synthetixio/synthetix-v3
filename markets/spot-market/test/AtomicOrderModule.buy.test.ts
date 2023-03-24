@@ -133,7 +133,7 @@ describe('Atomic Order Module buy()', () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems()
         .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.001), bn(1)); // 0.1% charged for each % above utilization
+        .setMarketUtilizationFees(marketId(), bn(0.001)); // 0.1% charged for each % above utilization
     });
 
     before('buy 50 snxETH', async () => {

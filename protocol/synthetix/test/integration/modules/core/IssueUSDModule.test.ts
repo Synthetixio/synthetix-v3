@@ -1,10 +1,10 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
-import Permissions from '../../mixins/AccountRBACMixin.permissions';
+import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../verifications';
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');

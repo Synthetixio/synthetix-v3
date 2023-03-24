@@ -2,34 +2,41 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 /**
- * @title Module for market-specific fee configuration
+ * @title Module for market-specific configuration.
  */
-interface IFeeConfigurationModule {
+interface IMarketConfigurationModule {
     /**
      * @notice emitted when market utilization fees are set for specified market
-     * @param synthMarketId Id of the market to set the fees for.
-     * @param utilizationFeeRate utilization fee rate for the corresponding market
+     * @param synthMarketId market id
+     * @param utilizationFeeRate utilization fee rate value
      */
     event MarketUtilizationFeesSet(uint indexed synthMarketId, uint utilizationFeeRate);
 
     /**
      * @notice emitted when the skew scale is set for a market
-     * @param synthMarketId Id of the market to set the fees for.
-     * @param skewScale the skew scale set for the corresponding market
+     * @param synthMarketId market id
+     * @param skewScale skew scale value
      */
     event MarketSkewScaleSet(uint indexed synthMarketId, uint skewScale);
 
     /**
+     * @notice emitted when the collateral leverage is set for a market
+     * @param synthMarketId market id
+     * @param collateralLeverage leverage value
+     */
+    event CollateralLeverageSet(uint indexed synthMarketId, uint collateralLeverage);
+
+    /**
      * @notice emitted when the fixed fee for atomic orders is set.
-     * @param synthMarketId Id of the market to set the fees for.
-     * @param atomicFixedFee the fixed fee for the corresponding market
+     * @param synthMarketId market id
+     * @param atomicFixedFee fee value
      */
     event AtomicFixedFeeSet(uint indexed synthMarketId, uint atomicFixedFee);
 
     /**
      * @notice emitted when the fixed fee for async orders is set.
-     * @param synthMarketId Id of the market to set the fees for.
-     * @param asyncFixedFee the fixed fee for the corresponding market
+     * @param synthMarketId market id
+     * @param asyncFixedFee fee value
      */
     event AsyncFixedFeeSet(uint indexed synthMarketId, uint asyncFixedFee);
 
@@ -104,13 +111,17 @@ interface IFeeConfigurationModule {
      * @dev 100% utilization means the fee is 0.  120% utilization means the fee is 20% * this fee rate (in bips).
      * @param synthMarketId Id of the market the utilization fee applies to.
      * @param utilizationFeeRate the rate is represented in bips with 18 decimals and is the rate at which fee increases based on the % above 100% utilization of the delegated collateral for the market.
-     * @param utilizationLeveragePercentage the leverage percentage is represented in bips with 18 decimals and is the % leverage applied to delegated collateral to determine the utilization rate of the outstanding synths.
      */
-    function setMarketUtilizationFees(
-        uint128 synthMarketId,
-        uint utilizationFeeRate,
-        uint utilizationLeveragePercentage
-    ) external;
+    function setMarketUtilizationFees(uint128 synthMarketId, uint utilizationFeeRate) external;
+
+    /**
+     * @notice sets the collateral leverage for a given market
+     * @dev only marketOwner can set the leverage
+     * @dev this leverage value is a value applied to delegated collateral which is compared to outstanding synth to determine utilization of market, and locked amounts
+     * @param synthMarketId Id of the market the collateral leverage applies to.
+     * @param collateralLeverage the leverage is represented as % with 18 decimals. 1 = 1x leverage
+     */
+    function setCollateralLeverage(uint128 synthMarketId, uint collateralLeverage) external;
 
     /**
      * @notice sets the fixed fee for a given market and transactor

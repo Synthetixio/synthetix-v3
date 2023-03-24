@@ -15,7 +15,7 @@ import "../utils/TransactionUtil.sol";
 /**
  * @title Fee storage that tracks all fees for a given market Id.
  */
-library FeeConfiguration {
+library MarketConfiguration {
     using SpotMarketFactory for SpotMarketFactory.Data;
     using OrderFees for OrderFees.Data;
     using SafeCastU256 for uint256;
@@ -24,6 +24,7 @@ library FeeConfiguration {
     using DecimalMath for int256;
 
     error InvalidUtilizationLeverage();
+    error InvalidCollateralLeverage(uint);
 
     struct Data {
         /**
@@ -44,9 +45,9 @@ library FeeConfiguration {
          */
         uint utilizationFeeRate;
         /**
-         * @dev a configurable leverage % that is applied to delegated collateral which is used as a ratio for determining utilization. D18
+         * @dev a configurable leverage % that is applied to delegated collateral which is used as a ratio for determining utilization, and locked amounts. D18
          */
-        uint utilizationLeveragePercentage;
+        uint collateralLeverage;
         /**
          * @dev wrapping fee rate represented as a percent, 18 decimals
          */
@@ -56,7 +57,7 @@ library FeeConfiguration {
          */
         int unwrapFixedFee;
         /**
-         * @dev skewScale is used to determine % of fees that get applied based on the ratio of outsanding synths to skewScale.
+         * @dev skewScale is used to determine % of fees that get applied based on the ratio of outstanding synths to skewScale.
          * if outstanding synths = skew scale, then 100% premium is applied to the trade.
          * A negative skew, derived based on the mentioned ratio, is applied on sell trades
          */
@@ -72,16 +73,17 @@ library FeeConfiguration {
         mapping(address => uint) referrerShare;
     }
 
-    function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {
+    function load(uint128 marketId) internal pure returns (Data storage marketConfig) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
         assembly {
-            feeConfiguration.slot := s
+            marketConfig.slot := s
         }
     }
 
-    function checkUtilizationLeverage(Data storage feeConfiguration) internal view {
-        if (feeConfiguration.utilizationLeveragePercentage == 0) {
-            revert InvalidUtilizationLeverage();
+    function isValidLeverage(uint leverage) internal pure {
+        // add upper bounds for leverage here
+        if (leverage == 0) {
+            revert InvalidCollateralLeverage(leverage);
         }
     }
 
@@ -259,6 +261,21 @@ library FeeConfiguration {
         usdAmount = (usdAmountInt - fees.skewFees).toUint();
     }
 
+    /**
+     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`amount`)
+     * @dev This function is used when we call `buyExactOut` or `sellExactIn` where we know the exact synth leaving/added to the system.
+     * @dev When we only know the USD amount and need to calculate expected synth after fees, we have to use
+     *      `calculateSkew` instead.
+     *
+     * Example:
+     *  Skew scale set to 1000 snxETH
+     *  Before fill outstanding snxETH (minus any wrapped collateral): 100 snxETH
+     *  If buy trade:
+     *    - user is buying 10 ETH
+     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1005 bips
+     *  On a sell, the amount is negative, and so if there's positive skew in the system, the fee is negative to incentize selling
+     *  and if the skew is negative, then the fee for a sell would be positive to incentivize neutralizing the skew.
+     */
     function calculateSkewFeeExact(
         Data storage self,
         uint128 marketId,
@@ -295,15 +312,16 @@ library FeeConfiguration {
     }
 
     /**
-     * @dev For a given USD amount, this function calculates the return synth amount and the skew fees
+     * @dev For a given USD amount, based on the skew scale, returns the exact synth amount to return or charge the trader
+     * @dev This function is used when we call `buyExactIn` or `sellExactOut` where we know the USD amount and need to calculate the synth amount
      */
     function calculateSkew(
-        Data storage feeConfiguration,
+        Data storage self,
         uint128 marketId,
         int usdAmount,
         uint synthPrice
     ) internal view returns (uint synthAmount) {
-        if (feeConfiguration.skewScale == 0) {
+        if (self.skewScale == 0) {
             return MathUtil.abs(usdAmount).divDecimal(synthPrice);
         }
 
@@ -315,30 +333,29 @@ library FeeConfiguration {
             wrappedCollateralAmount.toInt();
 
         synthAmount = MathUtil.abs(
-            _calculateSkewAmountOut(feeConfiguration, usdAmount, synthPrice, initialSkew)
+            _calculateSkewAmountOut(self, usdAmount, synthPrice, initialSkew)
         );
-
-        // skewFee = (amountOutWithoutSkew - amountOut).divDecimal(amountOutWithoutSkew);
-        // if (Transaction.isSell(transactionType)) {
-        //     skewFee = skewFee * -1;
-        // }
     }
 
     /**
      * @dev Calculates utilization rate fee
-     * TODO: change readme based on leverage
      * If no utilizationFeeRate is set, then the fee is 0
      * The utilization rate fee is determined based on the ratio of outstanding synth value to the delegated collateral to the market.
+     * The delegated collateral is calculated by multiplying the collateral by a configurable leverage parameter (`utilizationLeveragePercentage`)
+     *
      * Example:
      *  Utilization fee rate set to 0.1%
-     *  Total delegated collateral value: $1000
-     *  Total outstanding synth value = $1100
-     *  User buys $100 worth of synths
-     *  Before fill utilization rate: 1100 / 1000 = 110%
-     *  After fill utilization rate: 1200 / 1000 = 120%
+     *  collateralLeverage: 2
+     *  Total delegated collateral value: $1000 * 2 = $2000
+     *  Total outstanding synth value = $2200
+     *  User buys $200 worth of synths
+     *  Before fill utilization rate: 2200 / 2000 = 110%
+     *  After fill utilization rate: 2400 / 2000 = 120%
      *  Utilization Rate Delta = 120 - 110 = 10% / 2 (average) = 5%
      *  Fee charged = 5 * 0.001 (0.1%)  = 0.5%
      *
+     * Note: we do NOT calculate the inverse of this fee on `buyExactIn` vs `buyExactOut`.  We don't
+     * believe this edge case adds any risk.  This means it could be beneficial to use `buyExactIn` vs `buyExactOut`
      */
     function calculateUtilizationRateFee(
         Data storage self,
@@ -346,7 +363,7 @@ library FeeConfiguration {
         uint amount,
         uint256 synthPrice
     ) internal view returns (uint utilFee) {
-        if (self.utilizationFeeRate == 0) {
+        if (self.utilizationFeeRate == 0 || self.collateralLeverage == 0) {
             return 0;
         }
 
@@ -354,7 +371,7 @@ library FeeConfiguration {
             .load()
             .synthetix
             .getMarketCollateral(marketId)
-            .mulDecimal(self.utilizationLeveragePercentage);
+            .mulDecimal(self.collateralLeverage);
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
 
@@ -389,14 +406,14 @@ library FeeConfiguration {
      * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
      */
     function _getFixedFee(
-        Data storage feeConfiguration,
+        Data storage self,
         address transactor,
         bool async
     ) private view returns (uint fixedFee) {
-        if (feeConfiguration.atomicFixedFeeOverrides[transactor] > 0) {
-            fixedFee = feeConfiguration.atomicFixedFeeOverrides[transactor];
+        if (self.atomicFixedFeeOverrides[transactor] > 0) {
+            fixedFee = self.atomicFixedFeeOverrides[transactor];
         } else {
-            fixedFee = async ? feeConfiguration.asyncFixedFee : feeConfiguration.atomicFixedFee;
+            fixedFee = async ? self.asyncFixedFee : self.atomicFixedFee;
         }
     }
 
@@ -450,6 +467,11 @@ library FeeConfiguration {
         return referrerFeesCollected + feeCollectorQuote;
     }
 
+    /**
+     * @dev Referrer fees are a % of the fixed fee amount.  The % is retrieved from `referrerShare` and can be configured by market owner.
+     * @dev If this is a sell transaction, the fee to send to referrer is withdrawn from market, otherwise it's directly transferred from the contract
+     *      since funds were transferred here first.
+     */
     function _collectReferrerFees(
         Data storage self,
         uint128 marketId,

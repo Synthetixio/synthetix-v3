@@ -1,6 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
-import { snapshotCheckpoint } from '../utils/snapshot';
 
 export function verifyUsesFeatureFlag(
   c: () => ethers.Contract,
