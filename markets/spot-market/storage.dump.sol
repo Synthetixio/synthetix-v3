@@ -191,7 +191,6 @@ contract SpotMarketFactoryModule {
 library AsyncOrder {
     struct Data {
         uint256 totalEscrowedSynthShares;
-        int256 totalCommittedUsdAmount;
         uint128 totalClaims;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -211,9 +210,9 @@ library AsyncOrderClaim {
         uint256 amountEscrowed;
         uint256 settlementStrategyId;
         uint256 settlementTime;
-        int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
         uint256 settledAt;
+        address referrer;
     }
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrderClaim", marketId, claimId));
@@ -236,23 +235,35 @@ library AsyncOrderConfiguration {
     }
 }
 
-// @custom:artifact contracts/storage/FeeConfiguration.sol:FeeConfiguration
-library FeeConfiguration {
+// @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
+library MarketConfiguration {
     struct Data {
         mapping(address => uint) atomicFixedFeeOverrides;
         uint atomicFixedFee;
         uint asyncFixedFee;
         uint utilizationFeeRate;
+        uint collateralLeverage;
         int wrapFixedFee;
         int unwrapFixedFee;
         uint skewScale;
         address feeCollector;
+        mapping(address => uint) referrerShare;
     }
-    function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {
+    function load(uint128 marketId) internal pure returns (Data storage marketConfig) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
         assembly {
-            feeConfiguration.slot := s
+            marketConfig.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/OrderFees.sol:OrderFees
+library OrderFees {
+    struct Data {
+        uint256 fixedFees;
+        uint256 utilizationFees;
+        int256 skewFees;
+        int256 wrapperFees;
     }
 }
 
@@ -297,7 +308,7 @@ library SpotMarketFactory {
         address usdToken;
         address oracle;
         address synthetix;
-        address initialSynthImplementation;
+        address synthImplementation;
         mapping(uint128 => address) marketOwners;
         mapping(uint128 => address) nominatedMarketOwners;
     }

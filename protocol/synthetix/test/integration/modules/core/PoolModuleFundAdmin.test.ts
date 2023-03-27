@@ -1,11 +1,10 @@
 import assert from 'node:assert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
-
+import hre from 'hardhat';
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
 
 describe('PoolModule Admin', function () {
   const {

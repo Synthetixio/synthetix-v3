@@ -1,12 +1,11 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
-import { ethers } from 'ethers';
 import { fastForward, fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-
-import Permissions from '../../mixins/AccountRBACMixin.permissions';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { ethers } from 'ethers';
+import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
 // ---------------------------------------

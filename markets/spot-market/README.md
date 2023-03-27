@@ -13,9 +13,9 @@ it with liquidity. The `getSynth(uint128 marketId)` function returns the address
 
 The owner of a market may call `function updatePriceData(uint128 marketId, bytes32 buyNodeId, bytes32 sellNodeId)` to set the price feeds that should be used by the specified market. The node IDs must first be registered with the [oracle manager](../../protocol/oracle-manager).
 
-### Configuring Fees
+### Configuring Synth Market
 
-The owner of the market may set fees configurations using the functions exposed by the [IFeeConfigurationModule interface](./contracts/interfaces/IFeeConfigurationModule.sol).
+The owner of the market may set market configurations which includes different fee structures, leverage values and more. See [IMarketConfigurationModule interface](./contracts/interfaces/IMarketConfigurationModule.sol) for a list of configurable values.
 
 ## Types of Transactions
 
@@ -25,20 +25,28 @@ This market implementation allows synths to be exchanged using three different t
 
 The market allows traders to buy or sell synths in a single (atomic) transaction. The relevant logic is included in the [Atomic Order Module](./contracts/modules/AtomicOrderModule.sol).
 
-To buy a synth in an atomic order, a trader may call `buy(uint128 marketId, uint usdAmount, uint minAmountReceived)` with the market ID for the synth they'd like to purchase, the amount of stablecoins they'd like to provide for the exchange, and the minimum amount of synths to receive for the transaction to succeed. The trader must first approve the transfer of the amount of stablecoins to the market.
+To buy a synth in an atomic order, a trader may call `buy(uint128 marketId, uint usdAmount, uint minAmountReceived, address referrer)` with the market ID for the synth they'd like to purchase, the amount of stablecoins they'd like to provide for the exchange, the minimum amount of synths to receive for the transaction to succeed, and an optional `referrer` parameter. The trader must first approve the transfer of the amount of stablecoins to the market. There's another convenience function `buyExactOut` which can also be used to purchase synths by specifying the exact synth the trader wants in the transaction.
 
-To sell a synth in an atomic order, a trader may call `sell(uint128 marketId, uint synthAmount, uint minAmountReceived)` with the market ID for the synth they'd like to sell, the amount of synths they'd like to provide for the exchange, and the minimum amount of stablecoins to receive for the transaction to succeed. The trader must first approve the transfer of the amount of synths to the market.
+To sell a synth in an atomic order, a trader may call `sell(uint128 marketId, uint synthAmount, uint minAmountReceived, address referrer)` with the market ID for the synth they'd like to sell, the amount of synths they'd like to provide for the exchange, the minimum amount of stablecoins to receive for the transaction to succeed, and an optional `referrer` parameter. The trader must first approve the transfer of the amount of synths to the market. There's another convenience function `sellExactOut` where the trader has the option to specify the amount of USD that'd like to receive instead of the synth they're willing to sell.
 
-Traders may simulate calling these functions with `callStatic` to retrieve a quote of how much would have been provided in the exchange.
+Traders also have the option to call quote functions prior to a transaction to estimate cost of transaction with fees. The quote functions are listed below:
+
+```
+quoteBuyExactIn(uint128 marketId,uint usdAmount)
+quoteBuyExactOut(uint128 marketId,uint synthAmount)
+quoteSellExactIn(uint128 marketId,uint synthAmount)
+quoteSellExactOut(uint128 marketId,uint usdAmount)
+```
 
 #### Fees
 
 - `uint atomicFixedFee` - This fee (denominated as a percentage with 18 decimals) is applied to both buy and sell atomic orders.
 - `mapping(address => uint) atomicFixedFeeOverrides` - This is a mapping of fees (denominated as a percentage with 18 decimals) that will be used instead of `atomicFixedFee` when `msg.sender` is found in the mapping.
+- See Additional Fees section below for other applicable fees.
 
 ### Asyncronous Orders
 
-Asyncronous orders involve two transactions: a _commitment_ and a _settlement_. This reduces composability, but allows for front-running mitigation such that lower fees can be offered to traders via `FeeConfiguration.asyncFixedFee`. Asynchronous orders may only be cancelled prior to settlement if it is outside of the settlement window. The relevant logic is included in the [Async Order Module](./contracts/modules/AsyncOrderModule.sol).
+Asyncronous orders involve two transactions: a _commitment_ and a _settlement_. This reduces composability, but allows for front-running mitigation such that lower fees can be offered to traders via `MarketConfiguration.asyncFixedFee`. Asynchronous orders may only be cancelled prior to settlement if it is outside of the settlement window. The relevant logic is included in the [Async Order Module](./contracts/modules/AsyncOrderModule.sol).
 
 The market owner can configure various _settlement strategies_ for asyncronous orders. Each settlement strategy can be defined with the following properties:
 
@@ -105,17 +113,52 @@ If the utilization rate exceeds 100%, the market can apply a supply target fee o
 
 For instance, if a buy order would move the utilization rate from 90% to 120%, only utilization above 100% incurs fee, so the fee rate here would be (100% + 120% / 2) = 110%. Based on this calculation, we apply the configured feeRate to the average utilization above 100%, which in this case is 110%. If the fee rate is set to 0.1%, we would multiple 10 (percentage points above utilization) \* 0.1% = 1%.
 
+There is also a configurable value called `collateralLeverage` where the market owner can specify to which extent the delegated collateral can be leveraged. When creating a new synth market, the default is set to 1x leverage. When set to 2x, the market utilization % is based on the ratio of total outstanding synth supply to _2x_ the delegated collateral.
+
 ### Auto-Rebalancing Skew Fee
 
 An auto-rebalancing skew fee allows a market to use wrapping functionality in such a way that reduces protocol risk. A (positive or negative) fee can be applied to buy and sell orders as a function of _market skew_, defined as the total supply of synths minus the amount of wrapped collateral. This creates an arbitrage opportunity that should reduce the skew.
 
-The market owner can set the skew scale with the function `setMarketSkewScale()`. The skew scale is the amount we divide the current market skew by to determine the fee rate. For example, if a synthetic ETH market has issued 100 sETH and wrapped 110 ETH, the current skew would be -10 ETH. If the skew scale were set to 1,000 ETH, the skew fee would be -1% for a buy and 1% for a sell. This would incentivize users to buy more of the synth, reducing the skew.
+The market owner can set the skew scale with the function `setMarketSkewScale()`. The skew scale is the amount we divide the current market skew by to determine the fee rate.
+
+The skew fee is calculated in two different ways depending on which asset the trader is providing. When a trader is calling `buyExactIn` or `sellExactOut`, they are specifying a USD amount that'd either like to buy or exact back on a sell. For these transactions, we use the below formula to determine the synth amount. This equation ensures that both when a trader buys and sells the same amount, we end up at zero.
+
+`calculateSkew` equation:
+
+```
+K*2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
+K = configured skew scale
+C = amount (cost in USD)
+Ni = initial skew
+P = price
+```
+
+For `buyExactOut` and `sellExactIn`, we know the synth amount the user is requested, or is willing to sell, so the skew calculation boils down to just adding or subtracting the synth amount and averaging the skew for before and after the trade.
+Ex:
+
+```
+configured skew scale: 1000 snxETH
+before fill synth balance in market: 100 snxETH
+
+--> user buys 10 snxETH using buyExactOut
+- before skew % = 100 / 1000 = 0.1
+- after skew % = 110 / 1000 = 0.11
+- average skew = (0.1 + 0.11) / 2 = 0.105
+
+skew fee = 10.5%
+```
+
+This example shows a buy transaction, the same eq applies but after skew is a subtraction and we use the negative value of skew fee since it's a sell to get the correct skew fee %.
 
 ### Custom Fee Collector
 
 The owner of a market can deploy a custom fee collector contract (which conforms to the [IFeeCollector interface](./contracts/interfaces/external/IFeeCollector.sol)) and attach it to their market with the `setFeeCollector()` function.
 
 When a custom fee collector has been set, after each transaction, the market will approve the value of the collected fees (as stablecoins) to be used by the fee collector contract and then call `collectFees()` on it. Any fees not transferred out of the market by this call will be deposited to liquidity providers in Synthetix per usual.
+
+### Referral Fees
+
+Market owner can set different addresses (referrers) to receive a portion (or all) of the exchange (fixed: async/atomic) fees. Once a referrer is set, on any trade, via the optional `referrer` parameter, the trader or trade initiator can specify a referrer and a portion of the fees get sent to the referrer during the transaction. **Only** exchange fees are eligible for referrers.
 
 ### Interest Rate
 
@@ -125,4 +168,4 @@ Though synth decay may complicate composability, this incentivizes liquidity pro
 
 ## Development
 
-`npm start`
+`yarn start`

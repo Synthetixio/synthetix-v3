@@ -1,19 +1,23 @@
 {
   "name": "@synthetixio/sample-project",
   "version": "1.0.0",
-  "description": "Sample project implemeting Proxy architecture",
+  "description": "Sample project implementing Proxy architecture",
   "private": true,
   "scripts": {
     "clean": "hardhat clean",
     "build": "hardhat storage:verify",
+    "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "hardhat test",
     "coverage": "hardhat test"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.2.1",
-    "@synthetixio/core-contracts": "*",
-    "@synthetixio/core-modules": "*",
-    "@synthetixio/hardhat-storage": "*",
-    "hardhat-cannon": "^2.1.7"
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/hardhat-storage": "workspace:*",
+    "@synthetixio/router": "workspace:*",
+    "hardhat": "2.13.0",
+    "hardhat-cannon": "2.1.10"
   }
 }

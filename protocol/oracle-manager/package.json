@@ -1,25 +1,36 @@
 {
   "name": "@synthetixio/oracle-manager",
-  "version": "1.2.10",
+  "version": "3.0.4-alpha.0",
   "description": "Core Synthetix Protocol Oracle Manager",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "hardhat test",
-    "coverage": "npm run build && hardhat --network hardhat coverage",
+    "coverage": "yarn build && hardhat --network hardhat coverage",
     "clean": "hardhat clean",
     "build": "hardhat storage:verify && hardhat cannon:build",
+    "check:storage": "git diff --exit-code storage.dump.sol",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
-    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "lint": "npm run lint:js && npm run lint:sol"
+    "publish-contracts": "cannon publish oracle-manager:$(node -p 'require(`./package.json`).version') --quiet --private-key $DEPLOYER_PRIVATE_KEY",
+    "postpack": "yarn publish-contracts"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "*",
-    "@synthetixio/core-contracts": "*",
-    "@synthetixio/core-modules": "*",
-    "solidity-docgen": "0.6.0-beta.22"
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/router": "workspace:*",
+    "@synthetixio/wei": "2.74.4",
+    "@types/node": "18.11.10",
+    "ethers": "^5.0.0",
+    "hardhat": "2.13.0",
+    "solidity-docgen": "0.6.0-beta.31",
+    "ts-node": "10.9.1",
+    "typescript": "4.9.3"
   }
 }

@@ -5,7 +5,7 @@ import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('AsyncOrderModule chainlink', () => {
+describe('AsyncOrderModule', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
@@ -158,7 +158,7 @@ describe('AsyncOrderModule chainlink', () => {
         // due to fees, user doesn't receive full 1 ether
         await assertRevert(
           systems().SpotMarket.settleOrder(marketId(), 4),
-          `MinimumSettlementAmountNotMet(${bn(85)}, ${bn(84.15)})`
+          `MinimumSettlementAmountNotMet(${bn(85)}, ${bn(84.1)})`
         );
       });
 
@@ -166,7 +166,7 @@ describe('AsyncOrderModule chainlink', () => {
         await systems().SpotMarket.settleOrder(marketId(), 5);
         assertBn.equal(
           await systems().USD.balanceOf(await trader1.getAddress()),
-          traderBalance.add(bn(84.15))
+          traderBalance.add(bn(84.1))
         );
       });
     });

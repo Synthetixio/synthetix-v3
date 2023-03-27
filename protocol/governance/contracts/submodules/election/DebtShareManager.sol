@@ -5,10 +5,14 @@ import "../../storage/DebtShare.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "./ElectionBase.sol";
 
 /// @dev Tracks user Synthetix v2 debt chains on the local chain at a particular block number
 contract DebtShareManager is ElectionBase {
+    using SafeCastU256 for uint256;
+
     error DebtShareContractNotSet();
     error DebtShareSnapshotIdNotSet();
 
@@ -19,7 +23,7 @@ contract DebtShareManager is ElectionBase {
         DebtShare.Data storage store = DebtShare.load();
 
         uint currentEpochIndex = Council.load().lastElectionId;
-        store.debtShareIds[currentEpochIndex] = uint128(snapshotId);
+        store.debtShareIds[currentEpochIndex] = snapshotId.to128();
 
         emit DebtShareSnapshotIdSet(snapshotId);
     }
@@ -58,6 +62,6 @@ contract DebtShareManager is ElectionBase {
 
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
 
-        return store.debtShareContract.balanceOfOnPeriod(user, uint(debtShareId));
+        return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
     }
 }

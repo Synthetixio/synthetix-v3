@@ -11,3 +11,5 @@ utils/*/utils
 utils/*/test/generated
 protocol/*/test/generated
 *Router.sol
+.yarnrc.yml
+lerna.json

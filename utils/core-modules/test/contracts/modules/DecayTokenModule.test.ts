@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
-import { ethers } from 'ethers';
-import { bootstrap } from '../../bootstrap';
-import { DecayTokenModule } from '../../../typechain-types';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { ethers } from 'ethers';
+import { DecayTokenModule } from '../../../typechain-types';
+import { bootstrap } from '../../bootstrap';
 
 const parseEther = ethers.utils.parseEther;
 
@@ -359,39 +359,6 @@ describe('DecayTokenModule', () => {
         await TokenModule.balanceOf(await user1.getAddress()),
         parseEther('98.0198673305761728')
       );
-    });
-  });
-
-  describe('gas check', async () => {
-    it('mint after 1 minute', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 hour', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 3600, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 day', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 month', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24 * 30, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 1 year', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24 * 30 * 12, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
-    });
-    it('mint after 2 years', async () => {
-      const start = await getTime(getProvider());
-      await fastForwardTo(start + 60 * 60 * 24 * 30 * 12 * 2, getProvider());
-      await TokenModule.connect(owner).mint(await user2.getAddress(), parseEther('1'));
     });
   });
 });

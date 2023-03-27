@@ -27,6 +27,10 @@ library Transaction {
         return orderType == Type.SELL || orderType == Type.ASYNC_SELL;
     }
 
+    function isWrapper(Type orderType) internal pure returns (bool) {
+        return orderType == Type.WRAP || orderType == Type.UNWRAP;
+    }
+
     function isAsync(Type orderType) internal pure returns (bool) {
         return orderType == Type.ASYNC_BUY || orderType == Type.ASYNC_SELL;
     }

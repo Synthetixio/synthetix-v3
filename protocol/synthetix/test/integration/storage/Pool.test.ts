@@ -1,6 +1,6 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
-import { snapshotCheckpoint } from '../../utils/snapshot';
 import { bootstrapWithMockMarketAndPool } from '../bootstrap';
 
 describe('Pool', function () {

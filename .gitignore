@@ -16,3 +16,13 @@ dist
 node_modules
 Router.sol
 typechain-types
+lerna-debug.log
+
+# Yarn v3
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+.yarn/versions

@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "useWorkspaces": true,
+  "version": "3.0.4-alpha.0",
+  "exact": true,
+  "changelog": false,
+  "ignoreChanges": [
+    "**/test/**",
+    "**/*.md"
+  ],
+  "private": false,
+  "push": true,
+  "command": {
+    "version": {
+      "allowBranch": [
+        "main",
+        "lerna"
+      ]
+    }
+  }
+}
