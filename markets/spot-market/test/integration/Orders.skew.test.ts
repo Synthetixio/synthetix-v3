@@ -96,22 +96,19 @@ describe('testing skew', () => {
   });
 
   describe('buy path independence with fixed fee', () => {
-    before(restore);
-
-    let startingSynthBalance: Ethers.BigNumber, startingTrader2Balance: Ethers.BigNumber;
-
-    before('set atomic fee', async () => {
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.2));
-    });
-
-    const restoreToFee = snapshotCheckpoint(provider);
+    let synthBalance: Ethers.BigNumber, startingTrader2Balance: Ethers.BigNumber;
 
     describe('buy exact in', () => {
+      before(restore);
+      before('set atomic fee', async () => {
+        await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.2));
+      });
+
       before(async () => {
         await systems()
           .SpotMarket.connect(trader1)
           .buyExactIn(marketId(), bn(10_000), bn(0), Ethers.constants.AddressZero);
-        startingSynthBalance = await synth.balanceOf(trader1.getAddress());
+        synthBalance = await synth.balanceOf(trader1.getAddress());
       });
 
       it('has correct synth balance', async () => {
@@ -120,13 +117,17 @@ describe('testing skew', () => {
     });
 
     describe('buy exact out', () => {
-      before(restoreToFee);
+      before(restore);
+
+      before('set atomic fee', async () => {
+        await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.2));
+      });
 
       before('buy exact out', async () => {
         startingTrader2Balance = await systems().USD.balanceOf(trader2.getAddress());
         await systems()
           .SpotMarket.connect(trader2)
-          .buyExactOut(marketId(), startingSynthBalance, bn(5000000), Ethers.constants.AddressZero);
+          .buyExactOut(marketId(), synthBalance, bn(5000000), Ethers.constants.AddressZero);
       });
 
       it('should charge same amount as buy exact in', async () => {

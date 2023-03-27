@@ -64,28 +64,17 @@ interface ISpotMarketFactoryModule is IMarket {
     event MarketOwnerChanged(uint128 indexed marketId, address oldOwner, address newOwner);
 
     /**
-     * @notice Returns whether the factory has been initialized
-     * @return A boolean with the result of the query.
+     * @notice Sets the v3 synthetix core system.
+     * @dev Pulls in the USDToken and oracle manager from the synthetix core system and sets those appropriately.
+     * @param synthetix synthetix v3 core system address
      */
-    function isInitialized() external returns (bool);
+    function setSynthetix(ISynthetixSystem synthetix) external;
 
     /**
-     * @notice Initializes the factory with the required dependencies.
-     * @dev This function can only be called once.
-     * @dev This function can only be called by the owner of the factory.
-     * @dev This function can only be called if the factory is not initialized.
-     * @dev The initial implementations are used as initial implementations when creating associated system.
-     * @param snxAddress configured synthetix v3 core system
-     * @param usdTokenAddress configured snxUSD token address
-     * @param oracleManager oracle manager used for retrieving pricing data
-     * @param initialSynthImplementation initial synth implementation used to initialize new synths when registering.
+     * @notice When a new synth is created, this is the erc20 implementation that is used.
+     * @param synthImplementation erc20 implementation address
      */
-    function initialize(
-        ISynthetixSystem snxAddress,
-        address usdTokenAddress,
-        address oracleManager,
-        address initialSynthImplementation
-    ) external;
+    function setSynthImplementation(address synthImplementation) external;
 
     /**
      * @notice Creates a new synth market with synthetix v3 core system via market manager

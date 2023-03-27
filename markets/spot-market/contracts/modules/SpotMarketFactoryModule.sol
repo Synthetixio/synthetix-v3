@@ -18,11 +18,7 @@ import "../interfaces/ISpotMarketFactoryModule.sol";
  * @title Module for registering synths.  The factory tracks all synths in the system and consolidates implementation for all synths.
  * @dev See ISpotMarketFactoryModule.
  */
-contract SpotMarketFactoryModule is
-    ISpotMarketFactoryModule,
-    AssociatedSystemsModule,
-    InitializableMixin
-{
+contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
@@ -31,37 +27,25 @@ contract SpotMarketFactoryModule is
 
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
 
-    function _isInitialized() internal view override returns (bool) {
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        return
-            address(spotMarketFactory.synthetix) != address(0) &&
-            spotMarketFactory.usdToken != ITokenModule(address(0));
-    }
-
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function isInitialized() external view returns (bool) {
-        return _isInitialized();
-    }
-
-    /**
-     * @inheritdoc ISpotMarketFactoryModule
-     */
-    // TODO: remove and make this cannon friendly
-    function initialize(
-        ISynthetixSystem snxAddress,
-        address usdTokenAddress,
-        address oracleManager,
-        address initialSynthImplementation
-    ) external override {
+    function setSynthetix(ISynthetixSystem synthetix) external override {
         OwnableStorage.onlyOwner();
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        spotMarketFactory.synthetix = snxAddress;
-        spotMarketFactory.initialSynthImplementation = initialSynthImplementation;
-        spotMarketFactory.usdToken = ITokenModule(usdTokenAddress);
-        spotMarketFactory.oracle = INodeModule(oracleManager);
+        store.synthetix = synthetix;
+        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
+        store.usdToken = ITokenModule(usdTokenAddress);
+        store.oracle = synthetix.getOracleManager();
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function setSynthImplementation(address synthImplementation) external override {
+        OwnableStorage.onlyOwner();
+        SpotMarketFactory.load().synthImplementation = synthImplementation;
     }
 
     /**
@@ -71,10 +55,12 @@ contract SpotMarketFactoryModule is
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
-    ) external override onlyIfInitialized returns (uint128) {
+    ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.checkSynthImplemention();
+
         uint128 synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
 
         _initOrUpgradeToken(
@@ -82,10 +68,12 @@ contract SpotMarketFactoryModule is
             tokenName,
             tokenSymbol,
             18,
-            spotMarketFactory.initialSynthImplementation
+            spotMarketFactory.synthImplementation
         );
 
         spotMarketFactory.marketOwners[synthMarketId] = synthOwner;
+        // default collateral leverage to 1
+        MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
         emit SynthRegistered(synthMarketId);
 
@@ -103,6 +91,10 @@ contract SpotMarketFactoryModule is
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
 
+    /**
+     * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
+     * @dev collateral leverage is defaulted to 1 on registration of a new market
+     */
     function locked(uint128 marketId) external view returns (uint256) {
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;

@@ -17,6 +17,7 @@ library SpotMarketFactory {
 
     error OnlyMarketOwner(address marketOwner, address sender);
     error InvalidMarket(uint128 marketId);
+    error InvalidSynthImplementation(uint256 synthImplementation);
 
     struct Data {
         /**
@@ -32,9 +33,9 @@ library SpotMarketFactory {
          */
         ISynthetixSystem synthetix;
         /**
-         * @dev when synth is registered, this is the initial implementation address the proxy services.
+         * @dev erc20 synth implementation address.  associated systems creates a proxy backed by this implementation.
          */
-        address initialSynthImplementation;
+        address synthImplementation;
         /**
          * @dev mapping of marketId to marketOwner
          */
@@ -49,6 +50,12 @@ library SpotMarketFactory {
         bytes32 s = _SLOT_SPOT_MARKET_FACTORY;
         assembly {
             spotMarketFactory.slot := s
+        }
+    }
+
+    function checkSynthImplemention(Data storage self) internal view {
+        if (self.synthImplementation == address(0)) {
+            revert InvalidSynthImplementation(0);
         }
     }
 
