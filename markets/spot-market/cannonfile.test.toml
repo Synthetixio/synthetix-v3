@@ -99,32 +99,38 @@ depends = [
   "contract.SynthTokenModule"
 ]
 
-[invoke.initialize_spot_market_factory]
+[invoke.set_synthetix_system]
 target = ["SpotMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
-func = "initialize"
+func = "setSynthetix"
 args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>",
-  "<%= imports.synthetix.contracts.USDProxy.address %>",
-  "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+  "<%= imports.synthetix.contracts.CoreProxy.address %>"
+]
+depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix"]
+
+[invoke.set_synth_implementation]
+target = ["SpotMarketProxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "setSynthImplementation"
+args = [
   "<%= contracts.SynthRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix", "router.SynthRouter"]
+depends = ["invoke.upgrade_spot_market_proxy", "router.SynthRouter"]
 
-# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
+# add pool owner to feature flag allow list
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
-depends = ['provision.synthetix', 'invoke.upgrade_spot_market_proxy']
+depends = ['invoke.set_synthetix_system']
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
-depends = ['invoke.initialize_spot_market_factory']
+depends = ["invoke.upgrade_spot_market_proxy"]
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"

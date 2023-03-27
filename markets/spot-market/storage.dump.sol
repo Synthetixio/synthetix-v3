@@ -308,7 +308,7 @@ library SpotMarketFactory {
         address usdToken;
         address oracle;
         address synthetix;
-        address initialSynthImplementation;
+        address synthImplementation;
         mapping(uint128 => address) marketOwners;
         mapping(uint128 => address) nominatedMarketOwners;
     }
