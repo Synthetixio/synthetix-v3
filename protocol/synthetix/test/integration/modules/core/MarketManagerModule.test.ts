@@ -310,4 +310,39 @@ describe('MarketManagerModule', function () {
       });
     });
   });
+
+  describe('setMarketMinDelegateTime()', () => {
+    before(restore);
+
+    it('only works for market', async () => {
+      await assertRevert(
+        systems().Core.setMarketMinDelegateTime(marketId(), 86400),
+        'Unauthorized',
+        systems().Core
+      );
+    });
+
+    it('fails when min delegation time is unreasonably large', async () => {
+      await assertRevert(
+        MockMarket().setMinDelegationTime(100000000),
+        'InvalidParameter("minDelegateTime"',
+        systems().Core
+      );
+    });
+
+    describe('success', () => {
+      let tx: ethers.providers.TransactionResponse;
+      before('exec', async () => {
+        tx = await MockMarket().setMinDelegationTime(86400);
+      });
+
+      it('sets the value', async () => {
+        assertBn.equal(await systems().Core.getMarketMinDelegateTime(marketId()), 86400);
+      });
+
+      it('emits', async () => {
+        await assertEvent(tx, `SetMinDelegateTime(${marketId()}, 86400)`, systems().Core);
+      });
+    });
+  });
 });

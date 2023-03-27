@@ -7,6 +7,7 @@ import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('VaultModule', function () {
   const {
@@ -383,6 +384,47 @@ describe('VaultModule', function () {
           'user2 still has correct position',
           verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
         );
+
+        describe('if one of the markets has a min delegation time', () => {
+          const restore = snapshotCheckpoint(provider);
+
+          before('set market min delegation time to something high', async () => {
+            await MockMarket.setMinDelegationTime(86400);
+          });
+
+          it('fails when min delegation timeout not elapsed', async () => {
+            await assertRevert(
+              systems().Core.connect(user2).delegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount, // user1 50%, user2 50%
+                ethers.utils.parseEther('1')
+              ),
+              `MinDelegationTimeoutPending("${poolId}",`,
+              systems().Core
+            );
+          });
+
+          describe('after time passes', () => {
+            before('fast forward', async () => {
+              // for some reason `fastForward` doesn't seem to work with anvil
+              await fastForwardTo((await getTime(provider())) + 86400, provider());
+            });
+
+            it('works', async () => {
+              await systems().Core.connect(user2).delegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount, // user1 50%, user2 50%
+                ethers.utils.parseEther('1')
+              );
+            });
+          });
+
+          after(restore);
+        });
 
         // these exposure tests should be enabled when exposures other
         // than 1 are allowed (which might be something we want to do)

@@ -56,6 +56,13 @@ interface IMarketManagerModule {
     );
 
     /**
+     * @notice Emitted when a market sets an updated minimum delegation time
+     * @param marketId The id of the market that the setting is applied to
+     * @param minDelegateTime The minimum amount of time between delegation changes
+     */
+    event SetMinDelegateTime(uint128 indexed marketId, uint32 minDelegateTime);
+
+    /**
      * @notice Connects an external market to the system.
      * @dev Creates a Market object to track the external market, and returns the newly created market id.
      * @param market The address of the external market that is to be registered in the system.
@@ -149,4 +156,18 @@ interface IMarketManagerModule {
         uint128 marketId,
         uint256 maxIter
     ) external returns (bool finishedDistributing);
+
+    /**
+     * @notice allows for a market to set its minimum delegation time. This is useful for preventing stakers from frontrunning rewards or losses
+     * by limiting the ferquency of `delegateCollateral` (or `setPoolConfiguration`) calls. By default, there is no minimum delegation time.
+     * @param marketId the id of the market that wants to set delegation time.
+     * @param minDelegateTime the minimum number of seconds between delegation calls. Note: this value must be less than the globally defined maximum minDelegateTime
+     */
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external;
+
+    /**
+     * @notice Retrieve the minimum delegation time of a market
+     * @param marketId the id of the market
+     */
+    function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32);
 }

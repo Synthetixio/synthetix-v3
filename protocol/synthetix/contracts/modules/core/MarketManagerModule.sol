@@ -9,11 +9,14 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 
+import "../../storage/Config.sol";
 import "../../storage/Market.sol";
 import "../../storage/MarketCreator.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 /**
  * @title System-wide entry point for the management of markets connected to the system.
@@ -163,5 +166,34 @@ contract MarketManagerModule is IMarketManagerModule {
         uint256 maxIter
     ) external override returns (bool) {
         return Market.load(marketId).distributeDebtToPools(maxIter);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external override {
+        Market.Data storage market = Market.load(marketId);
+
+        if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
+
+        // min delegate time should not be unreasonably long
+        // solhint-disable-next-line numcast/safe-cast
+        uint maxMinDelegateTime = uint(Config.read("marketMinDelegateTime"));
+
+        if (maxMinDelegateTime == 0) {
+            maxMinDelegateTime = 86400 * 30; // 1 month is a reasonable starting point
+        }
+
+        if (minDelegateTime > maxMinDelegateTime) {
+            revert ParameterError.InvalidParameter("minDelegateTime", "must not be too large");
+        }
+
+        market.minDelegateTime = minDelegateTime;
+
+        emit SetMinDelegateTime(marketId, minDelegateTime);
+    }
+
+    function getMarketMinDelegateTime(uint128 marketId) external view override returns (uint32) {
+        return Market.load(marketId).minDelegateTime;
     }
 }
