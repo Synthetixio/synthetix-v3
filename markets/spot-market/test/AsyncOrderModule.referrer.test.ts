@@ -4,7 +4,7 @@ import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.only('Atomic Order Module referrer', () => {
+describe('Atomic Order Module referrer', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -56,8 +56,8 @@ describe.only('Atomic Order Module referrer', () => {
       await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
 
-    it('referrer has 0 snxETH', async () => {
-      assertBn.equal(await synth.balanceOf(await referrer.getAddress()), bn(0));
+    it('referrer has 0 USD', async () => {
+      assertBn.equal(await systems().USD.balanceOf(await referrer.getAddress()), bn(0));
     });
 
     it('buy 1 snxETH', async () => {
