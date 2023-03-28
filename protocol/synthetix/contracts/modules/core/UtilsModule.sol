@@ -51,7 +51,7 @@ contract UtilsModule is IUtilsModule {
         oracle.oracleManagerAddress = oracleManagerAddress;
     }
 
-    function getOracleManager() external returns (IOracleManager) {
+    function getOracleManager() external view returns (IOracleManager) {
         return IOracleManager(OracleManager.load().oracleManagerAddress);
     }
 
@@ -62,6 +62,6 @@ contract UtilsModule is IUtilsModule {
 
     function getConfig(bytes32 k) external view override returns (bytes32 v) {
         OwnableStorage.onlyOwner();
-        return Config.read(k);
+        return Config.read(k, 0);
     }
 }

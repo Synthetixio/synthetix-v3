@@ -7,11 +7,13 @@ import { ethers } from 'ethers';
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { MockMarket__factory } from '../../../../typechain-types/index';
 import { verifyUsesFeatureFlag } from '../../verifications';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('MarketManagerModule', function () {
   const {
     signers,
     systems,
+    provider,
     collateralAddress,
     poolId,
     accountId,
@@ -23,6 +25,8 @@ describe('MarketManagerModule', function () {
 
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
+
+  const feeAddress = '0x1234567890123456789012345678901234567890';
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -102,6 +106,8 @@ describe('MarketManagerModule', function () {
         await systems().USD.connect(user1).approve(MockMarket().address, One);
       });
 
+      const restoreDeposit = snapshotCheckpoint(provider);
+
       verifyUsesFeatureFlag(
         () => systems().Core,
         'depositMarketUsd',
@@ -109,6 +115,7 @@ describe('MarketManagerModule', function () {
       );
 
       describe('success', async () => {
+        before(restoreDeposit);
         before('deposit', async () => {
           txn = await MockMarket().connect(user1).buySynth(One);
         });
@@ -136,6 +143,58 @@ describe('MarketManagerModule', function () {
           );
         });
       });
+
+      describe('when fee is levied', async () => {
+        before(restoreDeposit);
+        before('set fee', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('depositMarketUsd_feeRatio'),
+              ethers.utils.hexZeroPad(ethers.utils.parseEther('0.01').toHexString(), 32)
+            ); // 1% fee levy
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('depositMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(feeAddress, 32)
+            );
+        });
+
+        before('deposit', async () => {
+          txn = await MockMarket().connect(user1).buySynth(One);
+        });
+
+        it('takes USD away', async () => {
+          assertBn.isZero(await systems().USD.balanceOf(await user1.getAddress()));
+        });
+
+        it('sent USD to fee address', async () => {
+          assertBn.equal(await systems().USD.balanceOf(feeAddress), One.div(100));
+        });
+
+        it('increases withdrawableUsd (minus a fee)', async () => {
+          assertBn.equal(
+            await systems().Core.connect(user1).getWithdrawableMarketUsd(marketId()),
+            depositAmount.add(One).sub(One.div(100))
+          );
+        });
+
+        it('increases total debt by the fee', async () => {
+          assertBn.equal(
+            await systems().Core.connect(user1).getMarketTotalDebt(marketId()),
+            One.div(100)
+          );
+        });
+
+        it('accrues debt for the fee', async () => {
+          // should only have the one USD minted earlier
+          assertBn.equal(
+            await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+            One.div(100)
+          );
+        });
+      });
     });
   });
 
@@ -148,6 +207,8 @@ describe('MarketManagerModule', function () {
         await systems().USD.connect(user1).approve(MockMarket().address, One);
         txn = await MockMarket().connect(user1).buySynth(One);
       });
+
+      const withdrawRestore = snapshotCheckpoint(provider);
 
       it('reverts if not enough liquidity', async () => {
         const reportedDebtBefore = await MockMarket().connect(user1).reportedDebt(0);
@@ -169,6 +230,7 @@ describe('MarketManagerModule', function () {
       );
 
       describe('withdraw some from the market', async () => {
+        before(withdrawRestore);
         before('mint USD to use market', async () => {
           txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
         });
@@ -203,6 +265,49 @@ describe('MarketManagerModule', function () {
           it('makes USD', async () => {
             assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One);
           });
+        });
+      });
+
+      describe('when fee is levied', async () => {
+        before(withdrawRestore);
+        before('set fee', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('withdrawMarketUsd_feeRatio'),
+              ethers.utils.hexZeroPad(ethers.utils.parseEther('0.01').toHexString(), 32)
+            ); // 1% fee levy
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('withdrawMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(feeAddress, 32)
+            );
+        });
+
+        before('mint USD to use market', async () => {
+          txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
+        });
+
+        it('decreased withdrawable usd', async () => {
+          const liquidity = await systems().Core.getWithdrawableMarketUsd(marketId());
+          // also subtract the fee here
+          assertBn.equal(liquidity, depositAmount.add(One.div(2)).sub(One.div(200)));
+        });
+
+        it('leaves totalDebt the same', async () => {
+          assertBn.equal(
+            await systems().Core.connect(user1).getMarketTotalDebt(marketId()),
+            One.div(200)
+          );
+        });
+
+        it('makes USD', async () => {
+          assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One.div(2));
+        });
+
+        it('sent USD to fee address', async () => {
+          assertBn.equal(await systems().USD.balanceOf(feeAddress), One.div(200));
         });
       });
     });

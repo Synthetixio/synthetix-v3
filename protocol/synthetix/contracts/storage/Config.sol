@@ -12,11 +12,25 @@ library Config {
     /**
      * @dev Returns a config value
      */
-    function read(bytes32 k) internal view returns (bytes32 v) {
+    function read(bytes32 k, bytes32 zeroValue) internal view returns (bytes32 v) {
         bytes32 s = keccak256(abi.encode("Config", k));
         assembly {
             v := sload(s)
         }
+
+        if (v == bytes32(0)) {
+            v = zeroValue;
+        }
+    }
+
+    function readUint(bytes32 k, uint256 zeroValue) internal view returns (uint256 v) {
+        // solhint-disable-next-line numcast/safe-cast
+        return uint(read(k, bytes32(zeroValue)));
+    }
+
+    function readAddress(bytes32 k, address zeroValue) internal view returns (address v) {
+        // solhint-disable-next-line numcast/safe-cast
+        return address(uint160(readUint(k, uint160(zeroValue))));
     }
 
     function put(bytes32 k, bytes32 v) internal {
