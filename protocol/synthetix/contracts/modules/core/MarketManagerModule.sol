@@ -109,6 +109,10 @@ contract MarketManagerModule is IMarketManagerModule {
         return AssociatedSystem.load(_USD_TOKEN).asToken();
     }
 
+    function getOracleManager() external view returns (IOracleManager) {
+        return IOracleManager(OracleManager.load().oracleManagerAddress);
+    }
+
     /**
      * @inheritdoc IMarketManagerModule
      */

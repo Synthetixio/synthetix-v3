@@ -66,7 +66,7 @@ contract VaultModule is IVaultModule {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
 
         // Use account interaction to update its rewards.
-        vault.updateRewards(accountId);
+        vault.updateRewards(accountId, poolId, collateralType);
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 

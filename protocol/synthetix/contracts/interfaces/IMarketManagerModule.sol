@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import "./external/IOracleManager.sol";
 
 /**
  * @title System-wide entry point for the management of markets connected to the system.
@@ -143,6 +144,11 @@ interface IMarketManagerModule {
      * @notice Returns the USD token associated with this synthetix core system
      */
     function getUsdToken() external view returns (IERC20);
+
+    /**
+     * @notice Retrieve the systems' configured oracle manager address
+     */
+    function getOracleManager() external view returns (IOracleManager);
 
     /**
      * @notice Update a market's current debt registration with the system.
