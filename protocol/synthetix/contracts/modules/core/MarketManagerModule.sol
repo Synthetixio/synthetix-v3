@@ -117,16 +117,18 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+    function depositMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        uint feeAmount = amount.mulDecimal(
-            Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0)
-        );
+        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0));
         address feeAddress = feeAmount > 0
             ? Config.readAddress(_CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS, address(0))
             : address(0);
@@ -154,7 +156,11 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+    function withdrawMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
@@ -165,9 +171,7 @@ contract MarketManagerModule is IMarketManagerModule {
         if (amount > getWithdrawableMarketUsd(marketId))
             revert NotEnoughLiquidity(marketId, amount);
 
-        uint feeAmount = amount.mulDecimal(
-            Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0)
-        );
+        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0));
         address feeAddress = feeAmount > 0
             ? Config.readAddress(_CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS, address(0))
             : address(0);
@@ -184,6 +188,22 @@ contract MarketManagerModule is IMarketManagerModule {
         }
 
         emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function getMarketFees(
+        uint128,
+        uint amount
+    ) external view override returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount) {
+        depositFeeAmount = amount.mulDecimal(
+            Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0)
+        );
+
+        withdrawFeeAmount = amount.mulDecimal(
+            Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0)
+        );
     }
 
     /**

@@ -161,7 +161,12 @@ describe('MarketManagerModule', function () {
             );
         });
 
+        let quotedFee;
+        let returnValue;
+
         before('deposit', async () => {
+          quotedFee = (await systems().Core.getMarketFees(marketId(), One))[0];
+          returnValue = await MockMarket().connect(user1).callStatic.buySynth(One);
           txn = await MockMarket().connect(user1).buySynth(One);
         });
 
@@ -193,6 +198,11 @@ describe('MarketManagerModule', function () {
             await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             One.div(100)
           );
+        });
+
+        it('returned fees paid', async () => {
+          assertBn.gt(returnValue, 0);
+          assertBn.equal(quotedFee, returnValue);
         });
       });
     });
@@ -285,7 +295,12 @@ describe('MarketManagerModule', function () {
             );
         });
 
+        let quotedFee;
+        let returnValue;
+
         before('mint USD to use market', async () => {
+          quotedFee = (await systems().Core.getMarketFees(marketId(), One.div(2)))[1];
+          returnValue = await MockMarket().connect(user1).callStatic.sellSynth(One.div(2));
           txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
         });
 
@@ -308,6 +323,11 @@ describe('MarketManagerModule', function () {
 
         it('sent USD to fee address', async () => {
           assertBn.equal(await systems().USD.balanceOf(feeAddress), One.div(200));
+        });
+
+        it('returned fees paid', async () => {
+          assertBn.gt(returnValue, 0);
+          assertBn.equal(quotedFee, returnValue);
         });
       });
     });
