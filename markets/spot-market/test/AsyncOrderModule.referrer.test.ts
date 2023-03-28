@@ -4,7 +4,7 @@ import { SynthRouter } from '../generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe('Atomic Order Module referrer', () => {
+describe.only('Atomic Order Module referrer', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -29,15 +29,15 @@ describe('Atomic Order Module referrer', () => {
     let txn: Ethers.providers.TransactionResponse;
 
     before('set referrer percentage to 10%', async () => {
-      await systems()
+      txn = await systems()
         .SpotMarket.connect(marketOwner)
-        .updateReferrerShare(marketId(), referrer, bn(0.1));
+        .updateReferrerShare(marketId(), await referrer.getAddress(), bn(0.1));
     });
 
     it('emitted ReferrerShareUpdated event with correct params', async () => {
       await assertEvent(
         txn,
-        `ReferrerShareUpdated(${marketId()}, ${referrer.getAddress()}, ${bn(0.1)})`,
+        `ReferrerShareUpdated(${marketId()}, "${await referrer.getAddress()}", ${bn(0.1)})`,
         systems().SpotMarket
       );
     });
@@ -49,7 +49,7 @@ describe('Atomic Order Module referrer', () => {
     before('set referrer percentage to 10%', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .updateReferrerShare(marketId(), referrer, bn(0.1));
+        .updateReferrerShare(marketId(), await referrer.getAddress(), bn(0.1));
     });
 
     before('set fixed fee to 1%', async () => {
@@ -62,15 +62,17 @@ describe('Atomic Order Module referrer', () => {
 
     it('buy 1 snxETH', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(0.99), referrer);
+      await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(1000), bn(0.99), await referrer.getAddress());
     });
 
     it('trader1 has 0.99 snxETH after fees', async () => {
       assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(0.99));
     });
 
-    it('referrer has 0.001 = 0.01 * 0.1 snxETH', async () => {
-      assertBn.equal(await synth.balanceOf(await referrer.getAddress()), bn(0.001));
+    it('referrer has 1 = 0.01 * 0.1 * 1000 USD (fixedFee * referrerPercentage * amount)', async () => {
+      assertBn.equal(await systems().USD.balanceOf(await referrer.getAddress()), bn(1));
     });
   });
 
@@ -86,21 +88,25 @@ describe('Atomic Order Module referrer', () => {
     before('set referrer percentage to 10%', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .updateReferrerShare(marketId(), referrer, bn(0.1));
+        .updateReferrerShare(marketId(), await referrer.getAddress(), bn(0.1));
     });
 
     before('buy 50 snxETH', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(50_000));
-      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(50_000), bn(50), referrer);
+      await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(50_000), bn(50), await referrer.getAddress());
     });
 
     before('buy 100 snxETH', async () => {
       await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(100_000));
-      await systems().SpotMarket.connect(trader2).buy(marketId(), bn(100_000), bn(97.5), referrer);
+      await systems()
+        .SpotMarket.connect(trader2)
+        .buy(marketId(), bn(100_000), bn(97.5), await referrer.getAddress());
     });
 
-    it('referrer has 0 snxETH (only fixed fees are sent to referrer)', async () => {
-      assertBn.equal(await synth.balanceOf(await referrer.getAddress()), bn(0));
+    it('referrer has 0 USD (only fixed fees are sent to referrer)', async () => {
+      assertBn.equal(await systems().USD.balanceOf(await referrer.getAddress()), bn(0));
     });
   });
 
@@ -114,21 +120,25 @@ describe('Atomic Order Module referrer', () => {
     before('set referrer percentage to 10%', async () => {
       await systems()
         .SpotMarket.connect(marketOwner)
-        .updateReferrerShare(marketId(), referrer, bn(0.1));
+        .updateReferrerShare(marketId(), await referrer.getAddress(), bn(0.1));
     });
 
     before('trader1 buy 10 snxETH', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(10_000));
-      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000), bn(9.5), referrer);
+      await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(10_000), bn(9.5), await referrer.getAddress());
     });
 
     before('trader2 buy 10 snxETH', async () => {
       await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-      await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000), bn(8.55), referrer);
+      await systems()
+        .SpotMarket.connect(trader2)
+        .buy(marketId(), bn(10_000), bn(8.55), await referrer.getAddress());
     });
 
-    it('referrer has 0 snxETH (only fixed fees are sent to referrer)', async () => {
-      assertBn.equal(await synth.balanceOf(await referrer.getAddress()), bn(0));
+    it('referrer has 0 USD (only fixed fees are sent to referrer)', async () => {
+      assertBn.equal(await systems().USD.balanceOf(await referrer.getAddress()), bn(0));
     });
   });
 });
