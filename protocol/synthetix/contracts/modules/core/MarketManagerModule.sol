@@ -35,6 +35,8 @@ contract MarketManagerModule is IMarketManagerModule {
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+
     /**
      * @inheritdoc IMarketManagerModule
      */
@@ -178,7 +180,7 @@ contract MarketManagerModule is IMarketManagerModule {
 
         // min delegate time should not be unreasonably long
         // solhint-disable-next-line numcast/safe-cast
-        uint maxMinDelegateTime = uint(Config.read("marketMinDelegateTime"));
+        uint maxMinDelegateTime = uint(Config.read(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX));
 
         if (maxMinDelegateTime == 0) {
             maxMinDelegateTime = 86400 * 30; // 1 month is a reasonable starting point
