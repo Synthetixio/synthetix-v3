@@ -85,7 +85,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
         await tx.wait(); // txReceipt.
       } catch (err) {
         const parseString = (str: string) => str.trim().replace('"', '').replace('"', '');
-        const parsedError = formatErrorMessage(err as unknown as any)
+        const parsedError = formatErrorMessage(err as unknown as { [k: string]: unknown })
           .replace('OffchainLookup(', '')
           .replace(')', '')
           .split(',');
@@ -102,12 +102,11 @@ describe('AsyncOrdersModule.e2e.test', function () {
 
       const fee = await verifier.getUpdateFee(1);
       const parsedURL = url.replace('{data}', data);
-      console.log('parsedURL:', parsedURL);
 
       //There is a delay on pyth service
       await new Promise((resolve) => setTimeout(resolve, 30000));
 
-      const response = await fetch(parsedURL).then((res: any) => res.json());
+      const response = await fetch(parsedURL).then((res) => res.json());
 
       await systems().SpotMarket.connect(keeper).settlePythOrder(response.data, extraData, {
         value: fee.toString(),
