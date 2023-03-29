@@ -35,11 +35,14 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
       hre.network.name === 'cannon' ? { ...params } : { ...params, noVerify: true };
 
     const cannonInfo = await hre.run('cannon:build', {
-      writeDeployments,
       ...cannonOpts,
     });
 
-    const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/*.json`]);
+    await hre.run('cannon:inspect', {
+      writeDeployments,
+    });
+
+    const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 
     await runTypeChain({
       cwd: hre.config.paths.root,

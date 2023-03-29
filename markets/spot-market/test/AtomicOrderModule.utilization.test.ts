@@ -1,6 +1,6 @@
 import { ethers as Ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 

@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
@@ -30,6 +30,7 @@ describe('AsyncOrderModule', () => {
         url: '',
         settlementReward: bn(5),
         priceDeviationTolerance: bn(0.01),
+        disabled: false,
       });
   });
 
