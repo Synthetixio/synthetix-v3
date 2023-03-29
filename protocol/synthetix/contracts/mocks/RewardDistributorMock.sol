@@ -63,12 +63,7 @@ contract RewardDistributorMock is IRewardDistributor {
         );
     }
 
-    function onStakerChanged(
-        uint128,
-        uint128,
-        address,
-        uint
-    ) external pure {
+    function onStakerChanged(uint128, uint128, address, uint) external pure {
         return;
     }
 
