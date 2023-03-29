@@ -299,6 +299,7 @@ contract MarketManagerModule {
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
