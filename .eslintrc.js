@@ -18,7 +18,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
     project: ['./tsconfig.eslint.json'],
   },
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: ['/*.js'],
   rules: {
     indent: 'off', // prettier
     'no-only-tests/no-only-tests': 'error',
