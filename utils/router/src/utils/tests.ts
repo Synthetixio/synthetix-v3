@@ -2,6 +2,7 @@
 
 import path from 'node:path';
 import { ChainBuilderContext } from '@usecannon/builder';
+import { loadCannonfile } from '@usecannon/cli';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
@@ -38,9 +39,13 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
       ...cannonOpts,
     });
 
+    const cannonfilePath = path.resolve(hre.config.paths.root, params.cannonfile || '');
+
+    const { name, version } = await loadCannonfile(cannonfilePath);
+
     await hre.run('cannon:inspect', {
-      ...cannonOpts,
       writeDeployments,
+      packageName: `${name}:${version}`,
     });
 
     const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
