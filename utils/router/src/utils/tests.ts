@@ -39,6 +39,7 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
     });
 
     await hre.run('cannon:inspect', {
+      ...cannonOpts,
       writeDeployments,
     });
 
