@@ -282,7 +282,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            trader,
             asyncOrderClaim.referrer,
             spotMarketFactory,
             Transaction.Type.ASYNC_SELL
