@@ -18,6 +18,8 @@ describe('IssueUSDModule', function () {
   let MockMarket: ethers.Contract;
   let marketId: number;
 
+  const feeAddress = '0x1234567890123456789012345678901234567890';
+
   before('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
@@ -186,15 +188,65 @@ describe('IssueUSDModule', function () {
         });
       });
     });
+
+    describe('successful mint when fee is levied', async () => {
+      before(restore);
+      before('set fee', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('mintUsd_feeRatio'),
+            ethers.utils.hexZeroPad(ethers.utils.parseEther('0.01').toHexString(), 32)
+          ); // 1% fee levy
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('mintUsd_feeAddress'),
+            ethers.utils.hexZeroPad(feeAddress, 32)
+          );
+      });
+
+      before('mint', async () => {
+        await systems().Core.connect(user1).mintUsd(
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.div(10) // should be enough
+        );
+      });
+
+      it(
+        'has correct debt',
+        verifyAccountState(
+          accountId,
+          poolId,
+          depositAmount,
+          depositAmount.div(10).add(depositAmount.div(1000))
+        )
+      );
+
+      it('sent USD to user1', async () => {
+        assertBn.equal(
+          await systems().USD.balanceOf(await user1.getAddress()),
+          depositAmount.div(10)
+        );
+      });
+
+      it('sent USD to the fee address', async () => {
+        assertBn.equal(await systems().USD.balanceOf(feeAddress), depositAmount.div(1000));
+      });
+    });
   });
 
-  describe('burnUSD()', async () => {
+  describe('burnUSD()', () => {
     before(restore);
     before('mint', async () => {
       await systems()
         .Core.connect(user1)
         .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
     });
+
+    const restoreBurn = snapshotCheckpoint(provider);
 
     verifyUsesFeatureFlag(
       () => systems().Core,
@@ -206,6 +258,7 @@ describe('IssueUSDModule', function () {
     );
 
     describe('burn from other account', async () => {
+      before(restoreBurn);
       before('transfer burn collateral', async () => {
         // send the collateral to account 2 so it can burn on behalf
         await systems()
@@ -223,6 +276,94 @@ describe('IssueUSDModule', function () {
 
       it('took away from user2', async () => {
         assertBn.equal(await systems().USD.balanceOf(await user2.getAddress()), 0);
+      });
+    });
+
+    describe('successful partial burn when fee is levied', async () => {
+      before(restoreBurn);
+      before('set fee', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeRatio'),
+            ethers.utils.hexZeroPad(ethers.utils.parseEther('0.01').toHexString(), 32)
+          ); // 1% fee levy
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeAddress'),
+            ethers.utils.hexZeroPad(feeAddress, 32)
+          );
+      });
+
+      before('account partial burn debt', async () => {
+        // in order to burn all with the fee we need a bit more
+        await systems()
+          .Core.connect(user1)
+          .burnUsd(
+            accountId,
+            poolId,
+            collateralAddress(),
+            depositAmount.div(20).add(depositAmount.div(2000))
+          ); // pay off 50.5
+      });
+
+      it(
+        'has correct debt',
+        verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(20))
+      );
+
+      it('took away from user1', async () => {
+        assertBn.equal(
+          await systems().USD.balanceOf(await user1.getAddress()),
+          ethers.utils.parseEther('49.5')
+        );
+      });
+
+      it('sent money to the fee address', async () => {
+        assertBn.equal(await systems().USD.balanceOf(feeAddress), depositAmount.div(2000));
+      });
+    });
+
+    describe('successful max burn when fee is levied', async () => {
+      before(restoreBurn);
+
+      before('acquire additional balance to pay off fee', async () => {
+        await systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, 0, collateralAddress(), depositAmount.div(1000));
+      });
+
+      before('set fee', async () => {
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeRatio'),
+            ethers.utils.hexZeroPad(ethers.utils.parseEther('0.01').toHexString(), 32)
+          ); // 1% fee levy
+        await systems()
+          .Core.connect(owner)
+          .setConfig(
+            ethers.utils.formatBytes32String('burnUsd_feeAddress'),
+            ethers.utils.hexZeroPad(feeAddress, 32)
+          );
+      });
+
+      before('account partial burn debt', async () => {
+        // in order to burn all with the fee we need a bit more
+        await systems()
+          .Core.connect(user1)
+          .burnUsd(accountId, poolId, collateralAddress(), depositAmount); // pay off everything
+      });
+
+      it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
+
+      it('took away from user1', async () => {
+        assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), 0);
+      });
+
+      it('sent money to the fee address', async () => {
+        assertBn.equal(await systems().USD.balanceOf(feeAddress), depositAmount.div(1000));
       });
     });
   });
