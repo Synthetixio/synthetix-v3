@@ -54,7 +54,6 @@ library SettlementStrategy {
 
     enum Type {
         ONCHAIN,
-        CHAINLINK,
         PYTH
     }
 
