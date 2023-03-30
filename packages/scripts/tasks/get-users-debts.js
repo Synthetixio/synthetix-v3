@@ -12,6 +12,13 @@ const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
 
 const { SynthetixDebtShare } = snx.getSource();
 
+/* Examples:
+
+npx hardhat governance:get-users-debts --address 0x89FCb32F29e509cc42d0C8b6f058C993013A843F --from-block 14169250 --until-block 16934639 --provider-url https://eth-mainnet.g.alchemy.com/v2/<API_KEY>
+npx hardhat governance:get-users-debts --address 0x45c55BF488D3Cb8640f12F63CbeDC027E8261E79 --from-block 3357941 --until-block 84651862 --provider-url https://opt-mainnet.g.alchemy.com/v2/<API_KEY>
+
+ */
+
 task(
   'governance:get-users-debts',
   'Get all the addresses with their debts querying to the SynthetixDebtShare contract'
@@ -148,9 +155,14 @@ async function getDebts({ filename, addresses, Contract, untilBlock }) {
   let i = 0;
   const pad = addresses.length.toString().length;
 
+  const balanceOf = (address) => Contract.balanceOf(address, { blockTag: untilBlock });
+
   const queue = createQueue.promise(async function (address) {
     try {
-      const debt = await Contract.balanceOf(address, { blockTag: untilBlock });
+      // Give it 3 tries to get the debt
+      const debt = await balanceOf(address)
+        .catch(() => balanceOf(address))
+        .catch(() => balanceOf(address));
 
       if (debt > 0) {
         writeDebt(filename, address, debt.toString());
