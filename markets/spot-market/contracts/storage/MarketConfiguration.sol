@@ -63,8 +63,7 @@ library MarketConfiguration {
          */
         uint skewScale;
         /**
-         * @dev The fee collector gets sent the calculated fees and can keep some of them to distribute in whichever way it wants.
-         * The rest of the fees are deposited into the market manager.
+         * @dev Once fees are calculated, the quote function is called with the totalFees.  The returned quoted amount is then transferred to this fee collector address
          */
         IFeeCollector feeCollector;
         /**
@@ -444,7 +443,7 @@ library MarketConfiguration {
         if (totalFees <= 0 || address(self.feeCollector) == address(0)) {
             return referrerFeesCollected;
         }
-        // remove fees sent to referrer when calculating fees to collect
+        // remove fees sent to referrer before getting quote from fee collector
         totalFees -= referrerFeesCollected.toInt();
 
         uint totalFeesUint = totalFees.toUint();
