@@ -159,7 +159,7 @@ interface IMarketManagerModule {
 
     /**
      * @notice allows for a market to set its minimum delegation time. This is useful for preventing stakers from frontrunning rewards or losses
-     * by limiting the ferquency of `delegateCollateral` (or `setPoolConfiguration`) calls. By default, there is no minimum delegation time.
+     * by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) calls. By default, there is no minimum delegation time.
      * @param marketId the id of the market that wants to set delegation time.
      * @param minDelegateTime the minimum number of seconds between delegation calls. Note: this value must be less than the globally defined maximum minDelegateTime
      */
