@@ -297,6 +297,8 @@ library SettlementStrategy {
         string url;
         uint256 settlementReward;
         uint256 priceDeviationTolerance;
+        uint256 minimumUsdExchangeAmount;
+        uint256 maxRoundingLoss;
         bool disabled;
     }
 }
