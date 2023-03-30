@@ -35,23 +35,20 @@ describe('ERC20', function () {
 
   describe('when specifying zero addresses or amounts', function () {
     it('reverts', async function () {
-      const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-
-      // Zero address
       await assertRevert(
-        ERC20.approve(ZERO_ADDRESS, 1),
+        ERC20.approve(ethers.constants.AddressZero, 1),
         'InvalidParameter("target", "Zero address")'
       );
       await assertRevert(
-        ERC20.transfer(ZERO_ADDRESS, 1),
+        ERC20.transfer(ethers.constants.AddressZero, 1),
         'InvalidParameter("target", "Zero address")'
       );
       await assertRevert(
-        ERC20.mintFor(ZERO_ADDRESS, 1),
+        ERC20.mintFor(ethers.constants.AddressZero, 1),
         'InvalidParameter("target", "Zero address")'
       );
       await assertRevert(
-        ERC20.burnFor(ZERO_ADDRESS, 1),
+        ERC20.burnFor(ethers.constants.AddressZero, 1),
         'InvalidParameter("target", "Zero address")'
       );
 
