@@ -30,12 +30,19 @@ contract MarketManagerModule is IMarketManagerModule {
     using Market for Market.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
+    using DecimalMath for uint256;
+
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
+    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
+    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
+    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS =
+        "withdrawMarketUsd_feeAddress";
 
     /**
      * @inheritdoc IMarketManagerModule
@@ -110,22 +117,39 @@ contract MarketManagerModule is IMarketManagerModule {
         return Market.load(marketId).isCapacityLocked();
     }
 
+    function getUsdToken() external view override returns (IERC20) {
+        return AssociatedSystem.load(_USD_TOKEN).asToken();
+    }
+
+    function getOracleManager() external view returns (IOracleManager) {
+        return IOracleManager(OracleManager.load().oracleManagerAddress);
+    }
+
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+    function depositMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
+        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0));
+        address feeAddress = feeAmount > 0
+            ? Config.readAddress(_CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS, address(0))
+            : address(0);
+
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting.
-        market.creditCapacityD18 += amount.toInt().to128();
-        market.netIssuanceD18 -= amount.toInt().to128();
+        market.creditCapacityD18 += (amount - feeAmount).toInt().to128();
+        market.netIssuanceD18 -= (amount - feeAmount).toInt().to128();
 
         // Burn the incoming USD.
         // Note: Instead of burning, we could transfer USD to and from the MarketManager,
@@ -133,13 +157,21 @@ contract MarketManagerModule is IMarketManagerModule {
         // which doesn't affect `totalSupply`, thus simplifying accounting.
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
 
+        if (feeAmount > 0) {
+            IUSDTokenModule(address(usdToken)).mint(feeAddress, feeAmount);
+        }
+
         emit MarketUsdDeposited(marketId, target, amount, msg.sender);
     }
 
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
+    function withdrawMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
@@ -150,14 +182,39 @@ contract MarketManagerModule is IMarketManagerModule {
         if (amount > getWithdrawableMarketUsd(marketId))
             revert NotEnoughLiquidity(marketId, amount);
 
+        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0));
+        address feeAddress = feeAmount > 0
+            ? Config.readAddress(_CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS, address(0))
+            : address(0);
+
         // Adjust accounting.
-        marketData.creditCapacityD18 -= amount.toInt().to128();
-        marketData.netIssuanceD18 += amount.toInt().to128();
+        marketData.creditCapacityD18 -= (amount + feeAmount).toInt().to128();
+        marketData.netIssuanceD18 += (amount + feeAmount).toInt().to128();
 
         // Mint the requested USD.
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
 
+        if (feeAmount > 0) {
+            AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
+        }
+
         emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function getMarketFees(
+        uint128,
+        uint amount
+    ) external view override returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount) {
+        depositFeeAmount = amount.mulDecimal(
+            Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0)
+        );
+
+        withdrawFeeAmount = amount.mulDecimal(
+            Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0)
+        );
     }
 
     /**
@@ -179,12 +236,7 @@ contract MarketManagerModule is IMarketManagerModule {
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // min delegate time should not be unreasonably long
-        // solhint-disable-next-line numcast/safe-cast
-        uint maxMinDelegateTime = uint(Config.read(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX));
-
-        if (maxMinDelegateTime == 0) {
-            maxMinDelegateTime = 86400 * 30; // 1 month is a reasonable starting point
-        }
+        uint maxMinDelegateTime = Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30);
 
         if (minDelegateTime > maxMinDelegateTime) {
             revert ParameterError.InvalidParameter("minDelegateTime", "must not be too large");

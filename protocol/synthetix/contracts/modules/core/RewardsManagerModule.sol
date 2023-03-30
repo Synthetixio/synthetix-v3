@@ -128,7 +128,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     ) external override returns (uint256[] memory, address[] memory) {
         Account.exists(accountId);
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        return vault.updateRewards(accountId);
+        return vault.updateRewards(accountId, poolId, collateralType);
     }
 
     /**
@@ -161,7 +161,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
-        uint256 rewardAmount = vault.updateReward(accountId, rewardId);
+        uint256 rewardAmount = vault.updateReward(accountId, poolId, collateralType, rewardId);
 
         RewardDistribution.Data storage reward = vault.rewards[rewardId];
         reward.claimStatus[accountId].pendingSendD18 = 0;

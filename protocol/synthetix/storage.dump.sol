@@ -278,6 +278,10 @@ contract IssueUSDModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
     bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
+    bytes32 private constant _CONFIG_MINT_FEE_RATIO = "mintUsd_feeRatio";
+    bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
+    bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
+    bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
 }
 
 // @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
@@ -300,6 +304,10 @@ contract MarketManagerModule {
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
+    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
+    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
+    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
