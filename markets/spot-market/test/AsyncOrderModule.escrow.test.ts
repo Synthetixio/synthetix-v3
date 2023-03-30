@@ -24,7 +24,7 @@ const settlementStrategyWithMin = {
   minimumUsdExchangeAmount: bn(0.000001),
 };
 
-describe.only('AsyncOrderModule escrow tests', () => {
+describe('AsyncOrderModule escrow tests', () => {
   const { systems, signers, marketId, aggregator, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
