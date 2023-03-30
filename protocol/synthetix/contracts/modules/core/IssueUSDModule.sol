@@ -9,6 +9,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
+import "../../storage/Config.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -27,6 +28,9 @@ contract IssueUSDModule is IIssueUSDModule {
     using Distribution for Distribution.Data;
     using ScalableMapping for ScalableMapping.Data;
 
+    using DecimalMath for uint256;
+    using DecimalMath for int256;
+
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
@@ -36,6 +40,11 @@ contract IssueUSDModule is IIssueUSDModule {
 
     bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
     bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
+
+    bytes32 private constant _CONFIG_MINT_FEE_RATIO = "mintUsd_feeRatio";
+    bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
+    bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
+    bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
 
     /**
      * @inheritdoc IIssueUSDModule
@@ -74,16 +83,25 @@ contract IssueUSDModule is IIssueUSDModule {
             );
         }
 
+        uint feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_MINT_FEE_RATIO, 0));
+        address feeAddress = feeAmount > 0
+            ? Config.readAddress(_CONFIG_MINT_FEE_ADDRESS, address(0))
+            : address(0);
+
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
         // Increase the debt of the position
-        epoch.assignDebtToAccount(accountId, amount.toInt());
+        epoch.assignDebtToAccount(accountId, (amount + feeAmount).toInt());
 
         // Decrease the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
 
         // Mint stablecoins to the sender
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
+
+        if (feeAmount > 0) {
+            AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
+        }
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
     }
@@ -108,18 +126,29 @@ contract IssueUSDModule is IIssueUSDModule {
             revert InsufficientDebt(debt);
         }
 
+        uint feePercent = Config.readUint(_CONFIG_BURN_FEE_RATIO, 0);
+        uint feeAmount = amount - amount.divDecimal(DecimalMath.UNIT + feePercent);
+        address feeAddress = feeAmount > 0
+            ? Config.readAddress(_CONFIG_BURN_FEE_ADDRESS, address(0))
+            : address(0);
+
         // Only allow burning the total debt of the position
-        if (debt < amount.toInt()) {
-            amount = debt.toUint();
+        if (amount.toInt() > debt + debt.mulDecimal(feePercent.toInt())) {
+            feeAmount = debt.toUint().mulDecimal(feePercent);
+            amount = debt.toUint() + feeAmount;
         }
 
         // Burn the stablecoins
         AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
+        if (feeAmount > 0) {
+            AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
+        }
+
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
         // Decrease the debt of the position
-        epoch.assignDebtToAccount(accountId, -amount.toInt());
+        epoch.assignDebtToAccount(accountId, -(amount - feeAmount).toInt());
 
         // Increase the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
