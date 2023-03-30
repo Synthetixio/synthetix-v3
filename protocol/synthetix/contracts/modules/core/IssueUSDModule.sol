@@ -136,8 +136,6 @@ contract IssueUSDModule is IIssueUSDModule {
         if (amount.toInt() > debt + debt.mulDecimal(feePercent.toInt())) {
             feeAmount = debt.toUint().mulDecimal(feePercent);
             amount = debt.toUint() + feeAmount;
-            //amount = debt.toUint().divDecimal((DecimalMath.UNIT + feePercent));
-            //feeAmount = debt.toUint() - amount;
         }
 
         // Burn the stablecoins
