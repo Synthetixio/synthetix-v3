@@ -119,10 +119,12 @@ library Vault {
      */
     function updateRewards(
         Data storage self,
-        uint128 accountId
-    ) internal returns (uint256[] memory, address[] memory) {
-        uint256[] memory rewards = new uint256[](self.rewardIds.length());
-        address[] memory distributors = new address[](self.rewardIds.length());
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) internal returns (uint256[] memory rewards, address[] memory distributors) {
+        rewards = new uint256[](self.rewardIds.length());
+        distributors = new address[](self.rewardIds.length());
 
         uint256 numRewards = self.rewardIds.length();
         for (uint256 i = 0; i < numRewards; i++) {
@@ -132,11 +134,15 @@ library Vault {
                 continue;
             }
 
-            rewards[i] = updateReward(self, accountId, self.rewardIds.valueAt(i + 1));
             distributors[i] = address(dist.distributor);
+            rewards[i] = updateReward(
+                self,
+                accountId,
+                poolId,
+                collateralType,
+                self.rewardIds.valueAt(i + 1)
+            );
         }
-
-        return (rewards, distributors);
     }
 
     /**
@@ -146,6 +152,8 @@ library Vault {
     function updateReward(
         Data storage self,
         uint128 accountId,
+        uint128 poolId,
+        address collateralType,
         bytes32 rewardId
     ) internal returns (uint256) {
         uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
@@ -158,6 +166,8 @@ library Vault {
         if (address(dist.distributor) == address(0)) {
             revert RewardDistributorNotFound();
         }
+
+        dist.distributor.onStakerChanged(accountId, poolId, collateralType, actorSharesD18);
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 

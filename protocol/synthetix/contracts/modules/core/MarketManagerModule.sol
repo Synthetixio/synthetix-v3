@@ -114,6 +114,14 @@ contract MarketManagerModule is IMarketManagerModule {
         return Market.load(marketId).isCapacityLocked();
     }
 
+    function getUsdToken() external view override returns (IERC20) {
+        return AssociatedSystem.load(_USD_TOKEN).asToken();
+    }
+
+    function getOracleManager() external view returns (IOracleManager) {
+        return IOracleManager(OracleManager.load().oracleManagerAddress);
+    }
+
     /**
      * @inheritdoc IMarketManagerModule
      */

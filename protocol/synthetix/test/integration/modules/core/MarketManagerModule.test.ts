@@ -435,4 +435,10 @@ describe('MarketManagerModule', function () {
       });
     });
   });
+
+  describe('getUsdToken()', () => {
+    it('returns the USD token', async () => {
+      assert.equal(await systems().Core.getUsdToken(), systems().USD.address);
+    });
+  });
 });
