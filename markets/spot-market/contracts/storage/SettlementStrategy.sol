@@ -10,6 +10,7 @@ library SettlementStrategy {
     using SafeCastU256 for uint256;
 
     error PriceDeviationToleranceExceeded(uint256 deviation, uint tolerance);
+    error InvalidCommitmentAmount(uint minimumAmount, uint amount);
 
     struct Data {
         /**
@@ -47,6 +48,23 @@ library SettlementStrategy {
          */
         uint256 priceDeviationTolerance;
         /**
+         * @dev minimum amount of USD to be eligible for trade.
+         * @dev this is to prevent inflation attacks where a user commits to selling a very small amount
+         *      leading to shares divided by a very small number.
+         * @dev in case this is not set properly, there is an extra layer of protection where the commitment reverts
+         *      if the value of shares escrowed for trader is less than the committed amount (+ maxRoundingLoss)
+         * @dev this value is enforced on both buys and sells, even though it's less of an issue on buy.
+         */
+        uint256 minimumUsdExchangeAmount;
+        /**
+         * @dev when converting from synth amount to shares, there's a small rounding loss on division.
+         * @dev when shares are issued, we have a sanity check to ensure that the amount of shares is equal to the synth amount originally committed.
+         * @dev the check would use the maxRoundingLoss by performing: calculatedSynthAmount + maxRoundingLoss >= committedSynthAmount
+         * @dev only applies to ASYNC_SELL transaction where shares are issued.
+         * @dev value is in native synth units
+         */
+        uint256 maxRoundingLoss;
+        /**
          * @dev whether the strategy is disabled or not.
          */
         bool disabled;
@@ -56,6 +74,13 @@ library SettlementStrategy {
         ONCHAIN,
         CHAINLINK,
         PYTH
+    }
+
+    function validateAmount(Data storage strategy, uint256 amount) internal view {
+        uint minimumAmount = strategy.minimumUsdExchangeAmount + strategy.settlementReward;
+        if (amount <= minimumAmount) {
+            revert InvalidCommitmentAmount(minimumAmount, amount);
+        }
     }
 
     function checkPriceDeviation(
