@@ -107,10 +107,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         }
 
         MarketConfiguration.load(synthMarketId).feeCollector = IFeeCollector(feeCollector);
-
-        // set infinite approval for fee collector
-        spotMarketFactory.usdToken.approve(feeCollector, type(uint256).max);
-
         emit FeeCollectorSet(synthMarketId, feeCollector);
     }
 

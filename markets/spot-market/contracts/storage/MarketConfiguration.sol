@@ -420,7 +420,7 @@ library MarketConfiguration {
     /**
      * @dev First sends referrer fees based on fixed fee amount and configured %
      * Then if total fees for transaction are greater than 0, gets quote from
-     * fee collector and calls collectFees to send fees to fee collector
+     * fee collector and transfers the quoted amount to fee collector
      */
     function collectFees(
         Data storage self,
@@ -456,13 +456,20 @@ library MarketConfiguration {
             uint8(transactionType)
         );
 
-        // if transaction is a sell or a wrapper type, we need to withdraw the fees from the market manager
-        if (Transaction.isSell(transactionType) || Transaction.isWrapper(transactionType)) {
-            factory.synthetix.withdrawMarketUsd(marketId, address(this), feeCollectorQuote);
+        if (feeCollectorQuote > totalFeesUint) {
+            feeCollectorQuote = totalFeesUint;
         }
 
-        // solhint-disable-next-line numcast/safe-cast
-        self.feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
+        // if transaction is a sell or a wrapper type, we need to withdraw the fees from the market manager
+        if (Transaction.isSell(transactionType) || Transaction.isWrapper(transactionType)) {
+            factory.synthetix.withdrawMarketUsd(
+                marketId,
+                address(self.feeCollector),
+                feeCollectorQuote
+            );
+        } else {
+            factory.usdToken.transfer(address(self.feeCollector), feeCollectorQuote);
+        }
 
         return referrerFeesCollected + feeCollectorQuote;
     }
