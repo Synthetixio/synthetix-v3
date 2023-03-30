@@ -682,12 +682,13 @@ describe('RewardsManagerModule', function () {
 
         await fastForward(1000, provider());
 
-        await systems()
-          .Core.connect(user1)
-          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
-
         // after first claim there should be no more additional rewards to claim
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), afterBalance);
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
+          'InvalidParameter("amount", "Zero amount")'
+        );
       });
 
       it('cannot be re-registered', async () => {
