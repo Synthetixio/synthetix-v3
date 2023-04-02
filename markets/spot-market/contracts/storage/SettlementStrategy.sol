@@ -29,7 +29,7 @@ library SettlementStrategy {
          * @dev the address of the contract that will verify the result data blob.
          * @dev used for pyth and chainlink offchain strategies.
          */
-        address priceVerificationContract; // For Chainlink and Pyth settlement strategies
+        address priceVerificationContract;
         /**
          * @dev configurable feed id for chainlink and pyth
          */
