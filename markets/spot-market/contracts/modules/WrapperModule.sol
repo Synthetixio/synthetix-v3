@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
@@ -24,6 +25,7 @@ contract WrapperModule is IWrapperModule {
     using Wrapper for Wrapper.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
+    using ERC20Helper for address;
 
     /**
      * @inheritdoc IWrapperModule
@@ -61,14 +63,6 @@ contract WrapperModule is IWrapperModule {
         // revert when wrapping more than the supply cap
         wrapperStore.checkMaxWrappableAmount(marketId, wrapAmountD18, spotMarketFactory.synthetix);
 
-        wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
-        wrappingCollateral.approve(address(spotMarketFactory.synthetix), wrapAmount);
-        spotMarketFactory.synthetix.depositMarketCollateral(
-            marketId,
-            wrapperStore.wrapCollateralType,
-            wrapAmount
-        );
-
         MarketConfiguration.Data storage config;
         (amountToMint, fees, config) = MarketConfiguration.quoteWrap(
             marketId,
@@ -87,6 +81,14 @@ contract WrapperModule is IWrapperModule {
             address(0),
             spotMarketFactory,
             Transaction.Type.WRAP
+        );
+
+        address(wrappingCollateral).safeTransferFrom(msg.sender, address(this), wrapAmount);
+        wrappingCollateral.approve(address(spotMarketFactory.synthetix), wrapAmount);
+        spotMarketFactory.synthetix.depositMarketCollateral(
+            marketId,
+            wrapperStore.wrapCollateralType,
+            wrapAmount
         );
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
@@ -145,7 +147,7 @@ contract WrapperModule is IWrapperModule {
             returnCollateralAmount
         );
 
-        ITokenModule(wrapperStore.wrapCollateralType).transfer(msg.sender, returnCollateralAmount);
+        wrapperStore.wrapCollateralType.safeTransfer(msg.sender, returnCollateralAmount);
 
         emit SynthUnwrapped(marketId, returnCollateralAmount, fees, collectedFees);
     }
