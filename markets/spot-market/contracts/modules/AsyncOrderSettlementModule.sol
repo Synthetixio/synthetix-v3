@@ -4,9 +4,9 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../interfaces/IAsyncOrderSettlementModule.sol";
-import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 import "../storage/AsyncOrderClaim.sol";
+import "../storage/Price.sol";
 import "../storage/SettlementStrategy.sol";
 import "../storage/AsyncOrderConfiguration.sol";
 import "../storage/SpotMarketFactory.sol";
@@ -19,14 +19,13 @@ import "../storage/MarketConfiguration.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
-    using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
     using DecimalMath for uint256;
     using DecimalMath for int64;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using SettlementStrategy for SettlementStrategy.Data;
     using MarketConfiguration for MarketConfiguration.Data;
-    using OrderFees for OrderFees.Data;
     using AsyncOrder for AsyncOrder.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
 
