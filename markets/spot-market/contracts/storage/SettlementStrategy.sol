@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "../utils/MathUtil.sol";
 
 library SettlementStrategy {
     using DecimalMath for uint256;
@@ -63,8 +64,8 @@ library SettlementStrategy {
         uint offchainPrice,
         uint onchainPrice
     ) internal view {
-        int priceDeviation = abs(offchainPrice.toInt() - onchainPrice.toInt());
-        uint priceDeviationPercentage = abs(priceDeviation).toUint().divDecimal(onchainPrice);
+        uint priceDeviation = MathUtil.abs(offchainPrice.toInt() - onchainPrice.toInt());
+        uint priceDeviationPercentage = priceDeviation.divDecimal(onchainPrice);
 
         if (priceDeviationPercentage > strategy.priceDeviationTolerance) {
             revert PriceDeviationToleranceExceeded(
@@ -72,9 +73,5 @@ library SettlementStrategy {
                 strategy.priceDeviationTolerance
             );
         }
-    }
-
-    function abs(int x) private pure returns (int) {
-        return x >= 0 ? x : -x;
     }
 }

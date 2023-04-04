@@ -82,8 +82,7 @@ library Price {
         uint amountUsd,
         Transaction.Type transactionType
     ) internal view returns (uint256 synthAmount) {
-        uint256 currentPrice = getCurrentPriceData(marketId, transactionType).price.toUint();
-
+        uint256 currentPrice = getCurrentPrice(marketId, transactionType);
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
