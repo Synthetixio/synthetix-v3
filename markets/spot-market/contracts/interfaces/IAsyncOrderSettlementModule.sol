@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/SettlementStrategy.sol";
-import "../storage/OrderFees.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {OrderFees} from "../storage/OrderFees.sol";
 
 /**
  * @title Module for committing and settling async orders.

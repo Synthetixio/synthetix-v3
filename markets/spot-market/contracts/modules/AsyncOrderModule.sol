@@ -1,14 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/AsyncOrderConfiguration.sol";
-import "../storage/AsyncOrder.sol";
-import "../storage/Price.sol";
-import "../interfaces/IAsyncOrderModule.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {SafeCast} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {AsyncOrderConfiguration} from "../storage/AsyncOrderConfiguration.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {Price} from "../storage/Price.sol";
+import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 
 /**
  * @title Module to process asyncronous orders
