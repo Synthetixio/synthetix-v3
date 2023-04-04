@@ -1,13 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/MarketConfiguration.sol";
-import "../storage/Price.sol";
-import "../interfaces/IAtomicOrderModule.sol";
-import "../utils/SynthUtil.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {Price} from "../storage/Price.sol";
+import {IAtomicOrderModule} from "../interfaces/IAtomicOrderModule.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
 
 /**
  * @title Module for buying and selling atomically registered synths.

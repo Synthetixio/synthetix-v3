@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {SafeCast} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {AsyncOrderConfiguration} from "../storage/AsyncOrderConfiguration.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";

@@ -1,14 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../interfaces/IWrapperModule.sol";
-import "../storage/Wrapper.sol";
-import "../storage/Price.sol";
-import "../storage/MarketConfiguration.sol";
-import "../utils/SynthUtil.sol";
+import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {IWrapperModule} from "../interfaces/IWrapperModule.sol";
+import {Wrapper} from "../storage/Wrapper.sol";
+import {Price} from "../storage/Price.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
 
 /**
  * @title Module for wrapping and unwrapping collateral for synths.
