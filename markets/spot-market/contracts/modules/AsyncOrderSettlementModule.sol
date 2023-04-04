@@ -288,7 +288,10 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             Transaction.Type.ASYNC_SELL
         );
 
-        spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
+        if (settlementReward > 0) {
+            spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
+        }
+
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);
     }
 
