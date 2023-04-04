@@ -38,6 +38,8 @@ describe('AsyncOrderModule pyth', () => {
       url: 'https://fakeapi.pyth.network/',
       settlementReward: bn(5),
       priceDeviationTolerance: bn(0.2),
+      minimumUsdExchangeAmount: bn(0.000001),
+      maxRoundingLoss: bn(0.000001),
     };
 
     strategyId = await systems()

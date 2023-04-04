@@ -2,12 +2,19 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../utils/SynthUtil.sol";
 
 /**
  * @title Async order top level data storage
  */
 library AsyncOrder {
+    /**
+     * @notice Thrown when the outstanding shares is a very small amount which throws off the shares calculation.
+     * @dev This is thrown when the sanity check that checks to ensure the shares amount issued has the correct synth value fails.
+     */
+    error InsufficientSharesAmount(uint256 expected, uint256 actual);
+
     struct Data {
         /**
          * @dev tracking total shares for share calculation of synths escrowed.  instead of storing direct synth amounts, we store shares in case of token decay.
@@ -33,7 +40,8 @@ library AsyncOrder {
     function transferIntoEscrow(
         uint128 marketId,
         address from,
-        uint256 synthAmount
+        uint256 synthAmount,
+        uint256 maxRoundingLoss
     ) internal returns (uint sharesAmount) {
         Data storage asyncOrderData = load(marketId);
         ITokenModule token = SynthUtil.getToken(marketId);
@@ -45,6 +53,13 @@ library AsyncOrder {
 
         token.transferFrom(from, address(this), synthAmount);
         asyncOrderData.totalEscrowedSynthShares += sharesAmount;
+
+        // sanity check to ensure the right shares amount is calculated
+        uint acceptableSynthAmount = convertSharesToSynth(asyncOrderData, marketId, sharesAmount) +
+            maxRoundingLoss;
+        if (acceptableSynthAmount < synthAmount) {
+            revert InsufficientSharesAmount({expected: synthAmount, actual: acceptableSynthAmount});
+        }
     }
 
     function burnFromEscrow(uint128 marketId, uint256 sharesAmount) internal {
@@ -53,7 +68,13 @@ library AsyncOrder {
 
         asyncOrderData.totalEscrowedSynthShares -= sharesAmount;
 
-        SynthUtil.getToken(marketId).burn(address(this), synthAmount);
+        ITokenModule token = SynthUtil.getToken(marketId);
+        // if there's no more shares, then burn the entire balance
+        uint burnAmt = asyncOrderData.totalEscrowedSynthShares == 0
+            ? token.balanceOf(address(this))
+            : synthAmount;
+
+        token.burn(address(this), burnAmt);
     }
 
     function transferFromEscrow(uint128 marketId, address to, uint256 sharesAmount) internal {
@@ -62,7 +83,13 @@ library AsyncOrder {
 
         asyncOrderData.totalEscrowedSynthShares -= sharesAmount;
 
-        SynthUtil.getToken(marketId).transferFrom(address(this), to, synthAmount);
+        ITokenModule token = SynthUtil.getToken(marketId);
+        // if there's no more shares, then transfer the entire balance
+        uint transferAmt = asyncOrderData.totalEscrowedSynthShares == 0
+            ? token.balanceOf(address(this))
+            : synthAmount;
+
+        token.transfer(to, transferAmt);
     }
 
     function convertSharesToSynth(

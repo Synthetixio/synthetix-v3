@@ -24,6 +24,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int64;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
+    using SettlementStrategy for SettlementStrategy.Data;
 
     /**
      * @inheritdoc IAsyncOrderModule
@@ -42,12 +43,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
-        asyncOrderConfiguration.isValidSettlementStrategy(settlementStrategyId);
+        SettlementStrategy.Data storage strategy = asyncOrderConfiguration.loadSettlementStrategy(
+            settlementStrategyId
+        );
 
         uint amountEscrowed;
         // setup data to create async order based on transaction type
         if (orderType == Transaction.Type.ASYNC_BUY) {
-            asyncOrderConfiguration.isValidAmount(settlementStrategyId, amountProvided);
+            strategy.validateAmount(amountProvided);
             SpotMarketFactory.load().usdToken.transferFrom(
                 msg.sender,
                 address(this),
@@ -65,10 +68,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 Transaction.Type.ASYNC_SELL
             );
 
-            // ensures that the amount provided is greater than the settlement reward
-            asyncOrderConfiguration.isValidAmount(settlementStrategyId, usdAmount);
+            // ensures that the amount provided is greater than the settlement reward + minimum sell amount
+            strategy.validateAmount(usdAmount);
             // using escrow in case of decaying token value
-            amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
+            amountEscrowed = AsyncOrder.transferIntoEscrow(
+                marketId,
+                msg.sender,
+                amountProvided,
+                strategy.maxRoundingLoss
+            );
         }
 
         uint settlementDelay = AsyncOrderConfiguration
