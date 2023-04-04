@@ -25,7 +25,7 @@ library ChainlinkNode {
 
         int256 finalPrice = twapTimeInterval == 0
             ? price
-            : getTwapPrice(chainlink, roundId, price, twapTimeInterval);
+            : getTwapPrice(chainlink, roundId, price, twapTimeInterval, updatedAt);
 
         finalPrice = decimals > PRECISION
             ? finalPrice.downscale(decimals - PRECISION)
@@ -38,12 +38,13 @@ library ChainlinkNode {
         IAggregatorV3Interface chainlink,
         uint80 latestRoundId,
         int256 latestPrice,
-        uint256 twapTimeInterval
+        uint256 twapTimeInterval,
+        uint256 lastUpdatedAt
     ) internal view returns (int256) {
         int256 priceSum = latestPrice;
         uint256 priceCount = 1;
 
-        uint256 startTime = block.timestamp - twapTimeInterval;
+        uint256 startTime = lastUpdatedAt - twapTimeInterval;
 
         while (latestRoundId > 0) {
             try chainlink.getRoundData(--latestRoundId) returns (
