@@ -62,7 +62,7 @@ library Wrapper {
         self.maxWrappableAmount = maxWrappableAmount;
     }
 
-    function isValidWrapper(Data storage self) internal view {
+    function validateWrapper(Data storage self) internal view {
         if (self.wrapCollateralType == address(0)) {
             revert InvalidCollateralType();
         }

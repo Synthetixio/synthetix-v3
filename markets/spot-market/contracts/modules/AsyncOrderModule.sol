@@ -37,12 +37,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         address referrer
     ) external override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
         // validation checks
-        Transaction.isAsyncTransaction(orderType);
-        SpotMarketFactory.load().isValidMarket(marketId);
+        Transaction.validateAsyncTransaction(orderType);
+        SpotMarketFactory.load().validateMarket(marketId);
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
-        asyncOrderConfiguration.isValidSettlementStrategy(settlementStrategyId);
+        asyncOrderConfiguration.validateSettlementStrategy(settlementStrategyId);
 
         uint amountEscrowed;
         // setup data to create async order based on transaction type
@@ -104,7 +104,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         asyncOrderClaim.checkClaimValidity();
-        asyncOrderClaim.isEligibleForCancellation(
+        asyncOrderClaim.validateCancellationEligibility(
             AsyncOrderConfiguration.load(marketId).settlementStrategies[
                 asyncOrderClaim.settlementStrategyId
             ]

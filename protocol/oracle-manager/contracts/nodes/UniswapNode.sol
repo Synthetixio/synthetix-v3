@@ -83,7 +83,7 @@ library UniswapNode {
         }
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
         // Must have no parents
         if (nodeDefinition.parents.length > 0) {
             return false;

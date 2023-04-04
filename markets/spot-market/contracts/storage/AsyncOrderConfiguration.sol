@@ -23,7 +23,7 @@ library AsyncOrderConfiguration {
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
     error InvalidCommitmentAmount(uint amount, uint settlementReward);
 
-    function isValidSettlementStrategy(
+    function validateSettlementStrategy(
         Data storage self,
         uint256 settlementStrategyId
     ) internal view {

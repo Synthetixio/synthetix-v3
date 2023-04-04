@@ -50,8 +50,8 @@ contract WrapperModule is IWrapperModule {
     ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
-        spotMarketFactory.isValidMarket(marketId);
-        wrapperStore.isValidWrapper();
+        spotMarketFactory.validateMarket(marketId);
+        wrapperStore.validateWrapper();
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
         uint256 wrapAmountD18 = Price
@@ -104,8 +104,8 @@ contract WrapperModule is IWrapperModule {
     ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
-        spotMarketFactory.isValidMarket(marketId);
-        wrapperStore.isValidWrapper();
+        spotMarketFactory.validateMarket(marketId);
+        wrapperStore.validateWrapper();
 
         ITokenModule synth = SynthUtil.getToken(marketId);
 

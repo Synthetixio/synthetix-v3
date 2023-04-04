@@ -31,7 +31,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) external override returns (uint usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.isValidMarket(marketId);
+        spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
         (usdAmountCharged, fees, config) = MarketConfiguration.quoteBuyExactOut(
@@ -87,7 +87,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) public override returns (uint synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.isValidMarket(marketId);
+        spotMarketFactory.validateMarket(marketId);
 
         // transfer usd funds
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
@@ -129,7 +129,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint128 marketId,
         uint usdAmount
     ) external view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
-        SpotMarketFactory.load().isValidMarket(marketId);
+        SpotMarketFactory.load().validateMarket(marketId);
 
         (synthAmount, fees, ) = MarketConfiguration.quoteBuyExactIn(
             marketId,
@@ -147,7 +147,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint128 marketId,
         uint synthAmount
     ) external view override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
-        SpotMarketFactory.load().isValidMarket(marketId);
+        SpotMarketFactory.load().validateMarket(marketId);
 
         (usdAmountCharged, fees, ) = MarketConfiguration.quoteBuyExactOut(
             marketId,
@@ -165,7 +165,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint128 marketId,
         uint synthAmount
     ) external view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
-        SpotMarketFactory.load().isValidMarket(marketId);
+        SpotMarketFactory.load().validateMarket(marketId);
 
         (returnAmount, fees, ) = MarketConfiguration.quoteSellExactIn(
             marketId,
@@ -183,7 +183,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint128 marketId,
         uint usdAmount
     ) external view override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
-        SpotMarketFactory.load().isValidMarket(marketId);
+        SpotMarketFactory.load().validateMarket(marketId);
 
         (synthToBurn, fees, ) = MarketConfiguration.quoteSellExactOut(
             marketId,
@@ -216,7 +216,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.isValidMarket(marketId);
+        spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
         (returnAmount, fees, config) = MarketConfiguration.quoteSellExactIn(
@@ -259,7 +259,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) external override returns (uint synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.isValidMarket(marketId);
+        spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
         (synthToBurn, fees, config) = MarketConfiguration.quoteSellExactOut(
