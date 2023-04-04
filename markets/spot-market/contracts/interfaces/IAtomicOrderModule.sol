@@ -9,14 +9,6 @@ import "../storage/OrderFees.sol";
  */
 interface IAtomicOrderModule {
     /**
-     * @notice Thrown when trader specified amounts to buy/sell without holding the underlying asset.
-     */
-    error InsufficientFunds();
-    /**
-     * @notice Thrown when trader has not provided allowance for the market to transfer the underlying asset.
-     */
-    error InsufficientAllowance(uint expected, uint current);
-    /**
      * @notice Thrown when trade is charging more USD than the max amount specified by the trader.
      * @dev Used in buyExactOut
      */
