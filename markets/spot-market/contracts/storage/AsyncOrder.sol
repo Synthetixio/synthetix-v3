@@ -58,7 +58,7 @@ library AsyncOrder {
         uint acceptableSynthAmount = convertSharesToSynth(asyncOrderData, marketId, sharesAmount) +
             maxRoundingLoss;
         if (acceptableSynthAmount < synthAmount) {
-            revert InvalidSharesCalculation({expected: synthAmount, actual: acceptableSynthAmount});
+            revert InsufficientSharesAmount({expected: synthAmount, actual: acceptableSynthAmount});
         }
     }
 

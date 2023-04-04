@@ -117,7 +117,7 @@ describe('AsyncOrderModule escrow tests', () => {
               bn(40_000),
               Ethers.constants.AddressZero
             ),
-          'InvalidSharesCalculation'
+          'InsufficientSharesAmount'
         );
       });
     });
