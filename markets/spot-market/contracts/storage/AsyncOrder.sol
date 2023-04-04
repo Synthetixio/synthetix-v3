@@ -9,7 +9,11 @@ import "../utils/SynthUtil.sol";
  * @title Async order top level data storage
  */
 library AsyncOrder {
-    error InvalidSharesCalculation(uint256 expected, uint256 actual);
+    /**
+     * @notice Thrown when the outstanding shares is a very small amount which throws off the shares calculation.
+     * @dev This is thrown when the sanity check that checks to ensure the shares amount issued has the correct synth value fails.
+     */
+    error InsufficientSharesAmount(uint256 expected, uint256 actual);
 
     struct Data {
         /**
