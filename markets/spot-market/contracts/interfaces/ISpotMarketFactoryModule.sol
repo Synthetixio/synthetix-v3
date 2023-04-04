@@ -31,8 +31,8 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthImplementationUpgraded(
         uint256 indexed synthMarketId,
-        address proxy,
-        address implementation
+        address indexed proxy,
+        address indexed implementation
     );
     /**
      * @notice Gets fired when the market's price feeds are updated, compatible with oracle manager
@@ -41,8 +41,8 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthPriceDataUpdated(
         uint256 indexed synthMarketId,
-        bytes32 buyFeedId,
-        bytes32 sellFeedId
+        bytes32 indexed buyFeedId,
+        bytes32 indexed sellFeedId
     );
 
     /**
@@ -50,7 +50,7 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param marketId id of the market
      * @param newOwner The address that has been nominated.
      */
-    event MarketOwnerNominated(uint128 indexed marketId, address newOwner);
+    event MarketOwnerNominated(uint128 indexed marketId, address indexed newOwner);
 
     /**
      * @notice Emitted when market nominee renounces nomination.
@@ -65,7 +65,11 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param oldOwner The previous owner of the market.
      * @param newOwner The new owner of the market.
      */
-    event MarketOwnerChanged(uint128 indexed marketId, address oldOwner, address newOwner);
+    event MarketOwnerChanged(
+        uint128 indexed marketId,
+        address indexed oldOwner,
+        address indexed newOwner
+    );
 
     /**
      * @notice Sets the v3 synthetix core system.
