@@ -128,6 +128,10 @@ library UniswapNode {
             return false;
         }
 
+        if (secondsAgo == 0) {
+            return false;
+        }
+
         // Must return relevant function without error
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;
