@@ -25,6 +25,15 @@ describe('SpotMarketFactory', () => {
   describe('spot market initialization', () => {
     const tokenName = 'Synthetic BTC';
 
+    describe('with zero address for synth owner', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          systems().SpotMarket.createSynth(tokenName, 'sBTC', Ethers.constants.AddressZero),
+          'InvalidMarketOwner'
+        );
+      });
+    });
+
     before('register synth', async () => {
       await systems().SpotMarket.callStatic.createSynth(
         tokenName,

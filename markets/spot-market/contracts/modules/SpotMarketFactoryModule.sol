@@ -26,6 +26,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     using Price for Price.Data;
 
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
+    uint8 private constant _SYNTH_IMPLEMENTATION_DECIMALS = 18;
 
     /**
      * @inheritdoc ISpotMarketFactoryModule
@@ -58,6 +59,10 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
+        if (synthOwner == address(0)) {
+            revert InvalidMarketOwner();
+        }
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.checkSynthImplemention();
 
@@ -67,7 +72,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
             SynthUtil.getSystemId(synthMarketId),
             tokenName,
             tokenSymbol,
-            18,
+            _SYNTH_IMPLEMENTATION_DECIMALS,
             spotMarketFactory.synthImplementation
         );
 

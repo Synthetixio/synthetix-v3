@@ -16,6 +16,11 @@ interface ISpotMarketFactoryModule is IMarket {
     error NotNominated(address addr);
 
     /**
+     * @notice Thrown when createSynth is called with zero-address synth owner
+     */
+    error InvalidMarketOwner();
+
+    /**
      * @notice Gets fired when the synth is registered as a market.
      * @param synthMarketId Id of the synth market that was created
      */
