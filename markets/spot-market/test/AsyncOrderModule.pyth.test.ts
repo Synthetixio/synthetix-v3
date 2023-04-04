@@ -30,7 +30,7 @@ describe('AsyncOrderModule pyth', () => {
 
   before('add settlement strategy', async () => {
     pythSettlementStrategy = {
-      strategyType: 2,
+      strategyType: 1, // pyth
       settlementDelay: 5,
       settlementWindowDuration: 120,
       priceVerificationContract: systems().OracleVerifierMock.address,
