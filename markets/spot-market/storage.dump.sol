@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -285,7 +285,6 @@ library Price {
 library SettlementStrategy {
     enum Type {
         ONCHAIN,
-        CHAINLINK,
         PYTH
     }
     struct Data {
@@ -344,9 +343,4 @@ library Transaction {
         WRAP,
         UNWRAP
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
