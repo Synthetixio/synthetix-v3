@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../storage/AsyncOrderConfiguration.sol";
 import "../storage/AsyncOrder.sol";
+import "../storage/Price.sol";
 import "../interfaces/IAsyncOrderModule.sol";
 
 /**
@@ -16,12 +16,7 @@ import "../interfaces/IAsyncOrderModule.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
-    using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
-    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using Price for Price.Data;
-    using DecimalMath for int64;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
     using SettlementStrategy for SettlementStrategy.Data;

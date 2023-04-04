@@ -2,7 +2,6 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../utils/SynthUtil.sol";
 
 /**

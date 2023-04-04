@@ -7,7 +7,6 @@ import "../utils/MathUtil.sol";
 
 library SettlementStrategy {
     using DecimalMath for uint256;
-    using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
     error PriceDeviationToleranceExceeded(uint256 deviation, uint tolerance);

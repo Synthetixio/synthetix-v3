@@ -2,8 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "../storage/SpotMarketFactory.sol";
+import "./external/ISynthetixSystem.sol";
 
 /**
  * @title Module for spot market factory
