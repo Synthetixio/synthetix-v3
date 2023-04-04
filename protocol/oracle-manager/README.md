@@ -2,7 +2,7 @@
 
 The oracle manager is a stateless system which allows price data from multiple sources to be combined using a variety of strategies and reverts to be triggered (i.e. "circuit breaking") under various conditions.
 
-The system consists of nodes which can registered by anyone using the `registerNode()` function. This returns a `bytes32` identifier for the node, determined by the parameters passed to the function:
+The system consists of nodes which can be registered by anyone using the `registerNode()` function. This returns a `bytes32` identifier for the node, determined by the parameters passed to the function:
 
 - `uint256 nodeType` - The ID corresponding to the desired the node type. (See below for a comprehensive list.)
 - `bytes parameters` - The parameter data for the selected node type. (This can be generated using `abi.encode()`.)

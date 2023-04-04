@@ -60,7 +60,7 @@ interface IAtomicOrderModule {
      * @dev Leftover fees not collected get deposited into the market manager to improve market PnL.
      * @dev Uses the buyFeedId configured for the market.
      * @param synthMarketId Id of the market used for the trade.
-     * @param amountUsd Amount of snxUSD trader is providing allownace to for the trade.
+     * @param amountUsd Amount of snxUSD trader is providing allowance for the trade.
      * @param minAmountReceived Min Amount of synth is expected the trader to receive otherwise the transaction will revert.
      * @param referrer Optional address of the referrer, for fee share
      * @return synthReturned Synth received on the trade based on amount provided by trader.
