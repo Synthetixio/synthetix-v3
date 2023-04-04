@@ -9,6 +9,11 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
  */
 interface IDecayTokenModule is IERC20 {
     /**
+     * @notice Thrown if decay rate is set greater than 10**18 per second
+     */
+    error InvalidDecayRate();
+
+    /**
      * @notice Returns wether the token has been initialized.
      * @return A boolean with the result of the query.
      */

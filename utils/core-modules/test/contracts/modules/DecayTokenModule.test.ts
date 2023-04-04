@@ -361,4 +361,23 @@ describe('DecayTokenModule', () => {
       );
     });
   });
+
+  describe('set decay rate limits', async () => {
+    before(restore);
+
+    const DECAY_RATE_UPPER_BOUND = 10 ** 18 * 31536000;
+
+    it('can set the decay rate to the upper bound', async () => {
+      const tx = await TokenModule.connect(owner).setDecayRate(DECAY_RATE_UPPER_BOUND);
+    });
+
+    it('cannot set the decay rate above the upper bound', async () => {
+      const tx = await TokenModule.connect(owner).setDecayRate(DECAY_RATE_UPPER_BOUND + 1);
+
+      await assertRevert(
+        TokenModule.connect(owner).setDecayRate(DECAY_RATE_UPPER_BOUND + 1),
+        'InvalidDecayRate()'
+      );
+    });
+  });
 });
