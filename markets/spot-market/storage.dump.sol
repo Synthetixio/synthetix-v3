@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -185,6 +185,7 @@ contract AsyncOrderSettlementModule {
 // @custom:artifact contracts/modules/SpotMarketFactoryModule.sol:SpotMarketFactoryModule
 contract SpotMarketFactoryModule {
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
+    uint8 private constant _SYNTH_IMPLEMENTATION_DECIMALS = 18;
 }
 
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
