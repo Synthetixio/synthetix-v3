@@ -31,7 +31,7 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthImplementationUpgraded(
         uint256 indexed synthMarketId,
-        address proxy,
+        address indexed proxy,
         address implementation
     );
     /**
@@ -41,8 +41,8 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthPriceDataUpdated(
         uint256 indexed synthMarketId,
-        bytes32 buyFeedId,
-        bytes32 sellFeedId
+        bytes32 indexed buyFeedId,
+        bytes32 indexed sellFeedId
     );
 
     /**

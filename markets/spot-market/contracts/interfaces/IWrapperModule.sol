@@ -20,7 +20,7 @@ interface IWrapperModule {
      */
     event WrapperSet(
         uint indexed synthMarketId,
-        address wrapCollateralType,
+        address indexed wrapCollateralType,
         uint256 maxWrappableAmount
     );
 
