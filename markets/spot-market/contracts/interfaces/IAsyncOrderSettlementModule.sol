@@ -78,7 +78,7 @@ interface IAsyncOrderSettlementModule {
      * @param result result returned from the offchain lookup.
      * @param extraData extra data sent during the offchain lookup revert error.
      * @return finalOrderAmount amount returned to trader after fees.
-     * @return OrderFees.Data breakdown of all the fees incurred for the transaction.
+     * @return fees breakdown of all the fees incurred for the transaction.
      */
     function settlePythOrder(
         bytes calldata result,

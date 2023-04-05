@@ -72,7 +72,7 @@ library SetUtil {
     }
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint256) _positions;
+        mapping(bytes32 => uint) _positions;
     }
 }
 
@@ -240,13 +240,13 @@ library AsyncOrderConfiguration {
 library MarketConfiguration {
     struct Data {
         mapping(address => uint256) atomicFixedFeeOverrides;
-        uint atomicFixedFee;
-        uint asyncFixedFee;
-        uint utilizationFeeRate;
-        uint collateralLeverage;
-        int wrapFixedFee;
-        int unwrapFixedFee;
-        uint skewScale;
+        uint256 atomicFixedFee;
+        uint256 asyncFixedFee;
+        uint256 utilizationFeeRate;
+        uint256 collateralLeverage;
+        int256 wrapFixedFee;
+        int256 unwrapFixedFee;
+        uint256 skewScale;
         address feeCollector;
         mapping(address => uint256) referrerShare;
     }

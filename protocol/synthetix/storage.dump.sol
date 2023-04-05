@@ -101,11 +101,11 @@ library DecimalMath {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
-    uint256 private constant _ROOT_INDEX = 1;
+    uint private constant _ROOT_INDEX = 1;
     struct Data {
         uint128 idCount;
         Node[] nodes;
-        mapping(uint128 => uint256) indices;
+        mapping(uint128 => uint) indices;
     }
     struct Node {
         uint128 id;
@@ -123,7 +123,7 @@ library SetUtil {
     }
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint256) _positions;
+        mapping(bytes32 => uint) _positions;
     }
 }
 
