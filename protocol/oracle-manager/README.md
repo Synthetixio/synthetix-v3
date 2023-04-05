@@ -38,6 +38,8 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 
 The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). **Note that the timestamp returned by this node is always block.timestamp.**
 
+Use the Uniswap Node with caution. For instance, the implementation of `block.timestamp` on various L2s and the depth of the liquidity available in pools may result in unreliable prices.
+
 - `nodeType` Value: 4
 - Parameters:
   - `address tokenAddress` - The address of the token

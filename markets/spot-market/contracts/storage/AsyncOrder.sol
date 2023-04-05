@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "../utils/SynthUtil.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
 
 /**
  * @title Async order top level data storage

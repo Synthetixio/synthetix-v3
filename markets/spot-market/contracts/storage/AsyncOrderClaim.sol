@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./SettlementStrategy.sol";
-import "./AsyncOrder.sol";
-import "../utils/TransactionUtil.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {AsyncOrder} from "./AsyncOrder.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Async order claim data storage
