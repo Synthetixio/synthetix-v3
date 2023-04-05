@@ -7,6 +7,8 @@ import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {Price} from "../storage/Price.sol";
 import {IAtomicOrderModule} from "../interfaces/IAtomicOrderModule.sol";
 import {SynthUtil} from "../utils/SynthUtil.sol";
+import {OrderFees} from "../storage/OrderFees.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Module for buying and selling atomically registered synths.

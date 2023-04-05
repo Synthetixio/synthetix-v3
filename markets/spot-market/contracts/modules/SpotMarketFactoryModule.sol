@@ -5,6 +5,9 @@ import {AssociatedSystemsModule, AssociatedSystem} from "@synthetixio/core-modul
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SynthUtil} from "../utils/SynthUtil.sol";
@@ -12,6 +15,8 @@ import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {Price} from "../storage/Price.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {ISpotMarketFactoryModule} from "../interfaces/ISpotMarketFactoryModule.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 /**
  * @title Module for registering synths.  The factory tracks all synths in the system and consolidates implementation for all synths.

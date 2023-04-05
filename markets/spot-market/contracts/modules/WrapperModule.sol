@@ -5,6 +5,9 @@ import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.so
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {IWrapperModule} from "../interfaces/IWrapperModule.sol";
+import {OrderFees} from "../storage/OrderFees.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {Wrapper} from "../storage/Wrapper.sol";
 import {Price} from "../storage/Price.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
