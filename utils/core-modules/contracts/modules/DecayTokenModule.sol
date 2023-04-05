@@ -9,7 +9,9 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "../interfaces/IDecayTokenModule.sol";
 import "../storage/DecayToken.sol";
 
-contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
+import "./TokenModule.sol";
+
+contract DecayTokenModule is IDecayTokenModule, TokenModule {
     using DecimalMath for uint256;
 
     modifier _advanceEpoch() {
@@ -19,13 +21,13 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public {
+    ) public override(TokenModule, ITokenModule) {
         OwnableStorage.onlyOwner();
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
@@ -34,16 +36,19 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
-    function isInitialized() external view returns (bool) {
+    function isInitialized() external view override(TokenModule, ITokenModule) returns (bool) {
         return _isInitialized();
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
-    function burn(address from, uint256 amount) external override _advanceEpoch {
+    function burn(
+        address from,
+        uint256 amount
+    ) external override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -54,9 +59,12 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
-    function mint(address to, uint256 amount) external override _advanceEpoch {
+    function mint(
+        address to,
+        uint256 amount
+    ) external override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -105,20 +113,6 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return super.balanceOf(user).mulDecimal(_tokensPerShare());
     }
 
-    function allowance(
-        address user,
-        address spender
-    ) public view virtual override(ERC20, IERC20) returns (uint256) {
-        return super.allowance(user, spender);
-    }
-
-    function approve(
-        address spender,
-        uint256 amount
-    ) public virtual override(ERC20, IERC20) returns (bool) {
-        return super.approve(spender, amount);
-    }
-
     function transferFrom(
         address from,
         address to,
@@ -138,14 +132,6 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         _transfer(from, to, _tokenToShare(amount));
 
         return true;
-    }
-
-    /**
-     * @inheritdoc IDecayTokenModule
-     */
-    function setAllowance(address from, address spender, uint256 amount) external override {
-        OwnableStorage.onlyOwner();
-        ERC20Storage.load().allowance[from][spender] = amount;
     }
 
     function transfer(
