@@ -120,17 +120,24 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
-        SpotMarketFactory.load().onlyMarketOwner(marketId);
+    function getSynthImpl(uint128 marketId) external view returns (address implAddress) {
+        return AssociatedSystem.load(SynthUtil.getSystemId(marketId)).impl;
+    }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function upgradeSynthImpl(uint128 marketId) external override {
+        address newImpl = SpotMarketFactory.load().synthImplementation;
         bytes32 synthId = SynthUtil.getSystemId(marketId);
-        _upgradeToken(synthId, synthImpl);
+        _upgradeToken(synthId, newImpl);
 
-        emit SynthImplementationUpgraded(
-            marketId,
-            address(SynthUtil.getToken(marketId)),
-            synthImpl
-        );
+        emit SynthImplementationUpgraded(marketId, address(SynthUtil.getToken(marketId)), newImpl);
+    }
+
+    function setDecayRate(uint128 marketId, uint256 rate) external override {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
+        SynthUtil.getToken(marketId).setDecayRate(rate);
     }
 
     /**

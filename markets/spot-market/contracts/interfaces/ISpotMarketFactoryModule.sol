@@ -104,6 +104,15 @@ interface ISpotMarketFactoryModule is IMarket {
     function getSynth(uint128 marketId) external view returns (address);
 
     /**
+     * @notice Get the implementation address of the synth for the provided marketId.
+     * This address should not be used directly--use `getSynth` instead
+     * @dev Uses associated systems module to retrieve the token address.
+     * @param marketId id of the market
+     * @return implAddress address of the proxy for the synth
+     */
+    function getSynthImpl(uint128 marketId) external view returns (address implAddress);
+
+    /**
      * @notice Update the price data for a given market.
      * @dev Only the market owner can call this function.
      * @param marketId id of the market
@@ -113,13 +122,19 @@ interface ISpotMarketFactoryModule is IMarket {
     function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
 
     /**
-     * @notice upgrades the synth implementation for a given market.
-     * @dev Only the market owner can call this function.
+     * @notice upgrades the synth implementation to the current implementation for the specified market.
+     * Anyone who is willing and able to spend the gas can call this method.
      * @dev The synth implementation is upgraded via the proxy.
      * @param marketId id of the market
-     * @param synthImpl new synth implementation
      */
-    function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
+    function upgradeSynthImpl(uint128 marketId) external;
+
+    /**
+     * @notice Allows market to adjust decay rate of the synth
+     * @param marketId the market to update the synth decay rate for
+     * @param rate APY to decay of the synth to decay by, as a 18 decimal ratio
+     */
+    function setDecayRate(uint128 marketId, uint256 rate) external;
 
     /**
      * @notice Allows the current market owner to nominate a new owner.
