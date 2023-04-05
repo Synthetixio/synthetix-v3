@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../storage/MarketConfiguration.sol";
+import "../storage/Price.sol";
 import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 
@@ -13,13 +14,8 @@ import "../utils/SynthUtil.sol";
  * @dev See IAtomicOrderModule.
  */
 contract AtomicOrderModule is IAtomicOrderModule {
-    using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
-    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using MarketConfiguration for MarketConfiguration.Data;
-    using OrderFees for OrderFees.Data;
-    using Price for Price.Data;
 
     /**
      * @inheritdoc IAtomicOrderModule

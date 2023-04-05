@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
@@ -16,11 +15,8 @@ import "../utils/SynthUtil.sol";
  * @dev See IWrapperModule.
  */
 contract WrapperModule is IWrapperModule {
-    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using MarketConfiguration for MarketConfiguration.Data;
-    using OrderFees for OrderFees.Data;
-    using Price for Price.Data;
     using Wrapper for Wrapper.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
