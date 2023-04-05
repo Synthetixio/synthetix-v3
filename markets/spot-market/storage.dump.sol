@@ -185,6 +185,7 @@ contract AsyncOrderSettlementModule {
 // @custom:artifact contracts/modules/SpotMarketFactoryModule.sol:SpotMarketFactoryModule
 contract SpotMarketFactoryModule {
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
+    uint8 private constant _SYNTH_IMPLEMENTATION_DECIMALS = 18;
 }
 
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
@@ -285,7 +286,6 @@ library Price {
 library SettlementStrategy {
     enum Type {
         ONCHAIN,
-        CHAINLINK,
         PYTH
     }
     struct Data {
@@ -297,6 +297,8 @@ library SettlementStrategy {
         string url;
         uint256 settlementReward;
         uint256 priceDeviationTolerance;
+        uint256 minimumUsdExchangeAmount;
+        uint256 maxRoundingLoss;
         bool disabled;
     }
 }

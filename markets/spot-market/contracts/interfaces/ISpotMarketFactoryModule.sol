@@ -2,8 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "../storage/SpotMarketFactory.sol";
+import "./external/ISynthetixSystem.sol";
 
 /**
  * @title Module for spot market factory
@@ -14,6 +13,11 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param addr The address that is trying to accept ownership.
      */
     error NotNominated(address addr);
+
+    /**
+     * @notice Thrown when createSynth is called with zero-address synth owner
+     */
+    error InvalidMarketOwner();
 
     /**
      * @notice Gets fired when the synth is registered as a market.

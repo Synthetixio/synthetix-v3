@@ -11,7 +11,6 @@ library PriceDeviationCircuitBreakerNode {
     using SafeCastU256 for uint256;
     using DecimalMath for int256;
 
-    error InvalidPrice();
     error DeviationToleranceExceeded(int256 deviation);
 
     function process(

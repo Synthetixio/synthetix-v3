@@ -30,7 +30,7 @@ describe('AsyncOrderModule pyth', () => {
 
   before('add settlement strategy', async () => {
     pythSettlementStrategy = {
-      strategyType: 2,
+      strategyType: 1, // pyth
       settlementDelay: 5,
       settlementWindowDuration: 120,
       priceVerificationContract: systems().OracleVerifierMock.address,
@@ -38,6 +38,8 @@ describe('AsyncOrderModule pyth', () => {
       url: 'https://fakeapi.pyth.network/',
       settlementReward: bn(5),
       priceDeviationTolerance: bn(0.2),
+      minimumUsdExchangeAmount: bn(0.000001),
+      maxRoundingLoss: bn(0.000001),
     };
 
     strategyId = await systems()
