@@ -125,7 +125,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external pure override returns (AsyncOrderClaim.Data memory) {
+    ) external pure override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
         return AsyncOrderClaim.load(marketId, asyncOrderId);
     }
 

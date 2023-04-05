@@ -61,29 +61,12 @@ interface IAsyncOrderSettlementModule {
      * @param marketId Id of the market used for the trade.
      * @param asyncOrderId id of the async order created during commitment.
      * @return finalOrderAmount amount returned to trader after fees.
-     * @return fees breakdown of all the fees incurred for the transaction.
+     * @return OrderFees.Data breakdown of all the fees incurred for the transaction.
      */
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount, OrderFees.Data memory fees);
-
-    /**
-     * @notice Callback function for chainlink settlement strategy
-     * @dev This is the selector specified as callback when settlement strategy type is chainlinkoffchain.
-     * @dev The data returned from the offchain lookup should be sent as "result"
-     * @dev The extraData is the same as the one sent during the offchain lookup revert error. It is used to retrieve the commitment claim.
-     * @param result result returned from the offchain lookup.
-     * @param extraData extra data sent during the offchain lookup revert error.
-     * @return finalOrderAmount amount returned to trader after fees.
-     * @return totalFees total fees for the transaction.
-     * @return collectedFees fees collected by the configured fee collector.
-     */
-    // Note: not implemented yet
-    // function settleChainlinkOrder(
-    //     bytes calldata result,
-    //     bytes calldata extraData
-    // ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
+    ) external returns (uint finalOrderAmount, OrderFees.Data memory);
 
     /**
      * @notice Callback function for Pyth settlement strategy
@@ -95,10 +78,10 @@ interface IAsyncOrderSettlementModule {
      * @param result result returned from the offchain lookup.
      * @param extraData extra data sent during the offchain lookup revert error.
      * @return finalOrderAmount amount returned to trader after fees.
-     * @return fees breakdown of all the fees incurred for the transaction.
+     * @return OrderFees.Data breakdown of all the fees incurred for the transaction.
      */
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory fees);
+    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory);
 }
