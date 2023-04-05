@@ -38,7 +38,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
-        asyncOrderConfiguration.validateSettlementStrategy(settlementStrategyId);
+        SettlementStrategy.Data storage strategy = asyncOrderConfiguration
+            .validateSettlementStrategy(settlementStrategyId);
 
         uint amountEscrowed;
         // setup data to create async order based on transaction type
