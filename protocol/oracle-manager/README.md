@@ -25,7 +25,7 @@ There are currently seven types of nodes.
 
 ### Chainlink Node
 
-The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.chain.link/data-feeds/price-feeds/addresses/).
+The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.chain.link/data-feeds/price-feeds/addresses/). **Note that the timestamp returned by this node is the timestamp of Chainlink's latest update, regardless of the TWAP interval.**
 
 - `nodeType` Value: 3
 - Parameters:
@@ -36,7 +36,7 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 
 ### Uniswap Node
 
-The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). **Note that the timestamp returned by this node is always 0.**
+The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). **Note that the timestamp returned by this node is always block.timestamp.**
 
 - `nodeType` Value: 4
 - Parameters:
