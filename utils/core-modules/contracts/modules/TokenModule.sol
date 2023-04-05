@@ -15,7 +15,7 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
     /**
      * @inheritdoc ITokenModule
      */
-    function isInitialized() external view returns (bool) {
+    function isInitialized() external view virtual returns (bool) {
         return _isInitialized();
     }
 
@@ -26,7 +26,7 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public {
+    ) public virtual {
         OwnableStorage.onlyOwner();
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
@@ -34,7 +34,7 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
     /**
      * @inheritdoc ITokenModule
      */
-    function burn(address from, uint256 amount) external override {
+    function burn(address from, uint256 amount) external virtual override {
         OwnableStorage.onlyOwner();
         _burn(from, amount);
     }
@@ -42,7 +42,7 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
     /**
      * @inheritdoc ITokenModule
      */
-    function mint(address to, uint256 amount) external override {
+    function mint(address to, uint256 amount) external virtual override {
         OwnableStorage.onlyOwner();
         _mint(to, amount);
     }
@@ -50,12 +50,12 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
     /**
      * @inheritdoc ITokenModule
      */
-    function setAllowance(address from, address spender, uint amount) external override {
+    function setAllowance(address from, address spender, uint amount) external virtual override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }
 
-    function _isInitialized() internal view override returns (bool) {
+    function _isInitialized() internal view virtual override returns (bool) {
         return ERC20Storage.load().decimals != 0;
     }
 }
