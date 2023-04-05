@@ -15,7 +15,7 @@ interface IAsyncOrderSettlementModule {
      * @param finalOrderAmount amount returned to trader after fees.
      * @param fees breakdown of all the fees incurred for the transaction.
      * @param collectedFees fees collected by the configured fee collector.
-     * @param sender trader address.
+     * @param settler address that settled the order.
      */
     event OrderSettled(
         uint128 indexed marketId,
@@ -23,7 +23,7 @@ interface IAsyncOrderSettlementModule {
         uint256 finalOrderAmount,
         OrderFees.Data fees,
         uint256 collectedFees,
-        address indexed sender
+        address indexed settler
     );
 
     /**
