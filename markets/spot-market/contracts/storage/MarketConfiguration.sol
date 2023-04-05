@@ -387,14 +387,18 @@ library MarketConfiguration {
             );
             // use 100% utilization if pre-fill utilization was less than 100%
             // no fees charged below 100% utilization
-            uint preUtilizationDelta = preUtilization > 1e18 ? preUtilization - 1e18 : 0;
+            uint preUtilizationDelta = preUtilization > DecimalMath.UNIT
+                ? preUtilization - DecimalMath.UNIT
+                : 0;
             uint postUtilization = totalValueAfterFill.divDecimal(
                 leveragedDelegatedCollateralValue
             );
-            uint postUtilizationDelta = postUtilization - 1e18;
+            uint postUtilizationDelta = postUtilization - DecimalMath.UNIT;
 
             // utilization is represented as the # of percentage points above 100%
-            uint utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(100e18) / 2;
+            uint utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(
+                100 * DecimalMath.UNIT
+            ) / 2;
 
             utilFee = utilization.mulDecimal(self.utilizationFeeRate);
         }
