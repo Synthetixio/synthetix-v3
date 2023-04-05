@@ -60,13 +60,13 @@ interface IAsyncOrderSettlementModule {
      * @dev if the strategy is offchain, this function will revert with OffchainLookup error and the client should perform offchain lookup and call the callback specified see: EIP-3668
      * @param marketId Id of the market used for the trade.
      * @param asyncOrderId id of the async order created during commitment.
-     * @return finalOrderAmount amount returned to trader after fees.
-     * @return fees breakdown of all the fees incurred for the transaction.
+     * @return uint amount returned to trader after fees.
+     * @return OrderFees.Data breakdown of all the fees incurred for the transaction.
      */
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount, OrderFees.Data memory fees);
+    ) external returns (uint, OrderFees.Data memory);
 
     /**
      * @notice Callback function for chainlink settlement strategy
@@ -94,11 +94,11 @@ interface IAsyncOrderSettlementModule {
      * @dev To determine the fee, the client should first call getUpdateFee() from Pyth's verifier contract.
      * @param result result returned from the offchain lookup.
      * @param extraData extra data sent during the offchain lookup revert error.
-     * @return finalOrderAmount amount returned to trader after fees.
-     * @return fees breakdown of all the fees incurred for the transaction.
+     * @return uint amount returned to trader after fees.
+     * @return OrderFees.Data breakdown of all the fees incurred for the transaction.
      */
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory fees);
+    ) external payable returns (uint, OrderFees.Data memory);
 }

@@ -54,7 +54,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
-    ) external override returns (uint128) {
+    ) external override returns (uint128 synthMarketId) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
         if (synthOwner == address(0)) {
@@ -64,7 +64,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.checkSynthImplemention();
 
-        uint128 synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
+        synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
 
         _initOrUpgradeToken(
             SynthUtil.getSystemId(synthMarketId),
@@ -79,8 +79,6 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
         emit SynthRegistered(synthMarketId);
-
-        return synthMarketId;
     }
 
     function name(uint128 marketId) external view returns (string memory) {
