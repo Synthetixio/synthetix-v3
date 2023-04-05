@@ -4,6 +4,9 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
+/**
+ * @title Math helper functions
+ */
 library MathUtil {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;

@@ -50,12 +50,18 @@ library SpotMarketFactory {
         }
     }
 
+    /**
+     * @notice ensures synth implementation is set before creating synth
+     */
     function checkSynthImplemention(Data storage self) internal view {
         if (self.synthImplementation == address(0)) {
             revert InvalidSynthImplementation(0);
         }
     }
 
+    /**
+     * @notice only owner of market passes check, otherwise reverts
+     */
     function onlyMarketOwner(Data storage self, uint128 marketId) internal view {
         address marketOwner = self.marketOwners[marketId];
 
@@ -64,6 +70,9 @@ library SpotMarketFactory {
         }
     }
 
+    /**
+     * @notice validates market id by checking that an owner exists for the market
+     */
     function validateMarket(Data storage self, uint128 marketId) internal view {
         if (self.marketOwners[marketId] == address(0)) {
             revert InvalidMarket(marketId);
