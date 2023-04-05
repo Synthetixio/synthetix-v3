@@ -1,8 +1,8 @@
 /* eslint-env mocha */
 
+import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ChainBuilderContext } from '@usecannon/builder';
-import { loadCannonfile } from '@usecannon/cli';
+import { ChainBuilderContext, ContractMap } from '@usecannon/builder';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
@@ -32,21 +32,9 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
     const typechainFolder = path.resolve(generatedPath, 'typechain');
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
-    const cannonOpts =
-      hre.network.name === 'cannon' ? { ...params } : { ...params, noVerify: true };
+    const cannonInfo = await hre.run('cannon:build', params);
 
-    const cannonInfo = await hre.run('cannon:build', {
-      ...cannonOpts,
-    });
-
-    const cannonfilePath = path.resolve(hre.config.paths.root, params.cannonfile || '');
-
-    const { name, version } = await loadCannonfile(cannonfilePath);
-
-    await hre.run('cannon:inspect', {
-      writeDeployments,
-      packageName: `${name}:${version}`,
-    });
+    await _writeDeploymentsFromOutput(writeDeployments, cannonInfo.outputs.contracts);
 
     const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 
@@ -154,4 +142,18 @@ function _getContractFromOutputs(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new ethers.Contract(address || contract.address, contract.abi, provider as unknown as any);
+}
+
+async function _writeDeploymentsFromOutput(target: string, contracts: ContractMap) {
+  await fs.mkdir(target, { recursive: true });
+  await Promise.all(
+    Object.entries(contracts).map(async ([contractName, contract]) =>
+      _writeJson(target, contractName, contract)
+    )
+  );
+}
+
+async function _writeJson(folder: string, filename: string, data: unknown) {
+  const filepath = path.resolve(folder, `${filename}.json`);
+  return fs.writeFile(filepath, JSON.stringify(data, null, 2));
 }
