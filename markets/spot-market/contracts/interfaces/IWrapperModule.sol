@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/OrderFees.sol";
+import {OrderFees} from "../storage/OrderFees.sol";
 
 /**
  * @title Module for synth wrappers

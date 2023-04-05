@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../interfaces/external/ISynthetixSystem.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 
 /**
  * @title Wrapper library servicing the wrapper module

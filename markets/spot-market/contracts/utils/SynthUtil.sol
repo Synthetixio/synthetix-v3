@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../interfaces/ISynthTokenModule.sol";
+import {ISynthTokenModule} from "../interfaces/ISynthTokenModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 library SynthUtil {

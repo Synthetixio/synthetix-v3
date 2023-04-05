@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../interfaces/IAsyncOrderConfigurationModule.sol";
-import "../storage/AsyncOrderConfiguration.sol";
-import "../storage/SettlementStrategy.sol";
-import "../storage/SpotMarketFactory.sol";
+import {IAsyncOrderConfigurationModule} from "../interfaces/IAsyncOrderConfigurationModule.sol";
+import {AsyncOrderConfiguration} from "../storage/AsyncOrderConfiguration.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 
 /**
  * @title Module for configuring settings for async order module.
