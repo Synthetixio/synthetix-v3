@@ -19,6 +19,7 @@ import "../interfaces/ISpotMarketFactoryModule.sol";
  */
 contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
+    using AssociatedSystem for AssociatedSystem.Data;
     using Price for Price.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using DecimalMath for uint256;
@@ -124,13 +125,9 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         bytes32 synthId = SynthUtil.getSystemId(marketId);
-        _upgradeToken(synthId, synthImpl);
+        AssociatedSystem.Data storage associatedSystem = _upgradeToken(synthId, synthImpl);
 
-        emit SynthImplementationUpgraded(
-            marketId,
-            address(SynthUtil.getToken(marketId)),
-            synthImpl
-        );
+        emit SynthImplementationUpgraded(marketId, address(associatedSystem.asToken()), synthImpl);
     }
 
     /**
