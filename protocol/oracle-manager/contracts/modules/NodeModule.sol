@@ -25,7 +25,7 @@ contract NodeModule is INodeModule {
         NodeDefinition.NodeType nodeType,
         bytes memory parameters,
         bytes32[] memory parents
-    ) external returns (bytes32) {
+    ) external returns (bytes32 nodeId) {
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.Data({
             parents: parents,
             nodeType: nodeType,
@@ -42,7 +42,7 @@ contract NodeModule is INodeModule {
         NodeDefinition.NodeType nodeType,
         bytes memory parameters,
         bytes32[] memory parents
-    ) external pure returns (bytes32) {
+    ) external pure returns (bytes32 nodeId) {
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.Data({
             parents: parents,
             nodeType: nodeType,
@@ -55,28 +55,30 @@ contract NodeModule is INodeModule {
     /**
      * @inheritdoc INodeModule
      */
-    function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory) {
+    function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory node) {
         return _getNode(nodeId);
     }
 
     /**
      * @inheritdoc INodeModule
      */
-    function process(bytes32 nodeId) external view returns (NodeOutput.Data memory) {
+    function process(bytes32 nodeId) external view returns (NodeOutput.Data memory node) {
         return _process(nodeId);
     }
 
     /**
      * @dev Returns node definition data for a given node id.
      */
-    function _getNode(bytes32 nodeId) internal pure returns (NodeDefinition.Data storage) {
+    function _getNode(bytes32 nodeId) internal pure returns (NodeDefinition.Data storage node) {
         return NodeDefinition.load(nodeId);
     }
 
     /**
      * @dev Returns the ID of a node, whether or not it has been registered.
      */
-    function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32) {
+    function _getNodeId(
+        NodeDefinition.Data memory nodeDefinition
+    ) internal pure returns (bytes32 nodeId) {
         return NodeDefinition.getId(nodeDefinition);
     }
 
@@ -117,7 +119,7 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns whether a given node ID has already been registered.
      */
-    function _isNodeRegistered(bytes32 nodeId) internal view returns (bool) {
+    function _isNodeRegistered(bytes32 nodeId) internal view returns (bool nodeRegistered) {
         NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
         return (nodeDefinition.nodeType != NodeDefinition.NodeType.NONE);
     }
@@ -169,7 +171,7 @@ contract NodeModule is INodeModule {
      */
     function _validateNodeDefinition(
         NodeDefinition.Data memory nodeDefinition
-    ) internal returns (bool) {
+    ) internal returns (bool valid) {
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
             return ReducerNode.validate(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {

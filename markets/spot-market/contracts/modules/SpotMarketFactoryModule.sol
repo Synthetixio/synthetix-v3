@@ -59,7 +59,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
-    ) external override returns (uint128) {
+    ) external override returns (uint128 synthMarketId) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
         if (synthOwner == address(0)) {
@@ -69,7 +69,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.checkSynthImplemention();
 
-        uint128 synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
+        synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
 
         _initOrUpgradeToken(
             SynthUtil.getSystemId(synthMarketId),
@@ -84,16 +84,16 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
         emit SynthRegistered(synthMarketId);
-
-        return synthMarketId;
     }
 
-    function name(uint128 marketId) external view returns (string memory) {
+    function name(uint128 marketId) external view returns (string memory marketName) {
         string memory tokenName = SynthUtil.getToken(marketId).name();
         return string.concat(tokenName, " Spot Market");
     }
 
-    function reportedDebt(uint128 marketId) external view override returns (uint256) {
+    function reportedDebt(
+        uint128 marketId
+    ) external view override returns (uint256 reportedDebtAmount) {
         uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
@@ -103,7 +103,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
      * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
      * @dev collateral leverage is defaulted to 1 on registration of a new market
      */
-    function locked(uint128 marketId) external view returns (uint256) {
+    function locked(uint128 marketId) external view returns (uint256 lockedAmount) {
         uint256 totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint256 collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;
 
@@ -118,7 +118,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function getSynth(uint128 marketId) external view override returns (address) {
+    function getSynth(uint128 marketId) external view override returns (address synthAddress) {
         return address(SynthUtil.getToken(marketId));
     }
 
@@ -206,7 +206,9 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function getMarketOwner(uint128 synthMarketId) public view override returns (address) {
+    function getMarketOwner(
+        uint128 synthMarketId
+    ) public view override returns (address marketOwner) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         return spotMarketFactory.marketOwners[synthMarketId];
     }
@@ -216,7 +218,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(IERC165) returns (bool) {
+    ) public view virtual override(IERC165) returns (bool isSupported) {
         return
             interfaceId == type(IMarket).interfaceId ||
             interfaceId == this.supportsInterface.selector;

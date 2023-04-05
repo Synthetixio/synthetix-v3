@@ -100,7 +100,7 @@ library Price {
     /**
      * @dev Utility function that returns the amount denominated with 18 decimals of precision.
      */
-    function scale(int256 amount, uint256 decimals) internal pure returns (int256) {
+    function scale(int256 amount, uint256 decimals) internal pure returns (int256 scaledAmount) {
         return (decimals > 18 ? amount.downscale(decimals - 18) : amount.upscale(18 - decimals));
     }
 
@@ -108,7 +108,7 @@ library Price {
      * @dev Utility function that receive amount with 18 decimals
      * returns the amount denominated with number of decimals as arg of 18.
      */
-    function scaleTo(int256 amount, uint256 decimals) internal pure returns (int256) {
+    function scaleTo(int256 amount, uint256 decimals) internal pure returns (int256 scaledAmount) {
         return (decimals > 18 ? amount.upscale(decimals - 18) : amount.downscale(18 - decimals));
     }
 }
