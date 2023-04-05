@@ -12,7 +12,7 @@ interface IAsyncOrderConfigurationModule {
      * @param synthMarketId adds settlement strategy to this specific market.
      * @param strategyId the newly created settlement strategy id.
      */
-    event SettlementStrategyAdded(uint128 synthMarketId, uint256 strategyId);
+    event SettlementStrategyAdded(uint128 indexed synthMarketId, uint256 indexed strategyId);
 
     /**
      * @notice Gets fired when settlement strategy is enabled/disabled.
@@ -21,7 +21,11 @@ interface IAsyncOrderConfigurationModule {
      * @param strategyId id of the strategy.
      * @param enabled true/false.
      */
-    event SettlementStrategyUpdated(uint128 synthMarketId, uint256 strategyId, bool enabled);
+    event SettlementStrategyUpdated(
+        uint128 indexed synthMarketId,
+        uint256 indexed strategyId,
+        bool enabled
+    );
 
     /**
      * @notice Adds new settlement strategy to the specified market id.
