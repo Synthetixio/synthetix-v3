@@ -42,7 +42,7 @@ contract WrapperModule is IWrapperModule {
     function wrap(
         uint128 marketId,
         uint256 wrapAmount,
-        uint minAmountReceived
+        uint256 minAmountReceived
     ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
@@ -73,10 +73,10 @@ contract WrapperModule is IWrapperModule {
         );
 
         if (amountToMint < minAmountReceived) {
-            revert InsufficientAmountReceived(minAmountReceived, amountToMint);
+            revert InsufficientAmountReceived(minAmountReceived, amountToMint256);
         }
 
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -85,7 +85,7 @@ contract WrapperModule is IWrapperModule {
             Transaction.Type.WRAP
         );
 
-        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
+        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint256);
 
         emit SynthWrapped(marketId, amountToMint, fees, collectedFees);
     }
@@ -96,7 +96,7 @@ contract WrapperModule is IWrapperModule {
     function unwrap(
         uint128 marketId,
         uint256 unwrapAmount,
-        uint minAmountReceived
+        uint256 minAmountReceived
     ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
@@ -126,7 +126,7 @@ contract WrapperModule is IWrapperModule {
         if (returnCollateralAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
         }
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,

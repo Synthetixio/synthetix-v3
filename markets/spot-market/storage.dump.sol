@@ -72,7 +72,7 @@ library SetUtil {
     }
     struct Bytes32Set {
         bytes32[] _values;
-        mapping(bytes32 => uint) _positions;
+        mapping(bytes32 => uint256) _positions;
     }
 }
 
@@ -239,7 +239,7 @@ library AsyncOrderConfiguration {
 // @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
 library MarketConfiguration {
     struct Data {
-        mapping(address => uint) atomicFixedFeeOverrides;
+        mapping(address => uint256) atomicFixedFeeOverrides;
         uint atomicFixedFee;
         uint asyncFixedFee;
         uint utilizationFeeRate;
@@ -248,7 +248,7 @@ library MarketConfiguration {
         int unwrapFixedFee;
         uint skewScale;
         address feeCollector;
-        mapping(address => uint) referrerShare;
+        mapping(address => uint256) referrerShare;
     }
     function load(uint128 marketId) internal pure returns (Data storage marketConfig) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));

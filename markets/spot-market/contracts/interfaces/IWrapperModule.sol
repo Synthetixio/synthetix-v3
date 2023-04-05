@@ -10,7 +10,7 @@ interface IWrapperModule {
     /**
      * @notice Thrown when a trade doesn't meet minimum expected return amount.
      */
-    error InsufficientAmountReceived(uint expected, uint current);
+    error InsufficientAmountReceived(uint256 expected, uint256 current);
 
     /**
      * @notice Gets fired when wrapper supply is set for a given market, collateral type.
@@ -19,7 +19,7 @@ interface IWrapperModule {
      * @param maxWrappableAmount the local supply cap for the wrapper.
      */
     event WrapperSet(
-        uint indexed synthMarketId,
+        uint256 indexed synthMarketId,
         address wrapCollateralType,
         uint256 maxWrappableAmount
     );
@@ -32,10 +32,10 @@ interface IWrapperModule {
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      */
     event SynthWrapped(
-        uint indexed synthMarketId,
-        uint amountWrapped,
+        uint256 indexed synthMarketId,
+        uint256 amountWrapped,
         OrderFees.Data fees,
-        uint feesCollected
+        uint256 feesCollected
     );
 
     /**
@@ -46,10 +46,10 @@ interface IWrapperModule {
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      */
     event SynthUnwrapped(
-        uint indexed synthMarketId,
-        uint amountUnwrapped,
+        uint256 indexed synthMarketId,
+        uint256 amountUnwrapped,
         OrderFees.Data fees,
-        uint feesCollected
+        uint256 feesCollected
     );
 
     /**
@@ -77,9 +77,9 @@ interface IWrapperModule {
      */
     function wrap(
         uint128 marketId,
-        uint wrapAmount,
-        uint minAmountReceived
-    ) external returns (uint, OrderFees.Data memory fees);
+        uint256 wrapAmount,
+        uint256 minAmountReceived
+    ) external returns (uint256, OrderFees.Data memory fees);
 
     /**
      * @notice Unwraps the synth and returns similar value of collateral minus the fees.
@@ -92,7 +92,7 @@ interface IWrapperModule {
      */
     function unwrap(
         uint128 marketId,
-        uint unwrapAmount,
-        uint minAmountReceived
-    ) external returns (uint, OrderFees.Data memory fees);
+        uint256 unwrapAmount,
+        uint256 minAmountReceived
+    ) external returns (uint256, OrderFees.Data memory fees);
 }

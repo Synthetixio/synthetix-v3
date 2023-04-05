@@ -22,10 +22,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function buyExactOut(
         uint128 marketId,
-        uint synthAmount,
-        uint maxUsdAmount,
+        uint256 synthAmount,
+        uint256 maxUsdAmount,
         address referrer
-    ) external override returns (uint usdAmountCharged, OrderFees.Data memory fees) {
+    ) external override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -44,7 +44,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmountCharged);
 
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -66,10 +66,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function buy(
         uint128 marketId,
-        uint usdAmount,
-        uint minAmountReceived,
+        uint256 usdAmount,
+        uint256 minAmountReceived,
         address referrer
-    ) external override returns (uint synthAmount, OrderFees.Data memory fees) {
+    ) external override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         return buyExactIn(marketId, usdAmount, minAmountReceived, referrer);
     }
 
@@ -78,10 +78,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function buyExactIn(
         uint128 marketId,
-        uint usdAmount,
-        uint minAmountReceived,
+        uint256 usdAmount,
+        uint256 minAmountReceived,
         address referrer
-    ) public override returns (uint synthAmount, OrderFees.Data memory fees) {
+    ) public override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -101,7 +101,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, synthAmount);
         }
 
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -123,7 +123,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteBuyExactIn(
         uint128 marketId,
-        uint usdAmount
+        uint256 usdAmount
     ) external view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
@@ -141,7 +141,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteBuyExactOut(
         uint128 marketId,
-        uint synthAmount
+        uint256 synthAmount
     ) external view override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
@@ -159,7 +159,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteSellExactIn(
         uint128 marketId,
-        uint synthAmount
+        uint256 synthAmount
     ) external view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
@@ -177,7 +177,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function quoteSellExactOut(
         uint128 marketId,
-        uint usdAmount
+        uint256 usdAmount
     ) external view override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.load().isValidMarket(marketId);
 
@@ -195,10 +195,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function sell(
         uint128 marketId,
-        uint synthAmount,
-        uint minUsdAmount,
+        uint256 synthAmount,
+        uint256 minUsdAmount,
         address referrer
-    ) external override returns (uint usdAmountReceived, OrderFees.Data memory fees) {
+    ) external override returns (uint256 usdAmountReceived, OrderFees.Data memory fees) {
         return sellExactIn(marketId, synthAmount, minUsdAmount, referrer);
     }
 
@@ -208,7 +208,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function sellExactIn(
         uint128 marketId,
         uint256 synthAmount,
-        uint minAmountReceived,
+        uint256 minAmountReceived,
         address referrer
     ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
@@ -231,7 +231,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         // Burn after calculation because skew is calculating using total supply prior to fill
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -250,10 +250,10 @@ contract AtomicOrderModule is IAtomicOrderModule {
      */
     function sellExactOut(
         uint128 marketId,
-        uint usdAmount,
-        uint maxSynthAmount,
+        uint256 usdAmount,
+        uint256 maxSynthAmount,
         address referrer
-    ) external override returns (uint synthToBurn, OrderFees.Data memory fees) {
+    ) external override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.isValidMarket(marketId);
 
@@ -271,7 +271,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         }
 
         SynthUtil.getToken(marketId).burn(msg.sender, synthToBurn);
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,

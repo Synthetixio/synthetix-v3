@@ -11,16 +11,16 @@ interface IAtomicOrderModule {
      * @notice Thrown when trade is charging more USD than the max amount specified by the trader.
      * @dev Used in buyExactOut
      */
-    error ExceedsMaxUsdAmount(uint maxUsdAmount, uint usdAmountCharged);
+    error ExceedsMaxUsdAmount(uint256 maxUsdAmount, uint256 usdAmountCharged);
     /**
      * @notice Thrown when trade is charging more synth than the max amount specified by the trader.
      * @dev Used in sellExactOut
      */
-    error ExceedsMaxSynthAmount(uint maxSynthAmount, uint synthAmountCharged);
+    error ExceedsMaxSynthAmount(uint256 maxSynthAmount, uint256 synthAmountCharged);
     /**
      * @notice Thrown when a trade doesn't meet minimum expected return amount.
      */
-    error InsufficientAmountReceived(uint expected, uint current);
+    error InsufficientAmountReceived(uint256 expected, uint256 current);
 
     /**
      * @notice Gets fired when buy trade is complete
@@ -31,10 +31,10 @@ interface IAtomicOrderModule {
      * @param referrer Optional address of the referrer, for fee share
      */
     event SynthBought(
-        uint indexed synthMarketId,
-        uint synthReturned,
+        uint256 indexed synthMarketId,
+        uint256 synthReturned,
         OrderFees.Data fees,
-        uint collectedFees,
+        uint256 collectedFees,
         address referrer
     );
 
@@ -47,10 +47,10 @@ interface IAtomicOrderModule {
      * @param referrer Optional address of the referrer, for fee share
      */
     event SynthSold(
-        uint indexed synthMarketId,
-        uint amountReturned,
+        uint256 indexed synthMarketId,
+        uint256 amountReturned,
         OrderFees.Data fees,
-        uint collectedFees,
+        uint256 collectedFees,
         address referrer
     );
 
@@ -68,10 +68,10 @@ interface IAtomicOrderModule {
      */
     function buyExactIn(
         uint128 synthMarketId,
-        uint amountUsd,
-        uint minAmountReceived,
+        uint256 amountUsd,
+        uint256 minAmountReceived,
         address referrer
-    ) external returns (uint, OrderFees.Data memory);
+    ) external returns (uint256, OrderFees.Data memory);
 
     /**
      * @notice  alias for buyExactIn
@@ -84,10 +84,10 @@ interface IAtomicOrderModule {
      */
     function buy(
         uint128 marketId,
-        uint usdAmount,
-        uint minAmountReceived,
+        uint256 usdAmount,
+        uint256 minAmountReceived,
         address referrer
-    ) external returns (uint synthAmount, OrderFees.Data memory fees);
+    ) external returns (uint256 synthAmount, OrderFees.Data memory fees);
 
     /**
      * @notice  user provides the synth amount they'd like to buy, and the function charges the USD amount which includes fees
@@ -96,15 +96,15 @@ interface IAtomicOrderModule {
      * @param   synthAmount  the amount of synth the trader wants to buy
      * @param   maxUsdAmount  max amount the trader is willing to pay for the specified synth
      * @param   referrer  optional address of the referrer, for fee share
-     * @return  uint  amount of USD charged for the trade
+     * @return  uint256  amount of USD charged for the trade
      * @return  OrderFees.Data  breakdown of all the fees incurred for the transaction
      */
     function buyExactOut(
         uint128 synthMarketId,
-        uint synthAmount,
-        uint maxUsdAmount,
+        uint256 synthAmount,
+        uint256 maxUsdAmount,
         address referrer
-    ) external returns (uint, OrderFees.Data memory);
+    ) external returns (uint256, OrderFees.Data memory);
 
     /**
      * @notice  quote for buyExactIn.  same parameters and return values as buyExactIn
@@ -115,7 +115,7 @@ interface IAtomicOrderModule {
      */
     function quoteBuyExactIn(
         uint128 synthMarketId,
-        uint usdAmount
+        uint256 usdAmount
     ) external view returns (uint256 synthAmount, OrderFees.Data memory);
 
     /**
@@ -127,7 +127,7 @@ interface IAtomicOrderModule {
      */
     function quoteBuyExactOut(
         uint128 synthMarketId,
-        uint synthAmount
+        uint256 synthAmount
     ) external view returns (uint256 usdAmountCharged, OrderFees.Data memory);
 
     /**
@@ -143,10 +143,10 @@ interface IAtomicOrderModule {
      */
     function sellExactIn(
         uint128 synthMarketId,
-        uint sellAmount,
-        uint minAmountReceived,
+        uint256 sellAmount,
+        uint256 minAmountReceived,
         address referrer
-    ) external returns (uint, OrderFees.Data memory);
+    ) external returns (uint256, OrderFees.Data memory);
 
     /**
      * @notice  initiates a trade where trader specifies USD amount they'd like to receive
@@ -160,10 +160,10 @@ interface IAtomicOrderModule {
      */
     function sellExactOut(
         uint128 marketId,
-        uint usdAmount,
-        uint maxSynthAmount,
+        uint256 usdAmount,
+        uint256 maxSynthAmount,
         address referrer
-    ) external returns (uint synthAmount, OrderFees.Data memory);
+    ) external returns (uint256 synthAmount, OrderFees.Data memory);
 
     /**
      * @notice  alias for sellExactIn
@@ -176,10 +176,10 @@ interface IAtomicOrderModule {
      */
     function sell(
         uint128 marketId,
-        uint synthAmount,
-        uint minUsdAmount,
+        uint256 synthAmount,
+        uint256 minUsdAmount,
         address referrer
-    ) external returns (uint usdAmountReceived, OrderFees.Data memory fees);
+    ) external returns (uint256 usdAmountReceived, OrderFees.Data memory fees);
 
     /**
      * @notice  quote for sellExactIn
@@ -191,7 +191,7 @@ interface IAtomicOrderModule {
      */
     function quoteSellExactIn(
         uint128 marketId,
-        uint synthAmount
+        uint256 synthAmount
     ) external view returns (uint256 returnAmount, OrderFees.Data memory);
 
     /**
@@ -204,6 +204,6 @@ interface IAtomicOrderModule {
      */
     function quoteSellExactOut(
         uint128 marketId,
-        uint usdAmount
+        uint256 usdAmount
     ) external view returns (uint256 synthAmount, OrderFees.Data memory);
 }

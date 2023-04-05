@@ -22,7 +22,7 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed asyncOrderId,
         uint256 finalOrderAmount,
         OrderFees.Data fees,
-        uint collectedFees,
+        uint256 collectedFees,
         address indexed sender
     );
 
@@ -66,7 +66,7 @@ interface IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount, OrderFees.Data memory fees);
+    ) external returns (uint256 finalOrderAmount, OrderFees.Data memory fees);
 
     /**
      * @notice Callback function for chainlink settlement strategy
@@ -83,7 +83,7 @@ interface IAsyncOrderSettlementModule {
     // function settleChainlinkOrder(
     //     bytes calldata result,
     //     bytes calldata extraData
-    // ) external returns (uint finalOrderAmount, int totalFees, uint collectedFees);
+    // ) external returns (uint256 finalOrderAmount, int256 totalFees, uint256 collectedFees);
 
     /**
      * @notice Callback function for Pyth settlement strategy
@@ -100,5 +100,5 @@ interface IAsyncOrderSettlementModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory fees);
+    ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees);
 }

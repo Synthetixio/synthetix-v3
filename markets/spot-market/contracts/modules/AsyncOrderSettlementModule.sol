@@ -37,7 +37,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external override returns (uint, OrderFees.Data memory) {
+    ) external override returns (uint256, OrderFees.Data memory) {
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
             SettlementStrategy.Data storage settlementStrategy
@@ -63,7 +63,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint, OrderFees.Data memory) {
+    ) external payable returns (uint256, OrderFees.Data memory) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -86,7 +86,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
-        uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
+        uint256 offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
 
         settlementStrategy.checkPriceDeviation(
             offchainPrice,
@@ -109,14 +109,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function _settleOrder(
         uint128 marketId,
         uint128 asyncOrderId,
-        uint price,
+        uint256 price,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees) {
+    ) private returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         // set settledAt to avoid any potential reentrancy
         asyncOrderClaim.settledAt = block.timestamp;
 
-        uint collectedFees;
+        uint256 collectedFees;
         if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_BUY) {
             (finalOrderAmount, fees, collectedFees) = _settleBuyOrder(
                 marketId,
@@ -151,13 +151,16 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
      */
     function _settleBuyOrder(
         uint128 marketId,
-        uint price,
-        uint settlementReward,
+        uint256 price,
+        uint256 settlementReward,
         AsyncOrderClaim.Data storage asyncOrderClaim
-    ) private returns (uint returnSynthAmount, OrderFees.Data memory fees, uint collectedFees) {
+    )
+        private
+        returns (uint256 returnSynthAmount, OrderFees.Data memory fees, uint256 collectedFees)
+    {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         // remove keeper fee
-        uint amountUsable = asyncOrderClaim.amountEscrowed - settlementReward;
+        uint256 amountUsable = asyncOrderClaim.amountEscrowed - settlementReward;
         address trader = asyncOrderClaim.owner;
 
         MarketConfiguration.Data storage config;
@@ -195,14 +198,17 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
      */
     function _settleSellOrder(
         uint128 marketId,
-        uint price,
-        uint settlementReward,
+        uint256 price,
+        uint256 settlementReward,
         AsyncOrderClaim.Data storage asyncOrderClaim
-    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees, uint collectedFees) {
+    )
+        private
+        returns (uint256 finalOrderAmount, OrderFees.Data memory fees, uint256 collectedFees)
+    {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         // get amount of synth from escrow
         // can't use amountEscrowed directly because the token could have decayed
-        uint synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
+        uint256 synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
             marketId,
             asyncOrderClaim.amountEscrowed
         );
@@ -255,7 +261,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint, OrderFees.Data memory) {
+    ) private view returns (uint256, OrderFees.Data memory) {
         string[] memory urls = new string[](1);
         urls[0] = settlementStrategy.url;
 

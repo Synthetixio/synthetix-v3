@@ -11,7 +11,11 @@ library Wrapper {
     /**
      * @notice Thrown when user tries to wrap more than the set supply cap for the market.
      */
-    error WrapperExceedsMaxAmount(uint maxWrappableAmount, uint currentSupply, uint amountToWrap);
+    error WrapperExceedsMaxAmount(
+        uint256 maxWrappableAmount,
+        uint256 currentSupply,
+        uint256 amountToWrap
+    );
 
     struct Data {
         /**
@@ -38,7 +42,7 @@ library Wrapper {
         uint256 wrapAmount,
         ISynthetixSystem synthetix
     ) internal view {
-        uint currentDepositedCollateral = synthetix.getMarketCollateralAmount(
+        uint256 currentDepositedCollateral = synthetix.getMarketCollateralAmount(
             marketId,
             self.wrapCollateralType
         );

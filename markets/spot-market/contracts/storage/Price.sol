@@ -58,7 +58,7 @@ library Price {
     function getCurrentPrice(
         uint128 marketId,
         Transaction.Type transactionType
-    ) internal view returns (uint price) {
+    ) internal view returns (uint256 price) {
         return getCurrentPriceData(marketId, transactionType).price.toUint();
     }
 
@@ -77,7 +77,7 @@ library Price {
      */
     function usdSynthExchangeRate(
         uint128 marketId,
-        uint amountUsd,
+        uint256 amountUsd,
         Transaction.Type transactionType
     ) internal view returns (uint256 synthAmount) {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
@@ -90,7 +90,7 @@ library Price {
      */
     function synthUsdExchangeRate(
         uint128 marketId,
-        uint sellAmount,
+        uint256 sellAmount,
         Transaction.Type transactionType
     ) internal view returns (uint256 amountUsd) {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
@@ -100,7 +100,7 @@ library Price {
     /**
      * @dev Utility function that returns the amount denominated with 18 decimals of precision.
      */
-    function scale(int256 amount, uint decimals) internal pure returns (int256) {
+    function scale(int256 amount, uint256 decimals) internal pure returns (int256) {
         return (decimals > 18 ? amount.downscale(decimals - 18) : amount.upscale(18 - decimals));
     }
 
@@ -108,7 +108,7 @@ library Price {
      * @dev Utility function that receive amount with 18 decimals
      * returns the amount denominated with number of decimals as arg of 18.
      */
-    function scaleTo(int256 amount, uint decimals) internal pure returns (int256) {
+    function scaleTo(int256 amount, uint256 decimals) internal pure returns (int256) {
         return (decimals > 18 ? amount.upscale(decimals - 18) : amount.downscale(18 - decimals));
     }
 }

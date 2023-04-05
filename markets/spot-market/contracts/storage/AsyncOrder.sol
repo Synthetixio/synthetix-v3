@@ -41,7 +41,7 @@ library AsyncOrder {
         address from,
         uint256 synthAmount,
         uint256 maxRoundingLoss
-    ) internal returns (uint sharesAmount) {
+    ) internal returns (uint256 sharesAmount) {
         Data storage asyncOrderData = load(marketId);
         ITokenModule token = SynthUtil.getToken(marketId);
 
@@ -54,8 +54,11 @@ library AsyncOrder {
         asyncOrderData.totalEscrowedSynthShares += sharesAmount;
 
         // sanity check to ensure the right shares amount is calculated
-        uint acceptableSynthAmount = convertSharesToSynth(asyncOrderData, marketId, sharesAmount) +
-            maxRoundingLoss;
+        uint256 acceptableSynthAmount = convertSharesToSynth(
+            asyncOrderData,
+            marketId,
+            sharesAmount
+        ) + maxRoundingLoss;
         if (acceptableSynthAmount < synthAmount) {
             revert InsufficientSharesAmount({expected: synthAmount, actual: acceptableSynthAmount});
         }
@@ -69,7 +72,7 @@ library AsyncOrder {
 
         ITokenModule token = SynthUtil.getToken(marketId);
         // if there's no more shares, then burn the entire balance
-        uint burnAmt = asyncOrderData.totalEscrowedSynthShares == 0
+        uint256 burnAmt = asyncOrderData.totalEscrowedSynthShares == 0
             ? token.balanceOf(address(this))
             : synthAmount;
 
@@ -84,7 +87,7 @@ library AsyncOrder {
 
         ITokenModule token = SynthUtil.getToken(marketId);
         // if there's no more shares, then transfer the entire balance
-        uint transferAmt = asyncOrderData.totalEscrowedSynthShares == 0
+        uint256 transferAmt = asyncOrderData.totalEscrowedSynthShares == 0
             ? token.balanceOf(address(this))
             : synthAmount;
 
@@ -96,7 +99,7 @@ library AsyncOrder {
         uint128 marketId,
         uint256 sharesAmount
     ) internal view returns (uint256) {
-        uint currentSynthBalance = SynthUtil.getToken(marketId).balanceOf(address(this));
+        uint256 currentSynthBalance = SynthUtil.getToken(marketId).balanceOf(address(this));
         return (sharesAmount * currentSynthBalance) / asyncOrderData.totalEscrowedSynthShares;
     }
 }
