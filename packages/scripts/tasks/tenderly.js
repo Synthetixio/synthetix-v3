@@ -3,8 +3,9 @@ const fs = require('fs/promises');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
-const { getPackageInfo, getPackageDeployment, getPackageProxy } = require('../internal/packages');
+const { getPackageDeployment, getPackageProxy } = require('../internal/packages');
 const { COUNCILS } = require('../internal/constants');
+const { getStorageSlot } = require('../internal/storage-slot');
 
 task('tenderly:deployments:copy', 'Copy deployments forks to fork folder')
   .addOptionalParam('from', 'Deployment reference', 'optimistic-mainnet')
@@ -50,14 +51,44 @@ task('tenderly:upgrade-proxies')
       const deployment = getPackageDeployment(hre, council, instance);
       const Proxy = await getPackageProxy(hre, council, instance);
 
-      const routerAddress = Object.values(deployment.contracts).find(
-        (c) => c.isRouter
-      ).deployedAddress;
-
+      const newRouter = Object.values(deployment.contracts).find((c) => c.isRouter).deployedAddress;
       const currentRouter = await Proxy.getImplementation();
 
-      console.log({ routerAddress, currentRouter });
-    }
+      if (newRouter === currentRouter) {
+        logger.success(`Proxy for ${council} already upgraded`);
+        continue;
+      }
 
-    logger.success('Done upgrading proxies');
+      await asOwner(Proxy, async () => {
+        const tx = await Proxy.upgradeTo(newRouter);
+        await tx.wait();
+      });
+
+      logger.success(`Upgraded "${council}" from ${currentRouter} to ${newRouter}`);
+    }
   });
+
+async function asOwner(Proxy, fn) {
+  const location = getStorageSlot('io.synthetix.ownable');
+  const offset = 2;
+  const signer = await hre.ethers.provider.getSigner();
+  const signerAddress = (await signer.getAddress()).toLowerCase().slice(2);
+
+  const originalValue = await hre.ethers.provider.getStorageAt(Proxy.address, location);
+  const newValue = [
+    originalValue.slice(0, originalValue.length - signerAddress.length - offset),
+    signerAddress,
+    originalValue.slice(-offset),
+  ].join('');
+
+  try {
+    await hre.ethers.provider.send('tenderly_setStorageAt', [Proxy.address, location, newValue]);
+    await fn();
+  } finally {
+    await hre.ethers.provider.send('tenderly_setStorageAt', [
+      Proxy.address,
+      location,
+      originalValue,
+    ]);
+  }
+}
