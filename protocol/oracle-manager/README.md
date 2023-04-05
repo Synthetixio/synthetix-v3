@@ -77,7 +77,7 @@ The Reducer Node combines the data from multiple parents using the specified ope
 
 ### Price Deviation Circuit Breaker Node
 
-The Price Deviation Circuit Breaker Node passes through value of the first parent if the prices between the first two parents are within the deviation tolerance. Otherwise, it returns the third parent if specified or reverts with `DeviationToleranceExceeded`.
+The Price Deviation Circuit Breaker Node passes through value of the first parent if the prices between the first two parents are within the deviation tolerance. Otherwise, it returns the third parent if specified or reverts with `DeviationToleranceExceeded`. _Note that the third parent will be returned regardless of its price. If this is a concern, the second parent should be another Price Deviation Circuit Breaker._
 
 - `nodeType` Value: 6
 - Parameters:
