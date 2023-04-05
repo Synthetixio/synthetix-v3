@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "../interfaces/external/ISynthetixSystem.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 
 /**
  * @title Main factory library that registers synths.  Also houses global configuration for all synths.

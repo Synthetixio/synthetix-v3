@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "./external/ISynthetixSystem.sol";
+import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {ISynthetixSystem} from "./external/ISynthetixSystem.sol";
 
 /**
  * @title Module for spot market factory
@@ -31,7 +31,7 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthImplementationUpgraded(
         uint256 indexed synthMarketId,
-        address proxy,
+        address indexed proxy,
         address implementation
     );
     /**
@@ -41,8 +41,8 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthPriceDataUpdated(
         uint256 indexed synthMarketId,
-        bytes32 buyFeedId,
-        bytes32 sellFeedId
+        bytes32 indexed buyFeedId,
+        bytes32 indexed sellFeedId
     );
 
     /**
