@@ -103,7 +103,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         }
         uint t = (block.timestamp - _epochStart());
         supply = _totalSupplyAtEpochStart();
-        uint r = _pow(((10 ** 18) - _ratePerSecond()), t);
+        uint r = _pow(((DecimalMath.UNIT) - _ratePerSecond()), t);
         supply = supply.mulDecimal(r);
 
         return (supply);
