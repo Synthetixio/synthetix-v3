@@ -43,9 +43,7 @@ task('tenderly:deployments:delete', 'Copy deployments forks to fork folder')
 task('tenderly:upgrade-proxies')
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
   .setAction(async ({ instance }, hre) => {
-    if (!hre.network.config.url.startsWith('https://rpc.tenderly.co/fork')) {
-      throw new Error('This task can only be run on Tenderly forks');
-    }
+    assertTenderly(hre);
 
     for (const council of COUNCILS) {
       const deployment = getPackageDeployment(hre, council, instance);
@@ -65,6 +63,46 @@ task('tenderly:upgrade-proxies')
       });
 
       logger.success(`Upgraded "${council}" from ${currentRouter} to ${newRouter}`);
+    }
+  });
+
+task('tenderly:exec')
+  .addPositionalParam('method', 'Method to execute on all councils')
+  .addOptionalVariadicPositionalParam(
+    'params',
+    'Param to pass to the method as a JSON array string',
+    []
+  )
+  .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
+  .setAction(async ({ method, params, instance }, hre) => {
+    assertTenderly(hre);
+
+    console.log();
+
+    for (const council of COUNCILS) {
+      const Proxy = await getPackageProxy(hre, council, instance);
+
+      await asOwner(Proxy, async () => {
+        const fnAbi = Proxy.interface.fragments.find((f) => f.name === method);
+
+        if (!fnAbi) throw new Error(`Method ${method} not found on ${Proxy.address}`);
+        if (fnAbi.type !== 'function') throw new Error(`Method ${method} is not a function`);
+
+        const isWriteCall = fnAbi.stateMutability !== 'view' && fnAbi.stateMutability !== 'pure';
+
+        console.log(`${council}: Proxy.${method}(${params.map((v) => `"${v}"`).join(', ')})`);
+
+        if (isWriteCall) {
+          const tx = await Proxy[method](...params);
+          await tx.wait();
+          console.log('  tx hash:', tx.hash);
+        } else {
+          const res = await Proxy[method](...params);
+          console.log('  ', res);
+        }
+
+        console.log();
+      });
     }
   });
 
@@ -102,5 +140,11 @@ async function asOwner(Proxy, fn) {
       location,
       originalValue,
     ]);
+  }
+}
+
+function assertTenderly(hre) {
+  if (!hre.network.config.url.startsWith('https://rpc.tenderly.co/fork')) {
+    throw new Error('This task can only be run on Tenderly forks');
   }
 }
