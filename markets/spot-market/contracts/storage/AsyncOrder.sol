@@ -95,7 +95,7 @@ library AsyncOrder {
         Data storage asyncOrderData,
         uint128 marketId,
         uint256 sharesAmount
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256 synthAmount) {
         uint currentSynthBalance = SynthUtil.getToken(marketId).balanceOf(address(this));
         return (sharesAmount * currentSynthBalance) / asyncOrderData.totalEscrowedSynthShares;
     }

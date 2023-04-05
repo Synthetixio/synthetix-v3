@@ -10,7 +10,7 @@ library StalenessCircuitBreakerNode {
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         uint256 stalenessTolerance = abi.decode(parameters, (uint256));
 
         if (block.timestamp - parentNodeOutputs[0].timestamp <= stalenessTolerance) {
@@ -21,7 +21,9 @@ library StalenessCircuitBreakerNode {
         return parentNodeOutputs[1];
     }
 
-    function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool) {
+    function isValid(
+        NodeDefinition.Data memory nodeDefinition
+    ) internal pure returns (bool valid) {
         // Must have 1-2 parents
         if (!(nodeDefinition.parents.length == 1 || nodeDefinition.parents.length == 2)) {
             return false;

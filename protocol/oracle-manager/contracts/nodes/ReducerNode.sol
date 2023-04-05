@@ -26,7 +26,7 @@ library ReducerNode {
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal pure returns (NodeOutput.Data memory) {
+    ) internal pure returns (NodeOutput.Data memory nodeOutput) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.RECENT) {
@@ -157,7 +157,9 @@ library ReducerNode {
         if (i < right) quickSort(arr, i, right);
     }
 
-    function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool) {
+    function isValid(
+        NodeDefinition.Data memory nodeDefinition
+    ) internal pure returns (bool valid) {
         // Must have at least 2 parents
         if (nodeDefinition.parents.length < 2) {
             return false;

@@ -79,5 +79,5 @@ interface IAsyncOrderModule {
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external view returns (AsyncOrderClaim.Data memory);
+    ) external view returns (AsyncOrderClaim.Data memory asyncOrderClaim);
 }

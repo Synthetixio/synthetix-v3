@@ -71,7 +71,7 @@ library AsyncOrderClaim {
         uint256 minimumSettlementAmount,
         address owner,
         address referrer
-    ) internal returns (Data storage) {
+    ) internal returns (Data storage claim) {
         AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
         uint128 claimId = ++asyncOrderData.totalClaims;
 

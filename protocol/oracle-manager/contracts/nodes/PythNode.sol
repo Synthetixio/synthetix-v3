@@ -14,7 +14,9 @@ library PythNode {
 
     int256 public constant PRECISION = 18;
 
-    function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
+    function process(
+        bytes memory parameters
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         (address pythAddress, bytes32 priceFeedId, bool useEma) = abi.decode(
             parameters,
             (address, bytes32, bool)
@@ -32,7 +34,9 @@ library PythNode {
         return NodeOutput.Data(price, pythData.publishTime, 0, 0);
     }
 
-    function isValid(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+    function isValid(
+        NodeDefinition.Data memory nodeDefinition
+    ) internal view returns (bool valid) {
         // Must have no parents
         if (nodeDefinition.parents.length > 0) {
             return false;

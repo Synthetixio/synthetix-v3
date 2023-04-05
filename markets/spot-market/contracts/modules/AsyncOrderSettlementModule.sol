@@ -41,7 +41,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external override returns (uint, OrderFees.Data memory) {
+    ) external override returns (uint finalOrderAmount, OrderFees.Data memory) {
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
             SettlementStrategy.Data storage settlementStrategy
@@ -67,7 +67,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint, OrderFees.Data memory) {
+    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -259,7 +259,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint, OrderFees.Data memory) {
+    ) private view returns (uint finalOrderAmount, OrderFees.Data memory) {
         string[] memory urls = new string[](1);
         urls[0] = settlementStrategy.url;
 
@@ -303,7 +303,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy);
     }
 
-    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
+    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8 time) {
         bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
 
         // get last 8 bytes
@@ -311,7 +311,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     }
 
     // borrowed from PythNode.sol
-    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
+    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256 scaledPrice) {
         int256 factor = PRECISION + expo;
         return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());
     }
