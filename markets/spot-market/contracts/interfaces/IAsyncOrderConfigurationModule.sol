@@ -24,7 +24,7 @@ interface IAsyncOrderConfigurationModule {
     event SettlementStrategyUpdated(
         uint128 indexed synthMarketId,
         uint256 indexed strategyId,
-        bool indexed enabled
+        bool enabled
     );
 
     /**
