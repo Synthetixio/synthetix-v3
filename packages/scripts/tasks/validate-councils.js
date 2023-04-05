@@ -5,7 +5,7 @@ const logger = require('@synthetixio/core-js/utils/io/logger');
 const { fromUnixTimestamp, toUnixTimestamp } = require('@synthetixio/core-js/utils/misc/dates');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
-const getPackageProxy = require('../internal/get-package-proxy');
+const { getPackageProxy } = require('../internal/packages');
 const importJson = require('../internal/import-json');
 
 task('validate-councils')

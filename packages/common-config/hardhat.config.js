@@ -36,6 +36,11 @@ module.exports = {
       url: process.env.NETWORK_ENDPOINT || 'https://mainnet.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
+    ['optimistic-mainnet-fork']: {
+      chainId: 10,
+      url: `https://rpc.tenderly.co/fork/${process.env.TENDERLY_FORK_ID}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
     ['mainnet']: {
       chainId: 1,
       url: process.env.NETWORK_ENDPOINT || 'http://127.0.0.1:8545/',
