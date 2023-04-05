@@ -56,7 +56,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0));
+        .commitOrder(marketId(), 3, bn(1000), strategyId, bn(0));
       startTime = await getTime(provider());
     });
 
