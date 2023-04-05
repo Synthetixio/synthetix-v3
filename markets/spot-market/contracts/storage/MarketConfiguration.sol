@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../interfaces/external/IFeeCollector.sol";
 import "./SpotMarketFactory.sol";
-import "./AsyncOrder.sol";
+import "./Wrapper.sol";
 import "./OrderFees.sol";
 import "../utils/SynthUtil.sol";
 import "../utils/MathUtil.sol";
@@ -63,8 +63,7 @@ library MarketConfiguration {
          */
         uint skewScale;
         /**
-         * @dev The fee collector gets sent the calculated fees and can keep some of them to distribute in whichever way it wants.
-         * The rest of the fees are deposited into the market manager.
+         * @dev Once fees are calculated, the quote function is called with the totalFees.  The returned quoted amount is then transferred to this fee collector address
          */
         IFeeCollector feeCollector;
         /**
@@ -420,7 +419,7 @@ library MarketConfiguration {
     /**
      * @dev First sends referrer fees based on fixed fee amount and configured %
      * Then if total fees for transaction are greater than 0, gets quote from
-     * fee collector and calls collectFees to send fees to fee collector
+     * fee collector and transfers the quoted amount to fee collector
      */
     function collectFees(
         Data storage self,
@@ -444,7 +443,7 @@ library MarketConfiguration {
         if (totalFees <= 0 || address(self.feeCollector) == address(0)) {
             return referrerFeesCollected;
         }
-        // remove fees sent to referrer when calculating fees to collect
+        // remove fees sent to referrer before getting quote from fee collector
         totalFees -= referrerFeesCollected.toInt();
 
         uint totalFeesUint = totalFees.toUint();
@@ -456,13 +455,20 @@ library MarketConfiguration {
             uint8(transactionType)
         );
 
-        // if transaction is a sell or a wrapper type, we need to withdraw the fees from the market manager
-        if (Transaction.isSell(transactionType) || Transaction.isWrapper(transactionType)) {
-            factory.synthetix.withdrawMarketUsd(marketId, address(this), feeCollectorQuote);
+        if (feeCollectorQuote > totalFeesUint) {
+            feeCollectorQuote = totalFeesUint;
         }
 
-        // solhint-disable-next-line numcast/safe-cast
-        self.feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
+        // if transaction is a sell or a wrapper type, we need to withdraw the fees from the market manager
+        if (Transaction.isSell(transactionType) || Transaction.isWrapper(transactionType)) {
+            factory.synthetix.withdrawMarketUsd(
+                marketId,
+                address(self.feeCollector),
+                feeCollectorQuote
+            );
+        } else {
+            factory.usdToken.transfer(address(self.feeCollector), feeCollectorQuote);
+        }
 
         return referrerFeesCollected + feeCollectorQuote;
     }

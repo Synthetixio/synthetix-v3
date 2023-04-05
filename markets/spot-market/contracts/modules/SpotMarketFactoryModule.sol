@@ -1,16 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../storage/Price.sol";
 import "../storage/MarketConfiguration.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
@@ -19,13 +18,13 @@ import "../interfaces/ISpotMarketFactoryModule.sol";
  * @dev See ISpotMarketFactoryModule.
  */
 contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsModule {
-    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using AssociatedSystem for AssociatedSystem.Data;
-    using MarketConfiguration for MarketConfiguration.Data;
     using Price for Price.Data;
+    using AssociatedSystem for AssociatedSystem.Data;
+    using DecimalMath for uint256;
 
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
+    uint8 private constant _SYNTH_IMPLEMENTATION_DECIMALS = 18;
 
     /**
      * @inheritdoc ISpotMarketFactoryModule
@@ -58,6 +57,10 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
+        if (synthOwner == address(0)) {
+            revert InvalidMarketOwner();
+        }
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.checkSynthImplemention();
 
@@ -67,7 +70,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
             SynthUtil.getSystemId(synthMarketId),
             tokenName,
             tokenSymbol,
-            18,
+            _SYNTH_IMPLEMENTATION_DECIMALS,
             spotMarketFactory.synthImplementation
         );
 

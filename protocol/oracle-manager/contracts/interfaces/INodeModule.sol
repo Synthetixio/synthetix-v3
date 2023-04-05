@@ -22,11 +22,6 @@ interface INodeModule {
     error UnprocessableNode(bytes32 nodeId);
 
     /**
-     * @notice Thrown when a node is registered with an invalid external node
-     */
-    error IncorrectExternalNodeInterface(address externalNode);
-
-    /**
      * @notice Emitted when `registerNode` is called.
      * @param nodeId The id of the registered node.
      * @param nodeType The nodeType assigned to this node.
