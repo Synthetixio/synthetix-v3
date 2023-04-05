@@ -21,9 +21,7 @@ library StalenessCircuitBreakerNode {
         return parentNodeOutputs[1];
     }
 
-    function isValid(
-        NodeDefinition.Data memory nodeDefinition
-    ) internal pure returns (bool valid) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {
         // Must have 1-2 parents
         if (!(nodeDefinition.parents.length == 1 || nodeDefinition.parents.length == 2)) {
             return false;
