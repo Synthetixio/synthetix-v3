@@ -72,7 +72,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
      * @inheritdoc IDecayTokenModule
      */
     function setDecayRate(uint256 _rate) external _advanceEpoch {
-        if ((10 ** 18) < (_rate / SECONDS_PER_YEAR)) {
+        if ((10 ** 18) * SECONDS_PER_YEAR < _rate) {
             revert InvalidDecayRate();
         }
         OwnableStorage.onlyOwner();
