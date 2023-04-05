@@ -34,6 +34,9 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
 
     const cannonInfo = await hre.run('cannon:build', params);
 
+    // We have to manually write the deployments files instead of using the cannon:inspect
+    // task because that task needs a local build to exist, but, we don't have it
+    // on coverage tests because they use --network hardhat instead of --network cannon
     await _writeDeploymentsFromOutput(writeDeployments, cannonInfo.outputs.contracts);
 
     const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
