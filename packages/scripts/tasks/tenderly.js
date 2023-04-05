@@ -68,13 +68,23 @@ task('tenderly:upgrade-proxies')
     }
   });
 
+/**
+ * Set temporarily the current signer as owner of the proxy and execute the given function.
+ * After the function is executed, the original owner is restored.
+ * @param {Proxy} Proxy
+ * @param {() => {}} fn
+ */
 async function asOwner(Proxy, fn) {
-  const location = getStorageSlot('io.synthetix.ownable');
-  const offset = 2;
   const signer = await hre.ethers.provider.getSigner();
   const signerAddress = (await signer.getAddress()).toLowerCase().slice(2);
 
+  // Storage slot location of the value for OwnableStorage.owner
+  const location = getStorageSlot('io.synthetix.ownable');
+  const offset = 2;
+
   const originalValue = await hre.ethers.provider.getStorageAt(Proxy.address, location);
+
+  // Create a new storage value with the signer address as the owner
   const newValue = [
     originalValue.slice(0, originalValue.length - signerAddress.length - offset),
     signerAddress,
@@ -82,9 +92,11 @@ async function asOwner(Proxy, fn) {
   ].join('');
 
   try {
+    // Set it before executing the function
     await hre.ethers.provider.send('tenderly_setStorageAt', [Proxy.address, location, newValue]);
     await fn();
   } finally {
+    // Restore the original owner always
     await hre.ethers.provider.send('tenderly_setStorageAt', [
       Proxy.address,
       location,
