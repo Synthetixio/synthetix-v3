@@ -76,7 +76,7 @@ contract WrapperModule is IWrapperModule {
         );
 
         if (amountToMint < minAmountReceived) {
-            revert InsufficientAmountReceived(minAmountReceived, amountToMint256);
+            revert InsufficientAmountReceived(minAmountReceived, amountToMint);
         }
 
         uint256 collectedFees = config.collectFees(
@@ -88,7 +88,7 @@ contract WrapperModule is IWrapperModule {
             Transaction.Type.WRAP
         );
 
-        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint256);
+        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
         emit SynthWrapped(marketId, amountToMint, fees, collectedFees);
     }
