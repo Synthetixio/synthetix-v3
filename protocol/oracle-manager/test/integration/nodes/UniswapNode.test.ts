@@ -58,8 +58,10 @@ describe('UniswapNode', function () {
   });
 
   it('retrieves the latest price', async () => {
+    const timestamp = (await hre.ethers.provider.getBlock('latest')).timestamp;
     const output = await NodeModule.process(nodeId);
+
     assertBn.equal(output.price, 1000000);
-    assertBn.equal(output.timestamp, 0);
+    assertBn.equal(timestamp, output.timestamp);
   });
 });
