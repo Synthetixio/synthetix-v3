@@ -4,9 +4,9 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../interfaces/IAsyncOrderSettlementModule.sol";
-import "../interfaces/external/IChainlinkVerifier.sol";
 import "../interfaces/external/IPythVerifier.sol";
 import "../storage/AsyncOrderClaim.sol";
+import "../storage/Price.sol";
 import "../storage/SettlementStrategy.sol";
 import "../storage/AsyncOrderConfiguration.sol";
 import "../storage/SpotMarketFactory.sol";
@@ -19,14 +19,13 @@ import "../storage/MarketConfiguration.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
-    using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
     using DecimalMath for uint256;
     using DecimalMath for int64;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using SettlementStrategy for SettlementStrategy.Data;
     using MarketConfiguration for MarketConfiguration.Data;
-    using OrderFees for OrderFees.Data;
     using AsyncOrder for AsyncOrder.Data;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
 
@@ -103,53 +102,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
                 settlementStrategy
             );
     }
-
-    /**
-     * @inheritdoc IAsyncOrderModule
-     */
-    /*
-    function settleChainlinkOrder(
-        bytes calldata result,
-        bytes calldata extraData
-    ) external override returns (uint, int, uint) {
-        (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
-        (
-            AsyncOrderClaim.Data storage asyncOrderClaim,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = _performClaimValidityChecks(marketId, asyncOrderId);
-
-        bytes memory verifierResponse = IChainlinkVerifier(
-            settlementStrategy.priceVerificationContract
-        ).verify(result);
-
-        (
-            bytes32 feedId,
-            uint32 observationsTimestamp,
-            uint64 observationsBlocknumber,
-            int192 median // TODO: why is this int192? decimals?
-        ) = abi.decode(verifierResponse, (bytes32, uint32, uint64, int192));
-
-        uint offchainPrice = uint(int(median)); // TODO: check this
-
-        settlementStrategy.checkPriceDeviation(
-            offchainPrice,
-            Price.getCurrentPrice(marketId, asyncOrderClaim.orderType)
-        );
-
-        if (observationsTimestamp < asyncOrderClaim.settlementTime) {
-            revert InvalidVerificationResponse();
-        }
-
-        return
-            _settleOrder(
-                marketId,
-                asyncOrderId,
-                offchainPrice,
-                asyncOrderClaim,
-                settlementStrategy
-            );
-    }
-    */
 
     /**
      * @dev Reusable logic used for settling orders once the appropriate checks are performed in calling functions.
@@ -282,13 +234,16 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            trader,
             asyncOrderClaim.referrer,
             spotMarketFactory,
             Transaction.Type.ASYNC_SELL
         );
 
-        spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
+        if (settlementReward > 0) {
+            spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
+        }
+
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);
     }
 
@@ -305,9 +260,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         urls[0] = settlementStrategy.url;
 
         bytes4 selector;
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.CHAINLINK) {
-            //selector = AsyncOrderModule.settleChainlinkOrder.selector;
-        } else if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
+        if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
             selector = AsyncOrderSettlementModule.settlePythOrder.selector;
         } else {
             revert SettlementStrategyNotFound(settlementStrategy.strategyType);
