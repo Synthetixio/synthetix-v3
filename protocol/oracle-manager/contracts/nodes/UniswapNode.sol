@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -58,7 +58,7 @@ library UniswapNode {
             ? price.upscale(scale.toUint())
             : price.downscale((-scale).toUint());
 
-        return NodeOutput.Data(finalPrice, 0, 0, 0);
+        return NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
     }
 
     function getQuoteAtTick(

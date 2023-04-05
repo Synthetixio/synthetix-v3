@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
-import "../interfaces/IMarketConfigurationModule.sol";
-import "../interfaces/external/IFeeCollector.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/MarketConfiguration.sol";
+import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
+import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 
 /**
  * @title Module for configuring fees for registered synth markets.

@@ -1,16 +1,16 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
-import "../interfaces/external/IFeeCollector.sol";
-import "./SpotMarketFactory.sol";
-import "./Wrapper.sol";
-import "./OrderFees.sol";
-import "../utils/SynthUtil.sol";
-import "../utils/MathUtil.sol";
-import "../utils/TransactionUtil.sol";
+import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
+import {SpotMarketFactory} from "./SpotMarketFactory.sol";
+import {Wrapper} from "./Wrapper.sol";
+import {OrderFees} from "./OrderFees.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Fee storage that tracks all fees for a given market Id.
@@ -397,15 +397,19 @@ library MarketConfiguration {
             );
             // use 100% utilization if pre-fill utilization was less than 100%
             // no fees charged below 100% utilization
-            uint256 preUtilizationDelta = preUtilization > 1e18 ? preUtilization - 1e18 : 0;
+
+            uint256 preUtilizationDelta = preUtilization > DecimalMath.UNIT
+                ? preUtilization - DecimalMath.UNIT
+                : 0;
             uint256 postUtilization = totalValueAfterFill.divDecimal(
                 leveragedDelegatedCollateralValue
             );
-            uint256 postUtilizationDelta = postUtilization - 1e18;
+            uint256 postUtilizationDelta = postUtilization - DecimalMath.UNIT;
 
             // utilization is represented as the # of percentage points above 100%
-            uint256 utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(100e18) /
-                2;
+            uint256 utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(
+                100 * DecimalMath.UNIT
+            ) / 2;
 
             utilFee = utilization.mulDecimal(self.utilizationFeeRate);
         }
