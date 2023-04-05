@@ -2,7 +2,6 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
-import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import "../interfaces/IMarketConfigurationModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
 import "../storage/SpotMarketFactory.sol";
@@ -14,7 +13,6 @@ import "../storage/MarketConfiguration.sol";
  */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using AssociatedSystem for AssociatedSystem.Data;
 
     /**
      * @inheritdoc IMarketConfigurationModule
@@ -107,10 +105,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         }
 
         MarketConfiguration.load(synthMarketId).feeCollector = IFeeCollector(feeCollector);
-
-        // set infinite approval for fee collector
-        spotMarketFactory.usdToken.approve(feeCollector, type(uint256).max);
-
         emit FeeCollectorSet(synthMarketId, feeCollector);
     }
 
