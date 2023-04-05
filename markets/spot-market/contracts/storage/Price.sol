@@ -7,7 +7,6 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./SpotMarketFactory.sol";
 import "../utils/TransactionUtil.sol";
-import "./Wrapper.sol";
 
 /**
  * @title Price storage for a specific synth market.
@@ -16,7 +15,6 @@ library Price {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
-    using SafeCastU256 for uint256;
 
     struct Data {
         /**

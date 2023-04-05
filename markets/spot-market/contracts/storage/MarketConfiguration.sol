@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../interfaces/external/IFeeCollector.sol";
 import "./SpotMarketFactory.sol";
-import "./AsyncOrder.sol";
+import "./Wrapper.sol";
 import "./OrderFees.sol";
 import "../utils/SynthUtil.sol";
 import "../utils/MathUtil.sol";
