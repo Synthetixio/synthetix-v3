@@ -116,7 +116,7 @@ library AsyncOrderClaim {
         }
     }
 
-    function isEligibleForCancellation(
+    function validateCancellationEligibility(
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {

@@ -44,9 +44,7 @@ library PriceDeviationCircuitBreakerNode {
         return x >= 0 ? x : -x;
     }
 
-    function validate(
-        NodeDefinition.Data memory nodeDefinition
-    ) internal pure returns (bool valid) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {
         // Must have 2-3 parents
         if (!(nodeDefinition.parents.length == 2 || nodeDefinition.parents.length == 3)) {
             return false;

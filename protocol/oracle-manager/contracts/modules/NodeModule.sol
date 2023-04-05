@@ -95,7 +95,7 @@ contract NodeModule is INodeModule {
         }
 
         // Validate that the node definition
-        if (!_validateNodeDefinition(nodeDefinition)) {
+        if (!_isValidNodeDefinition(nodeDefinition)) {
             revert InvalidNodeDefinition(nodeDefinition);
         }
 
@@ -169,25 +169,25 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns the output of a specified node.
      */
-    function _validateNodeDefinition(
+    function _isValidNodeDefinition(
         NodeDefinition.Data memory nodeDefinition
     ) internal returns (bool valid) {
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
-            return ReducerNode.validate(nodeDefinition);
+            return ReducerNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
-            return ExternalNode.validate(nodeDefinition);
+            return ExternalNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
-            return ChainlinkNode.validate(nodeDefinition);
+            return ChainlinkNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
-            return UniswapNode.validate(nodeDefinition);
+            return UniswapNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
-            return PythNode.validate(nodeDefinition);
+            return PythNode.isValid(nodeDefinition);
         } else if (
             nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
         ) {
-            return PriceDeviationCircuitBreakerNode.validate(nodeDefinition);
+            return PriceDeviationCircuitBreakerNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
-            return StalenessCircuitBreakerNode.validate(nodeDefinition);
+            return StalenessCircuitBreakerNode.isValid(nodeDefinition);
         }
         return false;
     }
