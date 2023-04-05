@@ -16,7 +16,7 @@ library OrderFees {
         int256 wrapperFees;
     }
 
-    function total(Data memory self) internal pure returns (int256) {
+    function total(Data memory self) internal pure returns (int256 amount) {
         return
             self.fixedFees.toInt() +
             self.utilizationFees.toInt() +

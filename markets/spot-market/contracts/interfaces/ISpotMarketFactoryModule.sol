@@ -101,7 +101,7 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param marketId id of the market
      * @return synthAddress address of the proxy for the synth
      */
-    function getSynth(uint128 marketId) external view returns (address);
+    function getSynth(uint128 marketId) external view returns (address synthAddress);
 
     /**
      * @notice Update the price data for a given market.

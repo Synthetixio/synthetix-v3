@@ -51,10 +51,10 @@ interface IAsyncOrderConfigurationModule {
      * @notice Returns the settlement strategy data for given market/strategy id.
      * @param marketId Id of the market associated with the strategy.
      * @param strategyId id of the strategy.
-     * @return SettlementStrategy.Data
+     * @return settlementStrategy
      */
     function getSettlementStrategy(
         uint128 marketId,
         uint256 strategyId
-    ) external view returns (SettlementStrategy.Data memory);
+    ) external view returns (SettlementStrategy.Data memory settlementStrategy);
 }

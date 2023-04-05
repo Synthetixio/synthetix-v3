@@ -52,7 +52,7 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     function getSettlementStrategy(
         uint128 marketId,
         uint256 strategyId
-    ) external view override returns (SettlementStrategy.Data memory) {
+    ) external view override returns (SettlementStrategy.Data memory settlementStrategy) {
         return AsyncOrderConfiguration.load(marketId).settlementStrategies[strategyId];
     }
 }

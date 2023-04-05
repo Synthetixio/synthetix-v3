@@ -156,7 +156,7 @@ interface IAtomicOrderModule {
      * @param   maxSynthAmount  max amount of synth trader is willing to use to receive the specified USD amount
      * @param   referrer  optional address of the referrer, for fee share
      * @return  synthToBurn amount of synth charged for the specified usd amount
-     * @return  OrderFees.Data  breakdown of all the fees incurred for the transaction
+     * @return  fees breakdown of all the fees incurred for the transaction
      */
     function sellExactOut(
         uint128 marketId,
