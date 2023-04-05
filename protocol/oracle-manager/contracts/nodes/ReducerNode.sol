@@ -157,9 +157,7 @@ library ReducerNode {
         if (i < right) quickSort(arr, i, right);
     }
 
-    function validate(
-        NodeDefinition.Data memory nodeDefinition
-    ) internal pure returns (bool valid) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {
         // Must have at least 2 parents
         if (nodeDefinition.parents.length < 2) {
             return false;

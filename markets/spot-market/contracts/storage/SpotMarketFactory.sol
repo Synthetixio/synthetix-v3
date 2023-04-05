@@ -64,7 +64,7 @@ library SpotMarketFactory {
         }
     }
 
-    function isValidMarket(Data storage self, uint128 marketId) internal view {
+    function validateMarket(Data storage self, uint128 marketId) internal view {
         if (self.marketOwners[marketId] == address(0)) {
             revert InvalidMarket(marketId);
         }

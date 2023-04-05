@@ -16,7 +16,7 @@ library ExternalNode {
         return externalNode.process(prices, parameters);
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal returns (bool valid) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal returns (bool valid) {
         // Must have correct length of parameters data
         if (nodeDefinition.parameters.length < 32) {
             return false;
@@ -27,7 +27,7 @@ library ExternalNode {
             return false;
         }
 
-        if (!IExternalNode(externalNode).validate(nodeDefinition)) {
+        if (!IExternalNode(externalNode).isValid(nodeDefinition)) {
             return false;
         }
 

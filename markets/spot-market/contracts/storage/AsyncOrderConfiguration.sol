@@ -22,7 +22,7 @@ library AsyncOrderConfiguration {
 
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
 
-    function loadSettlementStrategy(
+    function validateSettlementStrategy(
         Data storage self,
         uint256 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
