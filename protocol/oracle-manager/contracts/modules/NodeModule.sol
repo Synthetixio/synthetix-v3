@@ -55,7 +55,7 @@ contract NodeModule is INodeModule {
     /**
      * @inheritdoc INodeModule
      */
-    function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory) {
+    function getNode(bytes32 nodeId) external view returns (NodeDefinition.Data memory) {
         return _getNode(nodeId);
     }
 
@@ -69,7 +69,7 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns node definition data for a given node id.
      */
-    function _getNode(bytes32 nodeId) internal pure returns (NodeDefinition.Data storage) {
+    function _getNode(bytes32 nodeId) internal view returns (NodeDefinition.Data storage) {
         return NodeDefinition.load(nodeId);
     }
 
