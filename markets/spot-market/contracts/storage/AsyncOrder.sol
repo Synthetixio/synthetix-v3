@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../utils/SynthUtil.sol";
 
@@ -9,8 +8,6 @@ import "../utils/SynthUtil.sol";
  * @title Async order top level data storage
  */
 library AsyncOrder {
-    using ERC20Helper for address;
-
     struct Data {
         /**
          * @dev tracking total shares for share calculation of synths escrowed.  instead of storing direct synth amounts, we store shares in case of token decay.
@@ -47,7 +44,7 @@ library AsyncOrder {
                 token.balanceOf(address(this));
 
         asyncOrderData.totalEscrowedSynthShares += sharesAmount;
-        address(token).safeTransferFrom(from, address(this), synthAmount);
+        token.transferFrom(from, address(this), synthAmount);
     }
 
     function burnFromEscrow(uint128 marketId, uint256 sharesAmount) internal {
@@ -65,7 +62,7 @@ library AsyncOrder {
 
         asyncOrderData.totalEscrowedSynthShares -= sharesAmount;
 
-        address(SynthUtil.getToken(marketId)).safeTransferFrom(address(this), to, synthAmount);
+        SynthUtil.getToken(marketId).transferFrom(address(this), to, synthAmount);
     }
 
     function convertSharesToSynth(
