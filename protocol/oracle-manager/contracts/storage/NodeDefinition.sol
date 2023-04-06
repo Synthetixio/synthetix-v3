@@ -38,7 +38,7 @@ library NodeDefinition {
         node.parents = nodeDefinition.parents;
     }
 
-    function getId(Data memory nodeDefinition) internal pure returns (bytes32) {
+    function getId(Data memory nodeDefinition) internal pure returns (bytes32 id) {
         return
             keccak256(
                 abi.encode(

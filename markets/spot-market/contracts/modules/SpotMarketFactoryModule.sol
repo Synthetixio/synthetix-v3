@@ -1,17 +1,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
-import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import "../utils/SynthUtil.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/Price.sol";
-import "../storage/MarketConfiguration.sol";
-import "../interfaces/ISpotMarketFactoryModule.sol";
+import {AssociatedSystemsModule, AssociatedSystem} from "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {Price} from "../storage/Price.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {ISpotMarketFactoryModule} from "../interfaces/ISpotMarketFactoryModule.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 /**
  * @title Module for registering synths.  The factory tracks all synths in the system and consolidates implementation for all synths.
@@ -19,6 +24,7 @@ import "../interfaces/ISpotMarketFactoryModule.sol";
  */
 contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
+    using AssociatedSystem for AssociatedSystem.Data;
     using Price for Price.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using DecimalMath for uint256;
@@ -54,7 +60,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
-    ) external override returns (uint128) {
+    ) external override returns (uint128 synthMarketId) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
         if (synthOwner == address(0)) {
@@ -64,7 +70,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.checkSynthImplemention();
 
-        uint128 synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
+        synthMarketId = spotMarketFactory.synthetix.registerMarket(address(this));
 
         _initOrUpgradeToken(
             SynthUtil.getSystemId(synthMarketId),
@@ -79,16 +85,16 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
         emit SynthRegistered(synthMarketId);
-
-        return synthMarketId;
     }
 
-    function name(uint128 marketId) external view returns (string memory) {
+    function name(uint128 marketId) external view returns (string memory marketName) {
         string memory tokenName = SynthUtil.getToken(marketId).name();
         return string.concat(tokenName, " Spot Market");
     }
 
-    function reportedDebt(uint128 marketId) external view override returns (uint256) {
+    function reportedDebt(
+        uint128 marketId
+    ) external view override returns (uint256 reportedDebtAmount) {
         uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
@@ -98,9 +104,9 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
      * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
      * @dev collateral leverage is defaulted to 1 on registration of a new market
      */
-    function locked(uint128 marketId) external view returns (uint256) {
-        uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
-        uint collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;
+    function locked(uint128 marketId) external view returns (uint256 lockedAmount) {
+        uint256 totalBalance = SynthUtil.getToken(marketId).totalSupply();
+        uint256 collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;
 
         return
             collateralLeverage == 0
@@ -113,7 +119,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function getSynth(uint128 marketId) external view override returns (address) {
+    function getSynth(uint128 marketId) external view override returns (address synthAddress) {
         return address(SynthUtil.getToken(marketId));
     }
 
@@ -124,13 +130,9 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         bytes32 synthId = SynthUtil.getSystemId(marketId);
-        _upgradeToken(synthId, synthImpl);
+        AssociatedSystem.Data storage associatedSystem = _upgradeToken(synthId, synthImpl);
 
-        emit SynthImplementationUpgraded(
-            marketId,
-            address(SynthUtil.getToken(marketId)),
-            synthImpl
-        );
+        emit SynthImplementationUpgraded(marketId, address(associatedSystem.asToken()), synthImpl);
     }
 
     /**
@@ -201,7 +203,9 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function getMarketOwner(uint128 synthMarketId) public view override returns (address) {
+    function getMarketOwner(
+        uint128 synthMarketId
+    ) public view override returns (address marketOwner) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         return spotMarketFactory.marketOwners[synthMarketId];
     }
@@ -211,7 +215,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(IERC165) returns (bool) {
+    ) public view virtual override(IERC165) returns (bool isSupported) {
         return
             interfaceId == type(IMarket).interfaceId ||
             interfaceId == this.supportsInterface.selector;
