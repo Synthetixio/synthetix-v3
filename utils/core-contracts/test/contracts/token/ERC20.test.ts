@@ -3,7 +3,6 @@ import { TransactionReceipt } from '@ethersproject/abstract-provider';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { ERC20Mock } from '../../../typechain-types';
