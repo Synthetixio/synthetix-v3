@@ -78,7 +78,7 @@ library Distribution {
         Data storage self,
         bytes32 actorId,
         uint256 newActorSharesD18
-    ) internal returns (int valueChangeD18) {
+    ) internal returns (int256 valueChangeD18) {
         valueChangeD18 = getActorValueChange(self, actorId);
 
         DistributionActor.Data storage actor = self.actorInfo[actorId];
@@ -97,7 +97,7 @@ library Distribution {
     function accumulateActor(
         Data storage self,
         bytes32 actorId
-    ) internal returns (int valueChangeD18) {
+    ) internal returns (int256 valueChangeD18) {
         DistributionActor.Data storage actor = self.actorInfo[actorId];
         return _updateLastValuePerShare(self, actor, actor.sharesD18);
     }
@@ -114,7 +114,7 @@ library Distribution {
     function getActorValueChange(
         Data storage self,
         bytes32 actorId
-    ) internal view returns (int valueChangeD18) {
+    ) internal view returns (int256 valueChangeD18) {
         return _getActorValueChange(self, self.actorInfo[actorId]);
     }
 
@@ -133,7 +133,7 @@ library Distribution {
      * @param self The distribution whose value per share is being queried.
      * @return The value per share in 18 decimal precision.
      */
-    function getValuePerShare(Data storage self) internal view returns (int) {
+    function getValuePerShare(Data storage self) internal view returns (int256) {
         return self.valuePerShareD27.to256().downscale(DecimalMath.PRECISION_FACTOR);
     }
 
@@ -141,7 +141,7 @@ library Distribution {
         Data storage self,
         DistributionActor.Data storage actor,
         uint256 newActorShares
-    ) private returns (int valueChangeD18) {
+    ) private returns (int256 valueChangeD18) {
         valueChangeD18 = _getActorValueChange(self, actor);
 
         actor.lastValuePerShareD27 = newActorShares == 0
@@ -152,7 +152,7 @@ library Distribution {
     function _getActorValueChange(
         Data storage self,
         DistributionActor.Data storage actor
-    ) private view returns (int valueChangeD18) {
+    ) private view returns (int256 valueChangeD18) {
         int256 deltaValuePerShareD27 = self.valuePerShareD27 - actor.lastValuePerShareD27;
 
         int256 changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.toInt();

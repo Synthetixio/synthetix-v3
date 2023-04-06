@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/IDecayTokenModule.sol";
+import {IDecayTokenModule} from "@synthetixio/core-modules/contracts/interfaces/IDecayTokenModule.sol";
 
 /**
  * @title Module for market synth tokens

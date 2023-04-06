@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../interfaces/external/ISynthetixSystem.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 
 /**
  * @title Wrapper library servicing the wrapper module
@@ -11,7 +11,11 @@ library Wrapper {
     /**
      * @notice Thrown when user tries to wrap more than the set supply cap for the market.
      */
-    error WrapperExceedsMaxAmount(uint maxWrappableAmount, uint currentSupply, uint amountToWrap);
+    error WrapperExceedsMaxAmount(
+        uint256 maxWrappableAmount,
+        uint256 currentSupply,
+        uint256 amountToWrap
+    );
 
     struct Data {
         /**
@@ -38,7 +42,7 @@ library Wrapper {
         uint256 wrapAmount,
         ISynthetixSystem synthetix
     ) internal view {
-        uint currentDepositedCollateral = synthetix.getMarketCollateralAmount(
+        uint256 currentDepositedCollateral = synthetix.getMarketCollateralAmount(
             marketId,
             self.wrapCollateralType
         );
@@ -61,7 +65,7 @@ library Wrapper {
         self.maxWrappableAmount = maxWrappableAmount;
     }
 
-    function isValidWrapper(Data storage self) internal view {
+    function validateWrapper(Data storage self) internal view {
         if (self.wrapCollateralType == address(0)) {
             revert InvalidCollateralType();
         }
