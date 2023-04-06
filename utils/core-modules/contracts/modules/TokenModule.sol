@@ -30,7 +30,7 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public virtual onlyIfNotInitialized {
+    ) external virtual onlyIfNotInitialized {
         OwnableStorage.onlyOwner();
 
         _initialize(tokenName, tokenSymbol, tokenDecimals);
