@@ -344,6 +344,7 @@ library Wrapper {
 // @custom:artifact contracts/utils/TransactionUtil.sol:Transaction
 library Transaction {
     enum Type {
+        NULL,
         BUY,
         SELL,
         ASYNC_BUY,

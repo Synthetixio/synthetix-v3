@@ -8,6 +8,7 @@ library Transaction {
     error InvalidAsyncTransactionType(Type transactionType);
 
     enum Type {
+        NULL, // reserved for 0 (default value)
         BUY,
         SELL,
         ASYNC_BUY,
