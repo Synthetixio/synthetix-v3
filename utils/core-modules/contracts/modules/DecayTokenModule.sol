@@ -14,6 +14,8 @@ import "./TokenModule.sol";
 contract DecayTokenModule is IDecayTokenModule, TokenModule {
     using DecimalMath for uint256;
 
+    uint private constant SECONDS_PER_YEAR = 31536000;
+
     modifier _advanceEpoch() {
         _;
         DecayToken.Data storage store = DecayToken.load();
@@ -78,6 +80,9 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
      * @inheritdoc IDecayTokenModule
      */
     function setDecayRate(uint256 _rate) external _advanceEpoch {
+        if ((10 ** 18) * SECONDS_PER_YEAR < _rate) {
+            revert InvalidDecayRate();
+        }
         OwnableStorage.onlyOwner();
         DecayToken.Data storage store = DecayToken.load();
         store.totalSupplyAtEpochStart = totalSupply();
@@ -158,7 +163,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     }
 
     function _ratePerSecond() internal view returns (uint256) {
-        return decayRate() / 31536000;
+        return decayRate() / SECONDS_PER_YEAR;
     }
 
     function _tokensPerShare() internal view returns (uint256) {
