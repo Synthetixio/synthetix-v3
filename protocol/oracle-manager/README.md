@@ -2,7 +2,7 @@
 
 The oracle manager is a stateless system which allows price data from multiple sources to be combined using a variety of strategies and reverts to be triggered (i.e. "circuit breaking") under various conditions.
 
-The system consists of nodes which can registered by anyone using the `registerNode()` function. This returns a `bytes32` identifier for the node, determined by the parameters passed to the function:
+The system consists of nodes which can be registered by anyone using the `registerNode()` function. This returns a `bytes32` identifier for the node, determined by the parameters passed to the function:
 
 - `uint256 nodeType` - The ID corresponding to the desired the node type. (See below for a comprehensive list.)
 - `bytes parameters` - The parameter data for the selected node type. (This can be generated using `abi.encode()`.)
@@ -37,6 +37,8 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 ### Uniswap Node
 
 The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). **Note that the timestamp returned by this node is always block.timestamp.**
+
+Use the Uniswap Node with caution. For instance, the implementation of `block.timestamp` on various L2s and the depth of the liquidity available in pools may result in unreliable prices.
 
 - `nodeType` Value: 4
 - Parameters:
@@ -86,7 +88,7 @@ The Price Deviation Circuit Breaker Node passes through value of the first paren
 
 ### Staleness Circuit Breaker Node
 
-The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolerance. Otherwise, it returns the second parent if specified or reverts with `StalenessToleranceExceeded`.
+The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolerance. Otherwise, it returns the second parent if specified or reverts with `StalenessToleranceExceeded`. _Note that the second parent will be returned regardless of its staleness. If this is a concern, the second parent should be another Staleness Circuit Breaker._
 
 - `nodeType` Value: 7
 - Parameters:

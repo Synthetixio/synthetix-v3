@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
-import "../interfaces/IMarketConfigurationModule.sol";
-import "../interfaces/external/IFeeCollector.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/MarketConfiguration.sol";
+import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
+import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 
 /**
  * @title Module for configuring fees for registered synth markets.
@@ -17,7 +17,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external override {
+    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).atomicFixedFee = atomicFixedFee;
@@ -28,7 +28,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAsyncFixedFee(uint128 synthMarketId, uint asyncFixedFee) external override {
+    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).asyncFixedFee = asyncFixedFee;
@@ -39,7 +39,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMarketSkewScale(uint128 synthMarketId, uint skewScale) external override {
+    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).skewScale = skewScale;
@@ -52,7 +52,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
      */
     function setMarketUtilizationFees(
         uint128 synthMarketId,
-        uint utilizationFeeRate
+        uint256 utilizationFeeRate
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -66,7 +66,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
      */
     function setCollateralLeverage(
         uint128 synthMarketId,
-        uint collateralLeverage
+        uint256 collateralLeverage
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         MarketConfiguration.isValidLeverage(collateralLeverage);
@@ -82,7 +82,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function setCustomTransactorFees(
         uint128 synthMarketId,
         address transactor,
-        uint fixedFeeAmount
+        uint256 fixedFeeAmount
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         MarketConfiguration.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
@@ -111,7 +111,11 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external override {
+    function setWrapperFees(
+        uint128 synthMarketId,
+        int256 wrapFee,
+        int256 unwrapFee
+    ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(
@@ -129,7 +133,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function updateReferrerShare(
         uint128 synthMarketId,
         address referrer,
-        uint sharePercentage
+        uint256 sharePercentage
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 

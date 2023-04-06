@@ -86,4 +86,19 @@ describe('StalenessCircuitBreakerNode', function () {
     // Return the ID
     return await NodeModule.getNodeId(NodeTypes.EXTERNAL, NodeParameters, []);
   }
+
+  describe('register a circuit breaker with an unprocessable parent', async () => {
+    it('should revert', async () => {
+      const params = abi.encode(['uint'], [50]);
+      const parents = [
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+      ];
+      await assertRevert(
+        NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, params, parents),
+        'UnprocessableNode',
+        NodeModule
+      );
+    });
+  });
 });

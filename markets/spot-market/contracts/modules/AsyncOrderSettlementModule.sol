@@ -1,17 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../interfaces/IAsyncOrderSettlementModule.sol";
-import "../interfaces/external/IPythVerifier.sol";
-import "../storage/AsyncOrderClaim.sol";
-import "../storage/Price.sol";
-import "../storage/SettlementStrategy.sol";
-import "../storage/AsyncOrderConfiguration.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/AsyncOrder.sol";
-import "../storage/MarketConfiguration.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
+import {AsyncOrderClaim} from "../storage/AsyncOrderClaim.sol";
+import {Price} from "../storage/Price.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {OrderFees} from "../storage/OrderFees.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
+import {AsyncOrderConfiguration} from "../storage/AsyncOrderConfiguration.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
 
 /**
  * @title Module to settle asyncronous orders
@@ -37,7 +41,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external override returns (uint, OrderFees.Data memory) {
+    ) external override returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
             SettlementStrategy.Data storage settlementStrategy
@@ -63,7 +67,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint, OrderFees.Data memory) {
+    ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -86,7 +90,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
-        uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
+        uint256 offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
 
         settlementStrategy.checkPriceDeviation(
             offchainPrice,
@@ -109,14 +113,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function _settleOrder(
         uint128 marketId,
         uint128 asyncOrderId,
-        uint price,
+        uint256 price,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees) {
+    ) private returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         // set settledAt to avoid any potential reentrancy
         asyncOrderClaim.settledAt = block.timestamp;
 
-        uint collectedFees;
+        uint256 collectedFees;
         if (asyncOrderClaim.orderType == Transaction.Type.ASYNC_BUY) {
             (finalOrderAmount, fees, collectedFees) = _settleBuyOrder(
                 marketId,
@@ -151,13 +155,16 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
      */
     function _settleBuyOrder(
         uint128 marketId,
-        uint price,
-        uint settlementReward,
+        uint256 price,
+        uint256 settlementReward,
         AsyncOrderClaim.Data storage asyncOrderClaim
-    ) private returns (uint returnSynthAmount, OrderFees.Data memory fees, uint collectedFees) {
+    )
+        private
+        returns (uint256 returnSynthAmount, OrderFees.Data memory fees, uint256 collectedFees)
+    {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         // remove keeper fee
-        uint amountUsable = asyncOrderClaim.amountEscrowed - settlementReward;
+        uint256 amountUsable = asyncOrderClaim.amountEscrowed - settlementReward;
         address trader = asyncOrderClaim.owner;
 
         MarketConfiguration.Data storage config;
@@ -195,14 +202,17 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
      */
     function _settleSellOrder(
         uint128 marketId,
-        uint price,
-        uint settlementReward,
+        uint256 price,
+        uint256 settlementReward,
         AsyncOrderClaim.Data storage asyncOrderClaim
-    ) private returns (uint finalOrderAmount, OrderFees.Data memory fees, uint collectedFees) {
+    )
+        private
+        returns (uint256 finalOrderAmount, OrderFees.Data memory fees, uint256 collectedFees)
+    {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         // get amount of synth from escrow
         // can't use amountEscrowed directly because the token could have decayed
-        uint synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
+        uint256 synthAmount = AsyncOrder.load(marketId).convertSharesToSynth(
             marketId,
             asyncOrderClaim.amountEscrowed
         );
@@ -255,7 +265,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint, OrderFees.Data memory) {
+    ) private view returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         string[] memory urls = new string[](1);
         urls[0] = settlementStrategy.url;
 
@@ -299,7 +309,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         asyncOrderClaim.checkWithinSettlementWindow(settlementStrategy);
     }
 
-    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
+    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8 time) {
         bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
 
         // get last 8 bytes
@@ -307,7 +317,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     }
 
     // borrowed from PythNode.sol
-    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
+    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256 scaledPrice) {
         int256 factor = PRECISION + expo;
         return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());
     }
