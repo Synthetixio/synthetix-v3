@@ -78,7 +78,9 @@ describe('SpotMarketFactory', () => {
       it('emits event', async () => {
         await assertEvent(
           tx,
-          'SynthImplementationUpgraded(1, "0x6196F7E7496a7d8fC73e556DF23011d43392a09F", "0xe9D713be74592723F294Fb2DdFd06E550eEC28c1")',
+          `SynthImplementationUpgraded(${marketId()}, "${await systems().SpotMarket.getSynth(
+            marketId()
+          )}", "${systems().USDRouter.address}")`,
           systems().SpotMarket
         );
       });
@@ -94,6 +96,8 @@ describe('SpotMarketFactory', () => {
     });
 
     describe('success', () => {
+      before(restore);
+
       before('set decay', async () => {
         await systems().SpotMarket.connect(marketOwner).setDecayRate(marketId(), 1234);
       });
