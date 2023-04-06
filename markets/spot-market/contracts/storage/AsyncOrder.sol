@@ -51,7 +51,7 @@ library AsyncOrder {
                 token.balanceOf(address(this));
 
         token.transferFrom(from, address(this), synthAmount);
-        
+
         asyncOrderData.totalEscrowedSynthShares += sharesAmount;
 
         // sanity check to ensure the right shares amount is calculated
