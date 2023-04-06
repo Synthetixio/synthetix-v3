@@ -64,4 +64,16 @@ describe('UniswapNode', function () {
     assertBn.equal(output.price, 1000000);
     assertBn.equal(timestamp, output.timestamp);
   });
+
+  it('reverts with secondAgo = 0', async () => {
+    const NodeParameters = abi.encode(
+      ['address', 'address', 'uint8', 'uint8', 'address', 'uint32'],
+      [token0.address, token1.address, 6, 18, MockObservable.address, 0]
+    );
+
+    await assertRevert(
+      NodeModule.registerNode(NodeTypes.UNISWAP, NodeParameters, []),
+      'InvalidNodeDefinition'
+    );
+  });
 });
