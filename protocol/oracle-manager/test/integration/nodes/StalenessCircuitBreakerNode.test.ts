@@ -7,7 +7,7 @@ import NodeTypes from '../mixins/Node.types';
 
 describe('StalenessCircuitBreakerNode', function () {
   const { getContract, getSigners, getProvider } = bootstrap();
-  let owner, staleNodeId, freshNodeId, fallbackNodeId;
+  let owner, staleNodeId, freshNodeId, fallbackNodeId, zeroPriceNodeId;
 
   const abi = ethers.utils.defaultAbiCoder;
   let NodeModule: ethers.Contract;
@@ -22,6 +22,7 @@ describe('StalenessCircuitBreakerNode', function () {
     staleNodeId = await deployAndRegisterExternalNode(100, currentTimestamp - 100);
     freshNodeId = await deployAndRegisterExternalNode(200, currentTimestamp - 10);
     fallbackNodeId = await deployAndRegisterExternalNode(300, currentTimestamp);
+    zeroPriceNodeId = await deployAndRegisterExternalNode(0, currentTimestamp);
   });
 
   it('provides the output of the first parent if fresh', async () => {
@@ -58,6 +59,23 @@ describe('StalenessCircuitBreakerNode', function () {
     const nodeOutput = await NodeModule.process(nodeId);
     assertBn.equal(fallbackOutput.price, nodeOutput.price);
     assertBn.equal(fallbackOutput.timestamp, nodeOutput.timestamp);
+  });
+
+  it('return 0 if second parent output is 0 and first parent output is stale', async () => {
+    const NodeParameters = abi.encode(['uint'], [stalenessTolerance]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      staleNodeId,
+      zeroPriceNodeId,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      staleNodeId,
+      zeroPriceNodeId,
+    ]);
+
+    const zeroPriceOutput = await NodeModule.process(zeroPriceNodeId);
+    const nodeOutput = await NodeModule.process(nodeId);
+    assertBn.equal(0, nodeOutput.price);
+    assertBn.equal(zeroPriceOutput.timestamp, nodeOutput.timestamp);
   });
 
   it('throws if stale and no second parent', async () => {
