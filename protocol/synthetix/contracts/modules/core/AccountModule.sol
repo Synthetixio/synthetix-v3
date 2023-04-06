@@ -71,7 +71,7 @@ contract AccountModule is IAccountModule {
         Account.Data storage account = Account.load(accountId);
 
         address[] memory permissionedAddresses = account.rbac.permissionAddresses.values();
-        for (uint i = 0; i < permissionedAddresses.length; i++) {
+        for (uint256 i = 0; i < permissionedAddresses.length; i++) {
             account.rbac.revokeAllPermissions(permissionedAddresses[i]);
         }
 

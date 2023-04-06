@@ -76,6 +76,11 @@ library SetUtil {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/modules/DecayTokenModule.sol:DecayTokenModule
+contract DecayTokenModule {
+    uint private constant SECONDS_PER_YEAR = 31536000;
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
 library AssociatedSystem {
     bytes32 public constant KIND_ERC20 = "erc20";
@@ -185,6 +190,7 @@ contract AsyncOrderSettlementModule {
 // @custom:artifact contracts/modules/SpotMarketFactoryModule.sol:SpotMarketFactoryModule
 contract SpotMarketFactoryModule {
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
+    uint8 private constant _SYNTH_IMPLEMENTATION_DECIMALS = 18;
 }
 
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
@@ -238,16 +244,16 @@ library AsyncOrderConfiguration {
 // @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
 library MarketConfiguration {
     struct Data {
-        mapping(address => uint) atomicFixedFeeOverrides;
-        uint atomicFixedFee;
-        uint asyncFixedFee;
-        uint utilizationFeeRate;
-        uint collateralLeverage;
-        int wrapFixedFee;
-        int unwrapFixedFee;
-        uint skewScale;
+        mapping(address => uint256) atomicFixedFeeOverrides;
+        uint256 atomicFixedFee;
+        uint256 asyncFixedFee;
+        uint256 utilizationFeeRate;
+        uint256 collateralLeverage;
+        int256 wrapFixedFee;
+        int256 unwrapFixedFee;
+        uint256 skewScale;
         address feeCollector;
-        mapping(address => uint) referrerShare;
+        mapping(address => uint256) referrerShare;
     }
     function load(uint128 marketId) internal pure returns (Data storage marketConfig) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
@@ -285,7 +291,6 @@ library Price {
 library SettlementStrategy {
     enum Type {
         ONCHAIN,
-        CHAINLINK,
         PYTH
     }
     struct Data {
@@ -297,6 +302,8 @@ library SettlementStrategy {
         string url;
         uint256 settlementReward;
         uint256 priceDeviationTolerance;
+        uint256 minimumUsdExchangeAmount;
+        uint256 maxRoundingLoss;
         bool disabled;
     }
 }
