@@ -5,7 +5,7 @@ import "./ITokenModule.sol";
 
 /**
  * @title Module wrapping an ERC20 token implementation.
- * @notice the contract uses A = P(1 + r/n)**nt formula compounded every second to calculate decay amount at any moment
+ * @notice the contract uses A = P(1 - r)**t (r = decay rate) formula compounded every second to calculate decay amount at any moment
  */
 interface IDecayTokenModule is ITokenModule {
     /**
