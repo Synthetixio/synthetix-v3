@@ -81,6 +81,11 @@ contract DecayTokenModule {
     uint private constant SECONDS_PER_YEAR = 31536000;
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/modules/TokenModule.sol:TokenModule
+contract TokenModule {
+    bytes32 internal constant _INITIALIZED_NAME = "TokenModule";
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
 library AssociatedSystem {
     bytes32 public constant KIND_ERC20 = "erc20";
@@ -126,6 +131,19 @@ library FeatureFlag {
     }
     function load(bytes32 featureName) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.FeatureFlag", featureName));
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
+// @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
+library Initialized {
+    struct Data {
+        bool initialized;
+    }
+    function load(bytes32 id) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
         assembly {
             store.slot := s
         }
