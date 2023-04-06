@@ -13,7 +13,7 @@ library Transaction {
         UNWRAP
     }
 
-    function isAsyncTransaction(Type orderType) internal pure {
+    function validateAsyncTransaction(Type orderType) internal pure {
         if (orderType != Type.ASYNC_BUY && orderType != Type.ASYNC_SELL) {
             revert InvalidAsyncTransactionType(orderType);
         }

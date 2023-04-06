@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -24,7 +24,9 @@ library UniswapNode {
 
     uint8 public constant PRECISION = 18;
 
-    function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
+    function process(
+        bytes memory parameters
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         (
             address token,
             address stablecoin,
@@ -83,7 +85,7 @@ library UniswapNode {
         }
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal view returns (bool valid) {
         // Must have no parents
         if (nodeDefinition.parents.length > 0) {
             return false;
