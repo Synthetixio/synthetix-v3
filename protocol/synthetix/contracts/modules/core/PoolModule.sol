@@ -118,6 +118,7 @@ contract PoolModule is IPoolModule {
     ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
+        pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         // Note: This follows the same pattern as Pool.recalculateVaultCollateral(),
@@ -173,6 +174,9 @@ contract PoolModule is IPoolModule {
                 revert CapacityLocked(potentiallyLockedMarkets[i]);
             }
         }
+
+        // solhint-disable-next-line numcast/safe-cast
+        pool.lastConfigurationTime = uint64(block.timestamp);
 
         emit PoolConfigurationSet(poolId, newMarketConfigurations, msg.sender);
     }
