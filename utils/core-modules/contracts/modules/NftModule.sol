@@ -32,7 +32,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
         string memory tokenName,
         string memory tokenSymbol,
         string memory uri
-    ) public {
+    ) public onlyIfNotInitialized {
         OwnableStorage.onlyOwner();
 
         _initialize(tokenName, tokenSymbol, uri);
