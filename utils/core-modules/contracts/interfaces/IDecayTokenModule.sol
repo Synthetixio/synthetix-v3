@@ -9,6 +9,11 @@ import "./ITokenModule.sol";
  */
 interface IDecayTokenModule is ITokenModule {
     /**
+     * @notice Emitted when the decay rate is set to a value higher than the maximum
+     */
+    error InvalidDecayRate();
+
+    /**
      * @notice Updates the decay rate for a year
      * @param _rate The decay rate with 18 decimals (1e16 means 1% decay per year).
      */

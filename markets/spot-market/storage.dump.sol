@@ -76,6 +76,11 @@ library SetUtil {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/modules/DecayTokenModule.sol:DecayTokenModule
+contract DecayTokenModule {
+    uint private constant SECONDS_PER_YEAR = 31536000;
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
 library AssociatedSystem {
     bytes32 public constant KIND_ERC20 = "erc20";
