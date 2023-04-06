@@ -90,7 +90,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     });
 
     it('expect process to return first node price since prices are 50% different', async () => {
-      await assertRevert(NodeModule.process(nodeId), 'DeviationToleranceExceeded', NodeModule);
+      await assertRevert(NodeModule.process(nodeId), 'InvalidInputPrice', NodeModule);
     });
   });
 
