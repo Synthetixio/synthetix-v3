@@ -24,6 +24,8 @@ const settlementStrategyWithMin = {
   minimumUsdExchangeAmount: bn(0.000001),
 };
 
+const ASYNC_SELL_TRANSACTION_TYPE = 4;
+
 describe('AsyncOrderModule escrow tests', () => {
   const { systems, signers, marketId, aggregator, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
@@ -91,7 +93,7 @@ describe('AsyncOrderModule escrow tests', () => {
       // order 1
       await systems().SpotMarket.connect(attacker).commitOrder(
         marketId(),
-        3,
+        ASYNC_SELL_TRANSACTION_TYPE,
         1, // 1 wei
         strategyIdWithNoMin,
         Ethers.constants.MaxUint256,
@@ -111,7 +113,7 @@ describe('AsyncOrderModule escrow tests', () => {
             .SpotMarket.connect(trader)
             .commitOrder(
               marketId(),
-              3,
+              ASYNC_SELL_TRANSACTION_TYPE,
               bn(50),
               strategyIdWithNoMin,
               bn(40_000),
@@ -130,7 +132,7 @@ describe('AsyncOrderModule escrow tests', () => {
       await assertRevert(
         systems().SpotMarket.connect(attacker).commitOrder(
           marketId(),
-          3,
+          ASYNC_SELL_TRANSACTION_TYPE,
           1, // 1 wei
           strategyIdWithMin,
           Ethers.constants.MaxUint256,
@@ -149,7 +151,7 @@ describe('AsyncOrderModule escrow tests', () => {
         .SpotMarket.connect(attacker)
         .commitOrder(
           marketId(),
-          3,
+          ASYNC_SELL_TRANSACTION_TYPE,
           settlementStrategyWithMin.minimumUsdExchangeAmount,
           strategyIdWithMin,
           Ethers.constants.MaxUint256,
@@ -170,7 +172,7 @@ describe('AsyncOrderModule escrow tests', () => {
         .SpotMarket.connect(trader)
         .commitOrder(
           marketId(),
-          3,
+          ASYNC_SELL_TRANSACTION_TYPE,
           bn(50),
           strategyIdWithMin,
           bn(40_000),
