@@ -43,6 +43,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert ExceedsMaxUsdAmount(maxUsdAmount, usdAmountCharged);
         }
 
+        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount);
+        if (sellUsd > usdAmountCharged) {
+            revert InvalidPrices();
+        }
+
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmountCharged);
 
         uint256 collectedFees = config.collectFees(
@@ -102,6 +107,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, synthAmount);
         }
 
+        (uint sellUsd, ) = quoteSellExactIn(marketId, synthAmount);
+        if (sellUsd > usdAmount) {
+            revert InvalidPrices();
+        }
+
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
@@ -125,7 +135,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function quoteBuyExactIn(
         uint128 marketId,
         uint256 usdAmount
-    ) external view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+    ) public view override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().validateMarket(marketId);
 
         (synthAmount, fees, ) = MarketConfiguration.quoteBuyExactIn(
@@ -161,7 +171,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
     function quoteSellExactIn(
         uint128 marketId,
         uint256 synthAmount
-    ) external view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
+    ) public view override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.load().validateMarket(marketId);
 
         (returnAmount, fees, ) = MarketConfiguration.quoteSellExactIn(
@@ -228,6 +238,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InsufficientAmountReceived(minAmountReceived, returnAmount);
         }
 
+        (uint buySynths, ) = quoteBuyExactIn(marketId, returnAmount);
+        if (buySynths > synthAmount) {
+            revert InvalidPrices();
+        }
+
         // Burn synths provided
         // Burn after calculation because skew is calculating using total supply prior to fill
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
@@ -269,6 +284,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         if (synthToBurn > maxSynthAmount) {
             revert ExceedsMaxSynthAmount(maxSynthAmount, synthToBurn);
+        }
+
+        (uint buySynths, ) = quoteBuyExactIn(marketId, usdAmount);
+        if (buySynths > synthToBurn) {
+            revert InvalidPrices();
         }
 
         SynthUtil.getToken(marketId).burn(msg.sender, synthToBurn);
