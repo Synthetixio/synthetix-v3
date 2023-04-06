@@ -120,7 +120,7 @@ contract NodeModule is INodeModule {
      * @dev Returns whether a given node ID has already been registered.
      */
     function _isNodeRegistered(bytes32 nodeId) internal view returns (bool nodeRegistered) {
-        NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
+        NodeDefinition.Data memory nodeDefinition = NodeDefinition.load(nodeId);
         return (nodeDefinition.nodeType != NodeDefinition.NodeType.NONE);
     }
 
@@ -128,7 +128,7 @@ contract NodeModule is INodeModule {
      * @dev Returns the output of a specified node.
      */
     function _process(bytes32 nodeId) internal view returns (NodeOutput.Data memory price) {
-        NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
+        NodeDefinition.Data memory nodeDefinition = NodeDefinition.load(nodeId);
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
             return
@@ -172,6 +172,15 @@ contract NodeModule is INodeModule {
     function _isValidNodeDefinition(
         NodeDefinition.Data memory nodeDefinition
     ) internal returns (bool valid) {
+        if (
+            nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER ||
+            nodeDefinition.nodeType == NodeDefinition.NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER ||
+            nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER
+        ) {
+            //check if parents are processable
+            _processParentNodeOutputs(nodeDefinition);
+        }
+
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
             return ReducerNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL) {
@@ -196,7 +205,7 @@ contract NodeModule is INodeModule {
      * @dev helper function that calls process on parent nodes.
      */
     function _processParentNodeOutputs(
-        NodeDefinition.Data storage nodeDefinition
+        NodeDefinition.Data memory nodeDefinition
     ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
         parentNodeOutputs = new NodeOutput.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {

@@ -114,4 +114,19 @@ describe('PriceDeviationCircuitBreakerNode', function () {
       assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
     });
   });
+
+  describe('register a circuit breaker with an unprocessable parent', async () => {
+    it('should revert', async () => {
+      const params = abi.encode(['uint256'], [bn(0.4)]);
+      const parents = [
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+      ];
+      await assertRevert(
+        NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents),
+        'UnprocessableNode',
+        NodeModule
+      );
+    });
+  });
 });
