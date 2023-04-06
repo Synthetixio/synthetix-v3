@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./SettlementStrategy.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
 
 library AsyncOrderConfiguration {
     struct Data {
@@ -22,7 +22,7 @@ library AsyncOrderConfiguration {
 
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
 
-    function loadSettlementStrategy(
+    function validateSettlementStrategy(
         Data storage self,
         uint256 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {

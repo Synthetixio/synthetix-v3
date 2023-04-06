@@ -41,6 +41,11 @@ library Pool {
      */
     error PoolAlreadyExists(uint128 poolId);
 
+    /**
+     * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
+     */
+    error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
+
     struct Data {
         /**
          * @dev Numeric identifier for the pool. Must be unique.
@@ -100,6 +105,10 @@ library Pool {
          * Vaults track user collateral and debt using a debt distribution, which is connected to the debt distribution chain.
          */
         mapping(address => Vault.Data) vaults;
+        uint64 lastConfigurationTime;
+        uint64 __reserved1;
+        uint64 __reserved2;
+        uint64 __reserved3;
     }
 
     /**
@@ -346,6 +355,20 @@ library Pool {
         return Market.load(0);
     }
 
+    function getRequiredMinDelegationTime(
+        Data storage self
+    ) internal view returns (uint32 requiredMinDelegateTime) {
+        for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
+            uint32 marketMinDelegateTime = Market
+                .load(self.marketConfigurations[i].marketId)
+                .minDelegateTime;
+
+            if (marketMinDelegateTime > requiredMinDelegateTime) {
+                requiredMinDelegateTime = marketMinDelegateTime;
+            }
+        }
+    }
+
     /**
      * @dev Returns the debt of the vault that tracks the given collateral type.
      *
@@ -419,6 +442,20 @@ library Pool {
     function onlyPoolOwner(uint128 poolId, address caller) internal view {
         if (Pool.load(poolId).owner != caller) {
             revert AccessError.Unauthorized(caller);
+        }
+    }
+
+    function requireMinDelegationTimeElapsed(
+        Data storage self,
+        uint64 lastDelegationTime
+    ) internal view {
+        uint32 requiredMinDelegationTime = getRequiredMinDelegationTime(self);
+        if (block.timestamp < lastDelegationTime + requiredMinDelegationTime) {
+            revert MinDelegationTimeoutPending(
+                self.id,
+                // solhint-disable-next-line numcast/safe-cast
+                uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
+            );
         }
     }
 }

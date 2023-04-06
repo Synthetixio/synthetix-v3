@@ -60,7 +60,7 @@ library CollateralConfiguration {
      * @param tokenAmount The amount of tokens that were attempted to be converted.
      * @param decimals The number of decimals of the token that was attempted to be converted.
      */
-    error PrecisionLost(uint tokenAmount, uint8 decimals);
+    error PrecisionLost(uint256 tokenAmount, uint8 decimals);
 
     struct Data {
         /**

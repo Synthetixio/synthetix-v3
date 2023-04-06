@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 import NodeOperations from '../mixins/Node.operations';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('ReducerNode', function () {
   const { getContract, getSigners } = bootstrap();
@@ -195,4 +196,19 @@ describe('ReducerNode', function () {
     // Return the ID
     return await NodeModule.getNodeId(NodeTypes.EXTERNAL, NodeParameters, []);
   }
+
+  describe('register a reducer with an unprocessable parent', async () => {
+    it('should revert', async () => {
+      const params = abi.encode(['uint'], [NodeOperations.MIN]);
+      const parents = [
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+      ];
+      await assertRevert(
+        NodeModule.registerNode(NodeTypes.REDUCER, params, parents),
+        'UnprocessableNode',
+        NodeModule
+      );
+    });
+  });
 });

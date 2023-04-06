@@ -13,5 +13,5 @@ interface IExternalNode is IERC165 {
         bytes memory parameters
     ) external view returns (NodeOutput.Data memory);
 
-    function validate(NodeDefinition.Data memory nodeDefinition) external returns (bool);
+    function isValid(NodeDefinition.Data memory nodeDefinition) external returns (bool);
 }
