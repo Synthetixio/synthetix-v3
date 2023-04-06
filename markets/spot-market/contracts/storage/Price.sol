@@ -1,13 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "./SpotMarketFactory.sol";
-import "../utils/TransactionUtil.sol";
-import "./Wrapper.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SpotMarketFactory} from "./SpotMarketFactory.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Price storage for a specific synth market.
@@ -16,7 +15,6 @@ library Price {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
-    using SafeCastU256 for uint256;
 
     struct Data {
         /**
@@ -60,7 +58,7 @@ library Price {
     function getCurrentPrice(
         uint128 marketId,
         Transaction.Type transactionType
-    ) internal view returns (uint price) {
+    ) internal view returns (uint256 price) {
         return getCurrentPriceData(marketId, transactionType).price.toUint();
     }
 
@@ -79,7 +77,7 @@ library Price {
      */
     function usdSynthExchangeRate(
         uint128 marketId,
-        uint amountUsd,
+        uint256 amountUsd,
         Transaction.Type transactionType
     ) internal view returns (uint256 synthAmount) {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
@@ -92,7 +90,7 @@ library Price {
      */
     function synthUsdExchangeRate(
         uint128 marketId,
-        uint sellAmount,
+        uint256 sellAmount,
         Transaction.Type transactionType
     ) internal view returns (uint256 amountUsd) {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
@@ -102,7 +100,7 @@ library Price {
     /**
      * @dev Utility function that returns the amount denominated with 18 decimals of precision.
      */
-    function scale(int256 amount, uint decimals) internal pure returns (int256) {
+    function scale(int256 amount, uint256 decimals) internal pure returns (int256 scaledAmount) {
         return (decimals > 18 ? amount.downscale(decimals - 18) : amount.upscale(18 - decimals));
     }
 
@@ -110,7 +108,7 @@ library Price {
      * @dev Utility function that receive amount with 18 decimals
      * returns the amount denominated with number of decimals as arg of 18.
      */
-    function scaleTo(int256 amount, uint decimals) internal pure returns (int256) {
+    function scaleTo(int256 amount, uint256 decimals) internal pure returns (int256 scaledAmount) {
         return (decimals > 18 ? amount.upscale(decimals - 18) : amount.downscale(18 - decimals));
     }
 }

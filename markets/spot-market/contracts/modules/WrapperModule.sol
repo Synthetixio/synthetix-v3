@@ -1,26 +1,25 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../interfaces/IWrapperModule.sol";
-import "../storage/Wrapper.sol";
-import "../storage/Price.sol";
-import "../storage/MarketConfiguration.sol";
-import "../utils/SynthUtil.sol";
+import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {IWrapperModule} from "../interfaces/IWrapperModule.sol";
+import {OrderFees} from "../storage/OrderFees.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {Wrapper} from "../storage/Wrapper.sol";
+import {Price} from "../storage/Price.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
 
 /**
  * @title Module for wrapping and unwrapping collateral for synths.
  * @dev See IWrapperModule.
  */
 contract WrapperModule is IWrapperModule {
-    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using MarketConfiguration for MarketConfiguration.Data;
-    using OrderFees for OrderFees.Data;
-    using Price for Price.Data;
     using Wrapper for Wrapper.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
@@ -46,12 +45,12 @@ contract WrapperModule is IWrapperModule {
     function wrap(
         uint128 marketId,
         uint256 wrapAmount,
-        uint minAmountReceived
+        uint256 minAmountReceived
     ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
-        spotMarketFactory.isValidMarket(marketId);
-        wrapperStore.isValidWrapper();
+        spotMarketFactory.validateMarket(marketId);
+        wrapperStore.validateWrapper();
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
         uint256 wrapAmountD18 = Price
@@ -80,7 +79,7 @@ contract WrapperModule is IWrapperModule {
             revert InsufficientAmountReceived(minAmountReceived, amountToMint);
         }
 
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
@@ -100,12 +99,12 @@ contract WrapperModule is IWrapperModule {
     function unwrap(
         uint128 marketId,
         uint256 unwrapAmount,
-        uint minAmountReceived
+        uint256 minAmountReceived
     ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
-        spotMarketFactory.isValidMarket(marketId);
-        wrapperStore.isValidWrapper();
+        spotMarketFactory.validateMarket(marketId);
+        wrapperStore.validateWrapper();
 
         ITokenModule synth = SynthUtil.getToken(marketId);
 
@@ -130,7 +129,7 @@ contract WrapperModule is IWrapperModule {
         if (returnCollateralAmount < minAmountReceived) {
             revert InsufficientAmountReceived(minAmountReceived, returnCollateralAmount);
         }
-        uint collectedFees = config.collectFees(
+        uint256 collectedFees = config.collectFees(
             marketId,
             fees,
             msg.sender,
