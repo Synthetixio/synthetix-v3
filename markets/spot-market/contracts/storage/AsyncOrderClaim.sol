@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./SettlementStrategy.sol";
-import "./AsyncOrder.sol";
-import "../utils/TransactionUtil.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {AsyncOrder} from "./AsyncOrder.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Async order claim data storage
@@ -71,7 +71,7 @@ library AsyncOrderClaim {
         uint256 minimumSettlementAmount,
         address owner,
         address referrer
-    ) internal returns (Data storage) {
+    ) internal returns (Data storage claim) {
         AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
         uint128 claimId = ++asyncOrderData.totalClaims;
 
@@ -108,19 +108,19 @@ library AsyncOrderClaim {
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint startTime = claim.settlementTime;
-        uint expirationTime = startTime + settlementStrategy.settlementWindowDuration;
+        uint256 startTime = claim.settlementTime;
+        uint256 expirationTime = startTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < startTime || block.timestamp >= expirationTime) {
             revert OutsideSettlementWindow(block.timestamp, startTime, expirationTime);
         }
     }
 
-    function isEligibleForCancellation(
+    function validateCancellationEligibility(
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
+        uint256 expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < expirationTime) {
             revert IneligibleForCancellation(block.timestamp, expirationTime);

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/SettlementStrategy.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 
 /**
  * @title Module for updating configuration in relation to async order modules.
@@ -12,7 +12,7 @@ interface IAsyncOrderConfigurationModule {
      * @param synthMarketId adds settlement strategy to this specific market.
      * @param strategyId the newly created settlement strategy id.
      */
-    event SettlementStrategyAdded(uint128 synthMarketId, uint256 strategyId);
+    event SettlementStrategyAdded(uint128 indexed synthMarketId, uint256 indexed strategyId);
 
     /**
      * @notice Gets fired when settlement strategy is enabled/disabled.
@@ -21,7 +21,11 @@ interface IAsyncOrderConfigurationModule {
      * @param strategyId id of the strategy.
      * @param enabled true/false.
      */
-    event SettlementStrategyUpdated(uint128 synthMarketId, uint256 strategyId, bool enabled);
+    event SettlementStrategyUpdated(
+        uint128 indexed synthMarketId,
+        uint256 indexed strategyId,
+        bool enabled
+    );
 
     /**
      * @notice Adds new settlement strategy to the specified market id.
@@ -51,10 +55,10 @@ interface IAsyncOrderConfigurationModule {
      * @notice Returns the settlement strategy data for given market/strategy id.
      * @param marketId Id of the market associated with the strategy.
      * @param strategyId id of the strategy.
-     * @return SettlementStrategy.Data
+     * @return settlementStrategy
      */
     function getSettlementStrategy(
         uint128 marketId,
         uint256 strategyId
-    ) external view returns (SettlementStrategy.Data memory);
+    ) external view returns (SettlementStrategy.Data memory settlementStrategy);
 }
