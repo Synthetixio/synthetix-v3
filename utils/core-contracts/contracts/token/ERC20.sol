@@ -224,7 +224,7 @@ contract ERC20 is IERC20 {
         }
 
         //If decimals is already initialized, it can not change
-        if(store.decimals != 0 && tokenDecimals != store.decimals) {
+        if (store.decimals != 0 && tokenDecimals != store.decimals) {
             revert InitError.AlreadyInitialized();
         }
 
