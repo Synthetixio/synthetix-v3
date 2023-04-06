@@ -22,11 +22,6 @@ interface INodeModule {
     error UnprocessableNode(bytes32 nodeId);
 
     /**
-     * @notice Thrown when a node is registered with an invalid external node
-     */
-    error IncorrectExternalNodeInterface(address externalNode);
-
-    /**
      * @notice Emitted when `registerNode` is called.
      * @param nodeId The id of the registered node.
      * @param nodeType The nodeType assigned to this node.
@@ -45,38 +40,38 @@ interface INodeModule {
      * @param nodeType The nodeType assigned to this node.
      * @param parameters The parameters assigned to this node.
      * @param parents The parents assigned to this node.
-     * @return The id of the registered node.
+     * @return nodeId The id of the registered node.
      */
     function registerNode(
         NodeDefinition.NodeType nodeType,
         bytes memory parameters,
         bytes32[] memory parents
-    ) external returns (bytes32);
+    ) external returns (bytes32 nodeId);
 
     /**
      * @notice Returns the ID of a node, whether or not it has been registered.
      * @param parents The parents assigned to this node.
      * @param nodeType The nodeType assigned to this node.
      * @param parameters The parameters assigned to this node.
-     * @return The id of the node.
+     * @return nodeId The id of the node.
      */
     function getNodeId(
         NodeDefinition.NodeType nodeType,
         bytes memory parameters,
         bytes32[] memory parents
-    ) external returns (bytes32);
+    ) external returns (bytes32 nodeId);
 
     /**
      * @notice Returns a node's definition (type, parameters, and parents)
      * @param nodeId The node ID
-     * @return The node's definition data
+     * @return node The node's definition data
      */
-    function getNode(bytes32 nodeId) external view returns (NodeDefinition.Data memory);
+    function getNode(bytes32 nodeId) external view returns (NodeDefinition.Data memory node);
 
     /**
      * @notice Returns a node current output data
      * @param nodeId The node ID
-     * @return The node's output data
+     * @return node The node's output data
      */
-    function process(bytes32 nodeId) external view returns (NodeOutput.Data memory);
+    function process(bytes32 nodeId) external view returns (NodeOutput.Data memory node);
 }

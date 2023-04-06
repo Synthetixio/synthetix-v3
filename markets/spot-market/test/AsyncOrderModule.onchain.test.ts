@@ -15,7 +15,12 @@ const settlementStrategy = {
   url: '',
   settlementReward: bn(5),
   priceDeviationTolerance: bn(0.01),
+  minimumUsdExchangeAmount: bn(0.000001),
+  maxRoundingLoss: bn(0.000001),
 };
+
+const ASYNC_BUY_TRANSACTION = 3,
+  ASYNC_SELL_TRANSACTION = 4;
 
 describe('AsyncOrderModule onchain', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -51,7 +56,14 @@ describe('AsyncOrderModule onchain', () => {
   describe('commitOrder', () => {
     it('reverts on invalid market', async () => {
       await assertRevert(
-        systems().SpotMarket.commitOrder(25, 2, bn(1000), 1, bn(1), ethers.constants.AddressZero),
+        systems().SpotMarket.commitOrder(
+          25,
+          ASYNC_BUY_TRANSACTION,
+          bn(1000),
+          1,
+          bn(1),
+          ethers.constants.AddressZero
+        ),
         'InvalidMarket'
       );
     });
@@ -60,7 +72,7 @@ describe('AsyncOrderModule onchain', () => {
       await assertRevert(
         systems().SpotMarket.commitOrder(
           marketId(),
-          2,
+          ASYNC_BUY_TRANSACTION,
           bn(1000),
           5,
           bn(1),
@@ -74,7 +86,7 @@ describe('AsyncOrderModule onchain', () => {
       await assertRevert(
         systems().SpotMarket.commitOrder(
           marketId(),
-          0,
+          1,
           bn(1000),
           5,
           bn(1),
@@ -89,7 +101,14 @@ describe('AsyncOrderModule onchain', () => {
         await assertRevert(
           systems()
             .SpotMarket.connect(trader1)
-            .commitOrder(marketId(), 2, bn(1), strategyId, bn(1), ethers.constants.AddressZero),
+            .commitOrder(
+              marketId(),
+              ASYNC_BUY_TRANSACTION,
+              bn(1),
+              strategyId,
+              bn(1),
+              ethers.constants.AddressZero
+            ),
           'InvalidCommitmentAmount'
         );
       });
@@ -102,13 +121,22 @@ describe('AsyncOrderModule onchain', () => {
           await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
           commitTxn = await systems()
             .SpotMarket.connect(trader1)
-            .commitOrder(marketId(), 2, bn(1000), 0, bn(0.8), ethers.constants.AddressZero);
+            .commitOrder(
+              marketId(),
+              ASYNC_BUY_TRANSACTION,
+              bn(1000),
+              0,
+              bn(0.8),
+              ethers.constants.AddressZero
+            );
         });
 
         it('emits event', async () => {
           await assertEvent(
             commitTxn,
-            `OrderCommitted(${marketId()}, 2, ${bn(1000)}, 1, "${await trader1.getAddress()}"`,
+            `OrderCommitted(${marketId()}, ${ASYNC_BUY_TRANSACTION}, ${bn(
+              1000
+            )}, 1, "${await trader1.getAddress()}"`,
             systems().SpotMarket
           );
         });
@@ -184,13 +212,22 @@ describe('AsyncOrderModule onchain', () => {
         await synth.connect(trader1).approve(systems().SpotMarket.address, bn(0.5));
         commitTxn = await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 3, bn(0.5), strategyId, bn(200), ethers.constants.AddressZero);
+          .commitOrder(
+            marketId(),
+            ASYNC_SELL_TRANSACTION,
+            bn(0.5),
+            strategyId,
+            bn(200),
+            ethers.constants.AddressZero
+          );
       });
 
       it('emits event', async () => {
         await assertEvent(
           commitTxn,
-          `OrderCommitted(${marketId()}, 3, ${bn(0.5)}, 2, "${await trader1.getAddress()}"`,
+          `OrderCommitted(${marketId()}, ${ASYNC_SELL_TRANSACTION}, ${bn(
+            0.5
+          )}, 2, "${await trader1.getAddress()}"`,
           systems().SpotMarket
         );
       });

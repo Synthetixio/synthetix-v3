@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./SettlementStrategy.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
 
 library AsyncOrderConfiguration {
     struct Data {
@@ -21,29 +21,18 @@ library AsyncOrderConfiguration {
     }
 
     error InvalidSettlementStrategy(uint256 settlementStrategyId);
-    error InvalidCommitmentAmount(uint amount, uint settlementReward);
 
-    function isValidSettlementStrategy(
+    function validateSettlementStrategy(
         Data storage self,
         uint256 settlementStrategyId
-    ) internal view {
+    ) internal view returns (SettlementStrategy.Data storage strategy) {
         if (settlementStrategyId >= self.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
 
-        if (self.settlementStrategies[settlementStrategyId].disabled) {
+        strategy = self.settlementStrategies[settlementStrategyId];
+        if (strategy.disabled) {
             revert InvalidSettlementStrategy(settlementStrategyId);
-        }
-    }
-
-    function isValidAmount(
-        Data storage self,
-        uint256 settlementStrategyId,
-        uint256 amount
-    ) internal view {
-        uint settlementReward = self.settlementStrategies[settlementStrategyId].settlementReward;
-        if (amount <= settlementReward) {
-            revert InvalidCommitmentAmount(amount, settlementReward);
         }
     }
 }

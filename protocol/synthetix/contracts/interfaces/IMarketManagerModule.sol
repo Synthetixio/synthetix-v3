@@ -112,7 +112,7 @@ interface IMarketManagerModule {
      */
     function getMarketFees(
         uint128 marketId,
-        uint amount
+        uint256 amount
     ) external view returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount);
 
     /**

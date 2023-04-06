@@ -24,7 +24,7 @@ interface IRewardDistributor is IERC165 {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint newShares
+        uint256 newShares
     ) external;
 
     /// @notice Address to ERC-20 token distributed by this distributor, for display purposes only

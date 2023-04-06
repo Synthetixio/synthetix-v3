@@ -1,14 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/AsyncOrderConfiguration.sol";
-import "../storage/AsyncOrder.sol";
-import "../interfaces/IAsyncOrderModule.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {AsyncOrderClaim} from "../storage/AsyncOrderClaim.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
+import {AsyncOrderConfiguration} from "../storage/AsyncOrderConfiguration.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {Price} from "../storage/Price.sol";
+import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 
 /**
  * @title Module to process asyncronous orders
@@ -16,14 +18,10 @@ import "../interfaces/IAsyncOrderModule.sol";
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
-    using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
-    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using Price for Price.Data;
-    using DecimalMath for int64;
     using AsyncOrderClaim for AsyncOrderClaim.Data;
     using AsyncOrderConfiguration for AsyncOrderConfiguration.Data;
+    using SettlementStrategy for SettlementStrategy.Data;
 
     /**
      * @inheritdoc IAsyncOrderModule
@@ -37,17 +35,18 @@ contract AsyncOrderModule is IAsyncOrderModule {
         address referrer
     ) external override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
         // validation checks
-        Transaction.isAsyncTransaction(orderType);
-        SpotMarketFactory.load().isValidMarket(marketId);
+        Transaction.validateAsyncTransaction(orderType);
+        SpotMarketFactory.load().validateMarket(marketId);
         AsyncOrderConfiguration.Data storage asyncOrderConfiguration = AsyncOrderConfiguration.load(
             marketId
         );
-        asyncOrderConfiguration.isValidSettlementStrategy(settlementStrategyId);
+        SettlementStrategy.Data storage strategy = asyncOrderConfiguration
+            .validateSettlementStrategy(settlementStrategyId);
 
-        uint amountEscrowed;
+        uint256 amountEscrowed;
         // setup data to create async order based on transaction type
         if (orderType == Transaction.Type.ASYNC_BUY) {
-            asyncOrderConfiguration.isValidAmount(settlementStrategyId, amountProvided);
+            strategy.validateAmount(amountProvided);
             SpotMarketFactory.load().usdToken.transferFrom(
                 msg.sender,
                 address(this),
@@ -65,13 +64,18 @@ contract AsyncOrderModule is IAsyncOrderModule {
                 Transaction.Type.ASYNC_SELL
             );
 
-            // ensures that the amount provided is greater than the settlement reward
-            asyncOrderConfiguration.isValidAmount(settlementStrategyId, usdAmount);
+            // ensures that the amount provided is greater than the settlement reward + minimum sell amount
+            strategy.validateAmount(usdAmount);
             // using escrow in case of decaying token value
-            amountEscrowed = AsyncOrder.transferIntoEscrow(marketId, msg.sender, amountProvided);
+            amountEscrowed = AsyncOrder.transferIntoEscrow(
+                marketId,
+                msg.sender,
+                amountProvided,
+                strategy.maxRoundingLoss
+            );
         }
 
-        uint settlementDelay = AsyncOrderConfiguration
+        uint256 settlementDelay = AsyncOrderConfiguration
             .load(marketId)
             .settlementStrategies[settlementStrategyId]
             .settlementDelay;
@@ -104,7 +108,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         asyncOrderClaim.checkClaimValidity();
-        asyncOrderClaim.isEligibleForCancellation(
+        asyncOrderClaim.validateCancellationEligibility(
             AsyncOrderConfiguration.load(marketId).settlementStrategies[
                 asyncOrderClaim.settlementStrategyId
             ]
@@ -120,7 +124,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external pure override returns (AsyncOrderClaim.Data memory) {
+    ) external pure override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
         return AsyncOrderClaim.load(marketId, asyncOrderId);
     }
 

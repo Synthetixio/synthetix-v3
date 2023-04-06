@@ -206,7 +206,7 @@ contract MarketManagerModule is IMarketManagerModule {
      */
     function getMarketFees(
         uint128,
-        uint amount
+        uint256 amount
     ) external view override returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount) {
         depositFeeAmount = amount.mulDecimal(
             Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0)
