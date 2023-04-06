@@ -18,7 +18,7 @@ contract MockExternalNode is IExternalNode {
         return output;
     }
 
-    function validate(
+    function isValid(
         NodeDefinition.Data memory nodeDefinition
     ) external pure override returns (bool) {
         return nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL;
