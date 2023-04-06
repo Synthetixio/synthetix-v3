@@ -29,12 +29,14 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public override(TokenModule, ITokenModule) onlyIfNotInitialized {
+    ) public override(TokenModule, ITokenModule) {
         OwnableStorage.onlyOwner();
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
         DecayToken.Data storage store = DecayToken.load();
-        store.epochStart = block.timestamp;
+        if (store.epochStart == 0) {
+            store.epochStart = block.timestamp;
+        }
     }
 
     /**

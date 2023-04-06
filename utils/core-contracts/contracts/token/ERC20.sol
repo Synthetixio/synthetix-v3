@@ -223,7 +223,8 @@ contract ERC20 is IERC20 {
             );
         }
 
-        if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
+        //If decimals is already initialized, it can not change
+        if(store.decimals != 0 && tokenDecimals != store.decimals) {
             revert InitError.AlreadyInitialized();
         }
 

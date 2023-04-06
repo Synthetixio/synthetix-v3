@@ -3,6 +3,7 @@ import { TransactionReceipt } from '@ethersproject/abstract-provider';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { ERC20Mock } from '../../../typechain-types';
@@ -24,10 +25,10 @@ describe('ERC20', function () {
     await tx.wait();
   });
 
-  describe('When attempting to initialize it again', function () {
-    it('reverts', async function () {
+  describe('When attempting to initialize it again', () => {
+    it('with new decimal reverts', async () => {
       await assertRevert(
-        ERC20.initialize('Synthetix Network Token Updated', 'snx', 18),
+        ERC20.initialize('Synthetix Network Token Updated', 'snx', 19),
         'AlreadyInitialized()'
       );
     });

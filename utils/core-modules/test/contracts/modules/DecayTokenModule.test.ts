@@ -40,16 +40,28 @@ describe('DecayTokenModule', () => {
     await tx.wait();
   });
 
+  const restore = snapshotCheckpoint(getProvider);
+
   describe('When attempting to initialize it again', () => {
-    it('reverts', async () => {
+    it('with new decimal reverts', async () => {
       await assertRevert(
-        TokenModule.initialize('Synthetix Network Token Updated', 'snx', decimal),
+        TokenModule.initialize('Synthetix Network Token Updated', 'snx', decimal + 1),
         'AlreadyInitialized()'
       );
+    });
+
+    it('with the same decimal', async () => {
+      await TokenModule.initialize('Synthetix Network Token Updated', 'snx2', decimal);
+
+      assert.equal(await TokenModule.name(), 'Synthetix Network Token Updated');
+      assert.equal(await TokenModule.symbol(), 'snx2');
+      assertBn.equal(await TokenModule.decimals(), 18);
     });
   });
 
   describe('Before minting any tokens', () => {
+    before(restore);
+
     it('the total supply is 0', async () => {
       assertBn.equal(await TokenModule.totalSupply(), 0);
     });
@@ -61,8 +73,6 @@ describe('DecayTokenModule', () => {
       assertBn.equal(await TokenModule.decayRate(), decayRate);
     });
   });
-
-  const restore = snapshotCheckpoint(getProvider);
 
   describe('mint', () => {
     before('100 tokens is minted to user1', async () => {
