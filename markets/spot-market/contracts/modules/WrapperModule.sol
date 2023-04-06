@@ -110,9 +110,8 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
 
-        // transfer and burn from seller
-        synth.transferFrom(msg.sender, address(this), unwrapAmount);
-        synth.burn(address(this), unwrapAmount);
+        // burn from seller
+        synth.burn(msg.sender, unwrapAmount);
 
         MarketConfiguration.Data storage config;
         uint256 returnCollateralAmountD18;
