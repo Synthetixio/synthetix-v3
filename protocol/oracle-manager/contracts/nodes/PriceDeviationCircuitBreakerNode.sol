@@ -11,13 +11,12 @@ library PriceDeviationCircuitBreakerNode {
     using SafeCastU256 for uint256;
     using DecimalMath for int256;
 
-    error InvalidPrice();
     error DeviationToleranceExceeded(int256 deviation);
 
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal pure returns (NodeOutput.Data memory) {
+    ) internal pure returns (NodeOutput.Data memory nodeOutput) {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
         int256 primaryPrice = parentNodeOutputs[0].price;
@@ -41,11 +40,11 @@ library PriceDeviationCircuitBreakerNode {
         return parentNodeOutputs[0];
     }
 
-    function abs(int256 x) private pure returns (int256) {
+    function abs(int256 x) private pure returns (int256 result) {
         return x >= 0 ? x : -x;
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {
         // Must have 2-3 parents
         if (!(nodeDefinition.parents.length == 2 || nodeDefinition.parents.length == 3)) {
             return false;
