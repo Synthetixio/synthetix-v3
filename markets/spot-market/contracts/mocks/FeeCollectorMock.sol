@@ -17,7 +17,7 @@ contract FeeCollectorMock is IFeeCollector {
         address sender,
         uint8 tradeType
     ) external override returns (uint256) {
-        uint feeToCollect = feeAmount / 2;
+        uint256 feeToCollect = feeAmount / 2;
         return feeToCollect;
     }
 

@@ -9,8 +9,8 @@ library SettlementStrategy {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
 
-    error PriceDeviationToleranceExceeded(uint256 deviation, uint tolerance);
-    error InvalidCommitmentAmount(uint minimumAmount, uint amount);
+    error PriceDeviationToleranceExceeded(uint256 deviation, uint256 tolerance);
+    error InvalidCommitmentAmount(uint256 minimumAmount, uint256 amount);
 
     struct Data {
         /**
@@ -76,7 +76,7 @@ library SettlementStrategy {
     }
 
     function validateAmount(Data storage strategy, uint256 amount) internal view {
-        uint minimumAmount = strategy.minimumUsdExchangeAmount + strategy.settlementReward;
+        uint256 minimumAmount = strategy.minimumUsdExchangeAmount + strategy.settlementReward;
         if (amount <= minimumAmount) {
             revert InvalidCommitmentAmount(minimumAmount, amount);
         }
@@ -84,11 +84,11 @@ library SettlementStrategy {
 
     function checkPriceDeviation(
         Data storage strategy,
-        uint offchainPrice,
-        uint onchainPrice
+        uint256 offchainPrice,
+        uint256 onchainPrice
     ) internal view {
-        uint priceDeviation = MathUtil.abs(offchainPrice.toInt() - onchainPrice.toInt());
-        uint priceDeviationPercentage = priceDeviation.divDecimal(onchainPrice);
+        uint256 priceDeviation = MathUtil.abs(offchainPrice.toInt() - onchainPrice.toInt());
+        uint256 priceDeviationPercentage = priceDeviation.divDecimal(onchainPrice);
 
         if (priceDeviationPercentage > strategy.priceDeviationTolerance) {
             revert PriceDeviationToleranceExceeded(

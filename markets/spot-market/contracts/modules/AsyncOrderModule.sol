@@ -43,7 +43,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage strategy = asyncOrderConfiguration
             .validateSettlementStrategy(settlementStrategyId);
 
-        uint amountEscrowed;
+        uint256 amountEscrowed;
         // setup data to create async order based on transaction type
         if (orderType == Transaction.Type.ASYNC_BUY) {
             strategy.validateAmount(amountProvided);
@@ -75,7 +75,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        uint settlementDelay = AsyncOrderConfiguration
+        uint256 settlementDelay = AsyncOrderConfiguration
             .load(marketId)
             .settlementStrategies[settlementStrategyId]
             .settlementDelay;

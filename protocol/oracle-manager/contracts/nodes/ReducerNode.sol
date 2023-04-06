@@ -139,11 +139,11 @@ library ReducerNode {
         divPrice.timestamp = divPrice.timestamp / parentNodeOutputs.length;
     }
 
-    function quickSort(NodeOutput.Data[] memory arr, int left, int right) internal pure {
-        int i = left;
-        int j = right;
+    function quickSort(NodeOutput.Data[] memory arr, int256 left, int256 right) internal pure {
+        int256 i = left;
+        int256 j = right;
         if (i == j) return;
-        int pivot = arr[(left + (right - left) / 2).toUint()].price;
+        int256 pivot = arr[(left + (right - left) / 2).toUint()].price;
         while (i <= j) {
             while (arr[i.toUint()].price < pivot) i++;
             while (pivot < arr[j.toUint()].price) j--;
@@ -169,7 +169,7 @@ library ReducerNode {
         }
 
         // Must have valid operation
-        uint operationId = abi.decode(nodeDefinition.parameters, (uint));
+        uint256 operationId = abi.decode(nodeDefinition.parameters, (uint256));
         if (operationId > 6) {
             return false;
         }

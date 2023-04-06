@@ -22,7 +22,7 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed asyncOrderId,
         uint256 finalOrderAmount,
         OrderFees.Data fees,
-        uint collectedFees,
+        uint256 collectedFees,
         address indexed settler
     );
 
@@ -78,10 +78,10 @@ interface IAsyncOrderSettlementModule {
      * @param result result returned from the offchain lookup.
      * @param extraData extra data sent during the offchain lookup revert error.
      * @return finalOrderAmount amount returned to trader after fees.
-     * @return OrderFees.Data breakdown of all the fees incurred for the transaction.
+     * @return fees breakdown of all the fees incurred for the transaction.
      */
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory);
+    ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees);
 }
