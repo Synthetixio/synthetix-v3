@@ -12,6 +12,7 @@ library PriceDeviationCircuitBreakerNode {
     using DecimalMath for int256;
 
     error DeviationToleranceExceeded(int256 deviation);
+    error InvalidInputPrice();
 
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
@@ -30,9 +31,11 @@ library PriceDeviationCircuitBreakerNode {
                 if (parentNodeOutputs.length > 2) {
                     return parentNodeOutputs[2];
                 } else {
-                    revert DeviationToleranceExceeded(
-                        primaryPrice == 0 ? type(int256).max : difference / primaryPrice
-                    );
+                    if (primaryPrice == 0) {
+                        revert InvalidInputPrice();
+                    } else {
+                        revert DeviationToleranceExceeded(difference / abs(primaryPrice));
+                    }
                 }
             }
         }
