@@ -87,11 +87,17 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         emit SynthRegistered(synthMarketId);
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function name(uint128 marketId) external view returns (string memory marketName) {
         string memory tokenName = SynthUtil.getToken(marketId).name();
         return string.concat(tokenName, " Spot Market");
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function reportedDebt(
         uint128 marketId
     ) external view override returns (uint256 reportedDebtAmount) {
@@ -101,6 +107,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     }
 
     /**
+     * @inheritdoc IMarket
      * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
      * @dev collateral leverage is defaulted to 1 on registration of a new market
      */
@@ -126,13 +133,25 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
-        SpotMarketFactory.load().onlyMarketOwner(marketId);
+    function getSynthImpl(uint128 marketId) external view returns (address implAddress) {
+        return AssociatedSystem.load(SynthUtil.getSystemId(marketId)).impl;
+    }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function upgradeSynthImpl(uint128 marketId) external override {
+        address newImpl = SpotMarketFactory.load().synthImplementation;
         bytes32 synthId = SynthUtil.getSystemId(marketId);
-        AssociatedSystem.Data storage associatedSystem = _upgradeToken(synthId, synthImpl);
 
-        emit SynthImplementationUpgraded(marketId, address(associatedSystem.asToken()), synthImpl);
+        AssociatedSystem.Data storage associatedSystem = _upgradeToken(synthId, newImpl);
+
+        emit SynthImplementationUpgraded(marketId, address(associatedSystem.asToken()), newImpl);
+    }
+
+    function setDecayRate(uint128 marketId, uint256 rate) external override {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
+        SynthUtil.getToken(marketId).setDecayRate(rate);
     }
 
     /**
