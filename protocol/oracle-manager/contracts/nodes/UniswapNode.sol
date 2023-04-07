@@ -134,7 +134,7 @@ library UniswapNode {
             return false;
         }
 
-        // Must return relevant function without error
+        // Must call relevant function without error
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;
         secondsAgos[1] = 0;

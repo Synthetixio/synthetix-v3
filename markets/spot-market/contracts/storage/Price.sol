@@ -19,11 +19,11 @@ library Price {
     struct Data {
         /**
          * @dev The oracle manager node id used for buy transactions.
-         * currently used for calculating reported debt as well.
          */
         bytes32 buyFeedId;
         /**
          * @dev The oracle manager node id used for all non-buy transactions.
+         * @dev also used to for calculating reported debt
          */
         bytes32 sellFeedId;
     }

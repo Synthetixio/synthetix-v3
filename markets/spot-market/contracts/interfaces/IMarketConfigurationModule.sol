@@ -6,6 +6,11 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 interface IMarketConfigurationModule {
     /**
+     * @notice thrown when wrap + unwrap fees are being set to a negative value in total
+     */
+    error InvalidWrapperFees();
+
+    /**
      * @notice emitted when market utilization fees are set for specified market
      * @param synthMarketId market id
      * @param utilizationFeeRate utilization fee rate value
