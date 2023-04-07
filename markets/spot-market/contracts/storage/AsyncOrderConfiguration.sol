@@ -3,7 +3,12 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 
+/**
+ * @title Configuration for async orders
+ */
 library AsyncOrderConfiguration {
+    error InvalidSettlementStrategy(uint256 settlementStrategyId);
+
     struct Data {
         /**
          * @dev trader can specify one of these configured strategies when placing async order
@@ -20,8 +25,9 @@ library AsyncOrderConfiguration {
         }
     }
 
-    error InvalidSettlementStrategy(uint256 settlementStrategyId);
-
+    /**
+     * @notice given a strategy id, returns the entire settlement strategy struct
+     */
     function validateSettlementStrategy(
         Data storage self,
         uint256 settlementStrategyId

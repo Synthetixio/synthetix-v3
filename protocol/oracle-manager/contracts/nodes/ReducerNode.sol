@@ -105,7 +105,7 @@ library ReducerNode {
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory minPrice) {
         minPrice = parentNodeOutputs[0];
-        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+        for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
             if (parentNodeOutputs[i].price < minPrice.price) {
                 minPrice = parentNodeOutputs[i];
             }

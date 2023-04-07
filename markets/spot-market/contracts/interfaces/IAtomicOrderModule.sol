@@ -44,7 +44,7 @@ interface IAtomicOrderModule {
     );
 
     /**
-     * @notice Gets fired when buy trade is complete
+     * @notice Gets fired when sell trade is complete
      * @param synthMarketId Id of the market used for the trade.
      * @param amountReturned Amount of snxUSD returned to user based on synth provided by trader.
      * @param fees breakdown of all fees incurred for transaction.

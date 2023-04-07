@@ -26,12 +26,14 @@ type Proxies = {
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
   OracleVerifierMock: OracleVerifierMock;
+  ['synthetix.USDRouter']: SynthetixUSDProxy;
 };
 
 export type Systems = {
   SpotMarket: SpotMarketProxy;
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
+  USDRouter: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
   OracleVerifierMock: OracleVerifierMock;
@@ -60,6 +62,7 @@ before('load contracts', () => {
   contracts = {
     Core: getContract('synthetix.CoreProxy'),
     USD: getContract('synthetix.USDProxy'),
+    USDRouter: getContract('synthetix.USDRouter'),
     SpotMarket: getContract('SpotMarketProxy'),
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
