@@ -132,7 +132,7 @@ interface ICollateralModule {
         address collateralType,
         uint256 offset,
         uint256 count
-    ) external returns (uint cleared);
+    ) external returns (uint256 cleared);
 
     /**
      * @notice Get a list of locks existing in account. Lists all locks in storage, even if they are expired
