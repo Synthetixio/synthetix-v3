@@ -14,11 +14,23 @@ library NodeDefinition {
     }
 
     struct Data {
+        /**
+         * @dev oralce node type.
+         */
         NodeType nodeType;
+        /**
+         * @dev node parameters, based on the type of node can contain different data
+         */
         bytes parameters;
+        /**
+         * @dev node parents node IDs
+         */
         bytes32[] parents;
     }
 
+    /**
+     * @dev Returns the node stored at the specified node ID.
+     */
     function load(bytes32 id) internal pure returns (Data storage node) {
         bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
@@ -26,6 +38,11 @@ library NodeDefinition {
         }
     }
 
+    /**
+     * @dev register a new node for a given node definition
+     *
+     * Note: The node ID will be generated from node definition
+     */
     function create(
         Data memory nodeDefinition
     ) internal returns (NodeDefinition.Data storage node, bytes32 id) {
@@ -38,6 +55,9 @@ library NodeDefinition {
         node.parents = nodeDefinition.parents;
     }
 
+    /**
+     * @dev returns node ID from node definition
+     */
     function getId(Data memory nodeDefinition) internal pure returns (bytes32 id) {
         return
             keccak256(

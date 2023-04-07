@@ -6,8 +6,17 @@ library DecayToken {
         keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
 
     struct Data {
+        /**
+         * @dev decay rate in a year with 18 decimals (1e18 = 100%).
+         */
         uint256 decayRate;
+        /**
+         * @dev timestamp saved on the last (mint/burn).
+         */
         uint256 epochStart;
+        /**
+         * @dev total supply at the last (mint/burn).
+         */
         uint256 totalSupplyAtEpochStart;
     }
 
