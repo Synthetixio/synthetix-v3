@@ -7,15 +7,15 @@ library DecayToken {
 
     struct Data {
         /**
-         * @dev decay rate in a year with 18 decimals (1e18 = 100%).
+         * @dev Annualized decay rate, expressed with 18 decimal precision (1e18 = 100%).
          */
         uint256 decayRate;
         /**
-         * @dev timestamp saved on the last (mint/burn).
+         * @dev Timestamp of the last mint or burn event.
          */
         uint256 epochStart;
         /**
-         * @dev total supply at the last (mint/burn).
+         * @dev Total supply as of the last mint or burn event.
          */
         uint256 totalSupplyAtEpochStart;
     }

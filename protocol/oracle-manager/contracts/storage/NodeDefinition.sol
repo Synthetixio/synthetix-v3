@@ -15,15 +15,15 @@ library NodeDefinition {
 
     struct Data {
         /**
-         * @dev oralce node type.
+         * @dev Oracle node type enum
          */
         NodeType nodeType;
         /**
-         * @dev node parameters, based on the type of node can contain different data
+         * @dev Node parameters, specific to each node type
          */
         bytes parameters;
         /**
-         * @dev node parents node IDs
+         * @dev Parent node IDs, if any
          */
         bytes32[] parents;
     }
@@ -39,9 +39,7 @@ library NodeDefinition {
     }
 
     /**
-     * @dev register a new node for a given node definition
-     *
-     * Note: The node ID will be generated from node definition
+     * @dev Register a new node for a given node definition. The resulting node is a function of the definition.
      */
     function create(
         Data memory nodeDefinition
@@ -56,7 +54,7 @@ library NodeDefinition {
     }
 
     /**
-     * @dev returns node ID from node definition
+     * @dev Returns a node ID based on its definition
      */
     function getId(Data memory nodeDefinition) internal pure returns (bytes32 id) {
         return
