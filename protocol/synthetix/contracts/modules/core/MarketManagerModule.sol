@@ -16,6 +16,8 @@ import "../../storage/MarketCreator.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+
 /**
  * @title System-wide entry point for the management of markets connected to the system.
  * @dev See IMarketManagerModule.
@@ -35,6 +37,7 @@ contract MarketManagerModule is IMarketManagerModule {
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
 
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
@@ -222,5 +225,29 @@ contract MarketManagerModule is IMarketManagerModule {
         uint256 maxIter
     ) external override returns (bool) {
         return Market.load(marketId).distributeDebtToPools(maxIter);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external override {
+        Market.Data storage market = Market.load(marketId);
+
+        if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
+
+        // min delegate time should not be unreasonably long
+        uint maxMinDelegateTime = Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30);
+
+        if (minDelegateTime > maxMinDelegateTime) {
+            revert ParameterError.InvalidParameter("minDelegateTime", "must not be too large");
+        }
+
+        market.minDelegateTime = minDelegateTime;
+
+        emit SetMinDelegateTime(marketId, minDelegateTime);
+    }
+
+    function getMarketMinDelegateTime(uint128 marketId) external view override returns (uint32) {
+        return Market.load(marketId).minDelegateTime;
     }
 }

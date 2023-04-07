@@ -24,6 +24,7 @@ import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessEr
  */
 contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
+    using AssociatedSystem for AssociatedSystem.Data;
     using Price for Price.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using DecimalMath for uint256;
@@ -125,17 +126,25 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
-        SpotMarketFactory.load().onlyMarketOwner(marketId);
+    function getSynthImpl(uint128 marketId) external view returns (address implAddress) {
+        return AssociatedSystem.load(SynthUtil.getSystemId(marketId)).impl;
+    }
 
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function upgradeSynthImpl(uint128 marketId) external override {
+        address newImpl = SpotMarketFactory.load().synthImplementation;
         bytes32 synthId = SynthUtil.getSystemId(marketId);
-        _upgradeToken(synthId, synthImpl);
 
-        emit SynthImplementationUpgraded(
-            marketId,
-            address(SynthUtil.getToken(marketId)),
-            synthImpl
-        );
+        AssociatedSystem.Data storage associatedSystem = _upgradeToken(synthId, newImpl);
+
+        emit SynthImplementationUpgraded(marketId, address(associatedSystem.asToken()), newImpl);
+    }
+
+    function setDecayRate(uint128 marketId, uint256 rate) external override {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
+        SynthUtil.getToken(marketId).setDecayRate(rate);
     }
 
     /**

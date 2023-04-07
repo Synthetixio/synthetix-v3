@@ -7,6 +7,8 @@ import hre from 'hardhat';
 import { SynthRouter } from '../generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 
+const ASYNC_BUY_TRANSACTION = 3;
+
 describe('AsyncOrderModule pyth', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
@@ -60,14 +62,23 @@ describe('AsyncOrderModule pyth', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8), ethers.constants.AddressZero);
+        .commitOrder(
+          marketId(),
+          ASYNC_BUY_TRANSACTION,
+          bn(1000),
+          strategyId,
+          bn(0.8),
+          ethers.constants.AddressZero
+        );
       startTime = await getTime(provider());
     });
 
     it('emits event', async () => {
       await assertEvent(
         commitTxn,
-        `OrderCommitted(${marketId()}, 2, ${bn(1000)}, 1, "${await trader1.getAddress()}"`,
+        `OrderCommitted(${marketId()}, ${ASYNC_BUY_TRANSACTION}, ${bn(
+          1000
+        )}, 1, "${await trader1.getAddress()}"`,
         systems().SpotMarket
       );
     });
