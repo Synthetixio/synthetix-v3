@@ -65,6 +65,9 @@ library AsyncOrder {
         }
     }
 
+    /**
+     * @notice  First calculates the synth amount based on shares then burns that amount
+     */
     function burnFromEscrow(uint128 marketId, uint256 sharesAmount) internal {
         Data storage asyncOrderData = load(marketId);
         uint256 synthAmount = convertSharesToSynth(asyncOrderData, marketId, sharesAmount);
@@ -80,6 +83,10 @@ library AsyncOrder {
         token.burn(address(this), burnAmt);
     }
 
+    /**
+     * @notice  calculates the synth amount based on the sharesAmount input and transfers that to the `to` address.
+     * @dev   is used when cancelling an order
+     */
     function transferFromEscrow(uint128 marketId, address to, uint256 sharesAmount) internal {
         Data storage asyncOrderData = load(marketId);
         uint256 synthAmount = convertSharesToSynth(asyncOrderData, marketId, sharesAmount);
@@ -95,6 +102,9 @@ library AsyncOrder {
         token.transfer(to, transferAmt);
     }
 
+    /**
+     * @notice given the shares amount, returns the synth amount
+     */
     function convertSharesToSynth(
         Data storage asyncOrderData,
         uint128 marketId,

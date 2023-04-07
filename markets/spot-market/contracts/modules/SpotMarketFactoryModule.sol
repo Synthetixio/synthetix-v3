@@ -87,11 +87,17 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         emit SynthRegistered(synthMarketId);
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function name(uint128 marketId) external view returns (string memory marketName) {
         string memory tokenName = SynthUtil.getToken(marketId).name();
         return string.concat(tokenName, " Spot Market");
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function reportedDebt(
         uint128 marketId
     ) external view override returns (uint256 reportedDebtAmount) {
@@ -101,6 +107,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     }
 
     /**
+     * @inheritdoc IMarket
      * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
      * @dev collateral leverage is defaulted to 1 on registration of a new market
      */

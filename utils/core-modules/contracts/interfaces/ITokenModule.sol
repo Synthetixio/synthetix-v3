@@ -31,10 +31,10 @@ interface ITokenModule is IERC20 {
 
     /**
      * @notice Allows the owner to burn tokens.
-     * @param to The address whose tokens will be burnt.
+     * @param from The address whose tokens will be burnt.
      * @param amount The amount of tokens to burn.
      */
-    function burn(address to, uint amount) external;
+    function burn(address from, uint amount) external;
 
     /**
      * @notice Allows an address that holds tokens to provide allowance to another.
