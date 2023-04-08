@@ -7,7 +7,7 @@ import { SynthRouter } from '../generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 
 describe('Atomic Order Module sell()', () => {
-  const { systems, signers, marketId, provider } = bootstrapTraders(
+  const { systems, signers, marketId, provider, generateExternalNode } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
@@ -214,6 +214,39 @@ describe('Atomic Order Module sell()', () => {
       assertBn.equal(
         await systems().USD.balanceOf(await trader1.getAddress()),
         initialTrader1Balance.add(bn(5235.73875))
+      );
+    });
+  });
+
+  describe('price protection guardrails', () => {
+    before(restore);
+
+    before('set sell price higher than buy price', async () => {
+      const nodeId100 = await generateExternalNode(100);
+      const nodeId200 = await generateExternalNode(200);
+
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .updatePriceData(marketId(), nodeId100, nodeId200);
+    });
+
+    it('reverts sellExactIn', async () => {
+      await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .sellExactIn(marketId(), bn(1), 0, Ethers.constants.AddressZero),
+        'InvalidPrices'
+      );
+    });
+
+    it('reverts sellExactOut', async () => {
+      await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .sellExactOut(marketId(), 1000, bn(1000), Ethers.constants.AddressZero),
+        'InvalidPrices'
       );
     });
   });

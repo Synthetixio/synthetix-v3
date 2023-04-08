@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('Atomic Order Module buy()', () => {
-  const { systems, signers, marketId, restore } = bootstrapTraders(
+  const { systems, signers, marketId, restore, generateExternalNode } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
@@ -266,6 +266,39 @@ describe('Atomic Order Module buy()', () => {
           Ethers.constants.AddressZero
         }")`,
         systems().SpotMarket
+      );
+    });
+  });
+
+  describe('price protection guardrails', () => {
+    before(restore);
+
+    before('set sell price higher than buy price', async () => {
+      const nodeId100 = await generateExternalNode(100);
+      const nodeId200 = await generateExternalNode(200);
+
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .updatePriceData(marketId(), nodeId100, nodeId200);
+    });
+
+    it('reverts buyExactIn', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, 100);
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .buyExactIn(marketId(), 100, 0, Ethers.constants.AddressZero),
+        'InvalidPrices'
+      );
+    });
+
+    it('reverts buyExactOut', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(400));
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .buyExactOut(marketId(), bn(100), 10000, Ethers.constants.AddressZero),
+        'InvalidPrices'
       );
     });
   });

@@ -1,3 +1,4 @@
+import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
@@ -25,12 +26,14 @@ type Proxies = {
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
   OracleVerifierMock: OracleVerifierMock;
+  ['synthetix.USDRouter']: SynthetixUSDProxy;
 };
 
 export type Systems = {
   SpotMarket: SpotMarketProxy;
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
+  USDRouter: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
   OracleVerifierMock: OracleVerifierMock;
@@ -59,6 +62,7 @@ before('load contracts', () => {
   contracts = {
     Core: getContract('synthetix.CoreProxy'),
     USD: getContract('synthetix.USDProxy'),
+    USDRouter: getContract('synthetix.USDRouter'),
     SpotMarket: getContract('SpotMarketProxy'),
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
@@ -163,6 +167,21 @@ export function bootstrapWithStakedPool() {
 
   const restore = snapshotCheckpoint(r.provider);
 
+  const generateExternalNode = async (price: number) => {
+    const factory = await hre.ethers.getContractFactory('MockExternalNode');
+    const externalNode = await factory.deploy(price, 200); // used to have .connect(owner)
+
+    // Register the mock
+    const NodeParameters = ethers.utils.defaultAbiCoder.encode(['address'], [externalNode.address]);
+    const tx = await r.systems().OracleManager.registerNode(NodeTypes.EXTERNAL, NodeParameters, []);
+    const receipt = await tx.wait();
+    const event = findSingleEvent({
+      receipt,
+      eventName: 'NodeRegistered',
+    });
+    return event.args.nodeId;
+  };
+
   return {
     ...r,
     aggregator: () => aggregator,
@@ -173,6 +192,7 @@ export function bootstrapWithStakedPool() {
     depositAmount,
     restore,
     oracleNodeId: () => oracleNodeId,
+    generateExternalNode,
   };
 }
 

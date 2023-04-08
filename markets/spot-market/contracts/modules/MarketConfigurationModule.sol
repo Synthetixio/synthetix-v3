@@ -118,6 +118,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
+        if (wrapFee + unwrapFee < 0) {
+            revert InvalidWrapperFees();
+        }
+
         MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(
             synthMarketId
         );

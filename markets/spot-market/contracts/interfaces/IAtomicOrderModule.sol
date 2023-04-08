@@ -23,6 +23,11 @@ interface IAtomicOrderModule {
     error InsufficientAmountReceived(uint256 expected, uint256 current);
 
     /**
+     * @notice Thrown when the sell price is higher than the buy price
+     */
+    error InvalidPrices();
+
+    /**
      * @notice Gets fired when buy trade is complete
      * @param synthMarketId Id of the market used for the trade.
      * @param synthReturned Synth received on the trade based on amount provided by trader.
@@ -39,7 +44,7 @@ interface IAtomicOrderModule {
     );
 
     /**
-     * @notice Gets fired when buy trade is complete
+     * @notice Gets fired when sell trade is complete
      * @param synthMarketId Id of the market used for the trade.
      * @param amountReturned Amount of snxUSD returned to user based on synth provided by trader.
      * @param fees breakdown of all fees incurred for transaction.
