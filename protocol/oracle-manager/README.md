@@ -95,6 +95,15 @@ The Staleness Circuit Breaker Node passes through the value of the first parent 
   - `uint256 stalenessTolerance` - The number of seconds in the past that determines whether the first parent's data is considered stale. If it's stale, the node will provide the fallback parents node's data or revert.
 - Expected Parents: 1-2
 
+### Constant Node
+
+The Constant Node returns a value for its price, set on registrations. It returns `block.timestamp` for the timestamp. This is useful for test scenarios and in conjunction with the Reducer Node in production.
+
+- `nodeType` Value: 8
+- Parameters:
+  - `int256 price` - The price for this node to return when processed.
+- Expected Parents: 0
+
 ### External Node
 
 The External Node allows a custom node to be defined in an smart contract at a specified address. This contract must conform to the [`IExternalNode` interface](./contracts/interfaces/external/IExternalNode.sol).
@@ -120,5 +129,5 @@ To run the tests:
 2.  Add a new library in `/nodes`. It must have the following function interface:
     ` function process(NodeOutput.Data[] memory prices, bytes memory parameters) internal view returns (NodeOutput.Data memory)`
 3.  Add the new node type into `_validateNodeType()` in `/modules/NodeModule.sol`
-4.  Add a condition for new node type in `_validateNodeDefinition` in `modules/NodeModule.sol` that calls the node library from step 2.
+4.  Add a condition for new node type in `_process` in `modules/NodeModule.sol` that calls the node library from step 2.
 5.  Add appropriate tests and documentation.
