@@ -17,7 +17,7 @@ describe('AccountModule', function () {
     });
 
     before('create the account', async function () {
-      await systems().Core.connect(user1).createAccount(1);
+      await systems().Core.connect(user1)['createAccount(uint128)'](1);
     });
 
     before('grant some permissions', async () => {
