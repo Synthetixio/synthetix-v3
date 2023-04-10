@@ -16,7 +16,6 @@ describe('ExternalNode', function () {
   });
 
   it('can register and process an constant node.', async () => {
-    const [owner] = getSigners();
     const price = 100;
 
     // Register the node
