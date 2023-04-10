@@ -6,7 +6,7 @@ import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 
 describe('ExternalNode', function () {
-  const { getContract, getSigners } = bootstrap();
+  const { getContract } = bootstrap();
 
   const abi = ethers.utils.defaultAbiCoder;
   let NodeModule: ethers.Contract;
