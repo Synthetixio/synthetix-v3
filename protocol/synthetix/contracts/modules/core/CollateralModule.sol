@@ -75,8 +75,7 @@ contract CollateralModule is ICollateralModule {
         Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
             AccountRBAC._WITHDRAW_PERMISSION,
-            // solhint-disable-next-line numcast/safe-cast
-            uint256(Config.read(_CONFIG_TIMEOUT_WITHDRAW))
+            Config.readUint(_CONFIG_TIMEOUT_WITHDRAW, 0)
         );
 
         uint256 tokenAmountD18 = CollateralConfiguration
@@ -135,7 +134,7 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 offset,
         uint256 count
-    ) external override returns (uint cleared) {
+    ) external override returns (uint256 cleared) {
         CollateralLock.Data[] storage locks = Account
             .load(accountId)
             .collaterals[collateralType]
@@ -143,7 +142,7 @@ contract CollateralModule is ICollateralModule {
 
         uint64 currentTime = block.timestamp.to64();
 
-        uint len = locks.length;
+        uint256 len = locks.length;
 
         if (offset >= len) {
             return 0;
@@ -153,8 +152,8 @@ contract CollateralModule is ICollateralModule {
             count = len - offset;
         }
 
-        uint index = offset;
-        for (uint i = 0; i < count; i++) {
+        uint256 index = offset;
+        for (uint256 i = 0; i < count; i++) {
             if (locks[index].lockExpirationTime <= currentTime) {
                 emit CollateralLockExpired(
                     accountId,
@@ -186,7 +185,7 @@ contract CollateralModule is ICollateralModule {
             .load(accountId)
             .collaterals[collateralType]
             .locks;
-        uint len = storageLocks.length;
+        uint256 len = storageLocks.length;
 
         if (count == 0 || offset + count >= len) {
             count = offset < len ? len - offset : 0;
@@ -194,7 +193,7 @@ contract CollateralModule is ICollateralModule {
 
         locks = new CollateralLock.Data[](count);
 
-        for (uint i = 0; i < count; i++) {
+        for (uint256 i = 0; i < count; i++) {
             locks[i] = storageLocks[offset + i];
         }
     }

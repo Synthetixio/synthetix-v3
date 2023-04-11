@@ -6,39 +6,44 @@ pragma solidity >=0.8.11 <0.9.0;
  */
 interface IMarketConfigurationModule {
     /**
+     * @notice thrown when wrap + unwrap fees are being set to a negative value in total
+     */
+    error InvalidWrapperFees();
+
+    /**
      * @notice emitted when market utilization fees are set for specified market
      * @param synthMarketId market id
      * @param utilizationFeeRate utilization fee rate value
      */
-    event MarketUtilizationFeesSet(uint indexed synthMarketId, uint utilizationFeeRate);
+    event MarketUtilizationFeesSet(uint256 indexed synthMarketId, uint256 utilizationFeeRate);
 
     /**
      * @notice emitted when the skew scale is set for a market
      * @param synthMarketId market id
      * @param skewScale skew scale value
      */
-    event MarketSkewScaleSet(uint indexed synthMarketId, uint skewScale);
+    event MarketSkewScaleSet(uint256 indexed synthMarketId, uint256 skewScale);
 
     /**
      * @notice emitted when the collateral leverage is set for a market
      * @param synthMarketId market id
      * @param collateralLeverage leverage value
      */
-    event CollateralLeverageSet(uint indexed synthMarketId, uint collateralLeverage);
+    event CollateralLeverageSet(uint256 indexed synthMarketId, uint256 collateralLeverage);
 
     /**
      * @notice emitted when the fixed fee for atomic orders is set.
      * @param synthMarketId market id
      * @param atomicFixedFee fee value
      */
-    event AtomicFixedFeeSet(uint indexed synthMarketId, uint atomicFixedFee);
+    event AtomicFixedFeeSet(uint256 indexed synthMarketId, uint256 atomicFixedFee);
 
     /**
      * @notice emitted when the fixed fee for async orders is set.
      * @param synthMarketId market id
      * @param asyncFixedFee fee value
      */
-    event AsyncFixedFeeSet(uint indexed synthMarketId, uint asyncFixedFee);
+    event AsyncFixedFeeSet(uint256 indexed synthMarketId, uint256 asyncFixedFee);
 
     /**
      * @notice emitted when the fixed fee is set for a given transactor
@@ -48,9 +53,9 @@ interface IMarketConfigurationModule {
      * @param fixedFeeAmount the fixed fee for the corresponding market, and transactor
      */
     event TransactorFixedFeeSet(
-        uint indexed synthMarketId,
+        uint256 indexed synthMarketId,
         address transactor,
-        uint fixedFeeAmount
+        uint256 fixedFeeAmount
     );
 
     /**
@@ -58,7 +63,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market to set the collector for.
      * @param feeCollector the address of the fee collector to set.
      */
-    event FeeCollectorSet(uint indexed synthMarketId, address feeCollector);
+    event FeeCollectorSet(uint256 indexed synthMarketId, address feeCollector);
 
     /**
      * @notice emitted when wrapper fees are set for a given market
@@ -66,7 +71,7 @@ interface IMarketConfigurationModule {
      * @param wrapFee wrapping fee in %, 18 decimals. Can be negative.
      * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
      */
-    event WrapperFeesSet(uint indexed synthMarketId, int wrapFee, int unwrapFee);
+    event WrapperFeesSet(uint256 indexed synthMarketId, int256 wrapFee, int256 unwrapFee);
 
     /**
      * @notice Emitted when the owner of the market has changed.
@@ -74,7 +79,7 @@ interface IMarketConfigurationModule {
      * @param referrer The address of the referrer
      * @param sharePercentage The new share percentage for the referrer
      */
-    event ReferrerShareUpdated(uint128 indexed marketId, address referrer, uint sharePercentage);
+    event ReferrerShareUpdated(uint128 indexed marketId, address referrer, uint256 sharePercentage);
 
     /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
@@ -87,7 +92,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the fee applies to.
      * @param atomicFixedFee fixed fee amount represented in bips with 18 decimals.
      */
-    function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external;
+    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external;
 
     /**
      * @notice sets the async fixed fee for a given market
@@ -95,7 +100,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the fee applies to.
      * @param asyncFixedFee fixed fee amount represented in bips with 18 decimals.
      */
-    function setAsyncFixedFee(uint128 synthMarketId, uint asyncFixedFee) external;
+    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external;
 
     /**
      * @notice sets the skew scale for a given market
@@ -103,7 +108,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the skew scale applies to.
      * @param skewScale max amount of synth which makes the skew 100%. the fee is derived as a % of the max value.  100% premium means outstanding synth == skewScale.
      */
-    function setMarketSkewScale(uint128 synthMarketId, uint skewScale) external;
+    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external;
 
     /**
      * @notice sets the market utilization fee for a given market
@@ -112,7 +117,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the utilization fee applies to.
      * @param utilizationFeeRate the rate is represented in bips with 18 decimals and is the rate at which fee increases based on the % above 100% utilization of the delegated collateral for the market.
      */
-    function setMarketUtilizationFees(uint128 synthMarketId, uint utilizationFeeRate) external;
+    function setMarketUtilizationFees(uint128 synthMarketId, uint256 utilizationFeeRate) external;
 
     /**
      * @notice sets the collateral leverage for a given market
@@ -121,7 +126,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the collateral leverage applies to.
      * @param collateralLeverage the leverage is represented as % with 18 decimals. 1 = 1x leverage
      */
-    function setCollateralLeverage(uint128 synthMarketId, uint collateralLeverage) external;
+    function setCollateralLeverage(uint128 synthMarketId, uint256 collateralLeverage) external;
 
     /**
      * @notice sets the fixed fee for a given market and transactor
@@ -135,7 +140,7 @@ interface IMarketConfigurationModule {
     function setCustomTransactorFees(
         uint128 synthMarketId,
         address transactor,
-        uint fixedFeeAmount
+        uint256 fixedFeeAmount
     ) external;
 
     /**
@@ -156,7 +161,7 @@ interface IMarketConfigurationModule {
      * @param wrapFee wrapping fee in %, 18 decimals. Can be negative.
      * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
      */
-    function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external;
+    function setWrapperFees(uint128 synthMarketId, int256 wrapFee, int256 unwrapFee) external;
 
     /**
      * @notice Update the referral share percentage for a given market
@@ -164,5 +169,9 @@ interface IMarketConfigurationModule {
      * @param referrer The address of the referrer
      * @param sharePercentage The new share percentage for the referrer
      */
-    function updateReferrerShare(uint128 marketId, address referrer, uint sharePercentage) external;
+    function updateReferrerShare(
+        uint128 marketId,
+        address referrer,
+        uint256 sharePercentage
+    ) external;
 }

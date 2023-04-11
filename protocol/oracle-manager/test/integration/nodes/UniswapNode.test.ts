@@ -58,8 +58,22 @@ describe('UniswapNode', function () {
   });
 
   it('retrieves the latest price', async () => {
+    const timestamp = (await hre.ethers.provider.getBlock('latest')).timestamp;
     const output = await NodeModule.process(nodeId);
+
     assertBn.equal(output.price, 1000000);
-    assertBn.equal(output.timestamp, 0);
+    assertBn.equal(timestamp, output.timestamp);
+  });
+
+  it('reverts with secondAgo = 0', async () => {
+    const NodeParameters = abi.encode(
+      ['address', 'address', 'uint8', 'uint8', 'address', 'uint32'],
+      [token0.address, token1.address, 6, 18, MockObservable.address, 0]
+    );
+
+    await assertRevert(
+      NodeModule.registerNode(NodeTypes.UNISWAP, NodeParameters, []),
+      'InvalidNodeDefinition'
+    );
   });
 });

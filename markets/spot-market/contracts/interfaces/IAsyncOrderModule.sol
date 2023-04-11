@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/AsyncOrderConfiguration.sol";
-import "../storage/AsyncOrderClaim.sol";
-import "../utils/TransactionUtil.sol";
+import {AsyncOrderClaim} from "../storage/AsyncOrderClaim.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Module for committing and settling async orders.
@@ -80,5 +79,5 @@ interface IAsyncOrderModule {
     function getAsyncOrderClaim(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external view returns (AsyncOrderClaim.Data memory);
+    ) external view returns (AsyncOrderClaim.Data memory asyncOrderClaim);
 }

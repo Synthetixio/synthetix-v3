@@ -8,6 +8,8 @@ import { SynthRouter } from './generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import { SettlementStrategy } from './generated/typechain/SpotMarketProxy';
 
+const ASYNC_BUY_TRANSACTION = 3;
+
 describe('AsyncOrderModule pyth', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
@@ -31,7 +33,7 @@ describe('AsyncOrderModule pyth', () => {
 
   before('add settlement strategy', async () => {
     pythSettlementStrategy = {
-      strategyType: 2,
+      strategyType: 1, // pyth
       settlementDelay: 5,
       settlementWindowDuration: 120,
       priceVerificationContract: systems().OracleVerifierMock.address,
@@ -40,6 +42,8 @@ describe('AsyncOrderModule pyth', () => {
       settlementReward: bn(5),
       priceDeviationTolerance: bn(0.2),
       disabled: false,
+      minimumUsdExchangeAmount: bn(0.000001),
+      maxRoundingLoss: bn(0.000001),
     };
 
     strategyId = (
@@ -62,14 +66,23 @@ describe('AsyncOrderModule pyth', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8), ethers.constants.AddressZero);
+        .commitOrder(
+          marketId(),
+          ASYNC_BUY_TRANSACTION,
+          bn(1000),
+          strategyId,
+          bn(0.8),
+          ethers.constants.AddressZero
+        );
       startTime = await getTime(provider());
     });
 
     it('emits event', async () => {
       await assertEvent(
         commitTxn,
-        `OrderCommitted(${marketId()}, 2, ${bn(1000)}, 1, "${await trader1.getAddress()}"`,
+        `OrderCommitted(${marketId()}, ${ASYNC_BUY_TRANSACTION}, ${bn(
+          1000
+        )}, 1, "${await trader1.getAddress()}"`,
         systems().SpotMarket
       );
     });
