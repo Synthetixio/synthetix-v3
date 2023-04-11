@@ -3,7 +3,7 @@ import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 const settlementStrategyWithNoMin = {
@@ -17,6 +17,7 @@ const settlementStrategyWithNoMin = {
   priceDeviationTolerance: bn(0.01),
   minimumUsdExchangeAmount: 0,
   maxRoundingLoss: bn(0.000001),
+  disabled: false,
 };
 
 const settlementStrategyWithMin = {
@@ -61,15 +62,19 @@ describe('AsyncOrderModule escrow tests', () => {
   });
 
   before('add settlement strategies', async () => {
-    strategyIdWithNoMin = await systems()
-      .SpotMarket.connect(marketOwner)
-      .callStatic.addSettlementStrategy(marketId(), settlementStrategyWithNoMin);
+    strategyIdWithNoMin = (
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .callStatic.addSettlementStrategy(marketId(), settlementStrategyWithNoMin)
+    ).toNumber();
     await systems()
       .SpotMarket.connect(marketOwner)
       .addSettlementStrategy(marketId(), settlementStrategyWithNoMin);
-    strategyIdWithMin = await systems()
-      .SpotMarket.connect(marketOwner)
-      .callStatic.addSettlementStrategy(marketId(), settlementStrategyWithMin);
+    strategyIdWithMin = (
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .callStatic.addSettlementStrategy(marketId(), settlementStrategyWithMin)
+    ).toNumber();
     await systems()
       .SpotMarket.connect(marketOwner)
       .addSettlementStrategy(marketId(), settlementStrategyWithMin);

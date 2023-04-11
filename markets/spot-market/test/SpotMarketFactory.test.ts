@@ -3,7 +3,7 @@ import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 import { ISynthTokenModule__factory } from '../typechain-types/index';

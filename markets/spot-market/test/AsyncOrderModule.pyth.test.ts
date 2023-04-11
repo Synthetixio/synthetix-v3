@@ -4,8 +4,9 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
+import { SettlementStrategy } from './generated/typechain/SpotMarketProxy';
 
 const ASYNC_BUY_TRANSACTION = 3;
 
@@ -20,7 +21,7 @@ describe('AsyncOrderModule pyth', () => {
     synth: SynthRouter,
     startTime: number,
     strategyId: number,
-    pythSettlementStrategy: Record<string, unknown>,
+    pythSettlementStrategy: SettlementStrategy.DataStruct,
     pythCallData: string,
     extraData: string;
 
@@ -40,13 +41,16 @@ describe('AsyncOrderModule pyth', () => {
       url: 'https://fakeapi.pyth.network/',
       settlementReward: bn(5),
       priceDeviationTolerance: bn(0.2),
+      disabled: false,
       minimumUsdExchangeAmount: bn(0.000001),
       maxRoundingLoss: bn(0.000001),
     };
 
-    strategyId = await systems()
-      .SpotMarket.connect(marketOwner)
-      .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy);
+    strategyId = (
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy)
+    ).toNumber();
     await systems()
       .SpotMarket.connect(marketOwner)
       .addSettlementStrategy(marketId(), pythSettlementStrategy);
@@ -137,7 +141,7 @@ describe('AsyncOrderModule pyth', () => {
       });
 
       // ($1000 sent - $5 keeper) / ($1100/eth price) * 0.99 (1% fee) = 0.8955
-      const expectedReturnAmt = bn('0.8955');
+      const expectedReturnAmt = bn(0.8955);
 
       it('sent correct amount to trader', async () => {
         assertBn.equal(await synth.balanceOf(await trader1.getAddress()), expectedReturnAmt);
