@@ -1,9 +1,10 @@
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 /* eslint-disable max-len */
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
+
 const fetch = require('node-fetch');
 
 const feedId = '0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6';
@@ -18,6 +19,7 @@ const pythSettlementStrategy = {
   url: 'https://xc-testnet.pyth.network/api/get_vaa_ccip?data={data}',
   settlementReward: bn(5),
   priceDeviationTolerance: bn(1000),
+  disabled: false,
 };
 
 describe('AsyncOrdersModule.e2e.test', function () {
@@ -38,9 +40,11 @@ describe('AsyncOrdersModule.e2e.test', function () {
   });
 
   before('add settlement strategy', async () => {
-    strategyId = await systems()
-      .SpotMarket.connect(marketOwner)
-      .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy);
+    strategyId = (
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy)
+    ).toNumber();
     await systems()
       .SpotMarket.connect(marketOwner)
       .addSettlementStrategy(marketId(), pythSettlementStrategy);
@@ -56,7 +60,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 3, bn(1000), strategyId, bn(0));
+        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0), ethers.constants.AddressZero);
       startTime = await getTime(provider());
     });
 
@@ -99,7 +103,6 @@ describe('AsyncOrdersModule.e2e.test', function () {
 
       const fee = await verifier.getUpdateFee(1);
       const parsedURL = url.replace('{data}', data);
-      console.log('parsedURL:', parsedURL);
 
       //There is a delay on pyth service
       await new Promise((resolve) => setTimeout(resolve, 30000));

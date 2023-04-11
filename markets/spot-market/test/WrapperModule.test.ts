@@ -4,7 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 
 const bn = (n: number) => wei(n).toBN();
 

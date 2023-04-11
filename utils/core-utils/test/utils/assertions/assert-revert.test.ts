@@ -1,7 +1,8 @@
 import { ethers } from 'ethers';
 import { rejects } from 'assert/strict';
-
+import { equal } from 'assert/strict';
 import assertRevert from '../../../src/utils/assertions/assert-revert';
+import { formatErrorMessage } from '../../../utils/assertions/assert-revert';
 
 function mockValidTx() {
   return Promise.resolve({
@@ -39,6 +40,23 @@ describe('utils/assertions/assert-revert.ts', function () {
       await rejects(async () => {
         await assertRevert(mockRevertingTx(message), expectedMessage);
       }, new Error(`Transaction was expected to revert with "${expectedMessage}", but reverted with "Error: ${message}"\nError: Unknown transaction error`));
+    });
+  });
+
+  describe('#formatErrorMessage', function () {
+    it('format error correctly', async function () {
+      const message = 'Unknown transaction error';
+      try {
+        await mockRevertingTx(message);
+      } catch (error) {
+        equal(formatErrorMessage(error), message);
+      }
+    });
+
+    it('rejects when not error is invalid type', async function () {
+      await rejects(async () => {
+        formatErrorMessage('test' as unknown);
+      }, new Error('Error is not an object'));
     });
   });
 });

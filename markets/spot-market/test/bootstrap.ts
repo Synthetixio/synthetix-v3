@@ -3,39 +3,37 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
+import { SpotMarketProxy, SynthRouter } from './generated/typechain';
+import { AggregatorV3Mock, FeeCollectorMock, OracleVerifierMock } from '../typechain-types/index';
 import {
-  FeeCollectorMock,
-  OracleVerifierMock,
-  SpotMarketProxy,
-  SynthetixCollateralMock,
-  SynthetixCoreProxy,
-  SynthetixOracle_managerProxy,
-  SynthetixUSDProxy,
-  SynthRouter,
-} from '../generated/typechain';
-import { AggregatorV3Mock } from '../typechain-types/index';
+  USDProxy,
+  CollateralMock,
+  USDRouter,
+  CoreProxy,
+} from '@synthetixio/main/test/generated/typechain';
+import { OracleManagerModule } from '@synthetixio/oracle-manager/test/generated/typechain';
 
 type Proxies = {
-  ['synthetix.CoreProxy']: SynthetixCoreProxy;
-  ['synthetix.USDProxy']: SynthetixUSDProxy;
-  ['synthetix.CollateralMock']: SynthetixCollateralMock;
-  ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
+  ['synthetix.CoreProxy']: CoreProxy;
+  ['synthetix.USDProxy']: USDProxy;
+  ['synthetix.CollateralMock']: CollateralMock;
+  ['synthetix.oracle_manager.Proxy']: OracleManagerModule;
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
   OracleVerifierMock: OracleVerifierMock;
-  ['synthetix.USDRouter']: SynthetixUSDProxy;
+  ['synthetix.USDRouter']: USDRouter;
 };
 
 export type Systems = {
   SpotMarket: SpotMarketProxy;
-  Core: SynthetixCoreProxy;
-  USD: SynthetixUSDProxy;
-  USDRouter: SynthetixUSDProxy;
-  CollateralMock: SynthetixCollateralMock;
-  OracleManager: SynthetixOracle_managerProxy;
+  Core: CoreProxy;
+  USD: USDProxy;
+  USDRouter: USDRouter;
+  CollateralMock: CollateralMock;
+  OracleManager: OracleManagerModule;
   OracleVerifierMock: OracleVerifierMock;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
@@ -199,7 +197,7 @@ export function bootstrapWithStakedPool() {
 export function bootstrapWithSynth(name: string, token: string) {
   const r = bootstrapWithStakedPool();
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
-  let marketId: string;
+  let marketId: BigNumber;
   let aggregator: AggregatorV3Mock;
 
   before('identify market owner', async () => {
@@ -343,7 +341,7 @@ const stake = async (
 const createOracleNode = async (
   owner: ethers.Signer,
   price: ethers.BigNumber,
-  OracleManager: Oracle_managerProxy
+  OracleManager: synthetix.oracleManager.Proxy
 ) => {
   const abi = ethers.utils.defaultAbiCoder;
   const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
