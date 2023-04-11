@@ -1,9 +1,10 @@
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 /* eslint-disable max-len */
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
+
 const fetch = require('node-fetch');
 
 const feedId = '0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6';
@@ -85,7 +86,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
         await tx.wait(); // txReceipt.
       } catch (err) {
         const parseString = (str: string) => str.trim().replace('"', '').replace('"', '');
-        const parsedError = formatErrorMessage(err as unknown as { [k: string]: unknown })
+        const parsedError = formatErrorMessage(err)
           .replace('OffchainLookup(', '')
           .replace(')', '')
           .split(',');
