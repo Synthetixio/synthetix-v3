@@ -247,7 +247,7 @@ library PerpsAccount {
         Data storage self,
         uint128 accountId
     ) internal view returns (uint) {
-        (int totalAccountOpenInterest, uint accountMaxOpenInterest) = _calculateOpenInterestValues(
+        (int totalAccountOpenInterest, uint accountMaxOpenInterest) = calculateOpenInterestValues(
             self,
             accountId
         );
