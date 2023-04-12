@@ -18,8 +18,8 @@ describe('CollateralModule', function () {
     });
 
     before('create some accounts', async () => {
-      await (await systems().Core.connect(user1).createAccount(1)).wait();
-      await (await systems().Core.connect(user2).createAccount(2)).wait();
+      await (await systems().Core.connect(user1)['createAccount(uint128)'](1)).wait();
+      await (await systems().Core.connect(user2)['createAccount(uint128)'](2)).wait();
     });
 
     describe('when a collateral is added', function () {

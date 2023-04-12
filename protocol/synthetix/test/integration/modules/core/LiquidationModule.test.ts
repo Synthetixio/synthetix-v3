@@ -31,7 +31,7 @@ describe('LiquidationModule', function () {
     const liquidatorAccountId = 384572397362836;
 
     before('create liquidator account', async () => {
-      await systems().Core.connect(user2).createAccount(liquidatorAccountId);
+      await systems().Core.connect(user2)['createAccount(uint128)'](liquidatorAccountId);
     });
 
     it('does not allow liquidation of account with healthy c-ratio', async () => {
@@ -99,7 +99,7 @@ describe('LiquidationModule', function () {
           await collateralContract()
             .connect(user2)
             .approve(systems().Core.address, depositAmount.mul(10));
-          await systems().Core.connect(user2).createAccount(accountId2);
+          await systems().Core.connect(user2)['createAccount(uint128)'](accountId2);
           await systems()
             .Core.connect(user2)
             .deposit(accountId2, collateralAddress(), depositAmount.mul(10));
@@ -255,7 +255,7 @@ describe('LiquidationModule', function () {
         let preCollateralRatio: ethers.BigNumber;
 
         before('create liquidator account', async () => {
-          await systems().Core.connect(user2).createAccount(liquidatorAccountId);
+          await systems().Core.connect(user2)['createAccount(uint128)'](liquidatorAccountId);
         });
 
         before('pool liquidator account', async () => {
