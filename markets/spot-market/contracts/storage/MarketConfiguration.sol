@@ -418,6 +418,7 @@ library MarketConfiguration {
     /*
      * @dev if special fee is set for a given transactor that takes precedence over the global fixed fees
      * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
+     * @dev the code does not allow setting fixed fee to 0 for a given transactor.  If you want to disable fees for a given actor, set the fee to be very low (e.g. 1 wei)
      */
     function _getFixedFee(
         Data storage self,
