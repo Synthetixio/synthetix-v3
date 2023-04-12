@@ -25,7 +25,7 @@ describe('AccountModule', function () {
     });
 
     before('create the account', async function () {
-      const tx = await systems().Core.connect(user1).createAccount(1);
+      const tx = await systems().Core.connect(user1)['createAccount(uint128)'](1);
       receipt = await tx.wait();
     });
 

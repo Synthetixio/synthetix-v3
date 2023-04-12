@@ -96,7 +96,8 @@ library NodeDefinition {
         UNISWAP,
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
-        STALENESS_CIRCUIT_BREAKER
+        STALENESS_CIRCUIT_BREAKER,
+        CONSTANT
     }
     struct Data {
         NodeType nodeType;

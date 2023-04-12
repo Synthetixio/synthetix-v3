@@ -128,7 +128,7 @@ export function bootstrapWithStakedPool() {
       .createPool(poolId, await owner.getAddress());
 
     // create user account
-    await r.systems().Core.connect(user1).createAccount(accountId);
+    await r.systems().Core.connect(user1)['createAccount(uint128)'](accountId);
 
     // approve
     await r

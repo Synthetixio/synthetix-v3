@@ -190,7 +190,8 @@ library NodeDefinition {
         UNISWAP,
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
-        STALENESS_CIRCUIT_BREAKER
+        STALENESS_CIRCUIT_BREAKER,
+        CONSTANT
     }
     struct Data {
         NodeType nodeType;
@@ -572,6 +573,20 @@ library ScalableMapping {
         uint128 totalSharesD18;
         int128 scaleModifierD27;
         mapping(bytes32 => uint256) sharesD18;
+    }
+}
+
+// @custom:artifact contracts/storage/SystemAccountConfiguration.sol:SystemAccountConfiguration
+library SystemAccountConfiguration {
+    bytes32 private constant _SLOT_SYSTEM_ACCOUNT_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemAccountConfiguration"));
+    struct Data {
+        uint64 accountIdOffset;
+    }
+    function load() internal pure returns (Data storage systemAccountConfiguration) {
+        bytes32 s = _SLOT_SYSTEM_ACCOUNT_CONFIGURATION;
+        assembly {
+            systemAccountConfiguration.slot := s
+        }
     }
 }
 

@@ -9,6 +9,7 @@ import "../nodes/ChainlinkNode.sol";
 import "../nodes/PriceDeviationCircuitBreakerNode.sol";
 import "../nodes/StalenessCircuitBreakerNode.sol";
 import "../nodes/UniswapNode.sol";
+import "../nodes/ConstantNode.sol";
 
 import "../storage/NodeOutput.sol";
 import "../storage/NodeDefinition.sol";
@@ -162,6 +163,8 @@ contract NodeModule is INodeModule {
                     _processParentNodeOutputs(nodeDefinition),
                     nodeDefinition.parameters
                 );
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CONSTANT) {
+            return ConstantNode.process(nodeDefinition.parameters);
         }
         revert UnprocessableNode(nodeId);
     }
@@ -197,6 +200,8 @@ contract NodeModule is INodeModule {
             return PriceDeviationCircuitBreakerNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.STALENESS_CIRCUIT_BREAKER) {
             return StalenessCircuitBreakerNode.isValid(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CONSTANT) {
+            return ConstantNode.isValid(nodeDefinition);
         }
         return false;
     }
