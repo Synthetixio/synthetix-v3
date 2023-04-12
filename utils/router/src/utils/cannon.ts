@@ -1,9 +1,11 @@
 import {
+  CannonAction,
   ChainArtifacts,
   ChainBuilderContext,
+  ChainBuilderContextWithHelpers,
   ChainBuilderRuntime,
   ChainBuilderRuntimeInfo,
-  registerAction,
+  PackageState,
 } from '@usecannon/builder';
 import {
   getContractDefinitionFromPath,
@@ -37,16 +39,22 @@ export type Config = JTDDataType<typeof config>;
 // if not deployed, deploy the specified hardhat contract with specfied options, export
 // address, abi, etc.
 // if already deployed, reexport deployment options for usage downstream and exit with no changes
-const routerAction = {
+export default {
+  label: 'router',
+
   validate: config,
 
-  async getState(runtime: ChainBuilderRuntimeInfo, ctx: ChainBuilderContext, config: Config) {
-    if (!runtime.baseDir) {
+  async getState(
+    runtime: ChainBuilderRuntimeInfo,
+    ctx: ChainBuilderContextWithHelpers,
+    config: Config
+  ) {
+    if (!(runtime as unknown as { baseDir: string }).baseDir) {
       return null; // skip consistency check
       // todo: might want to do consistency check for config but not files, will see
     }
 
-    const newConfig = this.configInject(ctx, config);
+    const newConfig = this.configInject(ctx, config, null as unknown as PackageState);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contractAbis: any = {};
@@ -90,7 +98,7 @@ const routerAction = {
     runtime: ChainBuilderRuntime,
     ctx: ChainBuilderContext,
     config: Config,
-    currentLabel: string
+    packageState: PackageState
   ): Promise<ChainArtifacts> {
     debug('exec', config);
 
@@ -111,7 +119,7 @@ const routerAction = {
       };
     });
 
-    const contractName = currentLabel.slice('router.'.length);
+    const contractName = packageState.currentLabel.slice('router.'.length);
 
     const sourceCode = generateRouter({
       contractName,
@@ -158,7 +166,7 @@ const routerAction = {
         [contractName]: {
           address: receipt.contractAddress,
           abi: routableAbi,
-          deployedOn: currentLabel,
+          deployedOn: packageState.currentLabel,
           deployTxnHash: deployedRouterContractTxn.hash,
           contractName,
           sourceName: contractName + '.sol',
@@ -167,6 +175,4 @@ const routerAction = {
       },
     };
   },
-};
-
-registerAction('router', routerAction);
+} satisfies CannonAction;
