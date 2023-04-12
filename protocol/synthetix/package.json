@@ -28,7 +28,7 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/builder": "2.4.0-alpha.0",
+    "@usecannon/builder": "2.4.0-alpha.1",
     "ethers": "^5.0.0",
     "handlebars": "^4.7.7",
     "hardhat": "2.13.0",
