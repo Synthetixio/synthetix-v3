@@ -1,8 +1,8 @@
 const path = require('path');
 const dotenv = require('dotenv');
 
-// Load common .env file at ./packages/config-common/.env
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// Load common .env file at ../../.env
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
 require('@nomiclabs/hardhat-ethers');
 require('hardhat-contract-sizer');
@@ -32,10 +32,17 @@ module.exports = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
     ['optimistic-mainnet']: {
+      chainId: 10,
       url: process.env.NETWORK_ENDPOINT || 'https://mainnet.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
+    ['optimistic-mainnet-fork']: {
+      chainId: 10,
+      url: `https://rpc.tenderly.co/fork/${process.env.TENDERLY_FORK_ID}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
     ['mainnet']: {
+      chainId: 1,
       url: process.env.NETWORK_ENDPOINT || 'http://127.0.0.1:8545/',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },

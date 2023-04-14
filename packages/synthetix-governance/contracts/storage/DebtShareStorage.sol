@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IDebtShare.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import "../interfaces/ICrossDomainMessenger.sol";
 
 contract DebtShareStorage {
     struct DebtShareStore {
@@ -12,6 +13,8 @@ contract DebtShareStorage {
         uint128[] debtShareIds;
         // Array of CrossChainDebtShareData's for each epoch
         CrossChainDebtShareData[] crossChainDebtShareData;
+        // Stores the address of the Optimism cross domain messenger on L2
+        ICrossDomainMessenger crossDomainMessenger;
     }
 
     struct CrossChainDebtShareData {

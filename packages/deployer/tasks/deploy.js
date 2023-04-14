@@ -73,7 +73,17 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await _compile(hre, quiet);
       await hre.run(SUBTASK_SYNC_SOURCES, taskArguments);
       await hre.run(SUBTASK_SYNC_PROXY);
-      await hre.run(SUBTASK_PRINT_INFO, taskArguments);
+
+      try {
+        await hre.run(SUBTASK_PRINT_INFO, taskArguments);
+      } catch (err) {
+        if (err instanceof prompter.PromptCancelled) {
+          await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
+        }
+
+        throw err;
+      }
+
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
       await hre.run(SUBTASK_VALIDATE_INTERFACES);

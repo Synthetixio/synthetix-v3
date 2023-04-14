@@ -64,4 +64,21 @@ interface ISynthetixElectionModule is IBaseElectionModule {
         bytes32[] calldata merkleProof,
         address[] calldata candidates
     ) external;
+
+    /// @notice Sets the Optimism cross domain messenger on L2.
+    function setCrossDomainMessenger(address messenger) external;
+
+    /// @notice Returns the Optimism cross domain messenger on L2.
+    function getCrossDomainMessenger() external view returns (address);
+
+    /// @notice Allows L1 non-EOA addresses to vote on an election using cross-chain debts.
+    function declareAndCastRelayed(
+        address user,
+        uint256 debtShare,
+        bytes32[] calldata merkleProof,
+        address[] calldata candidates
+    ) external;
+
+    /// @notice Allows L1 non-EOA addresses to vote on an election.
+    function castRelayed(address user, address[] calldata candidates) external;
 }
