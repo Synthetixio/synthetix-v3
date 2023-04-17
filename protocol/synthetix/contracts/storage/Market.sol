@@ -180,7 +180,7 @@ library Market {
      * @dev Queries the market for the amount of collateral which should be prevented from withdrawal.
      */
     function getLockedCreditCapacity(Data storage self) internal view returns (uint256) {
-        return IMarket(self.marketAddress).locked(self.id);
+        return IMarket(self.marketAddress).minimumCredit(self.id);
     }
 
     /**
