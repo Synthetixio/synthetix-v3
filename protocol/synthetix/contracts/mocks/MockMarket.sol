@@ -75,7 +75,7 @@ contract MockMarket is IMarket {
         return "MockMarket";
     }
 
-    function locked(uint128) external view override returns (uint256) {
+    function minimumCredit(uint128) external view override returns (uint256) {
         return _locked;
     }
 

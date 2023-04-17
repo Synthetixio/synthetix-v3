@@ -81,7 +81,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return MathUtil.abs(PerpsMarket.load(marketId).skew);
     }
 
-    function locked(uint128 marketId) external view override returns (uint256) {
+    function minimumCredit(uint128 marketId) external view override returns (uint256) {
         return
             PerpsMarket.load(marketId).size.mulDecimal(
                 MarketConfiguration.load(marketId).lockedOiPercent
