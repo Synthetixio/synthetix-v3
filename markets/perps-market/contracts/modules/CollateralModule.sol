@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/main/contracts/storage/Account.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "../interfaces/ICollateralModule.sol";
 import "../storage/PerpsMarketFactory.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
@@ -16,6 +17,14 @@ contract CollateralModule is ICollateralModule {
 
     bytes32 private constant _MODIFY_COLLATERAL_FEATURE_FLAG = "modifyCollateral";
 
+    function setMaxCollateralAmount(uint128 synthId, uint maxCollateralAmount) external override {
+        OwnableStorage.onlyOwner();
+        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
+        perpsMarketFactory.maxCollateralAmounts[synthId] = maxCollateralAmount;
+
+        // TODO: emit event
+    }
+
     function modifyCollateral(
         uint128 accountId,
         uint128 synthMarketId,
@@ -24,7 +33,7 @@ contract CollateralModule is ICollateralModule {
         // TODO: check amountDelta is non-zero
         // TODO: RBAC check for permission of msg.sender for account id
 
-        FeatureFlag.ensureAccessToFeature(_MODIFY_COLLATERAL_FEATURE_FLAG);
+        // FeatureFlag.ensureAccessToFeature(_MODIFY_COLLATERAL_FEATURE_FLAG);
         Account.exists(accountId);
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
         perpsMarketFactory.checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
@@ -38,16 +47,16 @@ contract CollateralModule is ICollateralModule {
 
         if (amountDelta > 0) {
             // adding collateral
-            accountData.collateralAmounts[synthMarketId] += amountDelta.toUint();
+            accountData.addCollateralAmount(synthMarketId, amountDelta.toUint());
 
             synth.transferFrom(msg.sender, address(this), amountDelta.toUint());
         } else {
-            uint amountAbs = (-amountDelta).toUint();
+            uint amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
             accountData.checkAvailableCollateralAmount(synthMarketId, amountAbs);
             accountData.checkAvailableWithdrawableValue(accountId, amountDelta);
 
-            accountData.collateralAmounts[synthMarketId] -= amountAbs;
+            accountData.removeCollateralAmount(synthMarketId, amountAbs);
 
             synth.transfer(msg.sender, amountAbs);
         }

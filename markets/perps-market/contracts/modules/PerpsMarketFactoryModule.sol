@@ -93,13 +93,6 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function getAccountToken(uint128 marketId) external view override returns (address) {
-        return AssociatedSystem.load(_ACCOUNT_TOKEN_SYSTEM).proxy;
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
     function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
         PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
 

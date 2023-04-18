@@ -3,9 +3,9 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "./LiquidationConfiguration.sol";
 import "./PerpsMarket.sol";
-
-import "hardhat/console.sol";
+import "./PerpsPrice.sol";
 
 library Position {
     using SafeCastI256 for int256;
@@ -16,6 +16,8 @@ library Position {
     using DecimalMath for uint256;
     using DecimalMath for int128;
     using PerpsMarket for PerpsMarket.Data;
+    using LiquidationConfiguration for LiquidationConfiguration.Data;
+    using MarketConfiguration for MarketConfiguration.Data;
 
     struct Data {
         uint128 marketId;
@@ -39,14 +41,13 @@ library Position {
 
     function getPositionData(
         Data storage self,
-        uint128 marketId,
         uint price
     )
         internal
         view
         returns (int notional, int pnl, int accruedFunding, int netFundingPerUnit, int nextFunding)
     {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(self.marketId);
 
         nextFunding = perpsMarket.lastFundingValue + perpsMarket.unrecordedFunding(price);
         netFundingPerUnit = nextFunding - self.latestInteractionFunding;
@@ -56,6 +57,23 @@ library Position {
         int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
         pnl = self.size.mulDecimal(priceShift) + accruedFunding;
 
-        notional = self.size.mulDecimal(price);
+        notional = getNotionalSize(self, price);
+    }
+
+    function getNotionalSize(Data storage self, uint price) internal view returns (int) {
+        return self.size.mulDecimal(price.toInt());
+    }
+
+    function getLiquidationAmount(Data storage self) internal view returns (uint) {
+        if (self.marketId == 0) {
+            return 0;
+        }
+
+        uint price = PerpsPrice.getCurrentPrice(self.marketId);
+        int size = self.size;
+        return
+            LiquidationConfiguration.load(self.marketId).liquidationMargin(
+                MathUtil.abs(size.mulDecimal(price.toInt()))
+            ) + MarketConfiguration.load(self.marketId).liquidationPremium(size, price);
     }
 }

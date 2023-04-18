@@ -185,7 +185,7 @@ library PerpsMarket {
     }
 
     // TODO: David will refactor this
-    function orderSizeTooLarge(
+    function validatePositionSize(
         Data storage self,
         uint maxSize,
         int oldSize,

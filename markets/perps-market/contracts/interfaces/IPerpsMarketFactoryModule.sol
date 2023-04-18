@@ -30,8 +30,6 @@ interface IPerpsMarketFactoryModule is IMarket {
 
     function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
 
-    function getAccountToken(uint128 marketId) external view returns (address);
-
     function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external;
 
     function acceptMarketOwnership(uint128 perpsMarketId) external;

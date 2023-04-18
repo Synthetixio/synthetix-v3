@@ -18,7 +18,7 @@ describe.only('perps test', () => {
 
   before('create account', async () => {
     const [, , marketOwner, trader1] = signers();
-    await systems().Core.connect(trader1).createAccount(2);
+    await systems().PerpsMarket.connect(trader1).createAccount(2);
   });
 
   before('create settlement strategy', async () => {
@@ -40,8 +40,11 @@ describe.only('perps test', () => {
     await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId(), bn(100_000));
   });
 
+  before('add collateral', async () => {
+    await systems().PerpsMarket.connect(trader1).modifyCollateral(2, 0, bn(10_000));
+  });
+
   before('commit order', async () => {
-    const [, , , trader1] = signers();
     await systems()
       .PerpsMarket.connect(trader1)
       .commitOrder({

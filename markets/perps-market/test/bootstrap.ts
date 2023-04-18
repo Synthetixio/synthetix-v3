@@ -117,7 +117,6 @@ export function bootstrapWithStakedPool() {
       ethers.utils.parseEther('1000'),
       r.systems().OracleManager
     );
-
     oracleNodeId = results.oracleNodeId;
     aggregator = results.aggregator;
   });
@@ -185,6 +184,13 @@ export function bootstrapPerpsMarket(name: string, token: string) {
 
   before('setup feed', async () => {
     await r.systems().PerpsMarket.connect(marketOwner).updatePriceData(marketId, r.oracleNodeId());
+  });
+
+  before('set max collateral amount for snxUSD', async () => {
+    await r
+      .systems()
+      .PerpsMarket.connect(coreOwner)
+      .setMaxCollateralAmount(0, ethers.constants.MaxUint256);
   });
 
   before('delegate pool collateral to market', async () => {
@@ -301,6 +307,22 @@ export function bootstrapTraders(r: ReturnType<typeof bootstrapPerpsMarket>) {
     await stake(systems, 2, 1001, trader2);
   });
 
+  before('provide access to create account', async () => {
+    const [owner, , , trader1, trader2] = signers();
+    await systems()
+      .PerpsMarket.connect(owner)
+      .addToFeatureFlagAllowlist(
+        ethers.utils.formatBytes32String('createAccount'),
+        trader1.getAddress()
+      );
+    await systems()
+      .PerpsMarket.connect(owner)
+      .addToFeatureFlagAllowlist(
+        ethers.utils.formatBytes32String('createAccount'),
+        trader2.getAddress()
+      );
+  });
+
   before('mint usd', async () => {
     const [, , , trader1, trader2] = signers();
     const collateralAddress = systems().CollateralMock.address;
@@ -310,6 +332,16 @@ export function bootstrapTraders(r: ReturnType<typeof bootstrapPerpsMarket>) {
     await systems()
       .Core.connect(trader2)
       .mintUsd(1001, 2, collateralAddress, depositAmount.mul(200));
+  });
+
+  before('infinite approve to perps market proxy', async () => {
+    const [, , , trader1, trader2] = signers();
+    await systems()
+      .USD.connect(trader1)
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+    await systems()
+      .USD.connect(trader2)
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
   });
 
   const restore = snapshotCheckpoint(provider);

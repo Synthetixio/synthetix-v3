@@ -69,18 +69,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         order.update(commitment, block.timestamp + strategy.settlementDelay);
 
-        (, runtime.feesAccrued, , runtime.status) = order.simulateOrderSettlement(
-            PerpsMarket.load(commitment.marketId).positions[commitment.accountId],
+        (, runtime.feesAccrued, ) = order.validateOrder(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId),
-            MarketConfiguration.OrderType.ASYNC_OFFCHAIN
+            PerpsPrice.getCurrentPrice(commitment.marketId)
         );
-
-        console.log("STATUS", uint(runtime.status));
-
-        if (runtime.status != AsyncOrder.Status.Success) {
-            revert InvalidOrder(runtime.status);
-        }
 
         return (order, runtime.feesAccrued);
     }
@@ -180,27 +172,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage settlementStrategy
     ) private {
         PerpsMarket.load(asyncOrder.marketId).recomputeFunding(price);
-        Position.Data storage oldPosition = PerpsMarket.load(asyncOrder.marketId).positions[
-            asyncOrder.accountId
-        ];
-        (
-            Position.Data memory newPosition,
-            uint fees,
-            uint settlementReward,
-            AsyncOrder.Status status
-        ) = asyncOrder.simulateOrderSettlement(
-                oldPosition,
-                settlementStrategy,
-                price,
-                MarketConfiguration.OrderType.ASYNC_OFFCHAIN
-            );
+        (Position.Data memory newPosition, uint totalFees, ) = asyncOrder.validateOrder(
+            settlementStrategy,
+            price
+        );
 
-        if (status != AsyncOrder.Status.Success) {
-            revert InvalidOrder(status);
-        }
-
-        // settlement reward and order fees
-        uint totalFees = settlementReward + fees;
+        uint settlementReward = settlementStrategy.settlementReward;
 
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(asyncOrder.accountId);
         perpsAccount.updatePositionMarkets(asyncOrder.marketId, newPosition.size);
@@ -210,7 +187,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // pay keeper
         factory.usdToken.transfer(msg.sender, settlementReward);
         // deposit into market manager
-        factory.depositToMarketManager(asyncOrder.marketId, fees);
+        factory.depositToMarketManager(asyncOrder.marketId, totalFees - settlementReward);
 
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(asyncOrder.marketId);
 

@@ -14,7 +14,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "synthetix:<%= package.version %>-testable"
 
 [setting.spotMarketPackage]
-defaultValue = "spot-market:<%= package.version %>-testable"
+defaultValue = "synthetix-spot-market:<%= package.version %>-testable"
 
 [provision.synthetix]
 source = "<%= settings.synthetixPackage %>"
