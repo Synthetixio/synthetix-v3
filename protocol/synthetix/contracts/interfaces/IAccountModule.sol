@@ -17,6 +17,11 @@ interface IAccountModule {
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
 
     /**
+     * @notice Thrown when the requested account ID is greater or equal to type(uint128).max / 2
+     */
+    error InvalidAccountId(uint128 accountId);
+
+    /**
      * @notice Emitted when an account token with id `accountId` is minted to `sender`.
      * @param accountId The id of the account.
      * @param owner The address that owns the created account.
@@ -81,10 +86,18 @@ interface IAccountModule {
      * Requirements:
      *
      * - `requestedAccountId` must not already be minted.
+     * - `requestedAccountId` must be less than type(uint128).max / 2
      *
      * Emits a {AccountCreated} event.
      */
     function createAccount(uint128 requestedAccountId) external;
+
+    /**
+     * @notice Mints an account token with an available id to `msg.sender`.
+     *
+     * Emits a {AccountCreated} event.
+     */
+    function createAccount() external returns (uint128 accountId);
 
     /**
      * @notice Called by AccountTokenModule to notify the system when the account token is transferred.

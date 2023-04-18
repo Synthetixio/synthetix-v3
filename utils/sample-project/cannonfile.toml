@@ -40,8 +40,6 @@ salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
 [router.Router]
-exec = "@synthetixio/router/utils/cannon"
-func = "generate"
 contracts = [
   "CoreModule",
   "InitializableModule",

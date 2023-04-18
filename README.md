@@ -82,4 +82,4 @@ Then, follow the instructions in the [synthetix-deployments repository](https://
 
 After the new version of the [synthetix-omnibus](https://usecannon.com/packages/synthetix-omnibus) package has been published, the previously published packages can be verified on Etherscan.
 
-From the relevant package's directory, run the following command for each network it was deployed on: `yarn hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>`
+From the relevant package's directory, run the following command for each network it was deployed on: `yarn hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>` and add ` --preset with-synthetix` when verifying the oracle manager or ` --preset with-synthetix-omnibus` when verifying synthetix.

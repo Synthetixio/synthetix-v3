@@ -314,7 +314,7 @@ const stake = async (
   await systems().CollateralMock.mint(await user.getAddress(), depositAmount.mul(1000));
 
   // create user account
-  await systems().Core.connect(user).createAccount(accountId);
+  await systems().Core.connect(user)['createAccount(uint128)'](accountId);
 
   // approve
   await systems()

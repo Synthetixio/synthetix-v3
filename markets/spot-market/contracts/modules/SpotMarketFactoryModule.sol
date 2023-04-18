@@ -111,7 +111,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
      * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
      * @dev collateral leverage is defaulted to 1 on registration of a new market
      */
-    function locked(uint128 marketId) external view returns (uint256 lockedAmount) {
+    function minimumCredit(uint128 marketId) external view returns (uint256 lockedAmount) {
         uint256 totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint256 collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;
 

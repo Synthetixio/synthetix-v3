@@ -34,14 +34,16 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
         DecayToken.Data storage store = DecayToken.load();
-        store.epochStart = block.timestamp;
+        if (store.epochStart == 0) {
+            store.epochStart = block.timestamp;
+        }
     }
 
     /**
      * @inheritdoc ITokenModule
      */
     function isInitialized() external view override(TokenModule, ITokenModule) returns (bool) {
-        return _isInitialized();
+        return super._isInitialized();
     }
 
     /**
@@ -148,10 +150,6 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
 
     function decayRate() public view returns (uint256) {
         return DecayToken.load().decayRate;
-    }
-
-    function _isInitialized() internal view override returns (bool) {
-        return ERC20Storage.load().decimals != 0;
     }
 
     function _epochStart() internal view returns (uint256) {

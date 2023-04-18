@@ -24,10 +24,10 @@ describe('ERC20', function () {
     await tx.wait();
   });
 
-  describe('When attempting to initialize it again', function () {
-    it('reverts', async function () {
+  describe('When attempting to initialize it again', () => {
+    it('with new decimal reverts', async () => {
       await assertRevert(
-        ERC20.initialize('Synthetix Network Token Updated', 'snx', 18),
+        ERC20.initialize('Synthetix Network Token Updated', 'snx', 19),
         'AlreadyInitialized()'
       );
     });
