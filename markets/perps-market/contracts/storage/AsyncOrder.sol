@@ -333,7 +333,7 @@ library AsyncOrder {
         int marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint) {
-        int notionalDiff = sizeDelta.mulDecimal(int(fillPrice));
+        int notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // does this trade keep the skew on one side?
         if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
