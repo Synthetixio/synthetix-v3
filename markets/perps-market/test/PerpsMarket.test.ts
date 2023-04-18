@@ -4,14 +4,14 @@ import { bn, bootstrapTraders, bootstrapPerpsMarket } from './bootstrap';
 describe('perps test', () => {
   const { systems, signers, marketId } = bootstrapTraders(bootstrapPerpsMarket('Ether', 'snxETH'));
 
-  let marketOwner: ethers.Signer, trader1: ethers.Signer, trader2: ethers.Signer;
+  let marketOwner: ethers.Signer, trader1: ethers.Signer;
 
   before('identify actors', async () => {
-    [, , marketOwner, trader1, trader2] = signers();
+    [, , marketOwner, trader1] = signers();
   });
 
   before('create account', async () => {
-    const [, , marketOwner, trader1] = signers();
+    const [, , , trader1] = signers();
     console.log(systems().PerpsMarket.connect(trader1));
     await systems().PerpsMarket.connect(trader1)['createAccount(uint128)'](2);
   });
