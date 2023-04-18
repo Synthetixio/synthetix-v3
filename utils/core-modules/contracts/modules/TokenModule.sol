@@ -5,13 +5,17 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+
 import "../interfaces/ITokenModule.sol";
+import "../storage/Initialized.sol";
 
 /**
  * @title Module wrapping an ERC20 token implementation.
  * See ITokenModule.
  */
 contract TokenModule is ITokenModule, ERC20, InitializableMixin {
+    bytes32 internal constant _INITIALIZED_NAME = "TokenModule";
+
     /**
      * @inheritdoc ITokenModule
      */
@@ -26,9 +30,11 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public virtual {
+    ) external virtual {
         OwnableStorage.onlyOwner();
+
         _initialize(tokenName, tokenSymbol, tokenDecimals);
+        Initialized.load(_INITIALIZED_NAME).initialized = true;
     }
 
     /**
@@ -55,7 +61,7 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
         ERC20Storage.load().allowance[from][spender] = amount;
     }
 
-    function _isInitialized() internal view virtual override returns (bool) {
-        return ERC20Storage.load().decimals != 0;
+    function _isInitialized() internal view override returns (bool) {
+        return Initialized.load(_INITIALIZED_NAME).initialized;
     }
 }

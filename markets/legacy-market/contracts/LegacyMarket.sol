@@ -98,7 +98,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc IMarket
      */
-    function locked(uint128 /* requestedMarketId*/) external pure returns (uint256 lockedAmount) {
+    function minimumCredit(
+        uint128 /* requestedMarketId*/
+    ) external pure returns (uint256 lockedAmount) {
         // legacy market never locks collateral
         return 0;
     }

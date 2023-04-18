@@ -207,7 +207,7 @@ describe('SpotMarketFactory', () => {
       });
 
       it('should return $10,000', async () => {
-        assertBn.equal(await systems().SpotMarket.locked(marketId()), bn(10_000));
+        assertBn.equal(await systems().SpotMarket.minimumCredit(marketId()), bn(10_000));
       });
     });
 
@@ -217,7 +217,7 @@ describe('SpotMarketFactory', () => {
       });
 
       it('should return $5,000', async () => {
-        assertBn.equal(await systems().SpotMarket.locked(marketId()), bn(5_000));
+        assertBn.equal(await systems().SpotMarket.minimumCredit(marketId()), bn(5_000));
       });
     });
   });
