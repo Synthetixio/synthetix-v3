@@ -263,6 +263,8 @@ contract MarketManagerModule is IMarketManagerModule {
         Market.Data storage market = Market.load(marketId);
 
         market.minLiquidityRatioD18 = minLiquidityRatio;
+
+        emit SetMarketMinLiquidityRatio(marketId, minLiquidityRatio);
     }
 
     /**

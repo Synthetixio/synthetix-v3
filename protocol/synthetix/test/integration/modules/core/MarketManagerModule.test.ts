@@ -476,4 +476,46 @@ describe('MarketManagerModule', function () {
       assert.equal(await systems().Core.getUsdToken(), systems().USD.address);
     });
   });
+
+  describe('setMinLiquidityRatio()', () => {
+    before(restore);
+
+    it('only works for owner', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          ['setMinLiquidityRatio(uint128,uint256)'](marketId(), ethers.utils.parseEther('1.5')),
+        'Unauthorized',
+        systems().Core
+      );
+    });
+
+    describe('success', () => {
+      let tx: ethers.providers.TransactionResponse;
+      before('exec', async () => {
+        tx = await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint128,uint256)'](marketId(), ethers.utils.parseEther('1.5'));
+      });
+
+      it('sets the value', async () => {
+        assertBn.equal(
+          await systems().Core['getMinLiquidityRatio(uint128)'](marketId()),
+          ethers.utils.parseEther('1.5')
+        );
+      });
+
+      it('emits', async () => {
+        await assertEvent(
+          tx,
+          `SetMarketMinLiquidityRatio(${marketId()}, ${ethers.utils.parseEther('1.5')})`,
+          systems().Core
+        );
+      });
+
+      it('respects the market-specific minimum liquidity ratio', async () => {
+        // t.b.d.
+      });
+    });
+  });
 });

@@ -66,6 +66,13 @@ interface IMarketManagerModule {
     event SetMinDelegateTime(uint128 indexed marketId, uint32 minDelegateTime);
 
     /**
+     * @notice Emitted when a market-specific minimum liquidity ratio is set
+     * @param marketId The id of the market that the setting is applied to
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio
+     */
+    event SetMarketMinLiquidityRatio(uint128 indexed marketId, uint256 minLiquidityRatio);
+
+    /**
      * @notice Connects an external market to the system.
      * @dev Creates a Market object to track the external market, and returns the newly created market id.
      * @param market The address of the external market that is to be registered in the system.
