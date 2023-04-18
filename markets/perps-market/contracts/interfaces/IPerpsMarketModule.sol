@@ -15,5 +15,5 @@ interface IPerpsMarketModule {
 
     function indexPrice(uint128 marketId) external view returns (uint);
 
-    function fillPrice(uint128 marketId) external view returns (uint);
+    function fillPrice(uint128 marketId) external returns (uint);
 }

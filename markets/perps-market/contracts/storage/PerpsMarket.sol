@@ -1,17 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "./PerpsAccount.sol";
-import "./Position.sol";
-import "./AsyncOrder.sol";
-import "./MarketConfiguration.sol";
-import "../utils/MathUtil.sol";
-import "./SettlementStrategy.sol";
-import "./OrderFee.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {PerpsAccount} from "./PerpsAccount.sol";
+import {Position} from "./Position.sol";
+import {AsyncOrder} from "./AsyncOrder.sol";
+import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {OrderFee} from "./OrderFee.sol";
 
-import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 /**
  * @title Data for a single perps market
@@ -22,6 +22,8 @@ library PerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+
+    error OnlyMarketOwner(address marketOwner, address sender);
 
     struct Data {
         address owner;
@@ -57,6 +59,12 @@ library PerpsMarket {
         }
     }
 
+    function onlyMarketOwner(Data storage self) internal view {
+        if (self.owner != msg.sender) {
+            revert OnlyMarketOwner(self.owner, msg.sender);
+        }
+    }
+
     function maxLiquidatableAmount(uint128 marketId) internal returns (uint) {
         Data storage self = load(marketId);
         uint maxLiquidationValue = maxLiquidationPerSecond(marketId);
@@ -74,14 +82,16 @@ library PerpsMarket {
 
         return
             (maxLiquidationValue *
-                MarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
+                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
             self.lastUtilizedLiquidationCapacity;
     }
 
     function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(marketId);
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            marketId
+        );
         OrderFee.Data storage orderFeeData = marketConfig.orderFees[
-            MarketConfiguration.OrderType.ASYNC_OFFCHAIN
+            PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN
         ];
         return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
     }
@@ -159,7 +169,7 @@ library PerpsMarket {
     }
 
     function currentFundingVelocity(Data storage self) internal view returns (int) {
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(self.id);
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
         int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
         // Ensures the proportionalSkew is between -1 and 1.
@@ -175,7 +185,7 @@ library PerpsMarket {
     }
 
     // TODO: David will refactor this
-    function orderSizeTooLarge(
+    function validatePositionSize(
         Data storage self,
         uint maxSize,
         int oldSize,

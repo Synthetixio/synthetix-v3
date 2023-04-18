@@ -1,10 +1,10 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "0.0.2",
-  "description": "Spot Market implementation",
+  "version": "3.0.4-alpha.0",
+  "description": "Perps Market implementation",
   "private": true,
   "scripts": {
-    "build1": "hardhat storage:verify && hardhat cannon:build",
+    "build": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean",

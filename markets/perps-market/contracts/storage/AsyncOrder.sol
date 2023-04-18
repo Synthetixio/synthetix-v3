@@ -1,26 +1,31 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../interfaces/IAsyncOrderModule.sol";
-import "./SettlementStrategy.sol";
-import "./Position.sol";
-import "./MarketConfiguration.sol";
-import "./LiquidationConfiguration.sol";
-import "./PerpsMarket.sol";
-import "../utils/MathUtil.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {Position} from "./Position.sol";
+import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {LiquidationConfiguration} from "./LiquidationConfiguration.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {PerpsMarket} from "./PerpsMarket.sol";
+import {PerpsAccount} from "./PerpsAccount.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {OrderFee} from "./OrderFee.sol";
 
 library AsyncOrder {
     using DecimalMath for int256;
+    using DecimalMath for int128;
     using DecimalMath for uint256;
     using DecimalMath for int64;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
-    using MarketConfiguration for MarketConfiguration.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using LiquidationConfiguration for LiquidationConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
+    using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
 
     error SettlementWindowExpired(
@@ -39,8 +44,6 @@ library AsyncOrder {
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
-        uint liqPremium;
-        uint liqMargin;
     }
 
     enum Status {
@@ -59,7 +62,7 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta;
+        int256 sizeDelta; // TODO: change to int128
         uint256 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -77,21 +80,6 @@ library AsyncOrder {
         self.trackingCode = commitment.trackingCode;
         self.marketId = commitment.marketId;
         self.accountId = commitment.accountId;
-    }
-
-    struct SimulateDataRuntime {
-        uint fillPrice;
-        uint fees;
-        uint totalFees;
-        uint settlementReward;
-        uint newMargin;
-        Position.Data newPos;
-        Status status;
-        bool positionDecreasing;
-        int leverage;
-        int marketSkew;
-        uint liqPremium;
-        uint liqMargin;
     }
 
     function checkWithinSettlementWindow(
@@ -115,144 +103,236 @@ library AsyncOrder {
         }
     }
 
-    function simulateOrderSettlement(
+    error ZeroSizeOrder();
+    error InsufficientMargin(uint availableMargin, uint minMargin);
+
+    struct SimulateDataRuntime {
+        uint fillPrice;
+        uint fees;
+        uint availableMargin;
+        uint currentLiquidationMargin;
+        int128 newPositionSize;
+        uint newLiquidationMargin;
+        Position.Data newPosition;
+    }
+
+    function validateOrder(
         Data storage order,
-        Position.Data storage oldPosition,
-        SettlementStrategy.Data storage settlementStrategy,
-        uint256 orderPrice,
-        MarketConfiguration.OrderType orderType
-    ) internal view returns (Position.Data memory, uint, uint, Status) {
-        SimulateDataRuntime memory runtime;
-        // Reverts if the user is trying to submit a size-zero order.
+        SettlementStrategy.Data storage strategy,
+        uint256 orderPrice
+    ) internal returns (Position.Data memory, uint, uint) {
         if (order.sizeDelta == 0) {
-            return (oldPosition, 0, 0, Status.ZeroSizeOrder);
+            revert ZeroSizeOrder();
         }
 
-        // The order is not submitted if the user's existing position needs to be liquidated.
-        // if (_canLiquidate(oldPos, params.oraclePrice)) {
-        //     return (oldPos, 0 0,, 0, Status.CanLiquidate);
-        // }
+        SimulateDataRuntime memory runtime;
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
-        // usd value of the difference in position (using the p/d-adjusted price).
-        runtime.marketSkew = perpsMarketData.skew;
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(order.marketId);
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            order.marketId
+        );
+        PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
 
-        // calculate fill price
+        // 1. calculate fees
         runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,
             marketConfig.skewScale,
             order.sizeDelta,
             orderPrice
         );
+        runtime.fees =
+            calculateOrderFee(
+                order.sizeDelta,
+                runtime.fillPrice,
+                perpsMarketData.skew,
+                marketConfig.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN]
+            ) +
+            strategy.settlementReward;
 
-        // calculate the total fee for exchange
-        runtime.fees = orderFee(
-            order,
-            runtime.fillPrice,
-            runtime.marketSkew,
-            marketConfig.orderFees[orderType]
-        );
-
-        runtime.settlementReward = settlementStrategy.settlementReward;
-
-        runtime.totalFees = runtime.fees + runtime.settlementReward;
-
-        LiquidationConfiguration.Data storage liquidationConfig = LiquidationConfiguration.load(
-            order.marketId
-        );
-
-        // Deduct the fee.
-        // It is an error if the realised margin minus the fee is negative or subject to liquidation.
-        (runtime.newMargin, runtime.status) = recomputeMarginWithDelta(
-            liquidationConfig,
-            oldPosition,
-            runtime.fillPrice,
-            -(runtime.totalFees).toInt()
-        );
-        if (runtime.status != Status.Success) {
-            return (oldPosition, 0, 0, runtime.status);
+        // 2. check for margin requirements
+        runtime.availableMargin = account.getAvailableMargin(order.accountId);
+        if (runtime.availableMargin < runtime.fees) {
+            revert InsufficientMargin(runtime.availableMargin, runtime.fees);
         }
 
-        // construct new position
-        runtime.newPos = Position.Data({
+        runtime.availableMargin -= runtime.fees;
+        // load current position
+        Position.Data storage position = PerpsMarket.load(order.marketId).positions[
+            order.accountId
+        ];
+
+        runtime.currentLiquidationMargin = account.getAccountLiquidationAmount(
+            order.accountId,
+            order.marketId,
+            MathUtil.abs(position.size.to256().mulDecimal(runtime.fillPrice.toInt()))
+        );
+        if (runtime.availableMargin < runtime.currentLiquidationMargin) {
+            revert InsufficientMargin(runtime.availableMargin, runtime.currentLiquidationMargin);
+        }
+
+        // TODO: check for min initial margin
+
+        runtime.newPositionSize = position.size + order.sizeDelta.to128();
+
+        runtime.newLiquidationMargin = account.getAccountLiquidationAmount(
+            order.accountId,
+            order.marketId,
+            MathUtil.abs(runtime.newPositionSize.to256().mulDecimal(runtime.fillPrice.toInt()))
+        );
+
+        // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
+        if (runtime.availableMargin < runtime.newLiquidationMargin) {
+            revert InsufficientMargin(runtime.availableMargin, runtime.newLiquidationMargin);
+        }
+
+        runtime.newPosition = Position.Data({
             marketId: order.marketId,
             latestInteractionPrice: runtime.fillPrice.to128(),
-            latestInteractionMargin: runtime.newMargin.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
-            size: (oldPosition.size + order.sizeDelta).to128()
+            size: runtime.newPositionSize
         });
 
-        // always allow to decrease a position, otherwise a margin of minInitialMargin can never
-        // decrease a position as the price goes against them.
-        // we also add the paid out fee for the minInitialMargin because otherwise minInitialMargin
-        // is never the actual minMargin, because the first trade will always deduct
-        // a fee (so the margin that otherwise would need to be transferred would have to include the future
-        // fee as well, making the UX and definition of min-margin confusing).
-        bool positionDecreasing = MathUtil.sameSide(oldPosition.size, runtime.newPos.size) &&
-            MathUtil.abs(runtime.newPos.size) < MathUtil.abs(oldPosition.size);
-        if (!positionDecreasing) {
-            // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
-            // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
-            if (
-                runtime.newPos.latestInteractionMargin + runtime.totalFees <
-                marketConfig.minInitialMargin
-            ) {
-                return (oldPosition, 0, 0, Status.InsufficientMargin);
-            }
-        }
-
-        // check that new position margin is above liquidation margin
-        // (above, in _recomputeMarginWithDelta() we checked the old position, here we check the new one)
-        //
-        // Liquidation margin is considered without a fee (but including premium), because it wouldn't make sense to allow
-        // a trade that will make the position liquidatable.
-        //
-        // note: we use `oraclePrice` here as `liquidationPremium` calcs premium based not current skew.
-        runtime.liqPremium = marketConfig.liquidationPremium(runtime.newPos.size, orderPrice);
-        runtime.liqMargin =
-            liquidationConfig.liquidationMargin(runtime.newPos.size, orderPrice) +
-            runtime.liqPremium;
-        if (runtime.newMargin <= runtime.liqMargin) {
-            return (runtime.newPos, 0, 0, Status.CanLiquidate);
-        }
-
-        // Check that the maximum leverage is not exceeded when considering new margin including the paid fee.
-        // The paid fee is considered for the benefit of UX of allowed max leverage, otherwise, the actual
-        // max leverage is always below the max leverage parameter since the fee paid for a trade reduces the margin.
-        // We'll allow a little extra headroom for rounding errors.
-        runtime.leverage = runtime
-            .newPos
-            .size
-            .to256()
-            .mulDecimal(runtime.fillPrice.toInt())
-            .divDecimal((runtime.newMargin + runtime.totalFees).toInt());
-        if (marketConfig.maxLeverage + (DecimalMath.UNIT / 100) < MathUtil.abs(runtime.leverage)) {
-            return (oldPosition, 0, 0, Status.MaxLeverageExceeded);
-        }
-
-        // Check that the order isn't too large for the markets.
-        if (
-            perpsMarketData.orderSizeTooLarge(
-                marketConfig.maxMarketValue,
-                oldPosition.size,
-                runtime.newPos.size
-            )
-        ) {
-            return (oldPosition, 0, 0, Status.MaxMarketValueExceeded);
-        }
-
-        return (runtime.newPos, runtime.fees, runtime.settlementReward, Status.Success);
+        return (runtime.newPosition, runtime.fees, runtime.fillPrice);
     }
 
-    function orderFee(
-        Data storage order,
+    // function simulateOrderSettlement(
+    //     Data storage order,
+    //     Position.Data storage oldPosition,
+    //     SettlementStrategy.Data storage settlementStrategy,
+    //     uint256 orderPrice,
+    //     PerpsMarketConfiguration.OrderType orderType
+    // ) internal view returns (Position.Data memory, uint, uint, Status) {
+    //     SimulateDataRuntime memory runtime;
+    //     // Reverts if the user is trying to submit a size-zero order.
+    //     if (order.sizeDelta == 0) {
+    //         return (oldPosition, 0, 0, Status.ZeroSizeOrder);
+    //     }
+
+    //     // The order is not submitted if the user's existing position needs to be liquidated.
+    //     // if (_canLiquidate(oldPos, params.oraclePrice)) {
+    //     //     return (oldPos, 0 0,, 0, Status.CanLiquidate);
+    //     // }
+
+    //     PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
+    //     // usd value of the difference in position (using the p/d-adjusted price).
+    //     runtime.marketSkew = perpsMarketData.skew;
+    //     PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(order.marketId);
+
+    //     // calculate fill price
+    //     runtime.fillPrice = calculateFillPrice(
+    //         perpsMarketData.skew,
+    //         marketConfig.skewScale,
+    //         order.sizeDelta,
+    //         orderPrice
+    //     );
+
+    //     // calculate the total fee for exchange
+    //     runtime.fees = orderFee(
+    //         order,
+    //         runtime.fillPrice,
+    //         runtime.marketSkew,
+    //         marketConfig.orderFees[orderType]
+    //     );
+
+    //     runtime.settlementReward = settlementStrategy.settlementReward;
+
+    //     runtime.totalFees = runtime.fees + runtime.settlementReward;
+
+    //     LiquidationConfiguration.Data storage liquidationConfig = LiquidationConfiguration.load(
+    //         order.marketId
+    //     );
+
+    //     // Deduct the fee.
+    //     // It is an error if the realised margin minus the fee is negative or subject to liquidation.
+    //     (runtime.newMargin, runtime.status) = recomputeMarginWithDelta(
+    //         liquidationConfig,
+    //         oldPosition,
+    //         order.marketId,
+    //         runtime.fillPrice,
+    //         -(runtime.totalFees).toInt()
+    //     );
+
+    //     if (runtime.status != Status.Success) {
+    //         return (oldPosition, 0, 0, runtime.status);
+    //     }
+
+    //     // construct new position
+    //     runtime.newPos = Position.Data({
+    //         marketId: order.marketId,
+    //         latestInteractionPrice: runtime.fillPrice.to128(),
+    //         latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
+    //         size: (oldPosition.size + order.sizeDelta).to128()
+    //     });
+
+    //     // always allow to decrease a position, otherwise a margin of minInitialMargin can never
+    //     // decrease a position as the price goes against them.
+    //     // we also add the paid out fee for the minInitialMargin because otherwise minInitialMargin
+    //     // is never the actual minMargin, because the first trade will always deduct
+    //     // a fee (so the margin that otherwise would need to be transferred would have to include the future
+    //     // fee as well, making the UX and definition of min-margin confusing).
+    //     bool positionDecreasing = MathUtil.sameSide(oldPosition.size, runtime.newPos.size) &&
+    //         MathUtil.abs(runtime.newPos.size) < MathUtil.abs(oldPosition.size);
+    //     if (!positionDecreasing) {
+    //         // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
+    //         // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
+    //         console.log(marketConfig.minInitialMargin);
+    //         if (
+    //             runtime.newPos.latestInteractionMargin + runtime.totalFees <
+    //             marketConfig.minInitialMargin
+    //         ) {
+    //             return (oldPosition, 0, 0, Status.InsufficientMargin);
+    //         }
+    //     }
+
+    //     // check that new position margin is above liquidation margin
+    //     // (above, in _recomputeMarginWithDelta() we checked the old position, here we check the new one)
+    //     //
+    //     // Liquidation margin is considered without a fee (but including premium), because it wouldn't make sense to allow
+    //     // a trade that will make the position liquidatable.
+    //     //
+    //     // note: we use `oraclePrice` here as `liquidationPremium` calcs premium based not current skew.
+    //     runtime.liqPremium = marketConfig.liquidationPremium(runtime.newPos.size, orderPrice);
+    //     runtime.liqMargin =
+    //         liquidationConfig.liquidationMargin(runtime.newPos.size, orderPrice) +
+    //         runtime.liqPremium;
+    //     if (runtime.newMargin <= runtime.liqMargin) {
+    //         return (runtime.newPos, 0, 0, Status.CanLiquidate);
+    //     }
+
+    //     // Check that the maximum leverage is not exceeded when considering new margin including the paid fee.
+    //     // The paid fee is considered for the benefit of UX of allowed max leverage, otherwise, the actual
+    //     // max leverage is always below the max leverage parameter since the fee paid for a trade reduces the margin.
+    //     // We'll allow a little extra headroom for rounding errors.
+    //     runtime.leverage = runtime
+    //         .newPos
+    //         .size
+    //         .to256()
+    //         .mulDecimal(runtime.fillPrice.toInt())
+    //         .divDecimal((runtime.newMargin + runtime.totalFees).toInt());
+    //     if (marketConfig.maxLeverage + (DecimalMath.UNIT / 100) < MathUtil.abs(runtime.leverage)) {
+    //         return (oldPosition, 0, 0, Status.MaxLeverageExceeded);
+    //     }
+
+    //     // Check that the order isn't too large for the markets.
+    //     if (
+    //         perpsMarketData.orderSizeTooLarge(
+    //             marketConfig.maxMarketValue,
+    //             oldPosition.size,
+    //             runtime.newPos.size
+    //         )
+    //     ) {
+    //         return (oldPosition, 0, 0, Status.MaxMarketValueExceeded);
+    //     }
+
+    //     return (runtime.newPos, runtime.fees, runtime.settlementReward, Status.Success);
+    // }
+
+    function calculateOrderFee(
+        int sizeDelta,
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData
     ) internal view returns (uint) {
-        int sizeDelta = order.sizeDelta;
-
         int notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // does this trade keep the skew on one side?
@@ -275,7 +355,7 @@ library AsyncOrder {
         // a different fee is applied on the proportion increasing the skew.
 
         // proportion of size that's on the other direction
-        uint takerSize = MathUtil.abs((marketSkew + order.sizeDelta).divDecimal(order.sizeDelta));
+        uint takerSize = MathUtil.abs((marketSkew + sizeDelta).divDecimal(sizeDelta));
         uint makerSize = DecimalMath.UNIT - takerSize;
         uint takerFee = MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(
             orderFeeData.takerFee
@@ -297,7 +377,7 @@ library AsyncOrder {
         int pdBefore = skew.divDecimal(skewScale.toInt());
         int pdAfter = (skew + size).divDecimal(skewScale.toInt());
         int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int priceAfter = (price.toInt() + price.toInt()).mulDecimal(pdAfter);
+        int priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
 
         // How is the p/d-adjusted price calculated using an example:
         //
@@ -329,26 +409,27 @@ library AsyncOrder {
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
-    function recomputeMarginWithDelta(
-        LiquidationConfiguration.Data storage liquidationConfig,
-        Position.Data memory position,
-        uint price,
-        int marginDelta
-    ) internal view returns (uint margin, Status statusCode) {
-        (int marginProfitFunding, , , , ) = position.calculateExpectedPosition(price);
-        int newMargin = marginProfitFunding + marginDelta;
-        if (newMargin < 0) {
-            return (0, Status.InsufficientMargin);
-        }
+    // function recomputeMarginWithDelta(
+    //     LiquidationConfiguration.Data storage liquidationConfig,
+    //     Position.Data memory position,
+    //     uint128 marketId,
+    //     uint price,
+    //     int marginDelta
+    // ) internal view returns (uint margin, Status statusCode) {
+    //     (int marginProfitFunding, , , , ) = position.getPositionData(marketId, price);
+    //     int newMargin = marginProfitFunding + marginDelta;
+    //     if (newMargin < 0) {
+    //         return (0, Status.InsufficientMargin);
+    //     }
 
-        uint uMargin = newMargin.toUint();
-        int positionSize = position.size;
-        // minimum margin beyond which position can be liquidated
-        uint lMargin = liquidationConfig.liquidationMargin(positionSize, price);
-        if (positionSize != 0 && uMargin <= lMargin) {
-            return (uMargin, Status.CanLiquidate);
-        }
+    //     uint uMargin = newMargin.toUint();
+    //     int positionSize = position.size;
+    //     // minimum margin beyond which position can be liquidated
+    //     uint lMargin = liquidationConfig.liquidationMargin(positionSize, price);
+    //     if (positionSize != 0 && uMargin <= lMargin) {
+    //         return (uMargin, Status.CanLiquidate);
+    //     }
 
-        return (uMargin, Status.Success);
-    }
+    //     return (uMargin, Status.Success);
+    // }
 }

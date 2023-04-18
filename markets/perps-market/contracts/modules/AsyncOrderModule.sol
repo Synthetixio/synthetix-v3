@@ -1,15 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "../interfaces/external/IPythVerifier.sol";
-import "../interfaces/IAsyncOrderModule.sol";
-import "../storage/PerpsAccount.sol";
-import "../storage/PerpsMarket.sol";
-import "../storage/AsyncOrder.sol";
-import "../storage/Position.sol";
-import "../storage/PerpsPrice.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
+import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
+import {PerpsAccount} from "../storage/PerpsAccount.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {Position} from "../storage/Position.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 
 contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int256;
@@ -42,6 +45,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
             3. check valid settlement strategy
         */
 
+        // order checks
+        /*
+            1. check if size is 0
+            2. check with fees if sufficient margin
+            3. check for liquidation with new position size
+            4. check that initial margin reqs are met
+            5. check order size against max order size
+            6. 
+        */
+
         PerpsAccount.load(commitment.accountId).checkLiquidationFlag();
 
         // TODO: recompute funding
@@ -51,22 +64,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
             commitment.accountId
         ];
 
-        SettlementStrategy.Data storage strategy = MarketConfiguration
+        SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
             .settlementStrategies[commitment.settlementStrategyId];
 
         order.update(commitment, block.timestamp + strategy.settlementDelay);
 
-        (, runtime.feesAccrued, , runtime.status) = order.simulateOrderSettlement(
-            PerpsMarket.load(commitment.marketId).positions[commitment.accountId],
+        (, runtime.feesAccrued, ) = order.validateOrder(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId),
-            MarketConfiguration.OrderType.ASYNC_OFFCHAIN
+            PerpsPrice.getCurrentPrice(commitment.marketId)
         );
-
-        if (runtime.status != AsyncOrder.Status.Success) {
-            revert InvalidOrder(runtime.status);
-        }
 
         return (order, runtime.feesAccrued);
     }
@@ -166,27 +173,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage settlementStrategy
     ) private {
         PerpsMarket.load(asyncOrder.marketId).recomputeFunding(price);
-        Position.Data storage oldPosition = PerpsMarket.load(asyncOrder.marketId).positions[
-            asyncOrder.accountId
-        ];
-        (
-            Position.Data memory newPosition,
-            uint fees,
-            uint settlementReward,
-            AsyncOrder.Status status
-        ) = asyncOrder.simulateOrderSettlement(
-                oldPosition,
-                settlementStrategy,
-                price,
-                MarketConfiguration.OrderType.ASYNC_OFFCHAIN
-            );
+        (Position.Data memory newPosition, uint totalFees, ) = asyncOrder.validateOrder(
+            settlementStrategy,
+            price
+        );
 
-        if (status != AsyncOrder.Status.Success) {
-            revert InvalidOrder(status);
-        }
-
-        // settlement reward and order fees
-        uint totalFees = settlementReward + fees;
+        uint settlementReward = settlementStrategy.settlementReward;
 
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(asyncOrder.accountId);
         perpsAccount.updatePositionMarkets(asyncOrder.marketId, newPosition.size);
@@ -196,7 +188,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // pay keeper
         factory.usdToken.transfer(msg.sender, settlementReward);
         // deposit into market manager
-        factory.depositToMarketManager(asyncOrder.marketId, fees);
+        factory.depositToMarketManager(asyncOrder.marketId, totalFees - settlementReward);
 
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(asyncOrder.marketId);
 
@@ -212,7 +204,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 accountId
     ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
         AsyncOrder.Data storage order = PerpsMarket.load(marketId).asyncOrders[accountId];
-        SettlementStrategy.Data storage settlementStrategy = MarketConfiguration
+        SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];
 

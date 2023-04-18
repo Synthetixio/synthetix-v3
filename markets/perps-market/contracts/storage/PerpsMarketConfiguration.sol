@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "./OrderFee.sol";
-import "./SettlementStrategy.sol";
-import "../utils/MathUtil.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {OrderFee} from "./OrderFee.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
-library MarketConfiguration {
+library PerpsMarketConfiguration {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
@@ -21,7 +21,6 @@ library MarketConfiguration {
     struct Data {
         mapping(OrderType => OrderFee.Data) orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint16 maxLeverage;
         uint256 maxMarketValue; // oi cap
         uint256 maxFundingVelocity;
         uint256 skewScale;
@@ -37,7 +36,7 @@ library MarketConfiguration {
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(
-            abi.encode("io.synthetix.perps-market.MarketConfiguration", marketId)
+            abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId)
         );
         assembly {
             store.slot := s
@@ -56,7 +55,7 @@ library MarketConfiguration {
     }
 
     function liquidationPremium(
-        MarketConfiguration.Data storage marketConfig,
+        PerpsMarketConfiguration.Data storage marketConfig,
         int positionSize,
         uint currentPrice
     ) internal view returns (uint) {
