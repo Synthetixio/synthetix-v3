@@ -6,7 +6,7 @@ import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contra
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
-import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
@@ -82,14 +82,16 @@ library PerpsMarket {
 
         return
             (maxLiquidationValue *
-                MarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
+                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
             self.lastUtilizedLiquidationCapacity;
     }
 
     function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(marketId);
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            marketId
+        );
         OrderFee.Data storage orderFeeData = marketConfig.orderFees[
-            MarketConfiguration.OrderType.ASYNC_OFFCHAIN
+            PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN
         ];
         return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
     }
@@ -167,7 +169,7 @@ library PerpsMarket {
     }
 
     function currentFundingVelocity(Data storage self) internal view returns (int) {
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(self.id);
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
         int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
         // Ensures the proportionalSkew is between -1 and 1.

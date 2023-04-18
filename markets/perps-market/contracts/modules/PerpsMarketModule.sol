@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
-import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
@@ -19,7 +19,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
     }
 
     function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
-        return MarketConfiguration.load(marketId).maxMarketValue;
+        return PerpsMarketConfiguration.load(marketId).maxMarketValue;
     }
 
     function currentFundingRate(uint128 marketId) external view override returns (int) {
@@ -36,7 +36,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
-                MarketConfiguration.load(marketId).skewScale,
+                PerpsMarketConfiguration.load(marketId).skewScale,
                 sizeToUse,
                 PerpsPrice.getCurrentPrice(marketId)
             );

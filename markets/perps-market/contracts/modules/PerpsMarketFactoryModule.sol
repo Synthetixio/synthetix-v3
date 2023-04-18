@@ -18,7 +18,7 @@ import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 
 /**
@@ -89,7 +89,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     function minimumCredit(uint128 marketId) external view override returns (uint256) {
         return
             PerpsMarket.load(marketId).size.mulDecimal(
-                MarketConfiguration.load(marketId).lockedOiPercent
+                PerpsMarketConfiguration.load(marketId).lockedOiPercent
             );
     }
 

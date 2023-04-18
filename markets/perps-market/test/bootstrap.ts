@@ -11,6 +11,7 @@ import {
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
   PerpsMarketProxy,
+  AccountProxy,
 } from '../generated/typechain';
 import { AggregatorV3Mock } from '../typechain-types/index';
 
@@ -21,6 +22,7 @@ type Proxies = {
   ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
   ['spotMarket.SpotMarketProxy']: SpotMarketSpotMarketProxy;
   PerpsMarketProxy: PerpsMarketProxy;
+  AccountProxy: AccountProxy;
 };
 
 export type Systems = {
@@ -30,6 +32,7 @@ export type Systems = {
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
   PerpsMarket: PerpsMarketProxy;
+  Account: AccountProxy;
 };
 
 const params = { cannonfile: 'cannonfile.test.toml' };
@@ -57,6 +60,7 @@ before('load contracts', () => {
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
     PerpsMarket: getContract('PerpsMarketProxy'),
+    Account: getContract('AccountProxy'),
   };
 });
 

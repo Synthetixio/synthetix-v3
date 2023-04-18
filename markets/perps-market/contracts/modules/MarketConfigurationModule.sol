@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
-import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
@@ -17,7 +17,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
 
-        MarketConfiguration.Data storage config = MarketConfiguration.load(marketId);
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         strategyId = config.settlementStrategies.length;
 
         config.settlementStrategies.push(strategy);
@@ -25,6 +25,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     function setSkewScale(uint128 marketId, uint256 skewScale) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
-        MarketConfiguration.load(marketId).skewScale = skewScale;
+        PerpsMarketConfiguration.load(marketId).skewScale = skewScale;
     }
 }

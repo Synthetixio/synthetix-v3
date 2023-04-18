@@ -7,7 +7,7 @@ import {OrderFee} from "./OrderFee.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
-library MarketConfiguration {
+library PerpsMarketConfiguration {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
@@ -36,7 +36,7 @@ library MarketConfiguration {
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(
-            abi.encode("io.synthetix.perps-market.MarketConfiguration", marketId)
+            abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId)
         );
         assembly {
             store.slot := s
@@ -55,7 +55,7 @@ library MarketConfiguration {
     }
 
     function liquidationPremium(
-        MarketConfiguration.Data storage marketConfig,
+        PerpsMarketConfiguration.Data storage marketConfig,
         int positionSize,
         uint currentPrice
     ) internal view returns (uint) {

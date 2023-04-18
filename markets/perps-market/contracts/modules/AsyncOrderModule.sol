@@ -10,7 +10,7 @@ import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
-import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 
@@ -64,7 +64,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             commitment.accountId
         ];
 
-        SettlementStrategy.Data storage strategy = MarketConfiguration
+        SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
             .settlementStrategies[commitment.settlementStrategyId];
 
@@ -204,7 +204,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 accountId
     ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
         AsyncOrder.Data storage order = PerpsMarket.load(marketId).asyncOrders[accountId];
-        SettlementStrategy.Data storage settlementStrategy = MarketConfiguration
+        SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];
 

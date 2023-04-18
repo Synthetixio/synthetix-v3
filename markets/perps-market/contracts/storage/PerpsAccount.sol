@@ -11,7 +11,7 @@ import {LiquidationConfiguration} from "./LiquidationConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
-import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -26,7 +26,7 @@ library PerpsAccount {
     using PerpsPrice for PerpsPrice.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
-    using MarketConfiguration for MarketConfiguration.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using LiquidationConfiguration for LiquidationConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -462,7 +462,9 @@ library PerpsAccount {
         private
         returns (uint amountToLiquidate, int totalPnl, uint liquidationReward, Position.Data memory)
     {
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(positionMarketId);
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            positionMarketId
+        );
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
 
         uint maxLiquidatableAmount = PerpsMarket.maxLiquidatableAmount(positionMarketId);

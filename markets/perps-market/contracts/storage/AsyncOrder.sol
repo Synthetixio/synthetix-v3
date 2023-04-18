@@ -6,7 +6,7 @@ import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contra
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
-import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {LiquidationConfiguration} from "./LiquidationConfiguration.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
@@ -22,7 +22,7 @@ library AsyncOrder {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
-    using MarketConfiguration for MarketConfiguration.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using LiquidationConfiguration for LiquidationConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
@@ -128,7 +128,9 @@ library AsyncOrder {
         SimulateDataRuntime memory runtime;
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
-        MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(order.marketId);
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            order.marketId
+        );
         PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
 
         // 1. calculate fees
@@ -143,7 +145,7 @@ library AsyncOrder {
                 order.sizeDelta,
                 runtime.fillPrice,
                 perpsMarketData.skew,
-                marketConfig.orderFees[MarketConfiguration.OrderType.ASYNC_OFFCHAIN]
+                marketConfig.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN]
             ) +
             strategy.settlementReward;
 
@@ -198,7 +200,7 @@ library AsyncOrder {
     //     Position.Data storage oldPosition,
     //     SettlementStrategy.Data storage settlementStrategy,
     //     uint256 orderPrice,
-    //     MarketConfiguration.OrderType orderType
+    //     PerpsMarketConfiguration.OrderType orderType
     // ) internal view returns (Position.Data memory, uint, uint, Status) {
     //     SimulateDataRuntime memory runtime;
     //     // Reverts if the user is trying to submit a size-zero order.
@@ -214,7 +216,7 @@ library AsyncOrder {
     //     PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
     //     // usd value of the difference in position (using the p/d-adjusted price).
     //     runtime.marketSkew = perpsMarketData.skew;
-    //     MarketConfiguration.Data storage marketConfig = MarketConfiguration.load(order.marketId);
+    //     PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(order.marketId);
 
     //     // calculate fill price
     //     runtime.fillPrice = calculateFillPrice(

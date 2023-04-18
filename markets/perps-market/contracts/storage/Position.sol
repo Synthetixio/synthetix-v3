@@ -6,7 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {LiquidationConfiguration} from "./LiquidationConfiguration.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
-import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
 library Position {
@@ -19,7 +19,7 @@ library Position {
     using DecimalMath for int128;
     using PerpsMarket for PerpsMarket.Data;
     using LiquidationConfiguration for LiquidationConfiguration.Data;
-    using MarketConfiguration for MarketConfiguration.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     struct Data {
         uint128 marketId;
@@ -76,6 +76,6 @@ library Position {
         return
             LiquidationConfiguration.load(self.marketId).liquidationMargin(
                 MathUtil.abs(size.mulDecimal(price.toInt()))
-            ) + MarketConfiguration.load(self.marketId).liquidationPremium(size, price);
+            ) + PerpsMarketConfiguration.load(self.marketId).liquidationPremium(size, price);
     }
 }

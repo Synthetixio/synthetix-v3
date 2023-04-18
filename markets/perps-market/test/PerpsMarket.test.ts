@@ -12,7 +12,8 @@ describe('perps test', () => {
 
   before('create account', async () => {
     const [, , marketOwner, trader1] = signers();
-    await systems().PerpsMarket.connect(trader1).createAccount(2);
+    console.log(systems().PerpsMarket.connect(trader1));
+    await systems().PerpsMarket.connect(trader1)['createAccount(uint128)'](2);
   });
 
   before('create settlement strategy', async () => {
