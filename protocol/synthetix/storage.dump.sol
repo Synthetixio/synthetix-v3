@@ -461,6 +461,7 @@ library Market {
         uint64 __reservedForLater2;
         uint64 __reservedForLater3;
         uint64 __reservedForLater4;
+        uint256 minLiquidityRatioD18;
     }
     struct DepositedCollateral {
         address collateralType;
