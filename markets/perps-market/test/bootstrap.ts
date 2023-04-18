@@ -13,7 +13,6 @@ import {
   PerpsMarketProxy,
   AccountProxy,
 } from '../generated/typechain';
-import { AggregatorV3Mock } from '../typechain-types/index';
 
 type Proxies = {
   ['synthetix.CoreProxy']: SynthetixCoreProxy;
