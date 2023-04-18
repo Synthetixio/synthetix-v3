@@ -412,7 +412,7 @@ describe('IssueUSDModule', function () {
 
     describe('adjust system max c ratio', async () => {
       before('adjust max liquidity ratio', async () => {
-        await systems().Core.setMinLiquidityRatio(ethers.utils.parseEther('2'));
+        await systems().Core['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 
       it('try to create debt beyond system max c ratio', exploit(2));

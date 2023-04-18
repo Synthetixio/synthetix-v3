@@ -1,3 +1,4 @@
+/* eslint-disable no-unexpected-multiline */
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -514,7 +515,44 @@ describe('MarketManagerModule', function () {
       });
 
       it('respects the market-specific minimum liquidity ratio', async () => {
-        // t.b.d.
+        // Set global minimum liquidity ratio to 1000%
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('10'));
+
+        // Delegate collateral to market
+        await systems()
+          .Core.connect(owner)
+          .setPoolConfiguration(poolId, [
+            {
+              marketId: marketId(),
+              weightD18: ethers.utils.parseEther('1'),
+              maxDebtShareValueD18: ethers.utils.parseEther('1000'),
+            },
+          ]);
+
+        // Refresh credit capacity
+        await systems().Core.getVaultDebt(poolId, collateralAddress());
+
+        // See withdrawable amount
+        const withdrawableAmount1 = await systems()
+          .Core.connect(user1)
+          .getWithdrawableMarketUsd(marketId());
+
+        // Change market-specific minimum liquidity ratio to 100%
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint128,uint256)'](marketId(), ethers.utils.parseEther('1'));
+
+        // Refresh credit capacity
+        await systems().Core.getVaultDebt(poolId, collateralAddress());
+
+        // See larger withdrawable amount
+        const withdrawableAmount2 = await systems()
+          .Core.connect(user1)
+          .getWithdrawableMarketUsd(marketId());
+
+        assertBn.gt(withdrawableAmount2, withdrawableAmount1);
       });
     });
   });

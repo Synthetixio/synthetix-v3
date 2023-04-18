@@ -1,3 +1,4 @@
+/* eslint-disable no-unexpected-multiline */
 import assert from 'node:assert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -399,7 +400,9 @@ describe('PoolModule Admin', function () {
 
       before('raise maxLiquidityRatio', async () => {
         // need to do this for the below test to work
-        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('0.2'));
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('0.2'));
       });
 
       before('set pool position', async () => {
@@ -611,7 +614,9 @@ describe('PoolModule Admin', function () {
 
       before('set minLiquidityRatio', async () => {
         // need to do this for the below test to work
-        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 
       before('set pool position', async () => {
@@ -632,7 +637,9 @@ describe('PoolModule Admin', function () {
 
       describe('when minLiquidityRatio is decreased', async () => {
         before('set minLiquidityRatio', async () => {
-          await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('1'));
+          await systems()
+            .Core.connect(owner)
+            ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('1'));
 
           // bump the vault
           await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
@@ -649,9 +656,13 @@ describe('PoolModule Admin', function () {
   });
 
   describe('setMinLiquidityRatio()', async () => {
+    before(restore);
+
     it('only works for owner', async () => {
       await assertRevert(
-        systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
+        systems()
+          .Core.connect(user1)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2')),
         `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );
@@ -659,11 +670,16 @@ describe('PoolModule Admin', function () {
 
     describe('when invoked successfully', async () => {
       before('set', async () => {
-        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 
       it('is set', async () => {
-        assertBn.equal(await systems().Core.getMinLiquidityRatio(), ethers.utils.parseEther('2'));
+        assertBn.equal(
+          await systems().Core['getMinLiquidityRatio()'](),
+          ethers.utils.parseEther('2')
+        );
       });
     });
   });
