@@ -75,6 +75,12 @@ interface IPoolModule {
     );
 
     /**
+     * @notice Emitted when a system-wide minimum liquidity ratio is set
+     * @param minLiquidityRatio The new system-wide minimum liquidity ratio
+     */
+    event SetMinLiquidityRatio(uint256 minLiquidityRatio);
+
+    /**
      * @notice Creates a pool with the requested pool id.
      * @param requestedPoolId The requested id for the new pool. Reverts if the id is not available.
      * @param owner The address that will own the newly created pool.

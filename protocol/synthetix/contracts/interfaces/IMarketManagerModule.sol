@@ -66,6 +66,13 @@ interface IMarketManagerModule {
     event SetMinDelegateTime(uint128 indexed marketId, uint32 minDelegateTime);
 
     /**
+     * @notice Emitted when a market-specific minimum liquidity ratio is set
+     * @param marketId The id of the market that the setting is applied to
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio
+     */
+    event SetMarketMinLiquidityRatio(uint128 indexed marketId, uint256 minLiquidityRatio);
+
+    /**
      * @notice Connects an external market to the system.
      * @dev Creates a Market object to track the external market, and returns the newly created market id.
      * @param market The address of the external market that is to be registered in the system.
@@ -205,4 +212,18 @@ interface IMarketManagerModule {
      * @param marketId the id of the market
      */
     function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32);
+
+    /**
+     * @notice Allows the system owner (not the pool owner) to set a market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external;
+
+    /**
+     * @notice Retrieves the market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @return minRatioD18 The current market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function getMinLiquidityRatio(uint128 marketId) external view returns (uint256 minRatioD18);
 }
