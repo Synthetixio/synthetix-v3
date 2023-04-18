@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../interfaces/IMarketConfigurationModule.sol";
-import "../storage/SettlementStrategy.sol";
-import "../storage/MarketConfiguration.sol";
-import "../storage/PerpsMarket.sol";
+import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsMarket for PerpsMarket.Data;

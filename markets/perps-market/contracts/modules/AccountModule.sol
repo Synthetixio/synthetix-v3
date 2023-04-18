@@ -2,9 +2,11 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {AccountModule as BaseAccountModule} from "@synthetixio/main/contracts/modules/core/AccountModule.sol";
-import "../interfaces/IAccountModule.sol";
-import "../storage/PerpsAccount.sol";
-import "../storage/Position.sol";
+import {IAccountModule} from "../interfaces/IAccountModule.sol";
+import {PerpsAccount} from "../storage/PerpsAccount.sol";
+import {Position} from "../storage/Position.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
 
 contract AccountModule is BaseAccountModule, IAccountModule {
     using PerpsAccount for PerpsAccount.Data;

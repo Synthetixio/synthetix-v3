@@ -1,16 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../interfaces/IAsyncOrderModule.sol";
-import "./SettlementStrategy.sol";
-import "./Position.sol";
-import "./MarketConfiguration.sol";
-import "./LiquidationConfiguration.sol";
-import "./SettlementStrategy.sol";
-import "./PerpsMarket.sol";
-import "../utils/MathUtil.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {Position} from "./Position.sol";
+import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {LiquidationConfiguration} from "./LiquidationConfiguration.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {PerpsMarket} from "./PerpsMarket.sol";
+import {PerpsAccount} from "./PerpsAccount.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {OrderFee} from "./OrderFee.sol";
 
 library AsyncOrder {
     using DecimalMath for int256;
@@ -271,6 +273,7 @@ library AsyncOrder {
     //     if (!positionDecreasing) {
     //         // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
     //         // except that we get a nicer error message if fee > margin, rather than arithmetic overflow.
+    //         console.log(marketConfig.minInitialMargin);
     //         if (
     //             runtime.newPos.latestInteractionMargin + runtime.totalFees <
     //             marketConfig.minInitialMargin

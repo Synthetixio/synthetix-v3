@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "./external/ISynthetixSystem.sol";
-import "./external/ISpotMarketSystem.sol";
+import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {ISynthetixSystem} from "./external/ISynthetixSystem.sol";
+import {ISpotMarketSystem} from "./external/ISpotMarketSystem.sol";
 
 interface IPerpsMarketFactoryModule is IMarket {
     event MarketRegistered(

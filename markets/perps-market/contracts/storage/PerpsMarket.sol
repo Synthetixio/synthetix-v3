@@ -1,19 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "./PerpsAccount.sol";
-import "./Position.sol";
-import "./AsyncOrder.sol";
-import "./MarketConfiguration.sol";
-import "../utils/MathUtil.sol";
-import "./SettlementStrategy.sol";
-import "./OrderFee.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {PerpsAccount} from "./PerpsAccount.sol";
+import {Position} from "./Position.sol";
+import {AsyncOrder} from "./AsyncOrder.sol";
+import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {OrderFee} from "./OrderFee.sol";
 
-import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-
-import "hardhat/console.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 /**
  * @title Data for a single perps market

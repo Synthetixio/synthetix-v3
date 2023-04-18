@@ -1,11 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "./LiquidationConfiguration.sol";
-import "./PerpsMarket.sol";
-import "./PerpsPrice.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {LiquidationConfiguration} from "./LiquidationConfiguration.sol";
+import {PerpsMarket} from "./PerpsMarket.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
+import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 library Position {
     using SafeCastI256 for int256;

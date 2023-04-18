@@ -1,13 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/storage/Account.sol";
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "../interfaces/ICollateralModule.sol";
-import "../storage/PerpsMarketFactory.sol";
+import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+// TODO: use decay token module?
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ICollateralModule} from "../interfaces/ICollateralModule.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 contract CollateralModule is ICollateralModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;

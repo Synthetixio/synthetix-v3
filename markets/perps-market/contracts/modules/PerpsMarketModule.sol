@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/PerpsMarket.sol";
-import "../storage/MarketConfiguration.sol";
-import "../storage/PerpsPrice.sol";
-import "../storage/AsyncOrder.sol";
-import "../interfaces/IPerpsMarketModule.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
 
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;

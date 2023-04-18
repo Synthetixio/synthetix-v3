@@ -1,22 +1,25 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "../storage/PerpsMarketFactory.sol";
-import "../storage/PerpsMarket.sol";
-import "../storage/PerpsPrice.sol";
-import "../interfaces/IPerpsMarketFactoryModule.sol";
-import "../interfaces/external/ISpotMarketSystem.sol";
-
-import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {IMarketManagerModule} from "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
+import {AssociatedSystemsModule, AssociatedSystem} from "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
+import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
+import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 
 /**
  * @title Module for registering perpetual futures markets. The factory tracks all markets in the system and consolidates implementation.
