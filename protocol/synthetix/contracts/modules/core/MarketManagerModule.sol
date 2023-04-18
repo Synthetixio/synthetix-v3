@@ -269,6 +269,6 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function getMinLiquidityRatio(uint128 marketId) external view override returns (uint256) {
-        return Market.load(marketId).minLiquidityRatio;
+        return Market.load(marketId).minLiquidityRatioD18;
     }
 }
