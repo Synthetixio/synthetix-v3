@@ -205,4 +205,18 @@ interface IMarketManagerModule {
      * @param marketId the id of the market
      */
     function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32);
+
+    /**
+     * @notice Allows the system owner (not the pool owner) to set a market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external;
+
+    /**
+     * @notice Retrieves the market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @return minRatioD18 The current market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function getMinLiquidityRatio(uint128 marketId) external view returns (uint256 minRatioD18);
 }

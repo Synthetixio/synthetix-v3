@@ -160,7 +160,7 @@ library Pool {
 
         int256 cumulativeDebtChangeD18 = 0;
 
-        uint256 minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
+        uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
         // This debt extracted from markets is then applied to the pool's vault debt distribution, which thus exposes debt to the pool's vaults.
@@ -176,6 +176,11 @@ library Pool {
                 totalWeightsD18;
 
             Market.Data storage marketData = Market.load(marketConfiguration.marketId);
+
+            // Use market-specific minimum liquidity ratio if set, otherwise use system default.
+            uint256 minLiquidityRatioD18 = marketData.minLiquidityRatioD18 > 0
+                ? marketData.minLiquidityRatioD18
+                : systemMinLiquidityRatioD18;
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
