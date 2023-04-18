@@ -226,6 +226,8 @@ contract PoolModule is IPoolModule {
         OwnableStorage.onlyOwner();
 
         SystemPoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;
+
+        emit SetMinLiquidityRatio(minLiquidityRatio);
     }
 
     /**
