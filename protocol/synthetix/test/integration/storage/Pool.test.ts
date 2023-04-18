@@ -40,7 +40,7 @@ describe('Pool', function () {
         },
       ]);
 
-    await systems().Core.connect(owner).setMinLiquidityRatio(One.mul(2));
+    await systems().Core.connect(owner)['setMinLiquidityRatio(uint256)'](One.mul(2));
 
     // ping to make sure ratio is applied on active position for read only calls
     await systems().Core.connect(owner).getPositionDebt(accountId, poolId, collateralAddress());

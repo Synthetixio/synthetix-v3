@@ -30,7 +30,7 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/cli": "2.4.0-alpha.1",
+    "@usecannon/cli": "2.4.4",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0",
     "node-fetch": "2.6.9",

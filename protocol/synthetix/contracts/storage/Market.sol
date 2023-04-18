@@ -143,6 +143,10 @@ library Market {
         uint64 __reservedForLater2;
         uint64 __reservedForLater3;
         uint64 __reservedForLater4;
+        /**
+         * @dev Market-specific override of the minimum liquidity ratio
+         */
+        uint256 minLiquidityRatioD18;
     }
 
     /**

@@ -20,7 +20,7 @@
     "prepublishOnly": "yarn build"
   },
   "peerDependencies": {
-    "@usecannon/builder": "2.4.0-alpha.1",
+    "@usecannon/builder": "2.4.4",
     "ethers": "^5.0.0",
     "solidity-ast": "^0.4.0"
   },
