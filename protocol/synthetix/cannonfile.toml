@@ -7,6 +7,10 @@ description = "Core synthetix system"
 description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
 defaultValue = "main"
 
+[setting.bundleSalt]
+description = "Change this to a unique string to get a new initial module bundle"
+defaultValue = "main"
+
 [setting.owner]
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
@@ -21,7 +25,7 @@ options.salt = "<%= settings.salt %>-oracle"
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
-salt = "<%= settings.salt %>"
+salt = "<%= settings.bundleSalt !== 'main' ? settings.bundleSalt : settings.salt %>"
 create2 = true
 
 [contract.FeatureFlagModule]
