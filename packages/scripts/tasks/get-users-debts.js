@@ -198,5 +198,5 @@ function read(filename) {
 function writeDebt(filename, key, value) {
   const data = read(filename);
   data.debts[key] = value;
-  fs.writeFileSync(filename, JSON.stringify(sortKeys(data), null, 2));
+  fs.writeFileSync(filename, JSON.stringify(sortKeys(data, { deep: true }), null, 2));
 }
