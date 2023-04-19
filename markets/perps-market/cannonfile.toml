@@ -40,6 +40,9 @@ artifact = "LimitOrderModule"
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
 
+[contract.MarketConfigurationModule]
+artifact = "MarketConfigurationModule"
+
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
@@ -54,7 +57,7 @@ salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
 # Core
-[router.SpotMarketRouter]
+[router.PerpsMarketRouter]
 contracts = [
   "synthetix.AccountModule",
   "synthetix.AssociatedSystemsModule",
@@ -65,7 +68,8 @@ contracts = [
   "CollateralModule",
   "FeatureFlagModule",
   "LimitOrderModule",
-  "LiquidationModule"
+  "LiquidationModule",
+  "MarketConfigurationModule"
 ]
 depends = [
   "import.synthetix",
@@ -76,18 +80,19 @@ depends = [
   "contract.CollateralModule",
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",
-  "contract.LiquidationModule"
+  "contract.LiquidationModule",
+  "contract.MarketConfigurationModule"
 ]
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]
 fromCall.func= "owner"
 func = "upgradeTo"
-args = ["<%= contracts.SpotMarketRouter.address %>"]
-factory.PerpsMarketProxy.abiOf = ["SpotMarketRouter"]
+args = ["<%= contracts.PerpsMarketRouter.address %>"]
+factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
-depends = ["contract.InitialProxy", "router.SpotMarketRouter"]
+depends = ["contract.InitialProxy", "router.PerpsMarketRouter"]
 
 [invoke.setSynthetix]
 target = ["PerpsMarketProxy"]

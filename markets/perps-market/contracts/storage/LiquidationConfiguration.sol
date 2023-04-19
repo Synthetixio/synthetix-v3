@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "../utils/MathUtil.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 library LiquidationConfiguration {
     using DecimalMath for int256;
@@ -30,34 +30,20 @@ library LiquidationConfiguration {
         }
     }
 
+    // TODO: double check this eq and fix it
     function liquidationMargin(
-        LiquidationConfiguration.Data storage config,
-        int positionSize,
-        uint price
-    ) internal view returns (uint lMargin) {
-        uint liquidationBuffer = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
-            config.liquidationBufferRatio
-        );
+        Data storage config,
+        uint notionalValue
+    ) internal view returns (uint) {
+        uint liquidationBufferMargin = notionalValue.mulDecimal(config.liquidationBufferRatio);
+        uint rewardMargin = notionalValue.mulDecimal(config.desiredLiquidationRewardPercentage);
+
         return
-            liquidationBuffer +
-            liquidationFee(config, positionSize, price) +
-            config.desiredLiquidationRewardPercentage;
-    }
-
-    function liquidationFee(
-        LiquidationConfiguration.Data storage config,
-        int positionSize,
-        uint price
-    ) internal view returns (uint lFee) {
-        // size * price * fee-ratio
-        uint proportionalFee = MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(
-            config.liquidationBufferRatio
-        );
-        uint maxFee = config.maxLiquidationRewardUsd;
-        uint cappedProportionalFee = proportionalFee > maxFee ? maxFee : proportionalFee;
-        uint minFee = config.minLiquidationRewardUsd;
-
-        // max(proportionalFee, minFee) - to prevent not incentivising liquidations enough
-        return cappedProportionalFee > minFee ? cappedProportionalFee : minFee; // not using _max() helper because it's for signed ints
+            liquidationBufferMargin +
+            MathUtil.max(
+                MathUtil.min(liquidationBufferMargin, config.maxLiquidationRewardUsd),
+                config.minLiquidationRewardUsd
+            ) +
+            rewardMargin;
     }
 }

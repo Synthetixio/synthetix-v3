@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/PerpsMarket.sol";
-import "../storage/MarketConfiguration.sol";
-import "../storage/PerpsPrice.sol";
-import "../storage/AsyncOrder.sol";
-import "../interfaces/IPerpsMarketModule.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
 
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
@@ -19,7 +19,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
     }
 
     function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
-        return MarketConfiguration.load(marketId).maxMarketValue;
+        return PerpsMarketConfiguration.load(marketId).maxMarketValue;
     }
 
     function currentFundingRate(uint128 marketId) external view override returns (int) {
@@ -30,13 +30,13 @@ contract PerpsMarketModule is IPerpsMarketModule {
         return PerpsPrice.getCurrentPrice(marketId);
     }
 
-    function fillPrice(uint128 marketId) external view override returns (uint) {
+    function fillPrice(uint128 marketId) external override returns (uint) {
         // To get the current fill price we pass in size 0
         int sizeToUse = 0;
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
-                MarketConfiguration.load(marketId).skewScale,
+                PerpsMarketConfiguration.load(marketId).skewScale,
                 sizeToUse,
                 PerpsPrice.getCurrentPrice(marketId)
             );

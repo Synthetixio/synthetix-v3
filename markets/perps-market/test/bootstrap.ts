@@ -5,37 +5,33 @@ import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import {
-  FeeCollectorMock,
-  OracleVerifierMock,
-  SpotMarketProxy,
+  SpotMarketSpotMarketProxy,
   SynthetixCollateralMock,
   SynthetixCoreProxy,
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
-  SynthRouter,
+  PerpsMarketProxy,
+  AccountProxy,
 } from '../generated/typechain';
-import { AggregatorV3Mock } from '../typechain-types/index';
 
 type Proxies = {
   ['synthetix.CoreProxy']: SynthetixCoreProxy;
   ['synthetix.USDProxy']: SynthetixUSDProxy;
   ['synthetix.CollateralMock']: SynthetixCollateralMock;
   ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
-  SpotMarketProxy: SpotMarketProxy;
-  SynthRouter: SynthRouter;
-  FeeCollectorMock: FeeCollectorMock;
-  OracleVerifierMock: OracleVerifierMock;
+  ['spotMarket.SpotMarketProxy']: SpotMarketSpotMarketProxy;
+  PerpsMarketProxy: PerpsMarketProxy;
+  AccountProxy: AccountProxy;
 };
 
 export type Systems = {
-  SpotMarket: SpotMarketProxy;
+  SpotMarket: SpotMarketSpotMarketProxy;
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
   OracleManager: SynthetixOracle_managerProxy;
-  OracleVerifierMock: OracleVerifierMock;
-  FeeCollectorMock: FeeCollectorMock;
-  Synth: (address: string) => SynthRouter;
+  PerpsMarket: PerpsMarketProxy;
+  Account: AccountProxy;
 };
 
 const params = { cannonfile: 'cannonfile.test.toml' };
@@ -59,12 +55,11 @@ before('load contracts', () => {
   contracts = {
     Core: getContract('synthetix.CoreProxy'),
     USD: getContract('synthetix.USDProxy'),
-    SpotMarket: getContract('SpotMarketProxy'),
+    SpotMarket: getContract('spotMarket.SpotMarketProxy'),
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
-    FeeCollectorMock: getContract('FeeCollectorMock'),
-    OracleVerifierMock: getContract('OracleVerifierMock'),
-    Synth: (address: string) => getContract('SynthRouter', address),
+    PerpsMarket: getContract('PerpsMarketProxy'),
+    Account: getContract('AccountProxy'),
   };
 });
 
@@ -125,7 +120,6 @@ export function bootstrapWithStakedPool() {
       ethers.utils.parseEther('1000'),
       r.systems().OracleManager
     );
-
     oracleNodeId = results.oracleNodeId;
     aggregator = results.aggregator;
   });
@@ -176,48 +170,31 @@ export function bootstrapWithStakedPool() {
   };
 }
 
-export function bootstrapWithSynth(name: string, token: string) {
+export function bootstrapPerpsMarket(name: string, token: string) {
   const r = bootstrapWithStakedPool();
-  let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
-  let marketId: string;
-  let aggregator: AggregatorV3Mock;
+  let coreOwner: ethers.Signer, marketOwner: ethers.Signer, marketId: string;
 
   before('identify market owner', async () => {
     [coreOwner, , marketOwner] = r.signers();
   });
 
-  before('register synth', async () => {
+  before('register perps market', async () => {
     marketId = await r
       .systems()
-      .SpotMarket.callStatic.createSynth(name, token, marketOwner.getAddress());
-    await r.systems().SpotMarket.createSynth(name, token, marketOwner.getAddress());
+      .PerpsMarket.callStatic.createMarket(name, token, marketOwner.getAddress());
+    await r.systems().PerpsMarket.createMarket(name, token, marketOwner.getAddress());
   });
 
-  before('configure market collateral supply cap', async () => {
+  before('setup feed', async () => {
+    await r.systems().PerpsMarket.connect(marketOwner).updatePriceData(marketId, r.oracleNodeId());
+  });
+
+  before('set max collateral amount for snxUSD', async () => {
     await r
       .systems()
-      .Core.connect(coreOwner)
-      .configureMaximumMarketCollateral(
-        marketId,
-        r.systems().CollateralMock.address,
-        ethers.constants.MaxUint256
-      );
+      .PerpsMarket.connect(coreOwner)
+      .setMaxCollateralAmount(0, ethers.constants.MaxUint256);
   });
-
-  before('setup buy and sell feeds', async () => {
-    const result = await createOracleNode(
-      r.signers()[0],
-      ethers.utils.parseEther('900'),
-      r.systems().OracleManager
-    );
-    aggregator = result.aggregator;
-    await r
-      .systems()
-      .SpotMarket.connect(marketOwner)
-      .updatePriceData(marketId, r.oracleNodeId(), result.oracleNodeId);
-  });
-
-  // add weight to market from pool
 
   before('delegate pool collateral to market', async () => {
     await r
@@ -238,10 +215,76 @@ export function bootstrapWithSynth(name: string, token: string) {
     ...r,
     marketId: () => marketId,
     marketOwner: () => marketOwner,
-    aggregator: () => aggregator,
     restore,
   };
 }
+
+// export function bootstrapWithSynth(name: string, token: string) {
+//   const r = bootstrapWithStakedPool();
+//   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
+//   let marketId: string;
+//   let aggregator: AggregatorV3Mock;
+
+//   before('identify market owner', async () => {
+//     [coreOwner, , marketOwner] = r.signers();
+//   });
+
+//   before('register synth', async () => {
+//     marketId = await r
+//       .systems()
+//       .SpotMarket.callStatic.createSynth(name, token, marketOwner.getAddress());
+//     await r.systems().SpotMarket.createSynth(name, token, marketOwner.getAddress());
+//   });
+
+//   before('configure market collateral supply cap', async () => {
+//     await r
+//       .systems()
+//       .Core.connect(coreOwner)
+//       .configureMaximumMarketCollateral(
+//         marketId,
+//         r.systems().CollateralMock.address,
+//         ethers.constants.MaxUint256
+//       );
+//   });
+
+//   before('setup buy and sell feeds', async () => {
+//     const result = await createOracleNode(
+//       r.signers()[0],
+//       ethers.utils.parseEther('900'),
+//       r.systems().OracleManager
+//     );
+//     aggregator = result.aggregator;
+//     await r
+//       .systems()
+//       .SpotMarket.connect(marketOwner)
+//       .updatePriceData(marketId, r.oracleNodeId(), result.oracleNodeId);
+//   });
+
+//   // add weight to market from pool
+
+//   before('delegate pool collateral to market', async () => {
+//     await r
+//       .systems()
+//       .Core.connect(coreOwner)
+//       .setPoolConfiguration(r.poolId, [
+//         {
+//           marketId,
+//           weightD18: ethers.utils.parseEther('1'),
+//           maxDebtShareValueD18: ethers.utils.parseEther('1'),
+//         },
+//       ]);
+//   });
+
+//   const restore = snapshotCheckpoint(r.provider);
+
+//   return {
+//     ...r,
+//     marketId: () => marketId,
+//     marketOwner: () => marketOwner,
+//     aggregator: () => aggregator,
+//     restore,
+//   };
+// }
 
 /*
   1. creates a new pool
@@ -250,7 +293,7 @@ export function bootstrapWithSynth(name: string, token: string) {
   4. mint max USD
   5. traders now have USD to trade with
 */
-export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
+export function bootstrapTraders(r: ReturnType<typeof bootstrapPerpsMarket>) {
   const { signers, systems, provider } = r;
 
   // separate pool so doesn't mess with existing pool accounting
@@ -267,6 +310,22 @@ export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
     await stake(systems, 2, 1001, trader2);
   });
 
+  before('provide access to create account', async () => {
+    const [owner, , , trader1, trader2] = signers();
+    await systems()
+      .PerpsMarket.connect(owner)
+      .addToFeatureFlagAllowlist(
+        ethers.utils.formatBytes32String('createAccount'),
+        trader1.getAddress()
+      );
+    await systems()
+      .PerpsMarket.connect(owner)
+      .addToFeatureFlagAllowlist(
+        ethers.utils.formatBytes32String('createAccount'),
+        trader2.getAddress()
+      );
+  });
+
   before('mint usd', async () => {
     const [, , , trader1, trader2] = signers();
     const collateralAddress = systems().CollateralMock.address;
@@ -276,6 +335,16 @@ export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
     await systems()
       .Core.connect(trader2)
       .mintUsd(1001, 2, collateralAddress, depositAmount.mul(200));
+  });
+
+  before('infinite approve to perps market proxy', async () => {
+    const [, , , trader1, trader2] = signers();
+    await systems()
+      .USD.connect(trader1)
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+    await systems()
+      .USD.connect(trader2)
+      .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
   });
 
   const restore = snapshotCheckpoint(provider);

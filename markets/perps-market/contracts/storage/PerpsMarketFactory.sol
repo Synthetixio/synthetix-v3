@@ -1,15 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {IMarketCollateralModule} from "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-import "../interfaces/external/ISynthetixSystem.sol";
-import "../interfaces/external/ISpotMarketSystem.sol";
-import "../utils/MathUtil.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
+import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 /**
  * @title Main factory library that registers perps markets.  Also houses global configuration for all perps markets.
@@ -44,6 +44,7 @@ library PerpsMarketFactory {
         SetUtil.UintSet liquidatableAccounts;
         // collateral amounts running total
         mapping(uint128 => uint) collateralAmounts;
+        mapping(uint128 => address) marketOwners;
     }
 
     function load() internal pure returns (Data storage perpsMarketFactory) {
@@ -79,5 +80,13 @@ library PerpsMarketFactory {
     function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {
         self.usdToken.approve(address(this), amount);
         self.synthetix.depositMarketUsd(marketId, address(this), amount);
+    }
+
+    function onlyMarketOwner(Data storage self, uint128 marketId) internal view {
+        address marketOwner = self.marketOwners[marketId];
+
+        if (marketOwner != msg.sender) {
+            revert OnlyMarketOwner(marketOwner, msg.sender);
+        }
     }
 }

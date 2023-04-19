@@ -6,6 +6,7 @@ import "../../interfaces/IUSDTokenModule.sol";
 import "../../interfaces/external/IMarket.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 
@@ -247,7 +248,29 @@ contract MarketManagerModule is IMarketManagerModule {
         emit SetMinDelegateTime(marketId, minDelegateTime);
     }
 
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
     function getMarketMinDelegateTime(uint128 marketId) external view override returns (uint32) {
         return Market.load(marketId).minDelegateTime;
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external override {
+        OwnableStorage.onlyOwner();
+        Market.Data storage market = Market.load(marketId);
+
+        market.minLiquidityRatioD18 = minLiquidityRatio;
+
+        emit SetMarketMinLiquidityRatio(marketId, minLiquidityRatio);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function getMinLiquidityRatio(uint128 marketId) external view override returns (uint256) {
+        return Market.load(marketId).minLiquidityRatioD18;
     }
 }

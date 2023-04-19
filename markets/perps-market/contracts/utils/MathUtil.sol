@@ -15,6 +15,10 @@ library MathUtil {
         return x < y ? y : x;
     }
 
+    function max(uint x, uint y) internal pure returns (uint) {
+        return x < y ? y : x;
+    }
+
     function min(int x, int y) internal pure returns (int) {
         return x < y ? x : y;
     }
