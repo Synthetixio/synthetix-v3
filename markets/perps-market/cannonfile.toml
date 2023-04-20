@@ -34,6 +34,9 @@ artifact = "AsyncOrderModule"
 [contract.AtomicOrderModule]
 artifact = "AtomicOrderModule"
 
+[contract.PerpsAccountModule]
+artifact = "PerpsAccountModule"
+
 [contract.LimitOrderModule]
 artifact = "LimitOrderModule"
 
@@ -63,6 +66,7 @@ contracts = [
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
   "PerpsMarketFactoryModule",
+  "PerpsAccountModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
   "CollateralModule",
@@ -77,6 +81,7 @@ depends = [
   "contract.PerpsMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.PerpsAccountModule",
   "contract.CollateralModule",
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",

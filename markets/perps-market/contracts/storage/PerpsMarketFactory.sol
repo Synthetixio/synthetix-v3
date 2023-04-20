@@ -39,7 +39,10 @@ library PerpsMarketFactory {
         ISpotMarketSystem spotMarket;
         // max collateral amounts / market
         mapping(uint128 => uint) maxCollateralAmounts;
-        uint128[] deductionMarketOrder;
+        /**
+         * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
+         */
+        uint128[] synthDeductionPriority;
         uint maxLeverage;
         SetUtil.UintSet liquidatableAccounts;
         // collateral amounts running total

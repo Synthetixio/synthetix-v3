@@ -120,7 +120,7 @@ library AsyncOrder {
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    ) internal returns (Position.Data memory, uint, uint) {
+    ) internal view returns (Position.Data memory, uint, uint) {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
@@ -140,6 +140,7 @@ library AsyncOrder {
             order.sizeDelta,
             orderPrice
         );
+
         runtime.fees =
             calculateOrderFee(
                 order.sizeDelta,

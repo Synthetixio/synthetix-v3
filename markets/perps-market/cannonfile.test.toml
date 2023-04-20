@@ -25,6 +25,9 @@ source = "<%= settings.spotMarketPackage %>"
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
+[contract.PerpsAccountModule]
+artifact = "PerpsAccountModule"
+
 [contract.CollateralModule]
 artifact = "CollateralModule"
 
@@ -65,6 +68,7 @@ contracts = [
   "PerpsMarketFactoryModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
+  "PerpsAccountModule",
   "CollateralModule",
   "FeatureFlagModule",
   "LimitOrderModule",
@@ -77,6 +81,7 @@ depends = [
   "contract.PerpsMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.PerpsAccountModule",
   "contract.CollateralModule",
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",
@@ -144,3 +149,11 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 depends = ['invoke.setSynthetix']
+
+# add snxUSD as the only priority to deduct from on a given account, as default
+[invoke.setSynthDeductionPriority]
+target = ["PerpsMarketProxy"]
+func = "setSynthDeductionPriority"
+from = "<%= settings.owner %>"
+args = [[0]]
+depends = ['invoke.upgrade_proxy']

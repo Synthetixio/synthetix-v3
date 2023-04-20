@@ -7,7 +7,7 @@ import {Position} from "../storage/Position.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 
-contract AccountModule is IAccountModule {
+contract PerpsAccountModule is IAccountModule {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
 
