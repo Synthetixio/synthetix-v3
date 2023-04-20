@@ -1,8 +1,11 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapPerpsMarket } from './bootstrap';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('perps test', () => {
-  const { systems, signers, marketId } = bootstrapTraders(bootstrapPerpsMarket('Ether', 'snxETH'));
+  const { systems, signers, marketId, provider } = bootstrapTraders(
+    bootstrapPerpsMarket('Ether', 'snxETH')
+  );
 
   let marketOwner: ethers.Signer, trader1: ethers.Signer;
 
@@ -47,12 +50,18 @@ describe('perps test', () => {
         accountId: 2,
         sizeDelta: bn(1),
         settlementStrategyId: 0,
-        acceptablePrice: bn(900),
+        acceptablePrice: bn(1000),
         trackingCode: ethers.constants.HashZero,
       });
+    // fast forward to settlement
+    await fastForwardTo((await getTime(provider())) + 6, provider());
   });
 
-  it('works', () => {
-    console.log(systems().PerpsMarket);
+  before('settle', async () => {
+    await systems().PerpsMarket.connect(trader1).settle(marketId(), 2);
+  });
+
+  it('check position is live', () => {
+    console.log(systems().PerpsMarket.openPosition(2, marketId()));
   });
 });
