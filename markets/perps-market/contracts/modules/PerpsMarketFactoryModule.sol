@@ -104,6 +104,14 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         emit MarketPriceDataUpdated(perpsMarketId, feedId);
     }
 
+    function setSynthDeductionPriority(
+        uint128[] calldata synthDeductionPriority
+    ) external override {
+        OwnableStorage.onlyOwner();
+
+        PerpsMarketFactory.load().synthDeductionPriority = synthDeductionPriority;
+    }
+
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */

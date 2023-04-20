@@ -13,6 +13,8 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
+import "hardhat/console.sol";
+
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**
@@ -399,10 +401,11 @@ library PerpsAccount {
         Data storage self,
         uint amount // snxUSD
     ) internal {
+        console.log("deduct", amount);
         uint leftoverAmount = amount;
-        uint128[] storage deductionMarketOrder = PerpsMarketFactory.load().deductionMarketOrder;
-        for (uint i = 0; i < deductionMarketOrder.length; i++) {
-            uint128 marketId = deductionMarketOrder[i];
+        uint128[] storage synthDeductionPriority = PerpsMarketFactory.load().synthDeductionPriority;
+        for (uint i = 0; i < synthDeductionPriority.length; i++) {
+            uint128 marketId = synthDeductionPriority[i];
             uint availableAmount = self.collateralAmounts[marketId];
             if (availableAmount == 0) {
                 continue;
@@ -412,6 +415,7 @@ library PerpsAccount {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
                     self.collateralAmounts[marketId] = availableAmount - leftoverAmount;
+                    leftoverAmount = 0;
                     break;
                 } else {
                     self.collateralAmounts[marketId] = 0;

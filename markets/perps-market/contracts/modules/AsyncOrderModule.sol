@@ -92,15 +92,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         } else {
             _settleOffchain(order, settlementStrategy);
         }
-
-        // 3. calculate fees
-
-        // 4. deduct from account
-        perpsAccount.deductFromAccount(settlementStrategy.settlementReward);
-
-        // 5. commit to position
-
-        // 6. send keeper reward
     }
 
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
@@ -185,13 +176,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
         perpsAccount.deductFromAccount(totalFees);
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+
+        uint amountToDeposit = totalFees - settlementReward;
         // pay keeper
         factory.usdToken.transfer(msg.sender, settlementReward);
-        // deposit into market manager
-        factory.depositToMarketManager(asyncOrder.marketId, totalFees - settlementReward);
+        if (amountToDeposit > 0) {
+            // deposit into market manager
+            factory.depositToMarketManager(asyncOrder.marketId, amountToDeposit);
+        }
 
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(asyncOrder.marketId);
-
         perpsMarket.updatePositionData(newPosition);
 
         PerpsMarket.load(asyncOrder.marketId).positions[asyncOrder.accountId].updatePosition(

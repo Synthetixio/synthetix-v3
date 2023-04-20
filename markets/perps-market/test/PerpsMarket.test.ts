@@ -15,7 +15,6 @@ describe('perps test', () => {
 
   before('create account', async () => {
     const [, , , trader1] = signers();
-    console.log(systems().PerpsMarket.connect(trader1));
     await systems().PerpsMarket.connect(trader1)['createAccount(uint128)'](2);
   });
 
@@ -61,7 +60,7 @@ describe('perps test', () => {
     await systems().PerpsMarket.connect(trader1).settle(marketId(), 2);
   });
 
-  it('check position is live', () => {
-    console.log(systems().PerpsMarket.openPosition(2, marketId()));
+  it('check position is live', async () => {
+    console.log(await systems().PerpsMarket.openPosition(2, marketId()));
   });
 });
