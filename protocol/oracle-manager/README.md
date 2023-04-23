@@ -97,7 +97,7 @@ The Staleness Circuit Breaker Node passes through the value of the first parent 
 
 ### Constant Node
 
-The Constant Node returns a value for its price, set on registrations. It returns `block.timestamp` for the timestamp. This is useful for test scenarios and in conjunction with the Reducer Node in production.
+The Constant Node returns a value for its price, set on registrations. It returns `block.timestamp` for the timestamp. This is useful for test scenarios and in conjunction with the Reducer Node in production. This should _not_ be used instead of an oracle for pegged assets.
 
 - `nodeType` Value: 8
 - Parameters:
