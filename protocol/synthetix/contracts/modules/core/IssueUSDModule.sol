@@ -78,7 +78,7 @@ contract IssueUSDModule is IIssueUSDModule {
         address feeAddress = feeAmount > 0
             ? Config.readAddress(_CONFIG_MINT_FEE_ADDRESS, address(0))
             : address(0);
-        
+
         newDebt += feeAmount.toInt();
 
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
@@ -104,12 +104,7 @@ contract IssueUSDModule is IIssueUSDModule {
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
 
-            emit IssuanceFeePaid(
-                accountId,
-                poolId,
-                collateralType,
-                feeAmount
-            );
+            emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
         }
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
@@ -153,12 +148,7 @@ contract IssueUSDModule is IIssueUSDModule {
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
 
-            emit IssuanceFeePaid(
-                accountId,
-                poolId,
-                collateralType,
-                feeAmount
-            );
+            emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
         }
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();

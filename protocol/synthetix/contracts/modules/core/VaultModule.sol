@@ -73,7 +73,6 @@ contract VaultModule is IVaultModule {
 
         // Ensure current collateral amount differs from the new collateral amount.
         if (newCollateralAmountD18 == currentCollateralAmount) revert InvalidCollateralAmount();
-
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
         else if (newCollateralAmountD18 > currentCollateralAmount) {
@@ -85,8 +84,8 @@ contract VaultModule is IVaultModule {
                 collateralType,
                 newCollateralAmountD18 - currentCollateralAmount
             );
-        
-        // if decreasing delegation amount, ensure min time has elapsed
+
+            // if decreasing delegation amount, ensure min time has elapsed
         } else {
             Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
                 vault.currentEpoch().lastDelegationTime[accountId]

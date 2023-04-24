@@ -376,8 +376,13 @@ library Pool {
             }
         }
 
-        uint32 maxMinDelegateTime = uint32(Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30));
-        return maxMinDelegateTime < requiredMinDelegateTime ? maxMinDelegateTime : requiredMinDelegateTime;
+        uint32 maxMinDelegateTime = uint32(
+            Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
+        );
+        return
+            maxMinDelegateTime < requiredMinDelegateTime
+                ? maxMinDelegateTime
+                : requiredMinDelegateTime;
     }
 
     /**
