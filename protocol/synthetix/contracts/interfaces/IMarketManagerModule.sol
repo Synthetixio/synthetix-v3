@@ -58,6 +58,11 @@ interface IMarketManagerModule {
         address indexed market
     );
 
+    event MarketSystemFeePaid(
+        uint128 indexed marketId,
+        uint256 feeAmount
+    );
+
     /**
      * @notice Emitted when a market sets an updated minimum delegation time
      * @param marketId The id of the market that the setting is applied to

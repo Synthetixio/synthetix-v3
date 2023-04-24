@@ -158,8 +158,13 @@ contract MarketManagerModule is IMarketManagerModule {
         // which doesn't affect `totalSupply`, thus simplifying accounting.
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
 
-        if (feeAmount > 0) {
+        if (feeAmount > 0 && feeAddress != address(0)) {
             IUSDTokenModule(address(usdToken)).mint(feeAddress, feeAmount);
+
+            emit MarketSystemFeePaid(
+                marketId,
+                feeAmount
+            );
         }
 
         emit MarketUsdDeposited(marketId, target, amount, msg.sender);
@@ -180,10 +185,10 @@ contract MarketManagerModule is IMarketManagerModule {
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // Ensure that the market's balance allows for this withdrawal.
-        if (amount > getWithdrawableMarketUsd(marketId))
+        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0));
+        if (amount + feeAmount > getWithdrawableMarketUsd(marketId))
             revert NotEnoughLiquidity(marketId, amount);
 
-        feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0));
         address feeAddress = feeAmount > 0
             ? Config.readAddress(_CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS, address(0))
             : address(0);
@@ -195,8 +200,13 @@ contract MarketManagerModule is IMarketManagerModule {
         // Mint the requested USD.
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
 
-        if (feeAmount > 0) {
+        if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
+
+            emit MarketSystemFeePaid(
+                marketId,
+                feeAmount
+            );
         }
 
         emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
@@ -237,7 +247,7 @@ contract MarketManagerModule is IMarketManagerModule {
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // min delegate time should not be unreasonably long
-        uint maxMinDelegateTime = Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30);
+        uint256 maxMinDelegateTime = Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30);
 
         if (minDelegateTime > maxMinDelegateTime) {
             revert ParameterError.InvalidParameter("minDelegateTime", "must not be too large");
@@ -252,7 +262,10 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function getMarketMinDelegateTime(uint128 marketId) external view override returns (uint32) {
-        return Market.load(marketId).minDelegateTime;
+        // solhint-disable-next-line numcast/safe-cast
+        uint32 maxMinDelegateTime = uint32(Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30));
+        uint32 marketMinDelegateTime = Market.load(marketId).minDelegateTime;
+        return maxMinDelegateTime < marketMinDelegateTime ? maxMinDelegateTime : marketMinDelegateTime;
     }
 
     /**
