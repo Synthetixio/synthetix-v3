@@ -376,6 +376,7 @@ library Pool {
             }
         }
 
+        // solhint-disable-next-line numcast/safe-cast
         uint32 maxMinDelegateTime = uint32(
             Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
         );
