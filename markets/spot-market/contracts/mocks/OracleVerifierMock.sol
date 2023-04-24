@@ -13,9 +13,11 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
 
     // Pyth verifier
     function parsePriceFeedUpdates(
+        // solc-ignore-next-line unused-param
         bytes[] calldata updateData,
         bytes32[] calldata priceIds,
         uint64 minPublishTime,
+        // solc-ignore-next-line unused-param
         uint64 maxPublishTime
     ) external payable override returns (IPythVerifier.PriceFeed[] memory priceFeeds) {
         priceFeeds = new IPythVerifier.PriceFeed[](1);
@@ -39,6 +41,7 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
 
     // Chainlink verifier
     function verify(
+        // solc-ignore-next-line unused-param
         bytes memory chainlinkBlob
     ) external view override returns (bytes memory verifierResponse) {
         // solhint-disable-next-line numcast/safe-cast
@@ -46,6 +49,7 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
         verifierResponse = abi.encode("ETH-USD", block.timestamp, 10, priceFormatted);
     }
 
+    // solc-ignore-next-line func-mutability unused-param
     function getUpdateFee(uint256 updateDataSize) external view override returns (uint256) {
         return 1;
     }
