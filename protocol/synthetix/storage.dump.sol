@@ -523,6 +523,7 @@ library OracleManager {
 
 // @custom:artifact contracts/storage/Pool.sol:Pool
 library Pool {
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     struct Data {
         uint128 id;
         string name;

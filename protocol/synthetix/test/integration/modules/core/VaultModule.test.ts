@@ -392,18 +392,34 @@ describe('VaultModule', function () {
             await MockMarket.setMinDelegationTime(86400);
           });
 
-          it('fails when min delegation timeout not elapsed', async () => {
-            await assertRevert(
-              systems().Core.connect(user2).delegateCollateral(
-                user2AccountId,
-                poolId,
-                collateralAddress(),
-                depositAmount, // user1 50%, user2 50%
-                ethers.utils.parseEther('1')
-              ),
-              `MinDelegationTimeoutPending("${poolId}",`,
-              systems().Core
-            );
+          describe('without time passing', async () => {
+            it('fails when min delegation timeout not elapsed', async () => {
+              await assertRevert(
+                systems().Core.connect(user2).delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(4), // user1 50%, user2 50%
+                  ethers.utils.parseEther('1')
+                ),
+                `MinDelegationTimeoutPending("${poolId}",`,
+                systems().Core
+              );
+            });
+
+            it('can increase delegation without waiting', async () => {
+              await systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.mul(2),
+                  ethers.utils.parseEther('1')
+                );
+            });
+
+            after(restore);
           });
 
           describe('after time passes', () => {
@@ -413,13 +429,15 @@ describe('VaultModule', function () {
             });
 
             it('works', async () => {
-              await systems().Core.connect(user2).delegateCollateral(
-                user2AccountId,
-                poolId,
-                collateralAddress(),
-                depositAmount, // user1 50%, user2 50%
-                ethers.utils.parseEther('1')
-              );
+              await systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(2),
+                  ethers.utils.parseEther('1')
+                );
             });
           });
 
