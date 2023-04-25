@@ -72,20 +72,17 @@ contract AccountModule is IAccountModule {
      * @inheritdoc IAccountModule
      */
     function createAccount() external override returns (uint128 accountId) {
+        FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
+
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
 
         SystemAccountConfiguration.Data
             storage systemAccountConfiguration = SystemAccountConfiguration.load();
         accountId = (type(uint128).max / 2) + systemAccountConfiguration.accountIdOffset;
-
-        try accountTokenModule.ownerOf(accountId) returns (address currentOwner) {
-            accountTokenModule.transferFrom(currentOwner, msg.sender, accountId);
-        } catch {
-            accountTokenModule.safeMint(msg.sender, accountId, "");
-            Account.create(accountId, msg.sender);
-        }
-
         systemAccountConfiguration.accountIdOffset += 1;
+
+        accountTokenModule.safeMint(msg.sender, accountId, "");
+        Account.create(accountId, msg.sender);
 
         emit AccountCreated(accountId, msg.sender);
     }

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "./Config.sol";
 import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
@@ -45,6 +46,8 @@ library Pool {
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
+
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
     struct Data {
         /**
@@ -372,6 +375,15 @@ library Pool {
                 requiredMinDelegateTime = marketMinDelegateTime;
             }
         }
+
+        // solhint-disable-next-line numcast/safe-cast
+        uint32 maxMinDelegateTime = uint32(
+            Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
+        );
+        return
+            maxMinDelegateTime < requiredMinDelegateTime
+                ? maxMinDelegateTime
+                : requiredMinDelegateTime;
     }
 
     /**
