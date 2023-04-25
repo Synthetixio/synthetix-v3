@@ -5,10 +5,13 @@
     "access": "public"
   },
   "description": "Common configuration used by all Hardhat packages",
+  "scripts": {
+    "build": "echo 'Needed because https://github.com/yarnpkg/berry/issues/3995'"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.2.1",
     "@nomiclabs/hardhat-etherscan": "3.1.3",
-    "@synthetixio/hardhat-storage": "3.1.0-alpha.1",
+    "@synthetixio/hardhat-storage": "workspace:*",
     "@typechain/ethers-v5": "10.1.0",
     "@typechain/hardhat": "6.1.3",
     "dotenv": "16.0.1",
