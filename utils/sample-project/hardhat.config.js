@@ -4,7 +4,7 @@ require('@nomiclabs/hardhat-ethers');
 require('hardhat-cannon');
 require('@synthetixio/hardhat-storage');
 
-registerAction(require('@synthetixio/router/utils/cannon').default);
+registerAction(require('cannon-plugin-router'));
 
 module.exports = {
   solidity: {
