@@ -205,6 +205,14 @@ describe('MarketManagerModule', function () {
           assertBn.gt(returnValue, 0);
           assertBn.equal(quotedFee, returnValue);
         });
+
+        it('emitted event', async () => {
+          await assertEvent(
+            txn,
+            `MarketSystemFeePaid(${marketId()}, ${One.div(100)})`,
+            systems().Core
+          );
+        });
       });
     });
   });
@@ -329,6 +337,14 @@ describe('MarketManagerModule', function () {
         it('returned fees paid', async () => {
           assertBn.gt(returnValue, 0);
           assertBn.equal(quotedFee, returnValue);
+        });
+
+        it('emitted event', async () => {
+          await assertEvent(
+            txn,
+            `MarketSystemFeePaid(${marketId()}, ${One.div(200)})`,
+            systems().Core
+          );
         });
       });
     });

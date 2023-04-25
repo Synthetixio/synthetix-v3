@@ -87,6 +87,12 @@ describe('AccountModule', function () {
       });
 
       describe('when a user creates a series of accounts without a specified ID', () => {
+        verifyUsesFeatureFlag(
+          () => systems().Core,
+          'createAccount',
+          () => systems().Core.connect(user1)['createAccount()']()
+        );
+
         it('succeeds with uint128MaxHalf', async () => {
           const core = systems().Core.connect(user1);
 
