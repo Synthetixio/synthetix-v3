@@ -2657,6 +2657,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/hardhat-storage": "workspace:*"
+    cannon-plugin-router: 1.0.10
     hardhat: 2.13.0
     hardhat-cannon: 2.4.7
   languageName: unknown
