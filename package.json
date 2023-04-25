@@ -31,7 +31,7 @@
     "deps:circular": "deps-circular",
     "version": "yarn install && git stage yarn.lock",
     "cannon:setup": "cannon setup",
-    "publish:release": "lerna publish --force-publish",
+    "publish:release": "lerna publ/ish --force-publish",
     "publish:dev": "lerna publish --force-publish --canary --dist-tag dev --preid dev.$(git rev-parse --short HEAD)",
     "publish-contracts": "yarn workspaces foreach --verbose run publish-contracts",
     "prepublishOnly": "node ./prepublishOnly.js"
@@ -43,7 +43,7 @@
     "@types/node": "18.11.10",
     "@typescript-eslint/eslint-plugin": "5.45.0",
     "@typescript-eslint/parser": "5.45.0",
-    "@usecannon/cli": "2.4.4",
+    "@usecannon/cli": "2.4.7",
     "eslint": "8.29.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-no-only-tests": "3.1.0",

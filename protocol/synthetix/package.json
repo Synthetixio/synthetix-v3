@@ -21,19 +21,19 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-contracts": "workspace:*",
-    "@synthetixio/core-modules": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "workspace:*",
+    "@synthetixio/common-config": "3.1.0-alpha.0",
+    "@synthetixio/core-contracts": "3.1.0-alpha.0",
+    "@synthetixio/core-modules": "3.1.0-alpha.0",
+    "@synthetixio/core-utils": "3.1.0-alpha.0",
+    "@synthetixio/oracle-manager": "3.1.0-alpha.0",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/builder": "2.4.4",
+    "@usecannon/builder": "2.4.7",
     "ethers": "^5.0.0",
     "handlebars": "^4.7.7",
     "hardhat": "2.13.0",
     "solidity-ast": "0.4.46",
     "solidity-docgen": "0.6.0-beta.31",
     "ts-node": "10.9.1"
-  }
+  },
+  "gitHead": "3f5d1cdc48e2360dcc2fb086dcacf6e379acac48"
 }
