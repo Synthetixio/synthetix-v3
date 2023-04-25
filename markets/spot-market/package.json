@@ -13,6 +13,7 @@
     "test:fork": "hardhat test test-fork/AsyncOrdersModule.e2e.test.ts",
     "coverage": "yarn test",
     "compile-contracts": "hardhat compile",
+    "publish-contracts": "yarn build && cannon publish synthetix-spot-market:$(node -p 'require(`./package.json`).version') --quiet",
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },
   "keywords": [],

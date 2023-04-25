@@ -181,6 +181,13 @@ library CollateralLock {
     }
 }
 
+// @custom:artifact @synthetixio/main/contracts/storage/Config.sol:Config
+library Config {
+    struct Data {
+        uint256 __unused;
+    }
+}
+
 // @custom:artifact @synthetixio/main/contracts/storage/Distribution.sol:Distribution
 library Distribution {
     struct Data {
@@ -264,6 +271,7 @@ library OracleManager {
 
 // @custom:artifact @synthetixio/main/contracts/storage/Pool.sol:Pool
 library Pool {
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     struct Data {
         uint128 id;
         string name;
