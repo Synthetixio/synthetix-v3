@@ -11,14 +11,10 @@ contract FeeCollectorMock is IFeeCollector {
         usdToken = _usdToken;
     }
 
-    // solc-ignore-next-line func-mutability
     function quoteFees(
-        // solc-ignore-next-line unused-param
         uint128 marketId,
         uint256 feeAmount,
-        // solc-ignore-next-line unused-param
         address sender,
-        // solc-ignore-next-line unused-param
         uint8 tradeType
     ) external override returns (uint256) {
         uint256 feeToCollect = feeAmount / 2;
