@@ -5,19 +5,32 @@ const fs = require('fs');
 const prettier = require('prettier');
 
 const [networkName] = process.argv.slice(2);
+const networkId = {
+  mainnet: 1,
+  'optimism-mainnet': 10,
+  goerli: 5,
+  'optimism-goerli': 420,
+}[networkName];
+
+const graphNetworkName = {
+  mainnet: 'mainnet',
+  'optimism-mainnet': 'optimism',
+  goerli: 'goerli',
+  'optimism-goerli': 'optimism-goerli',
+}[networkName];
 
 async function run() {
-  const provider = new ethers.providers.InfuraProvider(networkName, process.env.INFURA_KEY);
+  const provider = new ethers.providers.InfuraProvider(networkId, process.env.INFURA_KEY);
 
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
-  networks[networkName].CoreProxy.address =
+  networks[graphNetworkName].CoreProxy.address =
     require(`@synthetixio/v3-contracts/deployments/${networkName}/CoreProxy.json`).address;
 
   const deployTx =
     require(`@synthetixio/v3-contracts/deployments/${networkName}/InitialCoreProxy.json`).deployTxnHash;
   const tx = await provider.getTransactionReceipt(deployTx);
-  networks[networkName].CoreProxy.startBlock = tx.blockNumber;
+  networks[graphNetworkName].CoreProxy.startBlock = tx.blockNumber;
 
   const prettierOptions = JSON.parse(fs.readFileSync('../../.prettierrc', 'utf8'));
 
