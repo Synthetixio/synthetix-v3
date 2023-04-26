@@ -18,6 +18,11 @@ const config = {
       './Router.sol',
     ],
   },
+  warnings: {
+    'contracts/mocks/**/*': {
+      default: 'off',
+    },
+  },
 };
 
 export default config;
