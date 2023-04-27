@@ -71,6 +71,7 @@ describe('DecayTokenModule', () => {
       assert.equal(await TokenModule.symbol(), 'snx');
       assertBn.equal(await TokenModule.decimals(), decimal);
       assertBn.equal(await TokenModule.decayRate(), decayRate);
+      assert.equal(await TokenModule.isInitialized(), true);
     });
   });
 
