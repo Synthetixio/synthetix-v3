@@ -34,7 +34,6 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
         OwnableStorage.onlyOwner();
 
         _initialize(tokenName, tokenSymbol, tokenDecimals);
-        Initialized.load(_INITIALIZED_NAME).initialized = true;
     }
 
     /**
@@ -63,5 +62,14 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
 
     function _isInitialized() internal view override returns (bool) {
         return Initialized.load(_INITIALIZED_NAME).initialized;
+    }
+
+    function _initialize(
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint8 tokenDecimals
+    ) internal override {
+        super._initialize(tokenName, tokenSymbol, tokenDecimals);
+        Initialized.load(_INITIALIZED_NAME).initialized = true;
     }
 }

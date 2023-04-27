@@ -136,7 +136,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
             store.allowance[from][msg.sender] -= amount;
         }
 
-        _transfer(from, to, _tokenToShare(amount));
+        super._transfer(from, to, _tokenToShare(amount));
 
         return true;
     }
@@ -191,25 +191,5 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
                 n /= 2;
             }
         }
-    }
-
-    function _transfer(address from, address to, uint256 amount) internal virtual override {
-        ERC20Storage.Data storage store = ERC20Storage.load();
-
-        uint256 accountBalance = store.balanceOf[from];
-        if (accountBalance < amount) {
-            revert InsufficientBalance(amount, accountBalance);
-        }
-
-        // We are now sure that we can perform this operation safely
-        // since it didn't revert in the previous step.
-        // The total supply cannot exceed the maximum value of uint256,
-        // thus we can now perform accounting operations in unchecked mode.
-        unchecked {
-            store.balanceOf[from] -= amount;
-            store.balanceOf[to] += amount;
-        }
-
-        emit Transfer(from, to, amount);
     }
 }
