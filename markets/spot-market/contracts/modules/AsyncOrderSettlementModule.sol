@@ -265,7 +265,17 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         uint128 asyncOrderId,
         AsyncOrderClaim.Data storage asyncOrderClaim,
         SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
+    )
+        private
+        view
+        returns (
+            /* settling offchain reverts with OffchainLookup */
+            // solc-ignore-next-line unused-param
+            uint256 finalOrderAmount,
+            // solc-ignore-next-line unused-param
+            OrderFees.Data memory fees
+        )
+    {
         string[] memory urls = new string[](1);
         urls[0] = settlementStrategy.url;
 

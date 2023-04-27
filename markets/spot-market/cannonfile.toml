@@ -2,10 +2,6 @@ name = "synthetix-spot-market"
 version = "<%= package.version %>"
 description = "Spot market implementation"
 
-[setting.coreProxyOwner]
-description = "owner of v3 core proxy"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
 [setting.owner]
 description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
@@ -78,7 +74,7 @@ depends = [
   "contract.FeatureFlagModule",
 ]
 
-[invoke.upgrade_spot_market_proxy]
+[invoke.upgradeSpotMarketProxy]
 target = ["InitialSpotMarketProxy"]
 fromCall.func = "owner"
 func = "upgradeTo"
@@ -99,35 +95,35 @@ depends = [
   "contract.SynthTokenModule"
 ]
 
-[invoke.set_synthetix_system]
+[invoke.setSynthetixSystem]
 target = ["SpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
+fromCall.func = "owner"
 func = "setSynthetix"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix"]
+depends = ["invoke.upgradeSpotMarketProxy", "import.synthetix"]
 
-[invoke.set_synth_implementation]
+[invoke.setSynthImplementation]
 target = ["SpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
+fromCall.func = "owner"
 func = "setSynthImplementation"
 args = [
   "<%= contracts.SynthRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "router.SynthRouter"]
+depends = ["invoke.upgradeSpotMarketProxy", "router.SynthRouter"]
 
 # add pool owner to feature flag allow list
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-from = "<%= settings.coreProxyOwner %>"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
-depends = ['invoke.set_synthetix_system']
+fromCall.func = "owner"
+args = ["<%= formatBytes32String('registerMarket') %>", "<%= contracts.SpotMarketProxy.address %>"]
+depends = ['invoke.setSynthetixSystem']
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
-args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
-depends = ["invoke.upgrade_spot_market_proxy"]
+args = ["<%= formatBytes32String('createSynth') %>", "<%= settings.owner %>"]
+depends = ["invoke.upgradeSpotMarketProxy"]
