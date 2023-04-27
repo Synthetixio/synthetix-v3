@@ -29,10 +29,10 @@
     "@ethersproject/bignumber": "^5.7.0",
     "@ethersproject/providers": "5.7.2",
     "@nomiclabs/hardhat-ethers": "2.2.1",
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/common-config": "3.1.0",
+    "@synthetixio/core-utils": "3.1.0",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0"
   },
-  "gitHead": "3f5d1cdc48e2360dcc2fb086dcacf6e379acac48"
+  "gitHead": "d5d322abfb3a6260ecd3e0339c945649f5d53cb2"
 }

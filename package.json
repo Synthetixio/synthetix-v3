@@ -31,7 +31,7 @@
     "deps:circular": "deps-circular",
     "version": "yarn install && git stage yarn.lock",
     "cannon:setup": "cannon setup",
-    "publish:release": "lerna publ/ish --force-publish",
+    "publish:release": "lerna publish --force-publish",
     "publish:dev": "lerna publish --force-publish --canary --dist-tag dev --preid dev.$(git rev-parse --short HEAD)",
     "publish-contracts": "yarn workspaces foreach --verbose run publish-contracts",
     "prepublishOnly": "node ./prepublishOnly.js"
