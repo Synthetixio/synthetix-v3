@@ -1,7 +1,9 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
+import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
+import { depositAmount, stake } from './bootstrapStakers';
+import { wei } from '@synthetixio/wei';
 import hre from 'hardhat';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
 
@@ -24,7 +26,7 @@ export interface Proxies {
   ['oracle_manager.Proxy']: Oracle_managerProxy;
 }
 
-interface Systems {
+export interface Systems {
   Account: AccountProxy;
   Core: CoreProxy;
   USD: USDProxy;
@@ -38,26 +40,20 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<P
 
 const restoreSnapshot = createSnapshot();
 
-export let systems: Systems;
-
-before('load system proxies', function () {
-  systems = {
-    Account: getContract('AccountProxy'),
-    Core: getContract('CoreProxy'),
-    USD: getContract('USDProxy'),
-    OracleManager: getContract('oracle_manager.Proxy'),
-    CollateralMock: getContract('CollateralMock'),
-  } as Systems;
-});
-
 export function bootstrap() {
-  before(restoreSnapshot);
+  let systems: Systems;
 
-  before('give owner permission to create pools and markets', async () => {
-    const [owner] = getSigners();
-    await systems.Core.addToFeatureFlagAllowlist(POOL_FEATURE_FLAG, await owner.getAddress());
-    await systems.Core.addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, await owner.getAddress());
+  before('load system proxies', function () {
+    systems = {
+      Account: getContract('AccountProxy'),
+      Core: getContract('CoreProxy'),
+      USD: getContract('USDProxy'),
+      OracleManager: getContract('oracle_manager.Proxy'),
+      CollateralMock: getContract('CollateralMock'),
+    } as Systems;
   });
+
+  before(restoreSnapshot);
 
   return {
     provider: () => getProvider(),
@@ -67,51 +63,37 @@ export function bootstrap() {
   };
 }
 
-export function bootstrapWithStakedPool() {
-  const r = bootstrap();
-
+export function bootstrapWithStakedPool(
+  r: ReturnType<typeof bootstrap> = bootstrap(),
+  stakedCollateralPrice: ethers.BigNumber = bn(1)
+) {
   let aggregator: ethers.Contract;
 
-  let oracleNodeId = '';
+  let oracleNodeId: string;
   const accountId = 1;
   const poolId = 1;
-  let collateralAddress: string;
-  const depositAmount = ethers.utils.parseEther('1000');
-  const abi = ethers.utils.defaultAbiCoder;
 
-  before('deploy mock aggregator', async () => {
-    const [owner] = r.signers();
-
-    const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
-    aggregator = await factory.connect(owner).deploy();
-
-    await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
+  before('give owner permission to create pools', async () => {
+    await r
+      .systems()
+      .Core.addToFeatureFlagAllowlist(POOL_FEATURE_FLAG, await r.owner().getAddress());
   });
 
   before('setup oracle manager node', async () => {
-    const [owner] = r.signers();
-
-    const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 18]);
-    await r.systems().OracleManager.connect(owner).registerNode(NodeTypes.CHAINLINK, params1, []);
-    oracleNodeId = await r
-      .systems()
-      .OracleManager.connect(owner)
-      .getNodeId(NodeTypes.CHAINLINK, params1, []);
+    const results = await createOracleNode<Oracle_managerProxy>(
+      r.signers()[0],
+      stakedCollateralPrice,
+      r.systems().OracleManager
+    );
+    oracleNodeId = results.oracleNodeId;
+    aggregator = results.aggregator;
   });
 
-  before('delegate collateral', async function () {
-    const [owner, user1] = r.signers();
-
-    // mint initial collateral
-    await r.systems().CollateralMock.mint(await user1.getAddress(), depositAmount.mul(1000));
-
-    // deploy an aggregator
-    collateralAddress = r.systems().CollateralMock.address;
-
-    // add collateral,
+  before('configure collateral', async () => {
+    // add collateral
     await (
-      await r.systems().Core.connect(owner).configureCollateral({
-        tokenAddress: collateralAddress,
+      await r.systems().Core.connect(r.owner()).configureCollateral({
+        tokenAddress: r.systems().CollateralMock.address,
         oracleNodeId,
         issuanceRatioD18: '5000000000000000000',
         liquidationRatioD18: '1500000000000000000',
@@ -120,51 +102,24 @@ export function bootstrapWithStakedPool() {
         depositingEnabled: true,
       })
     ).wait();
+  });
 
+  before('create pool', async () => {
     // create pool
     await r
       .systems()
-      .Core.connect(owner)
-      .createPool(poolId, await owner.getAddress());
+      .Core.connect(r.owner())
+      .createPool(poolId, await r.owner().getAddress());
+  });
 
-    // create user account
-    await r.systems().Core.connect(user1)['createAccount(uint128)'](accountId);
-
-    // approve
-    await r
-      .systems()
-      .CollateralMock.connect(user1)
-      .approve(r.systems().Core.address, depositAmount.mul(10));
-
-    // stake collateral
-    await r
-      .systems()
-      .Core.connect(user1)
-      .deposit(accountId, collateralAddress, depositAmount.mul(10));
-
-    // invest in the pool
-    await r
-      .systems()
-      .Core.connect(user1)
-      .delegateCollateral(
-        accountId,
-        poolId,
-        collateralAddress,
-        depositAmount,
-        ethers.utils.parseEther('1')
-      );
-
-    // also for convenience invest in the 0 pool
-    await r
-      .systems()
-      .Core.connect(user1)
-      .delegateCollateral(
-        accountId,
-        0,
-        collateralAddress,
-        depositAmount,
-        ethers.utils.parseEther('1')
-      );
+  before('stake', async function () {
+    const [, staker] = r.signers();
+    await stake(
+      { Core: r.systems().Core, CollateralMock: r.systems().CollateralMock },
+      poolId,
+      accountId,
+      staker
+    );
   });
 
   const restore = snapshotCheckpoint(r.provider);
@@ -175,9 +130,10 @@ export function bootstrapWithStakedPool() {
     accountId,
     poolId,
     collateralContract: () => r.systems().CollateralMock,
-    collateralAddress: () => collateralAddress,
+    collateralAddress: () => r.systems().CollateralMock.address,
     depositAmount,
     restore,
+    oracleNodeId: () => oracleNodeId,
   };
 }
 
@@ -186,6 +142,12 @@ export function bootstrapWithMockMarketAndPool() {
 
   let MockMarket: MockMarket;
   let marketId: ethers.BigNumber;
+
+  before('give owner permission to create markets', async () => {
+    await r
+      .systems()
+      .Core.addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, await r.owner().getAddress());
+  });
 
   before('deploy and connect fake market', async () => {
     const [owner, user1] = r.signers();
@@ -231,3 +193,5 @@ export function bootstrapWithMockMarketAndPool() {
     restore,
   };
 }
+
+export const bn = (n: number) => wei(n).toBN();

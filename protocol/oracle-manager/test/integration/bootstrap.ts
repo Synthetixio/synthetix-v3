@@ -88,3 +88,29 @@ export function bootstrapWithNodes() {
 }
 
 export const bn = (n: number) => wei(n).toBN();
+
+/* utility function to use for other bootstrappers wanting to add a new oracle node */
+export const createOracleNode = async <T = NodeModule>(
+  owner: ethers.Signer,
+  price: ethers.BigNumber,
+  OracleManager: T
+) => {
+  const abi = ethers.utils.defaultAbiCoder;
+  const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
+  const aggregator = await factory.connect(owner).deploy();
+
+  await aggregator.mockSetCurrentPrice(price);
+
+  const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 18]);
+  await OracleManager.connect(owner).registerNode(NodeTypes.CHAINLINK, params1, []);
+  const oracleNodeId = await OracleManager.connect(owner).getNodeId(
+    NodeTypes.CHAINLINK,
+    params1,
+    []
+  );
+
+  return {
+    oracleNodeId,
+    aggregator,
+  };
+};
