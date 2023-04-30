@@ -181,6 +181,12 @@ contract PoolModule is IPoolModule {
         emit PoolConfigurationSet(poolId, newMarketConfigurations, msg.sender);
     }
 
+    function getPoolCumulativeDebt(
+        uint128 poolId
+    ) external returns (int256 cumulativeDebtD18) {
+        (cumulativeDebtD18, ) = Pool.loadExisting(poolId).rebalanceMarketsInPool();
+    }
+
     /**
      * @inheritdoc IPoolModule
      */

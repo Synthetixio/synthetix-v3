@@ -6,6 +6,7 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
+import "./PoolCrossChainInfo.sol";
 import "./SystemPoolConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
@@ -112,6 +113,10 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+
+        int256 cumulativeDebtD18;
+
+        PoolCrossChainInfo.Data[] crossChain;
     }
 
     /**
@@ -140,18 +145,12 @@ library Pool {
         pool.owner = owner;
     }
 
-    /**
-     * @dev Ticker function that updates the debt distribution chain downwards, from markets into the pool, according to each market's weight.
-     *
-     * It updates the chain by performing these actions:
-     * - Splits the pool's total liquidity of the pool into each market, pro-rata. The amount of shares that the pool has on each market depends on how much liquidity the pool provides to the market.
-     * - Accumulates the change in debt value from each market into the pools own vault debt distribution's value per share.
-     */
-    function distributeDebtToVaults(Data storage self) internal {
+    function rebalanceMarketsInPool(Data storage self) internal returns (int256 cumulativeDebtChangeD18, int256 cumulativeDebtD18) {
+
         uint256 totalWeightsD18 = self.totalWeightsD18;
 
         if (totalWeightsD18 == 0) {
-            return; // Nothing to rebalance.
+            return 0; // Nothing to rebalance.
         }
 
         // Read from storage once, before entering the loop below.
@@ -160,8 +159,6 @@ library Pool {
         int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
             ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
             : int128(0);
-
-        int256 cumulativeDebtChangeD18 = 0;
 
         uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
@@ -208,8 +205,23 @@ library Pool {
             );
         }
 
+        cumulativeDebtD18 = self.cumulativeDebtD18;
+        self.cumulativeDebtD18 = cumulativeDebtD18 + cumulativeDebtChangeD18;
+    }
+
+    /**
+     * @dev Ticker function that updates the debt distribution chain downwards, from markets into the pool, according to each market's weight.
+     *
+     * It updates the chain by performing these actions:
+     * - Splits the pool's total liquidity of the pool into each market, pro-rata. The amount of shares that the pool has on each market depends on how much liquidity the pool provides to the market.
+     * - Accumulates the change in debt value from each market into the pools own vault debt distribution's value per share.
+     */
+    function distributeDebtToVaults(Data storage self) internal {
+
+        (int256 debtChange, ) = rebalanceMarketsInPool(self);
+
         // Passes on the accumulated debt changes from the markets, into the pool, so that vaults can later access this debt.
-        self.vaultsDebtDistribution.distributeValue(cumulativeDebtChangeD18);
+        self.vaultsDebtDistribution.distributeValue(debtChange);
     }
 
     /**
