@@ -24,7 +24,7 @@ library MarketConfiguration {
     using DecimalMath for int256;
 
     error InvalidUtilizationLeverage();
-    error InvalidCollateralLeverage(uint256);
+    error InvalidCreditCapacityLeverage(uint256);
 
     struct Data {
         /**
@@ -40,14 +40,14 @@ library MarketConfiguration {
          */
         uint256 asyncFixedFee;
         /**
-         * @dev utilization fee rate (in percentage) is the rate of fees applied based on the ratio of delegated collateral to total outstanding synth exposure. 18 decimals
+         * @dev utilization fee rate (in percentage) is the rate of fees applied based on the ratio of credit capacity to total outstanding synth exposure. 18 decimals
          * applied on buy trades only.
          */
         uint256 utilizationFeeRate;
         /**
-         * @dev a configurable leverage % that is applied to delegated collateral which is used as a ratio for determining utilization, and locked amounts. D18
+         * @dev a configurable leverage % that is applied to the credit capacity which is used as a ratio for determining utilization, and market minimum credit amounts. D18
          */
-        uint256 collateralLeverage;
+        uint256 creditCapacityLeverage;
         /**
          * @dev wrapping fee rate represented as a percent, 18 decimals
          */
@@ -82,7 +82,7 @@ library MarketConfiguration {
     function isValidLeverage(uint256 leverage) internal pure {
         // add upper bounds for leverage here
         if (leverage == 0) {
-            revert InvalidCollateralLeverage(leverage);
+            revert InvalidCreditCapacityLeverage(leverage);
         }
     }
 
@@ -349,13 +349,14 @@ library MarketConfiguration {
     /**
      * @dev Calculates utilization rate fee
      * If no utilizationFeeRate is set, then the fee is 0
-     * The utilization rate fee is determined based on the ratio of outstanding synth value to the delegated collateral to the market.
-     * The delegated collateral is calculated by multiplying the collateral by a configurable leverage parameter (`utilizationLeveragePercentage`)
+     * The utilization rate fee is determined based on the ratio of outstanding synth value to the credit capacity to the market.
+     * The leveraged credit capacity is calculated by multiplying the credit capacity by a configurable leverage parameter (`creditCapacityLeverage`)
      *
      * Example:
      *  Utilization fee rate set to 0.1%
-     *  collateralLeverage: 2
-     *  Total delegated collateral value: $1000 * 2 = $2000
+     *  creditCapacityLeverage: 2
+     *  Market Credit capacity: $1000
+     *  Total levered credit capacity: $1000 * 2 = $2000
      *  Total outstanding synth value = $2200
      *  User buys $200 worth of synths
      *  Before fill utilization rate: 2200 / 2000 = 110%
@@ -372,15 +373,15 @@ library MarketConfiguration {
         uint256 amount,
         uint256 synthPrice
     ) internal view returns (uint256 utilFee) {
-        if (self.utilizationFeeRate == 0 || self.collateralLeverage == 0) {
+        if (self.utilizationFeeRate == 0 || self.creditCapacityLeverage == 0) {
             return 0;
         }
 
-        uint256 leveragedDelegatedCollateralValue = SpotMarketFactory
+        uint256 leveragedCreditCapacity = SpotMarketFactory
             .load()
             .synthetix
-            .getMarketCollateral(marketId)
-            .mulDecimal(self.collateralLeverage);
+            .getWithdrawableMarketUsd(marketId)
+            .mulDecimal(self.creditCapacityLeverage);
 
         uint256 totalBalance = SynthUtil.getToken(marketId).totalSupply();
 
@@ -389,21 +390,17 @@ library MarketConfiguration {
         uint256 totalValueAfterFill = totalValueBeforeFill + amount;
 
         // utilization is below 100%
-        if (leveragedDelegatedCollateralValue > totalValueAfterFill) {
+        if (leveragedCreditCapacity > totalValueAfterFill) {
             return 0;
         } else {
-            uint256 preUtilization = totalValueBeforeFill.divDecimal(
-                leveragedDelegatedCollateralValue
-            );
+            uint256 preUtilization = totalValueBeforeFill.divDecimal(leveragedCreditCapacity);
             // use 100% utilization if pre-fill utilization was less than 100%
             // no fees charged below 100% utilization
 
             uint256 preUtilizationDelta = preUtilization > DecimalMath.UNIT
                 ? preUtilization - DecimalMath.UNIT
                 : 0;
-            uint256 postUtilization = totalValueAfterFill.divDecimal(
-                leveragedDelegatedCollateralValue
-            );
+            uint256 postUtilization = totalValueAfterFill.divDecimal(leveragedCreditCapacity);
             uint256 postUtilizationDelta = postUtilization - DecimalMath.UNIT;
 
             // utilization is represented as the # of percentage points above 100%

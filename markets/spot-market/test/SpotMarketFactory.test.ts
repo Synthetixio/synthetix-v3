@@ -192,18 +192,20 @@ describe('SpotMarketFactory', () => {
         .buy(marketId(), bn(10000), bn(10), Ethers.constants.AddressZero);
     });
 
-    describe('when collateral leverage is zero', () => {
+    describe('when credit capacity leverage is zero', () => {
       it('reverts', async () => {
         await assertRevert(
-          systems().SpotMarket.connect(marketOwner).setCollateralLeverage(marketId(), bn(0)),
-          'InvalidCollateralLeverage'
+          systems().SpotMarket.connect(marketOwner).setCreditCapacityLeverage(marketId(), bn(0)),
+          'InvalidCreditCapacityLeverage'
         );
       });
     });
 
-    describe('when collateral leverage is 1', () => {
-      before('set collateral leverage', async () => {
-        await systems().SpotMarket.connect(marketOwner).setCollateralLeverage(marketId(), bn(1));
+    describe('when creditCapacity leverage is 1', () => {
+      before('set creditCapacity leverage', async () => {
+        await systems()
+          .SpotMarket.connect(marketOwner)
+          .setCreditCapacityLeverage(marketId(), bn(1));
       });
 
       it('should return $10,000', async () => {
@@ -211,9 +213,11 @@ describe('SpotMarketFactory', () => {
       });
     });
 
-    describe('when collateral leverage is 2', () => {
-      before('set collateral leverage', async () => {
-        await systems().SpotMarket.connect(marketOwner).setCollateralLeverage(marketId(), bn(2));
+    describe('when credit capacity leverage is 2', () => {
+      before('set credit capacity leverage', async () => {
+        await systems()
+          .SpotMarket.connect(marketOwner)
+          .setCreditCapacityLeverage(marketId(), bn(2));
       });
 
       it('should return $5,000', async () => {

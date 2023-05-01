@@ -126,7 +126,7 @@ describe('Atomic Order Module buy()', () => {
   describe('utilization rate fees', async () => {
     before(restore);
 
-    // market provided collateral = $100,000 snxUSD
+    // credit capacity = $100,000 snxUSD
 
     let withdrawableUsd: Ethers.BigNumber;
     before('set utilization fee to 1%', async () => {
@@ -150,17 +150,21 @@ describe('Atomic Order Module buy()', () => {
       });
     });
 
+    // current credit capacity = 100,000 + 50,000 (deposited snxUSD)
     describe('when utilization is over 100%', () => {
-      before('buy 100 snxETH', async () => {
-        await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(100_000));
+      before('buy 200 snxETH', async () => {
+        await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(200_000));
         await systems()
           .SpotMarket.connect(trader2)
-          .buy(marketId(), bn(100_000), bn(97.5), Ethers.constants.AddressZero);
+          .buy(marketId(), bn(200_000), bn(97.5), Ethers.constants.AddressZero);
       });
 
       it('applies utilization fee', async () => {
         // 100% before utilization since we were under 100% utilization prior to fill
-        // 150_000 / 100_000 = 150% after utilization
+        // before transaction total synth value = $150,000
+        // after = $250,000
+        // 50_000 / 150_000  = 33% before utilization
+        // 250_000 / 150_000 = 150% after utilization
         // (150% (post) + 100% (pre)) / 2 = 125% average utilization
         // 25 * 0.1% = 2.5% fee
         assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(97.5));

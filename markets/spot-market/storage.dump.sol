@@ -267,7 +267,7 @@ library MarketConfiguration {
         uint256 atomicFixedFee;
         uint256 asyncFixedFee;
         uint256 utilizationFeeRate;
-        uint256 collateralLeverage;
+        uint256 creditCapacityLeverage;
         int256 wrapFixedFee;
         int256 unwrapFixedFee;
         uint256 skewScale;
