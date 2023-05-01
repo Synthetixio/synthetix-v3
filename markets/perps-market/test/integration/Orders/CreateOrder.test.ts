@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapPerpsMarket } from './bootstrap';
+import { bn, bootstrapTraders, bootstrapPerpsMarket } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('perps test', () => {
+describe('Create Order test', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapPerpsMarket('Ether', 'snxETH')
   );
@@ -28,6 +28,7 @@ describe('perps test', () => {
         priceVerificationContract: ethers.constants.AddressZero,
         feedId: ethers.constants.HashZero,
         url: '',
+        disabled: false,
         settlementReward: bn(5),
         priceDeviationTolerance: bn(0.01),
       });
