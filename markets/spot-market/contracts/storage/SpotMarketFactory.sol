@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
@@ -11,7 +11,7 @@ import {SynthUtil} from "../utils/SynthUtil.sol";
  * @title Main factory library that registers synths.  Also houses global configuration for all synths.
  */
 library SpotMarketFactory {
-    using SafeCastU256 for uint256;
+    using DecimalMath for uint256;
 
     bytes32 private constant _SLOT_SPOT_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
@@ -91,7 +91,7 @@ library SpotMarketFactory {
         self.synthetix.depositMarketUsd(marketId, address(this), amount);
     }
 
-    function marketDebt(uint128 marketId, uint256 price) internal {
+    function marketDebt(uint128 marketId, uint256 price) internal view returns (uint256) {
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
 }

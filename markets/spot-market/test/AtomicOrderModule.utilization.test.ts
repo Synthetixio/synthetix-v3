@@ -42,7 +42,7 @@ describe('Atomic Orders Utilization Rate tests', () => {
 
   describe('with 1x leverage', () => {
     before('set collateral leverage to 1', async () => {
-      await systems().SpotMarket.connect(marketOwner).setCollateralLeverage(marketId(), bn(1));
+      await systems().SpotMarket.connect(marketOwner).setMarketCreditLeverage(marketId(), bn(1));
     });
 
     // utilization rate from 0-90%
@@ -76,7 +76,7 @@ describe('Atomic Orders Utilization Rate tests', () => {
     before(restore);
     // with 2x leverage, delegated collateral is 2x == $200,000
     before('set collateral leverage to 1', async () => {
-      await systems().SpotMarket.connect(marketOwner).setCollateralLeverage(marketId(), bn(2));
+      await systems().SpotMarket.connect(marketOwner).setMarketCreditLeverage(marketId(), bn(2));
     });
 
     // utilization rate from 0-90%

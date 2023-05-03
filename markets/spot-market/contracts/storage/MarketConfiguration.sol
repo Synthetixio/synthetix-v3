@@ -377,13 +377,13 @@ library MarketConfiguration {
         }
 
         uint256 currentMarketDebt = SpotMarketFactory.marketDebt(marketId, synthPrice);
-        uint256 currentMarketCredit = SpotMarketFactory.load().synthetix.getWithdrawableUsd(
-            marketId
-        );
 
-        uint256 netMarketCreditBeforeFill = (currentMarketCredit - currentMarketDebt).mulDecimal(
-            self.marketCreditLeverage
-        );
+        uint256 netMarketCreditBeforeFill = (SpotMarketFactory
+            .load()
+            .synthetix
+            .getWithdrawableMarketUsd(marketId) - currentMarketDebt).mulDecimal(
+                self.marketCreditLeverage
+            );
         uint256 netMarketCreditAfterFill = (netMarketCreditBeforeFill + amount).mulDecimal(
             self.marketCreditLeverage
         );
