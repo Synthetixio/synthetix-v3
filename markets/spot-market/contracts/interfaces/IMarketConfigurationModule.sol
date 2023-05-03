@@ -25,11 +25,11 @@ interface IMarketConfigurationModule {
     event MarketSkewScaleSet(uint256 indexed synthMarketId, uint256 skewScale);
 
     /**
-     * @notice emitted when the collateral leverage is set for a market
+     * @notice emitted when the market collateral leverage is set for a market
      * @param synthMarketId market id
-     * @param collateralLeverage leverage value
+     * @param marketCreditLeverage leverage value
      */
-    event CollateralLeverageSet(uint256 indexed synthMarketId, uint256 collateralLeverage);
+    event MarketCreditLeverageSet(uint256 indexed synthMarketId, uint256 marketCreditLeverage);
 
     /**
      * @notice emitted when the fixed fee for atomic orders is set.
@@ -124,9 +124,9 @@ interface IMarketConfigurationModule {
      * @dev only marketOwner can set the leverage
      * @dev this leverage value is a value applied to delegated collateral which is compared to outstanding synth to determine utilization of market, and locked amounts
      * @param synthMarketId Id of the market the collateral leverage applies to.
-     * @param collateralLeverage the leverage is represented as % with 18 decimals. 1 = 1x leverage
+     * @param marketCreditLeverage the leverage is represented as % with 18 decimals. 1 = 1x leverage
      */
-    function setCollateralLeverage(uint128 synthMarketId, uint256 collateralLeverage) external;
+    function setMarketCreditLeverage(uint128 synthMarketId, uint256 marketCreditLeverage) external;
 
     /**
      * @notice sets the fixed fee for a given market and transactor

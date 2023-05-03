@@ -64,16 +64,16 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setCollateralLeverage(
+    function setMarketCreditLeverage(
         uint128 synthMarketId,
-        uint256 collateralLeverage
+        uint256 marketCreditLeverage
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
-        MarketConfiguration.isValidLeverage(collateralLeverage);
+        MarketConfiguration.isValidLeverage(marketCreditLeverage);
 
-        MarketConfiguration.load(synthMarketId).collateralLeverage = collateralLeverage;
+        MarketConfiguration.load(synthMarketId).marketCreditLeverage = marketCreditLeverage;
 
-        emit CollateralLeverageSet(synthMarketId, collateralLeverage);
+        emit MarketCreditLeverageSet(synthMarketId, marketCreditLeverage);
     }
 
     /**

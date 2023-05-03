@@ -24,7 +24,7 @@ library MarketConfiguration {
     using DecimalMath for int256;
 
     error InvalidUtilizationLeverage();
-    error InvalidCollateralLeverage(uint256);
+    error InvalidMarketCreditLeverage(uint256);
 
     struct Data {
         /**
@@ -45,9 +45,9 @@ library MarketConfiguration {
          */
         uint256 utilizationFeeRate;
         /**
-         * @dev a configurable leverage % that is applied to delegated collateral which is used as a ratio for determining utilization, and locked amounts. D18
+         * @dev a configurable leverage % that is applied to the net credit capacity of the market. Used to determine market's utilization % and minimum credit D18
          */
-        uint256 collateralLeverage;
+        uint256 marketCreditLeverage;
         /**
          * @dev wrapping fee rate represented as a percent, 18 decimals
          */
@@ -82,7 +82,7 @@ library MarketConfiguration {
     function isValidLeverage(uint256 leverage) internal pure {
         // add upper bounds for leverage here
         if (leverage == 0) {
-            revert InvalidCollateralLeverage(leverage);
+            revert InvalidMarketCreditLeverage(leverage);
         }
     }
 
@@ -372,38 +372,37 @@ library MarketConfiguration {
         uint256 amount,
         uint256 synthPrice
     ) internal view returns (uint256 utilFee) {
-        if (self.utilizationFeeRate == 0 || self.collateralLeverage == 0) {
+        if (self.utilizationFeeRate == 0 || self.marketCreditLeverage == 0) {
             return 0;
         }
 
-        uint256 leveragedDelegatedCollateralValue = SpotMarketFactory
-            .load()
-            .synthetix
-            .getMarketCollateral(marketId)
-            .mulDecimal(self.collateralLeverage);
+        uint256 currentMarketDebt = SpotMarketFactory.marketDebt(marketId, synthPrice);
+        uint256 currentMarketCredit = SpotMarketFactory.load().synthetix.getWithdrawableUsd(
+            marketId
+        );
 
-        uint256 totalBalance = SynthUtil.getToken(marketId).totalSupply();
+        uint256 netMarketCreditBeforeFill = (currentMarketCredit - currentMarketDebt).mulDecimal(
+            self.marketCreditLeverage
+        );
+        uint256 netMarketCreditAfterFill = (netMarketCreditBeforeFill + amount).mulDecimal(
+            self.marketCreditLeverage
+        );
 
         // Note: take into account the async order commitment amount in escrow
-        uint256 totalValueBeforeFill = totalBalance.mulDecimal(synthPrice);
+        uint256 totalValueBeforeFill = currentMarketDebt;
         uint256 totalValueAfterFill = totalValueBeforeFill + amount;
 
         // utilization is below 100%
-        if (leveragedDelegatedCollateralValue > totalValueAfterFill) {
+        if (netMarketCreditAfterFill > totalValueAfterFill) {
             return 0;
         } else {
-            uint256 preUtilization = totalValueBeforeFill.divDecimal(
-                leveragedDelegatedCollateralValue
-            );
+            uint256 preUtilization = totalValueBeforeFill.divDecimal(netMarketCreditBeforeFill);
             // use 100% utilization if pre-fill utilization was less than 100%
             // no fees charged below 100% utilization
-
             uint256 preUtilizationDelta = preUtilization > DecimalMath.UNIT
                 ? preUtilization - DecimalMath.UNIT
                 : 0;
-            uint256 postUtilization = totalValueAfterFill.divDecimal(
-                leveragedDelegatedCollateralValue
-            );
+            uint256 postUtilization = totalValueAfterFill.divDecimal(netMarketCreditAfterFill);
             uint256 postUtilizationDelta = postUtilization - DecimalMath.UNIT;
 
             // utilization is represented as the # of percentage points above 100%

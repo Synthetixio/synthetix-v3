@@ -81,8 +81,9 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         );
 
         spotMarketFactory.marketOwners[synthMarketId] = synthOwner;
-        // default collateral leverage to 1
-        MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
+        // default market credit leverage to 1
+        // market owner can set levarege using the `setMarketCreditLeverage` function
+        MarketConfiguration.load(synthMarketId).marketCreditLeverage = DecimalMath.UNIT;
 
         emit SynthRegistered(synthMarketId);
     }
@@ -101,26 +102,26 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function reportedDebt(
         uint128 marketId
     ) external view override returns (uint256 reportedDebtAmount) {
-        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
-
-        return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
+        return
+            SpotMarketFactory.marketDebt(
+                marketId,
+                Price.getCurrentPrice(marketId, Transaction.Type.SELL)
+            );
     }
 
     /**
      * @inheritdoc IMarket
      * @dev locked amount is calculating by dividing total supply by the market configured collateral leverage
-     * @dev collateral leverage is defaulted to 1 on registration of a new market
+     * @dev market credit leverage is defaulted to 1 on registration of a new market
      */
     function minimumCredit(uint128 marketId) external view returns (uint256 lockedAmount) {
-        uint256 totalBalance = SynthUtil.getToken(marketId).totalSupply();
-        uint256 collateralLeverage = MarketConfiguration.load(marketId).collateralLeverage;
+        uint256 marketDebt = SpotMarketFactory.marketDebt(
+            marketId,
+            Price.getCurrentPrice(marketId, Transaction.Type.BUY)
+        );
+        uint256 marketCreditLeverage = MarketConfiguration.load(marketId).marketCreditLeverage;
 
-        return
-            collateralLeverage == 0
-                ? 0
-                : totalBalance
-                    .mulDecimal(Price.getCurrentPrice(marketId, Transaction.Type.BUY))
-                    .divDecimal(collateralLeverage);
+        return marketDebt.divDecimal(marketCreditLeverage) + marketDebt;
     }
 
     /**
