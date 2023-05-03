@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../../interfaces/IUSDTokenModule.sol";
-import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol";
+import "../../interfaces/external/ICcipRouterClient.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
@@ -97,27 +97,24 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
      * @inheritdoc IUSDTokenModule
      */
     function transferCrossChain(
-        uint256 destChainId,
+        uint64 destChainId,
         address to,
         uint256 amount
     ) external returns (uint256 feesPaid) {
         AssociatedSystem.load(_CCIP_CHAINLINK_SEND).expectKind(AssociatedSystem.KIND_UNMANAGED);
 
-        IERC20[] memory tokens = new IERC20[](1);
-        tokens[0] = IERC20(address(this));
+        CcipClient.EVMTokenAmount[] memory tokenAmounts = new CcipClient.EVMTokenAmount[](1);
+        CcipClient.EVMTokenAmount(address(this), amount);
 
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = amount;
-
-        IEVM2AnySubscriptionOnRampRouterInterface(AssociatedSystem.load(_CCIP_CHAINLINK_SEND).proxy)
+        ICcipRouterClient(AssociatedSystem.load(_CCIP_CHAINLINK_SEND).proxy)
             .ccipSend(
                 destChainId,
-                IEVM2AnySubscriptionOnRampRouterInterface.EVM2AnySubscriptionMessage(
+                CcipClient.EVM2AnyMessage(
                     abi.encode(to), // Address of the receiver on the destination chain for EVM chains use abi.encode(destAddress).
                     "", // Bytes that we wish to send to the receiver
-                    tokens, // The ERC20 tokens we wish to send for EVM source chains
-                    amounts, // The amount of ERC20 tokens we wish to send for EVM source chains
-                    _TRANSFER_GAS_LIMIT // the gas limit for the call to the receiver for destination chains
+                    tokenAmounts,
+                    address(0),
+                    CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(_TRANSFER_GAS_LIMIT, false)) // the gas limit for the call to the receiver for destination chains
                 )
             );
 

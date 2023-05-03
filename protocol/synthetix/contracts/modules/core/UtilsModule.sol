@@ -36,6 +36,10 @@ contract UtilsModule is IUtilsModule {
             AssociatedSystem.load(_USD_TOKEN).proxy
         );
 
+        AssociatedSystem.load(_CCIP_CHAINLINK_SEND).set(ccipSend, address(0), AssociatedSystem.KIND_UNMANAGED);
+        AssociatedSystem.load(_CCIP_CHAINLINK_RECV).set(ccipReceive, address(0), AssociatedSystem.KIND_UNMANAGED);
+        AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).set(ccipTokenPool, address(0), AssociatedSystem.KIND_UNMANAGED);
+
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipSend);
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_RECV, ccipReceive);
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_TOKEN_POOL, ccipTokenPool);

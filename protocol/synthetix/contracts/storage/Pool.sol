@@ -27,6 +27,7 @@ library Pool {
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
+    using SetUtil for SetUtil.AddressSet;
     using SafeCastAddress for address;
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
@@ -145,22 +146,38 @@ library Pool {
         pool.owner = owner;
     }
 
+    function isCrossChainEnabled(Data storage self) internal view returns (bool) {
+        return self.crossChain[0].pairedChains.length > 0;
+    }
+
+    function getCreditCapacity(Data storage self) internal view returns (uint256) {
+        return isCrossChainEnabled(self) ? self.crossChain[0].latestLiquidity : self.vaultsDebtDistribution.totalSharesD18;
+    }
+
+    function getTotalDebts(Data storage self) internal view returns (int256) {
+        return isCrossChainEnabled(self) ? self.crossChain[0].latestDebtAmount : self.totalVaultDebtsD18;
+    }
+
+    function getTotalWeight(Data storage self) internal view returns (uint256) {
+        return isCrossChainEnabled(self) ? self.crossChain[0].latestTotalWeights : self.totalWeightsD18;
+    }
+
     function rebalanceMarketsInPool(Data storage self) internal returns (int256 cumulativeDebtChangeD18, int256 cumulativeDebtD18) {
 
-        uint256 totalWeightsD18 = self.totalWeightsD18;
+        uint256 totalWeightsD18 = getTotalWeight(self);
 
         if (totalWeightsD18 == 0) {
-            return 0; // Nothing to rebalance.
+            return (0, 0); // Nothing to rebalance.
         }
 
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
-        uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
+        uint256 totalCreditCapacityD18 = getCreditCapacity(self);
         int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
-            ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+            ? getTotalDebts(self).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
             : int128(0);
 
-        uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
+        //uint256 systemMinLiquidityRatioD18 = ;
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
         // This debt extracted from markets is then applied to the pool's vault debt distribution, which thus exposes debt to the pool's vaults.
@@ -180,7 +197,7 @@ library Pool {
             // Use market-specific minimum liquidity ratio if set, otherwise use system default.
             uint256 minLiquidityRatioD18 = marketData.minLiquidityRatioD18 > 0
                 ? marketData.minLiquidityRatioD18
-                : systemMinLiquidityRatioD18;
+                : SystemPoolConfiguration.load().minLiquidityRatioD18;
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
@@ -273,6 +290,47 @@ library Pool {
         }
 
         return false;
+    }
+
+    function recalculateAllCollaterals(
+        Data storage self
+    ) internal {
+        // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
+        distributeDebtToVaults(self);
+
+        SetUtil.AddressSet storage availableCollaterals = CollateralConfiguration.loadAvailableCollaterals();
+
+        int256 deltaDebtD18;
+
+        for (uint i = 0;i < availableCollaterals.length();i++) {
+            address collateralType = availableCollaterals.valueAt(i);
+
+            // Transfer the debt change from the pool into the vault.
+            bytes32 actorId = collateralType.toBytes32();
+            self.vaults[collateralType].distributeDebtToAccounts(
+                self.vaultsDebtDistribution.accumulateActor(actorId)
+            );
+
+            // Get the latest collateral price.
+            uint256 collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
+
+            // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
+            (uint256 usdWeightD18, , int256 collateralDeltaDebtD18) = self
+                .vaults[collateralType]
+                .updateCreditCapacity(collateralPriceD18);
+            
+            // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
+            self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
+
+            deltaDebtD18 += collateralDeltaDebtD18;
+        }
+
+
+        // Accumulate the change in total liquidity, from the vault, into the pool.
+        self.totalVaultDebtsD18 = self.totalVaultDebtsD18 + deltaDebtD18.to128();
+
+        // Distribute debt again because the market credit capacity may have changed, so we should ensure the vaults have the most up to date capacities
+        distributeDebtToVaults(self);
     }
 
     /**

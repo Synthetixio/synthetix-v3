@@ -14,6 +14,11 @@ interface IPoolModule {
     error CapacityLocked(uint256 marketId);
 
     /**
+     * @notice Thrown when the requested pool ID is greater or equal to type(uint128).max / 2
+     */
+    error InvalidPoolId(uint128 poolId);
+
+    /**
      * @notice Gets fired when pool will be created.
      * @param poolId The id of the newly created pool.
      * @param owner The owner of the newly created pool.

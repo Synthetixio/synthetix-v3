@@ -4,14 +4,21 @@ pragma solidity >=0.8.11 <0.9.0;
 import "./external/FunctionsClientInterface.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 
+import "../storage/MarketConfiguration.sol";
+
 /**
  * @title Module for management of pools which are cross chain capable
  */
-interface IPoolModule is FunctionsClientInterface, AutomationCompatibleInterface {
+interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibleInterface {
     /**
-     * @notice Creates a pool with the requested pool id.
-     * @param requestedPoolId The requested id for the new pool. Reverts if the id is not available.
-     * @param owner The address that will own the newly created pool.
+     * @notice Does something
      */
-    function createPool(uint128 requestedPoolId, address owner) external;
+     function createCrossChainPool(uint128 sourcePoolId, uint64 targetChainId) external returns (uint256 gasTokenUsed);
+
+     function _recvCreateCrossChainPool(uint64 srcChainId, uint64 srcPoolId) external;
+
+     function setCrossChainPoolConfiguration(
+        uint128 poolId, 
+        MarketConfiguration.Data[][] memory newMarketConfigurations
+    ) external;
 }

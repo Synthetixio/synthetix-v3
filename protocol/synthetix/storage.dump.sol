@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -216,6 +216,56 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact contracts/external/Buffer.sol:Buffer
+library Buffer {
+    struct buffer {
+        bytes buf;
+        uint256 capacity;
+    }
+}
+
+// @custom:artifact contracts/external/CBOR.sol:CBOR
+library CBOR {
+    uint8 private constant MAJOR_TYPE_INT = 0;
+    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
+    uint8 private constant MAJOR_TYPE_BYTES = 2;
+    uint8 private constant MAJOR_TYPE_STRING = 3;
+    uint8 private constant MAJOR_TYPE_ARRAY = 4;
+    uint8 private constant MAJOR_TYPE_MAP = 5;
+    uint8 private constant MAJOR_TYPE_TAG = 6;
+    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
+    uint8 private constant TAG_TYPE_BIGNUM = 2;
+    uint8 private constant TAG_TYPE_NEGATIVE_BIGNUM = 3;
+    uint8 private constant CBOR_FALSE = 20;
+    uint8 private constant CBOR_TRUE = 21;
+    uint8 private constant CBOR_NULL = 22;
+    uint8 private constant CBOR_UNDEFINED = 23;
+    struct CBORBuffer {
+        Buffer.buffer buf;
+        uint256 depth;
+    }
+}
+
+// @custom:artifact contracts/external/Functions.sol:Functions
+library Functions {
+    uint256 internal constant DEFAULT_BUFFER_SIZE = 256;
+    enum Location {
+        Inline,
+        Remote
+    }
+    enum CodeLanguage {
+        JavaScript
+    }
+    struct Request {
+        Location codeLocation;
+        Location secretsLocation;
+        CodeLanguage language;
+        string source;
+        bytes secrets;
+        string[] args;
+    }
+}
+
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
 interface IAccountModule {
     struct AccountPermissions {
@@ -233,25 +283,18 @@ interface ILiquidationModule {
     }
 }
 
-// @custom:artifact contracts/interfaces/external/IAny2EVMMessageReceiverInterface.sol:IAny2EVMMessageReceiverInterface
-interface IAny2EVMMessageReceiverInterface {
-    struct Any2EVMMessage {
-        uint256 srcChainId;
-        bytes sender;
-        bytes data;
-        address[] destTokens;
-        uint256[] amounts;
+// @custom:artifact contracts/interfaces/external/FunctionsBillingRegistryInterface.sol:FunctionsBillingRegistryInterface
+interface FunctionsBillingRegistryInterface {
+    enum FulfillResult {
+        USER_SUCCESS,
+        USER_ERROR,
+        INVALID_REQUEST_ID
     }
-}
-
-// @custom:artifact contracts/interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol:IEVM2AnySubscriptionOnRampRouterInterface
-interface IEVM2AnySubscriptionOnRampRouterInterface {
-    struct EVM2AnySubscriptionMessage {
-        bytes receiver;
-        bytes data;
-        address[] tokens;
-        uint256[] amounts;
-        uint256 gasLimit;
+    struct RequestBilling {
+        uint64 subscriptionId;
+        address client;
+        uint32 gasLimit;
+        uint256 gasPrice;
     }
 }
 
@@ -272,6 +315,13 @@ contract CollateralModule {
     bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
     bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
+}
+
+// @custom:artifact contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule
+contract CrossChainPoolModule {
+    string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
+    string internal constant _REQUEST_TOTAL_DEBT_CODE = "const maxFail = 1;const chainMapping = { '11155111': [`https://sepolia.infura.io/${secrets.INFURA_API_KEY}`], '80001': ['https://polygon-mumbai.infura.io/${secrets.INFURA_API_KEY}'] };let totalDebt = 0;for (let i = 0;i < args.length;i += 2) {    const chainId = Functions.decodeUint256(args[i]);    const poolIdHex = args[i + 1].slice(2);    const urls = chainMapping[chainId];    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: '0x47355c0f' + poolIdHex}] };    const results = await Promise.allSettled(urls.map(u => Functions.makeHttpRequest({ url, params })));    let sumAvg = 0;    for (const result of results) {        sumAvg += Functions.decodeInt256(res.data.result);    }    totalDebt += sumAvg / results.length;}return Functions.encodeInt256(totalDebt)";
+    bytes internal constant _REQUEST_TOTAL_DEBT_SECRETS = "0xwhatever";
 }
 
 // @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
@@ -309,6 +359,11 @@ contract MarketManagerModule {
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
+}
+
+// @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
+contract MulticallModule {
+    bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
@@ -425,6 +480,22 @@ library Config {
     }
 }
 
+// @custom:artifact contracts/storage/CrossChain.sol:CrossChain
+library CrossChain {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
+    struct Data {
+        address ccipRouter;
+        address chainlinkFunctionsOracle;
+        SetUtil.UintSet supportedNetworks;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
+    }
+}
+
 // @custom:artifact contracts/storage/Distribution.sol:Distribution
 library Distribution {
     struct Data {
@@ -538,12 +609,30 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        int256 cumulativeDebtD18;
+        PoolCrossChainInfo.Data[] crossChain;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
+library PoolCrossChainInfo {
+    struct Data {
+        uint128 latestLiquidity;
+        uint128 latestTotalWeights;
+        int128 latestDebtAmount;
+        uint64 latestDataTimestamp;
+        uint64 lastReportedOldestDataTimestamp;
+        uint64[] pairedChains;
+        mapping(uint64 => uint256) pairedPoolIds;
+        uint64 chainlinkSubscriptionId;
+        uint32 chainlinkSubscriptionInterval;
+        bytes32 latestRequestId;
     }
 }
 
@@ -600,6 +689,7 @@ library SystemPoolConfiguration {
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
         SetUtil.UintSet approvedPools;
+        uint128 lastPoolId;
     }
     function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
@@ -630,5 +720,32 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
+    }
+}
+
+// @custom:artifact contracts/utils/CcipClient.sol:CcipClient
+library CcipClient {
+    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
+    struct EVMTokenAmount {
+        address token;
+        uint256 amount;
+    }
+    struct Any2EVMMessage {
+        bytes32 messageId;
+        uint64 sourceChainId;
+        bytes sender;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+    }
+    struct EVM2AnyMessage {
+        bytes receiver;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+        address feeToken;
+        bytes extraArgs;
+    }
+    struct EVMExtraArgsV1 {
+        uint256 gasLimit;
+        bool strict;
     }
 }

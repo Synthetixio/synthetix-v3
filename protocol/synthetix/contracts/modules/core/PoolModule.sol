@@ -37,6 +37,10 @@ contract PoolModule is IPoolModule {
             revert AddressError.ZeroAddress();
         }
 
+        if (requestedPoolId >= type(uint128).max / 2) {
+            revert InvalidPoolId(requestedPoolId);
+        }
+
         Pool.create(requestedPoolId, owner);
 
         emit PoolCreated(requestedPoolId, owner, msg.sender);
@@ -117,7 +121,11 @@ contract PoolModule is IPoolModule {
         MarketConfiguration.Data[] memory newMarketConfigurations
     ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        if (msg.sender != address(this)) {
+            Pool.onlyPoolOwner(poolId, msg.sender);
+        }
+
         pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
@@ -127,6 +135,7 @@ contract PoolModule is IPoolModule {
 
         // Identify markets that need to be removed or verified later for being locked.
         (
+            ,
             uint128[] memory potentiallyLockedMarkets,
             uint128[] memory removedMarkets
         ) = _analyzePoolConfigurationChange(pool, newMarketConfigurations);
@@ -255,7 +264,7 @@ contract PoolModule is IPoolModule {
     )
         internal
         view
-        returns (uint128[] memory potentiallyLockedMarkets, uint128[] memory removedMarkets)
+        returns (uint256 totalWeightD18, uint128[] memory potentiallyLockedMarkets, uint128[] memory removedMarkets)
     {
         uint256 oldIdx = 0;
         uint256 potentiallyLockedMarketsIdx = 0;
@@ -265,10 +274,14 @@ contract PoolModule is IPoolModule {
         potentiallyLockedMarkets = new uint128[](pool.marketConfigurations.length);
         removedMarkets = new uint128[](pool.marketConfigurations.length);
 
-        // First we need the total weight of the new distribution.
-        uint256 totalWeightD18 = 0;
+        // First we need the current total weight
         for (uint256 i = 0; i < newMarketConfigurations.length; i++) {
             totalWeightD18 += newMarketConfigurations[i].weightD18;
+        }
+
+        if (pool.isCrossChainEnabled()) {
+            // we need to consider the cross chain weight as well
+            totalWeightD18 = pool.crossChain[0].latestTotalWeights + totalWeightD18 - pool.totalWeightsD18;
         }
 
         // Now, iterate through the incoming market configurations, and compare with them with the existing ones.

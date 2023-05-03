@@ -23,7 +23,7 @@ interface IUSDTokenModule is ITokenModule {
      * @return feesPaidD18 The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
      */
     function transferCrossChain(
-        uint256 destChainId,
+        uint64 destChainId,
         address to,
         uint256 amount
     ) external returns (uint256 feesPaidD18);
