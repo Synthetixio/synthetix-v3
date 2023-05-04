@@ -504,6 +504,36 @@ export class CollateralConfiguredConfigStruct extends ethereum.Tuple {
   }
 }
 
+export class IssuanceFeePaid extends ethereum.Event {
+  get params(): IssuanceFeePaid__Params {
+    return new IssuanceFeePaid__Params(this);
+  }
+}
+
+export class IssuanceFeePaid__Params {
+  _event: IssuanceFeePaid;
+
+  constructor(event: IssuanceFeePaid) {
+    this._event = event;
+  }
+
+  get accountId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get poolId(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._event.parameters[2].value.toAddress();
+  }
+
+  get feeAmount(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
 export class UsdBurned extends ethereum.Event {
   get params(): UsdBurned__Params {
     return new UsdBurned__Params(this);
@@ -790,6 +820,28 @@ export class MarketRegistered__Params {
   }
 }
 
+export class MarketSystemFeePaid extends ethereum.Event {
+  get params(): MarketSystemFeePaid__Params {
+    return new MarketSystemFeePaid__Params(this);
+  }
+}
+
+export class MarketSystemFeePaid__Params {
+  _event: MarketSystemFeePaid;
+
+  constructor(event: MarketSystemFeePaid) {
+    this._event = event;
+  }
+
+  get marketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get feeAmount(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
 export class MarketUsdDeposited extends ethereum.Event {
   get params(): MarketUsdDeposited__Params {
     return new MarketUsdDeposited__Params(this);
@@ -847,6 +899,50 @@ export class MarketUsdWithdrawn__Params {
 
   get market(): Address {
     return this._event.parameters[3].value.toAddress();
+  }
+}
+
+export class SetMarketMinLiquidityRatio extends ethereum.Event {
+  get params(): SetMarketMinLiquidityRatio__Params {
+    return new SetMarketMinLiquidityRatio__Params(this);
+  }
+}
+
+export class SetMarketMinLiquidityRatio__Params {
+  _event: SetMarketMinLiquidityRatio;
+
+  constructor(event: SetMarketMinLiquidityRatio) {
+    this._event = event;
+  }
+
+  get marketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get minLiquidityRatio(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
+export class SetMinDelegateTime extends ethereum.Event {
+  get params(): SetMinDelegateTime__Params {
+    return new SetMinDelegateTime__Params(this);
+  }
+}
+
+export class SetMinDelegateTime__Params {
+  _event: SetMinDelegateTime;
+
+  constructor(event: SetMinDelegateTime) {
+    this._event = event;
+  }
+
+  get marketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get minDelegateTime(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
   }
 }
 
@@ -1085,6 +1181,24 @@ export class PoolOwnershipAccepted__Params {
 
   get owner(): Address {
     return this._event.parameters[1].value.toAddress();
+  }
+}
+
+export class SetMinLiquidityRatio extends ethereum.Event {
+  get params(): SetMinLiquidityRatio__Params {
+    return new SetMinLiquidityRatio__Params(this);
+  }
+}
+
+export class SetMinLiquidityRatio__Params {
+  _event: SetMinLiquidityRatio;
+
+  constructor(event: SetMinLiquidityRatio) {
+    this._event = event;
+  }
+
+  get minLiquidityRatio(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
   }
 }
 
@@ -1415,6 +1529,31 @@ export class CoreProxy__liquidateVaultResultLiquidationDataStruct extends ethere
   }
 }
 
+export class CoreProxy__getMarketFeesResult {
+  value0: BigInt;
+  value1: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    return map;
+  }
+
+  getDepositFeeAmount(): BigInt {
+    return this.value0;
+  }
+
+  getWithdrawFeeAmount(): BigInt {
+    return this.value1;
+  }
+}
+
 export class CoreProxy__getPoolConfigurationResultValue0Struct extends ethereum.Tuple {
   get marketId(): BigInt {
     return this[0].toBigInt();
@@ -1692,6 +1831,21 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  createAccount(): BigInt {
+    let result = super.call('createAccount', 'createAccount():(uint128)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_createAccount(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('createAccount', 'createAccount():(uint128)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getAccountLastInteraction(accountId: BigInt): BigInt {
@@ -2358,6 +2512,41 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  depositMarketUsd(marketId: BigInt, target: Address, amount: BigInt): BigInt {
+    let result = super.call(
+      'depositMarketUsd',
+      'depositMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_depositMarketUsd(
+    marketId: BigInt,
+    target: Address,
+    amount: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'depositMarketUsd',
+      'depositMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   distributeDebtToPools(marketId: BigInt, maxIter: BigInt): boolean {
     let result = super.call(
       'distributeDebtToPools',
@@ -2412,6 +2601,56 @@ export class CoreProxy extends ethereum.SmartContract {
     let result = super.tryCall('getMarketDebtPerShare', 'getMarketDebtPerShare(uint128):(int256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getMarketFees(param0: BigInt, amount: BigInt): CoreProxy__getMarketFeesResult {
+    let result = super.call('getMarketFees', 'getMarketFees(uint128,uint256):(uint256,uint256)', [
+      ethereum.Value.fromUnsignedBigInt(param0),
+      ethereum.Value.fromUnsignedBigInt(amount),
+    ]);
+
+    return new CoreProxy__getMarketFeesResult(result[0].toBigInt(), result[1].toBigInt());
+  }
+
+  try_getMarketFees(
+    param0: BigInt,
+    amount: BigInt
+  ): ethereum.CallResult<CoreProxy__getMarketFeesResult> {
+    let result = super.tryCall(
+      'getMarketFees',
+      'getMarketFees(uint128,uint256):(uint256,uint256)',
+      [ethereum.Value.fromUnsignedBigInt(param0), ethereum.Value.fromUnsignedBigInt(amount)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getMarketFeesResult(value[0].toBigInt(), value[1].toBigInt())
+    );
+  }
+
+  getMarketMinDelegateTime(marketId: BigInt): BigInt {
+    let result = super.call(
+      'getMarketMinDelegateTime',
+      'getMarketMinDelegateTime(uint128):(uint32)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getMarketMinDelegateTime(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getMarketMinDelegateTime',
+      'getMarketMinDelegateTime(uint128):(uint32)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -2478,6 +2717,55 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  getMinLiquidityRatio(marketId: BigInt): BigInt {
+    let result = super.call('getMinLiquidityRatio', 'getMinLiquidityRatio(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_getMinLiquidityRatio(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getMinLiquidityRatio', 'getMinLiquidityRatio(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getOracleManager(): Address {
+    let result = super.call('getOracleManager', 'getOracleManager():(address)', []);
+
+    return result[0].toAddress();
+  }
+
+  try_getOracleManager(): ethereum.CallResult<Address> {
+    let result = super.tryCall('getOracleManager', 'getOracleManager():(address)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  getUsdToken(): Address {
+    let result = super.call('getUsdToken', 'getUsdToken():(address)', []);
+
+    return result[0].toAddress();
+  }
+
+  try_getUsdToken(): ethereum.CallResult<Address> {
+    let result = super.tryCall('getUsdToken', 'getUsdToken():(address)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
   getWithdrawableMarketUsd(marketId: BigInt): BigInt {
     let result = super.call(
       'getWithdrawableMarketUsd',
@@ -2539,6 +2827,41 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  withdrawMarketUsd(marketId: BigInt, target: Address, amount: BigInt): BigInt {
+    let result = super.call(
+      'withdrawMarketUsd',
+      'withdrawMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_withdrawMarketUsd(
+    marketId: BigInt,
+    target: Address,
+    amount: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'withdrawMarketUsd',
+      'withdrawMarketUsd(uint128,address,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromAddress(target),
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getApprovedPools(): Array<BigInt> {
     let result = super.call('getApprovedPools', 'getApprovedPools():(uint256[])', []);
 
@@ -2569,13 +2892,13 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getMinLiquidityRatio(): BigInt {
+  getMinLiquidityRatio1(): BigInt {
     let result = super.call('getMinLiquidityRatio', 'getMinLiquidityRatio():(uint256)', []);
 
     return result[0].toBigInt();
   }
 
-  try_getMinLiquidityRatio(): ethereum.CallResult<BigInt> {
+  try_getMinLiquidityRatio1(): ethereum.CallResult<BigInt> {
     let result = super.tryCall('getMinLiquidityRatio', 'getMinLiquidityRatio():(uint256)', []);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -3373,16 +3696,46 @@ export class CreateAccountCall__Inputs {
   constructor(call: CreateAccountCall) {
     this._call = call;
   }
-
-  get requestedAccountId(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
 }
 
 export class CreateAccountCall__Outputs {
   _call: CreateAccountCall;
 
   constructor(call: CreateAccountCall) {
+    this._call = call;
+  }
+
+  get accountId(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
+export class CreateAccount1Call extends ethereum.Call {
+  get inputs(): CreateAccount1Call__Inputs {
+    return new CreateAccount1Call__Inputs(this);
+  }
+
+  get outputs(): CreateAccount1Call__Outputs {
+    return new CreateAccount1Call__Outputs(this);
+  }
+}
+
+export class CreateAccount1Call__Inputs {
+  _call: CreateAccount1Call;
+
+  constructor(call: CreateAccount1Call) {
+    this._call = call;
+  }
+
+  get requestedAccountId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class CreateAccount1Call__Outputs {
+  _call: CreateAccount1Call;
+
+  constructor(call: CreateAccount1Call) {
     this._call = call;
   }
 }
@@ -4371,6 +4724,10 @@ export class DepositMarketUsdCall__Outputs {
   constructor(call: DepositMarketUsdCall) {
     this._call = call;
   }
+
+  get feeAmount(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
 }
 
 export class DistributeDebtToPoolsCall extends ethereum.Call {
@@ -4479,6 +4836,74 @@ export class RegisterMarketCall__Outputs {
   }
 }
 
+export class SetMarketMinDelegateTimeCall extends ethereum.Call {
+  get inputs(): SetMarketMinDelegateTimeCall__Inputs {
+    return new SetMarketMinDelegateTimeCall__Inputs(this);
+  }
+
+  get outputs(): SetMarketMinDelegateTimeCall__Outputs {
+    return new SetMarketMinDelegateTimeCall__Outputs(this);
+  }
+}
+
+export class SetMarketMinDelegateTimeCall__Inputs {
+  _call: SetMarketMinDelegateTimeCall;
+
+  constructor(call: SetMarketMinDelegateTimeCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get minDelegateTime(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+}
+
+export class SetMarketMinDelegateTimeCall__Outputs {
+  _call: SetMarketMinDelegateTimeCall;
+
+  constructor(call: SetMarketMinDelegateTimeCall) {
+    this._call = call;
+  }
+}
+
+export class SetMinLiquidityRatioCall extends ethereum.Call {
+  get inputs(): SetMinLiquidityRatioCall__Inputs {
+    return new SetMinLiquidityRatioCall__Inputs(this);
+  }
+
+  get outputs(): SetMinLiquidityRatioCall__Outputs {
+    return new SetMinLiquidityRatioCall__Outputs(this);
+  }
+}
+
+export class SetMinLiquidityRatioCall__Inputs {
+  _call: SetMinLiquidityRatioCall;
+
+  constructor(call: SetMinLiquidityRatioCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get minLiquidityRatio(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+}
+
+export class SetMinLiquidityRatioCall__Outputs {
+  _call: SetMinLiquidityRatioCall;
+
+  constructor(call: SetMinLiquidityRatioCall) {
+    this._call = call;
+  }
+}
+
 export class WithdrawMarketUsdCall extends ethereum.Call {
   get inputs(): WithdrawMarketUsdCall__Inputs {
     return new WithdrawMarketUsdCall__Inputs(this);
@@ -4514,6 +4939,10 @@ export class WithdrawMarketUsdCall__Outputs {
 
   constructor(call: WithdrawMarketUsdCall) {
     this._call = call;
+  }
+
+  get feeAmount(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
 
@@ -4799,20 +5228,20 @@ export class RevokePoolNominationCall__Outputs {
   }
 }
 
-export class SetMinLiquidityRatioCall extends ethereum.Call {
-  get inputs(): SetMinLiquidityRatioCall__Inputs {
-    return new SetMinLiquidityRatioCall__Inputs(this);
+export class SetMinLiquidityRatio1Call extends ethereum.Call {
+  get inputs(): SetMinLiquidityRatio1Call__Inputs {
+    return new SetMinLiquidityRatio1Call__Inputs(this);
   }
 
-  get outputs(): SetMinLiquidityRatioCall__Outputs {
-    return new SetMinLiquidityRatioCall__Outputs(this);
+  get outputs(): SetMinLiquidityRatio1Call__Outputs {
+    return new SetMinLiquidityRatio1Call__Outputs(this);
   }
 }
 
-export class SetMinLiquidityRatioCall__Inputs {
-  _call: SetMinLiquidityRatioCall;
+export class SetMinLiquidityRatio1Call__Inputs {
+  _call: SetMinLiquidityRatio1Call;
 
-  constructor(call: SetMinLiquidityRatioCall) {
+  constructor(call: SetMinLiquidityRatio1Call) {
     this._call = call;
   }
 
@@ -4821,10 +5250,10 @@ export class SetMinLiquidityRatioCall__Inputs {
   }
 }
 
-export class SetMinLiquidityRatioCall__Outputs {
-  _call: SetMinLiquidityRatioCall;
+export class SetMinLiquidityRatio1Call__Outputs {
+  _call: SetMinLiquidityRatio1Call;
 
-  constructor(call: SetMinLiquidityRatioCall) {
+  constructor(call: SetMinLiquidityRatio1Call) {
     this._call = call;
   }
 }
