@@ -92,6 +92,13 @@ contract NodeModule is INodeModule {
         // If the node has already been registered with the system, return its ID.
         nodeId = _getNodeId(nodeDefinition);
         if (_isNodeRegistered(nodeId)) {
+            # even though we do nothing else node is considered "re-registered" and returns as such
+            emit NodeRegistered(
+                nodeId,
+                nodeDefinition.nodeType,
+                nodeDefinition.parameters,
+                nodeDefinition.parents
+            );
             return nodeId;
         }
 
