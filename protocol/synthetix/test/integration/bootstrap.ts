@@ -1,9 +1,9 @@
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
-import { snapshotCheckpoint } from '../utils/snapshot';
 
 import type {
   AccountProxy,
@@ -128,7 +128,7 @@ export function bootstrapWithStakedPool() {
       .createPool(poolId, await owner.getAddress());
 
     // create user account
-    await r.systems().Core.connect(user1).createAccount(accountId);
+    await r.systems().Core.connect(user1)['createAccount(uint128)'](accountId);
 
     // approve
     await r

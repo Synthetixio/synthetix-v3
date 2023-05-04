@@ -1,13 +1,16 @@
 /* eslint-env mocha */
 
+import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ChainBuilderContext } from '@usecannon/builder';
+import { ChainBuilderContext, ContractMap } from '@usecannon/builder';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 
 interface Params {
   cannonfile?: string;
+  dryRun?: boolean;
+  impersonate?: string;
 }
 
 // Deployments path added by hardhat-cannon
@@ -17,27 +20,26 @@ declare module 'hardhat/types/config' {
   }
 }
 
-export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Params = {}) {
+export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonfile.toml' }) {
   let outputs: ChainBuilderContext;
   let provider: ethers.providers.JsonRpcProvider;
   let signers: ethers.Signer[];
 
   before(async function prepareNode() {
-    this.timeout(90000);
+    this.timeout(900000);
 
     const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
     const typechainFolder = path.resolve(generatedPath, 'typechain');
     const writeDeployments = path.resolve(generatedPath, 'deployments');
 
-    const cannonOpts =
-      hre.network.name === 'cannon' ? { cannonfile } : { cannonfile, noVerify: true };
+    const cannonInfo = await hre.run('cannon:build', params);
 
-    const cannonInfo = await hre.run('cannon:build', {
-      writeDeployments,
-      ...cannonOpts,
-    });
+    // We have to manually write the deployments files instead of using the cannon:inspect
+    // task because that task needs a local build to exist, but, we don't have it
+    // on coverage tests because they use --network hardhat instead of --network cannon
+    await _writeDeploymentsFromOutput(writeDeployments, cannonInfo.outputs.contracts);
 
-    const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/*.json`]);
+    const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 
     await runTypeChain({
       cwd: hre.config.paths.root,
@@ -143,4 +145,18 @@ function _getContractFromOutputs(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new ethers.Contract(address || contract.address, contract.abi, provider as unknown as any);
+}
+
+async function _writeDeploymentsFromOutput(target: string, contracts: ContractMap) {
+  await fs.mkdir(target, { recursive: true });
+  await Promise.all(
+    Object.entries(contracts).map(async ([contractName, contract]) =>
+      _writeJson(target, contractName, contract)
+    )
+  );
+}
+
+async function _writeJson(folder: string, filename: string, data: unknown) {
+  const filepath = path.resolve(folder, `${filename}.json`);
+  return fs.writeFile(filepath, JSON.stringify(data, null, 2));
 }

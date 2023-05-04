@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "../storage/SpotMarketFactory.sol";
+import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {ISynthetixSystem} from "./external/ISynthetixSystem.sol";
 
 /**
  * @title Module for spot market factory
@@ -14,6 +13,11 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param addr The address that is trying to accept ownership.
      */
     error NotNominated(address addr);
+
+    /**
+     * @notice Thrown when createSynth is called with zero-address synth owner
+     */
+    error InvalidMarketOwner();
 
     /**
      * @notice Gets fired when the synth is registered as a market.
@@ -27,7 +31,7 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthImplementationUpgraded(
         uint256 indexed synthMarketId,
-        address proxy,
+        address indexed proxy,
         address implementation
     );
     /**
@@ -37,8 +41,8 @@ interface ISpotMarketFactoryModule is IMarket {
      */
     event SynthPriceDataUpdated(
         uint256 indexed synthMarketId,
-        bytes32 buyFeedId,
-        bytes32 sellFeedId
+        bytes32 indexed buyFeedId,
+        bytes32 indexed sellFeedId
     );
 
     /**
@@ -49,6 +53,13 @@ interface ISpotMarketFactoryModule is IMarket {
     event MarketOwnerNominated(uint128 indexed marketId, address newOwner);
 
     /**
+     * @notice Emitted when market nominee renounces nomination.
+     * @param marketId id of the market
+     * @param nominee The address that has been nominated.
+     */
+    event MarketNominationRenounced(uint128 indexed marketId, address nominee);
+
+    /**
      * @notice Emitted when the owner of the market has changed.
      * @param marketId id of the market
      * @param oldOwner The previous owner of the market.
@@ -57,28 +68,17 @@ interface ISpotMarketFactoryModule is IMarket {
     event MarketOwnerChanged(uint128 indexed marketId, address oldOwner, address newOwner);
 
     /**
-     * @notice Returns whether the factory has been initialized
-     * @return A boolean with the result of the query.
+     * @notice Sets the v3 synthetix core system.
+     * @dev Pulls in the USDToken and oracle manager from the synthetix core system and sets those appropriately.
+     * @param synthetix synthetix v3 core system address
      */
-    function isInitialized() external returns (bool);
+    function setSynthetix(ISynthetixSystem synthetix) external;
 
     /**
-     * @notice Initializes the factory with the required dependencies.
-     * @dev This function can only be called once.
-     * @dev This function can only be called by the owner of the factory.
-     * @dev This function can only be called if the factory is not initialized.
-     * @dev The initial implementations are used as initial implementations when creating associated system.
-     * @param snxAddress configured synthetix v3 core system
-     * @param usdTokenAddress configured snxUSD token address
-     * @param oracleManager oracle manager used for retrieving pricing data
-     * @param initialSynthImplementation initial synth implementation used to initialize new synths when registering.
+     * @notice When a new synth is created, this is the erc20 implementation that is used.
+     * @param synthImplementation erc20 implementation address
      */
-    function initialize(
-        address snxAddress,
-        address usdTokenAddress,
-        address oracleManager,
-        address initialSynthImplementation
-    ) external;
+    function setSynthImplementation(address synthImplementation) external;
 
     /**
      * @notice Creates a new synth market with synthetix v3 core system via market manager
@@ -101,44 +101,66 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param marketId id of the market
      * @return synthAddress address of the proxy for the synth
      */
-    function getSynth(uint128 marketId) external view returns (address);
+    function getSynth(uint128 marketId) external view returns (address synthAddress);
+
+    /**
+     * @notice Get the implementation address of the synth for the provided marketId.
+     * This address should not be used directly--use `getSynth` instead
+     * @dev Uses associated systems module to retrieve the token address.
+     * @param marketId id of the market
+     * @return implAddress address of the proxy for the synth
+     */
+    function getSynthImpl(uint128 marketId) external view returns (address implAddress);
 
     /**
      * @notice Update the price data for a given market.
      * @dev Only the market owner can call this function.
-     * @param synthMarketId id of the market
+     * @param marketId id of the market
      * @param buyFeedId the oracle manager buy feed node id
      * @param sellFeedId the oracle manager sell feed node id
      */
-    function updatePriceData(uint128 synthMarketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
+    function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
 
     /**
-     * @notice upgrades the synth implementation for a given market.
-     * @dev Only the market owner can call this function.
+     * @notice upgrades the synth implementation to the current implementation for the specified market.
+     * Anyone who is willing and able to spend the gas can call this method.
      * @dev The synth implementation is upgraded via the proxy.
      * @param marketId id of the market
-     * @param synthImpl new synth implementation
      */
-    function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
+    function upgradeSynthImpl(uint128 marketId) external;
+
+    /**
+     * @notice Allows market to adjust decay rate of the synth
+     * @param marketId the market to update the synth decay rate for
+     * @param rate APY to decay of the synth to decay by, as a 18 decimal ratio
+     */
+    function setDecayRate(uint128 marketId, uint256 rate) external;
 
     /**
      * @notice Allows the current market owner to nominate a new owner.
      * @dev The nominated owner will have to call `acceptOwnership` in a separate transaction in order to finalize the action and become the new contract owner.
-     * @param marketId id of the market
+     * @param synthMarketId synth market id value
      * @param newNominatedOwner The address that is to become nominated.
      */
-    function nominateMarketOwner(uint128 marketId, address newNominatedOwner) external;
+    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) external;
 
     /**
      * @notice Allows a nominated address to accept ownership of the market.
      * @dev Reverts if the caller is not nominated.
-     * @param marketId id of the market
+     * @param synthMarketId synth market id value
      */
-    function acceptMarketOwnership(uint128 marketId) external;
+    function acceptMarketOwnership(uint128 synthMarketId) external;
+
+    /**
+     * @notice Allows a nominated address to renounce ownership of the market.
+     * @dev Reverts if the caller is not nominated.
+     * @param synthMarketId synth market id value
+     */
+    function renounceMarketNomination(uint128 synthMarketId) external;
 
     /**
      * @notice Returns market owner.
-     * @param marketId id of the market
+     * @param synthMarketId synth market id value
      */
-    function getMarketOwner(uint128 marketId) external view returns (address);
+    function getMarketOwner(uint128 synthMarketId) external view returns (address);
 }

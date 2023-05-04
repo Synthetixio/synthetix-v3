@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
@@ -11,16 +11,14 @@ contract FeeCollectorMock is IFeeCollector {
         usdToken = _usdToken;
     }
 
-    // collects 50% of the fees
-    function collectFees(
+    function quoteFees(
         uint128 marketId,
         uint256 feeAmount,
         address sender,
         uint8 tradeType
-    ) external override {
-        uint feeToCollect = feeAmount / 2;
-
-        usdToken.transferFrom(msg.sender, address(this), feeToCollect);
+    ) external override returns (uint256) {
+        uint256 feeToCollect = feeAmount / 2;
+        return feeToCollect;
     }
 
     function supportsInterface(

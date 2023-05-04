@@ -1,12 +1,11 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
-import { ethers } from 'ethers';
 import { fastForward, fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-
-import Permissions from '../../mixins/AccountRBACMixin.permissions';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { ethers } from 'ethers';
+import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
 // ---------------------------------------
@@ -550,9 +549,13 @@ describe('RewardsManagerModule', function () {
       });
 
       it('doesnt get any rewards on subsequent claim', async () => {
-        await systems()
-          .Core.connect(user1)
-          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
+          'InvalidParameter("amount", "Zero amount")',
+          systems().Core
+        );
 
         assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
       });
@@ -594,9 +597,13 @@ describe('RewardsManagerModule', function () {
         });
 
         it('does not get any rewards on subsequent claim', async () => {
-          await systems()
-            .Core.connect(user1)
-            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
+          await assertRevert(
+            systems()
+              .Core.connect(user1)
+              .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
+            'InvalidParameter("amount", "Zero amount")',
+            systems().Core
+          );
 
           assertBn.equal(
             await Collateral.balanceOf(await user1.getAddress()),
@@ -617,6 +624,16 @@ describe('RewardsManagerModule', function () {
           .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
+      );
+    });
+
+    before('distribute some rewards before removal', async function () {
+      await RewardDistributor.connect(owner).distributeRewards(
+        poolId,
+        collateralAddress(),
+        rewardAmount,
+        0, // timestamp
+        10
       );
     });
 
@@ -665,12 +682,13 @@ describe('RewardsManagerModule', function () {
 
         await fastForward(1000, provider());
 
-        await systems()
-          .Core.connect(user1)
-          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
-
         // after first claim there should be no more additional rewards to claim
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), afterBalance);
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
+          'InvalidParameter("amount", "Zero amount")'
+        );
       });
 
       it('cannot be re-registered', async () => {

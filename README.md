@@ -21,12 +21,12 @@ This is a monorepo with the following folder structure and packages:
 ```
 .
 ├── markets                      // Standalone projects that extend the core Synthetix protocol with markets.
-│   ├── legacy-market            // Market that connects Synthetix's v2 and v3 versions.
-│   └── spot-market              // Market extension for spot synths.
+│   ├── legacy-market            // Market that connects Synthetix's v2 and v3 versions.
+│   └── spot-market              // Market extension for spot synths.
 │
 ├── protocol                     // Core Synthetix protocol projects.
-│   ├── oracle-manager           // Composable oracle and price provider for teh core protocol.
-│   └── synthetix                // Core protocol (to be extended by markets).
+│   ├── oracle-manager           // Composable oracle and price provider for teh core protocol.
+│   └── synthetix                // Core protocol (to be extended by markets).
 │
 └── utils                        // Utilities, plugins, tooling.
     ├── common-config            // Common npm and hardhat configuration for multiple packages in the monorepo.
@@ -35,8 +35,7 @@ This is a monorepo with the following folder structure and packages:
     ├── core-utils               // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
     ├── router                   // Cannon plugin that merges multiple modules into a router contract.
     ├── hardhat-storage          // Hardhat plugin used to detect storage collisions between proxy implementations.
-    ├── sample-project           // Sample project based on router proxy and cannon.
-    └── solhint-plugin-numcast   // Solidity linter plugin to avoid low level numeric casts which can lead to silent overflows.
+    └── sample-project           // Sample project based on router proxy and cannon.
 ```
 
 ## Router Proxy
@@ -44,6 +43,8 @@ This is a monorepo with the following folder structure and packages:
 All projects in this monorepo that involve contracts use a proxy architecture developed by Synthetix referred to as the "Router Proxy". It is basically a way to merge several contracts, which we call "modules", into a single implementation contract which is the router itself. This router is used as the implementation of the main proxy of the system.
 
 See the [Router README](utils/router/README.md) for more details.
+
+⚠️ When using the Router as an implementation of a UUPS [Universal Upgradeable Proxy Standard](https://eips.ethereum.org/EIPS/eip-1822) be aware that any of the public functions defined in the Proxy could clash and override any of the Router modules functions. A malicious proxy owner could use this type of obfuscation to have users run code which they do not want to run. You can imagine scenarios where the function names do not look similar but share a function selector. ⚠️
 
 ## Information for Developers
 
@@ -57,7 +58,7 @@ If you intend to develop in this repository, please read the following items.
 
 ### Console logs in contracts
 
-In the contracts, use `import "hardhat/console.sol";`, then run `DEBUG=cannon:cli:rpc npm test`.
+In the contracts, use `import "hardhat/console.sol";`, then run `DEBUG=cannon:cli:rpc yarn test`.
 
 ## Deployment Guide
 
@@ -67,16 +68,13 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 ### Preparing a Release
 
-- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `npm i -g @usecannon/cli` and `hardhat-cannon` is upgraded to the latest through the repository.
-- After installing for the first time, run `cannon setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
-- Run `npm i` and `npm run build` in the root directory of the repository.
-- From the directory of the package you're releasing, run `npx hardhat cannon:build`.
-  - If you're upgrading the synthetix package, also run `npx hardhat cannon:build cannonfile.test.toml` to generate the testable package.
-- Confirm the private key that owns the corresponding namespace in the package registry is set in the `.env` file as `DEPLOYER_PRIVATE_KEY`.
-- Publish the release to Cannon package registry with `npx hardhat cannon:publish --network mainnet`.
-- Increment the version in the relevant `package.json` files. _The repositories should always contain the version number of the next release._ **Also bump the version of the oracle manager in the synthetix toml file after you've upgraded oracle manager.**
-- Run `npm i` in the root directory.
-- Commit and push the change to this repository.
+- Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `@usecannon/cli` and `hardhat-cannon` are upgraded to the latest through the repository (use `yarn upgrade-interactive` command).
+- After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
+- Confirm the private key that owns the corresponding namespace in the package registry is available as `$DEPLOYER_PRIVATE_KEY`.
+- Confirm the `@synthtixio` npm publishing key is available as `$NPM_TOKEN`.
+- Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
+- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
+- In case cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
 
@@ -84,4 +82,4 @@ Then, follow the instructions in the [synthetix-deployments repository](https://
 
 After the new version of the [synthetix-omnibus](https://usecannon.com/packages/synthetix-omnibus) package has been published, the previously published packages can be verified on Etherscan.
 
-From the relevant package's directory, run the following command for each network it was deployed on: `npx hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>`
+From the relevant package's directory, run the following command for each network it was deployed on: `yarn hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>` and add ` --preset with-synthetix` when verifying the oracle manager or ` --preset with-synthetix-omnibus` when verifying synthetix.

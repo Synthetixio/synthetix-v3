@@ -6,6 +6,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "../../interfaces/IAccountModule.sol";
 import "../../interfaces/IAccountTokenModule.sol";
 import "../../storage/Account.sol";
+import "../../storage/SystemAccountConfiguration.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -54,6 +55,11 @@ contract AccountModule is IAccountModule {
      */
     function createAccount(uint128 requestedAccountId) external override {
         FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
+
+        if (requestedAccountId >= type(uint128).max / 2) {
+            revert InvalidAccountId(requestedAccountId);
+        }
+
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
         accountTokenModule.safeMint(msg.sender, requestedAccountId, "");
 
@@ -65,13 +71,32 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
+    function createAccount() external override returns (uint128 accountId) {
+        FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
+
+        IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
+
+        SystemAccountConfiguration.Data
+            storage systemAccountConfiguration = SystemAccountConfiguration.load();
+        accountId = (type(uint128).max / 2) + systemAccountConfiguration.accountIdOffset;
+        systemAccountConfiguration.accountIdOffset += 1;
+
+        accountTokenModule.safeMint(msg.sender, accountId, "");
+        Account.create(accountId, msg.sender);
+
+        emit AccountCreated(accountId, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IAccountModule
+     */
     function notifyAccountTransfer(address to, uint128 accountId) external override {
         _onlyAccountToken();
 
         Account.Data storage account = Account.load(accountId);
 
         address[] memory permissionedAddresses = account.rbac.permissionAddresses.values();
-        for (uint i = 0; i < permissionedAddresses.length; i++) {
+        for (uint256 i = 0; i < permissionedAddresses.length; i++) {
             account.rbac.revokeAllPermissions(permissionedAddresses[i]);
         }
 

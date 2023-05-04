@@ -27,7 +27,13 @@ task(
   .addOptionalParam(
     'contracts',
     'Optional whitelist of contracts to get the storage values from',
-    ['contracts/**', '!contracts/routers/**', '!contracts/generated/**', '!contracts/mocks/**'],
+    [
+      'contracts/**',
+      '!contracts/routers/**',
+      '!contracts/generated/**',
+      '!contracts/mocks/**',
+      '!contracts/Router.sol',
+    ],
     types.stringArray
   )
   .addOptionalParam(
@@ -45,7 +51,7 @@ task(
       logger.info(contract);
     }
 
-    await hre.run('compile', { quiet: true });
+    await hre.run('compile', { quiet: true, force: true });
 
     const sourceUnits = await hre.run(SUBTASK_STORAGE_GET_SOURCE_UNITS, { contracts });
     const prevSourceUnits = await hre.run(SUBTASK_STORAGE_PARSE_DUMP, { output });

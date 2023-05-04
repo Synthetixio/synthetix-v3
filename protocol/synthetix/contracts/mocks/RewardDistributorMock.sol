@@ -63,6 +63,10 @@ contract RewardDistributorMock is IRewardDistributor {
         );
     }
 
+    function onStakerChanged(uint128, uint128, address, uint256) external pure {
+        return;
+    }
+
     /**
      * @dev See {IERC165-supportsInterface}.
      */

@@ -11,19 +11,23 @@ library ExternalNode {
     function process(
         NodeOutput.Data[] memory prices,
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         IExternalNode externalNode = IExternalNode(abi.decode(parameters, (address)));
         return externalNode.process(prices, parameters);
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal returns (bool) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal returns (bool valid) {
         // Must have correct length of parameters data
-        if (nodeDefinition.parameters.length != 32) {
+        if (nodeDefinition.parameters.length < 32) {
             return false;
         }
 
         address externalNode = abi.decode(nodeDefinition.parameters, (address));
         if (!ERC165Helper.safeSupportsInterface(externalNode, type(IExternalNode).interfaceId)) {
+            return false;
+        }
+
+        if (!IExternalNode(externalNode).isValid(nodeDefinition)) {
             return false;
         }
 

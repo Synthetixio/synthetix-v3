@@ -1,11 +1,136 @@
+name = "synthetix-spot-market"
 version = "<%= package.version %>-testable"
+description = "Spot market implementation"
 
-include = [
-  "cannonfile.toml"
+[setting.coreProxyOwner]
+description = "owner of v3 core proxy"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.owner]
+description = "spot market owner"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.synthetixPackage]
+defaultValue = "synthetix:<%= package.version %>-testable"
+
+[provision.synthetix]
+source = "<%= settings.synthetixPackage %>"
+
+[contract.SpotMarketFactoryModule]
+artifact = "SpotMarketFactoryModule"
+
+[contract.AtomicOrderModule]
+artifact = "AtomicOrderModule"
+
+[contract.AsyncOrderModule]
+artifact = "AsyncOrderModule"
+
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
+
+[contract.AsyncOrderConfigurationModule]
+artifact = "AsyncOrderConfigurationModule"
+
+[contract.WrapperModule]
+artifact = "WrapperModule"
+
+[contract.MarketConfigurationModule]
+artifact = "MarketConfigurationModule"
+
+[contract.SynthTokenModule]
+artifact = "SynthTokenModule"
+
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+
+[contract.InitialSpotMarketProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
+abiOf = ["CoreModule"]
+salt = "<%= settings.salt %>"
+depends = ["contract.CoreModule"]
+
+# Core
+[router.SpotMarketRouter]
+contracts = [
+  "CoreModule",
+  "SpotMarketFactoryModule",
+  "AtomicOrderModule",
+  "AsyncOrderModule",
+  "AsyncOrderSettlementModule",
+  "AsyncOrderConfigurationModule",
+  "WrapperModule",
+  "MarketConfigurationModule",
+  "FeatureFlagModule"
+]
+depends = [
+  "contract.CoreModule",
+  "contract.SpotMarketFactoryModule",
+  "contract.AtomicOrderModule",
+  "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
+  "contract.AsyncOrderConfigurationModule",
+  "contract.WrapperModule",
+  "contract.MarketConfigurationModule",
+  "contract.FeatureFlagModule",
 ]
 
-[import.synthetix]
-source = "synthetix:3.0.0-alpha.10-testable"
+[invoke.upgrade_spot_market_proxy]
+target = ["InitialSpotMarketProxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "upgradeTo"
+args = ["<%= contracts.SpotMarketRouter.address %>"]
+factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
+factory.SpotMarketProxy.event = "Upgraded"
+factory.SpotMarketProxy.arg = 0
+depends = ["contract.InitialSpotMarketProxy", "router.SpotMarketRouter"]
+
+# create synth router
+[router.SynthRouter]
+contracts = [
+  "CoreModule",
+  "SynthTokenModule"
+]
+depends = [
+  "contract.CoreModule",
+  "contract.SynthTokenModule"
+]
+
+[invoke.set_synthetix_system]
+target = ["SpotMarketProxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "setSynthetix"
+args = [
+  "<%= imports.synthetix.contracts.CoreProxy.address %>"
+]
+depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix"]
+
+[invoke.set_synth_implementation]
+target = ["SpotMarketProxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "setSynthImplementation"
+args = [
+  "<%= contracts.SynthRouter.address %>"
+]
+depends = ["invoke.upgrade_spot_market_proxy", "router.SynthRouter"]
+
+# add pool owner to feature flag allow list
+[invoke.addSpotMarketToFeatureFlag]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.coreProxyOwner %>"
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
+depends = ['invoke.set_synthetix_system']
+
+[invoke.addCreateSynthToFeatureFlag]
+target = ["SpotMarketProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.owner %>"
+args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
+depends = ["invoke.upgrade_spot_market_proxy"]
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
@@ -17,7 +142,7 @@ artifact = "contracts/mocks/OracleVerifierMock.sol:OracleVerifierMock"
 target = ["FeeCollectorMock"]
 func = "setUsdToken"
 args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
-depends = ["contract.FeeCollectorMock", "import.synthetix"]
+depends = ["contract.FeeCollectorMock", "provision.synthetix"]
 
 [invoke.set_initial_price]
 target = ["OracleVerifierMock"]

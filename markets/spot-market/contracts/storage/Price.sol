@@ -1,14 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
-import "./SpotMarketFactory.sol";
-import "../utils/SynthUtil.sol";
-import "./Wrapper.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SpotMarketFactory} from "./SpotMarketFactory.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Price storage for a specific synth market.
@@ -17,16 +15,15 @@ library Price {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
-    using SafeCastU256 for uint256;
 
     struct Data {
         /**
          * @dev The oracle manager node id used for buy transactions.
-         * currently used for calculating reported debt as well.
          */
         bytes32 buyFeedId;
         /**
          * @dev The oracle manager node id used for all non-buy transactions.
+         * @dev also used to for calculating reported debt
          */
         bytes32 sellFeedId;
     }
@@ -44,14 +41,11 @@ library Price {
      */
     function getCurrentPriceData(
         uint128 marketId,
-        SpotMarketFactory.TransactionType transactionType
+        Transaction.Type transactionType
     ) internal view returns (NodeOutput.Data memory price) {
         Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        if (
-            transactionType == SpotMarketFactory.TransactionType.BUY ||
-            transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY
-        ) {
+        if (Transaction.isBuy(transactionType)) {
             price = INodeModule(factory.oracle).process(self.buyFeedId);
         } else {
             price = INodeModule(factory.oracle).process(self.sellFeedId);
@@ -63,8 +57,8 @@ library Price {
      */
     function getCurrentPrice(
         uint128 marketId,
-        SpotMarketFactory.TransactionType transactionType
-    ) internal view returns (uint price) {
+        Transaction.Type transactionType
+    ) internal view returns (uint256 price) {
         return getCurrentPriceData(marketId, transactionType).price.toUint();
     }
 
@@ -83,11 +77,10 @@ library Price {
      */
     function usdSynthExchangeRate(
         uint128 marketId,
-        uint amountUsd,
-        SpotMarketFactory.TransactionType transactionType
+        uint256 amountUsd,
+        Transaction.Type transactionType
     ) internal view returns (uint256 synthAmount) {
-        uint256 currentPrice = getCurrentPriceData(marketId, transactionType).price.toUint();
-
+        uint256 currentPrice = getCurrentPrice(marketId, transactionType);
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
@@ -97,10 +90,25 @@ library Price {
      */
     function synthUsdExchangeRate(
         uint128 marketId,
-        uint sellAmount,
-        SpotMarketFactory.TransactionType transactionType
+        uint256 sellAmount,
+        Transaction.Type transactionType
     ) internal view returns (uint256 amountUsd) {
         uint256 currentPrice = getCurrentPrice(marketId, transactionType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
+    }
+
+    /**
+     * @dev Utility function that returns the amount denominated with 18 decimals of precision.
+     */
+    function scale(int256 amount, uint256 decimals) internal pure returns (int256 scaledAmount) {
+        return (decimals > 18 ? amount.downscale(decimals - 18) : amount.upscale(18 - decimals));
+    }
+
+    /**
+     * @dev Utility function that receive amount with 18 decimals
+     * returns the amount denominated with number of decimals as arg of 18.
+     */
+    function scaleTo(int256 amount, uint256 decimals) internal pure returns (int256 scaledAmount) {
+        return (decimals > 18 ? amount.upscale(decimals - 18) : amount.downscale(18 - decimals));
     }
 }

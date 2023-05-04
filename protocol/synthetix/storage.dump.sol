@@ -190,7 +190,8 @@ library NodeDefinition {
         UNISWAP,
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
-        STALENESS_CIRCUIT_BREAKER
+        STALENESS_CIRCUIT_BREAKER,
+        CONSTANT
     }
     struct Data {
         NodeType nodeType;
@@ -278,6 +279,10 @@ contract IssueUSDModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
     bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
+    bytes32 private constant _CONFIG_MINT_FEE_RATIO = "mintUsd_feeRatio";
+    bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
+    bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
+    bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
 }
 
 // @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
@@ -299,6 +304,11 @@ contract MarketManagerModule {
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
     bytes32 private constant _DEPOSIT_MARKET_FEATURE_FLAG = "depositMarketUsd";
     bytes32 private constant _WITHDRAW_MARKET_FEATURE_FLAG = "withdrawMarketUsd";
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO = "depositMarketUsd_feeRatio";
+    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
+    bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
+    bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
@@ -446,6 +456,12 @@ library Market {
         mapping(uint128 => MarketPoolInfo.Data) pools;
         DepositedCollateral[] depositedCollateral;
         mapping(address => uint256) maximumDepositableD18;
+        uint32 minDelegateTime;
+        uint32 __reservedForLater1;
+        uint64 __reservedForLater2;
+        uint64 __reservedForLater3;
+        uint64 __reservedForLater4;
+        uint256 minLiquidityRatioD18;
     }
     struct DepositedCollateral {
         address collateralType;
@@ -507,6 +523,7 @@ library OracleManager {
 
 // @custom:artifact contracts/storage/Pool.sol:Pool
 library Pool {
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     struct Data {
         uint128 id;
         string name;
@@ -517,6 +534,10 @@ library Pool {
         MarketConfiguration.Data[] marketConfigurations;
         Distribution.Data vaultsDebtDistribution;
         mapping(address => Vault.Data) vaults;
+        uint64 lastConfigurationTime;
+        uint64 __reserved1;
+        uint64 __reserved2;
+        uint64 __reserved3;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
@@ -557,6 +578,20 @@ library ScalableMapping {
     }
 }
 
+// @custom:artifact contracts/storage/SystemAccountConfiguration.sol:SystemAccountConfiguration
+library SystemAccountConfiguration {
+    bytes32 private constant _SLOT_SYSTEM_ACCOUNT_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemAccountConfiguration"));
+    struct Data {
+        uint64 accountIdOffset;
+    }
+    function load() internal pure returns (Data storage systemAccountConfiguration) {
+        bytes32 s = _SLOT_SYSTEM_ACCOUNT_CONFIGURATION;
+        assembly {
+            systemAccountConfiguration.slot := s
+        }
+    }
+}
+
 // @custom:artifact contracts/storage/SystemPoolConfiguration.sol:SystemPoolConfiguration
 library SystemPoolConfiguration {
     bytes32 private constant _SLOT_SYSTEM_POOL_CONFIGURATION = keccak256(abi.encode("io.synthetix.synthetix.SystemPoolConfiguration"));
@@ -594,5 +629,6 @@ library VaultEpoch {
         Distribution.Data accountsDebtDistribution;
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
+        mapping(uint128 => uint64) lastDelegationTime;
     }
 }

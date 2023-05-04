@@ -1,7 +1,7 @@
 import solc from 'solc';
 
-export async function compileContract(contractName: string, sourceCode: string) {
-  const input = {
+export function getCompileInput(contractName: string, sourceCode: string) {
+  return {
     language: 'Solidity',
     sources: {
       [`${contractName}.sol`]: {
@@ -16,6 +16,10 @@ export async function compileContract(contractName: string, sourceCode: string) 
       },
     },
   };
+}
+
+export async function compileContract(contractName: string, sourceCode: string) {
+  const input = getCompileInput(contractName, sourceCode);
 
   const solResult = JSON.parse(await solc.compile(JSON.stringify(input)));
 

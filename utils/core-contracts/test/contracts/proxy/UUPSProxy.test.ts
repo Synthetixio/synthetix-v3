@@ -26,6 +26,19 @@ describe('UUPSProxy', function () {
     [user] = await hre.ethers.getSigners();
   });
 
+  describe('validate', function () {
+    // This validation is useful because the Proxy is intended to have a Router
+    // or another kind of contract with the full implementation, so, if we allow
+    // the definition of public methods here it would override those methods.
+    it('does not have any public methods', async function () {
+      const publicFunctions = UUPSProxy__factory.abi.filter((item) => item.type === 'function');
+
+      if (publicFunctions.length) {
+        throw new Error('The UUPSProxy should not have public facing functions');
+      }
+    });
+  });
+
   describe('when deploying the proxy with invalid parameters', function () {
     let UUPSProxyFactory: UUPSProxy__factory;
     let Implementation: ImplementationMockA;

@@ -1,9 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./AsyncOrderConfiguration.sol";
-import "./SpotMarketFactory.sol";
+import {SettlementStrategy} from "./SettlementStrategy.sol";
+import {AsyncOrder} from "./AsyncOrder.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
+/**
+ * @title Async order claim data storage
+ */
 library AsyncOrderClaim {
     error OutsideSettlementWindow(uint256 timestamp, uint256 startTime, uint256 expirationTime);
     error IneligibleForCancellation(uint256 timestamp, uint256 expirationTime);
@@ -11,16 +15,42 @@ library AsyncOrderClaim {
     error InvalidClaim(uint256 asyncOrderId);
 
     struct Data {
+        /**
+         * @dev Unique ID associated with this claim
+         */
         uint128 id;
+        /**
+         * @dev The address that committed the order and received the exchanged amount on settlement
+         */
         address owner;
-        SpotMarketFactory.TransactionType orderType;
-        uint256 amountEscrowed; // Amount escrowed from trader. (USD denominated on buy. Synth shares denominated on sell.)
+        /**
+         * @dev ASYNC_BUY or ASYNC_SELL. (See Transaction.Type in TransactionUtil.sol)
+         */
+        Transaction.Type orderType;
+        /**
+         * @dev The amount of assets from the trader added to escrow. This is USD denominated for buy orders and synth shares denominated for sell orders. (Synth shares are necessary in case the Decay Token has a non-zero decay rate.)
+         */
+        uint256 amountEscrowed;
+        /**
+         * @dev The ID of the settlement strategy used for this claim
+         */
         uint256 settlementStrategyId;
+        /**
+         * @dev The time at which this order should be settleable. This is the sum of the commitment block time and the settlement delay. Settlement strategies should use the price at this time whenever possible.
+         */
         uint256 settlementTime;
-        int256 committedAmountUsd;
+        /**
+         * @dev The minimum amount trader is willing to accept on settlement. This is USD denominated for buy orders and synth denominated for sell orders.
+         */
         uint256 minimumSettlementAmount;
-        uint256 commitmentBlockNum;
+        /**
+         * @dev The timestamp at which the claim has been settled. (The same order cannont be settled twice.)
+         */
         uint256 settledAt;
+        /**
+         * @dev The address of the referrer for the order
+         */
+        address referrer;
     }
 
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
@@ -34,24 +64,26 @@ library AsyncOrderClaim {
 
     function create(
         uint128 marketId,
-        uint128 claimId,
-        SpotMarketFactory.TransactionType orderType,
+        Transaction.Type orderType,
         uint256 amountEscrowed,
         uint256 settlementStrategyId,
         uint256 settlementTime,
-        int256 committedAmountUsd,
         uint256 minimumSettlementAmount,
-        address owner
-    ) internal returns (Data storage) {
+        address owner,
+        address referrer
+    ) internal returns (Data storage claim) {
+        AsyncOrder.Data storage asyncOrderData = AsyncOrder.load(marketId);
+        uint128 claimId = ++asyncOrderData.totalClaims;
+
         Data storage self = load(marketId, claimId);
         self.id = claimId;
         self.orderType = orderType;
         self.amountEscrowed = amountEscrowed;
         self.settlementStrategyId = settlementStrategyId;
         self.settlementTime = settlementTime;
-        self.committedAmountUsd = committedAmountUsd;
         self.minimumSettlementAmount = minimumSettlementAmount;
         self.owner = owner;
+        self.referrer = referrer;
         return self;
     }
 
@@ -61,7 +93,7 @@ library AsyncOrderClaim {
     }
 
     function checkIfValidClaim(Data storage claim) internal view {
-        if (claim.owner == address(0) || claim.committedAmountUsd == 0) {
+        if (claim.owner == address(0) || claim.amountEscrowed == 0) {
             revert InvalidClaim(claim.id);
         }
     }
@@ -76,19 +108,19 @@ library AsyncOrderClaim {
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint startTime = claim.settlementTime;
-        uint expirationTime = startTime + settlementStrategy.settlementWindowDuration;
+        uint256 startTime = claim.settlementTime;
+        uint256 expirationTime = startTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < startTime || block.timestamp >= expirationTime) {
             revert OutsideSettlementWindow(block.timestamp, startTime, expirationTime);
         }
     }
 
-    function isEligibleForCancellation(
+    function validateCancellationEligibility(
         Data storage claim,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {
-        uint expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
+        uint256 expirationTime = claim.settlementTime + settlementStrategy.settlementWindowDuration;
 
         if (block.timestamp < expirationTime) {
             revert IneligibleForCancellation(block.timestamp, expirationTime);

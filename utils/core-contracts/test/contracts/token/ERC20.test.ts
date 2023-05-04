@@ -24,12 +24,45 @@ describe('ERC20', function () {
     await tx.wait();
   });
 
-  describe('When attempting to initialize it again', function () {
-    it('reverts', async function () {
+  describe('When attempting to initialize it again', () => {
+    it('with new decimal reverts', async () => {
       await assertRevert(
-        ERC20.initialize('Synthetix Network Token Updated', 'snx', 18),
+        ERC20.initialize('Synthetix Network Token Updated', 'snx', 19),
         'AlreadyInitialized()'
       );
+    });
+  });
+
+  describe('when specifying zero addresses or amounts', function () {
+    it('reverts', async function () {
+      await assertRevert(
+        ERC20.approve(ethers.constants.AddressZero, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+      await assertRevert(
+        ERC20.transfer(ethers.constants.AddressZero, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+      await assertRevert(
+        ERC20.mintFor(ethers.constants.AddressZero, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+      await assertRevert(
+        ERC20.burnFor(ethers.constants.AddressZero, 1),
+        'InvalidParameter("target", "Zero address")'
+      );
+
+      // Zero amount
+      await assertRevert(
+        ERC20.approve(await user1.getAddress(), 0),
+        'InvalidParameter("amount", "Zero amount")'
+      );
+      await assertRevert(
+        ERC20.transfer(await user1.getAddress(), 0),
+        'InvalidParameter("amount", "Zero amount")'
+      );
+      await assertRevert(ERC20.mint(0), 'InvalidParameter("amount", "Zero amount")');
+      await assertRevert(ERC20.burn(0), 'InvalidParameter("amount", "Zero amount")');
     });
   });
 

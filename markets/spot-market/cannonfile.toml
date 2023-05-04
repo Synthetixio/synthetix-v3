@@ -1,17 +1,13 @@
-name = "spot-market"
+name = "synthetix-spot-market"
 version = "<%= package.version %>"
 description = "Spot market implementation"
-
-[setting.coreProxyOwner]
-description = "owner of v3 core proxy"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.owner]
 description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:3.0.0-alpha.10"
+defaultValue = "synthetix:<%= package.version %>"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
@@ -25,14 +21,17 @@ artifact = "AtomicOrderModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
+
 [contract.AsyncOrderConfigurationModule]
 artifact = "AsyncOrderConfigurationModule"
 
 [contract.WrapperModule]
 artifact = "WrapperModule"
 
-[contract.FeeConfigurationModule]
-artifact = "FeeConfigurationModule"
+[contract.MarketConfigurationModule]
+artifact = "MarketConfigurationModule"
 
 [contract.SynthTokenModule]
 artifact = "SynthTokenModule"
@@ -57,9 +56,10 @@ contracts = [
   "SpotMarketFactoryModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
+  "AsyncOrderSettlementModule",
   "AsyncOrderConfigurationModule",
   "WrapperModule",
-  "FeeConfigurationModule",
+  "MarketConfigurationModule",
   "FeatureFlagModule"
 ]
 depends = [
@@ -67,15 +67,16 @@ depends = [
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
   "contract.AsyncOrderConfigurationModule",
   "contract.WrapperModule",
-  "contract.FeeConfigurationModule",
+  "contract.MarketConfigurationModule",
   "contract.FeatureFlagModule",
 ]
 
-[invoke.upgrade_spot_market_proxy]
+[invoke.upgradeSpotMarketProxy]
 target = ["InitialSpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.SpotMarketRouter.address %>"]
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
@@ -94,29 +95,35 @@ depends = [
   "contract.SynthTokenModule"
 ]
 
-[invoke.initialize_spot_market_factory]
+[invoke.setSynthetixSystem]
 target = ["SpotMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "initialize"
+fromCall.func = "owner"
+func = "setSynthetix"
 args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>",
-  "<%= imports.synthetix.contracts.USDProxy.address %>",
-  "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+  "<%= imports.synthetix.contracts.CoreProxy.address %>"
+]
+depends = ["invoke.upgradeSpotMarketProxy", "import.synthetix"]
+
+[invoke.setSynthImplementation]
+target = ["SpotMarketProxy"]
+fromCall.func = "owner"
+func = "setSynthImplementation"
+args = [
   "<%= contracts.SynthRouter.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "router.SynthRouter"]
+depends = ["invoke.upgradeSpotMarketProxy", "router.SynthRouter"]
 
-# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
+# add pool owner to feature flag allow list
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-from = "<%= settings.coreProxyOwner %>"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
-depends = ['import.synthetix', 'invoke.upgrade_spot_market_proxy']
+fromCall.func = "owner"
+args = ["<%= formatBytes32String('registerMarket') %>", "<%= contracts.SpotMarketProxy.address %>"]
+depends = ['invoke.setSynthetixSystem']
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
 func = "addToFeatureFlagAllowlist"
-from = "<%= settings.owner %>"
-args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
-depends = ['invoke.initialize_spot_market_factory']
+fromCall.func = "owner"
+args = ["<%= formatBytes32String('createSynth') %>", "<%= settings.owner %>"]
+depends = ["invoke.upgradeSpotMarketProxy"]

@@ -1,6 +1,9 @@
 {
   "name": "@synthetixio/hardhat-storage",
-  "version": "1.0.0",
+  "version": "3.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Solidity Contracts Storage Validation",
   "main": "dist/index.js",
   "source": "src/index.ts",
@@ -20,21 +23,24 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc --project src/tsconfig.json",
-    "watch": "npm run build -- --watch",
+    "watch": "yarn build --watch",
     "test": "jest",
-    "coverage": "npm run test -- --coverage",
-    "test:watch": "npm run test -- --watch",
-    "prepublishOnly": "npm run build"
+    "coverage": "yarn test --coverage",
+    "test:watch": "yarn test --watch",
+    "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@synthetixio/core-utils": "*",
-    "mustache": "4.2.0"
+    "@synthetixio/core-utils": "3.1.0",
+    "mustache": "4.2.0",
+    "solidity-ast": "0.4.46"
   },
   "devDependencies": {
     "@types/jest": "29.2.3",
     "@types/mustache": "4.2.2",
-    "hardhat": "2.12.3",
-    "jest": "29.3.1",
-    "ts-jest": "29.0.3"
-  }
+    "hardhat": "2.13.0",
+    "jest": "29.4.3",
+    "ts-jest": "29.0.5",
+    "typescript": "4.9.3"
+  },
+  "gitHead": "d5d322abfb3a6260ecd3e0339c945649f5d53cb2"
 }

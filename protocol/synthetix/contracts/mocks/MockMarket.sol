@@ -39,16 +39,16 @@ contract MockMarket is IMarket {
         );
     }
 
-    function buySynth(uint256 amount) external {
+    function buySynth(uint256 amount) external returns (uint256 feesPaid) {
         _reportedDebt += amount;
         uint256 toDeposit = amount.divDecimal(_price);
-        IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, toDeposit);
+        return IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
-    function sellSynth(uint256 amount) external {
+    function sellSynth(uint256 amount) external returns (uint256 feesPaid) {
         _reportedDebt -= amount;
         uint256 toDeposit = amount.divDecimal(_price);
-        IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, toDeposit);
+        return IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
     function depositUsd(uint256 amount) external {
@@ -75,12 +75,16 @@ contract MockMarket is IMarket {
         return "MockMarket";
     }
 
-    function locked(uint128) external view override returns (uint256) {
+    function minimumCredit(uint128) external view override returns (uint256) {
         return _locked;
     }
 
     function setPrice(uint256 newPrice) external {
         _price = newPrice;
+    }
+
+    function setMinDelegationTime(uint32 minDelegationTime) external {
+        IMarketManagerModule(_proxy).setMarketMinDelegateTime(_marketId, minDelegationTime);
     }
 
     function price() external view returns (uint256) {

@@ -1,13 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 
 /**
  * @title Wrapper library servicing the wrapper module
  */
 library Wrapper {
     error InvalidCollateralType();
+    /**
+     * @notice Thrown when user tries to wrap more than the set supply cap for the market.
+     */
+    error WrapperExceedsMaxAmount(
+        uint256 maxWrappableAmount,
+        uint256 currentSupply,
+        uint256 amountToWrap
+    );
 
     struct Data {
         /**
@@ -16,7 +24,7 @@ library Wrapper {
          */
         address wrapCollateralType;
         /**
-         * @dev amount of collateral that can be wrapped
+         * @dev amount of collateral that can be wrapped, denominated with 18 decimals of precision.
          */
         uint256 maxWrappableAmount;
     }
@@ -25,6 +33,25 @@ library Wrapper {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Wrapper", marketId));
         assembly {
             wrapper.slot := s
+        }
+    }
+
+    function checkMaxWrappableAmount(
+        Data storage self,
+        uint128 marketId,
+        uint256 wrapAmount,
+        ISynthetixSystem synthetix
+    ) internal view {
+        uint256 currentDepositedCollateral = synthetix.getMarketCollateralAmount(
+            marketId,
+            self.wrapCollateralType
+        );
+        if (currentDepositedCollateral + wrapAmount > self.maxWrappableAmount) {
+            revert WrapperExceedsMaxAmount(
+                self.maxWrappableAmount,
+                currentDepositedCollateral,
+                wrapAmount
+            );
         }
     }
 
@@ -38,7 +65,7 @@ library Wrapper {
         self.maxWrappableAmount = maxWrappableAmount;
     }
 
-    function isValidWrapper(Data storage self) internal view {
+    function validateWrapper(Data storage self) internal view {
         if (self.wrapCollateralType == address(0)) {
             revert InvalidCollateralType();
         }

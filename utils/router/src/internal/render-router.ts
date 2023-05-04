@@ -1,9 +1,10 @@
 import path from 'node:path';
-import { ethers } from 'ethers';
 import { JsonFragment } from '@ethersproject/abi';
+import { ethers } from 'ethers';
+import { ContractValidationError } from './errors';
 import { renderTemplate } from './render-template';
-import { toPrivateConstantCase } from './router-helper';
 import { routerFunctionFilter } from './router-function-filter';
+import { toPrivateConstantCase } from './router-helper';
 
 const TAB = '    ';
 
@@ -42,6 +43,9 @@ export function renderRouter({
   }
 
   const selectors = _getAllSelectors(contracts, functionFilter);
+
+  _validateSelectors(selectors);
+
   const binaryData = _buildBinaryData(selectors);
 
   return renderTemplate(template, {
@@ -188,4 +192,24 @@ export function getSelectors(
 
     return selectors;
   }, [] as { name: string; selector: string }[]);
+}
+
+function _validateSelectors(selectors: FunctionSelector[]) {
+  const repeated = new Set(selectors.map((s) => s.selector).filter(_onlyRepeated));
+
+  if (!repeated.size) return;
+
+  const list = selectors
+    .filter((s) => repeated.has(s.selector))
+    .map((s) => `  ${s.selector} // ${s.contractName}.${s.name}()`)
+    .join('\n');
+
+  throw new ContractValidationError(
+    `The following contracts have repeated function selectors behind the same Router:\n${list}\n`
+  );
+}
+
+function _onlyRepeated<T>(value: T, index: number, self: T[]) {
+  const last = self.lastIndexOf(value);
+  return self.indexOf(value) !== last && index === last;
 }

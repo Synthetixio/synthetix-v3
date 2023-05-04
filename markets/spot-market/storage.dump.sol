@@ -5,7 +5,6 @@ pragma solidity >=0.8.11<0.9.0;
 library OwnableStorage {
     bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
-        bool initialized;
         address owner;
         address nominatedOwner;
     }
@@ -77,6 +76,16 @@ library SetUtil {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/modules/DecayTokenModule.sol:DecayTokenModule
+contract DecayTokenModule {
+    uint private constant SECONDS_PER_YEAR = 31536000;
+}
+
+// @custom:artifact @synthetixio/core-modules/contracts/modules/TokenModule.sol:TokenModule
+contract TokenModule {
+    bytes32 internal constant _INITIALIZED_NAME = "TokenModule";
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
 library AssociatedSystem {
     bytes32 public constant KIND_ERC20 = "erc20";
@@ -99,7 +108,7 @@ library AssociatedSystem {
 library DecayToken {
     bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE = keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
     struct Data {
-        uint256 interestRate;
+        uint256 decayRate;
         uint256 epochStart;
         uint256 totalSupplyAtEpochStart;
     }
@@ -128,6 +137,19 @@ library FeatureFlag {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
+library Initialized {
+    struct Data {
+        bool initialized;
+    }
+    function load(bytes32 id) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -138,7 +160,8 @@ library NodeDefinition {
         UNISWAP,
         PYTH,
         PRICE_DEVIATION_CIRCUIT_BREAKER,
-        STALENESS_CIRCUIT_BREAKER
+        STALENESS_CIRCUIT_BREAKER,
+        CONSTANT
     }
     struct Data {
         NodeType nodeType;
@@ -178,21 +201,21 @@ interface IPythVerifier {
     }
 }
 
-// @custom:artifact contracts/modules/AsyncOrderModule.sol:AsyncOrderModule
-contract AsyncOrderModule {
+// @custom:artifact contracts/modules/AsyncOrderSettlementModule.sol:AsyncOrderSettlementModule
+contract AsyncOrderSettlementModule {
     int256 public constant PRECISION = 18;
 }
 
 // @custom:artifact contracts/modules/SpotMarketFactoryModule.sol:SpotMarketFactoryModule
 contract SpotMarketFactoryModule {
     bytes32 private constant _CREATE_SYNTH_FEATURE_FLAG = "createSynth";
+    uint8 private constant _SYNTH_IMPLEMENTATION_DECIMALS = 18;
 }
 
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
 library AsyncOrder {
     struct Data {
         uint256 totalEscrowedSynthShares;
-        int256 totalCommittedUsdAmount;
         uint128 totalClaims;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -208,14 +231,13 @@ library AsyncOrderClaim {
     struct Data {
         uint128 id;
         address owner;
-        SpotMarketFactory.TransactionType orderType;
+        Transaction.Type orderType;
         uint256 amountEscrowed;
         uint256 settlementStrategyId;
         uint256 settlementTime;
-        int256 committedAmountUsd;
         uint256 minimumSettlementAmount;
-        uint256 commitmentBlockNum;
         uint256 settledAt;
+        address referrer;
     }
     function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrderClaim", marketId, claimId));
@@ -238,23 +260,35 @@ library AsyncOrderConfiguration {
     }
 }
 
-// @custom:artifact contracts/storage/FeeConfiguration.sol:FeeConfiguration
-library FeeConfiguration {
+// @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
+library MarketConfiguration {
     struct Data {
-        mapping(address => uint) atomicFixedFeeOverrides;
-        uint atomicFixedFee;
-        uint asyncFixedFee;
-        uint utilizationFeeRate;
-        int wrapFixedFee;
-        int unwrapFixedFee;
-        uint skewScale;
+        mapping(address => uint256) atomicFixedFeeOverrides;
+        uint256 atomicFixedFee;
+        uint256 asyncFixedFee;
+        uint256 utilizationFeeRate;
+        uint256 collateralLeverage;
+        int256 wrapFixedFee;
+        int256 unwrapFixedFee;
+        uint256 skewScale;
         address feeCollector;
+        mapping(address => uint256) referrerShare;
     }
-    function load(uint128 marketId) internal pure returns (Data storage feeConfiguration) {
+    function load(uint128 marketId) internal pure returns (Data storage marketConfig) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
         assembly {
-            feeConfiguration.slot := s
+            marketConfig.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/OrderFees.sol:OrderFees
+library OrderFees {
+    struct Data {
+        uint256 fixedFees;
+        uint256 utilizationFees;
+        int256 skewFees;
+        int256 wrapperFees;
     }
 }
 
@@ -276,7 +310,6 @@ library Price {
 library SettlementStrategy {
     enum Type {
         ONCHAIN,
-        CHAINLINK,
         PYTH
     }
     struct Data {
@@ -288,6 +321,8 @@ library SettlementStrategy {
         string url;
         uint256 settlementReward;
         uint256 priceDeviationTolerance;
+        uint256 minimumUsdExchangeAmount;
+        uint256 maxRoundingLoss;
         bool disabled;
     }
 }
@@ -295,19 +330,11 @@ library SettlementStrategy {
 // @custom:artifact contracts/storage/SpotMarketFactory.sol:SpotMarketFactory
 library SpotMarketFactory {
     bytes32 private constant _SLOT_SPOT_MARKET_FACTORY = keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
-    enum TransactionType {
-        BUY,
-        SELL,
-        ASYNC_BUY,
-        ASYNC_SELL,
-        WRAP,
-        UNWRAP
-    }
     struct Data {
         address usdToken;
         address oracle;
         address synthetix;
-        address initialSynthImplementation;
+        address synthImplementation;
         mapping(uint128 => address) marketOwners;
         mapping(uint128 => address) nominatedMarketOwners;
     }
@@ -330,5 +357,18 @@ library Wrapper {
         assembly {
             wrapper.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/utils/TransactionUtil.sol:Transaction
+library Transaction {
+    enum Type {
+        NULL,
+        BUY,
+        SELL,
+        ASYNC_BUY,
+        ASYNC_SELL,
+        WRAP,
+        UNWRAP
     }
 }

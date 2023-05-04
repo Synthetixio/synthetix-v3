@@ -142,3 +142,15 @@ target = ["CollateralMock"]
 func = "initialize"
 args = ["SampleToken","TKN","18"]
 depends = ["contract.CollateralMock"]
+
+[invoke.enableAllFeatures]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "multicall"
+args = [[
+  # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
+  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('registerMarket'), true]).slice(2) %>",
+  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createPool'), true]).slice(2) %>",
+]]
+
+depends = ["invoke.upgrade_core_proxy"]

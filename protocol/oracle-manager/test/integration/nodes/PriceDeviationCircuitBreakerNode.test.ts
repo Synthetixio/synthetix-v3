@@ -2,11 +2,11 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithNodes } from '../bootstrap';
+import { bn, bootstrapWithNodes } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 
 describe('PriceDeviationCircuitBreakerNode', function () {
-  const { getContract, nodeId1, nodeId3, nodeId4 } = bootstrapWithNodes();
+  const { getContract, nodeId1, nodeId3, nodeId4, nodeId5 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;
   let NodeModule: ethers.Contract;
@@ -21,7 +21,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     let node1, node2;
     before(async () => {
       // 40% Deviation Tolerance
-      const deviationTolerance = 40;
+      const deviationTolerance = bn(0.4);
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
       await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
@@ -54,7 +54,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     let nodeId;
     before(async () => {
       // 50% Deviation Tolerance
-      const deviationTolerance = 50;
+      const deviationTolerance = bn(0.5);
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
       await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
@@ -71,11 +71,34 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     });
   });
 
+  describe('register a circuit breaker with primary price 0', async () => {
+    let nodeId;
+    before(async () => {
+      // 50% Deviation Tolerance
+      // nodeId5 is 0
+      const deviationTolerance = bn(0.5);
+      const params = abi.encode(['uint256'], [deviationTolerance]);
+
+      await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, [
+        nodeId5(),
+        nodeId3(),
+      ]);
+      nodeId = await NodeModule.getNodeId(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, [
+        nodeId5(),
+        nodeId3(),
+      ]);
+    });
+
+    it('expect process to return first node price since prices are 50% different', async () => {
+      await assertRevert(NodeModule.process(nodeId), 'InvalidInputPrice', NodeModule);
+    });
+  });
+
   describe('register a circuit breaker with 60% tolerance', async () => {
     let nodeId;
     before(async () => {
       // 60% Deviation Tolerance
-      const deviationTolerance = 60;
+      const deviationTolerance = bn(0.6);
       const params = abi.encode(['uint256'], [deviationTolerance]);
 
       await NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents);
@@ -89,6 +112,21 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     it('expect process to return first node price since prices are 50% different', async () => {
       const priceData = await NodeModule.process(nodeId);
       assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
+    });
+  });
+
+  describe('register a circuit breaker with an unprocessable parent', async () => {
+    it('should revert', async () => {
+      const params = abi.encode(['uint256'], [bn(0.4)]);
+      const parents = [
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+      ];
+      await assertRevert(
+        NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents),
+        'UnprocessableNode',
+        NodeModule
+      );
     });
   });
 });

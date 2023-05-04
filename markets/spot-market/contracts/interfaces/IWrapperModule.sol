@@ -1,24 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {OrderFees} from "../storage/OrderFees.sol";
+
 /**
  * @title Module for synth wrappers
  */
 interface IWrapperModule {
     /**
-     * @notice Thrown when trader specified amounts to wrap/unwrap without holding the underlying asset.
+     * @notice Thrown when a trade doesn't meet minimum expected return amount.
      */
-    error InsufficientFunds();
-
-    /**
-     * @notice Thrown when trader has not provided allowance for the market to transfer the underlying asset.
-     */
-    error InsufficientAllowance(uint expected, uint current);
-
-    /**
-     * @notice Thrown when user tries to wrap more than the set supply cap for the market.
-     */
-    error WrapperExceedsMaxAmount(uint maxWrappableAmount, uint currentSupply, uint amountToWrap);
+    error InsufficientAmountReceived(uint256 expected, uint256 current);
 
     /**
      * @notice Gets fired when wrapper supply is set for a given market, collateral type.
@@ -27,8 +19,8 @@ interface IWrapperModule {
      * @param maxWrappableAmount the local supply cap for the wrapper.
      */
     event WrapperSet(
-        uint indexed synthMarketId,
-        address wrapCollateralType,
+        uint256 indexed synthMarketId,
+        address indexed wrapCollateralType,
         uint256 maxWrappableAmount
     );
 
@@ -36,28 +28,28 @@ interface IWrapperModule {
      * @notice Gets fired after user wraps synth
      * @param synthMarketId Id of the market.
      * @param amountWrapped amount of synth wrapped.
-     * @param totalFees total fees applied on the transaction.
+     * @param fees breakdown of all the fees incurred for the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      */
     event SynthWrapped(
-        uint indexed synthMarketId,
-        uint amountWrapped,
-        int totalFees,
-        uint feesCollected
+        uint256 indexed synthMarketId,
+        uint256 amountWrapped,
+        OrderFees.Data fees,
+        uint256 feesCollected
     );
 
     /**
      * @notice Gets fired after user unwraps synth
      * @param synthMarketId Id of the market.
      * @param amountUnwrapped amount of synth unwrapped.
-     * @param totalFees total fees applied on the transaction.
+     * @param fees breakdown of all the fees incurred for the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
      */
     event SynthUnwrapped(
-        uint indexed synthMarketId,
-        uint amountUnwrapped,
-        int totalFees,
-        uint feesCollected
+        uint256 indexed synthMarketId,
+        uint256 amountUnwrapped,
+        OrderFees.Data fees,
+        uint256 feesCollected
     );
 
     /**
@@ -79,16 +71,28 @@ interface IWrapperModule {
      * @dev Fees are collected from the user by way of the contract returning less synth than specified amount of collateral.
      * @param marketId Id of the market used for the trade.
      * @param wrapAmount Amount of collateral to wrap.  This amount gets deposited into the market collateral manager.
-     * @return amountReturned Amount of synth returned to user.
+     * @param minAmountReceived The minimum amount of synths the trader is expected to receive, otherwise the transaction will revert.
+     * @return amountToMint Amount of synth returned to user.
+     * @return fees breakdown of all fees. in this case, only wrapper fees are returned.
      */
-    function wrap(uint128 marketId, uint wrapAmount) external returns (uint);
+    function wrap(
+        uint128 marketId,
+        uint256 wrapAmount,
+        uint256 minAmountReceived
+    ) external returns (uint256 amountToMint, OrderFees.Data memory fees);
 
     /**
      * @notice Unwraps the synth and returns similar value of collateral minus the fees.
      * @dev Transfers the specified synth, collects fees through configured fee collector, returns collateral minus fees to trader.
      * @param marketId Id of the market used for the trade.
      * @param unwrapAmount Amount of synth trader is unwrapping.
-     * @return amountReturned Amount of collateral returned.
+     * @param minAmountReceived The minimum amount of collateral the trader is expected to receive, otherwise the transaction will revert.
+     * @return returnCollateralAmount Amount of collateral returned.
+     * @return fees breakdown of all fees. in this case, only wrapper fees are returned.
      */
-    function unwrap(uint128 marketId, uint unwrapAmount) external returns (uint);
+    function unwrap(
+        uint128 marketId,
+        uint256 unwrapAmount,
+        uint256 minAmountReceived
+    ) external returns (uint256 returnCollateralAmount, OrderFees.Data memory fees);
 }

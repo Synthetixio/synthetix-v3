@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -24,12 +24,14 @@ library UniswapNode {
 
     uint8 public constant PRECISION = 18;
 
-    function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
+    function process(
+        bytes memory parameters
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         (
-            address token0,
-            address token1,
-            uint8 decimals0,
-            uint8 decimals1,
+            address token,
+            address stablecoin,
+            uint8 decimalsToken,
+            uint8 decimalsStablecoin,
             address pool,
             uint32 secondsAgo
         ) = abi.decode(parameters, (address, address, uint8, uint8, address, uint32));
@@ -48,20 +50,22 @@ library UniswapNode {
             tick--;
         }
 
-        uint256 baseAmount = 10 ** decimals0;
-        int256 price = getQuoteAtTick(tick, baseAmount.to128(), token0, token1).toInt();
+        uint256 baseAmount = 10 ** PRECISION;
+        int256 price = getQuoteAtTick(tick, baseAmount, token, stablecoin).toInt();
 
-        uint256 factor = (PRECISION - decimals1);
-        int256 finalPrice = factor > 0
-            ? price.upscale(factor)
-            : price.downscale((-factor.toInt()).toUint());
+        // solhint-disable-next-line numcast/safe-cast
+        int256 scale = uint256(decimalsToken).toInt() - uint256(decimalsStablecoin).toInt();
 
-        return NodeOutput.Data(finalPrice, 0, 0, 0);
+        int256 finalPrice = scale > 0
+            ? price.upscale(scale.toUint())
+            : price.downscale((-scale).toUint());
+
+        return NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
     }
 
     function getQuoteAtTick(
         int24 tick,
-        uint128 baseAmount,
+        uint256 baseAmount,
         address baseToken,
         address quoteToken
     ) internal pure returns (uint256 quoteAmount) {
@@ -81,7 +85,7 @@ library UniswapNode {
         }
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal view returns (bool valid) {
         // Must have no parents
         if (nodeDefinition.parents.length > 0) {
             return false;
@@ -93,10 +97,10 @@ library UniswapNode {
         }
 
         (
-            address token0,
-            address token1,
-            uint8 decimals0,
-            uint8 decimals1,
+            address token,
+            address stablecoin,
+            uint8 decimalsToken,
+            uint8 decimalsStablecoin,
             address pool,
             uint32 secondsAgo
         ) = abi.decode(
@@ -104,15 +108,33 @@ library UniswapNode {
                 (address, address, uint8, uint8, address, uint32)
             );
 
-        if (IERC20(token0).decimals() != decimals0) {
+        if (IERC20(token).decimals() != decimalsToken) {
             return false;
         }
 
-        if (IERC20(token1).decimals() != decimals1) {
+        if (IERC20(stablecoin).decimals() != decimalsStablecoin) {
             return false;
         }
 
-        // Must return relevant function without error
+        address poolToken0 = IUniswapV3Pool(pool).token0();
+        address poolToken1 = IUniswapV3Pool(pool).token1();
+
+        if (
+            !(poolToken0 == token && poolToken1 == stablecoin) &&
+            !(poolToken0 == stablecoin && poolToken1 == token)
+        ) {
+            return false;
+        }
+
+        if (decimalsToken > 18 || decimalsStablecoin > 18) {
+            return false;
+        }
+
+        if (secondsAgo == 0) {
+            return false;
+        }
+
+        // Must call relevant function without error
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;
         secondsAgos[1] = 0;

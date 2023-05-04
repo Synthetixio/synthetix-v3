@@ -11,6 +11,7 @@ library ReducerNode {
     using SafeCastU256 for uint256;
 
     error UnsupportedOperation(Operations operation);
+    error InvalidPrice(int256 price);
 
     enum Operations {
         RECENT,
@@ -25,7 +26,7 @@ library ReducerNode {
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal pure returns (NodeOutput.Data memory) {
+    ) internal pure returns (NodeOutput.Data memory nodeOutput) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.RECENT) {
@@ -92,7 +93,8 @@ library ReducerNode {
     function max(
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory maxPrice) {
-        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+        maxPrice = parentNodeOutputs[0];
+        for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
             if (parentNodeOutputs[i].price > maxPrice.price) {
                 maxPrice = parentNodeOutputs[i];
             }
@@ -103,7 +105,7 @@ library ReducerNode {
         NodeOutput.Data[] memory parentNodeOutputs
     ) internal pure returns (NodeOutput.Data memory minPrice) {
         minPrice = parentNodeOutputs[0];
-        for (uint256 i = 0; i < parentNodeOutputs.length; i++) {
+        for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
             if (parentNodeOutputs[i].price < minPrice.price) {
                 minPrice = parentNodeOutputs[i];
             }
@@ -128,17 +130,20 @@ library ReducerNode {
         divPrice.price = parentNodeOutputs[0].price;
         divPrice.timestamp = parentNodeOutputs[0].timestamp;
         for (uint256 i = 1; i < parentNodeOutputs.length; i++) {
+            if (parentNodeOutputs[i].price == 0) {
+                revert InvalidPrice(parentNodeOutputs[i].price);
+            }
             divPrice.price /= parentNodeOutputs[i].price;
             divPrice.timestamp += parentNodeOutputs[i].timestamp;
         }
         divPrice.timestamp = divPrice.timestamp / parentNodeOutputs.length;
     }
 
-    function quickSort(NodeOutput.Data[] memory arr, int left, int right) internal pure {
-        int i = left;
-        int j = right;
+    function quickSort(NodeOutput.Data[] memory arr, int256 left, int256 right) internal pure {
+        int256 i = left;
+        int256 j = right;
         if (i == j) return;
-        int pivot = arr[(left + (right - left) / 2).toUint()].price;
+        int256 pivot = arr[(left + (right - left) / 2).toUint()].price;
         while (i <= j) {
             while (arr[i.toUint()].price < pivot) i++;
             while (pivot < arr[j.toUint()].price) j--;
@@ -152,7 +157,7 @@ library ReducerNode {
         if (i < right) quickSort(arr, i, right);
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {
         // Must have at least 2 parents
         if (nodeDefinition.parents.length < 2) {
             return false;
@@ -164,7 +169,7 @@ library ReducerNode {
         }
 
         // Must have valid operation
-        uint operationId = abi.decode(nodeDefinition.parameters, (uint));
+        uint256 operationId = abi.decode(nodeDefinition.parameters, (uint256));
         if (operationId > 6) {
             return false;
         }

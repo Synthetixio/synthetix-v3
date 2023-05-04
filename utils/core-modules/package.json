@@ -1,7 +1,10 @@
 {
   "name": "@synthetixio/core-modules",
-  "version": "1.0.0",
-  "description": "Commmon contracts for Synthetix",
+  "version": "3.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Common contracts for Synthetix",
   "files": [
     "contracts",
     "!contracts/routers",
@@ -17,6 +20,13 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "*"
-  }
+    "@ethersproject/abi": "5.7.0",
+    "@ethersproject/providers": "5.7.2",
+    "@nomiclabs/hardhat-ethers": "2.2.1",
+    "@synthetixio/common-config": "3.1.0",
+    "@synthetixio/core-utils": "3.1.0",
+    "ethers": "^5.0.0",
+    "hardhat": "2.13.0"
+  },
+  "gitHead": "d5d322abfb3a6260ecd3e0339c945649f5d53cb2"
 }

@@ -1,13 +1,13 @@
-import { ethers as Ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter } from '../generated/typechain';
-import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { ethers as Ethers } from 'ethers';
+import { SynthRouter } from './generated/typechain';
+import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 
 describe('Atomic Order Module sell()', () => {
-  const { systems, signers, marketId, provider } = bootstrapTraders(
+  const { systems, signers, marketId, provider, generateExternalNode } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
@@ -27,9 +27,13 @@ describe('Atomic Order Module sell()', () => {
 
   before('setup traders', async () => {
     await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(10_000));
-    await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000), bn(10));
+    await systems()
+      .SpotMarket.connect(trader1)
+      .buy(marketId(), bn(10_000), bn(10), Ethers.constants.AddressZero);
     await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-    await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000), bn(10));
+    await systems()
+      .SpotMarket.connect(trader2)
+      .buy(marketId(), bn(10_000), bn(10), Ethers.constants.AddressZero);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -37,10 +41,6 @@ describe('Atomic Order Module sell()', () => {
   before('identify initial trader balances', async () => {
     initialTrader1Balance = await systems().USD.balanceOf(await trader1.getAddress());
     initialTrader2Balance = await systems().USD.balanceOf(await trader2.getAddress());
-  });
-
-  it('reverts on invalid market', async () => {
-    await assertRevert(systems().SpotMarket.buy(25, 10000, 0), 'InvalidMarket');
   });
 
   describe('slippage', () => {
@@ -52,7 +52,9 @@ describe('Atomic Order Module sell()', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
 
       await assertRevert(
-        systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(1000)),
+        systems()
+          .SpotMarket.connect(trader1)
+          .sell(marketId(), bn(1), bn(1000), Ethers.constants.AddressZero),
         `InsufficientAmountReceived("${bn(1000)}", "${bn(900)}")`
       );
     });
@@ -71,7 +73,9 @@ describe('Atomic Order Module sell()', () => {
     before('sell 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
-      txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(900));
+      txn = await systems()
+        .SpotMarket.connect(trader1)
+        .sell(marketId(), bn(1), bn(900), Ethers.constants.AddressZero);
     });
 
     it('trader1 received 900 snxUSD', async () => {
@@ -89,7 +93,11 @@ describe('Atomic Order Module sell()', () => {
     });
 
     it('emits SynthSold event', async () => {
-      await assertEvent(txn, `SynthSold(${marketId()}, ${bn(900)}, 0, 0)`, systems().SpotMarket);
+      await assertEvent(
+        txn,
+        `SynthSold(${marketId()}, ${bn(900)}, [0, 0, 0, 0], 0, "${Ethers.constants.AddressZero}")`,
+        systems().SpotMarket
+      );
     });
   });
 
@@ -104,7 +112,9 @@ describe('Atomic Order Module sell()', () => {
 
     before('sell 1 snxETH', async () => {
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
-      await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(900));
+      await systems()
+        .SpotMarket.connect(trader1)
+        .sell(marketId(), bn(1), bn(900), Ethers.constants.AddressZero);
     });
 
     // no utilizaiton fees should apply to sell
@@ -128,7 +138,9 @@ describe('Atomic Order Module sell()', () => {
     before('sell 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
-      txn = await systems().SpotMarket.connect(trader1).sell(marketId(), bn(1), bn(891));
+      txn = await systems()
+        .SpotMarket.connect(trader1)
+        .sell(marketId(), bn(1), bn(891), Ethers.constants.AddressZero);
     });
 
     // $9 fee, 1% fee
@@ -150,7 +162,9 @@ describe('Atomic Order Module sell()', () => {
     it('emits SynthSold event', async () => {
       await assertEvent(
         txn,
-        `SynthSold(${marketId()}, ${bn(891)}, ${bn(9)}, 0)`,
+        `SynthSold(${marketId()}, ${bn(891)}, [${bn(9)}, 0, 0, 0], 0, "${
+          Ethers.constants.AddressZero
+        }")`,
         systems().SpotMarket
       );
     });
@@ -164,7 +178,9 @@ describe('Atomic Order Module sell()', () => {
 
       before('sell 1 snxETH', async () => {
         await synth.connect(trader2).approve(systems().SpotMarket.address, bn(1));
-        await systems().SpotMarket.connect(trader2).sell(marketId(), bn(1), bn(899.1));
+        await systems()
+          .SpotMarket.connect(trader2)
+          .sell(marketId(), bn(1), bn(899.1), Ethers.constants.AddressZero);
       });
 
       it('only charges custom transactor fees', async () => {
@@ -179,8 +195,6 @@ describe('Atomic Order Module sell()', () => {
   describe('all fees', () => {
     before(restore);
 
-    // 20 snxETH outstanding from initial trader purchases
-
     before('set fixed fee to 1%', async () => {
       await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
     });
@@ -191,18 +205,48 @@ describe('Atomic Order Module sell()', () => {
 
     before('buy 5 snxETH', async () => {
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(5));
-      await systems().SpotMarket.connect(trader1).sell(marketId(), bn(5), bn(5242.5));
+      await systems()
+        .SpotMarket.connect(trader1)
+        .sell(marketId(), bn(5), bn(5235.73875), Ethers.constants.AddressZero);
     });
 
     it('trader1 gets extra snxUSD back for selling', async () => {
-      // before fill value = 20 eth * 900 usd/eth = 18_000 usd
-      // after fill value = 18_000 - 5 * 900 = 13_500 usd
-      // -17.5% fee (average before/after fill 20 + 15 / 2)
-      // 1% fixed fee
-      // $900 eth price * 5 eth skew * -16.5% fee =
       assertBn.equal(
         await systems().USD.balanceOf(await trader1.getAddress()),
-        initialTrader1Balance.add(bn(5242.5))
+        initialTrader1Balance.add(bn(5235.73875))
+      );
+    });
+  });
+
+  describe('price protection guardrails', () => {
+    before(restore);
+
+    before('set sell price higher than buy price', async () => {
+      const nodeId100 = await generateExternalNode(100);
+      const nodeId200 = await generateExternalNode(200);
+
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .updatePriceData(marketId(), nodeId100, nodeId200);
+    });
+
+    it('reverts sellExactIn', async () => {
+      await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .sellExactIn(marketId(), bn(1), 0, Ethers.constants.AddressZero),
+        'InvalidPrices'
+      );
+    });
+
+    it('reverts sellExactOut', async () => {
+      await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .sellExactOut(marketId(), 1000, bn(1000), Ethers.constants.AddressZero),
+        'InvalidPrices'
       );
     });
   });

@@ -37,7 +37,7 @@ depends = [
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.OracleRouter.address %>"]
 factory.Proxy.abiOf = ["OracleRouter"]

@@ -138,6 +138,15 @@ library Market {
          * @dev The maximum amount of market provided collateral, per type, that this market can deposit.
          */
         mapping(address => uint256) maximumDepositableD18;
+        uint32 minDelegateTime;
+        uint32 __reservedForLater1;
+        uint64 __reservedForLater2;
+        uint64 __reservedForLater3;
+        uint64 __reservedForLater4;
+        /**
+         * @dev Market-specific override of the minimum liquidity ratio
+         */
+        uint256 minLiquidityRatioD18;
     }
 
     /**
@@ -175,7 +184,7 @@ library Market {
      * @dev Queries the market for the amount of collateral which should be prevented from withdrawal.
      */
     function getLockedCreditCapacity(Data storage self) internal view returns (uint256) {
-        return IMarket(self.marketAddress).locked(self.id);
+        return IMarket(self.marketAddress).minimumCredit(self.id);
     }
 
     /**

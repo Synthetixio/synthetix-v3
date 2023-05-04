@@ -1,5 +1,6 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
+
 import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
@@ -8,10 +9,12 @@ import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
 import 'hardhat-ignore-warnings';
+import '@synthetixio/hardhat-storage';
 
 // Router generation cannon plugin
-import '@synthetixio/router/utils/cannon';
-import '@synthetixio/hardhat-storage';
+import { registerAction } from '@usecannon/builder';
+import pluginRouter from 'cannon-plugin-router';
+registerAction(pluginRouter);
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
@@ -92,10 +95,7 @@ const config = {
     username: 'synthetix-services',
   },
   cannon: {
-    ipfsEndpoint: 'https://ipfs.infura.io:5001',
-    ipfsAuthorizationHeader: `Basic ${Buffer.from(
-      process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
-    ).toString('base64')}`,
+    publicSourceCode: true,
   },
 };
 

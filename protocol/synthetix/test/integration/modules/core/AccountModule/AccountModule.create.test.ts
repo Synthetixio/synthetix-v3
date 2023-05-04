@@ -7,6 +7,9 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
 
+const uint128Max = ethers.BigNumber.from(2).pow(128).sub(1);
+const uint128MaxHalf = uint128Max.div(2);
+
 describe('AccountModule', function () {
   const { signers, systems } = bootstrap();
 
@@ -23,12 +26,12 @@ describe('AccountModule', function () {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'createAccount',
-      () => systems().Core.connect(user1).createAccount(1)
+      () => systems().Core.connect(user1)['createAccount(uint128)'](1)
     );
 
     describe('when user creates an account via the core system', function () {
       before('create the account', async function () {
-        const tx = await systems().Core.connect(user1).createAccount(1);
+        const tx = await systems().Core.connect(user1)['createAccount(uint128)'](1);
         receipt = await tx.wait();
       });
 
@@ -60,9 +63,81 @@ describe('AccountModule', function () {
       describe('when a user tries to create an account with an accountId that already exists', () => {
         it('reverts', async () => {
           await assertRevert(
-            systems().Core.connect(user2).createAccount(1),
+            systems().Core.connect(user2)['createAccount(uint128)'](1),
             'TokenAlreadyMinted("1")',
             systems().Account
+          );
+        });
+      });
+
+      describe('when a user tries to create an account with an accountId over the maximum', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            systems().Core.connect(user2)['createAccount(uint128)'](uint128MaxHalf),
+            `InvalidAccountId("${uint128MaxHalf}")`,
+            systems().Account
+          );
+
+          await assertRevert(
+            systems().Core.connect(user2)['createAccount(uint128)'](uint128MaxHalf.add(1)),
+            `InvalidAccountId("${uint128MaxHalf.add(1)}")`,
+            systems().Account
+          );
+        });
+      });
+
+      describe('when a user creates a series of accounts without a specified ID', () => {
+        verifyUsesFeatureFlag(
+          () => systems().Core,
+          'createAccount',
+          () => systems().Core.connect(user1)['createAccount()']()
+        );
+
+        it('succeeds with uint128MaxHalf', async () => {
+          const core = systems().Core.connect(user1);
+
+          // Get the returned accountId from the transaction
+          const accountId = await core.callStatic['createAccount()']();
+
+          const createAccountTx = await core['createAccount()']();
+          const receipt = await createAccountTx.wait();
+
+          // Check if the returned accountId is equal to uint128MaxHalf
+          assert.equal(
+            accountId.toString(),
+            uint128MaxHalf.toString(),
+            'Returned accountId should be equal to uint128MaxHalf'
+          );
+
+          // Verify the event
+          await assertEvent(
+            receipt,
+            `AccountCreated(${uint128MaxHalf}, "${await user1.getAddress()}")`,
+            systems().Core
+          );
+        });
+
+        it('succeeds with uint128MaxHalf + 1', async () => {
+          const core = systems().Core.connect(user1);
+
+          // Get the returned accountId from the transaction
+          const accountId = await core.callStatic['createAccount()']();
+
+          const createAccountTx = await core['createAccount()']();
+          const receipt = await createAccountTx.wait();
+
+          // Check if the returned accountId is equal to uint128MaxHalf
+          assert.equal(
+            accountId.toString(),
+            uint128MaxHalf.add(1).toString(),
+            'Returned accountId should be equal to uint128MaxHalf.add(1)'
+          );
+
+          // Verify the event
+          await assertEvent(
+            receipt,
+            `AccountCreated(${uint128MaxHalf.add(1)}, "${await user1.getAddress()}")`,
+            systems().Core
           );
         });
       });

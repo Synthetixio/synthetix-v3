@@ -1,14 +1,13 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-
-import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import { bootstrap } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
-import { snapshotCheckpoint } from '../../../../utils/snapshot';
+import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider } = bootstrap();
@@ -25,8 +24,8 @@ describe('CollateralModule', function () {
     });
 
     before('create some accounts', async () => {
-      await (await systems().Core.connect(user1).createAccount(1)).wait();
-      await (await systems().Core.connect(user2).createAccount(2)).wait();
+      await (await systems().Core.connect(user1)['createAccount(uint128)'](1)).wait();
+      await (await systems().Core.connect(user2)['createAccount(uint128)'](2)).wait();
     });
 
     describe('when a collateral is addded', function () {

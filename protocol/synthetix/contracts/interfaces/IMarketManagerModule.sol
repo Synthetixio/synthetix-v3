@@ -1,6 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import "./external/IOracleManager.sol";
+
 /**
  * @title System-wide entry point for the management of markets connected to the system.
  */
@@ -55,6 +58,22 @@ interface IMarketManagerModule {
         address indexed market
     );
 
+    event MarketSystemFeePaid(uint128 indexed marketId, uint256 feeAmount);
+
+    /**
+     * @notice Emitted when a market sets an updated minimum delegation time
+     * @param marketId The id of the market that the setting is applied to
+     * @param minDelegateTime The minimum amount of time between delegation changes
+     */
+    event SetMinDelegateTime(uint128 indexed marketId, uint32 minDelegateTime);
+
+    /**
+     * @notice Emitted when a market-specific minimum liquidity ratio is set
+     * @param marketId The id of the market that the setting is applied to
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio
+     */
+    event SetMarketMinLiquidityRatio(uint128 indexed marketId, uint256 minLiquidityRatio);
+
     /**
      * @notice Connects an external market to the system.
      * @dev Creates a Market object to track the external market, and returns the newly created market id.
@@ -70,8 +89,13 @@ interface IMarketManagerModule {
      * @param marketId The id of the market in which snxUSD will be deposited.
      * @param target The address of the account on who's behalf the deposit will be made.
      * @param amount The amount of snxUSD to be deposited, denominated with 18 decimals of precision.
+     * @return feeAmount the amount of fees paid (billed as additional debt towards liquidity providers)
      */
-    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external;
+    function depositMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external returns (uint256 feeAmount);
 
     /**
      * @notice Allows an external market connected to the system to withdraw snxUSD from the system.
@@ -80,8 +104,25 @@ interface IMarketManagerModule {
      * @param marketId The id of the market from which snxUSD will be withdrawn.
      * @param target The address of the account that will receive the withdrawn snxUSD.
      * @param amount The amount of snxUSD to be withdraw, denominated with 18 decimals of precision.
+     * @return feeAmount the amount of fees paid (billed as additional debt towards liquidity providers)
      */
-    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external;
+    function withdrawMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external returns (uint256 feeAmount);
+
+    /**
+     * @notice Get the amount of fees paid in USD for a call to `depositMarketUsd` and `withdrawMarketUsd` for the given market and amount
+     * @param marketId The market to check fees for
+     * @param amount The amount deposited or withdrawn in USD
+     * @return depositFeeAmount the amount of USD paid for a call to `depositMarketUsd`
+     * @return withdrawFeeAmount the amount of USD paid for a call to `withdrawMarketUsd`
+     */
+    function getMarketFees(
+        uint128 marketId,
+        uint256 amount
+    ) external view returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount);
 
     /**
      * @notice Returns the total withdrawable snxUSD amount for the specified market.
@@ -131,11 +172,21 @@ interface IMarketManagerModule {
     function getMarketDebtPerShare(uint128 marketId) external returns (int256 debtPerShareD18);
 
     /**
-     * @notice Returns wether the capacity of the specified market is locked.
+     * @notice Returns whether the capacity of the specified market is locked.
      * @param marketId The id of the market whose capacity is being queried.
      * @return isLocked A boolean that is true if the market's capacity is locked at the time of the query.
      */
     function isMarketCapacityLocked(uint128 marketId) external view returns (bool isLocked);
+
+    /**
+     * @notice Returns the USD token associated with this synthetix core system
+     */
+    function getUsdToken() external view returns (IERC20);
+
+    /**
+     * @notice Retrieve the systems' configured oracle manager address
+     */
+    function getOracleManager() external view returns (IOracleManager);
 
     /**
      * @notice Update a market's current debt registration with the system.
@@ -149,4 +200,32 @@ interface IMarketManagerModule {
         uint128 marketId,
         uint256 maxIter
     ) external returns (bool finishedDistributing);
+
+    /**
+     * @notice allows for a market to set its minimum delegation time. This is useful for preventing stakers from frontrunning rewards or losses
+     * by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) calls. By default, there is no minimum delegation time.
+     * @param marketId the id of the market that wants to set delegation time.
+     * @param minDelegateTime the minimum number of seconds between delegation calls. Note: this value must be less than the globally defined maximum minDelegateTime
+     */
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external;
+
+    /**
+     * @notice Retrieve the minimum delegation time of a market
+     * @param marketId the id of the market
+     */
+    function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32);
+
+    /**
+     * @notice Allows the system owner (not the pool owner) to set a market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external;
+
+    /**
+     * @notice Retrieves the market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @return minRatioD18 The current market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function getMinLiquidityRatio(uint128 marketId) external view returns (uint256 minRatioD18);
 }

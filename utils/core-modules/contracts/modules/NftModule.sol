@@ -32,7 +32,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
         string memory tokenName,
         string memory tokenSymbol,
         string memory uri
-    ) public {
+    ) external {
         OwnableStorage.onlyOwner();
 
         _initialize(tokenName, tokenSymbol, uri);
@@ -65,6 +65,14 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
         if (!_checkOnERC721Received(address(0), to, tokenId, data)) {
             revert InvalidTransferRecipient(to);
         }
+    }
+
+    /**
+     * @inheritdoc INftModule
+     */
+    function setBaseTokenURI(string memory uri) external override {
+        OwnableStorage.onlyOwner();
+        ERC721Storage.load().baseTokenURI = uri;
     }
 
     /**

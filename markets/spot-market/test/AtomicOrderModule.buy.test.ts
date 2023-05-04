@@ -1,12 +1,12 @@
 import { ethers as Ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('Atomic Order Module buy()', () => {
-  const { systems, signers, marketId, restore } = bootstrapTraders(
+  const { systems, signers, marketId, restore, generateExternalNode } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
@@ -23,13 +23,9 @@ describe('Atomic Order Module buy()', () => {
   });
 
   it('reverts on invalid market', async () => {
-    await assertRevert(systems().SpotMarket.buy(25, 10000, 10000), 'InvalidMarket');
-  });
-
-  it('reverts when user does not have proper funds', async () => {
     await assertRevert(
-      systems().SpotMarket.connect(signers()[8]).buy(marketId(), 10000, 10000),
-      'InsufficientAllowance("10000", "0")'
+      systems().SpotMarket.buyExactIn(25, 10000, 10000, Ethers.constants.AddressZero),
+      'InvalidMarket'
     );
   });
 
@@ -40,7 +36,9 @@ describe('Atomic Order Module buy()', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
 
       await assertRevert(
-        systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(10)),
+        systems()
+          .SpotMarket.connect(trader1)
+          .buy(marketId(), bn(1000), bn(10), Ethers.constants.AddressZero),
         `InsufficientAmountReceived("${bn(10)}", "${bn(1)}")`
       );
     });
@@ -60,7 +58,9 @@ describe('Atomic Order Module buy()', () => {
     before('buy 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(1));
+      txn = await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(1000), bn(1), Ethers.constants.AddressZero);
     });
 
     it('trader1 has 1 snxETH', async () => {
@@ -75,7 +75,11 @@ describe('Atomic Order Module buy()', () => {
     });
 
     it('emits SynthBought event', async () => {
-      await assertEvent(txn, `SynthBought(${marketId()}, ${bn(1)}, 0, 0)`, systems().SpotMarket);
+      await assertEvent(
+        txn,
+        `SynthBought(${marketId()}, ${bn(1)}, [0, 0, 0, 0], 0, "${Ethers.constants.AddressZero}")`,
+        systems().SpotMarket
+      );
     });
   });
 
@@ -91,7 +95,9 @@ describe('Atomic Order Module buy()', () => {
     before('buy 1 snxETH', async () => {
       withdrawableUsd = await systems().Core.getWithdrawableMarketUsd(marketId());
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), bn(0.99));
+      txn = await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(1000), bn(0.99), Ethers.constants.AddressZero);
     });
 
     it('trader1 has 0.99 snxETH after fees', async () => {
@@ -109,7 +115,9 @@ describe('Atomic Order Module buy()', () => {
     it('emits SynthBought event', async () => {
       await assertEvent(
         txn,
-        `SynthBought(${marketId()}, ${bn(0.99)}, ${bn(10)}, 0)`,
+        `SynthBought(${marketId()}, ${bn(0.99)}, [${bn(10)}, 0, 0, 0], 0, "${
+          Ethers.constants.AddressZero
+        }")`,
         systems().SpotMarket
       );
     });
@@ -130,7 +138,9 @@ describe('Atomic Order Module buy()', () => {
 
     before('buy 50 snxETH', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(50_000));
-      await systems().SpotMarket.connect(trader1).buy(marketId(), bn(50_000), bn(50));
+      await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(50_000), bn(50), Ethers.constants.AddressZero);
     });
 
     describe('when utilization is under 100%', () => {
@@ -143,7 +153,9 @@ describe('Atomic Order Module buy()', () => {
     describe('when utilization is over 100%', () => {
       before('buy 100 snxETH', async () => {
         await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(100_000));
-        await systems().SpotMarket.connect(trader2).buy(marketId(), bn(100_000), bn(97.5));
+        await systems()
+          .SpotMarket.connect(trader2)
+          .buy(marketId(), bn(100_000), bn(97.5), Ethers.constants.AddressZero);
       });
 
       it('applies utilization fee', async () => {
@@ -173,96 +185,26 @@ describe('Atomic Order Module buy()', () => {
     describe('first trader buy', () => {
       before('buy 10 snxETH', async () => {
         await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(10_000));
-        await systems().SpotMarket.connect(trader1).buy(marketId(), bn(10_000), bn(9.5));
+        await systems()
+          .SpotMarket.connect(trader1)
+          .buy(marketId(), bn(10_000), bn(9.5), Ethers.constants.AddressZero);
       });
 
       it('trader1 gets 9.5 snxETH', async () => {
-        // from 0 eth skew to 10 eth skew
-        // 5% fee (average before/after fill 0 + 10 / 2)
-        assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(9.5));
+        assertBn.near(await synth.balanceOf(await trader1.getAddress()), bn(9.54451), bn(0.00001));
       });
     });
 
     describe('next trader buy', () => {
       before('buy 10 more snxETH', async () => {
         await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(10_000));
-        await systems().SpotMarket.connect(trader2).buy(marketId(), bn(10_000), bn(8.55));
+        await systems()
+          .SpotMarket.connect(trader2)
+          .buy(marketId(), bn(10_000), bn(8.55), Ethers.constants.AddressZero);
       });
 
       it('trader2 gets 8.55 snxETH', async () => {
-        // from 9.5 eth skew to 19.5 eth skew
-        // 14.5% fee (average before/after fill 9.5 + 19.5 / 2)
-        assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(8.55));
-      });
-    });
-  });
-
-  describe('all fees set', () => {
-    before(restore);
-
-    before('set all fees', async () => {
-      /*
-          NOTE: very unlikely both utilization and skew fees would be set at the same time
-          but we test that the fees are additive and is supported.
-        */
-      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.01));
-      await systems()
-        .SpotMarket.connect(marketOwner)
-        .setMarketUtilizationFees(marketId(), bn(0.001));
-      await systems().SpotMarket.connect(marketOwner).setMarketSkewScale(marketId(), bn(1000));
-    });
-
-    before('traders buy snxETH', async () => {
-      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(90_000));
-      await systems().USD.connect(trader2).approve(systems().SpotMarket.address, bn(25_000));
-
-      await systems()
-        .SpotMarket.connect(trader1)
-        .buy(marketId(), bn(90_000), bn(90 * 0.945)); // 90 eth
-      await systems().SpotMarket.connect(trader2).buy(marketId(), bn(25_000), bn(22.185625)); // 25 eth
-    });
-
-    it('sent correct amounts of synth to trader 1', async () => {
-      // fixed fee 1% + utilization fee 0% (under 100% utilization)
-      //  + skew fee 4.5% (under 1000 eth skew) == 5.5% fee
-      assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(90 * 0.945));
-    });
-
-    it('sent correct amount of synth to trader 2', async () => {
-      // current synth amount after fees from trader1 = 85.05 eth
-      // total synth after trader2 buy = 110.05 eth
-      // fixed fee = 1%
-      // utilfee = (10.05 / 2) = 5.025 * 0.1% = 0.5025%
-      // skew fee = (85.05 + 110.05 / 2) = 9.755%
-      // total fees = 11.2575%
-      assertBn.equal(await synth.balanceOf(await trader2.getAddress()), bn(22.185625));
-    });
-
-    describe('custom transactor fees', () => {
-      before('set trader1 atomic fee to 0.1% bps', async () => {
-        await systems()
-          .SpotMarket.connect(marketOwner)
-          .setCustomTransactorFees(marketId(), trader1.getAddress(), bn(0.001));
-      });
-
-      let previousTrader1Balance: Ethers.BigNumber;
-      before('trader1 buys again', async () => {
-        previousTrader1Balance = await synth.balanceOf(await trader1.getAddress());
-        await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
-        await systems().SpotMarket.connect(trader1).buy(marketId(), bn(1000), 0);
-      });
-
-      it('trader1 gets lower atomic fixed fee', async () => {
-        // current synth amount from previous trades = 107.235625 eth
-        // total synth after trader2 buy = 108.235625 eth
-        // fixed fee = 0.1%
-        // utilfee = 7.735625 (utilization) * 0.1 (utilization rate) = 0.7735625
-        // skew fee = 10.7735625%
-        // total fees = 10.7735625% + 0.7735625% + 0.1% = 11.647125%
-        assertBn.equal(
-          await synth.balanceOf(await trader1.getAddress()),
-          previousTrader1Balance.add(bn(0.88352875))
-        );
+        assertBn.near(await synth.balanceOf(await trader2.getAddress()), bn(8.777084), bn(0.00001));
       });
     });
   });
@@ -292,7 +234,9 @@ describe('Atomic Order Module buy()', () => {
 
     before('trader buys snxETH', async () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(100_000));
-      txn = await systems().SpotMarket.connect(trader1).buy(marketId(), bn(100_000), bn(99)); // 90 eth
+      txn = await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(100_000), bn(99), Ethers.constants.AddressZero); // 90 eth
     });
 
     const expectedFee = bn(100_000 * 0.01);
@@ -318,8 +262,43 @@ describe('Atomic Order Module buy()', () => {
     it('emitted SynthBought event with correct params', async () => {
       await assertEvent(
         txn,
-        `SynthBought(${marketId()}, ${bn(99)}, ${expectedFee}, ${expectedFee.div(2)})`,
+        `SynthBought(${marketId()}, ${bn(99)}, [${expectedFee}, 0, 0, 0], ${expectedFee.div(2)}, "${
+          Ethers.constants.AddressZero
+        }")`,
         systems().SpotMarket
+      );
+    });
+  });
+
+  describe('price protection guardrails', () => {
+    before(restore);
+
+    before('set sell price higher than buy price', async () => {
+      const nodeId100 = await generateExternalNode(100);
+      const nodeId200 = await generateExternalNode(200);
+
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .updatePriceData(marketId(), nodeId100, nodeId200);
+    });
+
+    it('reverts buyExactIn', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, 100);
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .buyExactIn(marketId(), 100, 0, Ethers.constants.AddressZero),
+        'InvalidPrices'
+      );
+    });
+
+    it('reverts buyExactOut', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(400));
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .buyExactOut(marketId(), bn(100), 10000, Ethers.constants.AddressZero),
+        'InvalidPrices'
       );
     });
   });

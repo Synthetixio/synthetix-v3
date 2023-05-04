@@ -1,12 +1,13 @@
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
-import Permissions from '../../mixins/AccountRBACMixin.permissions';
+import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils/snapshot';
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('VaultModule', function () {
   const {
@@ -336,7 +337,7 @@ describe('VaultModule', function () {
             .connect(user1)
             .transfer(await user2.getAddress(), depositAmount.mul(2));
 
-          await systems().Core.connect(user2).createAccount(user2AccountId);
+          await systems().Core.connect(user2)['createAccount(uint128)'](user2AccountId);
 
           await collateralContract()
             .connect(user2)
@@ -383,6 +384,65 @@ describe('VaultModule', function () {
           'user2 still has correct position',
           verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
         );
+
+        describe('if one of the markets has a min delegation time', () => {
+          const restore = snapshotCheckpoint(provider);
+
+          before('set market min delegation time to something high', async () => {
+            await MockMarket.setMinDelegationTime(86400);
+          });
+
+          describe('without time passing', async () => {
+            it('fails when min delegation timeout not elapsed', async () => {
+              await assertRevert(
+                systems().Core.connect(user2).delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(4), // user1 50%, user2 50%
+                  ethers.utils.parseEther('1')
+                ),
+                `MinDelegationTimeoutPending("${poolId}",`,
+                systems().Core
+              );
+            });
+
+            it('can increase delegation without waiting', async () => {
+              await systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.mul(2),
+                  ethers.utils.parseEther('1')
+                );
+            });
+
+            after(restore);
+          });
+
+          describe('after time passes', () => {
+            before('fast forward', async () => {
+              // for some reason `fastForward` doesn't seem to work with anvil
+              await fastForwardTo((await getTime(provider())) + 86400, provider());
+            });
+
+            it('works', async () => {
+              await systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(2),
+                  ethers.utils.parseEther('1')
+                );
+            });
+          });
+
+          after(restore);
+        });
 
         // these exposure tests should be enabled when exposures other
         // than 1 are allowed (which might be something we want to do)

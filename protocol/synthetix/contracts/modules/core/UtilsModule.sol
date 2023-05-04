@@ -58,6 +58,6 @@ contract UtilsModule is IUtilsModule {
 
     function getConfig(bytes32 k) external view override returns (bytes32 v) {
         OwnableStorage.onlyOwner();
-        return Config.read(k);
+        return Config.read(k, 0);
     }
 }

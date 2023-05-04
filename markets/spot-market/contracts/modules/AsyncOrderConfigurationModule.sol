@@ -1,14 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../interfaces/IAsyncOrderConfigurationModule.sol";
-import "../storage/AsyncOrderConfiguration.sol";
-import "../storage/SettlementStrategy.sol";
-import "../storage/SpotMarketFactory.sol";
+import {IAsyncOrderConfigurationModule} from "../interfaces/IAsyncOrderConfigurationModule.sol";
+import {AsyncOrderConfiguration} from "../storage/AsyncOrderConfiguration.sol";
+import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 
+/**
+ * @title Module for configuring settings for async order module.
+ * @dev See IAsyncOrderConfigurationModule.
+ */
 contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
 
+    /**
+     * @inheritdoc IAsyncOrderConfigurationModule
+     */
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
@@ -25,6 +32,9 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
         emit SettlementStrategyAdded(marketId, strategyId);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
@@ -36,10 +46,13 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
         emit SettlementStrategyUpdated(marketId, strategyId, enabled);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderConfigurationModule
+     */
     function getSettlementStrategy(
         uint128 marketId,
         uint256 strategyId
-    ) external view override returns (SettlementStrategy.Data memory) {
+    ) external view override returns (SettlementStrategy.Data memory settlementStrategy) {
         return AsyncOrderConfiguration.load(marketId).settlementStrategies[strategyId];
     }
 }

@@ -35,7 +35,7 @@ export default {
 After that, you will be able to run the following command:
 
 ```bash
-npx hardhat storage:verify
+yarn hardhat storage:verify
 ```
 
 Which will do the following steps:

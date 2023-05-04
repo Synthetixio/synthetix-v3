@@ -4,7 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 
 const bn = (n: number) => wei(n).toBN();
 
@@ -36,11 +36,11 @@ describe('WrapperModule', () => {
   });
 
   it('reverts when invalid market id', async () => {
-    await assertRevert(systems().SpotMarket.wrap(25, 10000), 'InvalidMarket');
+    await assertRevert(systems().SpotMarket.wrap(25, 10000, 0), 'InvalidMarket');
   });
 
   it('reverts when wrapper not set', async () => {
-    await assertRevert(systems().SpotMarket.wrap(marketId(), 10000), 'InvalidCollateralType');
+    await assertRevert(systems().SpotMarket.wrap(marketId(), 10000, 0), 'InvalidCollateralType');
   });
 
   it('reverts when not a market owner tries updating wrapper', async () => {
@@ -77,8 +77,18 @@ describe('WrapperModule', () => {
 
       it('reverts', async () => {
         await assertRevert(
-          systems().SpotMarket.connect(trader1).wrap(marketId(), bn(501)),
+          systems().SpotMarket.connect(trader1).wrap(marketId(), bn(501), 0),
           'WrapperExceedsMaxAmount'
+        );
+      });
+    });
+
+    describe('slippage protection', () => {
+      it('reverts', async () => {
+        // There is a fee set, so we don't expect the order to fill 1:1
+        await assertRevert(
+          systems().SpotMarket.connect(trader1).wrap(marketId(), bn(500), bn(500)),
+          'InsufficientAmountReceived'
         );
       });
     });
@@ -97,7 +107,7 @@ describe('WrapperModule', () => {
       });
 
       before('wrap using collateral', async () => {
-        txn = await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1));
+        txn = await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1), 0);
       });
 
       it('returns correct amount of synth to trader', async () => {
@@ -139,7 +149,7 @@ describe('WrapperModule', () => {
       it('emits wrap event', async () => {
         await assertEvent(
           txn,
-          `SynthWrapped(${marketId()}, ${bn(0.99)}, ${bn(9)}, ${bn(4.5)})`,
+          `SynthWrapped(${marketId()}, ${bn(0.99)}, [0, 0, 0, ${bn(9)}], ${bn(4.5)})`,
           systems().SpotMarket
         );
       });
@@ -149,6 +159,14 @@ describe('WrapperModule', () => {
   describe('unwrap', () => {
     before('set allowance', async () => {
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(0.5));
+    });
+
+    it('reverts', async () => {
+      // There is a fee set, so we don't expect the order to fill 1:1
+      await assertRevert(
+        systems().SpotMarket.connect(trader1).unwrap(marketId(), bn(0.5), bn(0.5)),
+        'InsufficientAmountReceived'
+      );
     });
 
     let txn: ethers.providers.TransactionResponse,
@@ -171,8 +189,8 @@ describe('WrapperModule', () => {
       );
     });
 
-    before('unwrap synth', async () => {
-      txn = await systems().SpotMarket.connect(trader1).unwrap(marketId(), bn(0.5));
+    it('unwrap synth', async () => {
+      txn = await systems().SpotMarket.connect(trader1).unwrap(marketId(), bn(0.5), 0);
     });
 
     it('returns correct amount of collateral to trader', async () => {
@@ -217,7 +235,7 @@ describe('WrapperModule', () => {
     it('emits unwrap event', async () => {
       await assertEvent(
         txn,
-        `SynthUnwrapped(${marketId()}, ${bn(0.4975)}, ${bn(2.25)}, ${bn(1.125)})`,
+        `SynthUnwrapped(${marketId()}, ${bn(0.4975)}, [0, 0, 0, ${bn(2.25)}], ${bn(1.125)})`,
         systems().SpotMarket
       );
     });
@@ -232,7 +250,7 @@ describe('WrapperModule', () => {
 
     before('trader1 wraps 1 eth', async () => {
       await systems().CollateralMock.connect(trader1).approve(systems().SpotMarket.address, bn(1));
-      await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1));
+      await systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1), 0);
     });
 
     let previousTrader1CollateralAmount: ethers.BigNumber,
@@ -249,7 +267,7 @@ describe('WrapperModule', () => {
 
     before('trader1 unwraps 0.5 eth', async () => {
       await synth.connect(trader1).approve(systems().SpotMarket.address, bn(0.5));
-      await systems().SpotMarket.connect(trader1).unwrap(marketId(), bn(0.5));
+      await systems().SpotMarket.connect(trader1).unwrap(marketId(), bn(0.5), 0);
     });
 
     it('trader1 should receive more collateral back', async () => {
@@ -263,6 +281,23 @@ describe('WrapperModule', () => {
       assertBn.equal(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address),
         previousFeeCollectorBalance
+      );
+    });
+  });
+
+  describe('setWrapperFees guardrails', () => {
+    it('cannot be set such that the sum of the fees is negative', async () => {
+      await assertRevert(
+        systems().SpotMarket.connect(marketOwner).setWrapperFees(marketId(), bn(0.2), bn(-0.3)),
+        'InvalidWrapperFees'
+      );
+      await assertRevert(
+        systems().SpotMarket.connect(marketOwner).setWrapperFees(marketId(), bn(-0.6), bn(0.5)),
+        'InvalidWrapperFees'
+      );
+      await assertRevert(
+        systems().SpotMarket.connect(marketOwner).setWrapperFees(marketId(), bn(-0.1), bn(-0.1)),
+        'InvalidWrapperFees'
       );
     });
   });

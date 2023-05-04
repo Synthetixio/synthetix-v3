@@ -1,46 +1,57 @@
-import { snapshotCheckpoint } from '@synthetixio/main/test/utils/snapshot';
+import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
+import { SpotMarketProxy, SynthRouter } from './generated/typechain';
+import { AggregatorV3Mock, FeeCollectorMock, OracleVerifierMock } from '../typechain-types/index';
 import {
-  SpotMarketProxy,
-  SynthetixCollateralMock,
-  SynthetixCoreProxy,
-  SynthetixOracle_managerProxy,
-  SynthetixUSDProxy,
-  SynthRouter,
-  FeeCollectorMock,
-  OracleVerifierMock,
-} from '../generated/typechain';
-import { AggregatorV3Mock } from '../typechain-types/index';
+  USDProxy,
+  CollateralMock,
+  USDRouter,
+  CoreProxy,
+} from '@synthetixio/main/test/generated/typechain';
+import { OracleManagerModule } from '@synthetixio/oracle-manager/test/generated/typechain';
 
 type Proxies = {
-  ['synthetix.CoreProxy']: SynthetixCoreProxy;
-  ['synthetix.USDProxy']: SynthetixUSDProxy;
-  ['synthetix.CollateralMock']: SynthetixCollateralMock;
-  ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
+  ['synthetix.CoreProxy']: CoreProxy;
+  ['synthetix.USDProxy']: USDProxy;
+  ['synthetix.CollateralMock']: CollateralMock;
+  ['synthetix.oracle_manager.Proxy']: OracleManagerModule;
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
   FeeCollectorMock: FeeCollectorMock;
   OracleVerifierMock: OracleVerifierMock;
+  ['synthetix.USDRouter']: USDRouter;
 };
 
 export type Systems = {
   SpotMarket: SpotMarketProxy;
-  Core: SynthetixCoreProxy;
-  USD: SynthetixUSDProxy;
-  CollateralMock: SynthetixCollateralMock;
-  OracleManager: SynthetixOracle_managerProxy;
+  Core: CoreProxy;
+  USD: USDProxy;
+  USDRouter: USDRouter;
+  CollateralMock: CollateralMock;
+  OracleManager: OracleManagerModule;
   OracleVerifierMock: OracleVerifierMock;
   FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
 
-const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
-  cannonfile: 'cannonfile.test.toml',
-});
+const params = { cannonfile: 'cannonfile.test.toml' };
+
+// TODO: find an alternative way for custom config on fork tests. Probably having
+//       another bootstrap.ts on the test-fork/ folder would be best.
+// hre.network.name === 'cannon'
+//   ? { cannonfile: 'cannonfile.test.toml' }
+//   : {
+//       dryRun: true,
+//       impersonate: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+//       cannonfile: 'cannonfile.test.toml',
+//     };
+
+const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>(params);
 
 const restoreSnapshot = createSnapshot();
 
@@ -49,6 +60,7 @@ before('load contracts', () => {
   contracts = {
     Core: getContract('synthetix.CoreProxy'),
     USD: getContract('synthetix.USDProxy'),
+    USDRouter: getContract('synthetix.USDRouter'),
     SpotMarket: getContract('SpotMarketProxy'),
     OracleManager: getContract('synthetix.oracle_manager.Proxy'),
     CollateralMock: getContract('synthetix.CollateralMock'),
@@ -60,6 +72,22 @@ before('load contracts', () => {
 
 export function bootstrap() {
   before(restoreSnapshot);
+  const signers: ethers.Wallet[] = [];
+
+  before('set up accounts', async () => {
+    const provider = getProvider();
+    for (let i = getSigners().length; i < 8; i++) {
+      const signer = ethers.Wallet.fromMnemonic(
+        'test test test test test test test test test test test junk',
+        `m/44'/60'/0'/0/${i}`
+      ).connect(provider);
+      signers.push(signer);
+      await provider.send('hardhat_setBalance', [
+        await signer.getAddress(),
+        `0x${(1e22).toString(16)}`,
+      ]);
+    }
+  });
 
   before('give owner permission to create pools', async () => {
     const [owner] = getSigners();
@@ -71,7 +99,7 @@ export function bootstrap() {
 
   return {
     provider: () => getProvider(),
-    signers: () => getSigners(),
+    signers: () => [...getSigners(), ...signers],
     owner: () => getSigners()[0],
     systems: () => contracts,
   };
@@ -137,6 +165,21 @@ export function bootstrapWithStakedPool() {
 
   const restore = snapshotCheckpoint(r.provider);
 
+  const generateExternalNode = async (price: number) => {
+    const factory = await hre.ethers.getContractFactory('MockExternalNode');
+    const externalNode = await factory.deploy(price, 200); // used to have .connect(owner)
+
+    // Register the mock
+    const NodeParameters = ethers.utils.defaultAbiCoder.encode(['address'], [externalNode.address]);
+    const tx = await r.systems().OracleManager.registerNode(NodeTypes.EXTERNAL, NodeParameters, []);
+    const receipt = await tx.wait();
+    const event = findSingleEvent({
+      receipt,
+      eventName: 'NodeRegistered',
+    });
+    return event.args.nodeId;
+  };
+
   return {
     ...r,
     aggregator: () => aggregator,
@@ -147,13 +190,14 @@ export function bootstrapWithStakedPool() {
     depositAmount,
     restore,
     oracleNodeId: () => oracleNodeId,
+    generateExternalNode,
   };
 }
 
 export function bootstrapWithSynth(name: string, token: string) {
   const r = bootstrapWithStakedPool();
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
-  let marketId: string;
+  let marketId: BigNumber;
   let aggregator: AggregatorV3Mock;
 
   before('identify market owner', async () => {
@@ -163,8 +207,8 @@ export function bootstrapWithSynth(name: string, token: string) {
   before('register synth', async () => {
     marketId = await r
       .systems()
-      .SpotMarket.callStatic.createSynth(name, token, marketOwner.getAddress());
-    await r.systems().SpotMarket.createSynth(name, token, marketOwner.getAddress());
+      .SpotMarket.callStatic.createSynth(name, token, await marketOwner.getAddress());
+    await r.systems().SpotMarket.createSynth(name, token, await marketOwner.getAddress());
   });
 
   before('configure market collateral supply cap', async () => {
@@ -270,7 +314,7 @@ const stake = async (
   await systems().CollateralMock.mint(await user.getAddress(), depositAmount.mul(1000));
 
   // create user account
-  await systems().Core.connect(user).createAccount(accountId);
+  await systems().Core.connect(user)['createAccount(uint128)'](accountId);
 
   // approve
   await systems()
@@ -297,7 +341,7 @@ const stake = async (
 const createOracleNode = async (
   owner: ethers.Signer,
   price: ethers.BigNumber,
-  OracleManager: Oracle_managerProxy
+  OracleManager: synthetix.oracleManager.Proxy
 ) => {
   const abi = ethers.utils.defaultAbiCoder;
   const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');

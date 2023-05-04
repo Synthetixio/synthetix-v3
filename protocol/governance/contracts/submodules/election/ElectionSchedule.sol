@@ -3,10 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./ElectionBase.sol";
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /// @dev Provides core schedule functionality. I.e. dates, periods, etc
 contract ElectionSchedule is ElectionBase {
     using Council for Council.Data;
+    using SafeCastU256 for uint256;
 
     /// @dev Used to allow certain functions to only operate within a given period
     modifier onlyInPeriod(Council.ElectionPeriod period) {
@@ -118,7 +120,7 @@ contract ElectionSchedule is ElectionBase {
 
         // Keep the previous durations, but shift everything back
         // so that nominations start now
-        uint64 newNominationPeriodStartDate = uint64(block.timestamp);
+        uint64 newNominationPeriodStartDate = block.timestamp.to64();
         uint64 newVotingPeriodStartDate = newNominationPeriodStartDate + nominationPeriodDuration;
         uint64 newEpochEndDate = newVotingPeriodStartDate + votingPeriodDuration;
 
@@ -136,7 +138,7 @@ contract ElectionSchedule is ElectionBase {
         Epoch.Data storage previousEpoch = Council.load().getPreviousElection().epoch;
         Epoch.Data storage currentEpoch = Council.load().getCurrentElection().epoch;
 
-        uint64 currentEpochStartDate = uint64(block.timestamp);
+        uint64 currentEpochStartDate = block.timestamp.to64();
         uint64 currentEpochEndDate = currentEpochStartDate + _getEpochDuration(previousEpoch);
         uint64 currentVotingPeriodStartDate = currentEpochEndDate -
             _getVotingPeriodDuration(previousEpoch);

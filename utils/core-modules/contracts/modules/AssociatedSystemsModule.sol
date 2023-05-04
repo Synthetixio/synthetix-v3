@@ -20,6 +20,14 @@ import "../storage/AssociatedSystem.sol";
 contract AssociatedSystemsModule is IAssociatedSystemsModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
+    modifier onlyIfAssociated(bytes32 id) {
+        if (address(AssociatedSystem.load(id).proxy) == address(0)) {
+            revert MissingAssociatedSystem(id);
+        }
+
+        _;
+    }
+
     /**
      * @inheritdoc IAssociatedSystemsModule
      */
@@ -69,21 +77,16 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         kind = AssociatedSystem.load(id).kind;
     }
 
-    modifier onlyIfAssociated(bytes32 id) {
-        if (address(AssociatedSystem.load(id).proxy) == address(0)) {
-            revert MissingAssociatedSystem(id);
-        }
-
-        _;
-    }
-
     function _setAssociatedSystem(bytes32 id, bytes32 kind, address proxy, address impl) internal {
         AssociatedSystem.load(id).set(proxy, impl, kind);
         emit AssociatedSystemSet(kind, id, proxy, impl);
     }
 
-    function _upgradeToken(bytes32 id, address impl) internal {
-        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
+    function _upgradeToken(
+        bytes32 id,
+        address impl
+    ) internal returns (AssociatedSystem.Data storage store) {
+        store = AssociatedSystem.load(id);
         store.expectKind(AssociatedSystem.KIND_ERC20);
 
         store.impl = impl;
@@ -93,11 +96,14 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         // tell the associated proxy to upgrade to the new implementation
         IUUPSImplementation(proxy).upgradeTo(impl);
 
-        _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
+        emit AssociatedSystemSet(AssociatedSystem.KIND_ERC20, id, proxy, impl);
     }
 
-    function _upgradeNft(bytes32 id, address impl) internal {
-        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
+    function _upgradeNft(
+        bytes32 id,
+        address impl
+    ) internal returns (AssociatedSystem.Data storage store) {
+        store = AssociatedSystem.load(id);
         store.expectKind(AssociatedSystem.KIND_ERC721);
 
         store.impl = impl;
@@ -107,7 +113,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         // tell the associated proxy to upgrade to the new implementation
         IUUPSImplementation(proxy).upgradeTo(impl);
 
-        _setAssociatedSystem(id, AssociatedSystem.KIND_ERC721, proxy, impl);
+        emit AssociatedSystemSet(AssociatedSystem.KIND_ERC721, id, proxy, impl);
     }
 
     function _initOrUpgradeToken(

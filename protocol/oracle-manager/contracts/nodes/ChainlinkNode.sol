@@ -15,7 +15,9 @@ library ChainlinkNode {
 
     uint256 public constant PRECISION = 18;
 
-    function process(bytes memory parameters) internal view returns (NodeOutput.Data memory) {
+    function process(
+        bytes memory parameters
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         (address chainlinkAddr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
             parameters,
             (address, uint256, uint8)
@@ -39,7 +41,7 @@ library ChainlinkNode {
         uint80 latestRoundId,
         int256 latestPrice,
         uint256 twapTimeInterval
-    ) internal view returns (int256) {
+    ) internal view returns (int256 price) {
         int256 priceSum = latestPrice;
         uint256 priceCount = 1;
 
@@ -66,7 +68,7 @@ library ChainlinkNode {
         return priceSum / priceCount.toInt();
     }
 
-    function validate(NodeDefinition.Data memory nodeDefinition) internal view returns (bool) {
+    function isValid(NodeDefinition.Data memory nodeDefinition) internal view returns (bool valid) {
         // Must have no parents
         if (nodeDefinition.parents.length > 0) {
             return false;

@@ -16,7 +16,7 @@ describe('ExternalNode', function () {
     NodeModule = getContract('NodeModule');
   });
 
-  it('can register and process and external node.', async () => {
+  it('can register and process an external node.', async () => {
     const [owner] = getSigners();
     const price = 100;
     const timestamp = 200;
