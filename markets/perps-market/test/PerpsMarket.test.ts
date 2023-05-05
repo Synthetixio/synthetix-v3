@@ -14,7 +14,6 @@ describe('perps test', () => {
   });
 
   before('create account', async () => {
-    const [, , , trader1] = signers();
     await systems().PerpsMarket.connect(trader1)['createAccount(uint128)'](2);
   });
 
