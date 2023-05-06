@@ -7,6 +7,7 @@ import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/Autom
 import "../../external/Functions.sol";
 import "../../interfaces/ICrossChainPoolModule.sol";
 import "../../interfaces/IPoolModule.sol";
+import "../../interfaces/IMulticallModule.sol";
 import "../../storage/Config.sol";
 import "../../storage/CrossChain.sol";
 import "../../storage/Pool.sol";
@@ -16,6 +17,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
+    using SafeCastU128 for uint128;
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
 
@@ -29,20 +31,21 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         "const maxFail = 1;"
         "const chainMapping = { '11155111': [`https://sepolia.infura.io/${secrets.INFURA_API_KEY}`], '80001': ['https://polygon-mumbai.infura.io/${secrets.INFURA_API_KEY}'] };"
 
-        "let totalDebt = 0;"
+        "let responses = [];"
         "for (let i = 0;i < args.length;i += 2) {"
         "    const chainId = Functions.decodeUint256(args[i]);"
-        "    const poolIdHex = args[i + 1].slice(2);" // we don't really need to decode the pool id because its 
+        "    const callHex = args[i + 1];"
         "    const urls = chainMapping[chainId];"
-        "    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: '0x47355c0f' + poolIdHex}] };"
+        "    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: callHex }] };"
         "    const results = await Promise.allSettled(urls.map(u => Functions.makeHttpRequest({ url, params })));"
-        "    let sumAvg = 0;"
+        "    let ress = 0;"
         "    for (const result of results) {"
-        "        sumAvg += Functions.decodeInt256(res.data.result);"
+        "        ress.push(Functions.decodeInt256(res.data.result));"
         "    }"
-        "    totalDebt += sumAvg / results.length;"
+        "    ress.sort();"
+        "    responses.push(ress[ress.length / 2].slice(2));"
         "}"
-        "return Functions.encodeInt256(totalDebt)";
+        "return Buffer.from(responses.join(''));";
     bytes internal constant _REQUEST_TOTAL_DEBT_SECRETS = "0xwhatever";
 
     function createCrossChainPool(uint128 sourcePoolId, uint64 targetChainId) external override returns (uint256 gasTokenUsed) {
@@ -80,14 +83,34 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
             revert ParameterError.InvalidParameter("newMarketConfigurations", "must be same length as paired chains");
         }
 
+        uint newTotalWeight;
+        for (uint i = 0;i < newMarketConfigurations.length;i++) {
+            for (uint j = 0;j < newMarketConfigurations[i].length;j++) {
+                newTotalWeight += newMarketConfigurations[i][j].weightD18;
+            }
+        }
+
         // TODO: use internal function
         //address(this).call(abi.encodeWithSelector(IPoolModule.setPoolConfiguration, poolId, newMarketConfigurations[0]));
 
         for (uint i = 1;i < pool.crossChain[0].pairedChains.length;i++) {
             uint64[] memory targetChainIds = new uint64[](1);
             targetChainIds[0] = pool.crossChain[0].pairedChains[i];
-            CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(IPoolModule.setPoolConfiguration.selector, poolId, newMarketConfigurations[i]), 100000);
+            CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this._recvSetCrossChainPoolConfiguration.selector, poolId, newMarketConfigurations[i], newTotalWeight), 100000);
         }
+    }
+
+    function _recvSetCrossChainPoolConfiguration(
+        uint128 poolId,
+        MarketConfiguration.Data[] memory newMarketConfigurations,
+        uint256 newTotalWeight
+    ) external override {
+        CrossChain.onlyCrossChain();
+
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+
+        pool.crossChain[0].latestTotalWeights = newTotalWeight.to128();
+        pool.setMarketConfiguration(newMarketConfigurations);
     }
 
     /**
@@ -107,16 +130,91 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         }
 
         // TODO: be a real pool id
-        Pool.Data storage pool = Pool.load(0);
+        Pool.Data storage pool = Pool.load(uint128(uint256(CrossChain.load().chainlinkFunctionsRequestInfo[requestId])));
 
-        int256 totalDebt = abi.decode(response, (int256));
+        uint256 chainsCount = pool.crossChain[0].pairedChains.length;
 
-        int256 debtChange = totalDebt - pool.crossChain[0].latestDebtAmount;
+        uint256[] memory liquidityAmounts = new uint256[](chainsCount);
 
-        pool.vaultsDebtDistribution.distributeValue(debtChange);
+        PoolCrossChainSync memory sync;
 
-        pool.crossChain[0].latestDebtAmount = totalDebt.to128();
-        pool.crossChain[0].latestDataTimestamp = uint64(block.timestamp);
+        sync.dataTimestamp = uint64(block.timestamp);
+
+        for (uint i = 0; i < chainsCount;i++) {
+
+            (
+                uint256 chainLiquidity,
+                int256 chainCumulativeMarketDebt,
+                int256 chainTotalDebt,
+                uint256 chainSyncTime
+            ) = abi.decode(response, (uint256, int256, int256, uint256));
+
+            liquidityAmounts[i] = chainLiquidity;
+            sync.liquidity += chainLiquidity.to128();
+            sync.cumulativeMarketDebt += chainCumulativeMarketDebt.to128();
+            sync.totalDebt += chainTotalDebt.to128();
+
+            sync.oldestDataTimestamp = sync.oldestDataTimestamp < chainSyncTime ? sync.oldestDataTimestamp : uint64(chainSyncTime);
+        }
+
+        int256 marketDebtChange = sync.cumulativeMarketDebt - pool.crossChain[0].latestSync.cumulativeMarketDebt;
+        int256 remainingDebt = marketDebtChange;
+
+        // send sync message
+        for (uint i = 1;i < chainsCount;i++) {
+            uint64[] memory targetChainIds = new uint64[](1);
+            targetChainIds[0] = pool.crossChain[0].pairedChains[i];
+
+            int256 chainAssignedDebt = marketDebtChange * liquidityAmounts[i].toInt() / sync.liquidity.toInt();
+            remainingDebt -= chainAssignedDebt;
+
+            // TODO: gas limit should be based on number of markets assigned to pool
+            CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this.receivePoolHeartbeat.selector, pool.crossChain[0].pairedPoolIds[targetChainIds[0]], sync, chainAssignedDebt), 3000000);
+        }
+
+        _receivePoolHeartbeat(pool.id, sync, remainingDebt);
+    }
+
+    function receivePoolHeartbeat(uint128 poolId, PoolCrossChainSync memory syncData, int256 assignedDebt) external override {
+        _receivePoolHeartbeat(poolId, syncData, assignedDebt);
+    }
+
+    function _receivePoolHeartbeat(uint128 poolId, PoolCrossChainSync memory syncData, int256 assignedDebt) internal {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        
+        // record sync data
+        pool.crossChain[0].latestSync = syncData;
+
+        // assign accumulated debt
+        pool.distributeDebtToVaults(assignedDebt);
+        
+        // make sure the markets limits are set as expect
+        pool.recalculateAllCollaterals();
+
+        emit PoolHeartbeat(poolId, syncData);
+
+    }
+
+    function getPoolLastHeartbeat(uint128 poolId) external override returns (uint64) {
+        return Pool.loadExisting(poolId).crossChain[0].latestSync.dataTimestamp;
+    }
+
+    function getThisChainPoolLiquidity(
+        uint128 poolId
+    ) external override returns (uint256 liquidityD18) {
+        return Pool.loadExisting(poolId).vaultsDebtDistribution.totalSharesD18;
+    }
+
+    function getThisChainPoolCumulativeMarketDebt(
+        uint128 poolId
+    ) external override returns (int256 cumulativeDebtD18) {
+        (cumulativeDebtD18, ) = Pool.loadExisting(poolId).rebalanceMarketsInPool();
+    }
+
+    function getThisChainPoolTotalDebt(
+        uint128 poolId
+    ) external view override returns (int256 totalDebtD18) {
+        return Pool.loadExisting(poolId).totalVaultDebtsD18;
     }
 
     /**
@@ -132,7 +230,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         uint poolId = abi.decode(data, (uint));
         Pool.Data storage pool = Pool.loadExisting(abi.decode(data, (uint128)));
 
-        upkeepNeeded = (block.timestamp - pool.crossChain[0].latestDataTimestamp) > pool.crossChain[0].chainlinkSubscriptionInterval;
+        upkeepNeeded = (block.timestamp - pool.crossChain[0].latestSync.dataTimestamp) > pool.crossChain[0].chainlinkSubscriptionInterval;
     }
 
     /**
@@ -145,22 +243,23 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         (bool upkeepNeeded, ) = checkUpkeep("");
         require(upkeepNeeded, "Time interval not met");
 
-        Pool.Data storage pool = Pool.loadExisting(abi.decode(data, (uint128)));
+        uint128 poolId = abi.decode(data, (uint128));
+        Pool.Data storage pool = Pool.loadExisting(poolId);
 
         // take this opporitunity to rebalance the markets in this pool
         // we do it here instaed of fulfill because there is no reason for this to fail if for some reason the function fails
-        pool.recalculateAllCollaterals();
-        pool.rebalanceMarketsInPool();
 
-        string[] memory args = new string[](pool.crossChain[0].pairedChains.length);
-        args[0] = string(abi.encode(block.chainid, pool.id));
+        string[] memory args = new string[](pool.crossChain[0].pairedChains.length * 2);
+        args[0] = string(abi.encode(block.chainid));
+        args[1] = string(_encodeCrossChainPoolCall(poolId));
 
-        for (uint i = 1; i < args.length;i++) {
-            uint64 chainId = pool.crossChain[0].pairedChains[i - 1];
+        for (uint i = 2; i < args.length;i += 2) {
+            uint64 chainId = pool.crossChain[0].pairedChains[i / 2];
             args[i] = string(abi.encode(
-                chainId,
-                pool.crossChain[0].pairedPoolIds[chainId]
+                chainId
             ));
+
+            args[i + 1] = string(_encodeCrossChainPoolCall(pool.crossChain[0].pairedPoolIds[chainId]));
         }
 
         Functions.Request memory req = Functions.Request({
@@ -171,7 +270,26 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
             secrets: _REQUEST_TOTAL_DEBT_SECRETS,
             args: args
         });
-        bytes32 requestId = CrossChain.load().chainlinkFunctionsOracle.sendRequest(pool.crossChain[0].chainlinkSubscriptionId, abi.encode(req), 100000);
+        bytes32 requestId = CrossChain.load().chainlinkFunctionsOracle.sendRequest(
+            pool.crossChain[0].chainlinkSubscriptionId, 
+            abi.encode(req), 
+            100000
+        );
+
+        CrossChain.load().chainlinkFunctionsRequestInfo[requestId] = bytes32(uint256(pool.id));
+    }
+    
+    function _encodeCrossChainPoolCall(uint128 poolId) internal pure returns (bytes memory) {
+        bytes[] memory calls = new bytes[](4);
+        calls[0] = abi.encodeWithSelector(this.getThisChainPoolLiquidity.selector, poolId);
+        calls[1] = abi.encodeWithSelector(this.getThisChainPoolCumulativeMarketDebt.selector, poolId);
+        calls[2] = abi.encodeWithSelector(this.getThisChainPoolTotalDebt.selector, poolId);
+        calls[3] = abi.encodeWithSelector(this.getPoolLastHeartbeat.selector, poolId);
+
+        return abi.encodeWithSelector(
+            IMulticallModule.multicall.selector, 
+            abi.encode(calls)
+        );
     }
 
     function getDONPublicKey() external view returns (bytes memory) {

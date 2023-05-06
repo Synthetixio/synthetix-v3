@@ -8,10 +8,6 @@ import "../storage/MarketConfiguration.sol";
  * @dev The pool owner can be specified during creation, can be transferred, and has credentials for configuring the pool.
  */
 interface IPoolModule {
-    /**
-     * @notice Thrown when attempting to disconnect a market whose capacity is locked, and whose removal would cause a decrease in its associated pool's credit delegation proportion.
-     */
-    error CapacityLocked(uint256 marketId);
 
     /**
      * @notice Thrown when the requested pool ID is greater or equal to type(uint128).max / 2

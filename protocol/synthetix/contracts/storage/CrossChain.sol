@@ -25,6 +25,8 @@ library CrossChain {
         FunctionsOracleInterface chainlinkFunctionsOracle;
         
         SetUtil.UintSet supportedNetworks;
+
+        mapping (bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
 
     function load() internal pure returns (Data storage crossChain) {

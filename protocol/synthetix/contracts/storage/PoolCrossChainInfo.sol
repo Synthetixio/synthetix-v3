@@ -1,16 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+struct PoolCrossChainSync {
+    uint128 liquidity;
+    int128 cumulativeMarketDebt;
+    int128 totalDebt;
+    uint64 dataTimestamp;
+    uint64 oldestDataTimestamp;
+}
+
 library PoolCrossChainInfo {
     struct Data {
-        uint128 latestLiquidity;
+        PoolCrossChainSync latestSync;
         uint128 latestTotalWeights;
-        int128 latestDebtAmount;
-        uint64 latestDataTimestamp;
-        uint64 lastReportedOldestDataTimestamp;
 
         uint64[] pairedChains;
-        mapping(uint64 => uint256) pairedPoolIds;
+        mapping(uint64 => uint128) pairedPoolIds;
 
         uint64 chainlinkSubscriptionId;
         uint32 chainlinkSubscriptionInterval;
