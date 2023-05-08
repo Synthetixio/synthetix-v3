@@ -87,6 +87,20 @@ interface IMarketConfigurationModule {
     error InvalidFeeCollectorInterface(address invalidFeeCollector);
 
     /**
+     * @notice gets the atomic fixed fee for a given market
+     * @param synthMarketId Id of the market the fee applies to.
+     * @return atomicFixedFee fixed fee amount represented in bips with 18 decimals.
+     * @return asyncFixedFee fixed fee amount represented in bips with 18 decimals.
+     * @return wrapFee wrapping fee in %, 18 decimals. Can be negative.
+     * @return unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
+     */
+    function getMarketFees(
+        uint128 synthMarketId
+    )
+        external
+        returns (uint256 atomicFixedFee, uint256 asyncFixedFee, int256 wrapFee, int256 unwrapFee);
+
+    /**
      * @notice sets the atomic fixed fee for a given market
      * @dev only marketOwner can set the fee
      * @param synthMarketId Id of the market the fee applies to.
@@ -95,26 +109,12 @@ interface IMarketConfigurationModule {
     function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external;
 
     /**
-     * @notice gets the atomic fixed fee for a given market
-     * @param synthMarketId Id of the market the fee applies to.
-     * @return atomicFixedFee fixed fee amount represented in bips with 18 decimals.
-     */
-    function getAtomicFixedFee(uint128 synthMarketId) external returns (uint256 atomicFixedFee);
-
-    /**
      * @notice sets the async fixed fee for a given market
      * @dev only marketOwner can set the fee
      * @param synthMarketId Id of the market the fee applies to.
      * @param asyncFixedFee fixed fee amount represented in bips with 18 decimals.
      */
     function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external;
-
-    /**
-     * @notice gets the async fixed fee for a given market
-     * @param synthMarketId Id of the market the fee applies to.
-     * @return asyncFixedFee fixed fee amount represented in bips with 18 decimals.
-     */
-    function getAsyncFixedFee(uint128 synthMarketId) external returns (uint256 asyncFixedFee);
 
     /**
      * @notice sets the skew scale for a given market
@@ -223,17 +223,6 @@ interface IMarketConfigurationModule {
      * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
      */
     function setWrapperFees(uint128 synthMarketId, int256 wrapFee, int256 unwrapFee) external;
-
-    /**
-     * @notice gets wrapper related fees.
-     * @dev fees can be negative.  this is a way to unwind the wrapper if needed by providing incentives.
-     * @param synthMarketId Id of the market the wrapper fees apply to.
-     * @return wrapFee wrapping fee in %, 18 decimals. Can be negative.
-     * @return unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
-     */
-    function getWrapperFees(
-        uint128 synthMarketId
-    ) external returns (int256 wrapFee, int256 unwrapFee);
 
     /**
      * @notice Update the referral share percentage for a given market

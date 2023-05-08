@@ -28,10 +28,21 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function getAtomicFixedFee(
+    function getMarketFees(
         uint128 synthMarketId
-    ) external view override returns (uint256 atomicFixedFee) {
-        atomicFixedFee = MarketConfiguration.load(synthMarketId).atomicFixedFee;
+    )
+        external
+        view
+        override
+        returns (uint256 atomicFixedFee, uint256 asyncFixedFee, int256 wrapFee, int256 unwrapFee)
+    {
+        MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(
+            synthMarketId
+        );
+        atomicFixedFee = marketConfiguration.atomicFixedFee;
+        asyncFixedFee = marketConfiguration.asyncFixedFee;
+        wrapFee = marketConfiguration.wrapFixedFee;
+        unwrapFee = marketConfiguration.unwrapFixedFee;
     }
 
     /**
@@ -43,15 +54,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         MarketConfiguration.load(synthMarketId).asyncFixedFee = asyncFixedFee;
 
         emit AsyncFixedFeeSet(synthMarketId, asyncFixedFee);
-    }
-
-    /**
-     * @inheritdoc IMarketConfigurationModule
-     */
-    function getAsyncFixedFee(
-        uint128 synthMarketId
-    ) external view override returns (uint256 asyncFixedFee) {
-        asyncFixedFee = MarketConfiguration.load(synthMarketId).asyncFixedFee;
     }
 
     /**
@@ -193,19 +195,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         marketConfiguration.unwrapFixedFee = unwrapFee;
 
         emit WrapperFeesSet(synthMarketId, wrapFee, unwrapFee);
-    }
-
-    /**
-     * @inheritdoc IMarketConfigurationModule
-     */
-    function getWrapperFees(
-        uint128 synthMarketId
-    ) external view override returns (int256 wrapFee, int256 unwrapFee) {
-        MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(
-            synthMarketId
-        );
-        wrapFee = marketConfiguration.wrapFixedFee;
-        unwrapFee = marketConfiguration.unwrapFixedFee;
     }
 
     /**
