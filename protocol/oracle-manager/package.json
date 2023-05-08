@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/oracle-manager",
-  "version": "3.1.0",
+  "version": "3.1.1-dev.f51dd42e",
   "description": "Core Synthetix Protocol Oracle Manager",
   "publishConfig": {
     "access": "public"
@@ -20,10 +20,10 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.1.0",
-    "@synthetixio/core-contracts": "3.1.0",
-    "@synthetixio/core-modules": "3.1.0",
-    "@synthetixio/core-utils": "3.1.0",
+    "@synthetixio/common-config": "3.1.1-dev.f51dd42e",
+    "@synthetixio/core-contracts": "3.1.1-dev.f51dd42e",
+    "@synthetixio/core-modules": "3.1.1-dev.f51dd42e",
+    "@synthetixio/core-utils": "3.1.1-dev.f51dd42e",
     "@synthetixio/wei": "2.74.4",
     "@types/node": "18.11.10",
     "ethers": "^5.0.0",
@@ -32,5 +32,5 @@
     "ts-node": "10.9.1",
     "typescript": "4.9.3"
   },
-  "gitHead": "d5d322abfb3a6260ecd3e0339c945649f5d53cb2"
+  "gitHead": "f51dd42e611d03fee565293665f87e09d97fb6a2"
 }

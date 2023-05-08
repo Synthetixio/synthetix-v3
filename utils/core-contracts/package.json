@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-contracts",
-  "version": "3.1.0",
+  "version": "3.1.1-dev.f51dd42e",
   "publishConfig": {
     "access": "public"
   },
@@ -29,10 +29,10 @@
     "@ethersproject/bignumber": "^5.7.0",
     "@ethersproject/providers": "5.7.2",
     "@nomiclabs/hardhat-ethers": "2.2.1",
-    "@synthetixio/common-config": "3.1.0",
-    "@synthetixio/core-utils": "3.1.0",
+    "@synthetixio/common-config": "3.1.1-dev.f51dd42e",
+    "@synthetixio/core-utils": "3.1.1-dev.f51dd42e",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0"
   },
-  "gitHead": "d5d322abfb3a6260ecd3e0339c945649f5d53cb2"
+  "gitHead": "f51dd42e611d03fee565293665f87e09d97fb6a2"
 }
