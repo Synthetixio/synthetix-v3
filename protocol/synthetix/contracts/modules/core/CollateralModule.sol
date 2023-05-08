@@ -161,7 +161,11 @@ contract CollateralModule is ICollateralModule {
 
             if (
                 lockExpirationTime <= currentTime && 
-                (lockPoolSync == 0 || Pool.load(lockPoolSync).getOldestSync() > lockExpirationTime)
+                (lockPoolSync == 0 || (
+                    // can only unlock if pool sync time is met and the account is above the target ratio
+                    Pool.load(lockPoolSync).getOldestSync() > lockExpirationTime && 
+                    Pool.load(lockPoolSync).currentAccountCollateralRatio(locks[index].lockExpirationPoolSyncVault, accountId) > CollateralConfiguration.load(collateralType).issuanceRatioD18
+                ))
             ) {
                 emit CollateralLockExpired(
                     accountId,
@@ -237,7 +241,7 @@ contract CollateralModule is ICollateralModule {
         }
 
         account.collaterals[collateralType].locks.push(
-            CollateralLock.Data(amount.to128(), expireTimestamp, 0)
+            CollateralLock.Data(amount.to128(), expireTimestamp, 0, address(0))
         );
 
         emit CollateralLockCreated(accountId, collateralType, amount, expireTimestamp);

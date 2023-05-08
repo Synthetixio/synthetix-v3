@@ -12,7 +12,7 @@ import "../storage/PoolCrossChainInfo.sol";
  */
 interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibleInterface {
 
-    event PoolHeartbeat(uint128 poolId, PoolCrossChainSync syncData);
+    event PoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data syncData);
 
     function createCrossChainPool(uint128 sourcePoolId, uint64 targetChainId) external returns (uint256 gasTokenUsed);
 
@@ -26,14 +26,15 @@ interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibl
     function _recvSetCrossChainPoolConfiguration(
         uint128 poolId,
         MarketConfiguration.Data[] memory newMarketConfigurations,
-        uint256 newTotalWeight
+        uint256 newTotalWeight,
+        uint64 configTimestamp
     ) external;
 
-    function receivePoolHeartbeat(uint128 poolId, PoolCrossChainSync memory syncData, int256 assignedDebt) external;
+    function _recvPoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data memory syncData, int256 assignedDebt) external;
 
     function getThisChainPoolLiquidity(
         uint128 poolId
-    ) external returns (uint256 liquidityD18);
+    ) external view returns (uint256 liquidityD18);
 
     function getThisChainPoolCumulativeMarketDebt(
         uint128 poolId
@@ -43,5 +44,5 @@ interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibl
         uint128 poolId
     ) external view returns (int256 totalDebtD18);
 
-    function getPoolLastHeartbeat(uint128 poolId) external returns (uint64);
+    function getPoolLastHeartbeat(uint128 poolId) external view returns (uint64);
 }

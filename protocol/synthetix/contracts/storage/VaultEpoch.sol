@@ -72,6 +72,9 @@ library VaultEpoch {
          */
         mapping(uint128 => uint64) lastDelegationTime;
 
+        uint128 totalExitingCollateralD18;
+        uint128 _reserved;
+
         /**
          * @dev When collateral is removed from a pool, it must first go into "exiting" collateral. This allows
          * for any debt which is accumulated asynchronously from the pool to be accounted before completely
@@ -171,8 +174,10 @@ library VaultEpoch {
         self.exitingCollateral[actorId] = CollateralLock.Data(
             self.exitingCollateral[actorId].amountD18 + collateralReductionD18.to128(),
             uint64(block.timestamp),
-            0
+            0,
+            address(0)
         );
+        self.totalExitingCollateralD18 += collateralReductionD18.to128();
     }
 
     /**

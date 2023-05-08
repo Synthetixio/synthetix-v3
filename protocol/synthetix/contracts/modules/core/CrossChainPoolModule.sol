@@ -96,21 +96,23 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         for (uint i = 1;i < pool.crossChain[0].pairedChains.length;i++) {
             uint64[] memory targetChainIds = new uint64[](1);
             targetChainIds[0] = pool.crossChain[0].pairedChains[i];
-            CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this._recvSetCrossChainPoolConfiguration.selector, poolId, newMarketConfigurations[i], newTotalWeight), 100000);
+            CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this._recvSetCrossChainPoolConfiguration.selector, poolId, newMarketConfigurations[i], newTotalWeight, uint64(block.timestamp)), 100000);
         }
     }
 
     function _recvSetCrossChainPoolConfiguration(
         uint128 poolId,
         MarketConfiguration.Data[] memory newMarketConfigurations,
-        uint256 newTotalWeight
+        uint256 newTotalWeight,
+        uint64 configTimestamp
     ) external override {
         CrossChain.onlyCrossChain();
 
         Pool.Data storage pool = Pool.loadExisting(poolId);
 
-        pool.crossChain[0].latestTotalWeights = newTotalWeight.to128();
         pool.setMarketConfiguration(newMarketConfigurations);
+        pool.crossChain[0].latestTotalWeights = newTotalWeight.to128();
+        pool.lastConfigurationTime = configTimestamp;
     }
 
     /**
@@ -136,18 +138,18 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
 
         uint256[] memory liquidityAmounts = new uint256[](chainsCount);
 
-        PoolCrossChainSync memory sync;
+        PoolCrossChainSync.Data memory sync;
 
         sync.dataTimestamp = uint64(block.timestamp);
 
         for (uint i = 0; i < chainsCount;i++) {
-
             (
                 uint256 chainLiquidity,
                 int256 chainCumulativeMarketDebt,
                 int256 chainTotalDebt,
-                uint256 chainSyncTime
-            ) = abi.decode(response, (uint256, int256, int256, uint256));
+                uint256 chainSyncTime,
+                uint256 chainLastPoolConfigTime
+            ) = abi.decode(response, (uint256, int256, int256, uint256, uint256));
 
             liquidityAmounts[i] = chainLiquidity;
             sync.liquidity += chainLiquidity.to128();
@@ -155,6 +157,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
             sync.totalDebt += chainTotalDebt.to128();
 
             sync.oldestDataTimestamp = sync.oldestDataTimestamp < chainSyncTime ? sync.oldestDataTimestamp : uint64(chainSyncTime);
+            sync.oldestPoolConfigTimestamp = sync.oldestPoolConfigTimestamp < chainLastPoolConfigTime ? sync.oldestPoolConfigTimestamp : uint64(chainLastPoolConfigTime);
         }
 
         int256 marketDebtChange = sync.cumulativeMarketDebt - pool.crossChain[0].latestSync.cumulativeMarketDebt;
@@ -169,17 +172,17 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
             remainingDebt -= chainAssignedDebt;
 
             // TODO: gas limit should be based on number of markets assigned to pool
-            CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this.receivePoolHeartbeat.selector, pool.crossChain[0].pairedPoolIds[targetChainIds[0]], sync, chainAssignedDebt), 3000000);
+            CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this._recvPoolHeartbeat.selector, pool.crossChain[0].pairedPoolIds[targetChainIds[0]], sync, chainAssignedDebt), 3000000);
         }
 
         _receivePoolHeartbeat(pool.id, sync, remainingDebt);
     }
 
-    function receivePoolHeartbeat(uint128 poolId, PoolCrossChainSync memory syncData, int256 assignedDebt) external override {
+    function _recvPoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data memory syncData, int256 assignedDebt) external override {
         _receivePoolHeartbeat(poolId, syncData, assignedDebt);
     }
 
-    function _receivePoolHeartbeat(uint128 poolId, PoolCrossChainSync memory syncData, int256 assignedDebt) internal {
+    function _receivePoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data memory syncData, int256 assignedDebt) internal {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         
         // record sync data
@@ -195,14 +198,14 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
 
     }
 
-    function getPoolLastHeartbeat(uint128 poolId) external override returns (uint64) {
+    function getPoolLastHeartbeat(uint128 poolId) external view override returns (uint64) {
         return Pool.loadExisting(poolId).crossChain[0].latestSync.dataTimestamp;
     }
 
     function getThisChainPoolLiquidity(
         uint128 poolId
-    ) external override returns (uint256 liquidityD18) {
-        return Pool.loadExisting(poolId).vaultsDebtDistribution.totalSharesD18;
+    ) external view override returns (uint256 liquidityD18) {
+        return Pool.loadExisting(poolId).totalCapacityD18;
     }
 
     function getThisChainPoolCumulativeMarketDebt(

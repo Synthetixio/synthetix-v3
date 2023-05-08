@@ -152,10 +152,23 @@ describe('IssueUSDModule', function () {
         verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(10))
       );
 
-      it('sent USD to user1', async () => {
+      it('put USD in accountIds account with lock', async () => {
+        const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
         assertBn.equal(
-          await systems().USD.balanceOf(await user1.getAddress()),
+          totalDeposited,
           depositAmount.div(10)
+        );
+
+        const locks = await systems().Core.getLocks(accountId, systems().USD.address, 0, 100);
+
+        assertBn.equal(
+          locks[0].amountD18,
+          depositAmount.div(10)
+        );
+
+        assertBn.equal(
+          locks[0].lockExpirationPoolSync,
+          poolId
         );
       });
 
@@ -186,6 +199,15 @@ describe('IssueUSDModule', function () {
             await systems().USD.balanceOf(await user1.getAddress()),
             depositAmount.div(5)
           );
+        });
+
+        describe('account goes into debt', () => {
+          before('gets debt', async () => () => {
+          });
+
+          it('blocks transfer of USD that is below liquidation threshold', async () => {
+            throw new Error();
+          });
         });
       });
     });
@@ -270,13 +292,16 @@ describe('IssueUSDModule', function () {
           .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10))
     );
 
-    describe('burn from other account', async () => {
+    describe('burn', async () => {
       before(restoreBurn);
-      before('transfer burn collateral', async () => {
-        // send the collateral to account 2 so it can burn on behalf
+      before('transfer burn collateral into system', async () => {
         await systems()
           .USD.connect(user1)
-          .transfer(await user2.getAddress(), depositAmount.div(10));
+          .approve(systems().Core.address, depositAmount.div(10));
+
+        await systems()
+          .Core.connect(user1)
+          .deposit(accountId, systems().USD.address, depositAmount.div(10));
       });
 
       before('other account burn', async () => {
@@ -287,8 +312,8 @@ describe('IssueUSDModule', function () {
 
       it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
 
-      it('took away from user2', async () => {
-        assertBn.equal(await systems().USD.balanceOf(await user2.getAddress()), 0);
+      it('took away from account collateral', async () => {
+        assertBn.equal(await systems().Core.getAccountAvailableCollateral(accountId, systems().USD.address), 0);
       });
     });
 

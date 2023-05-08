@@ -129,7 +129,7 @@ contract PoolModule is IPoolModule {
         pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
-        (, int256 cumulativeDebtChange) = pool.rebalanceMarketsInPool();
+        (int256 cumulativeDebtChange,) = pool.rebalanceMarketsInPool();
         pool.distributeDebtToVaults(cumulativeDebtChange);
 
         pool.setMarketConfiguration(newMarketConfigurations);

@@ -19,5 +19,6 @@ library CollateralLock {
          * @dev In addition to the condition imposed by `lockExpirationTime`, the specified pool (by pool id) must be synced after `lockExpirationTime`
          */
         uint128 lockExpirationPoolSync;
+        address lockExpirationPoolSyncVault;
     }
 }

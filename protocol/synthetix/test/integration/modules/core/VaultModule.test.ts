@@ -669,7 +669,7 @@ describe('VaultModule', function () {
                 verifyAccountState(accountId, poolId, depositAmount, startingDebt)
               );
               it(
-                'user2 position is decreased',
+                'user2 collateral is removed (but position remains the same',
                 verifyAccountState(
                   user2AccountId,
                   poolId,
@@ -677,6 +677,14 @@ describe('VaultModule', function () {
                   depositAmount.div(100)
                 )
               );
+
+              it('keeps collateral assigned', async () => {
+                throw new Error();
+              });
+
+              it('has releasable collateral', async () => {
+                throw new Error();
+              });
             });
           });
         });
@@ -704,16 +712,44 @@ describe('VaultModule', function () {
             'user1 still has correct position',
             verifyAccountState(accountId, poolId, depositAmount, startingDebt)
           );
-          it('user2 position is closed', verifyAccountState(user2AccountId, poolId, 0, 0));
+          it('user2 position is same (but collateral is put into exiting)', verifyAccountState(user2AccountId, poolId, 0, 0));
 
-          it('lets user2 re-stake again', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
-              user2AccountId,
-              poolId,
-              collateralAddress(),
-              depositAmount.div(3), // user1 75%, user2 25%
-              ethers.utils.parseEther('1')
-            );
+          it('user2 position is in exiting state', async () => {
+            throw new Error();
+          });
+
+          it('does not release assignment from account', async () => {
+            throw new Error();
+          });
+
+          describe('when cross chain enabled and oldest sync time is too old', () => {
+            before('set', async () => {
+              
+            });
+
+            it('does not allow release', async () => {
+              throw new Error();
+            });
+          });
+
+          describe('release collateral', () => {
+            before('gets released', async () => {
+
+            });
+
+            it('returns assigned collateral to account', async () => {
+              throw new Error();
+            });
+
+            it('lets user2 re-stake again', async () => {
+              await systems().Core.connect(user2).delegateCollateral(
+                user2AccountId,
+                poolId,
+                collateralAddress(),
+                depositAmount.div(3), // user1 75%, user2 25%
+                ethers.utils.parseEther('1')
+              );
+            });
           });
         });
       });

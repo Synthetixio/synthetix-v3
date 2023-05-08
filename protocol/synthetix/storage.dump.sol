@@ -320,7 +320,7 @@ contract CollateralModule {
 // @custom:artifact contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule
 contract CrossChainPoolModule {
     string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
-    string internal constant _REQUEST_TOTAL_DEBT_CODE = "const maxFail = 1;const chainMapping = { '11155111': [`https://sepolia.infura.io/${secrets.INFURA_API_KEY}`], '80001': ['https://polygon-mumbai.infura.io/${secrets.INFURA_API_KEY}'] };let totalDebt = 0;for (let i = 0;i < args.length;i += 2) {    const chainId = Functions.decodeUint256(args[i]);    const poolIdHex = args[i + 1].slice(2);    const urls = chainMapping[chainId];    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: '0x47355c0f' + poolIdHex}] };    const results = await Promise.allSettled(urls.map(u => Functions.makeHttpRequest({ url, params })));    let sumAvg = 0;    for (const result of results) {        sumAvg += Functions.decodeInt256(res.data.result);    }    totalDebt += sumAvg / results.length;}return Functions.encodeInt256(totalDebt)";
+    string internal constant _REQUEST_TOTAL_DEBT_CODE = "const maxFail = 1;const chainMapping = { '11155111': [`https://sepolia.infura.io/${secrets.INFURA_API_KEY}`], '80001': ['https://polygon-mumbai.infura.io/${secrets.INFURA_API_KEY}'] };let responses = [];for (let i = 0;i < args.length;i += 2) {    const chainId = Functions.decodeUint256(args[i]);    const callHex = args[i + 1];    const urls = chainMapping[chainId];    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: callHex }] };    const results = await Promise.allSettled(urls.map(u => Functions.makeHttpRequest({ url, params })));    let ress = 0;    for (const result of results) {        ress.push(Functions.decodeInt256(res.data.result));    }    ress.sort();    responses.push(ress[ress.length / 2].slice(2));}return Buffer.from(responses.join(''));";
     bytes internal constant _REQUEST_TOTAL_DEBT_SECRETS = "0xwhatever";
 }
 
@@ -470,6 +470,8 @@ library CollateralLock {
     struct Data {
         uint128 amountD18;
         uint64 lockExpirationTime;
+        uint128 lockExpirationPoolSync;
+        address lockExpirationPoolSyncVault;
     }
 }
 
@@ -487,6 +489,7 @@ library CrossChain {
         address ccipRouter;
         address chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
+        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
     function load() internal pure returns (Data storage crossChain) {
         bytes32 s = _SLOT_CROSS_CHAIN;
@@ -609,8 +612,17 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        int256 cumulativeDebtD18;
-        PoolCrossChainInfo.Data[] crossChain;
+        uint128 totalCapacityD18;
+        int128 cumulativeDebtD18;
+        mapping(uint256 => uint256) heldMarketConfigurationWeights;
+        mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
+    }
+    struct AnalyzePoolConfigRuntime {
+        uint256 oldIdx;
+        uint256 potentiallyLockedMarketsIdx;
+        uint256 potentiallyDelayedMarketsIdx;
+        uint256 removedMarketsIdx;
+        uint128 lastMarketId;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
@@ -623,16 +635,25 @@ library Pool {
 // @custom:artifact contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
 library PoolCrossChainInfo {
     struct Data {
-        uint128 latestLiquidity;
+        PoolCrossChainSync.Data latestSync;
         uint128 latestTotalWeights;
-        int128 latestDebtAmount;
-        uint64 latestDataTimestamp;
-        uint64 lastReportedOldestDataTimestamp;
         uint64[] pairedChains;
-        mapping(uint64 => uint256) pairedPoolIds;
+        mapping(uint64 => uint128) pairedPoolIds;
         uint64 chainlinkSubscriptionId;
         uint32 chainlinkSubscriptionInterval;
         bytes32 latestRequestId;
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCrossChainSync.sol:PoolCrossChainSync
+library PoolCrossChainSync {
+    struct Data {
+        uint128 liquidity;
+        int128 cumulativeMarketDebt;
+        int128 totalDebt;
+        uint64 dataTimestamp;
+        uint64 oldestDataTimestamp;
+        uint64 oldestPoolConfigTimestamp;
     }
 }
 
@@ -704,6 +725,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
+        uint128 prevCapacityD18;
         int128 prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
@@ -720,6 +742,9 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
+        uint128 totalExitingCollateralD18;
+        uint128 _reserved;
+        mapping(bytes32 => CollateralLock.Data) exitingCollateral;
     }
 }
 

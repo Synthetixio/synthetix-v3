@@ -178,6 +178,7 @@ library CollateralLock {
     struct Data {
         uint128 amountD18;
         uint64 lockExpirationTime;
+        uint128 lockExpirationPoolSync;
     }
 }
 
@@ -286,12 +287,38 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        int256 cumulativeDebtD18;
+        PoolCrossChainInfo.Data[] crossChain;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
+library PoolCrossChainInfo {
+    struct Data {
+        PoolCrossChainSync.Data latestSync;
+        uint128 latestTotalWeights;
+        uint64[] pairedChains;
+        mapping(uint64 => uint128) pairedPoolIds;
+        uint64 chainlinkSubscriptionId;
+        uint32 chainlinkSubscriptionInterval;
+        bytes32 latestRequestId;
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/PoolCrossChainSync.sol:PoolCrossChainSync
+library PoolCrossChainSync {
+    struct Data {
+        uint128 liquidity;
+        int128 cumulativeMarketDebt;
+        int128 totalDebt;
+        uint64 dataTimestamp;
+        uint64 oldestDataTimestamp;
     }
 }
 
@@ -334,6 +361,7 @@ library SystemPoolConfiguration {
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
         SetUtil.UintSet approvedPools;
+        uint128 lastPoolId;
     }
     function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
@@ -364,6 +392,7 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
+        mapping(bytes32 => CollateralLock.Data) exitingCollateral;
     }
 }
 

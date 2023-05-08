@@ -169,6 +169,9 @@ contract VaultModule is IVaultModule {
             1
         );
 
+        epoch.exitingCollateral[bytes32(uint256(accountId))].amountD18 = 0;
+        epoch.totalExitingCollateralD18 -= amountReleased.to128();
+
         Account.load(accountId).collaterals[collateralType].increaseAvailableCollateral(
             amountReleased
         );

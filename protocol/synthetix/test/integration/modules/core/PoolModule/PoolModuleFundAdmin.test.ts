@@ -5,7 +5,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('PoolModule Admin', function () {
