@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/oracle-manager",
-  "version": "3.1.1-dev.f51dd42e",
+  "version": "3.1.0",
   "description": "Core Synthetix Protocol Oracle Manager",
   "publishConfig": {
     "access": "public"
@@ -20,10 +20,10 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.1.1-dev.f51dd42e",
-    "@synthetixio/core-contracts": "3.1.1-dev.f51dd42e",
-    "@synthetixio/core-modules": "3.1.1-dev.f51dd42e",
-    "@synthetixio/core-utils": "3.1.1-dev.f51dd42e",
+    "@synthetixio/common-config": "3.1.0",
+    "@synthetixio/core-contracts": "3.1.0",
+    "@synthetixio/core-modules": "3.1.0",
+    "@synthetixio/core-utils": "3.1.0",
     "@synthetixio/wei": "2.74.4",
     "@types/node": "18.11.10",
     "ethers": "^5.0.0",

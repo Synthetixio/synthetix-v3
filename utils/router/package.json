@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/router",
-  "version": "3.1.1-dev.f51dd42e",
+  "version": "3.1.0",
   "publishConfig": {
     "access": "public"
   },
