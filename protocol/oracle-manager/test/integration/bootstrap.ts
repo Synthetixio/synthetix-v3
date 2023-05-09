@@ -1,9 +1,10 @@
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { NodeModule } from '../generated/typechain';
+import { NodeModule, Proxy } from '../generated/typechain';
 import NodeTypes from './mixins/Node.types';
 import { wei } from '@synthetixio/wei';
+import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 const abi = ethers.utils.defaultAbiCoder;
 
@@ -90,10 +91,10 @@ export function bootstrapWithNodes() {
 export const bn = (n: number) => wei(n).toBN();
 
 /* utility function to use for other bootstrappers wanting to add a new oracle node */
-export const createOracleNode = async <T = NodeModule>(
+export const createOracleNode = async (
   owner: ethers.Signer,
   price: ethers.BigNumber,
-  OracleManager: T
+  OracleManager: Proxy
 ) => {
   const abi = ethers.utils.defaultAbiCoder;
   const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
@@ -113,4 +114,19 @@ export const createOracleNode = async <T = NodeModule>(
     oracleNodeId,
     aggregator,
   };
+};
+
+export const generateExternalNode = async (OracleManager: Proxy, price: number) => {
+  const factory = await hre.ethers.getContractFactory('MockExternalNode');
+  const externalNode = await factory.deploy(price, 200); // used to have .connect(owner)
+
+  // Register the mock
+  const NodeParameters = ethers.utils.defaultAbiCoder.encode(['address'], [externalNode.address]);
+  const tx = await OracleManager.registerNode(NodeTypes.EXTERNAL, NodeParameters, []);
+  const receipt = await tx.wait();
+  const event = findSingleEvent({
+    receipt,
+    eventName: 'NodeRegistered',
+  });
+  return event.args.nodeId;
 };

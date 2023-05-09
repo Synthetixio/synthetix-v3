@@ -1,10 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
-// TODO: use decay token module?
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ICollateralModule} from "../interfaces/ICollateralModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";

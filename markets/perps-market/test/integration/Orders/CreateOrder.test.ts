@@ -3,9 +3,8 @@ import { bn, bootstrapTraders, bootstrapPerpsMarket } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('Create Order test', () => {
-  const { systems, signers, marketId, provider } = bootstrapTraders(
-    bootstrapPerpsMarket('Ether', 'snxETH')
-  );
+  const r = bootstrapPerpsMarket('Ether', 'snxETH');
+  const { systems, signers, marketId, provider } = bootstrapTraders(r);
 
   let marketOwner: ethers.Signer, trader1: ethers.Signer;
 

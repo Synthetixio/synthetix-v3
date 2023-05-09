@@ -1,6 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IAccountModule} from "../interfaces/IAccountModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";

@@ -65,7 +65,7 @@ export function bootstrap() {
 
 export function bootstrapPerpsMarket(name: string, token: string) {
   const r = bootstrapWithStakedPool(bootstrap(), bn(1000));
-  let coreOwner: ethers.Signer, marketOwner: ethers.Signer, marketId: string;
+  let coreOwner: ethers.Signer, marketOwner: ethers.Signer, marketId: ethers.BigNumber;
   let contracts: Systems;
 
   before('identify contracts', () => {
@@ -117,15 +117,10 @@ export function bootstrapPerpsMarket(name: string, token: string) {
   };
 }
 
-/*
-  1. creates a new pool
-  2. mints collateral for new users
-  3. delegates collateral to pool
-  4. mint max USD
-  5. traders now have USD to trade with
-*/
 export function bootstrapTraders(r: ReturnType<typeof bootstrapPerpsMarket>) {
   bootstrapStakers(r.systems, r.signers);
+
+  let trader1: ethers.Signer, trader2: ethers.Signer;
 
   before('provide access to create account', async () => {
     const [owner, , , trader1, trader2] = r.signers();
@@ -161,6 +156,8 @@ export function bootstrapTraders(r: ReturnType<typeof bootstrapPerpsMarket>) {
 
   return {
     ...r,
+    trader1: () => trader1,
+    trader2: () => trader2,
     restore,
   };
 }

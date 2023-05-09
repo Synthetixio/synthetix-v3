@@ -1,5 +1,6 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
+import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
 import { depositAmount, stake } from './bootstrapStakers';
@@ -7,13 +8,7 @@ import { wei } from '@synthetixio/wei';
 import hre from 'hardhat';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
 
-import type {
-  AccountProxy,
-  CoreProxy,
-  USDProxy,
-  CollateralMock,
-  Oracle_managerProxy,
-} from '../generated/typechain';
+import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../generated/typechain';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
@@ -23,7 +18,7 @@ export interface Proxies {
   CoreProxy: CoreProxy;
   USDProxy: USDProxy;
   CollateralMock: CollateralMock;
-  ['oracle_manager.Proxy']: Oracle_managerProxy;
+  ['oracle_manager.Proxy']: OracleManagerProxy;
 }
 
 export interface Systems {
@@ -31,7 +26,7 @@ export interface Systems {
   Core: CoreProxy;
   USD: USDProxy;
   CollateralMock: CollateralMock;
-  OracleManager: Oracle_managerProxy;
+  OracleManager: OracleManagerProxy;
 }
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
@@ -65,7 +60,8 @@ export function bootstrap() {
 
 export function bootstrapWithStakedPool(
   r: ReturnType<typeof bootstrap> = bootstrap(),
-  stakedCollateralPrice: ethers.BigNumber = bn(1)
+  stakedCollateralPrice: ethers.BigNumber = bn(1),
+  stakedAmount: ethers.BigNumber = depositAmount
 ) {
   let aggregator: ethers.Contract;
 
@@ -80,7 +76,7 @@ export function bootstrapWithStakedPool(
   });
 
   before('setup oracle manager node', async () => {
-    const results = await createOracleNode<Oracle_managerProxy>(
+    const results = await createOracleNode(
       r.signers()[0],
       stakedCollateralPrice,
       r.systems().OracleManager
@@ -118,7 +114,8 @@ export function bootstrapWithStakedPool(
       { Core: r.systems().Core, CollateralMock: r.systems().CollateralMock },
       poolId,
       accountId,
-      staker
+      staker,
+      stakedAmount
     );
   });
 
