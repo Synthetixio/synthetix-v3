@@ -73,6 +73,8 @@ To prepare for system upgrades, this repository is used to release new versions 
 - Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file.
 - Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
 - Publish the release with `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:release` for the proper semver release.
-- In case cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
+  - You don't need to pass in the `CANNON_REGISTRY_PROVIDER_URL` or `CANNON_PRIVATE_KEY` values if you're using [Frame](https://frame.sh/).
+  - In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately.
+- If you ran `yarn publish:dev`, remove the version changes in all of the `package.json` files.
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
