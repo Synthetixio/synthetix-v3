@@ -13,7 +13,8 @@
     "coverage": "yarn test",
     "compile-contracts": "hardhat compile",
     "publish-contracts": "yarn build && cannon publish synthetix-spot-market:$(node -p 'require(`./package.json`).version') --quiet",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "postpack": "yarn publish-contracts"
   },
   "keywords": [],
   "author": "Synthetix",
@@ -37,5 +38,5 @@
     "ts-node": "10.9.1",
     "typescript": "4.9.3"
   },
-  "gitHead": "f51dd42e611d03fee565293665f87e09d97fb6a2"
+  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
 }
