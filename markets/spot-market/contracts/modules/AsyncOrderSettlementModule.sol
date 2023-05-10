@@ -191,7 +191,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             spotMarketFactory,
             Transaction.Type.ASYNC_BUY
         );
-        if(settlementReward > 0) {
+        if (settlementReward > 0) {
             ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, settlementReward);
         }
         spotMarketFactory.depositToMarketManager(marketId, amountUsable - collectedFees);
