@@ -98,6 +98,16 @@ library MarketConfiguration {
     }
 
     /**
+     * @dev Get custom fee for transactor
+     */
+    function getAtomicFixedFeeOverride(
+        uint128 marketId,
+        address transactor
+    ) internal view returns (uint256 fixedFee) {
+        fixedFee = load(marketId).atomicFixedFeeOverrides[transactor];
+    }
+
+    /**
      * @dev Get quote for amount of collateral (`amount`) to receive in synths (`synthAmount`)
      */
     function quoteWrap(
