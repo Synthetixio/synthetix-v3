@@ -70,8 +70,7 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 - Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `@usecannon/cli` and `hardhat-cannon` are upgraded to the latest through the repository (use `yarn upgrade-interactive` command).
 - After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
-- Confirm the private key that owns the corresponding namespace in the package registry is available as `$DEPLOYER_PRIVATE_KEY`.
-- Confirm the `@synthtixio` npm publishing key is available as `$NPM_TOKEN`.
+- Confirm the `@synthetixio` npm publishing key is available as `$NPM_TOKEN`.
 - Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
 - Publish the release with `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:release` for the proper semver release.
 - In case cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
