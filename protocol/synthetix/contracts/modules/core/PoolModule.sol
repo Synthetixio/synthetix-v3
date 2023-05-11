@@ -159,6 +159,10 @@ contract PoolModule is IPoolModule {
         return marketConfigurations;
     }
 
+    function getPoolLastConfigurationTime(uint128 poolId) external view override returns (uint64) {
+        return Pool.loadExisting(poolId).lastConfigurationTime;
+    }
+
     /**
      * @inheritdoc IPoolModule
      */

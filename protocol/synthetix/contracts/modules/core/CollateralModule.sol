@@ -14,6 +14,8 @@ import "../../storage/Pool.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Module for managing user collateral.
  * @dev See ICollateralModule.
@@ -163,8 +165,8 @@ contract CollateralModule is ICollateralModule {
                 lockExpirationTime <= currentTime && 
                 (lockPoolSync == 0 || (
                     // can only unlock if pool sync time is met and the account is above the target ratio
-                    Pool.load(lockPoolSync).getOldestSync() > lockExpirationTime && 
-                    Pool.load(lockPoolSync).currentAccountCollateralRatio(locks[index].lockExpirationPoolSyncVault, accountId) > CollateralConfiguration.load(collateralType).issuanceRatioD18
+                    Pool.load(lockPoolSync).getOldestSync() >= lockExpirationTime && 
+                    Pool.load(lockPoolSync).currentAccountCollateralRatio(locks[index].lockExpirationPoolSyncVault, accountId) >= CollateralConfiguration.load(collateralType).issuanceRatioD18
                 ))
             ) {
                 emit CollateralLockExpired(

@@ -179,7 +179,55 @@ describe('IssueUSDModule', function () {
         );
       });
 
+      const restoreMinted = snapshotCheckpoint(provider);
+
+      describe('immediately unlock locks', async () => {
+        before(restoreMinted);
+        before('trigger cleanExpiredLocks', async () => {
+          await systems().Core.connect(owner).cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
+        });
+
+        it('should have expired the lock without issue', async () => {
+          const locks = await systems().Core.getLocks(accountId, systems().USD.address, 0, 100);
+          assertBn.equal(locks.length, 0);
+        });
+      });
+
+      describe('account goes into debt before clearing lock', () => {
+        before(restoreMinted);
+        before('gets debt', async () => {
+          await MockMarket.setReportedDebt(depositAmount.div(20));
+        });
+
+        before('trigger cleanExpiredLocks', async () => {
+          await systems().Core.connect(owner).cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
+        });
+
+        it('blocks unlocking of USD that is below liquidation threshold', async () => {
+          const locks = await systems().Core.getLocks(accountId, systems().USD.address, 0, 100);
+          assertBn.equal(locks.length, 1);
+        });
+
+        describe('user repays necessary debt', async () => {
+          before('burnusd', async () => {
+            await systems()
+              .Core.connect(user1)
+              .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(20));
+          });
+
+          before('trigger cleanExpiredLocks', async () => {
+            await systems().Core.connect(owner).cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
+          });
+
+          it('now is unlock', async () => {
+            const locks = await systems().Core.getLocks(accountId, systems().USD.address, 0, 100);
+            assertBn.equal(locks.length, 0);
+          });
+        });
+      });
+
       describe('subsequent mint', () => {
+        before(restoreMinted);
         before('mint again', async () => {
           await systems().Core.connect(user1).mintUsd(
             accountId,
@@ -194,20 +242,9 @@ describe('IssueUSDModule', function () {
           verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(5))
         );
 
-        it('sent more USD to user1', async () => {
-          assertBn.equal(
-            await systems().USD.balanceOf(await user1.getAddress()),
-            depositAmount.div(5)
-          );
-        });
-
-        describe('account goes into debt', () => {
-          before('gets debt', async () => () => {
-          });
-
-          it('blocks transfer of USD that is below liquidation threshold', async () => {
-            throw new Error();
-          });
+        it('sent more USD to accountId', async () => {
+          const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
+          assertBn.equal(totalDeposited, depositAmount.div(5));
         });
       });
     });
@@ -250,11 +287,9 @@ describe('IssueUSDModule', function () {
         )
       );
 
-      it('sent USD to user1', async () => {
-        assertBn.equal(
-          await systems().USD.balanceOf(await user1.getAddress()),
-          depositAmount.div(10)
-        );
+      it('sent USD to accountId', async () => {
+        const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
+        assertBn.equal(totalDeposited, depositAmount.div(10));
       });
 
       it('sent USD to the fee address', async () => {
@@ -294,15 +329,6 @@ describe('IssueUSDModule', function () {
 
     describe('burn', async () => {
       before(restoreBurn);
-      before('transfer burn collateral into system', async () => {
-        await systems()
-          .USD.connect(user1)
-          .approve(systems().Core.address, depositAmount.div(10));
-
-        await systems()
-          .Core.connect(user1)
-          .deposit(accountId, systems().USD.address, depositAmount.div(10));
-      });
 
       before('other account burn', async () => {
         await systems()
@@ -351,11 +377,9 @@ describe('IssueUSDModule', function () {
         verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(20))
       );
 
-      it('took away from user1', async () => {
-        assertBn.equal(
-          await systems().USD.balanceOf(await user1.getAddress()),
-          ethers.utils.parseEther('49.5')
-        );
+      it('took away from accountId balance', async () => {
+        const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
+        assertBn.equal(totalDeposited, ethers.utils.parseEther('49.5'));
       });
 
       it('sent money to the fee address', async () => {

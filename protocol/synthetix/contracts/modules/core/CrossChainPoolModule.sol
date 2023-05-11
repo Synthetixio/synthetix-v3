@@ -12,6 +12,8 @@ import "../../storage/Config.sol";
 import "../../storage/CrossChain.sol";
 import "../../storage/Pool.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 contract CrossChainPoolModule is ICrossChainPoolModule {
     using Functions for Functions.Request;
     using CrossChain for CrossChain.Data;
@@ -24,6 +26,9 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     error PoolAlreadyExists(uint128, uint256);
 
     event OCRResponse(bytes32 indexed requestId, bytes result, bytes err);
+
+    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
+    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
 
     string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
 
@@ -48,7 +53,9 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         "return Buffer.from(responses.join(''));";
     bytes internal constant _REQUEST_TOTAL_DEBT_SECRETS = "0xwhatever";
 
-    function createCrossChainPool(uint128 sourcePoolId, uint64 targetChainId) external override returns (uint256 gasTokenUsed) {
+    function createCrossChainPool(uint128 sourcePoolId, uint64 targetChainId) external override returns (uint128 crossChainPoolId, uint256 gasTokenUsed) {
+        FeatureFlag.ensureAccessToFeature(_CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG);
+
         Pool.Data storage pool = Pool.loadExisting(sourcePoolId);
         Pool.onlyPoolOwner(sourcePoolId, msg.sender);
 
@@ -56,9 +63,11 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
             revert PoolAlreadyExists(targetChainId, pool.crossChain[0].pairedPoolIds[targetChainId]);
         }
 
+        crossChainPoolId = pool.addCrossChain(targetChainId);
+
         uint64[] memory targetChainIds = new uint64[](1);
         targetChainIds[0] = targetChainId;
-        return CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this._recvCreateCrossChainPool.selector, block.chainid, sourcePoolId), 100000);
+        gasTokenUsed = CrossChain.load().broadcast(targetChainIds, abi.encodeWithSelector(this._recvCreateCrossChainPool.selector, block.chainid, sourcePoolId, crossChainPoolId), 100000);
     }
 
     function _recvCreateCrossChainPool(uint64 srcChainId, uint64 srcPoolId) external override {
@@ -67,15 +76,18 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         // create a pool with no owner. It can only be controlled by cross chain calls from its parent pool
         Pool.Data storage pool = Pool.create(type(uint128).max / 2 + SystemPoolConfiguration.load().lastPoolId++, address(0));
 
-        uint64[] memory targetChainIds = new uint64[](1);
-        targetChainIds[0] = srcChainId;
-        //CrossChain.broadcast(targetChainIds, abi.encodeWithSelector(this._pairPool, srcPoolId, block.chainid, pool.id));
+        pool.crossChain[0].pairedChains.push(srcChainId);
+        pool.crossChain[0].pairedChains.push(uint64(block.chainid));
+
+        pool.crossChain[0].pairedPoolIds[srcChainId] = srcPoolId;
     }
 
     function setCrossChainPoolConfiguration(
         uint128 poolId, 
         MarketConfiguration.Data[][] memory newMarketConfigurations
     ) external override {
+        FeatureFlag.ensureAccessToFeature(_SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG);
+
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
@@ -186,7 +198,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         
         // record sync data
-        pool.crossChain[0].latestSync = syncData;
+        pool.setCrossChainSyncData(syncData);
 
         // assign accumulated debt
         pool.distributeDebtToVaults(assignedDebt);
@@ -288,6 +300,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         calls[1] = abi.encodeWithSelector(this.getThisChainPoolCumulativeMarketDebt.selector, poolId);
         calls[2] = abi.encodeWithSelector(this.getThisChainPoolTotalDebt.selector, poolId);
         calls[3] = abi.encodeWithSelector(this.getPoolLastHeartbeat.selector, poolId);
+        calls[4] = abi.encodeWithSelector(IPoolModule.getPoolLastConfigurationTime.selector, poolId);
 
         return abi.encodeWithSelector(
             IMulticallModule.multicall.selector, 

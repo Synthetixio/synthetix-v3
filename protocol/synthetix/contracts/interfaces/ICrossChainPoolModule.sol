@@ -14,7 +14,7 @@ interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibl
 
     event PoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data syncData);
 
-    function createCrossChainPool(uint128 sourcePoolId, uint64 targetChainId) external returns (uint256 gasTokenUsed);
+    function createCrossChainPool(uint128 sourcePoolId, uint64 targetChainId) external returns (uint128 crossChainPoolId, uint256 gasTokenUsed);
 
     function _recvCreateCrossChainPool(uint64 srcChainId, uint64 srcPoolId) external;
 

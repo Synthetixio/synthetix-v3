@@ -155,9 +155,19 @@ contract VaultModule is IVaultModule {
         }
 
         // released collateral must have occured prior to oldest update
-        if (Pool.load(poolId).getOldestSync() > lock.lockExpirationTime) {
+        if (Pool.load(poolId).getOldestSync() < lock.lockExpirationTime) {
             revert PoolExitTemporaryLock(accountId, Pool.load(poolId).getOldestSync(), epoch.exitingCollateral[bytes32(uint256(accountId))].lockExpirationTime);
         }
+
+        // c-ratio must still be healthy (or no debt if removing all collateral)
+        int256 debt = Pool.load(poolId).updateAccountDebt(collateralType, accountId);
+
+        // Minimum collateralization ratios are configured in the system per collateral type.abi
+        // Ensure that the account's updated position satisfies this requirement.
+        CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
+            debt < 0 ? 0 : debt.toUint(),
+            epoch.getAccountCollateral(accountId)
+        );
 
         amountReleased = lock.amountD18;
 

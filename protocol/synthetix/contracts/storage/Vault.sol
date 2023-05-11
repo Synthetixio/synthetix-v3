@@ -103,6 +103,7 @@ library Vault {
         deltaCapacityD18 = usdCapacityD18.toInt() - self.prevCapacityD18.toInt();
 
         self.prevTotalDebtD18 = totalDebtD18.to128();
+        self.prevCapacityD18 = usdCapacityD18.to128();
     }
 
     /**

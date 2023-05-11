@@ -9,7 +9,7 @@ import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('VaultModule', function () {
+describe.only('VaultModule', function () {
   const {
     signers,
     systems,
@@ -652,6 +652,12 @@ describe('VaultModule', function () {
             });
 
             describe('success', () => {
+              let preMarketCapacity;
+
+              before('calculate pre', async () => {
+                preMarketCapacity = await systems().Core.getWithdrawableMarketUsd(marketId);
+              });
+
               before('delegate', async () => {
                 await systems()
                   .Core.connect(user2)
@@ -678,12 +684,12 @@ describe('VaultModule', function () {
                 )
               );
 
-              it('keeps collateral assigned', async () => {
-                throw new Error();
+              it('reduces market capacity', async () => {
+                assertBn.lt(await systems().Core.getWithdrawableMarketUsd(marketId), preMarketCapacity);
               });
 
               it('has releasable collateral', async () => {
-                throw new Error();
+                assertBn.equal(await systems().Core.callStatic.releaseExitedCollateral(user2AccountId, poolId, collateralAddress()), depositAmount.div(10).mul(9));
               });
             });
           });
@@ -696,59 +702,90 @@ describe('VaultModule', function () {
               .burnUsd(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));
           });
 
-          before('delegate', async () => {
-            await systems()
-              .Core.connect(user2)
-              .delegateCollateral(
-                user2AccountId,
-                poolId,
-                collateralAddress(),
-                0,
-                ethers.utils.parseEther('1')
-              );
+          const restoreForRemove = snapshotCheckpoint(provider);
+
+          describe('without cross chain', () => {
+            before(restoreForRemove);
+            before('delegate', async () => {
+              await systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  0,
+                  ethers.utils.parseEther('1')
+                );
+            });
+  
+            it(
+              'user1 still has correct position',
+              verifyAccountState(accountId, poolId, depositAmount, startingDebt)
+            );
+            it('user2 position is same (but collateral is put into exiting)', verifyAccountState(user2AccountId, poolId, 0, 0));
+  
+            it('user2 position is in exiting state', async () => {
+              assertBn.equal(await systems().Core.callStatic.releaseExitedCollateral(user2AccountId, poolId, collateralAddress()), depositAmount);
+            });
           });
 
-          it(
-            'user1 still has correct position',
-            verifyAccountState(accountId, poolId, depositAmount, startingDebt)
-          );
-          it('user2 position is same (but collateral is put into exiting)', verifyAccountState(user2AccountId, poolId, 0, 0));
+          describe('with cross chain', async () => {
+            before(restoreForRemove);
+            before('enable cross chain', async () => {
+              await systems().Core.connect(owner).Pool_addCrossChain(poolId, 100);
+            });
 
-          it('user2 position is in exiting state', async () => {
-            throw new Error();
-          });
-
-          it('does not release assignment from account', async () => {
-            throw new Error();
-          });
-
-          describe('when cross chain enabled and oldest sync time is too old', () => {
-            before('set', async () => {
-              
+            before('delegate', async () => {
+              await systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  0,
+                  ethers.utils.parseEther('1')
+                );
             });
 
             it('does not allow release', async () => {
-              throw new Error();
-            });
-          });
-
-          describe('release collateral', () => {
-            before('gets released', async () => {
-
-            });
-
-            it('returns assigned collateral to account', async () => {
-              throw new Error();
-            });
-
-            it('lets user2 re-stake again', async () => {
-              await systems().Core.connect(user2).delegateCollateral(
-                user2AccountId,
-                poolId,
-                collateralAddress(),
-                depositAmount.div(3), // user1 75%, user2 25%
-                ethers.utils.parseEther('1')
+              await assertRevert(
+                systems().Core.releaseExitedCollateral(user2AccountId, poolId, collateralAddress()),
+                `PoolExitTemporaryLock("${user2AccountId}", "0"`,
+                systems().Core
               );
+            });
+
+            describe('when good sync time comes in', () => {
+              before('pool sync', async () => {
+                // set oldestDataTimestamp to a much newer number
+                const now = await getTime(provider());
+                await systems().Core.Pool_setCrossChainSyncData(poolId, {
+                  liquidity: 0,
+                  cumulativeMarketDebt: 0,
+                  totalDebt: 0,
+                  dataTimestamp: now,
+                  oldestDataTimestamp: now,
+                  oldestPoolConfigTimestamp: 0,
+                });
+              });
+
+              before('release', async () => {
+                await systems().Core.releaseExitedCollateral(user2AccountId, poolId, collateralAddress());
+              });
+
+              it('returns assigned collateral to account', async () => {
+                assertBn.equal(await systems().Core.getAccountAvailableCollateral(user2AccountId, collateralAddress()), depositAmount.mul(2));
+              });
+  
+              it('lets user2 re-stake again', async () => {
+                await systems().Core.connect(user2).delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(3), // user1 75%, user2 25%
+                  ethers.utils.parseEther('1')
+                );
+              });
             });
           });
         });

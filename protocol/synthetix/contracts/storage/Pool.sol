@@ -45,6 +45,11 @@ library Pool {
     error PoolAlreadyExists(uint128 poolId);
 
     /**
+     * @dev Thrown when trying to create a cross chain pool from a non-primary pool (aka a pool that wasn't itself created by another pool)
+     */
+    error PoolIsNotPrimary(uint128 poolId);
+
+    /**
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
@@ -476,6 +481,26 @@ library Pool {
             maxMinDelegateTime < requiredMinDelegateTime
                 ? maxMinDelegateTime
                 : requiredMinDelegateTime;
+    }
+
+    function addCrossChain(Data storage self, uint64 chainId) internal returns (uint128 ccPoolId) {
+
+        if (self.id > type(uint128).max / 2) {
+            revert PoolIsNotPrimary(self.id);
+        }
+
+        if (self.crossChain[0].pairedPoolIds[chainId] != 0) {
+            revert PoolAlreadyExists(self.crossChain[0].pairedPoolIds[chainId]);
+        }
+
+        ccPoolId = uint128(uint256(keccak256(abi.encode("SNXV3CC", block.chainid, self.id))) | (1 << 127));
+
+        self.crossChain[0].pairedPoolIds[chainId] = ccPoolId;
+        self.crossChain[0].pairedChains.push(chainId);
+    }
+
+    function setCrossChainSyncData(Data storage self, PoolCrossChainSync.Data memory syncData) internal {
+        self.crossChain[0].latestSync = syncData;
     }
 
     /**

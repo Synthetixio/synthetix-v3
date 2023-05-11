@@ -36,7 +36,7 @@ describe('CollateralModule', function () {
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
+        await verifyCollateral(1, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {

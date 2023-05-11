@@ -110,6 +110,13 @@ interface IPoolModule {
     ) external view returns (MarketConfiguration.Data[] memory markets);
 
     /**
+     * @notice Retrieves the unix timestamp of the last time this pool configuration was updated.
+     * @dev If the pool is cross chain, this value will be the timestamp reported by the primary chain
+     * @return the configuration timestamp
+     */
+    function getPoolLastConfigurationTime(uint128 poolId) external view returns (uint64);
+
+    /**
      * @notice Allows the owner of the pool to set the pool's name.
      * @param poolId The id of the pool whose name is being set.
      * @param name The new name to give to the pool.
