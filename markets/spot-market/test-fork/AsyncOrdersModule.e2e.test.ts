@@ -20,6 +20,8 @@ const pythSettlementStrategy = {
   settlementReward: bn(5),
   priceDeviationTolerance: bn(1000),
   disabled: false,
+  minimumUsdExchangeAmount: bn(0.000001),
+  maxRoundingLoss: bn(0.000001),
 };
 
 describe('AsyncOrdersModule.e2e.test', function () {
