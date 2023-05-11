@@ -769,22 +769,44 @@ describe.only('VaultModule', function () {
                 });
               });
 
-              before('release', async () => {
-                await systems().Core.releaseExitedCollateral(user2AccountId, poolId, collateralAddress());
+              const restoreDebtCheck = snapshotCheckpoint(provider);
+
+              describe('goes into debt', async () => {
+                before(restoreDebtCheck);
+                before('cause debt', async () => {
+                  // for cross chain we have to set the debt on cross chain sync data beause the market is not read directly
+                  const now = await getTime(provider());
+                  await systems().Core.Pool_distributeDebtToVaults(poolId, depositAmount.div(10));
+                });
+
+                it('fails to release because of debt', async () => {
+                  await assertRevert(
+                    systems().Core.connect(user2).releaseExitedCollateral(user2AccountId, poolId, collateralAddress()),
+                    `InsufficientCollateralRatio(`,
+                    systems().Core
+                  );
+                });
               });
 
-              it('returns assigned collateral to account', async () => {
-                assertBn.equal(await systems().Core.getAccountAvailableCollateral(user2AccountId, collateralAddress()), depositAmount.mul(2));
-              });
+              describe('stays out of debt', async () => {
+                before(restoreDebtCheck);
+                before('release', async () => {
+                  await systems().Core.connect(user2).releaseExitedCollateral(user2AccountId, poolId, collateralAddress());
+                });
   
-              it('lets user2 re-stake again', async () => {
-                await systems().Core.connect(user2).delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(3), // user1 75%, user2 25%
-                  ethers.utils.parseEther('1')
-                );
+                it('returns assigned collateral to account', async () => {
+                  assertBn.equal(await systems().Core.getAccountAvailableCollateral(user2AccountId, collateralAddress()), depositAmount.mul(2));
+                });
+    
+                it('lets user2 re-stake again', async () => {
+                  await systems().Core.connect(user2).delegateCollateral(
+                    user2AccountId,
+                    poolId,
+                    collateralAddress(),
+                    depositAmount.div(3), // user1 75%, user2 25%
+                    ethers.utils.parseEther('1')
+                  );
+                });
               });
             });
           });
