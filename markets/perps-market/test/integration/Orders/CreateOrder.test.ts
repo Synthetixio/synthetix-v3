@@ -1,15 +1,16 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapPerpsMarket } from '../bootstrap';
+import { bn, bootstrapTraders, bootstrapPerpsMarkets } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('Create Order test', () => {
-  const r = bootstrapPerpsMarket('Ether', 'snxETH');
-  const { systems, signers, marketId, provider } = bootstrapTraders(r);
+  const r = bootstrapPerpsMarkets([{ name: 'Ether', token: 'snxETH', price: bn(1000) }]);
+  const { systems, signers, perpsMarkets, provider } = bootstrapTraders(r);
 
-  let marketOwner: ethers.Signer, trader1: ethers.Signer;
+  let marketOwner: ethers.Signer, trader1: ethers.Signer, marketId: ethers.BigNumber;
 
   before('identify actors', async () => {
     [, , marketOwner, trader1] = signers();
+    marketId = perpsMarkets()[0].marketId();
   });
 
   before('create account', async () => {
@@ -20,7 +21,7 @@ describe('Create Order test', () => {
   before('create settlement strategy', async () => {
     await systems()
       .PerpsMarket.connect(marketOwner)
-      .addSettlementStrategy(marketId(), {
+      .addSettlementStrategy(marketId, {
         strategyType: 0,
         settlementDelay: 5,
         settlementWindowDuration: 120,
@@ -34,7 +35,7 @@ describe('Create Order test', () => {
   });
 
   before('set skew scale', async () => {
-    await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId(), bn(100_000));
+    await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId, bn(100_000));
   });
 
   before('add collateral', async () => {
@@ -45,7 +46,7 @@ describe('Create Order test', () => {
     await systems()
       .PerpsMarket.connect(trader1)
       .commitOrder({
-        marketId: marketId(),
+        marketId: marketId,
         accountId: 2,
         sizeDelta: bn(1),
         settlementStrategyId: 0,
@@ -57,10 +58,10 @@ describe('Create Order test', () => {
   });
 
   before('settle', async () => {
-    await systems().PerpsMarket.connect(trader1).settle(marketId(), 2);
+    await systems().PerpsMarket.connect(trader1).settle(marketId, 2);
   });
 
   it('check position is live', async () => {
-    console.log(await systems().PerpsMarket.openPosition(2, marketId()));
+    console.log(await systems().PerpsMarket.openPosition(2, marketId));
   });
 });

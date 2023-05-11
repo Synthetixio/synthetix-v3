@@ -116,6 +116,7 @@ export const createOracleNode = async (
   };
 };
 
+// Note: must have deployed `MockExternalNode`
 export const generateExternalNode = async (OracleManager: Proxy, price: number) => {
   const factory = await hre.ethers.getContractFactory('MockExternalNode');
   const externalNode = await factory.deploy(price, 200); // used to have .connect(owner)

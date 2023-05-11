@@ -110,8 +110,94 @@ export function bootstrap() {
   };
 }
 
-export function bootstrapWithSynth(name: string, token: string) {
-  const r = bootstrapWithStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
+export function bootstrapSynthMarkets(
+  data: Array<{
+    name: string;
+    token: string;
+    buyPrice: ethers.BigNumber;
+    sellPrice: ethers.BigNumber;
+  }>,
+  chainState?: ReturnType<typeof bootstrapWithStakedPool>
+) {
+  const r = chainState ?? bootstrapWithStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
+  let contracts: Systems, marketOwner: ethers.Signer;
+  before('identify actors', () => {
+    contracts = r.systems() as Systems;
+    [, , marketOwner] = r.signers();
+  });
+
+  const synthMarkets = data.map(({ name, token, buyPrice, sellPrice }) => {
+    let marketId: ethers.BigNumber,
+      buyNodeId: string,
+      buyAggregator: AggregatorV3Mock,
+      sellNodeId: string,
+      sellAggregator: AggregatorV3Mock;
+
+    before('create price nodes', async () => {
+      const buyPriceNodeResult = await createOracleNode(
+        r.signers()[0],
+        buyPrice,
+        contracts.OracleManager
+      );
+      const sellPriceNodeResult = await createOracleNode(
+        r.signers()[0],
+        sellPrice,
+        contracts.OracleManager
+      );
+      buyNodeId = buyPriceNodeResult.oracleNodeId;
+      buyAggregator = buyPriceNodeResult.aggregator;
+      sellNodeId = sellPriceNodeResult.oracleNodeId;
+      sellAggregator = sellPriceNodeResult.aggregator;
+    });
+
+    before('register synth', async () => {
+      marketId = await contracts.SpotMarket.callStatic.createSynth(
+        name,
+        token,
+        await marketOwner.getAddress()
+      );
+      await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
+      await contracts.SpotMarket.connect(marketOwner).updatePriceData(
+        marketId,
+        buyNodeId,
+        sellNodeId
+      );
+    });
+
+    before('delegate collateral to market from pool', async () => {
+      await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
+        {
+          marketId,
+          weightD18: ethers.utils.parseEther('1'),
+          maxDebtShareValueD18: ethers.utils.parseEther('1'),
+        },
+      ]);
+    });
+
+    return {
+      marketId: () => marketId,
+      buyAggregator: () => buyAggregator,
+      sellAggregator: () => sellAggregator,
+    };
+  });
+
+  const restore = snapshotCheckpoint(r.provider);
+
+  return {
+    ...r,
+    systems: () => contracts,
+    synthMarkets: () => synthMarkets,
+    restore,
+  };
+}
+
+export function bootstrapWithSynth(
+  name: string,
+  token: string,
+  r: ReturnType<typeof bootstrapWithStakedPool>
+) {
+  r = r ?? bootstrapWithStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
+
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
   let marketId: BigNumber;
   let aggregator: AggregatorV3Mock;

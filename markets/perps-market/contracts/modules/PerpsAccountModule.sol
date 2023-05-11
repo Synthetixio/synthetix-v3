@@ -10,6 +10,7 @@ import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract PerpsAccountModule is IAccountModule {
@@ -18,6 +19,7 @@ contract PerpsAccountModule is IAccountModule {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using PerpsAccount for PerpsAccount.Data;
+    using PerpsMarketFactory for PerpsMarketFactory.Data;
 
     function modifyCollateral(
         uint128 accountId,
