@@ -158,4 +158,62 @@ describe('AsyncOrderModule pyth', () => {
       });
     });
   });
+
+  describe('no Settlement Reward', () => {
+    before('add settlement strategy with 0 settlement reward and commit an order', async () => {
+      pythSettlementStrategy = {
+        strategyType: 1, // pyth
+        settlementDelay: 5,
+        settlementWindowDuration: 120,
+        priceVerificationContract: systems().OracleVerifierMock.address,
+        feedId: ethers.utils.formatBytes32String('ETH/USD'),
+        url: 'https://fakeapi.pyth.network/',
+        settlementReward: 0,
+        priceDeviationTolerance: bn(0.2),
+        disabled: false,
+        minimumUsdExchangeAmount: bn(0.000001),
+        maxRoundingLoss: bn(0.000001),
+      };
+
+      const noSettlementStrategyId = (
+        await systems()
+          .SpotMarket.connect(marketOwner)
+          .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy)
+      ).toNumber();
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .addSettlementStrategy(marketId(), pythSettlementStrategy);
+
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+      await systems()
+        .SpotMarket.connect(trader1)
+        .commitOrder(
+          marketId(),
+          ASYNC_BUY_TRANSACTION,
+          bn(1000),
+          noSettlementStrategyId,
+          bn(0.8),
+          ethers.constants.AddressZero
+        );
+      startTime = await getTime(provider());
+    });
+
+    before('setup bytes data', () => {
+      extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [marketId(), 2]);
+      pythCallData = ethers.utils.solidityPack(
+        ['bytes32', 'uint64'],
+        [pythSettlementStrategy.feedId, startTime + 5]
+      );
+    });
+
+    before('settle', async () => {
+      await fastForwardTo(startTime + 6, provider());
+      await systems().SpotMarket.connect(keeper).settlePythOrder(pythCallData, extraData);
+    });
+
+    it('sent correct amount to trader', async () => {
+      //0.8955 + 0.9 = 1.7955
+      assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(1.7955));
+    });
+  });
 });

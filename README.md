@@ -70,16 +70,11 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 - Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `@usecannon/cli` and `hardhat-cannon` are upgraded to the latest through the repository (use `yarn upgrade-interactive` command).
 - After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
-- Confirm the private key that owns the corresponding namespace in the package registry is available as `$DEPLOYER_PRIVATE_KEY`.
-- Confirm the `@synthtixio` npm publishing key is available as `$NPM_TOKEN`.
+- Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file.
 - Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
-- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
-- In case cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all cannon packages. Or `yarn publish-contracts` in each failed package separately
+- Publish the release with `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:release` for the proper semver release.
+  - You don't need to pass in the `CANNON_REGISTRY_PROVIDER_URL` or `CANNON_PRIVATE_KEY` values if you're using [Frame](https://frame.sh/).
+  - In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately.
+- If you ran `yarn publish:dev`, remove the version changes in all of the `package.json` files.
 
 Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
-
-### Finalizing a Release
-
-After the new version of the [synthetix-omnibus](https://usecannon.com/packages/synthetix-omnibus) package has been published, the previously published packages can be verified on Etherscan.
-
-From the relevant package's directory, run the following command for each network it was deployed on: `yarn hardhat cannon:verify <PACKAGE_NAME>:<VERSION> --network <NETWORK_NAME>` and add ` --preset with-synthetix` when verifying the oracle manager or ` --preset with-synthetix-omnibus` when verifying synthetix.
