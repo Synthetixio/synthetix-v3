@@ -1,13 +1,10 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
-import {
-  bootstrapStakers,
-  bootstrapWithStakedPool,
-} from '@synthetixio/main/test/integration/bootstrap';
+import { bootstrapStakers, createStakedPool } from '@synthetixio/main/test/common';
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
-import { SpotMarketProxy, SynthRouter } from '../generated/typechain';
+import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { SpotMarketProxy, SynthRouter } from './generated/typechain';
 import {
   USDProxy,
   CollateralMock,
@@ -116,9 +113,9 @@ export function bootstrap() {
 export function bootstrapWithSynth(
   name: string,
   token: string,
-  r: ReturnType<typeof bootstrapWithStakedPool>
+  r: ReturnType<typeof createStakedPool>
 ) {
-  r = r ?? bootstrapWithStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
+  r = r ?? createStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
 
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
   let marketId: BigNumber;

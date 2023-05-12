@@ -1,13 +1,11 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
-import { depositAmount, stake } from './stakers';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../../generated/typechain';
-import { MockMarket } from '../../../typechain-types';
-import { createStakedPool } from '.';
+import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../generated/typechain';
+import { MockMarket } from '../../typechain-types';
+import { createStakedPool } from '../common';
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
@@ -27,7 +25,7 @@ export interface Systems {
   OracleManager: OracleManagerProxy;
 }
 
-console.log('RUNRUNRUN');
+console.log('SNX BOOTSTRAP');
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
   cannonfile: 'cannonfile.test.toml',
 });

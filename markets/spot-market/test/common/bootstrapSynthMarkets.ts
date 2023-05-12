@@ -1,9 +1,9 @@
 import { ethers } from 'ethers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { Systems } from './bootstrap';
+import { Systems } from '../bootstrap';
 import { bootstrapWithStakedPool } from '@synthetixio/main/test/integration/bootstrap';
 import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
+import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 
 type SynthMarkets = Array<{
   marketId: () => ethers.BigNumber;

@@ -1,17 +1,15 @@
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { NodeModule, Proxy } from '../generated/typechain';
+import { NodeModule } from '../generated/typechain';
 import NodeTypes from './mixins/Node.types';
 import { wei } from '@synthetixio/wei';
-import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 const abi = ethers.utils.defaultAbiCoder;
 
 interface Contracts {
   NodeModule: NodeModule;
 }
-
 const r = coreBootstrap<Contracts>();
 
 const restoreSnapshot = r.createSnapshot();
@@ -89,45 +87,3 @@ export function bootstrapWithNodes() {
 }
 
 export const bn = (n: number) => wei(n).toBN();
-
-/* utility function to use for other bootstrappers wanting to add a new oracle node */
-export const createOracleNode = async (
-  owner: ethers.Signer,
-  price: ethers.BigNumber,
-  OracleManager: Proxy
-) => {
-  const abi = ethers.utils.defaultAbiCoder;
-  const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
-  const aggregator = await factory.connect(owner).deploy();
-
-  await aggregator.mockSetCurrentPrice(price);
-
-  const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 18]);
-  await OracleManager.connect(owner).registerNode(NodeTypes.CHAINLINK, params1, []);
-  const oracleNodeId = await OracleManager.connect(owner).getNodeId(
-    NodeTypes.CHAINLINK,
-    params1,
-    []
-  );
-
-  return {
-    oracleNodeId,
-    aggregator,
-  };
-};
-
-// Note: must have deployed `MockExternalNode`
-export const generateExternalNode = async (OracleManager: Proxy, price: number) => {
-  const factory = await hre.ethers.getContractFactory('MockExternalNode');
-  const externalNode = await factory.deploy(price, 200); // used to have .connect(owner)
-
-  // Register the mock
-  const NodeParameters = ethers.utils.defaultAbiCoder.encode(['address'], [externalNode.address]);
-  const tx = await OracleManager.registerNode(NodeTypes.EXTERNAL, NodeParameters, []);
-  const receipt = await tx.wait();
-  const event = findSingleEvent({
-    receipt,
-    eventName: 'NodeRegistered',
-  });
-  return event.args.nodeId;
-};

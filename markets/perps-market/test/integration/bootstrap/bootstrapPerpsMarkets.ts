@@ -13,7 +13,7 @@ import {
 } from '../../generated/typechain';
 import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
-import { bootstrapSynthMarkets } from '../../../../spot-market/test/bootstrap/bootstrap';
+import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/bootstrap';
 
 type PerpsMarkets = Array<{
   marketId: () => ethers.BigNumber;

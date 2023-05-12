@@ -2,22 +2,15 @@ import { ethers } from 'ethers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { wei } from '@synthetixio/wei';
 import { stake } from './stakers';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
-import { Systems } from '.';
+import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { bootstrap } from '../integration/bootstrap';
 
 export const bn = (n: number) => wei(n).toBN();
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 
-type ChainState = {
-  provider: () => ethers.providers.JsonRpcProvider;
-  signers: () => ethers.Signer[];
-  owner: () => ethers.Signer;
-  systems: () => Systems;
-};
-
 export const createStakedPool = (
-  r: ChainState,
+  r: ReturnType<typeof bootstrap>,
   stakedCollateralPrice: ethers.BigNumber = bn(1),
   stakedAmount: ethers.BigNumber = bn(1000)
 ) => {
