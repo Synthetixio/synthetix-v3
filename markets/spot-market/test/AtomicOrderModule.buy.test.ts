@@ -4,7 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { SynthRouter } from './generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { generateExternalNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
+import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 
 describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(

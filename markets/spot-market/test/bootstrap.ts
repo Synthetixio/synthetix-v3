@@ -54,7 +54,6 @@ const params = { cannonfile: 'cannonfile.test.toml' };
 //       impersonate: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
 //       cannonfile: 'cannonfile.test.toml',
 //     };
-
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>(params);
 
 const restoreSnapshot = createSnapshot();
@@ -110,12 +109,8 @@ export function bootstrap() {
   };
 }
 
-export function bootstrapWithSynth(
-  name: string,
-  token: string,
-  r: ReturnType<typeof createStakedPool>
-) {
-  r = r ?? createStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
+export function bootstrapWithSynth(name: string, token: string) {
+  const r = createStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
 
   let coreOwner: ethers.Signer, marketOwner: ethers.Signer;
   let marketId: BigNumber;

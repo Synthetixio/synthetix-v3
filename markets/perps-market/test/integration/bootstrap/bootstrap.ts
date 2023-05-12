@@ -10,6 +10,7 @@ import {
   PerpsMarketProxy,
   AccountProxy,
 } from '../../generated/typechain';
+import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
 
 type Proxies = {
   ['synthetix.CoreProxy']: SynthetixCoreProxy;
@@ -19,6 +20,7 @@ type Proxies = {
   ['spotMarket.SpotMarketProxy']: SpotMarketSpotMarketProxy;
   PerpsMarketProxy: PerpsMarketProxy;
   AccountProxy: AccountProxy;
+  ['spotMarket.SynthRouter']: SynthRouter;
 };
 
 export type Systems = {
@@ -29,6 +31,7 @@ export type Systems = {
   OracleManager: SynthetixOracle_managerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
+  Synth: (address: string) => SynthRouter;
 };
 
 const params = { cannonfile: 'cannonfile.test.toml' };
@@ -50,6 +53,7 @@ export function bootstrap() {
       CollateralMock: getContract('synthetix.CollateralMock'),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
+      Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
 

@@ -1,14 +1,16 @@
 import { ethers } from 'ethers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems } from '../bootstrap';
-import { bootstrapWithStakedPool } from '@synthetixio/main/test/integration/bootstrap';
+import { createStakedPool } from '@synthetixio/main/test/common';
 import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { SynthRouter } from '../generated/typechain';
 
 type SynthMarkets = Array<{
   marketId: () => ethers.BigNumber;
   buyAggregator: () => AggregatorV3Mock;
   sellAggregator: () => AggregatorV3Mock;
+  synth: () => SynthRouter;
 }>;
 
 export function bootstrapSynthMarkets(
@@ -18,7 +20,7 @@ export function bootstrapSynthMarkets(
     buyPrice: ethers.BigNumber;
     sellPrice: ethers.BigNumber;
   }>,
-  r: ReturnType<typeof bootstrapWithStakedPool>
+  r: ReturnType<typeof createStakedPool>
 ) {
   let contracts: Systems, marketOwner: ethers.Signer;
   before('identify actors', () => {
@@ -31,7 +33,8 @@ export function bootstrapSynthMarkets(
       buyNodeId: string,
       buyAggregator: AggregatorV3Mock,
       sellNodeId: string,
-      sellAggregator: AggregatorV3Mock;
+      sellAggregator: AggregatorV3Mock,
+      synth: SynthRouter;
 
     before('create price nodes', async () => {
       const buyPriceNodeResult = await createOracleNode(
@@ -62,6 +65,7 @@ export function bootstrapSynthMarkets(
         buyNodeId,
         sellNodeId
       );
+      synth = contracts.Synth(await contracts.SpotMarket.getSynth(marketId));
     });
 
     before('delegate collateral to market from pool', async () => {
@@ -78,6 +82,7 @@ export function bootstrapSynthMarkets(
       marketId: () => marketId,
       buyAggregator: () => buyAggregator,
       sellAggregator: () => sellAggregator,
+      synth: () => synth,
     };
   });
 

@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapPerpsMarkets } from '../bootstrap';
-import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/bootstrap';
+import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
 describe('ModifyCollateral', () => {
   const chainStateWithPerpsMarkets = bootstrapPerpsMarkets(
@@ -41,15 +41,19 @@ describe('ModifyCollateral', () => {
 
   before('trader1 buys 1 snxBTC', async () => {
     await systems()
-      .SpotMarket.connect(trader1)
+      .SpotMarket.connect(trader1())
       .buy(snxBTCMarketId, bn(10000), bn(1), ethers.constants.AddressZero);
   });
 
   before('add collateral', async () => {
     await systems().PerpsMarket.connect(trader1()).modifyCollateral(accountIds[0], 0, bn(10_000));
+    await synthMarkets()[0]
+      .synth()
+      .connect(trader1())
+      .approve(systems().PerpsMarket.address, bn(1));
     await systems()
       .PerpsMarket.connect(trader1())
-      .modifyCollateral(accountIds[0], snxBTCMarketId, bn(10_000));
+      .modifyCollateral(accountIds[0], snxBTCMarketId, bn(1));
   });
 
   it('properly reflects margin for account', async () => {

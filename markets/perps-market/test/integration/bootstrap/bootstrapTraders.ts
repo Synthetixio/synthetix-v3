@@ -1,4 +1,4 @@
-import { bootstrapStakers } from '@synthetixio/main/test/integration';
+import { bootstrapStakers } from '@synthetixio/main/test/common';
 import { Systems } from './bootstrap';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
@@ -36,14 +36,20 @@ export function bootstrapTraders(data: Data) {
       );
   });
 
-  before('infinite approve to perps market proxy', async () => {
-    const [, , , trader1, trader2] = signers();
+  before('infinite approve to perps/spot market proxy', async () => {
+    [, , , trader1, trader2] = signers();
     await systems()
       .USD.connect(trader1)
       .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
     await systems()
+      .USD.connect(trader1)
+      .approve(systems().SpotMarket.address, ethers.constants.MaxUint256);
+    await systems()
       .USD.connect(trader2)
       .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+    await systems()
+      .USD.connect(trader2)
+      .approve(systems().SpotMarket.address, ethers.constants.MaxUint256);
   });
 
   accountIds.forEach((id, idx) => {

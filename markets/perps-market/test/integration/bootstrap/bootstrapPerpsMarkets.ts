@@ -1,4 +1,4 @@
-import { bootstrapWithStakedPool } from '@synthetixio/main/test/integration';
+import { createStakedPool } from '@synthetixio/main/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems, bootstrap, bn } from './bootstrap';
 import { ethers } from 'ethers';
@@ -12,8 +12,8 @@ import {
   AccountProxy,
 } from '../../generated/typechain';
 import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
-import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
-import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/bootstrap';
+import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
 type PerpsMarkets = Array<{
   marketId: () => ethers.BigNumber;
@@ -21,7 +21,7 @@ type PerpsMarkets = Array<{
 }>;
 
 type IncomingChainState =
-  | ReturnType<typeof bootstrapWithStakedPool>
+  | ReturnType<typeof createStakedPool>
   | ReturnType<typeof bootstrapSynthMarkets>;
 type NewChainState = {
   systems: () => Systems;
@@ -38,7 +38,7 @@ type BootstrapPerpsMarketType = <T extends IncomingChainState | undefined>(
 ) => PerpsMarketsReturn<T>;
 
 export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState) => {
-  const r: IncomingChainState = chainState ?? bootstrapWithStakedPool(bootstrap(), bn(1000));
+  const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(1000));
   let contracts: Systems, marketOwner: ethers.Signer;
 
   before('identify contracts', () => {

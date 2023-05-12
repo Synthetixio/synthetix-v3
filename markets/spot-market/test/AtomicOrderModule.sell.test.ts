@@ -5,7 +5,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { ethers as Ethers } from 'ethers';
 import { SynthRouter } from './generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import { generateExternalNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
+import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 
 describe('Atomic Order Module sell()', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
