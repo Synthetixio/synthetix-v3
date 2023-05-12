@@ -1,3 +1,3 @@
 export * from './bootstrap';
-export * from './bootstrapStakers';
-export * from './bootstrapWithStakedPool';
+export * from './stakers';
+export * from './stakedPool';

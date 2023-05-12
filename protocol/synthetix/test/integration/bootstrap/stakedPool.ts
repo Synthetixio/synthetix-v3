@@ -1,16 +1,26 @@
 import { ethers } from 'ethers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { depositAmount, stake } from './bootstrapStakers';
+import { wei } from '@synthetixio/wei';
+import { stake } from './stakers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
-import { bn, bootstrap } from './bootstrap';
+import { Systems } from '.';
+
+export const bn = (n: number) => wei(n).toBN();
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 
-export function bootstrapWithStakedPool(
-  r: ReturnType<typeof bootstrap> = bootstrap(),
+type ChainState = {
+  provider: () => ethers.providers.JsonRpcProvider;
+  signers: () => ethers.Signer[];
+  owner: () => ethers.Signer;
+  systems: () => Systems;
+};
+
+export const createStakedPool = (
+  r: ChainState,
   stakedCollateralPrice: ethers.BigNumber = bn(1),
-  stakedAmount: ethers.BigNumber = depositAmount
-) {
+  stakedAmount: ethers.BigNumber = bn(1000)
+) => {
   let aggregator: ethers.Contract;
 
   let oracleNodeId: string;
@@ -76,8 +86,8 @@ export function bootstrapWithStakedPool(
     poolId,
     collateralContract: () => r.systems().CollateralMock,
     collateralAddress: () => r.systems().CollateralMock.address,
-    depositAmount,
+    depositAmount: stakedAmount,
     restore,
     oracleNodeId: () => oracleNodeId,
   };
-}
+};
