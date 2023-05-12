@@ -1,10 +1,13 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
-import { bootstrapStakers, bootstrapWithStakedPool } from '@synthetixio/main/test/integration';
+import {
+  bootstrapStakers,
+  bootstrapWithStakedPool,
+} from '@synthetixio/main/test/integration/bootstrap';
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
-import { SpotMarketProxy, SynthRouter } from './generated/typechain';
+import { SpotMarketProxy, SynthRouter } from '../generated/typechain';
 import {
   USDProxy,
   CollateralMock,
@@ -59,25 +62,25 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<P
 
 const restoreSnapshot = createSnapshot();
 
-let contracts: Systems;
-before('load contracts', () => {
-  contracts = {
-    Account: getContract('synthetix.AccountProxy'),
-    Core: getContract('synthetix.CoreProxy'),
-    USD: getContract('synthetix.USDProxy'),
-    USDRouter: getContract('synthetix.USDRouter'),
-    SpotMarket: getContract('SpotMarketProxy'),
-    OracleManager: getContract('synthetix.oracle_manager.Proxy'),
-    CollateralMock: getContract('synthetix.CollateralMock'),
-    FeeCollectorMock: getContract('FeeCollectorMock'),
-    OracleVerifierMock: getContract('OracleVerifierMock'),
-    Synth: (address: string) => getContract('SynthRouter', address),
-  };
-});
-
 export function bootstrap() {
   before(restoreSnapshot);
   const signers: ethers.Wallet[] = [];
+
+  let contracts: Systems;
+  before('load contracts', () => {
+    contracts = {
+      Account: getContract('synthetix.AccountProxy'),
+      Core: getContract('synthetix.CoreProxy'),
+      USD: getContract('synthetix.USDProxy'),
+      USDRouter: getContract('synthetix.USDRouter'),
+      SpotMarket: getContract('SpotMarketProxy'),
+      OracleManager: getContract('synthetix.oracle_manager.Proxy'),
+      CollateralMock: getContract('synthetix.CollateralMock'),
+      FeeCollectorMock: getContract('FeeCollectorMock'),
+      OracleVerifierMock: getContract('OracleVerifierMock'),
+      Synth: (address: string) => getContract('SynthRouter', address),
+    };
+  });
 
   before('set up accounts', async () => {
     const provider = getProvider();
@@ -107,87 +110,6 @@ export function bootstrap() {
     signers: () => [...getSigners(), ...signers],
     owner: () => getSigners()[0],
     systems: () => contracts,
-  };
-}
-
-export function bootstrapSynthMarkets(
-  data: Array<{
-    name: string;
-    token: string;
-    buyPrice: ethers.BigNumber;
-    sellPrice: ethers.BigNumber;
-  }>,
-  chainState?: ReturnType<typeof bootstrapWithStakedPool>
-) {
-  const r = chainState ?? bootstrapWithStakedPool(bootstrap(), bn(1000), bn(1000).div(10));
-  let contracts: Systems, marketOwner: ethers.Signer;
-  before('identify actors', () => {
-    contracts = r.systems() as Systems;
-    [, , marketOwner] = r.signers();
-  });
-
-  const synthMarkets = data.map(({ name, token, buyPrice, sellPrice }) => {
-    let marketId: ethers.BigNumber,
-      buyNodeId: string,
-      buyAggregator: AggregatorV3Mock,
-      sellNodeId: string,
-      sellAggregator: AggregatorV3Mock;
-
-    before('create price nodes', async () => {
-      const buyPriceNodeResult = await createOracleNode(
-        r.signers()[0],
-        buyPrice,
-        contracts.OracleManager
-      );
-      const sellPriceNodeResult = await createOracleNode(
-        r.signers()[0],
-        sellPrice,
-        contracts.OracleManager
-      );
-      buyNodeId = buyPriceNodeResult.oracleNodeId;
-      buyAggregator = buyPriceNodeResult.aggregator;
-      sellNodeId = sellPriceNodeResult.oracleNodeId;
-      sellAggregator = sellPriceNodeResult.aggregator;
-    });
-
-    before('register synth', async () => {
-      marketId = await contracts.SpotMarket.callStatic.createSynth(
-        name,
-        token,
-        await marketOwner.getAddress()
-      );
-      await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
-      await contracts.SpotMarket.connect(marketOwner).updatePriceData(
-        marketId,
-        buyNodeId,
-        sellNodeId
-      );
-    });
-
-    before('delegate collateral to market from pool', async () => {
-      await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
-        {
-          marketId,
-          weightD18: ethers.utils.parseEther('1'),
-          maxDebtShareValueD18: ethers.utils.parseEther('1'),
-        },
-      ]);
-    });
-
-    return {
-      marketId: () => marketId,
-      buyAggregator: () => buyAggregator,
-      sellAggregator: () => sellAggregator,
-    };
-  });
-
-  const restore = snapshotCheckpoint(r.provider);
-
-  return {
-    ...r,
-    systems: () => contracts,
-    synthMarkets: () => synthMarkets,
-    restore,
   };
 }
 

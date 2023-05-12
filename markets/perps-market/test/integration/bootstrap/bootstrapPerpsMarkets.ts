@@ -13,12 +13,32 @@ import {
 } from '../../generated/typechain';
 import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/integration/bootstrap';
+import { bootstrapSynthMarkets } from '../../../../spot-market/test/bootstrap/bootstrap';
 
-export function bootstrapPerpsMarkets(
+type PerpsMarkets = Array<{
+  marketId: () => ethers.BigNumber;
+  aggregator: () => AggregatorV3Mock;
+}>;
+
+type IncomingChainState =
+  | ReturnType<typeof bootstrapWithStakedPool>
+  | ReturnType<typeof bootstrapSynthMarkets>;
+type NewChainState = {
+  systems: () => Systems;
+  perpsMarkets: () => PerpsMarkets;
+  restore: () => Promise<void>;
+};
+type PerpsMarketsReturn<T> = T extends undefined
+  ? NewChainState & IncomingChainState
+  : NewChainState;
+
+type BootstrapPerpsMarketType = <T extends IncomingChainState | undefined>(
   data: Array<{ name: string; token: string; price: ethers.BigNumber }>,
-  chainState?: ReturnType<typeof bootstrapWithStakedPool>
-) {
-  const r = chainState ?? bootstrapWithStakedPool(bootstrap(), bn(1000));
+  chainState: T
+) => PerpsMarketsReturn<T>;
+
+export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState) => {
+  const r: IncomingChainState = chainState ?? bootstrapWithStakedPool(bootstrap(), bn(1000));
   let contracts: Systems, marketOwner: ethers.Signer;
 
   before('identify contracts', () => {
@@ -29,15 +49,7 @@ export function bootstrapPerpsMarkets(
     [, , marketOwner] = r.signers();
   });
 
-  before('set snxUSD limit to max', async () => {
-    // set max collateral amt for snxUSD to maxUINT
-    await contracts.PerpsMarket.connect(r.owner()).setMaxCollateralAmount(
-      0, // snxUSD
-      ethers.constants.MaxUint256
-    );
-  });
-
-  const perpsMarkets = data.map(({ name, token, price }) => {
+  const perpsMarkets: PerpsMarkets = data.map(({ name, token, price }) => {
     let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: ethers.BigNumber;
     before('create price nodes', async () => {
       const results = await createOracleNode(r.owner(), price, r.systems().OracleManager);
@@ -79,4 +91,4 @@ export function bootstrapPerpsMarkets(
     systems: () => contracts,
     perpsMarkets: () => perpsMarkets,
   };
-}
+};

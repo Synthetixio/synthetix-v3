@@ -1,5 +1,59 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapPerpsMarket } from '../bootstrap/bootstrap';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { bn, bootstrapTraders, bootstrapPerpsMarkets } from '../bootstrap';
+import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/bootstrap';
 
-describe('ModifyCollateral', () => {});
+describe('ModifyCollateral', () => {
+  const chainStateWithPerpsMarkets = bootstrapPerpsMarkets(
+    [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    undefined
+  );
+
+  const { synthMarkets } = bootstrapSynthMarkets(
+    [
+      {
+        name: 'Bitcoin',
+        token: 'snxBTC',
+        buyPrice: bn(10000),
+        sellPrice: bn(10000),
+      },
+    ],
+    chainStateWithPerpsMarkets
+  );
+
+  const { systems, signers, provider, owner, perpsMarkets } = chainStateWithPerpsMarkets;
+
+  const accountIds = [10, 20];
+  const { trader1 } = bootstrapTraders({ systems, signers, provider, accountIds });
+
+  let snxBTCMarketId: ethers.BigNumber;
+
+  before('identify actors', () => {
+    snxBTCMarketId = synthMarkets()[0].marketId();
+  });
+
+  // TODO: test this limit
+  before('set snxBTC limit to max', async () => {
+    // set max collateral amt for snxUSD to maxUINT
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setMaxCollateralAmount(snxBTCMarketId, ethers.constants.MaxUint256);
+  });
+
+  before('trader1 buys 1 snxBTC', async () => {
+    await systems()
+      .SpotMarket.connect(trader1)
+      .buy(snxBTCMarketId, bn(10000), bn(1), ethers.constants.AddressZero);
+  });
+
+  before('add collateral', async () => {
+    await systems().PerpsMarket.connect(trader1()).modifyCollateral(accountIds[0], 0, bn(10_000));
+    await systems()
+      .PerpsMarket.connect(trader1())
+      .modifyCollateral(accountIds[0], snxBTCMarketId, bn(10_000));
+  });
+
+  it('properly reflects margin for account', async () => {
+    const totalValue = await systems().PerpsMarket.totalCollateralValue(accountIds[0]);
+    console.log(totalValue);
+  });
+});

@@ -37,21 +37,29 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<P
 
 const restoreSnapshot = createSnapshot();
 
-let contracts: Systems;
-before('load contracts', () => {
-  contracts = {
-    Core: getContract('synthetix.CoreProxy'),
-    USD: getContract('synthetix.USDProxy'),
-    SpotMarket: getContract('spotMarket.SpotMarketProxy'),
-    OracleManager: getContract('synthetix.oracle_manager.Proxy'),
-    CollateralMock: getContract('synthetix.CollateralMock'),
-    PerpsMarket: getContract('PerpsMarketProxy'),
-    Account: getContract('AccountProxy'),
-  };
-});
-
 export function bootstrap() {
   before(restoreSnapshot);
+
+  let contracts: Systems;
+  before('load contracts', () => {
+    contracts = {
+      Core: getContract('synthetix.CoreProxy'),
+      USD: getContract('synthetix.USDProxy'),
+      SpotMarket: getContract('spotMarket.SpotMarketProxy'),
+      OracleManager: getContract('synthetix.oracle_manager.Proxy'),
+      CollateralMock: getContract('synthetix.CollateralMock'),
+      PerpsMarket: getContract('PerpsMarketProxy'),
+      Account: getContract('AccountProxy'),
+    };
+  });
+
+  before('set snxUSD limit to max', async () => {
+    // set max collateral amt for snxUSD to maxUINT
+    await contracts.PerpsMarket.connect(getSigners()[0]).setMaxCollateralAmount(
+      0, // snxUSD
+      ethers.constants.MaxUint256
+    );
+  });
 
   return {
     provider: () => getProvider(),

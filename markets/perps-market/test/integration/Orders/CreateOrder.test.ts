@@ -3,19 +3,17 @@ import { bn, bootstrapTraders, bootstrapPerpsMarkets } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('Create Order test', () => {
-  const r = bootstrapPerpsMarkets([{ name: 'Ether', token: 'snxETH', price: bn(1000) }]);
-  const { systems, signers, perpsMarkets, provider } = bootstrapTraders(r);
+  const { systems, signers, perpsMarkets, provider } = bootstrapPerpsMarkets(
+    [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    undefined
+  );
+  const { trader1 } = bootstrapTraders({ systems, signers, provider, accountIds: [2, 3] });
 
-  let marketOwner: ethers.Signer, trader1: ethers.Signer, marketId: ethers.BigNumber;
+  let marketOwner: ethers.Signer, marketId: ethers.BigNumber;
 
   before('identify actors', async () => {
-    [, , marketOwner, trader1] = signers();
+    [, , marketOwner] = signers();
     marketId = perpsMarkets()[0].marketId();
-  });
-
-  before('create account', async () => {
-    const [, , , trader1] = signers();
-    await systems().PerpsMarket.connect(trader1)['createAccount(uint128)'](2);
   });
 
   before('create settlement strategy', async () => {
@@ -39,12 +37,12 @@ describe('Create Order test', () => {
   });
 
   before('add collateral', async () => {
-    await systems().PerpsMarket.connect(trader1).modifyCollateral(2, 0, bn(10_000));
+    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
   });
 
   before('commit order', async () => {
     await systems()
-      .PerpsMarket.connect(trader1)
+      .PerpsMarket.connect(trader1())
       .commitOrder({
         marketId: marketId,
         accountId: 2,
@@ -58,7 +56,7 @@ describe('Create Order test', () => {
   });
 
   before('settle', async () => {
-    await systems().PerpsMarket.connect(trader1).settle(marketId, 2);
+    await systems().PerpsMarket.connect(trader1()).settle(marketId, 2);
   });
 
   it('check position is live', async () => {
