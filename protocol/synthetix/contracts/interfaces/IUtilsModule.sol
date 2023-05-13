@@ -7,11 +7,14 @@ pragma solidity >=0.8.11 <0.9.0;
 interface IUtilsModule {
     /**
      * @notice Configure CCIP addresses on the stablecoin.
-     * @param ccipSend The address on this chain to which CCIP messages will be sent.
-     * @param ccipReceive The address on this chain from which CCIP messages will be received.
+     * @param ccipRouter The address on this chain to which CCIP messages will be sent or received.
      * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.
      */
-    function registerCcip(address ccipSend, address ccipReceive, address ccipTokenPool) external;
+     function configureChainlinkCrossChain(
+        address ccipRouter,
+        address ccipTokenPool,
+        address chainlinkFunctions
+    ) external;
 
     /**
      * @notice Configure the system's single oracle manager address.

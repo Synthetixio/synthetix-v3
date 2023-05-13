@@ -7,6 +7,7 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 import "../../interfaces/IUtilsModule.sol";
 
+import "../../storage/CrossChain.sol";
 import "../../storage/OracleManager.sol";
 import "../../storage/Config.sol";
 
@@ -25,23 +26,24 @@ contract UtilsModule is IUtilsModule {
     /**
      * @inheritdoc IUtilsModule
      */
-    function registerCcip(
-        address ccipSend,
-        address ccipReceive,
-        address ccipTokenPool
+    function configureChainlinkCrossChain(
+        address ccipRouter,
+        address ccipTokenPool,
+        address chainlinkFunctions
     ) external override {
         OwnableStorage.onlyOwner();
+
+        CrossChain.Data storage cc = CrossChain.load();
+
+        cc.ccipRouter = ICcipRouterClient(ccipRouter);
+        cc.chainlinkFunctionsOracle = FunctionsOracleInterface(chainlinkFunctions);
 
         IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
             AssociatedSystem.load(_USD_TOKEN).proxy
         );
 
-        AssociatedSystem.load(_CCIP_CHAINLINK_SEND).set(ccipSend, address(0), AssociatedSystem.KIND_UNMANAGED);
-        AssociatedSystem.load(_CCIP_CHAINLINK_RECV).set(ccipReceive, address(0), AssociatedSystem.KIND_UNMANAGED);
-        AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).set(ccipTokenPool, address(0), AssociatedSystem.KIND_UNMANAGED);
-
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipSend);
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_RECV, ccipReceive);
+        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipRouter);
+        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_RECV, ccipRouter);
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_TOKEN_POOL, ccipTokenPool);
     }
 
