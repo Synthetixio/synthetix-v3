@@ -1,15 +1,11 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapPerpsMarkets } from '../bootstrap';
+import { bn, bootstrapTraders, bootstrapPerpsMarkets, bootstrapMarkets } from '../bootstrap';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
 describe('ModifyCollateral', () => {
-  const chainStateWithPerpsMarkets = bootstrapPerpsMarkets(
-    [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
-    undefined
-  );
-
-  const { synthMarkets } = bootstrapSynthMarkets(
-    [
+  const accountIds = [10, 20];
+  const { systems, owner, synthMarkets, trader1 } = bootstrapMarkets({
+    synthMarkets: [
       {
         name: 'Bitcoin',
         token: 'snxBTC',
@@ -17,13 +13,9 @@ describe('ModifyCollateral', () => {
         sellPrice: bn(10000),
       },
     ],
-    chainStateWithPerpsMarkets
-  );
-
-  const { systems, signers, provider, owner, perpsMarkets } = chainStateWithPerpsMarkets;
-
-  const accountIds = [10, 20];
-  const { trader1 } = bootstrapTraders({ systems, signers, provider, accountIds });
+    perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    traderAccountIds: accountIds,
+  });
 
   let snxBTCMarketId: ethers.BigNumber;
 

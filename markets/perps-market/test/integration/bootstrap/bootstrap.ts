@@ -11,6 +11,8 @@ import {
   AccountProxy,
 } from '../../generated/typechain';
 import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
+import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
+import { PerpsMarketData, bootstrapPerpsMarkets, bootstrapTraders } from '.';
 
 type Proxies = {
   ['synthetix.CoreProxy']: SynthetixCoreProxy;
@@ -70,6 +72,38 @@ export function bootstrap() {
     signers: () => getSigners(),
     owner: () => getSigners()[0],
     systems: () => contracts,
+  };
+}
+
+type BootstrapArgs = {
+  synthMarkets: SynthArguments;
+  perpsMarkets: PerpsMarketData;
+  traderAccountIds: Array<number>;
+};
+
+export function bootstrapMarkets(data: BootstrapArgs) {
+  const chainStateWithPerpsMarkets = bootstrapPerpsMarkets(data.perpsMarkets, undefined);
+
+  const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
+
+  const { systems, signers, provider, owner, perpsMarkets } = chainStateWithPerpsMarkets;
+  const { trader1, trader2, restore } = bootstrapTraders({
+    systems,
+    signers,
+    provider,
+    accountIds: data.traderAccountIds,
+  });
+
+  return {
+    systems,
+    signers,
+    provider,
+    restore,
+    trader1,
+    trader2,
+    owner,
+    perpsMarkets,
+    synthMarkets,
   };
 }
 

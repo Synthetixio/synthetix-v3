@@ -6,20 +6,22 @@ import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { SynthRouter } from '../generated/typechain';
 
-type SynthMarkets = Array<{
+export type SynthMarkets = Array<{
   marketId: () => ethers.BigNumber;
   buyAggregator: () => AggregatorV3Mock;
   sellAggregator: () => AggregatorV3Mock;
   synth: () => SynthRouter;
 }>;
 
+export type SynthArguments = Array<{
+  name: string;
+  token: string;
+  buyPrice: ethers.BigNumber;
+  sellPrice: ethers.BigNumber;
+}>;
+
 export function bootstrapSynthMarkets(
-  data: Array<{
-    name: string;
-    token: string;
-    buyPrice: ethers.BigNumber;
-    sellPrice: ethers.BigNumber;
-  }>,
+  data: SynthArguments,
   r: ReturnType<typeof createStakedPool>
 ) {
   let contracts: Systems, marketOwner: ethers.Signer;

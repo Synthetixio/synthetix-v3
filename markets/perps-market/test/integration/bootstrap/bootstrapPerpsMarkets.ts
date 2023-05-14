@@ -20,6 +20,8 @@ type PerpsMarkets = Array<{
   aggregator: () => AggregatorV3Mock;
 }>;
 
+export type PerpsMarketData = Array<{ name: string; token: string; price: ethers.BigNumber }>;
+
 type IncomingChainState =
   | ReturnType<typeof createStakedPool>
   | ReturnType<typeof bootstrapSynthMarkets>;
@@ -33,7 +35,7 @@ type PerpsMarketsReturn<T> = T extends undefined
   : NewChainState;
 
 type BootstrapPerpsMarketType = <T extends IncomingChainState | undefined>(
-  data: Array<{ name: string; token: string; price: ethers.BigNumber }>,
+  data: PerpsMarketData,
   chainState: T
 ) => PerpsMarketsReturn<T>;
 
