@@ -319,6 +319,8 @@ contract CollateralModule {
 
 // @custom:artifact contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule
 contract CrossChainPoolModule {
+    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
+    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
     string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
     string internal constant _REQUEST_TOTAL_DEBT_CODE = "const maxFail = 1;const chainMapping = { '11155111': [`https://sepolia.infura.io/${secrets.INFURA_API_KEY}`], '80001': ['https://polygon-mumbai.infura.io/${secrets.INFURA_API_KEY}'] };let responses = [];for (let i = 0;i < args.length;i += 2) {    const chainId = Functions.decodeUint256(args[i]);    const callHex = args[i + 1];    const urls = chainMapping[chainId];    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: callHex }] };    const results = await Promise.allSettled(urls.map(u => Functions.makeHttpRequest({ url, params })));    let ress = 0;    for (const result of results) {        ress.push(Functions.decodeInt256(res.data.result));    }    ress.sort();    responses.push(ress[ress.length / 2].slice(2));}return Buffer.from(responses.join(''));";
     bytes internal constant _REQUEST_TOTAL_DEBT_SECRETS = "0xwhatever";
