@@ -5,9 +5,10 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { ethers as Ethers } from 'ethers';
 import { SynthRouter } from './generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
+import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 
 describe('Atomic Order Module sell()', () => {
-  const { systems, signers, marketId, provider, generateExternalNode } = bootstrapTraders(
+  const { systems, signers, marketId, provider } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
@@ -222,8 +223,8 @@ describe('Atomic Order Module sell()', () => {
     before(restore);
 
     before('set sell price higher than buy price', async () => {
-      const nodeId100 = await generateExternalNode(100);
-      const nodeId200 = await generateExternalNode(200);
+      const nodeId100 = await generateExternalNode(systems().OracleManager, 100);
+      const nodeId200 = await generateExternalNode(systems().OracleManager, 200);
 
       await systems()
         .SpotMarket.connect(marketOwner)
