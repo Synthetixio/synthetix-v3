@@ -2,15 +2,6 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Systems, bootstrap, bn } from './bootstrap';
 import { ethers } from 'ethers';
-import {
-  SpotMarketSpotMarketProxy,
-  SynthetixCollateralMock,
-  SynthetixCoreProxy,
-  SynthetixOracle_managerProxy,
-  SynthetixUSDProxy,
-  PerpsMarketProxy,
-  AccountProxy,
-} from '../../generated/typechain';
 import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';

@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapPerpsMarkets, bootstrapMarkets } from '../bootstrap';
-import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
+import { bn, bootstrapMarkets } from '../bootstrap';
 
 describe('ModifyCollateral', () => {
   const accountIds = [10, 20];
