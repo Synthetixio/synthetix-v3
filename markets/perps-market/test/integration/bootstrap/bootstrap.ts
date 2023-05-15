@@ -91,6 +91,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     systems,
     signers,
     provider,
+    owner,
     accountIds: data.traderAccountIds,
   });
 

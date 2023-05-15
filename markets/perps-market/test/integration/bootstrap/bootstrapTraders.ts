@@ -7,6 +7,7 @@ type Data = {
   systems: () => Systems;
   signers: () => ethers.Signer[];
   provider: () => ethers.providers.JsonRpcProvider;
+  owner: () => ethers.Signer;
   accountIds: Array<number>;
 };
 /*
@@ -15,21 +16,21 @@ type Data = {
   needed for testing
 */
 export function bootstrapTraders(data: Data) {
-  const { systems, signers, provider, accountIds } = data;
+  const { systems, signers, provider, accountIds, owner } = data;
   bootstrapStakers(systems, signers);
 
   let trader1: ethers.Signer, trader2: ethers.Signer;
 
   before('provide access to create account', async () => {
-    const [owner, , , trader1, trader2] = signers();
+    [, , , trader1, trader2] = signers();
     await systems()
-      .PerpsMarket.connect(owner)
+      .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
         trader1.getAddress()
       );
     await systems()
-      .PerpsMarket.connect(owner)
+      .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('createAccount'),
         trader2.getAddress()

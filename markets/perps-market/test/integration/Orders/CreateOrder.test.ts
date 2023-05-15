@@ -1,13 +1,13 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapTraders, bootstrapPerpsMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('Create Order test', () => {
-  const { systems, signers, perpsMarkets, provider } = bootstrapPerpsMarkets(
-    [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
-    undefined
-  );
-  const { trader1 } = bootstrapTraders({ systems, signers, provider, accountIds: [2, 3] });
+  const { systems, signers, perpsMarkets, provider, trader1 } = bootstrapMarkets({
+    synthMarkets: [],
+    perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    traderAccountIds: [2, 3],
+  });
 
   let marketOwner: ethers.Signer, marketId: ethers.BigNumber;
 
