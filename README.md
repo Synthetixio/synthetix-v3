@@ -22,10 +22,11 @@ This is a monorepo with the following folder structure and packages:
 .
 ├── markets                      // Standalone projects that extend the core Synthetix protocol with markets.
 │   ├── legacy-market            // Market that connects Synthetix's v2 and v3 versions.
+│   └── perps-market             // Market extension for perps.
 │   └── spot-market              // Market extension for spot synths.
 │
 ├── protocol                     // Core Synthetix protocol projects.
-│   ├── oracle-manager           // Composable oracle and price provider for teh core protocol.
+│   ├── oracle-manager           // Composable oracle and price provider for the core protocol.
 │   └── synthetix                // Core protocol (to be extended by markets).
 │
 └── utils                        // Utilities, plugins, tooling.
