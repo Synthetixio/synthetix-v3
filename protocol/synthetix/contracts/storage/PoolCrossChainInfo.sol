@@ -7,13 +7,10 @@ library PoolCrossChainInfo {
     struct Data {
         PoolCrossChainSync.Data latestSync;
         uint128 latestTotalWeights;
-
         uint64[] pairedChains;
         mapping(uint64 => uint128) pairedPoolIds;
-
         uint64 chainlinkSubscriptionId;
         uint32 chainlinkSubscriptionInterval;
-
         bytes32 latestRequestId;
     }
 }
