@@ -25,7 +25,6 @@ export interface Systems {
   OracleManager: OracleManagerProxy;
 }
 
-console.log('SNX BOOTSTRAP');
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
   cannonfile: 'cannonfile.test.toml',
 });

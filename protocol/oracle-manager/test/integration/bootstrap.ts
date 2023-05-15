@@ -10,7 +10,6 @@ const abi = ethers.utils.defaultAbiCoder;
 interface Contracts {
   NodeModule: NodeModule;
 }
-console.log('ORACLE CORE BOOTSTRAP');
 const r = coreBootstrap<Contracts>();
 
 const restoreSnapshot = r.createSnapshot();
