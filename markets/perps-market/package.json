@@ -12,7 +12,9 @@
     "test": "hardhat test",
     "coverage": "yarn test",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "publish-contracts": "yarn build && cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --quiet",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "postpack": "yarn publish-contracts"
   },
   "keywords": [],
   "author": "Synthetix",
