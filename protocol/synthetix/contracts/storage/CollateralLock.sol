@@ -14,7 +14,6 @@ library CollateralLock {
          * @dev The date when the locked amount becomes unlocked.
          */
         uint64 lockExpirationTime;
-
         /**
          * @dev In addition to the condition imposed by `lockExpirationTime`, the specified pool (by pool id) must be synced after `lockExpirationTime`
          */

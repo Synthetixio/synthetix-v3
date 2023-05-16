@@ -40,7 +40,6 @@ contract MulticallModule is IMulticallModule {
         address[] calldata to,
         bytes[] calldata data
     ) public payable override returns (bytes[] memory results) {
-
         if (Config.read(_CONFIG_MESSAGE_SENDER, 0) != 0) {
             revert RecursiveMulticall(msg.sender);
         }

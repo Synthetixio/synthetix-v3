@@ -146,7 +146,10 @@ contract VaultModule is IVaultModule {
         uint128 poolId,
         address collateralType
     ) external override returns (uint256 amountReleased) {
-        VaultEpoch.Data storage epoch = Pool.loadExisting(poolId).vaults[collateralType].currentEpoch();
+        VaultEpoch.Data storage epoch = Pool
+            .loadExisting(poolId)
+            .vaults[collateralType]
+            .currentEpoch();
 
         CollateralLock.Data storage lock = epoch.exitingCollateral[bytes32(uint256(accountId))];
 
@@ -156,7 +159,11 @@ contract VaultModule is IVaultModule {
 
         // released collateral must have occured prior to oldest update
         if (Pool.load(poolId).getOldestSync() < lock.lockExpirationTime) {
-            revert PoolExitTemporaryLock(accountId, Pool.load(poolId).getOldestSync(), epoch.exitingCollateral[bytes32(uint256(accountId))].lockExpirationTime);
+            revert PoolExitTemporaryLock(
+                accountId,
+                Pool.load(poolId).getOldestSync(),
+                epoch.exitingCollateral[bytes32(uint256(accountId))].lockExpirationTime
+            );
         }
 
         // c-ratio must still be healthy (or no debt if removing all collateral)
@@ -173,11 +180,7 @@ contract VaultModule is IVaultModule {
 
         lock.amountD18 = 0;
 
-        epoch.increaseAccountPosition(
-            accountId,
-            0,
-            1
-        );
+        epoch.increaseAccountPosition(accountId, 0, 1);
 
         epoch.exitingCollateral[bytes32(uint256(accountId))].amountD18 = 0;
         epoch.totalExitingCollateralD18 -= amountReleased.to128();
@@ -311,7 +314,6 @@ contract VaultModule is IVaultModule {
             // If the collateral amount is not negative, make sure that the pool exists
             // in the collateral entry's pool array. Otherwise remove it.
             _updateAccountCollateralPools(accountId, poolId, collateralType, true);
-
         } else {
             pool.vaults[collateralType].currentEpoch().decreaseAccountPosition(
                 accountId,

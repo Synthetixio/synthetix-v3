@@ -101,10 +101,13 @@ contract IssueUSDModule is IIssueUSDModule {
 
         // Mint stablecoins to the core system and set accounting to grant to account
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(address(this), amount);
-        Account.load(accountId).collaterals[AssociatedSystem.load(_USD_TOKEN).proxy]
+        Account
+            .load(accountId)
+            .collaterals[AssociatedSystem.load(_USD_TOKEN).proxy]
             .increaseAvailableCollateral(amount);
-        Account.load(accountId).collaterals[AssociatedSystem.load(_USD_TOKEN).proxy]
-            .locks.push(CollateralLock.Data(amount.to128(), uint64(block.timestamp), poolId, collateralType));
+        Account.load(accountId).collaterals[AssociatedSystem.load(_USD_TOKEN).proxy].locks.push(
+            CollateralLock.Data(amount.to128(), uint64(block.timestamp), poolId, collateralType)
+        );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
@@ -148,7 +151,9 @@ contract IssueUSDModule is IIssueUSDModule {
         }
 
         // Burn the stablecoins
-        Account.load(accountId).collaterals[AssociatedSystem.load(_USD_TOKEN).proxy]
+        Account
+            .load(accountId)
+            .collaterals[AssociatedSystem.load(_USD_TOKEN).proxy]
             .decreaseAvailableCollateral(amount);
         AssociatedSystem.load(_USD_TOKEN).asToken().burn(address(this), amount);
 

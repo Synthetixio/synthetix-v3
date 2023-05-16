@@ -10,7 +10,7 @@ interface IUtilsModule {
      * @param ccipRouter The address on this chain to which CCIP messages will be sent or received.
      * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.
      */
-     function configureChainlinkCrossChain(
+    function configureChainlinkCrossChain(
         address ccipRouter,
         address ccipTokenPool,
         address chainlinkFunctions

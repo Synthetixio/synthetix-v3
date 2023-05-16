@@ -8,7 +8,6 @@ import "../storage/MarketConfiguration.sol";
  * @dev The pool owner can be specified during creation, can be transferred, and has credentials for configuring the pool.
  */
 interface IPoolModule {
-
     /**
      * @notice Thrown when the requested pool ID is greater or equal to type(uint128).max / 2
      */
