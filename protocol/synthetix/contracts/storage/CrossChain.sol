@@ -11,7 +11,6 @@ import "../interfaces/external/FunctionsOracleInterface.sol";
  * @title System wide configuration for anything
  */
 library CrossChain {
-
     using SetUtil for SetUtil.UintSet;
 
     error NotCcipRouter(address);
@@ -23,10 +22,8 @@ library CrossChain {
     struct Data {
         ICcipRouterClient ccipRouter;
         FunctionsOracleInterface chainlinkFunctionsOracle;
-        
         SetUtil.UintSet supportedNetworks;
-
-        mapping (bytes32 => bytes32) chainlinkFunctionsRequestInfo;
+        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -58,7 +55,12 @@ library CrossChain {
         }
     }
 
-    function send(Data storage self, uint64 chainId, bytes memory data, uint256 gasLimit) internal returns (uint256 gasTokenUsed) {
+    function transmit(
+        Data storage self,
+        uint64 chainId,
+        bytes memory data,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
         uint64[] memory chains = new uint64[](1);
         chains[0] = chainId;
         return broadcast(self, chains, data, gasLimit);
@@ -67,20 +69,23 @@ library CrossChain {
     /**
      * @dev Sends a message to one or more chains
      */
-    function broadcast(Data storage self, uint64[] memory chains, bytes memory data, uint256 gasLimit) internal returns (uint256 gasTokenUsed) {
-
+    function broadcast(
+        Data storage self,
+        uint64[] memory chains,
+        bytes memory data,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
         ICcipRouterClient router = self.ccipRouter;
 
         CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
             abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
-            data, // Data payload 
+            data, // Data payload
             new CcipClient.EVMTokenAmount[](0), // Token transfers
             address(0), // Address of feeToken. address(0) means you will send msg.value.
             CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, true))
         );
 
-        for (uint i = 0;i < chains.length;i++) {
-
+        for (uint i = 0; i < chains.length; i++) {
             if (chains[i] == block.chainid) {
                 (bool success, bytes memory result) = address(this).call(data);
 
@@ -90,13 +95,9 @@ library CrossChain {
                         revert(result, len)
                     }
                 }
-            }
-            else {
+            } else {
                 uint256 fee = router.getFee(chains[i], sentMsg);
-                router.ccipSend{value: fee}(
-                    chains[i],
-                    sentMsg
-                );
+                router.ccipSend{value: fee}(chains[i], sentMsg);
 
                 gasTokenUsed += fee;
             }

@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity ^0.8.7;
 
 import "../../interfaces/IUSDTokenModule.sol";
-import "../../interfaces/external/ICcipRouterClient.sol";
+import "../../storage/CrossChain.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
@@ -15,12 +16,12 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
  */
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     using AssociatedSystem for AssociatedSystem.Data;
+    using CrossChain for CrossChain.Data;
 
     uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
 
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
+    bytes32 internal constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 
     /**
      * @dev For use as an associated system.
@@ -100,25 +101,16 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         uint64 destChainId,
         address to,
         uint256 amount
-    ) external returns (uint256 feesPaid) {
-        AssociatedSystem.load(_CCIP_CHAINLINK_SEND).expectKind(AssociatedSystem.KIND_UNMANAGED);
+    ) external payable returns (uint256 gasTokenUsed) {
+        FeatureFlag.ensureAccessToFeature(_TRANSFER_CROSS_CHAIN_FEATURE_FLAG);
 
-        CcipClient.EVMTokenAmount[] memory tokenAmounts = new CcipClient.EVMTokenAmount[](1);
-        CcipClient.EVMTokenAmount(address(this), amount);
+        _burn(msg.sender, amount);
 
-        ICcipRouterClient(AssociatedSystem.load(_CCIP_CHAINLINK_SEND).proxy)
-            .ccipSend(
-                destChainId,
-                CcipClient.EVM2AnyMessage(
-                    abi.encode(to), // Address of the receiver on the destination chain for EVM chains use abi.encode(destAddress).
-                    "", // Bytes that we wish to send to the receiver
-                    tokenAmounts,
-                    address(0),
-                    CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(_TRANSFER_GAS_LIMIT, false)) // the gas limit for the call to the receiver for destination chains
-                )
-            );
-
-        return (0);
+        gasTokenUsed = CrossChain.load().transmit(
+            destChainId,
+            abi.encodeWithSelector(this.mint.selector, to, amount),
+            _TRANSFER_GAS_LIMIT
+        );
     }
 
     /**

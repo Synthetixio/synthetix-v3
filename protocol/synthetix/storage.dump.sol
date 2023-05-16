@@ -395,9 +395,8 @@ contract VaultModule {
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
 contract USDTokenModule {
     uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
+    bytes32 internal constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 }
 
 // @custom:artifact contracts/storage/Account.sol:Account
