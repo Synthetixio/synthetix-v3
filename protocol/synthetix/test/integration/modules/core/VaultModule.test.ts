@@ -9,7 +9,7 @@ import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe.only('VaultModule', function () {
+describe('VaultModule', function () {
   const {
     signers,
     systems,
@@ -685,11 +685,21 @@ describe.only('VaultModule', function () {
               );
 
               it('reduces market capacity', async () => {
-                assertBn.lt(await systems().Core.getWithdrawableMarketUsd(marketId), preMarketCapacity);
+                assertBn.lt(
+                  await systems().Core.getWithdrawableMarketUsd(marketId),
+                  preMarketCapacity
+                );
               });
 
               it('has releasable collateral', async () => {
-                assertBn.equal(await systems().Core.callStatic.releaseExitedCollateral(user2AccountId, poolId, collateralAddress()), depositAmount.div(10).mul(9));
+                assertBn.equal(
+                  await systems().Core.callStatic.releaseExitedCollateral(
+                    user2AccountId,
+                    poolId,
+                    collateralAddress()
+                  ),
+                  depositAmount.div(10).mul(9)
+                );
               });
             });
           });
@@ -717,15 +727,25 @@ describe.only('VaultModule', function () {
                   ethers.utils.parseEther('1')
                 );
             });
-  
+
             it(
               'user1 still has correct position',
               verifyAccountState(accountId, poolId, depositAmount, startingDebt)
             );
-            it('user2 position is same (but collateral is put into exiting)', verifyAccountState(user2AccountId, poolId, 0, 0));
-  
+            it(
+              'user2 position is same (but collateral is put into exiting)',
+              verifyAccountState(user2AccountId, poolId, 0, 0)
+            );
+
             it('user2 position is in exiting state', async () => {
-              assertBn.equal(await systems().Core.callStatic.releaseExitedCollateral(user2AccountId, poolId, collateralAddress()), depositAmount);
+              assertBn.equal(
+                await systems().Core.callStatic.releaseExitedCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress()
+                ),
+                depositAmount
+              );
             });
           });
 
@@ -781,7 +801,9 @@ describe.only('VaultModule', function () {
 
                 it('fails to release because of debt', async () => {
                   await assertRevert(
-                    systems().Core.connect(user2).releaseExitedCollateral(user2AccountId, poolId, collateralAddress()),
+                    systems()
+                      .Core.connect(user2)
+                      .releaseExitedCollateral(user2AccountId, poolId, collateralAddress()),
                     `InsufficientCollateralRatio(`,
                     systems().Core
                   );
@@ -791,13 +813,21 @@ describe.only('VaultModule', function () {
               describe('stays out of debt', async () => {
                 before(restoreDebtCheck);
                 before('release', async () => {
-                  await systems().Core.connect(user2).releaseExitedCollateral(user2AccountId, poolId, collateralAddress());
+                  await systems()
+                    .Core.connect(user2)
+                    .releaseExitedCollateral(user2AccountId, poolId, collateralAddress());
                 });
-  
+
                 it('returns assigned collateral to account', async () => {
-                  assertBn.equal(await systems().Core.getAccountAvailableCollateral(user2AccountId, collateralAddress()), depositAmount.mul(2));
+                  assertBn.equal(
+                    await systems().Core.getAccountAvailableCollateral(
+                      user2AccountId,
+                      collateralAddress()
+                    ),
+                    depositAmount.mul(2)
+                  );
                 });
-    
+
                 it('lets user2 re-stake again', async () => {
                   await systems().Core.connect(user2).delegateCollateral(
                     user2AccountId,

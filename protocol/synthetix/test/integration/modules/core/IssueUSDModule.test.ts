@@ -153,23 +153,17 @@ describe('IssueUSDModule', function () {
       );
 
       it('put USD in accountIds account with lock', async () => {
-        const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
-        assertBn.equal(
-          totalDeposited,
-          depositAmount.div(10)
+        const [totalDeposited] = await systems().Core.getAccountCollateral(
+          accountId,
+          systems().USD.address
         );
+        assertBn.equal(totalDeposited, depositAmount.div(10));
 
         const locks = await systems().Core.getLocks(accountId, systems().USD.address, 0, 100);
 
-        assertBn.equal(
-          locks[0].amountD18,
-          depositAmount.div(10)
-        );
+        assertBn.equal(locks[0].amountD18, depositAmount.div(10));
 
-        assertBn.equal(
-          locks[0].lockExpirationPoolSync,
-          poolId
-        );
+        assertBn.equal(locks[0].lockExpirationPoolSync, poolId);
       });
 
       it('decreased available capacity for market', async () => {
@@ -184,7 +178,9 @@ describe('IssueUSDModule', function () {
       describe('immediately unlock locks', async () => {
         before(restoreMinted);
         before('trigger cleanExpiredLocks', async () => {
-          await systems().Core.connect(owner).cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
+          await systems()
+            .Core.connect(owner)
+            .cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
         });
 
         it('should have expired the lock without issue', async () => {
@@ -200,7 +196,9 @@ describe('IssueUSDModule', function () {
         });
 
         before('trigger cleanExpiredLocks', async () => {
-          await systems().Core.connect(owner).cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
+          await systems()
+            .Core.connect(owner)
+            .cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
         });
 
         it('blocks unlocking of USD that is below liquidation threshold', async () => {
@@ -216,7 +214,9 @@ describe('IssueUSDModule', function () {
           });
 
           before('trigger cleanExpiredLocks', async () => {
-            await systems().Core.connect(owner).cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
+            await systems()
+              .Core.connect(owner)
+              .cleanExpiredLocks(accountId, systems().USD.address, 0, 100);
           });
 
           it('now is unlock', async () => {
@@ -243,7 +243,10 @@ describe('IssueUSDModule', function () {
         );
 
         it('sent more USD to accountId', async () => {
-          const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
+          const [totalDeposited] = await systems().Core.getAccountCollateral(
+            accountId,
+            systems().USD.address
+          );
           assertBn.equal(totalDeposited, depositAmount.div(5));
         });
       });
@@ -288,7 +291,10 @@ describe('IssueUSDModule', function () {
       );
 
       it('sent USD to accountId', async () => {
-        const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
+        const [totalDeposited] = await systems().Core.getAccountCollateral(
+          accountId,
+          systems().USD.address
+        );
         assertBn.equal(totalDeposited, depositAmount.div(10));
       });
 
@@ -339,7 +345,10 @@ describe('IssueUSDModule', function () {
       it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
 
       it('took away from account collateral', async () => {
-        assertBn.equal(await systems().Core.getAccountAvailableCollateral(accountId, systems().USD.address), 0);
+        assertBn.equal(
+          await systems().Core.getAccountAvailableCollateral(accountId, systems().USD.address),
+          0
+        );
       });
     });
 
@@ -378,7 +387,10 @@ describe('IssueUSDModule', function () {
       );
 
       it('took away from accountId balance', async () => {
-        const [totalDeposited] = await systems().Core.getAccountCollateral(accountId, systems().USD.address);
+        const [totalDeposited] = await systems().Core.getAccountCollateral(
+          accountId,
+          systems().USD.address
+        );
         assertBn.equal(totalDeposited, ethers.utils.parseEther('49.5'));
       });
 

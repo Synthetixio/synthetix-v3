@@ -16,13 +16,21 @@ describe('CrossChainPoolModule', function () {
   });
 
   before('set ccip settings', async () => {
-    await systems().Core.connect(owner).configureChainlinkCrossChain(await FakeCcip.getAddress(), ethers.constants.AddressZero);
+    await systems()
+      .Core.connect(owner)
+      .configureChainlinkCrossChain(await FakeCcip.getAddress(), ethers.constants.AddressZero);
   });
 
   describe('ccipReceive()', () => {
     it('fails if caller is not CCIP router', async () => {
       await assertRevert(
-        systems().Core.ccipReceive({ messageId: '', sourceChainId: 0, sender: systems().Core.address, data: '0x', tokenAmounts: []}),
+        systems().Core.ccipReceive({
+          messageId: '',
+          sourceChainId: 0,
+          sender: systems().Core.address,
+          data: '0x',
+          tokenAmounts: [],
+        }),
         'Unauthorized(',
         systems().Core
       );
@@ -30,7 +38,13 @@ describe('CrossChainPoolModule', function () {
 
     it('fails if message sender on other chain is not self', async () => {
       await assertRevert(
-        systems().Core.ccipReceive({ messageId: '', sourceChainId: 0, sender: await FakeCcip.getAddress(), data: '0x', tokenAmounts: []}),
+        systems().Core.ccipReceive({
+          messageId: '',
+          sourceChainId: 0,
+          sender: await FakeCcip.getAddress(),
+          data: '0x',
+          tokenAmounts: [],
+        }),
         'Unauthorized(',
         systems().Core
       );
@@ -38,18 +52,14 @@ describe('CrossChainPoolModule', function () {
 
     it('forwards message to specified caller', async () => {
       const tx = await systems().Core.ccipReceive({
-        messageId: '', 
-        sourceChainId: 0, 
-        sender: systems().Core.address, 
-        data: systems().Core.interface.encodeFunctionData('createAccount(uint128)', [8273846]), 
-        tokenAmounts: []
+        messageId: '',
+        sourceChainId: 0,
+        sender: systems().Core.address,
+        data: systems().Core.interface.encodeFunctionData('createAccount(uint128)', [8273846]),
+        tokenAmounts: [],
       });
 
-      await assertEvent(
-        tx,
-        'AccountCreated("8273846")',
-        systems().Core
-      );
+      await assertEvent(tx, 'AccountCreated("8273846")', systems().Core);
     });
   });
 });
