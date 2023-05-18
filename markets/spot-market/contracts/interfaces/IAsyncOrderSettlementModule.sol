@@ -43,6 +43,11 @@ interface IAsyncOrderSettlementModule {
     error InvalidVerificationResponse();
 
     /**
+     * @notice Gets thrown when settle called with invalid settlement strategy
+     */
+    error InvalidSettlementStrategy(SettlementStrategy.Type strategyType);
+
+    /**
      * @notice Gets thrown when final order amount returned to trader is less than the minimum settlement amount.
      * @dev slippage tolerance
      */

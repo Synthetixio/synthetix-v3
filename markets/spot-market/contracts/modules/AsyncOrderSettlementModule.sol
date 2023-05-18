@@ -74,6 +74,10 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             SettlementStrategy.Data storage settlementStrategy
         ) = _performClaimValidityChecks(marketId, asyncOrderId);
 
+        if (settlementStrategy.strategyType != SettlementStrategy.Type.PYTH) {
+            revert InvalidSettlementStrategy(settlementStrategy.strategyType);
+        }
+
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = settlementStrategy.feedId;
 
