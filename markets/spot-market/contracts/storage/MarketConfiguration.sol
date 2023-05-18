@@ -108,15 +108,15 @@ library MarketConfiguration {
     }
 
     /**
-     * @dev Get quote for amount of collateral (`amount`) to receive in synths (`synthAmount`)
+     * @dev Get quote for amount of collateral (`baseAmountD18`) to receive in synths (`synthAmount`)
      */
     function quoteWrap(
         uint128 marketId,
-        uint256 amount,
+        uint256 baseAmountD18,
         uint256 synthPrice
     ) internal view returns (uint256 synthAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
-        uint256 usdAmount = amount.mulDecimal(synthPrice);
+        uint256 usdAmount = baseAmountD18.mulDecimal(synthPrice);
         fees.wrapperFees = config.wrapFixedFee.mulDecimal(usdAmount.toInt());
         usdAmount = (usdAmount.toInt() - fees.wrapperFees).toUint();
 
@@ -281,7 +281,7 @@ library MarketConfiguration {
     }
 
     /**
-     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`amount`)
+     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`usdAmount`)
      * @dev This function is used when we call `buyExactOut` or `sellExactIn` where we know the exact synth leaving/added to the system.
      * @dev When we only know the USD amount and need to calculate expected synth after fees, we have to use
      *      `calculateSkew` instead.
@@ -298,7 +298,7 @@ library MarketConfiguration {
     function calculateSkewFeeExact(
         Data storage self,
         uint128 marketId,
-        int256 amount,
+        int256 usdAmount,
         uint256 synthPrice,
         Transaction.Type transactionType
     ) internal view returns (int256 skewFee) {
@@ -320,7 +320,7 @@ library MarketConfiguration {
             .mulDecimal(synthPrice)
             .toInt() - wrappedCollateralAmount.toInt();
 
-        int256 skewAfterFill = initialSkew + amount;
+        int256 skewAfterFill = initialSkew + usdAmount;
         int256 skewAverage = (skewAfterFill + initialSkew) / 2;
 
         skewFee = skewAverage.divDecimal(skewScaleValue);
@@ -379,7 +379,7 @@ library MarketConfiguration {
     function calculateUtilizationRateFee(
         Data storage self,
         uint128 marketId,
-        uint256 amount,
+        uint256 usdAmount,
         uint256 synthPrice
     ) internal view returns (uint256 utilFee) {
         if (self.utilizationFeeRate == 0 || self.collateralLeverage == 0) {
@@ -396,7 +396,7 @@ library MarketConfiguration {
 
         // Note: take into account the async order commitment amount in escrow
         uint256 totalValueBeforeFill = totalBalance.mulDecimal(synthPrice);
-        uint256 totalValueAfterFill = totalValueBeforeFill + amount;
+        uint256 totalValueAfterFill = totalValueBeforeFill + usdAmount;
 
         // utilization is below 100%
         if (leveragedDelegatedCollateralValue > totalValueAfterFill) {
@@ -541,12 +541,12 @@ library MarketConfiguration {
      */
     function _calculateSkewAmountOut(
         Data storage self,
-        int256 amount,
+        int256 usdAmount,
         uint256 price,
         int256 initialSkew
     ) private view returns (int256 amountOut) {
         uint256 skewPriceRatio = self.skewScale.divDecimal(2 * price);
-        int256 costPriceSkewRatio = (8 * amount.mulDecimal(price.toInt())).divDecimal(
+        int256 costPriceSkewRatio = (8 * usdAmount.mulDecimal(price.toInt())).divDecimal(
             self.skewScale.toInt()
         );
         int256 initialSkewPriceRatio = (2 * initialSkew.mulDecimal(price.toInt())).divDecimal(
