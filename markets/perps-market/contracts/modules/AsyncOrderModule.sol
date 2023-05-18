@@ -95,6 +95,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     }
 
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
+        // TODO Payable. Check reentrancy and potential issues sending value to external contracts
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrder.Data storage order,
