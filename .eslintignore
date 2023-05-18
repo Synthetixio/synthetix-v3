@@ -4,3 +4,4 @@ utils/*/utils
 **/typechain-types
 **/contracts/routers
 **/contracts/generated
+**/artifacts

@@ -6144,6 +6144,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-progress@workspace:utils/eslint-plugin-progress":
+  version: 0.0.0-use.local
+  resolution: "eslint-plugin-progress@workspace:utils/eslint-plugin-progress"
+  languageName: unknown
+  linkType: soft
+
 "eslint-scope@npm:^4.0.3":
   version: 4.0.3
   resolution: "eslint-scope@npm:4.0.3"
