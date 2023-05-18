@@ -531,7 +531,7 @@ library MarketConfiguration {
     /*
      * @dev This equation allows us to calculate skew fee % from any given point on the skew scale
      * to where we should end up after a fill.  The equation is derived from the following:
-     *  K*2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
+     *  K/2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
      *  K = configured skew scale
      *  C = amount (cost in USD)
      *  Ni = initial skew

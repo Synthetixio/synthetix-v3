@@ -126,7 +126,7 @@ The skew fee is calculated in two different ways depending on which asset the tr
 `calculateSkew` equation:
 
 ```
-K*2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
+K/2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
 K = configured skew scale
 C = amount (cost in USD)
 Ni = initial skew
