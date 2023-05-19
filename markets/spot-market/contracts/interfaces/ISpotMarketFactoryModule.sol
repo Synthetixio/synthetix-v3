@@ -20,6 +20,18 @@ interface ISpotMarketFactoryModule is IMarket {
     error InvalidMarketOwner();
 
     /**
+     * @notice Gets fired when the synthetix is set
+     * @param synthetix address of the synthetix core contract
+     * @param usdTokenAddress address of the USDToken contract
+     * @param oracleManager address of the Oracle Manager contract
+     */
+    event SynthetixSystemSet(address synthetix, address usdTokenAddress, address oracleManager);
+    /**
+     * @notice Gets fired when the synth implementation is set
+     * @param synthImplementation address of the synth implementation
+     */
+    event SynthImplementationSet(address synthImplementation);
+    /**
      * @notice Gets fired when the synth is registered as a market.
      * @param synthMarketId Id of the synth market that was created
      */
