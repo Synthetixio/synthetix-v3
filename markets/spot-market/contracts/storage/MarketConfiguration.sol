@@ -156,7 +156,7 @@ library MarketConfiguration {
         int256 amountInt = usdAmount.toInt();
 
         // compute skew fee based on amount out
-        int256 skewFee = calculateSkewFeeExact(
+        int256 skewFee = calculateSkewFeeRatioExact(
             config,
             marketId,
             amountInt,
@@ -168,13 +168,17 @@ library MarketConfiguration {
         // apply fees by adding to the amount
         usdAmount = (amountInt + fees.skewFees).toUint();
 
-        uint256 utilizationFee = calculateUtilizationRateFee(
+        uint256 utilizationFee = calculateUtilizationFeeRatio(
             config,
             marketId,
             usdAmount,
             synthPrice
         );
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         // apply utilization and fixed fees
         // Note: when calculating exact out, we need to apply fees in reverse order.  so instead of
         // multiplying by %, we divide by %
@@ -196,13 +200,17 @@ library MarketConfiguration {
     ) internal view returns (uint256 synthAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
 
-        uint256 utilizationFee = calculateUtilizationRateFee(
+        uint256 utilizationFee = calculateUtilizationFeeRatio(
             config,
             marketId,
             usdAmount,
             synthPrice
         );
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
 
         fees.utilizationFees = utilizationFee.mulDecimal(usdAmount);
         fees.fixedFees = fixedFee.mulDecimal(usdAmount);
@@ -236,7 +244,11 @@ library MarketConfiguration {
         fees.skewFees = synthAmountFromSkew.mulDecimal(synthPrice).toInt() - usdAmount.toInt();
         usdAmount = (usdAmount.toInt() + fees.skewFees).toUint();
 
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         // use the usd amount _after_ skew fee is applied to the amount
         // when exact out, fees are applied by dividing by %
         fees.fixedFees = usdAmount.divDecimal(DecimalMath.UNIT - fixedFee) - usdAmount;
@@ -260,7 +272,11 @@ library MarketConfiguration {
 
         usdAmount = synthAmount.mulDecimal(synthPrice);
 
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         fees.fixedFees = fixedFee.mulDecimal(usdAmount);
 
         // apply fixed fee by removing from the amount that gets returned to user in exchange
@@ -269,7 +285,7 @@ library MarketConfiguration {
         // use the amount _after_ fixed fee is applied to the amount
         // skew is calcuated based on amount after all other fees applied, to get accurate skew fee
         int256 usdAmountInt = usdAmount.toInt();
-        int256 skewFee = calculateSkewFeeExact(
+        int256 skewFee = calculateSkewFeeRatioExact(
             config,
             marketId,
             usdAmountInt * -1, // removing value so negative
@@ -291,11 +307,11 @@ library MarketConfiguration {
      *  Before fill outstanding snxETH (minus any wrapped collateral): 100 snxETH
      *  If buy trade:
      *    - user is buying 10 ETH
-     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1005 bips
+     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1050 bips
      *  On a sell, the amount is negative, and so if there's positive skew in the system, the fee is negative to incentize selling
      *  and if the skew is negative, then the fee for a sell would be positive to incentivize neutralizing the skew.
      */
-    function calculateSkewFeeExact(
+    function calculateSkewFeeRatioExact(
         Data storage self,
         uint128 marketId,
         int256 usdAmount,
@@ -376,7 +392,7 @@ library MarketConfiguration {
      * Note: we do NOT calculate the inverse of this fee on `buyExactIn` vs `buyExactOut`.  We don't
      * believe this edge case adds any risk.  This means it could be beneficial to use `buyExactIn` vs `buyExactOut`
      */
-    function calculateUtilizationRateFee(
+    function calculateUtilizationFeeRatio(
         Data storage self,
         uint128 marketId,
         uint256 usdAmount,
@@ -430,7 +446,7 @@ library MarketConfiguration {
      * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
      * @dev the code does not allow setting fixed fee to 0 for a given transactor.  If you want to disable fees for a given actor, set the fee to be very low (e.g. 1 wei)
      */
-    function _getFixedFee(
+    function _getFixedFeeRatio(
         Data storage self,
         address transactor,
         bool async
