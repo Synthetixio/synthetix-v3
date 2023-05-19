@@ -11,7 +11,7 @@ module.exports = {
     Proxy: 'readonly',
     Promise: 'readonly',
   },
-  plugins: ['no-only-tests'],
+  plugins: ['progress', 'no-only-tests'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 12,
@@ -20,6 +20,7 @@ module.exports = {
   },
   ignorePatterns: ['/*.js'],
   rules: {
+    'progress/enable': process.env.ESLINT_PROGRESS === 'true' ? 1 : 0,
     indent: 'off', // prettier
     'no-only-tests/no-only-tests': 'error',
     'linebreak-style': 'off', // prettier
