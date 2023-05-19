@@ -58,10 +58,10 @@ interface ISpotMarketFactoryModule is IMarket {
     );
     /**
      * @notice Gets fired when the market's price feeds are updated, compatible with oracle manager
-     * @param synthMarketId Id of the synth market
+     * @param marketId Id of the synth market
      * @param rate the new decay rate (1e16 means 1% decay per year)
      */
-    event DecayRateUpdated(uint128 synthMarketId, uint256 rate);
+    event DecayRateUpdated(uint128 indexed marketId, uint256 rate);
 
     /**
      * @notice Emitted when an address has been nominated.

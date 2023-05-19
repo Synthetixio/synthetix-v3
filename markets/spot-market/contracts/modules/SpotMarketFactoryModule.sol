@@ -157,7 +157,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.load().onlyMarketOwner(marketId);
         SynthUtil.getToken(marketId).setDecayRate(rate);
 
-        emit DecayRateUpdated(uint128 marketId, uint256 rate);
+        emit DecayRateUpdated(marketId, rate);
     }
 
     /**
