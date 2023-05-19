@@ -54,9 +54,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
 
             amountEscrowed = amountProvided;
-        }
-
-        if (orderType == Transaction.Type.ASYNC_SELL) {
+        } else if (orderType == Transaction.Type.ASYNC_SELL) {
             // Get the dollar value of the provided synths
             uint256 usdAmount = Price.synthUsdExchangeRate(
                 marketId,

@@ -156,6 +156,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function setDecayRate(uint128 marketId, uint256 rate) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
         SynthUtil.getToken(marketId).setDecayRate(rate);
+
+        emit DecayRateUpdated(uint128 marketId, uint256 rate);
     }
 
     /**
