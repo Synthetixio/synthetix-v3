@@ -7,7 +7,7 @@ import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
  * @title Wrapper library servicing the wrapper module
  */
 library Wrapper {
-    error InvalidCollateralType();
+    error InvalidCollateralType(bytes32 message);
     /**
      * @notice Thrown when user tries to wrap more than the set supply cap for the market.
      */
@@ -55,19 +55,29 @@ library Wrapper {
         }
     }
 
-    function update(
+    function updateValid(
         uint128 marketId,
         address wrapCollateralType,
         uint256 maxWrappableAmount
     ) internal {
         Data storage self = load(marketId);
+        address configuredCollateralType = self.wrapCollateralType;
+
+        // you are only allowed to update the collateral type once for each market
+        // we currently do not support multiple collateral types/market
+        if (
+            configuredCollateralType != address(0) && configuredCollateralType != wrapCollateralType
+        ) {
+            revert InvalidCollateralType("Already set");
+        }
+
         self.wrapCollateralType = wrapCollateralType;
         self.maxWrappableAmount = maxWrappableAmount;
     }
 
     function validateWrapper(Data storage self) internal view {
         if (self.wrapCollateralType == address(0)) {
-            revert InvalidCollateralType();
+            revert InvalidCollateralType("Not set");
         }
     }
 }
