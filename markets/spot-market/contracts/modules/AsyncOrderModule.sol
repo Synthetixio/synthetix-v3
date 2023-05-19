@@ -89,7 +89,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             referrer
         );
 
-        // Emit event
         emit OrderCommitted(
             marketId,
             orderType,
@@ -149,7 +148,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             AsyncOrder.transferFromEscrow(marketId, trader, asyncOrderClaim.amountEscrowed);
         }
 
-        // Emit event
         emit OrderCancelled(marketId, asyncOrderId, asyncOrderClaim, trader);
     }
 }
