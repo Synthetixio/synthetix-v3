@@ -36,7 +36,7 @@ contract WrapperModule is IWrapperModule {
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
-        Wrapper.update(marketId, wrapCollateralType, maxWrappableAmount);
+        Wrapper.updateValid(marketId, wrapCollateralType, maxWrappableAmount);
 
         emit WrapperSet(marketId, wrapCollateralType, maxWrappableAmount);
     }
