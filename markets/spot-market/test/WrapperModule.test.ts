@@ -65,18 +65,6 @@ describe('WrapperModule', () => {
         systems().SpotMarket
       );
     });
-
-    describe('does not allow you to update collateral type once set', () => {
-      it('reverts on update with different collateral type', async () => {
-        await assertRevert(
-          systems()
-            .SpotMarket.connect(marketOwner)
-            // use random address
-            .setWrapper(marketId(), systems().FeeCollectorMock.address, bn(500)),
-          'InvalidCollateralType'
-        );
-      });
-    });
   });
 
   describe('wrap', () => {
@@ -163,6 +151,18 @@ describe('WrapperModule', () => {
           txn,
           `SynthWrapped(${marketId()}, ${bn(0.99)}, [0, 0, 0, ${bn(9)}], ${bn(4.5)})`,
           systems().SpotMarket
+        );
+      });
+    });
+
+    describe('does not allow you to update collateral type with oustanding collateral deposited', () => {
+      it('reverts on update with different collateral type', async () => {
+        await assertRevert(
+          systems()
+            .SpotMarket.connect(marketOwner)
+            // use random address
+            .setWrapper(marketId(), systems().FeeCollectorMock.address, bn(500)),
+          'InvalidCollateralType'
         );
       });
     });

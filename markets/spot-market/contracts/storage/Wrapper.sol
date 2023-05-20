@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
+import {SpotMarketFactory} from "./SpotMarketFactory.sol";
 
 /**
  * @title Wrapper library servicing the wrapper module
@@ -65,9 +66,11 @@ library Wrapper {
 
         // you are only allowed to update the collateral type once for each market
         // we currently do not support multiple collateral types/market
-        if (
-            configuredCollateralType != address(0) && configuredCollateralType != wrapCollateralType
-        ) {
+        uint currentMarketCollateralAmount = SpotMarketFactory
+            .load()
+            .synthetix
+            .getMarketCollateralAmount(marketId, configuredCollateralType);
+        if (currentMarketCollateralAmount != 0) {
             revert InvalidCollateralType("Already set");
         }
 
