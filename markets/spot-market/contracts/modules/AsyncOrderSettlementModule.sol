@@ -143,14 +143,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             );
         }
 
-        // Emit event
         emit OrderSettled(
             marketId,
             asyncOrderId,
             finalOrderAmount,
             fees,
             collectedFees,
-            msg.sender
+            msg.sender,
+            price
         );
     }
 

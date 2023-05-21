@@ -23,7 +23,8 @@ interface IAsyncOrderSettlementModule {
         uint256 finalOrderAmount,
         OrderFees.Data fees,
         uint256 collectedFees,
-        address indexed settler
+        address indexed settler,
+        uint256 price
     );
 
     /**
