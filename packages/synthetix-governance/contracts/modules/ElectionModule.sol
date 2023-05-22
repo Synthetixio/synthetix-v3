@@ -89,12 +89,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         return address(_debtShareStore().debtShareContract);
     }
 
-    function setDebtShareSnapshotId(uint snapshotId)
-        external
-        override
-        onlyOwner
-        onlyInPeriods(ElectionPeriod.Nomination, ElectionPeriod.Vote)
-    {
+    function setDebtShareSnapshotId(uint snapshotId) external override onlyOwner onlyInPeriod(ElectionPeriod.Nomination) {
         _setDebtShareSnapshotId(snapshotId);
     }
 
@@ -114,7 +109,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         external
         override
         onlyOwner
-        onlyInPeriods(ElectionPeriod.Nomination, ElectionPeriod.Vote)
+        onlyInPeriod(ElectionPeriod.Nomination)
     {
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
 
