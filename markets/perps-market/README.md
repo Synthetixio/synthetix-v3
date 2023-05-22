@@ -4,13 +4,12 @@ This system generates markets that allow traders to open positions (ERC-721 toke
 
 ## Developer Get Started
 
-1. Make sure you have latest cannon cli installed by running: `npm install -g @usecannon/cli`.
-2. Ensure you have IPFS Desktop running and your local cannon settings configured.
+1. Ensure you have [IPFS Desktop](https://docs.ipfs.tech/install/ipfs-desktop/) running
+2. Run `yarn` at the root directory: `/synthetix-v3`.
+3. Run `yarn cannon setup` to configure cannon
 
 - Run `cat ~/.local/share/cannon/settings.json` and ensure your `ipfsUrl` is configured to `http://localhost:5001`.
 
-2. Run `yarn clean` to remove any old artifacts and cached files.
-3. Run `yarn` at the root directory: `/synthetix-v3`.
 4. Run `yarn build` at the root directory: `/synthetix-v3`.
 5. Run `yarn test` in the synthetix protocol directory: `/protocol/synthetix`.
 
@@ -24,4 +23,10 @@ This system generates markets that allow traders to open positions (ERC-721 toke
 
 - The perps market is composed of both the synthetix core and spot market contracts and uses the testable versions to create a testable perps market environment.
 
-If you have passing tests at this point, **Congrats**, you are all set for development.
+If you have passing tests at this point, **congrats**, you are all set for development.
+
+## Troubleshooting
+
+If you experience any unexpected errors try running:
+
+- `yarn clean`
