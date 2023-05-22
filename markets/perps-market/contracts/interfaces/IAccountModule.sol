@@ -5,6 +5,8 @@ pragma solidity >=0.8.11 <0.9.0;
  * @title Account module
  */
 interface IAccountModule {
+    function modifyCollateral(uint128 accountId, uint128 synthMarketId, int amountDelta) external;
+
     function totalCollateralValue(uint128 accountId) external view returns (uint);
 
     function totalAccountOpenInterest(uint128 accountId) external view returns (int);
