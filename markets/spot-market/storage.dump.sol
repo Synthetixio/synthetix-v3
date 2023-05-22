@@ -263,7 +263,7 @@ library AsyncOrderConfiguration {
 // @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
 library MarketConfiguration {
     struct Data {
-        mapping(address => uint256) atomicFixedFeeOverrides;
+        mapping(address => uint256) fixedFeeOverrides;
         uint256 atomicFixedFee;
         uint256 asyncFixedFee;
         uint256 utilizationFeeRate;
