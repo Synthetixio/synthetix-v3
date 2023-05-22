@@ -9,16 +9,26 @@ library LiquidationConfiguration {
     using DecimalMath for uint256;
 
     struct Data {
-        uint liquidationPremiumMultiplier;
-        uint maxLiquidationDelta;
-        uint maxPremiumDiscount;
-        // usd denominated
+        /**
+         * @dev % of the notional value that is required in margin when initially opening position
+         */
+        uint initialMarginPercentage;
+        /**
+         * @dev % of the notional value that is required in margin during maintenance and checking for liquidation eligibility
+         */
+        uint marginMaintenancePercentage;
+        /**
+         * @dev minimum configured liquidation reward for the sender who liquidates the account
+         */
         uint minLiquidationRewardUsd;
-        // usd denominated
+        /**
+         * @dev maximum configured liquidation reward for the sender who liquidates the account
+         */
         uint maxLiquidationRewardUsd;
-        // % of liquidated position
-        uint desiredLiquidationRewardPercentage;
-        uint liquidationBufferRatio;
+        /**
+         * @dev This multiplier is applied to the max liquidation value when calculating max liquidation for a given market
+         */
+        uint256 maxLiquidationLimitAccumulationMultiplier;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -30,20 +40,11 @@ library LiquidationConfiguration {
         }
     }
 
-    // TODO: double check this eq and fix it
     function liquidationMargin(
         Data storage config,
-        uint notionalValue
-    ) internal view returns (uint) {
-        uint liquidationBufferMargin = notionalValue.mulDecimal(config.liquidationBufferRatio);
-        uint rewardMargin = notionalValue.mulDecimal(config.desiredLiquidationRewardPercentage);
-
-        return
-            liquidationBufferMargin +
-            MathUtil.max(
-                MathUtil.min(liquidationBufferMargin, config.maxLiquidationRewardUsd),
-                config.minLiquidationRewardUsd
-            ) +
-            rewardMargin;
+        uint256 notionalValueOfPosition
+    ) internal view returns (uint256 initialMargin, uint256 maintenanceMargin) {
+        initialMargin = notionalValueOfPosition.mulDecimal(config.initialMarginPercentage);
+        maintenanceMargin = notionalValueOfPosition.mulDecimal(config.marginMaintenancePercentage);
     }
 }

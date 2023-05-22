@@ -490,11 +490,6 @@ library PerpsAccount {
         // in market units
         amountToLiquidate = MathUtil.min(maxLiquidatableAmount, MathUtil.abs(position.size));
 
-        liquidationReward = MathUtil.min(
-            marketConfig.maxLiquidationReward,
-            amountToLiquidate.mulDecimal(marketConfig.liquidationRewardPercentage)
-        );
-
         (, totalPnl, , , ) = position.getPositionData(price);
 
         // reduce position size

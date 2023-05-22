@@ -27,11 +27,6 @@ library PerpsMarketConfiguration {
         uint256 minInitialMargin;
         uint256 liquidationPremiumMultiplier;
         uint256 lockedOiPercent;
-        // liquidation params
-        uint256 maxLiquidationLimitAccumulationMultiplier;
-        // liquidation rewards
-        uint liquidationRewardPercentage;
-        uint maxLiquidationReward;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
