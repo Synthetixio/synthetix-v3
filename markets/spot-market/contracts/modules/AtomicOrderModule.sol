@@ -31,10 +31,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.BUY);
         (usdAmountCharged, fees, config) = MarketConfiguration.quoteBuyExactOut(
             marketId,
             synthAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            price,
             msg.sender,
             Transaction.Type.BUY
         );
@@ -62,7 +63,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.depositToMarketManager(marketId, usdAmountCharged - collectedFees);
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer);
+        emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer, price);
 
         return (synthAmount, fees);
     }
@@ -95,10 +96,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         MarketConfiguration.Data storage config;
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.BUY);
         (synthAmount, fees, config) = MarketConfiguration.quoteBuyExactIn(
             marketId,
             usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.BUY),
+            price,
             msg.sender,
             Transaction.Type.BUY
         );
@@ -124,7 +126,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.depositToMarketManager(marketId, usdAmount - collectedFees);
         SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer);
+        emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer, price);
 
         return (synthAmount, fees);
     }
@@ -226,10 +228,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
         (returnAmount, fees, config) = MarketConfiguration.quoteSellExactIn(
             marketId,
             synthAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            price,
             msg.sender,
             Transaction.Type.SELL
         );
@@ -258,7 +261,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, returnAmount);
 
-        emit SynthSold(marketId, returnAmount, fees, collectedFees, referrer);
+        emit SynthSold(marketId, returnAmount, fees, collectedFees, referrer, price);
     }
 
     /**
@@ -274,10 +277,11 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
+        uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.SELL);
         (synthToBurn, fees, config) = MarketConfiguration.quoteSellExactOut(
             marketId,
             usdAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.SELL),
+            price,
             msg.sender,
             Transaction.Type.SELL
         );
@@ -303,6 +307,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, usdAmount);
 
-        emit SynthSold(marketId, usdAmount, fees, collectedFees, referrer);
+        emit SynthSold(marketId, usdAmount, fees, collectedFees, referrer, price);
     }
 }

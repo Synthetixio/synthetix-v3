@@ -20,6 +20,18 @@ interface ISpotMarketFactoryModule is IMarket {
     error InvalidMarketOwner();
 
     /**
+     * @notice Gets fired when the synthetix is set
+     * @param synthetix address of the synthetix core contract
+     * @param usdTokenAddress address of the USDToken contract
+     * @param oracleManager address of the Oracle Manager contract
+     */
+    event SynthetixSystemSet(address synthetix, address usdTokenAddress, address oracleManager);
+    /**
+     * @notice Gets fired when the synth implementation is set
+     * @param synthImplementation address of the synth implementation
+     */
+    event SynthImplementationSet(address synthImplementation);
+    /**
      * @notice Gets fired when the synth is registered as a market.
      * @param synthMarketId Id of the synth market that was created
      */
@@ -37,13 +49,19 @@ interface ISpotMarketFactoryModule is IMarket {
     /**
      * @notice Gets fired when the market's price feeds are updated, compatible with oracle manager
      * @param buyFeedId the oracle manager feed id for the buy price
-     * @param sellFeedId the oracle manager feed id for the buy price
+     * @param sellFeedId the oracle manager feed id for the sell price
      */
     event SynthPriceDataUpdated(
         uint256 indexed synthMarketId,
         bytes32 indexed buyFeedId,
         bytes32 indexed sellFeedId
     );
+    /**
+     * @notice Gets fired when the market's price feeds are updated, compatible with oracle manager
+     * @param marketId Id of the synth market
+     * @param rate the new decay rate (1e16 means 1% decay per year)
+     */
+    event DecayRateUpdated(uint128 indexed marketId, uint256 rate);
 
     /**
      * @notice Emitted when an address has been nominated.

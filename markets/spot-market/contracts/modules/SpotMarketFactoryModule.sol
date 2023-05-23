@@ -43,6 +43,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
         store.usdToken = ITokenModule(usdTokenAddress);
         store.oracle = synthetix.getOracleManager();
+
+        emit SynthetixSystemSet(address(synthetix), usdTokenAddress, address(store.oracle));
     }
 
     /**
@@ -51,6 +53,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function setSynthImplementation(address synthImplementation) external override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.load().synthImplementation = synthImplementation;
+
+        emit SynthImplementationSet(synthImplementation);
     }
 
     /**
@@ -152,6 +156,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function setDecayRate(uint128 marketId, uint256 rate) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
         SynthUtil.getToken(marketId).setDecayRate(rate);
+
+        emit DecayRateUpdated(marketId, rate);
     }
 
     /**
