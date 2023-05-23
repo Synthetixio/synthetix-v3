@@ -14,7 +14,7 @@ export function getCompileInput(contractName: string, sourceCode: string) {
           '*': ['*'],
         },
       },
-      evmVersion: 'paris' // lock to older evm version for the time b eing because there is no way to specify it from outside of the tool
+      evmVersion: 'paris', // lock to older evm version for the time b eing because there is no way to specify it from outside of the tool
     },
   };
 }
