@@ -132,7 +132,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint256 fixedFeeAmount
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
-        MarketConfiguration.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
+        MarketConfiguration.setFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
 
         emit TransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
     }
@@ -144,7 +144,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 synthMarketId,
         address transactor
     ) external view override returns (uint256 fixedFeeAmount) {
-        fixedFeeAmount = MarketConfiguration.getAtomicFixedFeeOverride(synthMarketId, transactor);
+        fixedFeeAmount = MarketConfiguration.getFixedFeeOverride(synthMarketId, transactor);
     }
 
     /**

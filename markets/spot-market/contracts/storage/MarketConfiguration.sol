@@ -28,9 +28,9 @@ library MarketConfiguration {
 
     struct Data {
         /**
-         * @dev The atomic fixed fee rate for a specific transactor.  Useful for direct integrations to set custom fees for specific addresses.
+         * @dev The fixed fee rate for a specific transactor.  Useful for direct integrations to set custom fees for specific addresses.
          */
-        mapping(address => uint256) atomicFixedFeeOverrides;
+        mapping(address => uint256) fixedFeeOverrides;
         /**
          * @dev atomic buy/sell fixed fee that's applied on all trades. Percentage, 18 decimals
          */
@@ -89,22 +89,18 @@ library MarketConfiguration {
     /**
      * @dev Set custom fee for transactor
      */
-    function setAtomicFixedFeeOverride(
-        uint128 marketId,
-        address transactor,
-        uint256 fixedFee
-    ) internal {
-        load(marketId).atomicFixedFeeOverrides[transactor] = fixedFee;
+    function setFixedFeeOverride(uint128 marketId, address transactor, uint256 fixedFee) internal {
+        load(marketId).fixedFeeOverrides[transactor] = fixedFee;
     }
 
     /**
      * @dev Get custom fee for transactor
      */
-    function getAtomicFixedFeeOverride(
+    function getFixedFeeOverride(
         uint128 marketId,
         address transactor
     ) internal view returns (uint256 fixedFee) {
-        fixedFee = load(marketId).atomicFixedFeeOverrides[transactor];
+        fixedFee = load(marketId).fixedFeeOverrides[transactor];
     }
 
     /**
@@ -451,8 +447,8 @@ library MarketConfiguration {
         address transactor,
         bool async
     ) private view returns (uint256 fixedFee) {
-        if (self.atomicFixedFeeOverrides[transactor] > 0) {
-            fixedFee = self.atomicFixedFeeOverrides[transactor];
+        if (self.fixedFeeOverrides[transactor] > 0) {
+            fixedFee = self.fixedFeeOverrides[transactor];
         } else {
             fixedFee = async ? self.asyncFixedFee : self.atomicFixedFee;
         }
