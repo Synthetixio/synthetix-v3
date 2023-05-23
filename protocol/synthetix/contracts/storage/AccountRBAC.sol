@@ -20,6 +20,7 @@ library AccountRBAC {
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
+    bytes32 internal constant _PERPS_PERMISSION = "PERPS";
 
     /**
      * @dev Thrown when a permission specified by a user does not exist or is invalid.
@@ -50,7 +51,8 @@ library AccountRBAC {
             permission != AccountRBAC._DELEGATE_PERMISSION &&
             permission != AccountRBAC._MINT_PERMISSION &&
             permission != AccountRBAC._ADMIN_PERMISSION &&
-            permission != AccountRBAC._REWARDS_PERMISSION
+            permission != AccountRBAC._REWARDS_PERMISSION &&
+            permission != AccountRBAC._PERPS_PERMISSION
         ) {
             revert InvalidPermission(permission);
         }

@@ -1,54 +1,148 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { account } from '@synthetixio/main/typechain-types/contracts/modules';
 
-describe('ModifyCollateral', () => {
+describe.only('ModifyCollateral', () => {
   const accountIds = [10, 20];
-  const { systems, owner, synthMarkets, trader1 } = bootstrapMarkets({
+  const invalidAccountId = 42069;
+
+  const { systems, owner, synthMarkets, perpsMarkets, trader1, trader2 } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
         token: 'snxBTC',
-        buyPrice: bn(10000),
-        sellPrice: bn(10000),
+        buyPrice: bn(10_000),
+        sellPrice: bn(10_000),
+      },
+      {
+        name: 'Ether',
+        token: 'snxETH',
+        buyPrice: bn(1000),
+        sellPrice: bn(1000),
       },
     ],
-    perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    perpsMarkets: [
+      { name: 'Bitcoin', token: 'snxBTC', price: bn(10_000) },
+      { name: 'Ether', token: 'snxETH', price: bn(1000) },
+    ],
     traderAccountIds: accountIds,
   });
 
-  let snxBTCMarketId: ethers.BigNumber;
+  const PERPS_PERMISSION_NAME = ethers.utils.formatBytes32String('PERPS');
+
+  let synthBTCMarketId: ethers.BigNumber, synthETHMarketId: ethers.BigNumber;
+  let perpBTCMarketId: ethers.BigNumber, perpETHMarketId: ethers.BigNumber;
 
   before('identify actors', () => {
-    snxBTCMarketId = synthMarkets()[0].marketId();
+    perpBTCMarketId = perpsMarkets()[0].marketId(); // 1
+    perpETHMarketId = perpsMarkets()[1].marketId(); // 2
+    synthBTCMarketId = synthMarkets()[0].marketId(); // 3
+    synthETHMarketId = synthMarkets()[1].marketId(); // 4
   });
 
-  // TODO: test this limit
-  before('set snxBTC limit to max', async () => {
-    // set max collateral amt for snxUSD to maxUINT
-    await systems()
-      .PerpsMarket.connect(owner())
-      .setMaxCollateralAmount(snxBTCMarketId, ethers.constants.MaxUint256);
-  });
+  describe('modifyCollateral()', async () => {
+    describe('failure cases', async () => {
+      it('reverts when the account does not exist', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(trader2())
+            .modifyCollateral(invalidAccountId, perpBTCMarketId, bn(1)),
+          `AccountNotFound(${invalidAccountId}`
+        );
+      });
 
-  before('trader1 buys 1 snxBTC', async () => {
-    await systems()
-      .SpotMarket.connect(trader1())
-      .buy(snxBTCMarketId, bn(10000), bn(1), ethers.constants.AddressZero);
-  });
+      it('reverts when the msg sender does not have valid permission', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(owner())
+            .modifyCollateral(accountIds[1], perpBTCMarketId, bn(1)),
+          `PermissionDenied("${
+            accountIds[1]
+          }", "${PERPS_PERMISSION_NAME}", "${await owner().getAddress()}")`
+        );
+      });
 
-  before('add collateral', async () => {
-    await systems().PerpsMarket.connect(trader1()).modifyCollateral(accountIds[0], 0, bn(10_000));
-    await synthMarkets()[0]
-      .synth()
-      .connect(trader1())
-      .approve(systems().PerpsMarket.address, bn(1));
-    await systems()
-      .PerpsMarket.connect(trader1())
-      .modifyCollateral(accountIds[0], snxBTCMarketId, bn(1));
-  });
+      it('reverts when trying to modify collateral with a zero amount delta', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(trader1())
+            .modifyCollateral(accountIds[0], perpETHMarketId, bn(0)),
+          `InvalidAmountDelta("${bn(0)}")`
+        );
+      });
 
-  it('properly reflects margin for account', async () => {
-    const totalValue = await systems().PerpsMarket.totalCollateralValue(accountIds[0]);
-    console.log(totalValue);
+      it('reverts when it exceeds the max collateral amount', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(trader1())
+            .modifyCollateral(accountIds[0], perpBTCMarketId, bn(2)),
+          `MaxCollateralExceeded("1")`
+        );
+      });
+
+      it('reverts if the trader does not have enough balance', async () => {
+        const collateralAmt = bn(1);
+        await systems()
+          .PerpsMarket.connect(owner())
+          .setMaxCollateralAmount(synthETHMarketId, collateralAmt);
+
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(trader1())
+            .modifyCollateral(accountIds[0], synthETHMarketId, collateralAmt),
+          `InsufficientAllowance("${collateralAmt}", "0")`
+        );
+      });
+    });
+
+    describe('successful', async () => {
+      let modifyCollateralTxn: ethers.providers.TransactionResponse;
+
+      before('owner sets limits to max', async () => {
+        await systems()
+          .PerpsMarket.connect(owner())
+          .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+      });
+
+      before('trader1 buys 1 snxBTC', async () => {
+        await systems()
+          .SpotMarket.connect(trader1())
+          .buy(synthBTCMarketId, bn(10_000), bn(1), ethers.constants.AddressZero);
+      });
+
+      before('add collateral', async () => {
+        await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .approve(systems().PerpsMarket.address, bn(1));
+
+        modifyCollateralTxn = await systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountIds[0], synthBTCMarketId, bn(1));
+      });
+
+      it('properly reflects margin for account', async () => {
+        const totalValue = await systems().PerpsMarket.totalCollateralValue(accountIds[0]);
+        console.log(totalValue.toString());
+      });
+
+      // it properly deducts the amount from the trader's spot balance
+      it('properly deducts the amount from the traders balance ', async () => {
+        // const totalValue = await systems().PerpsMarket.totalCollateralValue(expectedAccountId);
+        // console.log(totalValue.toString());
+      });
+
+      it('emits correct event with the expected values', async () => {
+        await assertEvent(
+          modifyCollateralTxn,
+          `CollateralModified(${accountIds[0]}, ${synthBTCMarketId}, ${bn(
+            1
+          )}, "${await trader1().getAddress()}"`,
+          systems().PerpsMarket
+        );
+      });
+    });
   });
 });

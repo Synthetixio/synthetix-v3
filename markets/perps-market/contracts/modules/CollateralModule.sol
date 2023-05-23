@@ -8,8 +8,6 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 contract CollateralModule is ICollateralModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
 
-    bytes32 private constant _MODIFY_COLLATERAL_FEATURE_FLAG = "modifyCollateral";
-
     function setMaxCollateralAmount(uint128 synthId, uint maxCollateralAmount) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();

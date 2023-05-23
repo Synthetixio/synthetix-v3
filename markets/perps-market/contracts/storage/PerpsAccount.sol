@@ -13,8 +13,6 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
-import "hardhat/console.sol";
-
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**
@@ -401,7 +399,6 @@ library PerpsAccount {
         Data storage self,
         uint amount // snxUSD
     ) internal {
-        console.log("deduct", amount);
         uint leftoverAmount = amount;
         uint128[] storage synthDeductionPriority = PerpsMarketFactory.load().synthDeductionPriority;
         for (uint i = 0; i < synthDeductionPriority.length; i++) {
