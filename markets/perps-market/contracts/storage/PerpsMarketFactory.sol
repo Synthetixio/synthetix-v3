@@ -43,6 +43,7 @@ library PerpsMarketFactory {
          * @dev when deducting from user's margin which is made up of many synths, this priority governs which synth to sell for deduction
          */
         uint128[] synthDeductionPriority;
+        uint128[] perpsMarketIds;
         uint maxLeverage;
         SetUtil.UintSet liquidatableAccounts;
         // collateral amounts running total

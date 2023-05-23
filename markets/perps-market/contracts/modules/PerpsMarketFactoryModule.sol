@@ -73,6 +73,8 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         market.name = marketName;
         market.symbol = marketSymbol;
 
+        store.perpsMarketIds.push(perpsMarketId);
+
         emit MarketRegistered(perpsMarketId, marketOwner, marketName, marketSymbol);
 
         return perpsMarketId;
@@ -165,5 +167,9 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return
             interfaceId == type(IMarket).interfaceId ||
             interfaceId == this.supportsInterface.selector;
+    }
+
+    function getPerpsMarketIds() public view returns (uint128[] memory) {
+        return PerpsMarketFactory.load().perpsMarketIds;
     }
 }

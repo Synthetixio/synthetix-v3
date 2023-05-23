@@ -609,6 +609,7 @@ library PerpsMarketFactory {
         address spotMarket;
         mapping(uint128 => uint) maxCollateralAmounts;
         uint128[] synthDeductionPriority;
+        uint128[] perpsMarketIds;
         uint maxLeverage;
         SetUtil.UintSet liquidatableAccounts;
         mapping(uint128 => uint) collateralAmounts;
