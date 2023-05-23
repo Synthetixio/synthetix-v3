@@ -50,7 +50,7 @@ describe('MulticallModule', function () {
     });
   });
 
-  describe('multicallThrough()', () => {
+  describe.skip('multicallThrough()', () => {
     it('passes through errors', async () => {
       await assertRevert(
         systems()

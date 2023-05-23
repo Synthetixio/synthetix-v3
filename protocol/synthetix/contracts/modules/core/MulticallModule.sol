@@ -5,8 +5,6 @@ import "../../interfaces/IMulticallModule.sol";
 
 import "../../storage/Config.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Module that enables calling multiple methods of the system in a single transaction.
  * @dev See IMulticallModule.
@@ -29,7 +27,6 @@ contract MulticallModule is IMulticallModule {
 
             if (!success) {
                 uint len = result.length;
-                console.log("THELEN", len);
                 assembly {
                     revert(add(result, 0x20), len)
                 }
@@ -39,7 +36,8 @@ contract MulticallModule is IMulticallModule {
         }
     }
 
-    function multicallThrough(
+    // uncomment this when governance approves `multicallThrough` functionality (didnt want to put this in a separate PR for now)
+    /*function multicallThrough(
         address[] calldata to,
         bytes[] calldata data
     ) public payable override returns (bytes[] memory results) {
@@ -74,5 +72,5 @@ contract MulticallModule is IMulticallModule {
 
     function getMessageSender() external view override returns (address) {
         return Config.readAddress(_CONFIG_MESSAGE_SENDER, address(0));
-    }
+    }*/
 }
