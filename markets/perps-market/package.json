@@ -2,7 +2,6 @@
   "name": "@synthetixio/perps-market",
   "version": "3.1.0",
   "description": "Perps Market implementation",
-  "private": true,
   "scripts": {
     "build": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
     "check:storage": "git diff --exit-code storage.dump.sol",
