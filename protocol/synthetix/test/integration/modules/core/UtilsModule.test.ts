@@ -34,7 +34,32 @@ describe('UtilsModule', function () {
           .registerCcip(user1.getAddress(), user1.getAddress(), user1.getAddress());
       });
 
-      it('sets ccip values in usd token', async () => {});
+      it('sets ccip values in usd token', async () => {
+        assert.equal(
+          (
+            await systems().USD.getAssociatedSystem(
+              ethers.utils.formatBytes32String('ccipChainlinkSend')
+            )
+          )[0],
+          await user1.getAddress()
+        );
+        assert.equal(
+          (
+            await systems().USD.getAssociatedSystem(
+              ethers.utils.formatBytes32String('ccipChainlinkRecv')
+            )
+          )[0],
+          await user1.getAddress()
+        );
+        assert.equal(
+          (
+            await systems().USD.getAssociatedSystem(
+              ethers.utils.formatBytes32String('ccipChainlinkTokenPool')
+            )
+          )[0],
+          await user1.getAddress()
+        );
+      });
     });
   });
 
