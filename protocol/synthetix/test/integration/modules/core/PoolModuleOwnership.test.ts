@@ -4,11 +4,12 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrap, bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('PoolModule Create / Ownership', function () {
-  const { signers, systems, MockMarket, marketId, poolId, depositAmount } = bootstrapWithMockMarketAndPool();
+  const { signers, systems, MockMarket, marketId, poolId, depositAmount } =
+    bootstrapWithMockMarketAndPool();
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -205,14 +206,14 @@ describe('PoolModule Create / Ownership', function () {
       before('save market capacity', async () => {
         initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
       });
-  
+
       describe('market debt goes up', async () => {
         before('increase market debt', async () => {
           await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
-  
+
           await systems().Core.connect(owner).rebalancePool(poolId);
         });
-  
+
         it('the ultimate capacity of the market ends up to be the same', async () => {
           assertBn.equal(
             await systems().Core.Market_get_creditCapacityD18(marketId()),
