@@ -78,7 +78,9 @@ describe('Atomic Order Module buy()', () => {
     it('emits SynthBought event', async () => {
       await assertEvent(
         txn,
-        `SynthBought(${marketId()}, ${bn(1)}, [0, 0, 0, 0], 0, "${Ethers.constants.AddressZero}")`,
+        `SynthBought(${marketId()}, ${bn(1)}, [0, 0, 0, 0], 0, "${
+          Ethers.constants.AddressZero
+        }", ${bn(1000)})`,
         systems().SpotMarket
       );
     });
@@ -118,7 +120,7 @@ describe('Atomic Order Module buy()', () => {
         txn,
         `SynthBought(${marketId()}, ${bn(0.99)}, [${bn(10)}, 0, 0, 0], 0, "${
           Ethers.constants.AddressZero
-        }")`,
+        }", ${bn(1000)})`,
         systems().SpotMarket
       );
     });
@@ -265,7 +267,7 @@ describe('Atomic Order Module buy()', () => {
         txn,
         `SynthBought(${marketId()}, ${bn(99)}, [${expectedFee}, 0, 0, 0], ${expectedFee.div(2)}, "${
           Ethers.constants.AddressZero
-        }")`,
+        }", ${bn(1000)})`,
         systems().SpotMarket
       );
     });

@@ -23,7 +23,8 @@ interface IAsyncOrderSettlementModule {
         uint256 finalOrderAmount,
         OrderFees.Data fees,
         uint256 collectedFees,
-        address indexed settler
+        address indexed settler,
+        uint256 price
     );
 
     /**
@@ -41,6 +42,11 @@ interface IAsyncOrderSettlementModule {
      * @notice Gets thrown when offchain verification returns data not associated with the order.
      */
     error InvalidVerificationResponse();
+
+    /**
+     * @notice Gets thrown when settle called with invalid settlement strategy
+     */
+    error InvalidSettlementStrategy(SettlementStrategy.Type strategyType);
 
     /**
      * @notice Gets thrown when final order amount returned to trader is less than the minimum settlement amount.
