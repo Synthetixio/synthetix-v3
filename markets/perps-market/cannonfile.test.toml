@@ -1,5 +1,5 @@
 name = "synthetix-perps-market"
-version = "<%= package.version %>"
+version = "<%= package.version %>-testable"
 description = "Perps market implementation"
 
 [setting.coreProxyOwner]
