@@ -40,7 +40,8 @@ interface IAtomicOrderModule {
         uint256 synthReturned,
         OrderFees.Data fees,
         uint256 collectedFees,
-        address referrer
+        address referrer,
+        uint256 price
     );
 
     /**
@@ -56,7 +57,8 @@ interface IAtomicOrderModule {
         uint256 amountReturned,
         OrderFees.Data fees,
         uint256 collectedFees,
-        address referrer
+        address referrer,
+        uint256 price
     );
 
     /**

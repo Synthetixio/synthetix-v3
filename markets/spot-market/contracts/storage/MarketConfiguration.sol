@@ -104,15 +104,15 @@ library MarketConfiguration {
     }
 
     /**
-     * @dev Get quote for amount of collateral (`amount`) to receive in synths (`synthAmount`)
+     * @dev Get quote for amount of collateral (`baseAmountD18`) to receive in synths (`synthAmount`)
      */
     function quoteWrap(
         uint128 marketId,
-        uint256 amount,
+        uint256 baseAmountD18,
         uint256 synthPrice
     ) internal view returns (uint256 synthAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
-        uint256 usdAmount = amount.mulDecimal(synthPrice);
+        uint256 usdAmount = baseAmountD18.mulDecimal(synthPrice);
         fees.wrapperFees = config.wrapFixedFee.mulDecimal(usdAmount.toInt());
         usdAmount = (usdAmount.toInt() - fees.wrapperFees).toUint();
 
@@ -152,7 +152,7 @@ library MarketConfiguration {
         int256 amountInt = usdAmount.toInt();
 
         // compute skew fee based on amount out
-        int256 skewFee = calculateSkewFeeExact(
+        int256 skewFee = calculateSkewFeeRatioExact(
             config,
             marketId,
             amountInt,
@@ -164,13 +164,17 @@ library MarketConfiguration {
         // apply fees by adding to the amount
         usdAmount = (amountInt + fees.skewFees).toUint();
 
-        uint256 utilizationFee = calculateUtilizationRateFee(
+        uint256 utilizationFee = calculateUtilizationFeeRatio(
             config,
             marketId,
             usdAmount,
             synthPrice
         );
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         // apply utilization and fixed fees
         // Note: when calculating exact out, we need to apply fees in reverse order.  so instead of
         // multiplying by %, we divide by %
@@ -192,13 +196,17 @@ library MarketConfiguration {
     ) internal view returns (uint256 synthAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
 
-        uint256 utilizationFee = calculateUtilizationRateFee(
+        uint256 utilizationFee = calculateUtilizationFeeRatio(
             config,
             marketId,
             usdAmount,
             synthPrice
         );
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
 
         fees.utilizationFees = utilizationFee.mulDecimal(usdAmount);
         fees.fixedFees = fixedFee.mulDecimal(usdAmount);
@@ -232,7 +240,11 @@ library MarketConfiguration {
         fees.skewFees = synthAmountFromSkew.mulDecimal(synthPrice).toInt() - usdAmount.toInt();
         usdAmount = (usdAmount.toInt() + fees.skewFees).toUint();
 
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         // use the usd amount _after_ skew fee is applied to the amount
         // when exact out, fees are applied by dividing by %
         fees.fixedFees = usdAmount.divDecimal(DecimalMath.UNIT - fixedFee) - usdAmount;
@@ -256,7 +268,11 @@ library MarketConfiguration {
 
         usdAmount = synthAmount.mulDecimal(synthPrice);
 
-        uint256 fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         fees.fixedFees = fixedFee.mulDecimal(usdAmount);
 
         // apply fixed fee by removing from the amount that gets returned to user in exchange
@@ -265,7 +281,7 @@ library MarketConfiguration {
         // use the amount _after_ fixed fee is applied to the amount
         // skew is calcuated based on amount after all other fees applied, to get accurate skew fee
         int256 usdAmountInt = usdAmount.toInt();
-        int256 skewFee = calculateSkewFeeExact(
+        int256 skewFee = calculateSkewFeeRatioExact(
             config,
             marketId,
             usdAmountInt * -1, // removing value so negative
@@ -277,7 +293,7 @@ library MarketConfiguration {
     }
 
     /**
-     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`amount`)
+     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`usdAmount`)
      * @dev This function is used when we call `buyExactOut` or `sellExactIn` where we know the exact synth leaving/added to the system.
      * @dev When we only know the USD amount and need to calculate expected synth after fees, we have to use
      *      `calculateSkew` instead.
@@ -287,14 +303,14 @@ library MarketConfiguration {
      *  Before fill outstanding snxETH (minus any wrapped collateral): 100 snxETH
      *  If buy trade:
      *    - user is buying 10 ETH
-     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1005 bips
+     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1050 bips
      *  On a sell, the amount is negative, and so if there's positive skew in the system, the fee is negative to incentize selling
      *  and if the skew is negative, then the fee for a sell would be positive to incentivize neutralizing the skew.
      */
-    function calculateSkewFeeExact(
+    function calculateSkewFeeRatioExact(
         Data storage self,
         uint128 marketId,
-        int256 amount,
+        int256 usdAmount,
         uint256 synthPrice,
         Transaction.Type transactionType
     ) internal view returns (int256 skewFee) {
@@ -316,7 +332,7 @@ library MarketConfiguration {
             .mulDecimal(synthPrice)
             .toInt() - wrappedCollateralAmount.toInt();
 
-        int256 skewAfterFill = initialSkew + amount;
+        int256 skewAfterFill = initialSkew + usdAmount;
         int256 skewAverage = (skewAfterFill + initialSkew) / 2;
 
         skewFee = skewAverage.divDecimal(skewScaleValue);
@@ -372,10 +388,10 @@ library MarketConfiguration {
      * Note: we do NOT calculate the inverse of this fee on `buyExactIn` vs `buyExactOut`.  We don't
      * believe this edge case adds any risk.  This means it could be beneficial to use `buyExactIn` vs `buyExactOut`
      */
-    function calculateUtilizationRateFee(
+    function calculateUtilizationFeeRatio(
         Data storage self,
         uint128 marketId,
-        uint256 amount,
+        uint256 usdAmount,
         uint256 synthPrice
     ) internal view returns (uint256 utilFee) {
         if (self.utilizationFeeRate == 0 || self.collateralLeverage == 0) {
@@ -392,7 +408,7 @@ library MarketConfiguration {
 
         // Note: take into account the async order commitment amount in escrow
         uint256 totalValueBeforeFill = totalBalance.mulDecimal(synthPrice);
-        uint256 totalValueAfterFill = totalValueBeforeFill + amount;
+        uint256 totalValueAfterFill = totalValueBeforeFill + usdAmount;
 
         // utilization is below 100%
         if (leveragedDelegatedCollateralValue > totalValueAfterFill) {
@@ -426,7 +442,7 @@ library MarketConfiguration {
      * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
      * @dev the code does not allow setting fixed fee to 0 for a given transactor.  If you want to disable fees for a given actor, set the fee to be very low (e.g. 1 wei)
      */
-    function _getFixedFee(
+    function _getFixedFeeRatio(
         Data storage self,
         address transactor,
         bool async
@@ -527,7 +543,7 @@ library MarketConfiguration {
     /*
      * @dev This equation allows us to calculate skew fee % from any given point on the skew scale
      * to where we should end up after a fill.  The equation is derived from the following:
-     *  K*2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
+     *  K/2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
      *  K = configured skew scale
      *  C = amount (cost in USD)
      *  Ni = initial skew
@@ -537,12 +553,12 @@ library MarketConfiguration {
      */
     function _calculateSkewAmountOut(
         Data storage self,
-        int256 amount,
+        int256 usdAmount,
         uint256 price,
         int256 initialSkew
     ) private view returns (int256 amountOut) {
         uint256 skewPriceRatio = self.skewScale.divDecimal(2 * price);
-        int256 costPriceSkewRatio = (8 * amount.mulDecimal(price.toInt())).divDecimal(
+        int256 costPriceSkewRatio = (8 * usdAmount.mulDecimal(price.toInt())).divDecimal(
             self.skewScale.toInt()
         );
         int256 initialSkewPriceRatio = (2 * initialSkew.mulDecimal(price.toInt())).divDecimal(
