@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -309,6 +309,11 @@ contract MarketManagerModule {
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO = "withdrawMarketUsd_feeRatio";
     bytes32 private constant _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS = "depositMarketUsd_feeAddress";
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
+}
+
+// @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
+contract MulticallModule {
+    bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
@@ -631,4 +636,9 @@ library VaultEpoch {
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
