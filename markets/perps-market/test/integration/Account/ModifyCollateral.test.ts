@@ -7,6 +7,8 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 describe('ModifyCollateral', () => {
   const accountIds = [10, 20];
   const invalidAccountId = 42069;
+  const oneBTC = bn(1);
+  const marginAmount = bn(10_000);
 
   const { systems, owner, synthMarkets, perpsMarkets, trader1, trader2 } = bootstrapMarkets({
     synthMarkets: [
@@ -48,7 +50,7 @@ describe('ModifyCollateral', () => {
         await assertRevert(
           systems()
             .PerpsMarket.connect(trader2())
-            .modifyCollateral(invalidAccountId, perpBTCMarketId, bn(1)),
+            .modifyCollateral(invalidAccountId, perpBTCMarketId, oneBTC),
           `AccountNotFound("${invalidAccountId}"`
         );
       });
@@ -57,7 +59,7 @@ describe('ModifyCollateral', () => {
         await assertRevert(
           systems()
             .PerpsMarket.connect(owner())
-            .modifyCollateral(accountIds[1], perpBTCMarketId, bn(1)),
+            .modifyCollateral(accountIds[1], perpBTCMarketId, oneBTC),
           `PermissionDenied("${
             accountIds[1]
           }", "${PERPS_PERMISSION_NAME}", "${await owner().getAddress()}")`
@@ -82,24 +84,39 @@ describe('ModifyCollateral', () => {
         );
       });
 
-      it('reverts if the trader does not have enough balance', async () => {
-        const collateralAmt = bn(1);
+      it('reverts if the trader does not have enough allowance', async () => {
         await systems()
           .PerpsMarket.connect(owner())
-          .setMaxCollateralAmount(synthETHMarketId, collateralAmt);
+          .setMaxCollateralAmount(synthETHMarketId, oneBTC);
 
         await assertRevert(
           systems()
             .PerpsMarket.connect(trader1())
-            .modifyCollateral(accountIds[0], synthETHMarketId, collateralAmt),
-          `InsufficientAllowance("${collateralAmt}", "0")`
+            .modifyCollateral(accountIds[0], synthETHMarketId, oneBTC),
+          `InsufficientAllowance("${oneBTC}", "0")`
+        );
+      });
+
+      it('reverts if the trader does not have enough spot balance', async () => {
+        await systems()
+          .PerpsMarket.connect(owner())
+          .setMaxCollateralAmount(synthBTCMarketId, oneBTC);
+
+        await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .approve(systems().PerpsMarket.address, oneBTC);
+
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(trader1())
+            .modifyCollateral(accountIds[0], synthBTCMarketId, oneBTC),
+          `InsufficientBalance("${oneBTC}", "0")`
         );
       });
     });
 
     describe('successful', async () => {
-      const oneBTC = bn(1);
-      const marginAmount = bn(10_000);
       let spotBalanceBefore: ethers.BigNumber;
       let perpsBalanceBefore: ethers.BigNumber;
       let modifyCollateralTxn: ethers.providers.TransactionResponse;
