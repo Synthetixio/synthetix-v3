@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 describe('Create Order test', () => {
   const { systems, signers, perpsMarkets, provider, trader1 } = bootstrapMarkets({
@@ -60,6 +61,9 @@ describe('Create Order test', () => {
   });
 
   it('check position is live', async () => {
-    console.log(await systems().PerpsMarket.openPosition(2, marketId));
+    const [pnl, funding, size] = await systems().PerpsMarket.openPosition(2, marketId);
+    assertBn.equal(pnl, bn(-0.005));
+    assertBn.equal(funding, bn(0));
+    assertBn.equal(size, bn(1));
   });
 });

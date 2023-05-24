@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Perps Market implementation",
   "scripts": {
     "build": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
