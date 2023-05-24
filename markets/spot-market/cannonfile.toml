@@ -124,6 +124,6 @@ depends = ['invoke.setSynthetixSystem']
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
 func = "addToFeatureFlagAllowlist"
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 args = ["<%= formatBytes32String('createSynth') %>", "<%= settings.owner %>"]
 depends = ["invoke.upgradeSpotMarketProxy"]

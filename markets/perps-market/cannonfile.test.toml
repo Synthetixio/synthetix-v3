@@ -1,5 +1,5 @@
 name = "synthetix-perps-market"
-version = "<%= package.version %>"
+version = "<%= package.version %>-testable"
 description = "Perps market implementation"
 
 [setting.coreProxyOwner]
@@ -25,9 +25,6 @@ source = "<%= settings.spotMarketPackage %>"
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
-[contract.PerpsAccountModule]
-artifact = "PerpsAccountModule"
-
 [contract.CollateralModule]
 artifact = "CollateralModule"
 
@@ -36,6 +33,9 @@ artifact = "AsyncOrderModule"
 
 [contract.AtomicOrderModule]
 artifact = "AtomicOrderModule"
+
+[contract.PerpsAccountModule]
+artifact = "PerpsAccountModule"
 
 [contract.LimitOrderModule]
 artifact = "LimitOrderModule"
@@ -66,9 +66,9 @@ contracts = [
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
   "PerpsMarketFactoryModule",
+  "PerpsAccountModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
-  "PerpsAccountModule",
   "CollateralModule",
   "FeatureFlagModule",
   "LimitOrderModule",

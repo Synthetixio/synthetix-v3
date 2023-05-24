@@ -85,12 +85,13 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         );
     }
 
-    function _recvCreateCrossChainPool(uint64 srcChainId, uint64 srcPoolId) external override {
+    function _recvCreateCrossChainPool(uint64 srcChainId, uint128 srcPoolId) external override {
         CrossChain.onlyCrossChain();
 
         // create a pool with no owner. It can only be controlled by cross chain calls from its parent pool
+        uint128 newPoolId = Pool.getCrossChainPoolId(srcChainId, srcPoolId);
         Pool.Data storage pool = Pool.create(
-            type(uint128).max / 2 + SystemPoolConfiguration.load().lastPoolId++,
+            newPoolId,
             address(0)
         );
 
@@ -98,6 +99,8 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         pool.crossChain[0].pairedChains.push(uint64(block.chainid));
 
         pool.crossChain[0].pairedPoolIds[srcChainId] = srcPoolId;
+
+        emit CrossChainSecondaryPoolCreated(srcChainId, srcPoolId, newPoolId);
     }
 
     function setCrossChainPoolConfiguration(

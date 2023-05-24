@@ -28,7 +28,7 @@ contract MulticallModule is IMulticallModule {
             if (!success) {
                 uint len = result.length;
                 assembly {
-                    revert(result, len)
+                    revert(add(result, 0x20), len)
                 }
             }
 
@@ -36,7 +36,8 @@ contract MulticallModule is IMulticallModule {
         }
     }
 
-    function multicallThrough(
+    // uncomment this when governance approves `multicallThrough` functionality (didnt want to put this in a separate PR for now)
+    /*function multicallThrough(
         address[] calldata to,
         bytes[] calldata data
     ) public payable override returns (bytes[] memory results) {
@@ -53,13 +54,13 @@ contract MulticallModule is IMulticallModule {
             if (to[i] == address(this)) {
                 (success, result) = address(this).delegatecall(data[i]);
             } else {
-                (success, result) = address(this).call(data[i]);
+                (success, result) = address(to[i]).call(data[i]);
             }
 
             if (!success) {
                 uint len = result.length;
                 assembly {
-                    revert(result, len)
+                    revert(add(result, 0x20), len)
                 }
             }
 
@@ -69,7 +70,7 @@ contract MulticallModule is IMulticallModule {
         Config.put(_CONFIG_MESSAGE_SENDER, 0);
     }
 
-    function getMessageSender() external override returns (address) {
+    function getMessageSender() external view override returns (address) {
         return Config.readAddress(_CONFIG_MESSAGE_SENDER, address(0));
-    }
+    }*/
 }

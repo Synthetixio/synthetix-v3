@@ -1,8 +1,7 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "3.1.0-alpha.1",
+  "version": "3.1.1",
   "description": "Perps Market implementation",
-  "private": true,
   "scripts": {
     "build": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
     "check:storage": "git diff --exit-code storage.dump.sol",
@@ -12,7 +11,9 @@
     "test": "hardhat test",
     "coverage": "yarn test",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "publish-contracts": "yarn build && cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --quiet",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "postpack": "yarn publish-contracts"
   },
   "keywords": [],
   "author": "Synthetix",

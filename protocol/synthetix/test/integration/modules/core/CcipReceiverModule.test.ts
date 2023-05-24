@@ -1,12 +1,10 @@
-import assert from 'assert/strict';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
 import { bootstrap } from '../../bootstrap';
-import { verifyUsesFeatureFlag } from '../../verifications';
 
-describe('CrossChainPoolModule', function () {
+describe.only('CcipReceiverModule', function () {
   const { signers, systems } = bootstrap();
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, FakeCcip: ethers.Signer;
@@ -18,30 +16,30 @@ describe('CrossChainPoolModule', function () {
   before('set ccip settings', async () => {
     await systems()
       .Core.connect(owner)
-      .configureChainlinkCrossChain(await FakeCcip.getAddress(), ethers.constants.AddressZero);
+      .configureChainlinkCrossChain(await FakeCcip.getAddress(), ethers.constants.AddressZero, ethers.constants.AddressZero);
   });
 
   describe('ccipReceive()', () => {
     it('fails if caller is not CCIP router', async () => {
       await assertRevert(
         systems().Core.ccipReceive({
-          messageId: '',
+          messageId: ethers.constants.HashZero,
           sourceChainId: 0,
-          sender: systems().Core.address,
+          sender: ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
           data: '0x',
           tokenAmounts: [],
         }),
-        'Unauthorized(',
+        `NotCcipRouter("${await owner.getAddress()}")`,
         systems().Core
       );
     });
 
     it('fails if message sender on other chain is not self', async () => {
       await assertRevert(
-        systems().Core.ccipReceive({
-          messageId: '',
+        systems().Core.connect(FakeCcip).ccipReceive({
+          messageId: ethers.constants.HashZero,
           sourceChainId: 0,
-          sender: await FakeCcip.getAddress(),
+          sender: ethers.utils.defaultAbiCoder.encode(['address'], [await FakeCcip.getAddress()]),
           data: '0x',
           tokenAmounts: [],
         }),
@@ -51,15 +49,17 @@ describe('CrossChainPoolModule', function () {
     });
 
     it('forwards message to specified caller', async () => {
-      const tx = await systems().Core.ccipReceive({
-        messageId: '',
+      const tx = await systems().Core.connect(FakeCcip).ccipReceive({
+        messageId: ethers.constants.HashZero,
         sourceChainId: 0,
-        sender: systems().Core.address,
-        data: systems().Core.interface.encodeFunctionData('createAccount(uint128)', [8273846]),
+        sender: ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
+        data: systems().Core.interface.encodeFunctionData('_recvCreateCrossChainPool', [100,5]),
         tokenAmounts: [],
       });
 
-      await assertEvent(tx, 'AccountCreated("8273846")', systems().Core);
+      //console.log(await tx.wait());
+
+      await assertEvent(tx, 'CrossChainSecondaryPoolCreated(', systems().Core);
     });
   });
 });

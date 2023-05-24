@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.4;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -179,6 +179,7 @@ library CollateralLock {
         uint128 amountD18;
         uint64 lockExpirationTime;
         uint128 lockExpirationPoolSync;
+        address lockExpirationPoolSyncVault;
     }
 }
 
@@ -287,8 +288,17 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        int256 cumulativeDebtD18;
-        PoolCrossChainInfo.Data[] crossChain;
+        uint128 totalCapacityD18;
+        int128 cumulativeDebtD18;
+        mapping(uint256 => uint256) heldMarketConfigurationWeights;
+        mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
+    }
+    struct AnalyzePoolConfigRuntime {
+        uint256 oldIdx;
+        uint256 potentiallyLockedMarketsIdx;
+        uint256 potentiallyDelayedMarketsIdx;
+        uint256 removedMarketsIdx;
+        uint128 lastMarketId;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
@@ -319,6 +329,7 @@ library PoolCrossChainSync {
         int128 totalDebt;
         uint64 dataTimestamp;
         uint64 oldestDataTimestamp;
+        uint64 oldestPoolConfigTimestamp;
     }
 }
 
@@ -376,6 +387,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
+        uint128 prevCapacityD18;
         int128 prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
@@ -392,6 +404,8 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
+        uint128 totalExitingCollateralD18;
+        uint128 _reserved;
         mapping(bytes32 => CollateralLock.Data) exitingCollateral;
     }
 }

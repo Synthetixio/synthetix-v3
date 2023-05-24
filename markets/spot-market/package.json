@@ -1,9 +1,10 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Spot Market implementation",
   "scripts": {
-    "build": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
+    "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat cannon:build",
+    "build-testable": "hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean",
@@ -13,7 +14,8 @@
     "coverage": "yarn test",
     "compile-contracts": "hardhat compile",
     "publish-contracts": "yarn build && cannon publish synthetix-spot-market:$(node -p 'require(`./package.json`).version') --quiet",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "postpack": "yarn publish-contracts"
   },
   "keywords": [],
   "author": "Synthetix",
@@ -22,12 +24,12 @@
     "@ethersproject/abi": "5.7.0",
     "@ethersproject/providers": "5.7.2",
     "@nomiclabs/hardhat-ethers": "2.2.1",
-    "@synthetixio/common-config": "3.1.0",
-    "@synthetixio/core-contracts": "3.1.0",
-    "@synthetixio/core-modules": "3.1.0",
-    "@synthetixio/core-utils": "3.1.0",
-    "@synthetixio/main": "3.1.0",
-    "@synthetixio/oracle-manager": "3.1.0",
+    "@synthetixio/common-config": "3.1.1",
+    "@synthetixio/core-contracts": "3.1.1",
+    "@synthetixio/core-modules": "3.1.1",
+    "@synthetixio/core-utils": "3.1.1",
+    "@synthetixio/main": "3.1.1",
+    "@synthetixio/oracle-manager": "3.1.1",
     "@synthetixio/wei": "2.74.4",
     "@usecannon/cli": "2.4.7",
     "ethers": "^5.0.0",
@@ -37,5 +39,5 @@
     "ts-node": "10.9.1",
     "typescript": "4.9.3"
   },
-  "gitHead": "d5d322abfb3a6260ecd3e0339c945649f5d53cb2"
+  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
 }

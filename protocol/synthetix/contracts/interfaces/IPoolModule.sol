@@ -179,4 +179,9 @@ interface IPoolModule {
      * @return minRatioD18 The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function getMinLiquidityRatio() external view returns (uint256 minRatioD18);
+
+    /**
+     * @notice Distributes cached debt in a pool to its vaults and updates market credit capacities.
+     */
+    function rebalancePool(uint128 poolId) external;
 }

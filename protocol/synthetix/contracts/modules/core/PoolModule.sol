@@ -116,6 +116,13 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
+    function rebalancePool(uint128 poolId) external override {
+        Pool.load(poolId).distributeDebtToVaults(0);
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
     function setPoolConfiguration(
         uint128 poolId,
         MarketConfiguration.Data[] memory newMarketConfigurations

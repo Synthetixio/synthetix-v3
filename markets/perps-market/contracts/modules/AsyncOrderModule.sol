@@ -178,8 +178,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         uint amountToDeposit = totalFees - settlementReward;
-        // pay keeper
-        factory.usdToken.transfer(msg.sender, settlementReward);
+        if (settlementReward > 0) {
+            // pay keeper
+            factory.usdToken.transfer(msg.sender, settlementReward);
+        }
         if (amountToDeposit > 0) {
             // deposit into market manager
             factory.depositToMarketManager(asyncOrder.marketId, amountToDeposit);

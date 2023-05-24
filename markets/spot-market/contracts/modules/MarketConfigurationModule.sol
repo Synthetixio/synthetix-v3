@@ -28,6 +28,26 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getMarketFees(
+        uint128 synthMarketId
+    )
+        external
+        view
+        override
+        returns (uint256 atomicFixedFee, uint256 asyncFixedFee, int256 wrapFee, int256 unwrapFee)
+    {
+        MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(
+            synthMarketId
+        );
+        atomicFixedFee = marketConfiguration.atomicFixedFee;
+        asyncFixedFee = marketConfiguration.asyncFixedFee;
+        wrapFee = marketConfiguration.wrapFixedFee;
+        unwrapFee = marketConfiguration.unwrapFixedFee;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -50,6 +70,15 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getMarketSkewScale(
+        uint128 synthMarketId
+    ) external view override returns (uint256 skewScale) {
+        skewScale = MarketConfiguration.load(synthMarketId).skewScale;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setMarketUtilizationFees(
         uint128 synthMarketId,
         uint256 utilizationFeeRate
@@ -59,6 +88,15 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         MarketConfiguration.load(synthMarketId).utilizationFeeRate = utilizationFeeRate;
 
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getMarketUtilizationFees(
+        uint128 synthMarketId
+    ) external view override returns (uint256 utilizationFeeRate) {
+        utilizationFeeRate = MarketConfiguration.load(synthMarketId).utilizationFeeRate;
     }
 
     /**
@@ -79,15 +117,34 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getCollateralLeverage(
+        uint128 synthMarketId
+    ) external view override returns (uint256 collateralLeverage) {
+        collateralLeverage = MarketConfiguration.load(synthMarketId).collateralLeverage;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setCustomTransactorFees(
         uint128 synthMarketId,
         address transactor,
         uint256 fixedFeeAmount
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
-        MarketConfiguration.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
+        MarketConfiguration.setFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
 
         emit TransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getCustomTransactorFees(
+        uint128 synthMarketId,
+        address transactor
+    ) external view override returns (uint256 fixedFeeAmount) {
+        fixedFeeAmount = MarketConfiguration.getFixedFeeOverride(synthMarketId, transactor);
     }
 
     /**
@@ -106,6 +163,15 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         MarketConfiguration.load(synthMarketId).feeCollector = IFeeCollector(feeCollector);
         emit FeeCollectorSet(synthMarketId, feeCollector);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getFeeCollector(
+        uint128 synthMarketId
+    ) external view override returns (address feeCollector) {
+        feeCollector = address(MarketConfiguration.load(synthMarketId).feeCollector);
     }
 
     /**
@@ -144,5 +210,15 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         MarketConfiguration.load(synthMarketId).referrerShare[referrer] = sharePercentage;
 
         emit ReferrerShareUpdated(synthMarketId, referrer, sharePercentage);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getReferrerShare(
+        uint128 synthMarketId,
+        address referrer
+    ) external view override returns (uint256 sharePercentage) {
+        sharePercentage = MarketConfiguration.load(synthMarketId).referrerShare[referrer];
     }
 }

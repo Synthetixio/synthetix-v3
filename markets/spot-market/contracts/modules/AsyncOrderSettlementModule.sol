@@ -74,6 +74,10 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             SettlementStrategy.Data storage settlementStrategy
         ) = _performClaimValidityChecks(marketId, asyncOrderId);
 
+        if (settlementStrategy.strategyType != SettlementStrategy.Type.PYTH) {
+            revert InvalidSettlementStrategy(settlementStrategy.strategyType);
+        }
+
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = settlementStrategy.feedId;
 
@@ -139,14 +143,14 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             );
         }
 
-        // Emit event
         emit OrderSettled(
             marketId,
             asyncOrderId,
             finalOrderAmount,
             fees,
             collectedFees,
-            msg.sender
+            msg.sender,
+            price
         );
     }
 
@@ -191,8 +195,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             spotMarketFactory,
             Transaction.Type.ASYNC_BUY
         );
-
-        ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, settlementReward);
+        if (settlementReward > 0) {
+            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, settlementReward);
+        }
         spotMarketFactory.depositToMarketManager(marketId, amountUsable - collectedFees);
         SynthUtil.getToken(marketId).mint(trader, returnSynthAmount);
     }

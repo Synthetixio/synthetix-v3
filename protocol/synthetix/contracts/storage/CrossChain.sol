@@ -13,6 +13,8 @@ import "../interfaces/external/FunctionsOracleInterface.sol";
 library CrossChain {
     using SetUtil for SetUtil.UintSet;
 
+    event ProcessedCcipMessage(bytes data, bytes result);
+
     error NotCcipRouter(address);
     error UnsupportedNetwork(uint64);
 
@@ -33,7 +35,7 @@ library CrossChain {
         }
     }
 
-    function processCcipReceive(CcipClient.Any2EVMMessage memory data) internal view {
+    function processCcipReceive(CcipClient.Any2EVMMessage memory data) internal {
         Data storage self = load();
         if (address(self.ccipRouter) == address(0) || msg.sender != address(self.ccipRouter)) {
             revert NotCcipRouter(msg.sender);
@@ -47,6 +49,19 @@ library CrossChain {
         if (sender != address(this)) {
             revert AccessError.Unauthorized(sender);
         }
+
+        // at this point, everything should be good to send the message to ourselves.
+        // the below `onlyCrossChain` function will verify that the caller is self
+        (bool success, bytes memory result) = address(this).call(data.data);
+
+        if (!success) {
+            uint len = result.length;
+            assembly {
+                revert(add(result, 0x20), len)
+            }
+        }
+
+        emit ProcessedCcipMessage(data.data, result);
     }
 
     function onlyCrossChain() internal view {

@@ -1,13 +1,15 @@
 import assert from 'assert/strict';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrap } from '../../../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
 
 describe('PoolModule Create / Ownership', function () {
-  const { signers, systems } = bootstrap();
+  const { signers, systems, MockMarket, marketId, poolId, depositAmount } =
+    bootstrapWithMockMarketAndPool();
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -18,7 +20,7 @@ describe('PoolModule Create / Ownership', function () {
   verifyUsesFeatureFlag(
     () => systems().Core,
     'createPool',
-    () => systems().Core.connect(user1).createPool(1, ethers.constants.AddressZero)
+    () => systems().Core.connect(user1).createPool(2, ethers.constants.AddressZero)
   );
 
   describe('When creating a Pool', async () => {
@@ -36,20 +38,20 @@ describe('PoolModule Create / Ownership', function () {
     before('create a pool', async () => {
       const tx = await systems()
         .Core.connect(user1)
-        .createPool(1, await user1.getAddress());
+        .createPool(2, await user1.getAddress());
       receipt = await tx.wait();
     });
 
     it('emitted an event', async () => {
       await assertEvent(
         receipt,
-        `PoolCreated(1, "${await user1.getAddress()}", "${await user1.getAddress()}")`,
+        `PoolCreated(2, "${await user1.getAddress()}", "${await user1.getAddress()}")`,
         systems().Core
       );
     });
 
     it('is created', async () => {
-      assert.equal(await systems().Core.getPoolOwner(1), await user1.getAddress());
+      assert.equal(await systems().Core.getPoolOwner(2), await user1.getAddress());
     });
 
     describe('when trying to create the same systems().CoreId', () => {
@@ -66,8 +68,8 @@ describe('PoolModule Create / Ownership', function () {
         await assertRevert(
           systems()
             .Core.connect(user2)
-            .createPool(1, await user1.getAddress()),
-          'PoolAlreadyExists("1")',
+            .createPool(2, await user1.getAddress()),
+          'PoolAlreadyExists("2")',
           systems().Core
         );
       });
@@ -77,7 +79,7 @@ describe('PoolModule Create / Ownership', function () {
       describe('when attempting to accept before nominating', async () => {
         it('reverts', async () => {
           await assertRevert(
-            systems().Core.connect(user2).acceptPoolOwnership(1),
+            systems().Core.connect(user2).acceptPoolOwnership(2),
             `Unauthorized("${await user2.getAddress()}")`,
             systems().Core
           );
@@ -89,24 +91,24 @@ describe('PoolModule Create / Ownership', function () {
         before('', async () => {
           const tx = await systems()
             .Core.connect(user1)
-            .nominatePoolOwner(await user2.getAddress(), 1);
+            .nominatePoolOwner(await user2.getAddress(), 2);
           receipt = await tx.wait();
         });
 
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `PoolOwnerNominated(1, "${await user2.getAddress()}", "${await user1.getAddress()}")`,
+            `PoolOwnerNominated(2, "${await user2.getAddress()}", "${await user1.getAddress()}")`,
             systems().Core
           );
         });
 
         it('emits an event when nominee renounces', async () => {
-          const tx = await systems().Core.connect(user2).renouncePoolNomination(1);
+          const tx = await systems().Core.connect(user2).renouncePoolNomination(2);
           receipt = await tx.wait();
           await assertEvent(
             receipt,
-            `PoolNominationRenounced(1, "${await user2.getAddress()}")`,
+            `PoolNominationRenounced(2, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -114,13 +116,13 @@ describe('PoolModule Create / Ownership', function () {
         it('emits an event owner revoke nominee', async () => {
           const tx = await systems()
             .Core.connect(user1)
-            .nominatePoolOwner(await user2.getAddress(), 1);
+            .nominatePoolOwner(await user2.getAddress(), 2);
           await tx.wait();
-          const tx2 = await systems().Core.connect(user1).revokePoolNomination(1);
+          const tx2 = await systems().Core.connect(user1).revokePoolNomination(2);
           receipt = await tx2.wait();
           await assertEvent(
             receipt,
-            `PoolNominationRevoked(1, "${await user1.getAddress()}")`,
+            `PoolNominationRevoked(2, "${await user1.getAddress()}")`,
             systems().Core
           );
         });
@@ -129,9 +131,9 @@ describe('PoolModule Create / Ownership', function () {
           before('accept ownership', async () => {
             const tx = await systems()
               .Core.connect(user1)
-              .nominatePoolOwner(await user2.getAddress(), 1);
+              .nominatePoolOwner(await user2.getAddress(), 2);
             await tx.wait();
-            const tx2 = await systems().Core.connect(user2).acceptPoolOwnership(1);
+            const tx2 = await systems().Core.connect(user2).acceptPoolOwnership(2);
             receipt = await tx2.wait();
           });
 
@@ -139,21 +141,21 @@ describe('PoolModule Create / Ownership', function () {
             await (
               await systems()
                 .Core.connect(user2)
-                .nominatePoolOwner(await user1.getAddress(), 1)
+                .nominatePoolOwner(await user1.getAddress(), 2)
             ).wait();
-            await (await systems().Core.connect(user1).acceptPoolOwnership(1)).wait();
+            await (await systems().Core.connect(user1).acceptPoolOwnership(2)).wait();
           });
 
           it('emits an event', async () => {
             await assertEvent(
               receipt,
-              `PoolOwnershipAccepted(1, "${await user2.getAddress()}")`,
+              `PoolOwnershipAccepted(2, "${await user2.getAddress()}")`,
               systems().Core
             );
           });
 
           it('is the new owner', async () => {
-            assert.equal(await systems().Core.getPoolOwner(1), await user2.getAddress());
+            assert.equal(await systems().Core.getPoolOwner(2), await user2.getAddress());
           });
         });
       });
@@ -163,36 +165,57 @@ describe('PoolModule Create / Ownership', function () {
         before('nominate the new owner', async () => {
           const tx = await systems()
             .Core.connect(user1)
-            .nominatePoolOwner(await user2.getAddress(), 1);
+            .nominatePoolOwner(await user2.getAddress(), 2);
           receipt = await tx.wait();
         });
 
         before('renounce nomination', async () => {
-          const tx = await systems().Core.connect(user2).renouncePoolNomination(1);
+          const tx = await systems().Core.connect(user2).renouncePoolNomination(2);
           receipt = await tx.wait();
         });
 
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `PoolNominationRenounced(1, "${await user2.getAddress()}")`,
+            `PoolNominationRenounced(2, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
 
         it('ownership did not change', async () => {
-          assert.equal(await systems().Core.getPoolOwner(1), await user1.getAddress());
+          assert.equal(await systems().Core.getPoolOwner(2), await user1.getAddress());
         });
 
         describe('when attempting to accept the nomination after renouncing to it', async () => {
           it('reverts', async () => {
             await assertRevert(
-              systems().Core.connect(user2).acceptPoolOwnership(1),
+              systems().Core.connect(user2).acceptPoolOwnership(2),
               `Unauthorized("${await user2.getAddress()}")`,
               systems().Core
             );
           });
         });
+      });
+    });
+  });
+
+  describe('rebalancePool()', () => {
+    let initialMarketCapacity: ethers.BigNumber;
+    before('save market capacity', async () => {
+      initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
+    });
+    describe('market debt goes up', async () => {
+      before('increase market debt and rebalances the markets inside of pool', async () => {
+        await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
+
+        await systems().Core.connect(owner).rebalancePool(poolId);
+      });
+
+      it('the ultimate capacity of the market ends up to be the same', async () => {
+        assertBn.equal(
+          await systems().Core.Market_get_creditCapacityD18(marketId()),
+          initialMarketCapacity
+        );
       });
     });
   });
