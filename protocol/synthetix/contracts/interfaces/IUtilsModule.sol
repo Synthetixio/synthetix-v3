@@ -32,4 +32,18 @@ interface IUtilsModule {
      * @return v the value set on the specified k
      */
     function getConfig(bytes32 k) external view returns (bytes32 v);
+
+    /**
+     * @notice Read a UINT value from the KV system
+     * @param k the key to read
+     * @return v the value set on the specified k
+     */
+    function getConfigUint(bytes32 k) external view returns (uint256 v);
+
+    /**
+     * @notice Read a Address value from the KV system
+     * @param k the key to read
+     * @return v the value set on the specified k
+     */
+    function getConfigAddress(bytes32 k) external view returns (address v);
 }

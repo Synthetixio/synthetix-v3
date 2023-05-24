@@ -311,6 +311,11 @@ contract MarketManagerModule {
     bytes32 private constant _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS = "withdrawMarketUsd_feeAddress";
 }
 
+// @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
+contract MulticallModule {
+    bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
+}
+
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
 contract PoolModule {
     bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
