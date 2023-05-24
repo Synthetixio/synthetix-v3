@@ -6,8 +6,6 @@ import {ICollateralModule} from "../interfaces/ICollateralModule.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 
 contract CollateralModule is ICollateralModule {
-    using PerpsMarketFactory for PerpsMarketFactory.Data;
-
     function setMaxCollateralAmount(uint128 synthId, uint maxCollateralAmount) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[synthId] = maxCollateralAmount;
