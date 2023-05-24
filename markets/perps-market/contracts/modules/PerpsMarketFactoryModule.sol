@@ -11,6 +11,7 @@ import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFl
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
@@ -26,7 +27,6 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
  * @dev See IPerpsMarketFactoryModule.
  */
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
-    using PerpsMarketFactory for PerpsMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
@@ -109,7 +109,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     ) external override {
         OwnableStorage.onlyOwner();
 
-        PerpsMarketFactory.load().synthDeductionPriority = synthDeductionPriority;
+        GlobalPerpsMarketConfiguration.load().synthDeductionPriority = synthDeductionPriority;
     }
 
     /**

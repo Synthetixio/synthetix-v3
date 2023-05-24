@@ -2596,7 +2596,53 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/router@3.1.1, @synthetixio/router@workspace:utils/router":
+"@synthetixio/router@npm:3.0.4-alpha.0":
+  version: 3.0.4-alpha.0
+  resolution: "@synthetixio/router@npm:3.0.4-alpha.0"
+  dependencies:
+    "@ethersproject/abi": 5.7.0
+    ajv: ^8.11.0
+    debug: 4.3.4
+    ethers: ^5.0.0
+    lodash: 4.17.21
+    mustache: 4.2.0
+    solc: ^0.8.17
+  peerDependencies:
+    "@usecannon/builder": ^2.1.7
+    hardhat: ^2.0.0
+  peerDependenciesMeta:
+    "@usecannon/builder":
+      optional: true
+    hardhat:
+      optional: true
+  checksum: 13c2e0f3c8d7e11b32f07bb0eaec80db205dc0cb4c61ea0ea15112814b9d530dd2292660bed0ec863344c076af5d14a07670c224330813a695aa8a08b381f3a8
+  languageName: node
+  linkType: hard
+
+"@synthetixio/router@npm:3.1.1":
+  version: 3.1.1
+  resolution: "@synthetixio/router@npm:3.1.1"
+  dependencies:
+    "@ethersproject/abi": 5.7.0
+    ajv: ^8.11.0
+    debug: 4.3.4
+    ethers: ^5.0.0
+    lodash: 4.17.21
+    mustache: 4.2.0
+    solc: ^0.8.17
+  peerDependencies:
+    "@usecannon/builder": ^2.4.0-alpha.1
+    hardhat: ^2.0.0
+  peerDependenciesMeta:
+    "@usecannon/builder":
+      optional: true
+    hardhat:
+      optional: true
+  checksum: ae5d0abd5d889656a5923b10d94d785e6d5b5944b930ee2193d74274e24c30a5061b1f88463d1e56b10da4182b564c0f326698321114b912d8af189bfe369421
+  languageName: node
+  linkType: hard
+
+"@synthetixio/router@workspace:utils/router":
   version: 0.0.0-use.local
   resolution: "@synthetixio/router@workspace:utils/router"
   dependencies:
@@ -2625,29 +2671,6 @@ __metadata:
       optional: true
   languageName: unknown
   linkType: soft
-
-"@synthetixio/router@npm:3.0.4-alpha.0":
-  version: 3.0.4-alpha.0
-  resolution: "@synthetixio/router@npm:3.0.4-alpha.0"
-  dependencies:
-    "@ethersproject/abi": 5.7.0
-    ajv: ^8.11.0
-    debug: 4.3.4
-    ethers: ^5.0.0
-    lodash: 4.17.21
-    mustache: 4.2.0
-    solc: ^0.8.17
-  peerDependencies:
-    "@usecannon/builder": ^2.1.7
-    hardhat: ^2.0.0
-  peerDependenciesMeta:
-    "@usecannon/builder":
-      optional: true
-    hardhat:
-      optional: true
-  checksum: 13c2e0f3c8d7e11b32f07bb0eaec80db205dc0cb4c61ea0ea15112814b9d530dd2292660bed0ec863344c076af5d14a07670c224330813a695aa8a08b381f3a8
-  languageName: node
-  linkType: hard
 
 "@synthetixio/sample-project@workspace:utils/sample-project":
   version: 0.0.0-use.local
