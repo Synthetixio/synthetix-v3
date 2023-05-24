@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
-import assertBignumber from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 describe('ModifyCollateral', () => {
   const accountIds = [10, 20];
@@ -50,6 +50,6 @@ describe('ModifyCollateral', () => {
 
   it('properly reflects margin for account', async () => {
     const totalValue = await systems().PerpsMarket.totalCollateralValue(accountIds[0]);
-    assertBignumber.equal(totalValue, bn(20_000));
+    assertBn.equal(totalValue, bn(20_000));
   });
 });
