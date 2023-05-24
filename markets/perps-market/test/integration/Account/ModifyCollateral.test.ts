@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
+import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
@@ -97,6 +98,10 @@ describe('ModifyCollateral', () => {
     });
 
     describe('successful', async () => {
+      const oneBTC = bn(1);
+      const marginAmount = bn(10_000);
+      let spotBalanceBefore: ethers.BigNumber;
+      let perpsBalanceBefore: ethers.BigNumber;
       let modifyCollateralTxn: ethers.providers.TransactionResponse;
 
       before('owner sets limits to max', async () => {
@@ -108,29 +113,60 @@ describe('ModifyCollateral', () => {
       before('trader1 buys 1 snxBTC', async () => {
         await systems()
           .SpotMarket.connect(trader1())
-          .buy(synthBTCMarketId, bn(10_000), bn(1), ethers.constants.AddressZero);
+          .buy(synthBTCMarketId, marginAmount, oneBTC, ethers.constants.AddressZero);
       });
 
-      before('add collateral', async () => {
+      before('record balances', async () => {
+        spotBalanceBefore = await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .balanceOf(await trader1().getAddress());
+
+        perpsBalanceBefore = await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .balanceOf(systems().PerpsMarket.address);
+      });
+
+      before('trader1 approves the perps market', async () => {
         await synthMarkets()[0]
           .synth()
           .connect(trader1())
-          .approve(systems().PerpsMarket.address, bn(1));
+          .approve(systems().PerpsMarket.address, oneBTC);
+      });
 
+      before('trader1 adds collateral', async () => {
         modifyCollateralTxn = await systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(accountIds[0], synthBTCMarketId, bn(1));
+          .modifyCollateral(accountIds[0], synthBTCMarketId, oneBTC);
       });
 
-      it('properly reflects margin for account', async () => {
+      it('properly reflects the total collateral value', async () => {
         const totalValue = await systems().PerpsMarket.totalCollateralValue(accountIds[0]);
-        console.log(totalValue.toString());
+        assertBn.equal(totalValue, marginAmount);
       });
 
-      // it properly deducts the amount from the trader's spot balance
-      it('properly deducts the amount from the traders balance ', async () => {
-        // const totalValue = await systems().PerpsMarket.totalCollateralValue(expectedAccountId);
-        // console.log(totalValue.toString());
+      it('properly reflects the total account open interest', async () => {
+        const totalOpenInterest = await systems().PerpsMarket.totalAccountOpenInterest(
+          accountIds[0]
+        );
+        assertBn.equal(totalOpenInterest, 0); // only deposited - did not open a position
+      });
+
+      it('properly reflects trader1 spot balance', async () => {
+        const spotBalanceAfter = await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .balanceOf(await trader1().getAddress());
+        assertBn.equal(spotBalanceAfter, spotBalanceBefore.sub(oneBTC));
+      });
+
+      it('properly reflects the perps market balance', async () => {
+        const perpsBalanceAfter = await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .balanceOf(systems().PerpsMarket.address);
+        assertBn.equal(perpsBalanceAfter, perpsBalanceBefore.add(oneBTC));
       });
 
       it('emits correct event with the expected values', async () => {
