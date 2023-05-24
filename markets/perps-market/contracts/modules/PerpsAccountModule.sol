@@ -9,6 +9,7 @@ import {IAccountModule} from "../interfaces/IAccountModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -19,7 +20,7 @@ contract PerpsAccountModule is IAccountModule {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using PerpsAccount for PerpsAccount.Data;
-    using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
 
     function modifyCollateral(
         uint128 accountId,
@@ -32,7 +33,8 @@ contract PerpsAccountModule is IAccountModule {
         // FeatureFlag.ensureAccessToFeature(_MODIFY_COLLATERAL_FEATURE_FLAG);
         Account.exists(accountId);
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
-        perpsMarketFactory.checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
+
+        GlobalPerpsMarket.load().checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
 
         PerpsAccount.Data storage accountData = PerpsAccount.load(accountId);
         accountData.checkLiquidationFlag();
