@@ -200,13 +200,11 @@ describe('PoolModule Create / Ownership', function () {
   });
 
   describe('rebalancePool()', () => {
+    let initialMarketCapacity: ethers.BigNumber;
+    before('save market capacity', async () => {
+      initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
+    });
     it('rebalances the markets inside of pool', async () => {
-      let initialMarketCapacity: ethers.BigNumber;
-
-      before('save market capacity', async () => {
-        initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
-      });
-
       describe('market debt goes up', async () => {
         before('increase market debt', async () => {
           await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
