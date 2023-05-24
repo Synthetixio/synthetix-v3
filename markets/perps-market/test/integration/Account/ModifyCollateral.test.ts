@@ -48,7 +48,7 @@ describe('ModifyCollateral', () => {
           systems()
             .PerpsMarket.connect(trader2())
             .modifyCollateral(invalidAccountId, perpBTCMarketId, bn(1)),
-          `AccountNotFound(${invalidAccountId}`
+          `AccountNotFound("${invalidAccountId}"`
         );
       });
 
