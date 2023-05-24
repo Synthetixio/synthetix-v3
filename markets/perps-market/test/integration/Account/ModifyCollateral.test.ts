@@ -2,9 +2,8 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { account } from '@synthetixio/main/typechain-types/contracts/modules';
 
-describe.only('ModifyCollateral', () => {
+describe('ModifyCollateral', () => {
   const accountIds = [10, 20];
   const invalidAccountId = 42069;
 
