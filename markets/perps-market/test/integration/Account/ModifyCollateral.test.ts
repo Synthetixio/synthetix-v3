@@ -21,13 +21,13 @@ describe('ModifyCollateral', () => {
       {
         name: 'Ether',
         token: 'snxETH',
-        buyPrice: bn(1000),
-        sellPrice: bn(1000),
+        buyPrice: bn(1_000),
+        sellPrice: bn(1_000),
       },
     ],
     perpsMarkets: [
       { name: 'Bitcoin', token: 'snxBTC', price: bn(10_000) },
-      { name: 'Ether', token: 'snxETH', price: bn(1000) },
+      { name: 'Ether', token: 'snxETH', price: bn(1_000) },
     ],
     traderAccountIds: accountIds,
   });
