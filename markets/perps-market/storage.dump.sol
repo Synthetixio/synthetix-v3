@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -437,6 +437,11 @@ contract AsyncOrderModule {
     }
 }
 
+// @custom:artifact contracts/modules/CollateralModule.sol:CollateralModule
+contract CollateralModule {
+    bytes32 private constant _MODIFY_COLLATERAL_FEATURE_FLAG = "modifyCollateral";
+}
+
 // @custom:artifact contracts/modules/PerpsMarketFactoryModule.sol:PerpsMarketFactoryModule
 contract PerpsMarketFactoryModule {
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
@@ -482,6 +487,19 @@ library AsyncOrder {
         int128 newPositionSize;
         uint newLiquidationMargin;
         Position.Data newPosition;
+    }
+}
+
+// @custom:artifact contracts/storage/GlobalConfiguration.sol:GlobalConfiguration
+library GlobalConfiguration {
+    struct Data {
+        uint256 data;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.GlobalConfiguration"));
+        assembly {
+            store.slot := s
+        }
     }
 }
 
@@ -633,6 +651,11 @@ library PerpsMarketFactory {
         address usdToken;
         address synthetix;
         address spotMarket;
+        mapping(uint128 => uint) maxCollateralAmounts;
+        uint128[] synthDeductionPriority;
+        uint maxLeverage;
+        SetUtil.UintSet liquidatableAccounts;
+        mapping(uint128 => uint) collateralAmounts;
         mapping(uint128 => address) marketOwners;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
@@ -683,4 +706,9 @@ library SettlementStrategy {
         uint256 priceDeviationTolerance;
         bool disabled;
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
