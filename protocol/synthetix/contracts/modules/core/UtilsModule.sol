@@ -17,6 +17,7 @@ import "../../storage/Config.sol";
  */
 contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;
+    using SetUtil for SetUtil.UintSet;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
@@ -50,7 +51,7 @@ contract UtilsModule is IUtilsModule {
     /**
      * @inheritdoc IUtilsModule
      */
-    function setSupportedCrossChainNetworks(uint64[] supportedNetworks) external returns (uint256 numRegistered) {
+    function setSupportedCrossChainNetworks(uint64[] memory supportedNetworks) external returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
         uint64 myChainId = uint64(block.chainid);
