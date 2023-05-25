@@ -81,7 +81,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
      * @inheritdoc IUSDTokenModule
      */
     function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
+        burn(msg.sender, amount);
     }
 
     /**
