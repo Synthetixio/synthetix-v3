@@ -50,6 +50,24 @@ contract UtilsModule is IUtilsModule {
     /**
      * @inheritdoc IUtilsModule
      */
+    function setSupportedCrossChainNetworks(uint64[] supportedNetworks) external returns (uint256 numRegistered) {
+        OwnableStorage.onlyOwner();
+
+        uint64 myChainId = uint64(block.chainid);
+
+        CrossChain.Data storage cc = CrossChain.load();
+        for (uint i = 0;i < supportedNetworks.length;i++) {
+            if (supportedNetworks[i] != myChainId && !cc.supportedNetworks.contains(supportedNetworks[i])) {
+                numRegistered++;
+                cc.supportedNetworks.add(supportedNetworks[i]);
+                emit NewSupportedCrossChainNetwork(supportedNetworks[i]);
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IUtilsModule
+     */
     function configureOracleManager(address oracleManagerAddress) external override {
         OwnableStorage.onlyOwner();
 
