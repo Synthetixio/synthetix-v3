@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
-import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IAccountModule} from "../interfaces/IAccountModule.sol";
@@ -27,11 +27,11 @@ contract PerpsAccountModule is IAccountModule {
         uint128 synthMarketId,
         int amountDelta
     ) external override {
-        // TODO: check amountDelta is non-zero
-        // TODO: RBAC check for permission of msg.sender for account id
-
-        // FeatureFlag.ensureAccessToFeature(_MODIFY_COLLATERAL_FEATURE_FLAG);
         Account.exists(accountId);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_PERMISSION);
+
+        if (amountDelta == 0) revert InvalidAmountDelta(amountDelta);
+
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
         GlobalPerpsMarket.load().checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
@@ -59,7 +59,7 @@ contract PerpsAccountModule is IAccountModule {
             synth.transfer(msg.sender, amountAbs);
         }
 
-        // TODO: emit event
+        emit CollateralModified(accountId, synthMarketId, amountDelta, msg.sender);
     }
 
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
