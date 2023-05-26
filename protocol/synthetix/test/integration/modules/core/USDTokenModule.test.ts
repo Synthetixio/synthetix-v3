@@ -6,7 +6,7 @@ import { verifyUsesFeatureFlag } from '../../verifications';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
 describe('USDTokenModule', function () {
-  const { owner, systems, staker, accountId, poolId, collateralAddress, depositAmount } =
+  const { owner, systems, staker, accountId, poolId, collateralAddress } =
     bootstrapWithStakedPool();
 
   const usdAmount = bn(100);

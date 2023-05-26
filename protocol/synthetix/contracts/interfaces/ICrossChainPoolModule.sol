@@ -13,7 +13,11 @@ import "../storage/PoolCrossChainInfo.sol";
 interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibleInterface {
     event PoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data syncData);
 
-    event CrossChainSecondaryPoolCreated(uint64 srcChainId, uint128 srcPoolId, uint128 thisChainPoolId);
+    event CrossChainSecondaryPoolCreated(
+        uint64 srcChainId,
+        uint128 srcPoolId,
+        uint128 thisChainPoolId
+    );
 
     function createCrossChainPool(
         uint128 sourcePoolId,

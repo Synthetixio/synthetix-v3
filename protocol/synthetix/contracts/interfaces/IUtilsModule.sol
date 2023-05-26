@@ -28,7 +28,9 @@ interface IUtilsModule {
      * @param supportedNetworks array of all networks that are supported by the protocol
      * @return numRegistered the number of networks that were actually registered
      */
-    function setSupportedCrossChainNetworks(uint64[] memory supportedNetworks) external returns (uint256 numRegistered);
+    function setSupportedCrossChainNetworks(
+        uint64[] memory supportedNetworks
+    ) external returns (uint256 numRegistered);
 
     /**
      * @notice Configure the system's single oracle manager address.

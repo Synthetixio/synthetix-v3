@@ -521,10 +521,12 @@ library Pool {
         self.crossChain[0].pairedChains.push(chainId);
     }
 
-    function getCrossChainPoolId(uint64 srcChainId, uint128 srcPoolId) internal returns (uint128 ccPoolId) {
-        return uint128(
-            uint256(keccak256(abi.encode("SNXV3CC", srcChainId, srcPoolId))) | (1 << 127)
-        );
+    function getCrossChainPoolId(
+        uint64 srcChainId,
+        uint128 srcPoolId
+    ) internal returns (uint128 ccPoolId) {
+        return
+            uint128(uint256(keccak256(abi.encode("SNXV3CC", srcChainId, srcPoolId))) | (1 << 127));
     }
 
     function setCrossChainSyncData(

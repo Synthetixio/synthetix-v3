@@ -7,7 +7,7 @@ import { bootstrap } from '../../bootstrap';
 describe('CcipReceiverModule', function () {
   const { signers, systems } = bootstrap();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, FakeCcip: ethers.Signer;
+  let owner: ethers.Signer, FakeCcip: ethers.Signer;
 
   before('identify signers', async () => {
     [owner, user1, user2, FakeCcip] = signers();
