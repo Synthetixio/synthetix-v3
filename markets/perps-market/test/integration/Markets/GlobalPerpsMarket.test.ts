@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
@@ -15,14 +16,25 @@ describe('GlobalPerpsMarket', () => {
     );
     await systems().PerpsMarket.setSynthDeductionPriorty([1, 2]);
     await systems().PerpsMarket.setMaxLeverage(1);
+  });
 
-    it('returns maxCollateralAmounts for synth market id', async () => {
-      assertBn.equal(
-        await systems().PerpsMarket.getMaxCollateralAmountsForSynthMarket(
-          perpsMarkets()[0].marketId()
-        ),
-        bn(1000)
-      );
+  it('returns maxCollateralAmounts for synth market id', async () => {
+    assertBn.equal(
+      await systems().PerpsMarket.getMaxCollateralAmountsForSynthMarket(
+        perpsMarkets()[0].marketId()
+      ),
+      bn(10000)
+    );
+  });
+
+  it('returns the correct synthDeductionPriorty ', async () => {
+    const synths = await systems().PerpsMarket.getSynthDeductionPriorty();
+    synths.forEach((synth, index) => {
+      assertBn.equal(synth, BigNumber.from(index + 1));
     });
+  });
+
+  it('returns the correct max leverage', async () => {
+    assertBn.equal(await systems().PerpsMarket.getMaxLeverage(), BigNumber.from(1));
   });
 });
