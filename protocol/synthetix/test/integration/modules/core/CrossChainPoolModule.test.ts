@@ -1,6 +1,3 @@
-import assert from 'assert/strict';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
@@ -9,10 +6,10 @@ import { verifyUsesFeatureFlag } from '../../verifications';
 describe('CrossChainPoolModule', function () {
   const { signers, systems } = bootstrapWithMockMarketAndPool();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let user1: ethers.Signer;
 
   before('identify signers', async () => {
-    [owner, user1, user2] = signers();
+    [, user1] = signers();
   });
 
   describe('createCrossChainPool()', () => {

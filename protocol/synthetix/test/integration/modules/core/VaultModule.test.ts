@@ -795,7 +795,6 @@ describe('VaultModule', function () {
                 before(restoreDebtCheck);
                 before('cause debt', async () => {
                   // for cross chain we have to set the debt on cross chain sync data beause the market is not read directly
-                  const now = await getTime(provider());
                   await systems().Core.Pool_distributeDebtToVaults(poolId, depositAmount.div(10));
                 });
 

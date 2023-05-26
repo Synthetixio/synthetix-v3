@@ -90,10 +90,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
 
         // create a pool with no owner. It can only be controlled by cross chain calls from its parent pool
         uint128 newPoolId = Pool.getCrossChainPoolId(srcChainId, srcPoolId);
-        Pool.Data storage pool = Pool.create(
-            newPoolId,
-            address(0)
-        );
+        Pool.Data storage pool = Pool.create(newPoolId, address(0));
 
         pool.crossChain[0].pairedChains.push(srcChainId);
         pool.crossChain[0].pairedChains.push(uint64(block.chainid));

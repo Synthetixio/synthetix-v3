@@ -80,6 +80,20 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @inheritdoc IUSDTokenModule
      */
+    function burn(uint256 amount) external {
+        if (
+            msg.sender != OwnableStorage.getOwner() &&
+            msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
+        ) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
+        _burn(msg.sender, amount);
+    }
+
+    /**
+     * @inheritdoc IUSDTokenModule
+     */
     function burnWithAllowance(address from, address spender, uint256 amount) external {
         OwnableStorage.onlyOwner();
 
