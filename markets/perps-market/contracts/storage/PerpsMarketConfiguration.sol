@@ -24,9 +24,22 @@ library PerpsMarketConfiguration {
         uint256 maxMarketValue; // oi cap
         uint256 maxFundingVelocity;
         uint256 skewScale;
-        uint256 minInitialMargin;
-        uint256 liquidationPremiumMultiplier;
+        /**
+         * @dev the initial margin requirements for this market when opening a position
+         * @dev this fraction is multiplied by the impact of the position on the skew (open position size / skewScale)
+         */
+        uint256 initialMarginFraction;
+        /**
+         * @dev the maintenance margin requirements for this market when opening a position
+         * @dev this generally will be lower than initial margin but is used to determine when to liquidate a position
+         * @dev this fraction is multiplied by the impact of the position on the skew (position size / skewScale)
+         */
+        uint256 maintenanceMarginFraction;
         uint256 lockedOiPercent;
+        /**
+         * @dev This multiplier is applied to the max liquidation value when calculating max liquidation for a given market
+         */
+        uint256 maxLiquidationLimitAccumulationMultiplier;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -38,6 +51,16 @@ library PerpsMarketConfiguration {
         }
     }
 
+    function calculateMarginRatios(
+        Data storage self,
+        uint256 notionalValue
+    ) internal view returns (uint256 initialMarginRatio, uint256 maintenanceMarginRatio) {
+        uint256 impactOnSkew = notionalValue.divDecimal(self.skewScale);
+
+        initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginFraction);
+        maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginFraction);
+    }
+
     function calculateSettlementReward(
         Data storage self,
         uint liquidatedUsd
@@ -47,26 +70,5 @@ library PerpsMarketConfiguration {
         );
 
         return MathUtil.min(amountBasedOnLiquidatedAmount, self.maxLiquidationReward);
-    }
-
-    function liquidationPremium(
-        PerpsMarketConfiguration.Data storage marketConfig,
-        int positionSize,
-        uint currentPrice
-    ) internal view returns (uint) {
-        if (positionSize == 0) {
-            return 0;
-        }
-
-        // note: this is the same as fillPrice() where the skew is 0.
-        int notionalValue = positionSize.mulDecimal(currentPrice.toInt());
-        uint notionalAbsValue = MathUtil.abs(notionalValue);
-
-        return
-            MathUtil
-                .abs(positionSize)
-                .divDecimal(marketConfig.skewScale)
-                .mulDecimal(notionalAbsValue)
-                .mulDecimal(marketConfig.liquidationPremiumMultiplier);
     }
 }

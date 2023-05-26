@@ -17,6 +17,8 @@ library GlobalPerpsMarket {
 
     error MaxCollateralExceeded(uint128 marketId);
 
+    error IneligibleForLiquidation(uint128 accountId);
+
     struct Data {
         SetUtil.UintSet liquidatableAccounts;
         // collateral amounts running total
@@ -27,6 +29,12 @@ library GlobalPerpsMarket {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
         assembly {
             marketData.slot := s
+        }
+    }
+
+    function validateLiquidationEligiblity(uint128 accountId) internal view {
+        if (!load().liquidatableAccounts.contains(accountId)) {
+            revert IneligibleForLiquidation(accountId);
         }
     }
 

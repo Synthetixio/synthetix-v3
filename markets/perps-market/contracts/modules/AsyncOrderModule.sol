@@ -55,8 +55,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             6. 
         */
 
-        PerpsAccount.load(commitment.accountId).checkLiquidationFlag();
-
         // TODO: recompute funding
         RuntimeCommitData memory runtime;
 

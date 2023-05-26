@@ -13,8 +13,16 @@ contract LiquidationModule is ILiquidationModule {
     using PerpsAccount for PerpsAccount.Data;
 
     function liquidate(uint128 accountId) external override {
-        // 1. load account
-        _liquidateAccount(accountId);
+        if (GlobalPerpsMarket.load().liquidatableAccounts.contains(accountId)) {
+            _liquidateAccount(accountId);
+        }
+
+        (bool isEligible, , ) = PerpsAccount.load(accountId).isEligibleForLiquidation(accountId);
+        if (isEligible) {
+            _liquidateAccount(accountId);
+        } else {
+            revert NotEligibleForLiquidation(accountId);
+        }
     }
 
     function liquidateFlagged() external override {
@@ -29,10 +37,11 @@ contract LiquidationModule is ILiquidationModule {
 
     function _liquidateAccount(uint128 accountId) internal {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        account.markForLiquidation(accountId);
+        account.liquidateAccount(accountId);
 
-        if (account.flaggedForLiquidation) {
-            account.liquidateAccount(accountId);
+        // TODO: account can be removed from liquidation if the margin reqs are met,
+
+        if (account.openPositionMarketIds.length() == 0) {
             account.removeFromLiquidation(accountId);
         }
     }

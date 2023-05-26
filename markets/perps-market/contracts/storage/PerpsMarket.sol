@@ -82,7 +82,7 @@ library PerpsMarket {
 
         return
             (maxLiquidationValue *
-                LiquidationConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
+                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
             self.lastUtilizedLiquidationCapacity;
     }
 

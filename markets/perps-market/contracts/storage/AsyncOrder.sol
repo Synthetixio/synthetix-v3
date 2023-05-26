@@ -46,19 +46,6 @@ library AsyncOrder {
         bytes32 trackingCode;
     }
 
-    enum Status {
-        Success,
-        PriceOutOfBounds,
-        CanLiquidate,
-        MaxMarketValueExceeded,
-        MaxLeverageExceeded,
-        InsufficientMargin,
-        NotPermitted,
-        ZeroSizeOrder,
-        AcceptablePriceExceeded,
-        PositionFlagged
-    }
-
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;

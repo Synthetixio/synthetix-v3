@@ -36,19 +36,14 @@ library PerpsAccount {
     struct Data {
         // TODO: add account id to data so we don't have to pass it in
         // synth marketId => amount
-        mapping(uint128 => uint) collateralAmounts;
+        mapping(uint128 => uint256) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
-        bool flaggedForLiquidation;
     }
 
     error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
 
     error InsufficientMarginError(uint leftover);
-
-    error IneligibleForLiquidation();
-
-    error FlaggedForLiquidation();
 
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
@@ -80,11 +75,15 @@ library PerpsAccount {
     function isEligibleForLiquidation(
         Data storage self,
         uint128 accountId
-    ) internal view returns (bool) {
-        uint availableMargin = getAvailableMargin(self, accountId);
-        uint liquidationMarginUsd = getAccountLiquidationAmount(self, accountId, 0, 0);
-
-        return liquidationMarginUsd > availableMargin;
+    )
+        internal
+        view
+        returns (bool isEligible, uint availableMargin, uint requiredMaintenanceMargin)
+    {
+        availableMargin = getAvailableMargin(self, accountId);
+        // TODO: add in liquidation rewards
+        requiredMaintenanceMargin = getAccountMaintenanceMargin(self, accountId);
+        isEligible = requiredMaintenanceMargin > availableMargin;
     }
 
     function flagForLiquidation(Data storage self, uint128 accountId) internal {
@@ -96,12 +95,6 @@ library PerpsAccount {
             liquidatableAccounts.add(accountId);
             convertAllCollateralToUsd(self);
             self.flaggedForLiquidation = true;
-        }
-    }
-
-    function checkLiquidationFlag(Data storage self) internal view {
-        if (self.flaggedForLiquidation) {
-            revert FlaggedForLiquidation();
         }
     }
 
@@ -282,45 +275,6 @@ library PerpsAccount {
         return availableWithdrawableCollateralUsd;
     }
 
-    function getAvailableWithdrawableCollateralUsd(
-        Data storage self,
-        uint128 accountId
-    ) internal view returns (uint) {
-        (int totalAccountOpenInterest, uint accountMaxOpenInterest) = calculateOpenInterestValues(
-            self,
-            accountId
-        );
-
-        return (accountMaxOpenInterest.toInt() - totalAccountOpenInterest).toUint();
-    }
-
-    function calculateOpenInterestValues(
-        Data storage self,
-        uint128 accountId
-    ) internal view returns (int totalAccountOpenInterest, uint accountMaxOpenInterest) {
-        totalAccountOpenInterest = getTotalNotionalOpenInterest(self, accountId);
-
-        uint totalCollateralValue = getTotalCollateralValue(self);
-
-        uint maxLeverage = GlobalPerpsMarketConfiguration.load().maxLeverage;
-        accountMaxOpenInterest = totalCollateralValue.mulDecimal(maxLeverage);
-    }
-
-    function getTotalNotionalOpenInterest(
-        Data storage self,
-        uint128 accountId
-    ) internal view returns (int totalAccountOpenInterest) {
-        for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
-            uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
-
-            Position.Data storage position = PerpsMarket.load(marketId).positions[accountId];
-            (int openInterest, , , , ) = position.getPositionData(
-                PerpsPrice.getCurrentPrice(marketId)
-            );
-            totalAccountOpenInterest += openInterest;
-        }
-    }
-
     function getTotalCollateralValue(Data storage self) internal view returns (uint) {
         uint totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
@@ -362,31 +316,22 @@ library PerpsAccount {
     }
 
     /**
-     * @dev Returns the minimum amt of margin required before liquidation can occur
-     * @dev If you send 0 for marketId, it will return liquidation amount for current open positions
-     * @dev if marketId is specified, it will overwrite the account's open position with the position size specified.  Handy in situations where a new order is coming in
+     * @notice  This function returns the minimum margin an account requires to stay above liquidation threshold
      */
-    function getAccountLiquidationAmount(
+    function getAccountMaintenanceMargin(
         Data storage self,
-        uint128 accountId,
-        uint128 marketId,
-        uint notionalPositionSize
-    ) internal view returns (uint liquidationAmount) {
-        for (uint i = 1; i <= self.activeCollateralTypes.length(); i++) {
-            uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
-            if (synthMarketId == marketId) {
-                continue;
-            }
-
-            Position.Data storage position = PerpsMarket.load(synthMarketId).positions[accountId];
-            liquidationAmount += position.getLiquidationAmount();
-        }
-
-        if (marketId != 0) {
-            // TODO: liquidation premium
-            liquidationAmount += LiquidationConfiguration.load(marketId).liquidationMargin(
-                notionalPositionSize
+        uint128 accountId
+    ) internal view returns (uint maintenanceMargin) {
+        for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
+            uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
+            Position.Data storage position = PerpsMarket.load(marketId).positions[accountId];
+            PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+                marketId
             );
+            uint256 notionalValue = position.getNotionalValue(PerpsPrice.getCurrentPrice(marketId));
+            (, uint256 maintenanceMarginRatio) = marketConfig.getMarginRatios(notionalValue);
+
+            maintenanceMargin += notionalValue.mulDecimal(maintenanceMarginRatio);
         }
     }
 
