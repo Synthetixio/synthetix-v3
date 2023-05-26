@@ -478,11 +478,12 @@ library MarketConfiguration {
         );
 
         int256 totalFees = fees.total();
+        // remove referrer fees collected prior to comparison
+        totalFees -= referrerFeesCollected.toInt();
+
         if (totalFees <= 0 || address(self.feeCollector) == address(0)) {
             return referrerFeesCollected;
         }
-        // remove fees sent to referrer before getting quote from fee collector
-        totalFees -= referrerFeesCollected.toInt();
 
         uint256 totalFeesUint = totalFees.toUint();
         uint256 feeCollectorQuote = self.feeCollector.quoteFees(
