@@ -373,7 +373,7 @@ library AccountRBAC {
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
-    bytes32 internal constant _PERPS_PERMISSION = "PERPS";
+    bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
