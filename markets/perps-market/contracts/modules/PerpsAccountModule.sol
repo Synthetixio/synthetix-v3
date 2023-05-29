@@ -76,7 +76,8 @@ contract PerpsAccountModule is IAccountModule {
         uint128 accountId,
         uint128 marketId
     ) external view override returns (int, int, int) {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadIfExists(marketId);
+
         Position.Data storage position = perpsMarket.positions[accountId];
 
         (, int pnl, int accruedFunding, , ) = position.getPositionData(

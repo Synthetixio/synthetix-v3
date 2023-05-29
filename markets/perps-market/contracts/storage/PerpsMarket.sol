@@ -25,7 +25,11 @@ library PerpsMarket {
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
+<<<<<<< HEAD
     error InvalidMarket(uint128 marketId);
+=======
+    error MarketNotFound(uint128 marketId);
+>>>>>>> 11f1c0b5 (Test market creation)
 
     struct Data {
         address owner;
