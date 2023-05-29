@@ -34,10 +34,11 @@ contract PerpsAccountModule is IAccountModule {
 
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
-        GlobalPerpsMarket.load().checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
+        GlobalPerpsMarket.Data storage globalPerpsMarket = GlobalPerpsMarket.load();
+        globalPerpsMarket.checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
+        globalPerpsMarket.checkLiquidation(accountId);
 
-        PerpsAccount.Data storage accountData = PerpsAccount.load(accountId);
-        accountData.checkLiquidationFlag();
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
 
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
@@ -45,16 +46,14 @@ contract PerpsAccountModule is IAccountModule {
 
         if (amountDelta > 0) {
             // adding collateral
-            accountData.addCollateralAmount(synthMarketId, amountDelta.toUint());
+            account.addCollateralAmount(synthMarketId, amountDelta.toUint());
 
             synth.transferFrom(msg.sender, address(this), amountDelta.toUint());
         } else {
             uint amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            accountData.checkAvailableCollateralAmount(synthMarketId, amountAbs);
-            accountData.checkAvailableWithdrawableValue(accountId, amountDelta);
-
-            accountData.removeCollateralAmount(synthMarketId, amountAbs);
+            account.checkAvailableWithdrawableValue(accountId, amountAbs);
+            account.withdrawCollateral(synthMarketId, amountAbs);
 
             synth.transfer(msg.sender, amountAbs);
         }
@@ -66,7 +65,7 @@ contract PerpsAccountModule is IAccountModule {
         return PerpsAccount.load(accountId).getTotalCollateralValue();
     }
 
-    function totalAccountOpenInterest(uint128 accountId) external view override returns (int) {
+    function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest(accountId);
     }
 

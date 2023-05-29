@@ -54,21 +54,21 @@ library PerpsMarketConfiguration {
     function calculateMarginRatios(
         Data storage self,
         uint256 notionalValue
-    ) internal view returns (uint256 initialMarginRatio, uint256 maintenanceMarginRatio) {
+    )
+        internal
+        view
+        returns (
+            uint256 initialMarginRatio,
+            uint256 maintenanceMarginRatio,
+            uint256 initialMargin,
+            uint256 maintenanceMargin
+        )
+    {
         uint256 impactOnSkew = notionalValue.divDecimal(self.skewScale);
 
         initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginFraction);
         maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginFraction);
-    }
-
-    function calculateSettlementReward(
-        Data storage self,
-        uint liquidatedUsd
-    ) internal view returns (uint) {
-        uint amountBasedOnLiquidatedAmount = liquidatedUsd.mulDecimal(
-            self.liquidationRewardPercentage
-        );
-
-        return MathUtil.min(amountBasedOnLiquidatedAmount, self.maxLiquidationReward);
+        initialMargin = notionalValue.mulDecimal(initialMarginRatio);
+        maintenanceMargin = notionalValue.mulDecimal(maintenanceMarginRatio);
     }
 }

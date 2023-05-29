@@ -19,6 +19,7 @@ type IncomingChainState =
 type NewChainState = {
   systems: () => Systems;
   perpsMarkets: () => PerpsMarkets;
+  marketOwner: () => ethers.Signer;
   restore: () => Promise<void>;
 };
 type PerpsMarketsReturn<T> = T extends undefined
@@ -82,6 +83,7 @@ export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState
     ...r,
     restore,
     systems: () => contracts,
+    marketOwner: () => marketOwner,
     perpsMarkets: () => perpsMarkets,
   };
 };
