@@ -25,6 +25,8 @@ library CrossChain {
         ICcipRouterClient ccipRouter;
         FunctionsOracleInterface chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
         mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
 
@@ -35,14 +37,16 @@ library CrossChain {
         }
     }
 
-    function processCcipReceive(CcipClient.Any2EVMMessage memory data) internal {
+    function processCcipReceive(Data storage self, CcipClient.Any2EVMMessage memory data) internal {
         Data storage self = load();
         if (address(self.ccipRouter) == address(0) || msg.sender != address(self.ccipRouter)) {
             revert NotCcipRouter(msg.sender);
         }
 
-        if (self.supportedNetworks.contains(data.sourceChainId)) {
-            revert UnsupportedNetwork(data.sourceChainId);
+        uint64 sourceChainId = self.ccipSelectorToChainId[data.sourceChainId];
+
+        if (self.supportedNetworks.contains(sourceChainId)) {
+            revert UnsupportedNetwork(sourceChainId);
         }
 
         address sender = abi.decode(data.sender, (address));
@@ -111,8 +115,9 @@ library CrossChain {
                     }
                 }
             } else {
-                uint256 fee = router.getFee(chains[i], sentMsg);
-                router.ccipSend{value: fee}(chains[i], sentMsg);
+                uint64 chainSelector = self.ccipChainIdToSelector[chains[i]];
+                uint256 fee = router.getFee(chainSelector, sentMsg);
+                router.ccipSend{value: fee}(chainSelector, sentMsg);
 
                 gasTokenUsed += fee;
             }

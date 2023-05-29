@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "../../interfaces/IUtilsModule.sol";
 
@@ -52,11 +53,16 @@ contract UtilsModule is IUtilsModule {
      * @inheritdoc IUtilsModule
      */
     function setSupportedCrossChainNetworks(
-        uint64[] memory supportedNetworks
+        uint64[] memory supportedNetworks,
+        uint64[] memory ccipSelectors
     ) external returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
         uint64 myChainId = uint64(block.chainid);
+
+        if (ccipSelectors.length != supportedNetworks.length) {
+            revert ParameterError.InvalidParameter("ccipSelectors", "must match length");
+        }
 
         CrossChain.Data storage cc = CrossChain.load();
         for (uint i = 0; i < supportedNetworks.length; i++) {
@@ -68,6 +74,9 @@ contract UtilsModule is IUtilsModule {
                 cc.supportedNetworks.add(supportedNetworks[i]);
                 emit NewSupportedCrossChainNetwork(supportedNetworks[i]);
             }
+
+            cc.ccipChainIdToSelector[supportedNetworks[i]] = ccipSelectors[i];
+            cc.ccipSelectorToChainId[ccipSelectors[i]] = supportedNetworks[i];
         }
     }
 

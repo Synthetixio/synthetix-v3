@@ -26,10 +26,12 @@ interface IUtilsModule {
      * Ignores a network if it matches the current chain id
      * Ignores a network if it has already been added
      * @param supportedNetworks array of all networks that are supported by the protocol
+     * @param ccipSelectors the ccip "selector" which maps to the chain id on the same index. must be same length as `supportedNetworks`
      * @return numRegistered the number of networks that were actually registered
      */
     function setSupportedCrossChainNetworks(
-        uint64[] memory supportedNetworks
+        uint64[] memory supportedNetworks,
+        uint64[] memory ccipSelectors
     ) external returns (uint256 numRegistered);
 
     /**

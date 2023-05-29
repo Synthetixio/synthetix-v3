@@ -490,6 +490,8 @@ library CrossChain {
         address ccipRouter;
         address chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
         mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
     function load() internal pure returns (Data storage crossChain) {
