@@ -42,8 +42,10 @@ jobs:
             workspace: "@synthetixio/oracle-manager"
           - package: spot-market
             workspace: "@synthetixio/spot-market"
+            coverage-file: utils/router/coverage/coverage.info
           - package: perps-market
             workspace: "@synthetixio/perps-market"
+            coverage-file: utils/router/coverage/coverage.info
           - package: main
             workspace: "@synthetixio/main"
     steps:

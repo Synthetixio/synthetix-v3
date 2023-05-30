@@ -9,6 +9,8 @@
 | @synthetixio/core-modules   | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=core-modules)](https://codecov.io/gh/Synthetixio/synthetix-v3)   |
 | @synthetixio/router         | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=router)](https://codecov.io/gh/Synthetixio/synthetix-v3)         |
 | @synthetixio/main           | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=synthetix)](https://codecov.io/gh/Synthetixio/synthetix-v3)      |
+| @synthetixio/spot-market    | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=spot-market)](https://codecov.io/gh/Synthetixio/synthetix-v3)    |
+| @synthetixio/perps-market   | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=perps-market)](https://codecov.io/gh/Synthetixio/synthetix-v3)   |
 
 ## Documentation
 
