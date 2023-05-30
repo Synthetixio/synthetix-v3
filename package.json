@@ -15,7 +15,7 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "clean": "yarn workspaces foreach --parallel --verbose run clean",
-    "build-prerelease-dev": "git diff --exit-code && yarn lerna exec -- npm version prepatch --no-git-tag-version --no-workspaces-update && yarn build && git stash",
+    "build-prerelease-dev": "git diff --exit-code && yarn lerna exec -- npm version prepatch --no-git-tag-version --no-workspaces-update && yarn && yarn build && git stash && yarn",
     "build": "yarn workspaces foreach --topological-dev --verbose run build",
     "test": "yarn workspaces foreach --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --verbose run coverage",
