@@ -12,7 +12,7 @@ dataSources:
       language: wasm/assemblyscript
       abis:
         - name: CoreProxy
-          file: ../../node_modules/@synthetixio/v3-contracts/deployments/goerli/CoreProxy.json
+          file: ../node_modules/@synthetixio/v3-contracts/deployments/goerli/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule

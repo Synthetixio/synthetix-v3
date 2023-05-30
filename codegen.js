@@ -32,7 +32,7 @@ async function run() {
   const tx = await provider.getTransactionReceipt(deployTx);
   networks[graphNetworkName].CoreProxy.startBlock = tx.blockNumber;
 
-  const prettierOptions = JSON.parse(fs.readFileSync('../../.prettierrc', 'utf8'));
+  const prettierOptions = JSON.parse(fs.readFileSync('../.prettierrc', 'utf8'));
 
   const pretty = prettier.format(JSON.stringify(networks, null, 2), {
     parser: 'json',
