@@ -23,7 +23,7 @@ export function getISOWeekNumber(timestamp: i64): i64 {
 }
 
 export function createMarketSnapshotByWeek(marketWithLatestValues: Market): void {
-  const date = new Date(<i64>parseInt(marketWithLatestValues.updated_at.toString()));
+  const date = new Date(<i64>parseInt(marketWithLatestValues.updated_at.toString()) * 1000);
 
   const week = getISOWeekNumber(date.getTime());
 
