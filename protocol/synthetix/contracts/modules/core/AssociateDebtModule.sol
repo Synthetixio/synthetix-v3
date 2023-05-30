@@ -63,6 +63,9 @@ contract AssociateDebtModule is IAssociateDebtModule {
         // Refresh latest account debt
         poolData.updateAccountDebt(collateralType, accountId);
 
+        // rebalance here because this is a good opporitunity to do so, and because its required for correct debt accounting after account debt update
+        poolData.rebalanceMarketsInPool();
+
         // Remove the debt we're about to assign to a specific position, pro-rata
         epochData.distributeDebtToAccounts(-amount.toInt());
 

@@ -339,7 +339,6 @@ library Pool {
         uint128 accountId
     ) internal returns (int256 debtD18) {
         distributeDebtToVaults(self, collateralType);
-        rebalanceMarketsInPool(self);
         return self.vaults[collateralType].consolidateAccountDebt(accountId);
     }
 
@@ -469,6 +468,7 @@ library Pool {
         uint128 accountId
     ) internal returns (uint256) {
         int256 positionDebtD18 = updateAccountDebt(self, collateralType, accountId);
+        rebalanceMarketsInPool(self);
         if (positionDebtD18 <= 0) {
             return type(uint256).max;
         }

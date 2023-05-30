@@ -193,6 +193,7 @@ contract VaultModule is IVaultModule {
         Pool.Data storage pool = Pool.load(poolId);
 
         debt = pool.updateAccountDebt(collateralType, accountId);
+        pool.rebalanceMarketsInPool();
         (collateralAmount, collateralValue) = pool.currentAccountCollateral(
             collateralType,
             accountId
@@ -207,8 +208,10 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external override returns (int256) {
-        return Pool.load(poolId).updateAccountDebt(collateralType, accountId);
+    ) external override returns (int256 debt) {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        debt = pool.updateAccountDebt(collateralType, accountId);
+        pool.rebalanceMarketsInPool();
     }
 
     /**
@@ -218,14 +221,14 @@ contract VaultModule is IVaultModule {
         uint128 poolId,
         address collateralType
     ) public view override returns (uint256 amount, uint256 value) {
-        return Pool.load(poolId).currentVaultCollateral(collateralType);
+        return Pool.loadExisting(poolId).currentVaultCollateral(collateralType);
     }
 
     /**
      * @inheritdoc IVaultModule
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int256) {
-        return Pool.load(poolId).currentVaultDebt(collateralType);
+        return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
     }
 
     /**
