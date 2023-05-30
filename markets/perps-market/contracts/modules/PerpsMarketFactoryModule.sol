@@ -35,6 +35,8 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
     bytes32 private constant _ACCOUNT_TOKEN_SYSTEM = "accountNft";
 
+    error InvalidMarketOwner();
+
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
@@ -64,6 +66,10 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
 
+        if (marketOwner == address(0)) {
+            revert InvalidMarketOwner();
+        }
+
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
         uint128 perpsMarketId = store.synthetix.registerMarket(address(this));
 
@@ -74,30 +80,34 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return perpsMarketId;
     }
 
-    function name(uint128 marketId) external view override returns (string memory) {
-        return string.concat(PerpsMarket.load(marketId).name, " Perps Market");
+    function name(uint128 perpsMarketId) external view override returns (string memory) {
+        return string.concat(PerpsMarket.load(perpsMarketId).name, " Perps Market");
     }
 
-    function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        return MathUtil.abs(PerpsMarket.load(marketId).skew);
+    function symbol(uint128 perpsMarketId) external view override returns (string memory) {
+        return PerpsMarket.load(perpsMarketId).symbol;
     }
 
-    function minimumCredit(uint128 marketId) external view override returns (uint256) {
+    function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
+        return MathUtil.abs(PerpsMarket.load(perpsMarketId).skew);
+    }
+
+    function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         return
-            PerpsMarket.load(marketId).size.mulDecimal(
-                PerpsMarketConfiguration.load(marketId).lockedOiPercent
+            PerpsMarket.load(perpsMarketId).size.mulDecimal(
+                PerpsMarketConfiguration.load(perpsMarketId).lockedOiPercent
             );
     }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function updatePriceData(uint128 marketId, bytes32 feedId) external override {
-        PerpsMarket.loadWithVerifiedOwner(marketId, msg.sender);
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+        PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
 
-        PerpsPrice.load(marketId).update(feedId);
+        PerpsPrice.load(perpsMarketId).update(feedId);
 
-        emit MarketPriceDataUpdated(marketId, feedId);
+        emit MarketPriceDataUpdated(perpsMarketId, feedId);
     }
 
     function setSynthDeductionPriority(
@@ -111,8 +121,14 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function nominateMarketOwner(uint128 marketId, address newNominatedOwner) external override {
-        PerpsMarket.Data storage market = PerpsMarket.loadWithVerifiedOwner(marketId, msg.sender);
+    function nominateMarketOwner(
+        uint128 perpsMarketId,
+        address newNominatedOwner
+    ) external override {
+        PerpsMarket.Data storage market = PerpsMarket.loadWithVerifiedOwner(
+            perpsMarketId,
+            msg.sender
+        );
 
         if (newNominatedOwner == address(0)) {
             revert AddressError.ZeroAddress();
@@ -120,20 +136,20 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         market.nominatedOwner = newNominatedOwner;
 
-        emit MarketOwnerNominated(marketId, newNominatedOwner);
+        emit MarketOwnerNominated(perpsMarketId, newNominatedOwner);
     }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function acceptMarketOwnership(uint128 marketId) external override {
-        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+    function acceptMarketOwnership(uint128 perpsMarketId) external override {
+        PerpsMarket.Data storage market = PerpsMarket.load(perpsMarketId);
         address currentNominatedOwner = market.nominatedOwner;
         if (msg.sender != currentNominatedOwner) {
             revert NotNominated(msg.sender);
         }
 
-        emit MarketOwnerChanged(marketId, market.owner, currentNominatedOwner);
+        emit MarketOwnerChanged(perpsMarketId, market.owner, currentNominatedOwner);
 
         market.owner = currentNominatedOwner;
         market.nominatedOwner = address(0);
@@ -142,8 +158,8 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function getMarketOwner(uint128 marketId) external view override returns (address) {
-        return PerpsMarket.load(marketId).owner;
+    function getMarketOwner(uint128 perpsMarketId) external view override returns (address) {
+        return PerpsMarket.load(perpsMarketId).owner;
     }
 
     /**
