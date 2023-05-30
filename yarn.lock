@@ -1325,6 +1325,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lerna-lite/exec@npm:1.17.0":
+  version: 1.17.0
+  resolution: "@lerna-lite/exec@npm:1.17.0"
+  dependencies:
+    "@lerna-lite/core": 1.17.0
+    "@lerna-lite/filter-packages": 1.17.0
+    "@lerna-lite/profiler": 1.17.0
+    chalk: ^4.1.2
+    dotenv: ^16.0.3
+    npmlog: ^7.0.1
+    p-map: ^4.0.0
+  checksum: 28f39983c982dfd52385e093403219484abe9a6bf158c1eef36fc31f13e9f38d7f6577fcec0088ea6259b0f989ad863de360b68352ff046ac5c2ce79f0fe3fcb
+  languageName: node
+  linkType: hard
+
+"@lerna-lite/filter-packages@npm:1.17.0":
+  version: 1.17.0
+  resolution: "@lerna-lite/filter-packages@npm:1.17.0"
+  dependencies:
+    "@lerna-lite/core": 1.17.0
+    multimatch: ^5.0.0
+    npmlog: ^7.0.1
+  checksum: 90c2e4f77bc51ae8b4462ef6b13aca11d9ebaee788af4fa265d30544dc83958723043dc54ef98eddd677d8a27d09a052c01535290f3730555236cb84c289bd90
+  languageName: node
+  linkType: hard
+
 "@lerna-lite/init@npm:1.17.0":
   version: 1.17.0
   resolution: "@lerna-lite/init@npm:1.17.0"
@@ -1346,6 +1372,18 @@ __metadata:
     chalk: ^4.1.2
     columnify: ^1.6.0
   checksum: 682a2cbfc2a298a0fb0e42e131c0b05fb3f282ff8a3f895fed5e8aa48cee5a7037cea9f3ecd5ec2cb219a9aaecff19f732ede557a6b318fc008ab36fd42caf8e
+  languageName: node
+  linkType: hard
+
+"@lerna-lite/profiler@npm:1.17.0":
+  version: 1.17.0
+  resolution: "@lerna-lite/profiler@npm:1.17.0"
+  dependencies:
+    "@lerna-lite/core": 1.17.0
+    fs-extra: ^11.1.0
+    npmlog: ^7.0.1
+    upath: ^2.0.1
+  checksum: 499de0f370d8aef09a413c62488e29c716bf9778f962b3a02a6dea4e811e5cfd831db01014de6043d2c981e4187c68976c34a248e56a3f1ae7b1a831515cc2ef
   languageName: node
   linkType: hard
 
@@ -14086,6 +14124,7 @@ __metadata:
   resolution: "synthetix-v3@workspace:."
   dependencies:
     "@lerna-lite/cli": 1.17.0
+    "@lerna-lite/exec": 1.17.0
     "@synthetixio/deps": "workspace:*"
     "@types/mocha": 10.0.1
     "@types/node": 18.11.10
@@ -14776,6 +14815,13 @@ __metadata:
   version: 4.0.0
   resolution: "untildify@npm:4.0.0"
   checksum: 39ced9c418a74f73f0a56e1ba4634b4d959422dff61f4c72a8e39f60b99380c1b45ed776fbaa0a4101b157e4310d873ad7d114e8534ca02609b4916bb4187fb9
+  languageName: node
+  linkType: hard
+
+"upath@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "upath@npm:2.0.1"
+  checksum: 2db04f24a03ef72204c7b969d6991abec9e2cb06fb4c13a1fd1c59bc33b46526b16c3325e55930a11ff86a77a8cbbcda8f6399bf914087028c5beae21ecdb33c
   languageName: node
   linkType: hard
 
