@@ -48,6 +48,7 @@ jobs:
             coverage-file: utils/router/coverage/coverage.info
           - package: main
             workspace: "@synthetixio/main"
+            coverage-file: utils/router/coverage/coverage.info
     steps:
       - run: mkdir -p ~/.local/share/cannon && echo '{"ipfsUrl":"http://localhost:5001"}' > ~/.local/share/cannon/settings.json
       - name: Install Foundry (Cannon)
