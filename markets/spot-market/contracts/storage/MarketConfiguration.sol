@@ -250,7 +250,7 @@ library MarketConfiguration {
         fees.fixedFees = usdAmount.divDecimal(DecimalMath.UNIT - fixedFee) - usdAmount;
         // apply fixed fee
         usdAmount += fees.fixedFees;
-        // convert usd amount to synth amount to return to trader
+        // convert usd amount to synth amount to charge the trader
         synthAmount = usdAmount.divDecimal(synthPrice);
     }
 
@@ -279,7 +279,7 @@ library MarketConfiguration {
         usdAmount -= fees.fixedFees;
 
         // use the amount _after_ fixed fee is applied to the amount
-        // skew is calcuated based on amount after all other fees applied, to get accurate skew fee
+        // skew is calculated based on amount after all other fees applied, to get accurate skew fee
         int256 usdAmountInt = usdAmount.toInt();
         int256 skewFee = calculateSkewFeeRatioExact(
             config,
