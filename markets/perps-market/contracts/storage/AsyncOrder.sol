@@ -161,7 +161,7 @@ library AsyncOrder {
         runtime.newNotionalValue = MathUtil.abs(
             runtime.newPositionSize.to256().mulDecimal(runtime.fillPrice.toInt())
         );
-        (, , runtime.initialRequiredMargin, ) = marketConfig.calculateRequiredMargins(
+        (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newNotionalValue
         );
 

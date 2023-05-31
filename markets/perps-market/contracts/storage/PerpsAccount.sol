@@ -28,6 +28,7 @@ library PerpsAccount {
     using PerpsMarket for PerpsMarket.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
 
@@ -131,14 +132,16 @@ library PerpsAccount {
 
         if (isEligible) {
             revert AccountLiquidatable(accountId);
-        } else if (amountToWithdraw > availableWithdrawableCollateralUsd) {
+        }
+
+        if (amountToWithdraw > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
                 amountToWithdraw
             );
-        } else {
-            availableWithdrawableCollateralUsd = availableMargin - requiredMaintenanceMargin;
         }
+
+        availableWithdrawableCollateralUsd = availableMargin - requiredMaintenanceMargin;
     }
 
     function getTotalCollateralValue(Data storage self) internal view returns (uint) {
@@ -201,11 +204,10 @@ library PerpsAccount {
      */
     function getAccountMaintenanceMargin(
         Data storage self,
-        uint128 accountId,
-        uint128 skipMarketId
-    ) internal view returns (uint totalMaintenanceMargin) {
+        uint128 accountId
+    ) internal view returns (uint accountMaintenanceMargin) {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
-        uint256 marketLiquidationRewards;
+        uint256 accumulatedLiquidationRewards;
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[accountId];
@@ -213,16 +215,16 @@ library PerpsAccount {
                 marketId
             );
             uint256 notionalValue = position.getNotionalValue(PerpsPrice.getCurrentPrice(marketId));
-            (, , , uint256 marketMaintenanceMargin, uint256 liquidationMargin) = marketConfig
+            (, , , uint256 positionMaintenanceMargin, uint256 liquidationMargin) = marketConfig
                 .calculateRequiredMargins(notionalValue);
 
-            marketLiquidationRewards += liquidationMargin;
-            totalMaintenanceMargin += marketMaintenanceMargin;
+            accumulatedLiquidationRewards += liquidationMargin;
+            accountMaintenanceMargin += positionMaintenanceMargin;
         }
 
         return
-            totalMaintenanceMargin +
-            GlobalPerpsMarketConfiguration.load().liquidationReward(marketLiquidationRewards);
+            accountMaintenanceMargin +
+            GlobalPerpsMarketConfiguration.load().liquidationReward(accumulatedLiquidationRewards);
     }
 
     function convertAllCollateralToUsd(Data storage self) internal {
@@ -415,10 +417,10 @@ library PerpsAccount {
         }
 
         // pay out liquidation rewards
-        uint256 liquidationReward = GlobalPerpsMarketConfiguration.load().liquidationReward(
-            totalLiquidationRewards
+        runtime.liquidationReward = GlobalPerpsMarketConfiguration.load().liquidationReward(
+            runtime.accumulatedLiquidationRewards
         );
-        factory.usdToken.transfer(msg.sender, liquidationReward);
+        factory.usdToken.transfer(msg.sender, runtime.liquidationReward);
     }
 
     function _processMarketLiquidation(
@@ -456,7 +458,7 @@ library PerpsAccount {
 
         // using amountToLiquidate to calculate liquidation reward
         (, , , , liquidationReward) = PerpsMarketConfiguration
-            .load(marketId)
+            .load(positionMarketId)
             .calculateRequiredMargins(amountToLiquidate.mulDecimal(price));
 
         return (amountToLiquidate, totalPnl, liquidationReward, position);
