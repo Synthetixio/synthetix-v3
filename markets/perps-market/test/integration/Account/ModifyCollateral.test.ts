@@ -32,7 +32,8 @@ describe('ModifyCollateral', () => {
     traderAccountIds: accountIds,
   });
 
-  const PERPS_PERMISSION_NAME = ethers.utils.formatBytes32String('PERPS');
+  const PERPS_MODIFY_COLLATERAL_PERMISSION_NAME =
+    ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL');
 
   let synthBTCMarketId: ethers.BigNumber, synthETHMarketId: ethers.BigNumber;
   let perpBTCMarketId: ethers.BigNumber, perpETHMarketId: ethers.BigNumber;
@@ -62,7 +63,7 @@ describe('ModifyCollateral', () => {
             .modifyCollateral(accountIds[1], perpBTCMarketId, oneBTC),
           `PermissionDenied("${
             accountIds[1]
-          }", "${PERPS_PERMISSION_NAME}", "${await owner().getAddress()}")`
+          }", "${PERPS_MODIFY_COLLATERAL_PERMISSION_NAME}", "${await owner().getAddress()}")`
         );
       });
 
