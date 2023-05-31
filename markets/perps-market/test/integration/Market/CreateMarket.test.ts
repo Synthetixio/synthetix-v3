@@ -270,7 +270,7 @@ describe('Create Market test', () => {
   describe('market interface views', async () => {
     before(restore);
 
-    let oracleNodeId: string, marketId: ethers.BigNumber;
+    let marketId: ethers.BigNumber;
 
     before('create perps market', async () => {
       marketId = await systems().PerpsMarket.callStatic.createMarket(
@@ -282,8 +282,7 @@ describe('Create Market test', () => {
     });
 
     before('create price nodes', async () => {
-      const results = await createOracleNode(owner(), price, systems().OracleManager);
-      oracleNodeId = results.oracleNodeId;
+      await createOracleNode(owner(), price, systems().OracleManager);
     });
 
     describe('can get market data', () => {
