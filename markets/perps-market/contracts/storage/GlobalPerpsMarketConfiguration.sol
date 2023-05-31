@@ -41,7 +41,7 @@ library GlobalPerpsMarketConfiguration {
     function liquidationReward(
         Data storage self,
         uint256 totalLiquidationRewards
-    ) internal view returns (uint) {
+    ) internal view returns (uint256) {
         return
             MathUtil.min(
                 MathUtil.max(totalLiquidationRewards, self.minLiquidationRewardUsd),

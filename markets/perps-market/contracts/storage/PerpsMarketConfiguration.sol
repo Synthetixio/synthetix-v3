@@ -62,7 +62,7 @@ library PerpsMarketConfiguration {
         return notionalValue.mulDecimal(self.liquidationRewardRatioD18);
     }
 
-    function calculateMarginRatios(
+    function calculateRequiredMargins(
         Data storage self,
         uint256 notionalValue
     )

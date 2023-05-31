@@ -161,14 +161,23 @@ library AsyncOrder {
         runtime.newNotionalValue = MathUtil.abs(
             runtime.newPositionSize.to256().mulDecimal(runtime.fillPrice.toInt())
         );
-        (, , runtime.initialRequiredMargin, ) = marketConfig.calculateMarginRatios(
+        (, , runtime.initialRequiredMargin, ) = marketConfig.calculateRequiredMargins(
             runtime.newNotionalValue
         );
 
+        // use order price to determine notional value here since we need to subtract
+        // this amount
+        (, , , uint256 currentMarketMaintenanceMargin, ) = marketConfig.calculateRequiredMargins(
+            position.getNotionalValue(orderPrice)
+        );
+
+        // requiredMaintenanceMargin includes the maintenance margin for the current position that's
+        // being modified, so we subtract the maintenance margin and use the initial required margin
         runtime.totalRequiredMargin =
             runtime.orderFees +
             runtime.requiredMaintenanceMargin +
-            runtime.initialRequiredMargin;
+            runtime.initialRequiredMargin -
+            currentMarketMaintenanceMargin;
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
