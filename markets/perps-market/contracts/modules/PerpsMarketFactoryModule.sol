@@ -35,6 +35,8 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
     bytes32 private constant _ACCOUNT_TOKEN_SYSTEM = "accountNft";
 
+    error InvalidMarketOwner();
+
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
@@ -64,6 +66,10 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
 
+        if (marketOwner == address(0)) {
+            revert InvalidMarketOwner();
+        }
+
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
         uint128 perpsMarketId = store.synthetix.registerMarket(address(this));
 
@@ -74,18 +80,22 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return perpsMarketId;
     }
 
-    function name(uint128 marketId) external view override returns (string memory) {
-        return string.concat(PerpsMarket.load(marketId).name, " Perps Market");
+    function name(uint128 perpsMarketId) external view override returns (string memory) {
+        return string.concat(PerpsMarket.load(perpsMarketId).name, " Perps Market");
     }
 
-    function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        return MathUtil.abs(PerpsMarket.load(marketId).skew);
+    function symbol(uint128 perpsMarketId) external view override returns (string memory) {
+        return PerpsMarket.load(perpsMarketId).symbol;
     }
 
-    function minimumCredit(uint128 marketId) external view override returns (uint256) {
+    function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
+        return MathUtil.abs(PerpsMarket.load(perpsMarketId).skew);
+    }
+
+    function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         return
-            PerpsMarket.load(marketId).size.mulDecimal(
-                PerpsMarketConfiguration.load(marketId).lockedOiPercent
+            PerpsMarket.load(perpsMarketId).size.mulDecimal(
+                PerpsMarketConfiguration.load(perpsMarketId).lockedOiPercent
             );
     }
 

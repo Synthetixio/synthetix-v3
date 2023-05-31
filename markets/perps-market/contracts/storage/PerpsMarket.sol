@@ -10,6 +10,7 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
 
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
@@ -26,6 +27,8 @@ library PerpsMarket {
     error OnlyMarketOwner(address marketOwner, address sender);
 
     error InvalidMarket(uint128 marketId);
+
+    error PriceFeedNotSet(uint128 marketId);
 
     struct Data {
         address owner;
@@ -69,10 +72,17 @@ library PerpsMarket {
         }
     }
 
+    /**
+     * @dev Reverts if the market does not exist with appropriate error. Otherwise, returns the market.
+     */
     function loadValid(uint128 marketId) internal view returns (Data storage market) {
         market = load(marketId);
         if (market.owner == address(0)) {
             revert InvalidMarket(marketId);
+        }
+
+        if (PerpsPrice.load(marketId).feedId == "") {
+            revert PriceFeedNotSet(marketId);
         }
     }
 
