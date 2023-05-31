@@ -34,4 +34,18 @@ library GlobalPerpsMarketConfiguration {
             globalMarketConfig.slot := s
         }
     }
+
+    /**
+     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against min/max
+     */
+    function liquidationReward(
+        Data storage self,
+        uint256 totalLiquidationRewards
+    ) internal view returns (uint) {
+        return
+            MathUtil.min(
+                MathUtil.max(totalLiquidationRewards, self.minLiquidationRewardUsd),
+                self.maxLiquidationRewardUsd
+            );
+    }
 }

@@ -317,6 +317,7 @@ library PerpsAccount {
         Data storage self,
         uint128 accountId
     ) internal view returns (uint totalMaintenanceMargin) {
+        uint256 totalLiquidationRewards;
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[accountId];
@@ -324,12 +325,16 @@ library PerpsAccount {
                 marketId
             );
             uint256 notionalValue = position.getNotionalValue(PerpsPrice.getCurrentPrice(marketId));
-            (, , , uint256 marketMaintenanceMargin) = marketConfig.calculateMarginRatios(
-                notionalValue
-            );
+            (, , , uint256 marketMaintenanceMargin, uint256 liquidationMargin) = marketConfig
+                .calculateMarginRatios(notionalValue);
+            totalLiquidationRewards += liquidationMargin;
 
             totalMaintenanceMargin += marketMaintenanceMargin;
         }
+
+        return
+            totalMaintenanceMargin +
+            GlobalPerpsMarketConfiguration.load().liquidationReward(totalLiquidationRewards);
     }
 
     function convertAllCollateralToUsd(Data storage self) internal {

@@ -40,6 +40,10 @@ library PerpsMarketConfiguration {
          * @dev This multiplier is applied to the max liquidation value when calculating max liquidation for a given market
          */
         uint256 maxLiquidationLimitAccumulationMultiplier;
+        /**
+         * @dev This value is multiplied by the notional value of a position to determine liquidation reward
+         */
+        uint256 liquidationRewardRatioD18;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -49,6 +53,13 @@ library PerpsMarketConfiguration {
         assembly {
             store.slot := s
         }
+    }
+
+    function calculateLiquidationMargin(
+        Data storage self,
+        uint256 notionalValue
+    ) internal view returns (uint256) {
+        return notionalValue.mulDecimal(self.liquidationRewardRatioD18);
     }
 
     function calculateMarginRatios(
@@ -61,7 +72,8 @@ library PerpsMarketConfiguration {
             uint256 initialMarginRatio,
             uint256 maintenanceMarginRatio,
             uint256 initialMargin,
-            uint256 maintenanceMargin
+            uint256 maintenanceMargin,
+            uint256 liquidationMargin
         )
     {
         uint256 impactOnSkew = notionalValue.divDecimal(self.skewScale);
@@ -70,5 +82,7 @@ library PerpsMarketConfiguration {
         maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginFraction);
         initialMargin = notionalValue.mulDecimal(initialMarginRatio);
         maintenanceMargin = notionalValue.mulDecimal(maintenanceMarginRatio);
+
+        liquidationMargin = calculateLiquidationMargin(self, notionalValue);
     }
 }
