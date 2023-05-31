@@ -162,19 +162,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
             factory.depositToMarketManager(asyncOrder.marketId, amountToDeposit);
         }
 
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(asyncOrder.marketId);
         perpsMarket.updatePositionData(newPosition);
 
-        PerpsMarket.load(asyncOrder.marketId).positions[asyncOrder.accountId].updatePosition(
-            newPosition
-        );
+        perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
     }
 
     function _performOrderValidityChecks(
         uint128 marketId,
         uint128 accountId
     ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
-        AsyncOrder.Data storage order = PerpsMarket.load(marketId).asyncOrders[accountId];
+        AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];
