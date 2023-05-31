@@ -260,6 +260,9 @@ library Pool {
         return false;
     }
 
+    /**
+     * IMPORTANT: after this function, you should accumulateVaultDebt
+     */
     function distributeDebtToVaults(
         Data storage self,
         address optionalCollateralType
