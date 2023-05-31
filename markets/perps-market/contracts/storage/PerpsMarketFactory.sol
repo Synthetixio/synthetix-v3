@@ -16,7 +16,6 @@ library PerpsMarketFactory {
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
 
     error OnlyMarketOwner(address marketOwner, address sender);
-    error InvalidMarket(uint128 marketId);
 
     struct Data {
         /**
