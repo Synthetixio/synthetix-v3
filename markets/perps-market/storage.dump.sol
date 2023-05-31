@@ -523,7 +523,8 @@ library PerpsAccount {
     }
     struct RuntimeLiquidationData {
         uint totalLosingPnl;
-        uint totalLiquidationRewards;
+        uint accumulatedLiquidationRewards;
+        uint liquidationReward;
         uint losingMarketsLength;
         uint profitableMarketsLength;
         uint128[] profitableMarkets;
@@ -584,6 +585,7 @@ library PerpsMarketConfiguration {
         uint256 maintenanceMarginFraction;
         uint256 lockedOiPercent;
         uint256 maxLiquidationLimitAccumulationMultiplier;
+        uint256 liquidationRewardRatioD18;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
