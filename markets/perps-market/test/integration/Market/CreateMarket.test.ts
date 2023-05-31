@@ -3,7 +3,7 @@ import { bn, bootstrapMarkets } from '../bootstrap';
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-// import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 
 describe('Create Market test', () => {
@@ -11,7 +11,7 @@ describe('Create Market test', () => {
     token = 'snxETH',
     price = bn(1000);
 
-  const { systems, signers, owner, restore, poolId } = bootstrapMarkets({
+  const { systems, signers, owner, restore, poolId, trader1 } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [], // don't create a market in bootstrap
     traderAccountIds: [2, 3],
@@ -164,7 +164,7 @@ describe('Create Market test', () => {
     });
   });
 
-  describe('price data', async () => {
+  describe('market operation and configuration', async () => {
     before(restore);
 
     let oracleNodeId: string, marketId: ethers.BigNumber;
@@ -183,23 +183,118 @@ describe('Create Market test', () => {
       oracleNodeId = results.oracleNodeId;
     });
 
-    before('update price data', async () => {
-      await systems().PerpsMarket.connect(marketOwner).updatePriceData(marketId, oracleNodeId);
+    describe('attempt to update price data with non-owner', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          systems().PerpsMarket.connect(randomAccount).updatePriceData(marketId, oracleNodeId),
+          'Unauthorized'
+        );
+      });
     });
 
-    before('delegate collateral from pool to market', async () => {
-      await systems()
-        .Core.connect(owner())
-        .setPoolConfiguration(poolId, [
-          {
-            marketId,
-            weightD18: ethers.utils.parseEther('1'),
-            maxDebtShareValueD18: ethers.utils.parseEther('1'),
-          },
-        ]);
+    describe('before setting up price data', () => {
+      it('reverts when trying to use the market', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(marketOwner)
+            .commitOrder({
+              marketId: marketId,
+              accountId: 2,
+              sizeDelta: bn(1),
+              settlementStrategyId: 0,
+              acceptablePrice: bn(1000),
+              trackingCode: ethers.constants.HashZero,
+            }),
+          'PriceFeedNotSet'
+        );
+      });
     });
 
-    it('should check something TODO', async () => {});
+    describe('when price data is updated', () => {
+      before('update price data', async () => {
+        await systems().PerpsMarket.connect(marketOwner).updatePriceData(marketId, oracleNodeId);
+      });
+
+      // Need to do some configuration to make sure the market is ready to use
+      before('delegate collateral from pool to market', async () => {
+        await systems()
+          .Core.connect(owner())
+          .setPoolConfiguration(poolId, [
+            {
+              marketId,
+              weightD18: ethers.utils.parseEther('1'),
+              maxDebtShareValueD18: ethers.utils.parseEther('1'),
+            },
+          ]);
+      });
+
+      before('create settlement strategy', async () => {
+        await systems()
+          .PerpsMarket.connect(marketOwner)
+          .addSettlementStrategy(marketId, {
+            strategyType: 0,
+            settlementDelay: 5,
+            settlementWindowDuration: 120,
+            priceVerificationContract: ethers.constants.AddressZero,
+            feedId: ethers.constants.HashZero,
+            url: '',
+            disabled: false,
+            settlementReward: bn(5),
+            priceDeviationTolerance: bn(0.01),
+          });
+      });
+
+      before('set skew scale', async () => {
+        await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId, bn(100_000));
+      });
+
+      before('add collateral', async () => {
+        await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
+      });
+
+      it('sohuld be able to use the market', async () => {
+        await systems()
+          .PerpsMarket.connect(marketOwner)
+          .commitOrder({
+            marketId: marketId,
+            accountId: 2,
+            sizeDelta: bn(1),
+            settlementStrategyId: 0,
+            acceptablePrice: bn(1000),
+            trackingCode: ethers.constants.HashZero,
+          });
+      });
+    });
+  });
+
+  describe('market interface views', async () => {
+    before(restore);
+
+    let oracleNodeId: string, marketId: ethers.BigNumber;
+
+    before('create perps market', async () => {
+      marketId = await systems().PerpsMarket.callStatic.createMarket(
+        name,
+        token,
+        marketOwner.getAddress()
+      );
+      await systems().PerpsMarket.createMarket(name, token, marketOwner.getAddress());
+    });
+
+    before('create price nodes', async () => {
+      const results = await createOracleNode(owner(), price, systems().OracleManager);
+      oracleNodeId = results.oracleNodeId;
+    });
+
+    describe('can get market data', () => {
+      it('can get market reported debt', async () => {
+        assertBn.equal(await systems().PerpsMarket.reportedDebt(marketId), bn(0));
+      });
+
+      it('can get market minimum credit', async () => {
+        assertBn.equal(await systems().PerpsMarket.minimumCredit(marketId), bn(0));
+      });
+    });
   });
 
   describe('factory setup', async () => {
@@ -230,9 +325,5 @@ describe('Create Market test', () => {
         await systems().PerpsMarket.connect(owner()).setSpotMarket(systems().SpotMarket.address);
       });
     });
-  });
-
-  describe('linked market data', async () => {
-    before(restore);
   });
 });
