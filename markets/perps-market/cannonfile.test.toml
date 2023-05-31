@@ -59,6 +59,9 @@ abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
+[contract.GlobalPerpsMarketModule]
+artifact = "GlobalPerpsMarketModule"
+
 # Core
 [router.PerpsMarketRouter]
 contracts = [
@@ -73,7 +76,8 @@ contracts = [
   "FeatureFlagModule",
   "LimitOrderModule",
   "LiquidationModule",
-  "MarketConfigurationModule"
+  "MarketConfigurationModule",
+  "GlobalPerpsMarketModule"
 ]
 depends = [
   "provision.synthetix",
@@ -86,7 +90,8 @@ depends = [
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",
   "contract.LiquidationModule",
-  "contract.MarketConfigurationModule"
+  "contract.MarketConfigurationModule",
+  "contract.GlobalPerpsMarketModule"
 ]
 
 [invoke.upgrade_proxy]
