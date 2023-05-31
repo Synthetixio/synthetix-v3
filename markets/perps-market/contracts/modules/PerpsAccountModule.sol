@@ -28,7 +28,10 @@ contract PerpsAccountModule is IAccountModule {
         int amountDelta
     ) external override {
         Account.exists(accountId);
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_PERMISSION);
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
+        );
 
         if (amountDelta == 0) revert InvalidAmountDelta(amountDelta);
 
