@@ -42,7 +42,7 @@ describe('GlobalPerpsMarket', () => {
       .PerpsMarket.connect(trader1())
       .setSynthDeductionPriorty([1, 2]);
     assertRevert(
-      failSetSynthDeductionPriorityTx,
+      failSetMaxCollateralForSynthMarketId,
       `Unauthorized("${await trader1().getAddress()}")`
     );
     assertRevert(
