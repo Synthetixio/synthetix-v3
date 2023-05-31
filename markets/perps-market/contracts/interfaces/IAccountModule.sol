@@ -18,7 +18,7 @@ interface IAccountModule {
 
     function totalCollateralValue(uint128 accountId) external view returns (uint);
 
-    function totalAccountOpenInterest(uint128 accountId) external view returns (int);
+    function totalAccountOpenInterest(uint128 accountId) external view returns (uint);
 
     function openPosition(
         uint128 accountId,
