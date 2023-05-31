@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
@@ -26,17 +27,11 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getMaxLeverage() external view returns (uint256) {
-        return GlobalPerpsMarketConfiguration.load().maxLeverage;
-    }
-
-    /**
-     * @inheritdoc IGlobalPerpsMarketModule
-     */
     function setMaxCollateralForSynthMarketId(
         uint128 synthMarketId,
         uint collateralAmount
     ) external {
+        OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.maxCollateralAmounts[synthMarketId] = collateralAmount;
     }
@@ -45,15 +40,8 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      * @inheritdoc IGlobalPerpsMarketModule
      */
     function setSynthDeductionPriorty(uint128[] memory newSynthDeductionPriority) external {
+        OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.synthDeductionPriority = newSynthDeductionPriority;
-    }
-
-    /**
-     * @inheritdoc IGlobalPerpsMarketModule
-     */
-    function setMaxLeverage(uint256 maxLeverage) external {
-        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.maxLeverage = maxLeverage;
     }
 }
