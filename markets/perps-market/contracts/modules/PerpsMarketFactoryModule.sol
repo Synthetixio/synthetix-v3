@@ -67,11 +67,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
         uint128 perpsMarketId = store.synthetix.registerMarket(address(this));
 
-        PerpsMarket.Data storage market = PerpsMarket.create(perpsMarketId);
-
-        market.owner = marketOwner;
-        market.name = marketName;
-        market.symbol = marketSymbol;
+        PerpsMarket.create(perpsMarketId, marketOwner, marketName, marketSymbol);
 
         emit MarketRegistered(perpsMarketId, marketOwner, marketName, marketSymbol);
 

@@ -19,9 +19,13 @@ library GlobalPerpsMarketConfiguration {
          */
         uint128[] synthDeductionPriority;
         /**
-         * @dev max leverage allowed based on notional value of all positions vs. the margin available in account
+         * @dev minimum configured liquidation reward for the sender who liquidates the account
          */
-        uint256 maxLeverage;
+        uint minLiquidationRewardUsd;
+        /**
+         * @dev maximum configured liquidation reward for the sender who liquidates the account
+         */
+        uint maxLiquidationRewardUsd;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
