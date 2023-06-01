@@ -13,11 +13,18 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.version %>"
 
+[setting.synthetixPreset]
+defaultValue = "main"
+
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>"
 
+[setting.salt]
+defaultValue = 'snax'
+
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"

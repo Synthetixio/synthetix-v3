@@ -17,6 +17,7 @@ library CrossChain {
 
     error NotCcipRouter(address);
     error UnsupportedNetwork(uint64);
+    error InsufficientCcipFee(uint256 requiredAmount, uint256 availableAmount);
 
     bytes32 private constant _SLOT_CROSS_CHAIN =
         keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
@@ -38,14 +39,13 @@ library CrossChain {
     }
 
     function processCcipReceive(Data storage self, CcipClient.Any2EVMMessage memory data) internal {
-        Data storage self = load();
         if (address(self.ccipRouter) == address(0) || msg.sender != address(self.ccipRouter)) {
             revert NotCcipRouter(msg.sender);
         }
 
         uint64 sourceChainId = self.ccipSelectorToChainId[data.sourceChainId];
 
-        if (self.supportedNetworks.contains(sourceChainId)) {
+        if (!self.supportedNetworks.contains(sourceChainId)) {
             revert UnsupportedNetwork(sourceChainId);
         }
 
@@ -101,7 +101,7 @@ library CrossChain {
             data, // Data payload
             new CcipClient.EVMTokenAmount[](0), // Token transfers
             address(0), // Address of feeToken. address(0) means you will send msg.value.
-            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, true))
+            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
         );
 
         for (uint i = 0; i < chains.length; i++) {
@@ -117,6 +117,12 @@ library CrossChain {
             } else {
                 uint64 chainSelector = self.ccipChainIdToSelector[chains[i]];
                 uint256 fee = router.getFee(chainSelector, sentMsg);
+
+                // need to check sufficient fee here or else the error is very confusing
+                if (address(this).balance < fee) {
+                    revert InsufficientCcipFee(fee, address(this).balance);
+                }
+
                 router.ccipSend{value: fee}(chainSelector, sentMsg);
 
                 gasTokenUsed += fee;

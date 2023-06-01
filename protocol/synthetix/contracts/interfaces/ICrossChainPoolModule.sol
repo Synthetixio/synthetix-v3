@@ -10,7 +10,7 @@ import "../storage/PoolCrossChainInfo.sol";
 /**
  * @title Module for management of pools which are cross chain capable
  */
-interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibleInterface {
+interface ICrossChainPoolModule {
     event PoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data syncData);
 
     event CrossChainSecondaryPoolCreated(
@@ -22,14 +22,14 @@ interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibl
     function createCrossChainPool(
         uint128 sourcePoolId,
         uint64 targetChainId
-    ) external returns (uint128 crossChainPoolId, uint256 gasTokenUsed);
+    ) external payable returns (uint128 crossChainPoolId, uint256 gasTokenUsed);
 
     function _recvCreateCrossChainPool(uint64 srcChainId, uint128 srcPoolId) external;
 
     function setCrossChainPoolConfiguration(
         uint128 poolId,
         MarketConfiguration.Data[][] memory newMarketConfigurations
-    ) external;
+    ) external payable returns (uint256 gasTokenUsed);
 
     function _recvSetCrossChainPoolConfiguration(
         uint128 poolId,
@@ -37,12 +37,8 @@ interface ICrossChainPoolModule is FunctionsClientInterface, AutomationCompatibl
         uint256 newTotalWeight,
         uint64 configTimestamp
     ) external;
-
-    function _recvPoolHeartbeat(
-        uint128 poolId,
-        PoolCrossChainSync.Data memory syncData,
-        int256 assignedDebt
-    ) external;
+    
+    function getPoolCrossChainInfo(uint128 poolId) external view returns (uint64[] memory pairedChainIds, uint128 primaryPoolId, uint128 secondaryPoolId);
 
     function getThisChainPoolLiquidity(uint128 poolId) external view returns (uint256 liquidityD18);
 

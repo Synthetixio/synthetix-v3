@@ -16,7 +16,7 @@ import "../../storage/CrossChain.sol";
  * @dev See IUtilsModule.
  */
 contract CcipReceiverModule is IAny2EVMMessageReceiver {
-    function ccipReceive(CcipClient.Any2EVMMessage calldata message) external {
+    function ccipReceive(CcipClient.Any2EVMMessage memory message) external {
         CrossChain.processCcipReceive(CrossChain.load(), message);
     }
 }

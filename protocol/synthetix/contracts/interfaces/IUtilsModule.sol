@@ -1,10 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+
 /**
  * @title Module with assorted utility functions.
  */
-interface IUtilsModule {
+interface IUtilsModule is IERC165 {
     /**
      * @notice Emitted when a new cross chain network becomes supported by the protocol
      */

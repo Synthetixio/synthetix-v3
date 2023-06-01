@@ -12,6 +12,8 @@ import "../../storage/CrossChain.sol";
 import "../../storage/OracleManager.sol";
 import "../../storage/Config.sol";
 
+import "../../interfaces/external/IAny2EVMMessageReceiver.sol";
+
 /**
  * @title Module with assorted utility functions.
  * @dev See IUtilsModule.
@@ -106,4 +108,13 @@ contract UtilsModule is IUtilsModule {
     function getConfigAddress(bytes32 k) external view override returns (address v) {
         return Config.readAddress(k, address(0));
     }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
+    }
+
 }

@@ -515,6 +515,12 @@ library Pool {
             revert PoolAlreadyExists(self.crossChain[0].pairedPoolIds[chainId]);
         }
 
+        if (self.crossChain[0].pairedChains.length == 0) {
+            // kind of redundant but good for consistency to ensure that the primary is always the first pool listed in paired chains
+            self.crossChain[0].pairedChains.push(uint64(block.chainid));
+            self.crossChain[0].pairedPoolIds[chainId] = self.id;
+        }
+
         ccPoolId = getCrossChainPoolId(uint64(block.chainid), self.id);
 
         self.crossChain[0].pairedPoolIds[chainId] = ccPoolId;
