@@ -3,6 +3,7 @@ import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { wei } from '@synthetixio/wei';
 
 describe('ModifyCollateral', () => {
   const accountIds = [10, 20];
@@ -185,6 +186,22 @@ describe('ModifyCollateral', () => {
           .connect(trader1())
           .balanceOf(systems().PerpsMarket.address);
         assertBn.equal(perpsBalanceAfter, perpsBalanceBefore.add(oneBTC));
+      });
+
+      it('properly reflects balances after withdraw', async () => {
+        await systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountIds[0], synthBTCMarketId, wei(-0.1).toBN());
+        const spotBalanceAfter = await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .balanceOf(await trader1().getAddress());
+        const perpsBalanceAfter = await synthMarkets()[0]
+          .synth()
+          .connect(trader1())
+          .balanceOf(systems().PerpsMarket.address);
+        assertBn.equal(perpsBalanceAfter, wei(0.9).toBN());
+        assertBn.equal(spotBalanceAfter, wei(0.1).toBN());
       });
 
       it('emits correct event with the expected values', async () => {
