@@ -162,3 +162,6 @@ func = "setSynthDeductionPriority"
 from = "<%= settings.owner %>"
 args = [[0]]
 depends = ['invoke.upgrade_proxy']
+
+[contract.MockPyth]
+artifact = "contracts/mocks/MockPyth.sol:MockPyth"
