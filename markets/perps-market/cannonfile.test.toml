@@ -165,3 +165,4 @@ depends = ['invoke.upgrade_proxy']
 
 [contract.MockPyth]
 artifact = "contracts/mocks/MockPyth.sol:MockPyth"
+args = [100, 1]
