@@ -59,7 +59,7 @@ task(
 
     logger.subtitle('Users Debts');
     logger.boxStart();
-    logger.log(chalk.gray(`      Provider URL: ${hre.network.config.url}`));
+    logger.log(chalk.gray(`      Provider URL: ${providerUrl || hre.network.config.url}`));
     logger.log(chalk.gray(`  Deployed Address: ${address}`));
     logger.log(chalk.gray(`        From Block: ${fromBlock}`));
     logger.log(chalk.gray(`       Until block: ${untilBlock}`));

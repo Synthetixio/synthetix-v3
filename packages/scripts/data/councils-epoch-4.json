@@ -1,0 +1,88 @@
+[
+  {
+    "name": "ambassador-council",
+    "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
+    "nominatedOwner": "0x0000000000000000000000000000000000000000",
+    "nominationPeriodStartDate": "2023-08-14T14:28:47.000Z",
+    "votingPeriodStartDate": "2023-08-18T14:28:47.000Z",
+    "epochEndDate": "2023-08-28T14:28:46.000Z",
+    "nextEpochSeatCount": "5",
+    "epochIndex": "4",
+    "currentPeriod": "0",
+    "councilMembers": [
+      "0xF68D2BfCecd7895BBa05a7451Dd09A1749026454",
+      "0x585639fBf797c1258eBA8875c080Eb63C833d252",
+      "0xBAb4905D05CB8d2A249116321c4B9226869E4258",
+      "0xb8cF517f5475C0f4E09edA100c74C0e91221332B",
+      "0xbbFf7c2dF218839895695c6D13bbFd4AcdF8191D"
+    ],
+    "councilTokenName": "Synthetix Ambassador Council Token",
+    "councilTokenSymbol": "SNX-ACT",
+    "minimumActiveMembers": "2"
+  },
+  {
+    "name": "grants-council",
+    "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
+    "nominatedOwner": "0x0000000000000000000000000000000000000000",
+    "nominationPeriodStartDate": "2023-08-14T14:27:47.000Z",
+    "votingPeriodStartDate": "2023-08-18T14:27:47.000Z",
+    "epochEndDate": "2023-08-28T14:27:46.000Z",
+    "nextEpochSeatCount": "5",
+    "epochIndex": "4",
+    "currentPeriod": "0",
+    "councilMembers": [
+      "0x8be60fe9F7C8d940D8DA9d5dDD0D8E0c15A4288B",
+      "0xfC6c93B1E3B50f68374f7B52306Dae45C04B869C",
+      "0x4f370B4d03D2b46CcE26F1aEFE142708E03D7FFE",
+      "0x9b12d2A80fad64A5499e70bf74447C352c99fD46",
+      "0x1a207bEefC754735871CEEb4C506686F044B1c41"
+    ],
+    "councilTokenName": "Synthetix Grants Council Token",
+    "councilTokenSymbol": "SNX-GCT",
+    "minimumActiveMembers": "4"
+  },
+  {
+    "name": "spartan-council",
+    "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
+    "nominatedOwner": "0x0000000000000000000000000000000000000000",
+    "nominationPeriodStartDate": "2023-08-14T14:26:11.000Z",
+    "votingPeriodStartDate": "2023-08-18T14:26:11.000Z",
+    "epochEndDate": "2023-08-28T14:26:10.000Z",
+    "nextEpochSeatCount": "8",
+    "epochIndex": "4",
+    "currentPeriod": "0",
+    "councilMembers": [
+      "0x207F342c470D6ACe889CF4BBAa2B24E693531Df1",
+      "0x461783A831E6dB52D68Ba2f3194F6fd1E0087E04",
+      "0xB15740b1222522183f278D8bd839BCEb29712007",
+      "0x8F876c97AD1090004dC28294237003e571C76Ba7",
+      "0xf07A2439296e07Bc4320AF924E655a01fb69D89C",
+      "0x1f2B0633BB0623dCCebE57932d6731Ae93f5213E",
+      "0xbf041Fe55449Df61F9ACE1Cd656414e29AeeD411",
+      "0x0120666306F4D15bb125696f322BFD8EE83423a9"
+    ],
+    "councilTokenName": "Synthetix Spartan Council Token",
+    "councilTokenSymbol": "SNX-SCT",
+    "minimumActiveMembers": "7"
+  },
+  {
+    "name": "treasury-council",
+    "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
+    "nominatedOwner": "0x0000000000000000000000000000000000000000",
+    "nominationPeriodStartDate": "2023-08-14T14:29:17.000Z",
+    "votingPeriodStartDate": "2023-08-18T14:29:17.000Z",
+    "epochEndDate": "2023-08-28T14:29:16.000Z",
+    "nextEpochSeatCount": "4",
+    "epochIndex": "4",
+    "currentPeriod": "0",
+    "councilMembers": [
+      "0x4c9891aba6C1771E69e573d7B391FF2c9b23B488",
+      "0x42f9134E9d3Bf7eEE1f8A5Ac2a4328B059E7468c",
+      "0x0e859372c72b01cc86BD4B6dF28Dd57E08226A1a",
+      "0xf04A6E38C6CFE0AcFbeB472888ed990787e69072"
+    ],
+    "councilTokenName": "Synthetix Treasury Council Token",
+    "councilTokenSymbol": "SNX-TCT",
+    "minimumActiveMembers": "3"
+  }
+]
