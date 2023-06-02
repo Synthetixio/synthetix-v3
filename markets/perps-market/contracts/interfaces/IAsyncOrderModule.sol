@@ -27,6 +27,7 @@ interface IAsyncOrderModule {
         address indexed sender
     );*/
 
+    error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
     error OffchainLookup(
         address sender,

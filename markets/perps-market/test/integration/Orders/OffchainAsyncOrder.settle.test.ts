@@ -8,7 +8,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
 const ASYNC_OFFCHAIN_URL = 'https://fakeapi.pyth.synthetix.io/';
 
-describe('Create Offchain Async Order test - no settle helpers', () => {
+describe('Settle Offchain Async Order test - not using settle helpers', () => {
   const { systems, marketOwner, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],

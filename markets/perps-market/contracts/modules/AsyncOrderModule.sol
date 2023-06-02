@@ -38,9 +38,17 @@ contract AsyncOrderModule is IAsyncOrderModule {
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
         PerpsMarket.Data storage market = PerpsMarket.loadValid(commitment.marketId);
 
+        // TODO Check if commitment.accountId is valid
+        // TODO Check msg.sender can commit order for commitment.accountId
+
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
         AsyncOrder.Data storage order = market.asyncOrders[commitment.accountId];
+
+        if (order.sizeDelta != 0) {
+            revert OrderAlreadyCommitted(commitment.marketId, commitment.accountId);
+        }
+
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
             .settlementStrategies[commitment.settlementStrategyId];
