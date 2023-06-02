@@ -27,4 +27,16 @@ interface IUSDTokenModule is ITokenModule {
         address to,
         uint256 amount
     ) external returns (uint256 feesPaidD18);
+
+    /**
+     * @notice Updates the token name
+     * @param tokenName The new token name
+     */
+    function setTokenName(string memory tokenName) external;
+
+    /**
+     * @notice Updates the token symbol
+     * @param tokenSymbol The new token symbol
+     */
+    function setTokenSymbol(string memory tokenSymbol) external;
 }

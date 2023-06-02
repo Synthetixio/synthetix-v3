@@ -131,4 +131,24 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }
+
+    /**
+     * @inheritdoc IUSDTokenModule
+     */
+    function setTokenName(string memory tokenName) external override {
+        OwnableStorage.onlyOwner();
+        ERC20Storage.Data storage erc20 = ERC20Storage.load();
+
+        erc20.name = tokenName;
+    }
+
+    /**
+     * @inheritdoc IUSDTokenModule
+     */
+    function setTokenSymbol(string memory tokenSymbol) external override {
+        OwnableStorage.onlyOwner();
+        ERC20Storage.Data storage erc20 = ERC20Storage.load();
+
+        erc20.symbol = tokenSymbol;
+    }
 }
