@@ -8,6 +8,7 @@ import {
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
   PerpsMarketProxy,
+  MockPyth,
   AccountProxy,
 } from '../../generated/typechain';
 import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
@@ -30,6 +31,7 @@ export type Systems = {
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
+  MockPyth: MockPyth;
   OracleManager: SynthetixOracle_managerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
@@ -55,6 +57,7 @@ export function bootstrap() {
       CollateralMock: getContract('synthetix.CollateralMock'),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
+      MockPyth: getContract('MockPyth'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });

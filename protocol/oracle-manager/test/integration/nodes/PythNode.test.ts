@@ -79,8 +79,8 @@ describe('PythNode', function () {
   describe('use parsed price feed', () => {
     let updateFee: ethers.BigNumber;
     let priceFeedData: string;
-    before('update price feed', async () => {
-      // Set the latest price
+    before('gets price feed', async () => {
+      // Get the latest price
       priceFeedData = await PythMock.createPriceFeedUpdateData(
         priceFeedId,
         price,
@@ -92,8 +92,6 @@ describe('PythNode', function () {
       );
       updateFee = await PythMock.getUpdateFee([priceFeedData]);
     });
-
-    before('parse price feed data', async () => {});
 
     it('retrieves latest price', async () => {
       const parsedPrice = await PythMock.callStatic.parsePriceFeedUpdates(
