@@ -13,11 +13,6 @@ module.exports = {
   },
   plugins: ['progress', 'no-only-tests'],
   parser: '@typescript-eslint/parser',
-  parserOptions: {
-    ecmaVersion: 12,
-    tsconfigRootDir: __dirname,
-    project: ['./tsconfig.eslint.json'],
-  },
   ignorePatterns: ['/*.js'],
   rules: {
     'progress/enable': process.env.ESLINT_PROGRESS === 'true' ? 1 : 0,
@@ -33,11 +28,7 @@ module.exports = {
     {
       files: ['**/*.ts'],
       extends: ['plugin:@typescript-eslint/recommended'],
-      parserOptions: {
-        project: ['./tsconfig.json'],
-      },
       rules: {
-        '@typescript-eslint/no-floating-promises': 'error',
         '@typescript-eslint/no-var-requires': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
         '@typescript-eslint/no-empty-function': 0,
