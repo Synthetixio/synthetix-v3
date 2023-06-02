@@ -24,4 +24,6 @@ interface IAccountModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (int, int, int);
+
+    function submittedAsyncOrder(uint128 accountId, uint128 marketId) external view returns (int);
 }

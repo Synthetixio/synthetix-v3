@@ -2,12 +2,13 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-// import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
-describe('Create Offchain Async Order test', () => {
-  const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
-  const ASYNC_OFFCHAIN_URL = 'https://fakeapi.pyth.network/';
+const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
+const ASYNC_OFFCHAIN_URL = 'https://fakeapi.pyth.synthetix.io/';
+
+describe('Create Offchain Async Order test - no settle helpers', () => {
   const { systems, marketOwner, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
@@ -15,6 +16,7 @@ describe('Create Offchain Async Order test', () => {
   });
 
   const feedId = ethers.utils.formatBytes32String('ETH/USD');
+
   let priceVerificationContract: string;
   let marketId: ethers.BigNumber;
 
@@ -50,6 +52,7 @@ describe('Create Offchain Async Order test', () => {
   describe('commit order', async () => {
     let tx: ethers.ContractTransaction;
     let startTime: number;
+
     before('commit the order', async () => {
       tx = await systems()
         .PerpsMarket.connect(trader1())
@@ -64,15 +67,17 @@ describe('Create Offchain Async Order test', () => {
       startTime = await getTime(provider());
     });
 
-    // it('emit event', async () => {
-    //   await assertEvent(
-    //     tx,
-    //     `OrderCommitted(${marketId}, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(
-    //       1000
-    //     )}, 1, "${await trader1().getAddress()}"`,
-    //     systems().PerpsMarket
-    //   );
-    // });
+    it('emit event', async () => {
+      await assertEvent(
+        tx,
+        `OrderCommitted(${marketId}, 2, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(1)}, ${bn(1000)}, ${
+          startTime + 5
+        }, ${startTime + 5 + 120}, "${
+          ethers.constants.HashZero
+        }", "${await trader1().getAddress()}"`,
+        systems().PerpsMarket
+      );
+    });
 
     // it('identifies the pending order', async () => {});
 

@@ -44,11 +44,26 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
             .settlementStrategies[commitment.settlementStrategyId];
-        order.update(commitment, block.timestamp + strategy.settlementDelay);
+
+        uint256 settlementTime = block.timestamp + strategy.settlementDelay;
+        order.update(commitment, settlementTime);
 
         (, uint feesAccrued, ) = order.validateOrder(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
+        );
+
+        // TODO include fees in event
+        emit OrderCommitted(
+            commitment.marketId,
+            commitment.accountId,
+            strategy.strategyType,
+            commitment.sizeDelta,
+            commitment.acceptablePrice,
+            settlementTime,
+            settlementTime + strategy.settlementWindowDuration,
+            commitment.trackingCode,
+            msg.sender
         );
 
         return (order, feesAccrued);
