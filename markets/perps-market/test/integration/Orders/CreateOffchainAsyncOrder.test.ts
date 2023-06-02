@@ -79,7 +79,14 @@ describe('Create Offchain Async Order test - no settle helpers', () => {
       );
     });
 
-    // it('identifies the pending order', async () => {});
+    it('identifies the pending order', async () => {
+      const pendingOrderSizeDelta = await systems().PerpsMarket.submittedAsyncOrder(2, marketId);
+      assertBn.equal(pendingOrderSizeDelta, bn(1));
+      // assertBn.equal(pendingOrder.acceptablePrice, bn(1000));
+      // assertBn.equal(pendingOrder.settlementStrategyId, bn(0));
+      // assertBn.equal(pendingOrder.startTime, bn(startTime + 5));
+      // assertBn.equal(pendingOrder.endTime, bn(startTime + 5 + 120));
+    });
 
     describe('settle order', () => {
       let pythCallData: string, extraData: string;
