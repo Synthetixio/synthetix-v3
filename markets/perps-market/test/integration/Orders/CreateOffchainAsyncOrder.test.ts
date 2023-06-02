@@ -2,13 +2,13 @@ import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+// import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('Create Offchain Async Order test', () => {
   const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
   const ASYNC_OFFCHAIN_URL = 'https://fakeapi.pyth.network/';
-  const { systems, marketOwner, perpsMarkets, provider, trader1 } = bootstrapMarkets({
+  const { systems, marketOwner, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
     traderAccountIds: [2, 3],
@@ -99,7 +99,7 @@ describe('Create Offchain Async Order test', () => {
         //   : pythSettlementStrategy.url;
 
         await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(marketId, 2),
+          systems().PerpsMarket.connect(keeper()).settle(marketId, 2),
           `OffchainLookup("${
             systems().PerpsMarket.address
           }", "${expectedUrl}", "${pythCallData}", "${functionSig}", "${extraData}")`
@@ -126,7 +126,7 @@ describe('Create Offchain Async Order test', () => {
 
         before('settle', async () => {
           tx = await systems()
-            .PerpsMarket.connect(trader1())
+            .PerpsMarket.connect(keeper())
             .settlePythOrder(pythPriceData, extraData, { value: updateFee });
         });
 
