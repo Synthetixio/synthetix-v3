@@ -114,10 +114,10 @@ describe('Create Offchain Async Order test', () => {
           // Get the latest price
           pythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
             feedId,
-            1000,
+            1000_0000,
             1,
-            -18,
-            1000,
+            -4,
+            1000_0000,
             1,
             startTime + 6
           );
