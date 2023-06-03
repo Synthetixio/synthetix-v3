@@ -125,6 +125,8 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
             abi.encodeWithSelector(this.mint.selector, to, amount),
             _TRANSFER_GAS_LIMIT
         );
+
+        emit TransferCrossChainInitiated(destChainId, to, amount, msg.sender);
     }
 
     /**

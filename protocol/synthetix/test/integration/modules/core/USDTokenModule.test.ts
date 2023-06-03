@@ -1,11 +1,12 @@
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
-describe('USDTokenModule', function () {
+describe.only('USDTokenModule', function () {
   const { owner, systems, staker, accountId, poolId, collateralAddress } =
     bootstrapWithStakedPool();
 
@@ -81,12 +82,64 @@ describe('USDTokenModule', function () {
           .transferCrossChain(1, ethers.constants.AddressZero, usdAmount)
     );
 
-    it('only works if user has enough snxUSD', async () => {});
+    before('ensure access to feature', async () => {
+      await systems()
+        .Core.connect(owner())
+        .addToFeatureFlagAllowlist(
+          ethers.utils.formatBytes32String('transferCrossChain'),
+          stakerAddress
+        );
+    });
+
+    it('reverts if the allowance is not enough', async () => {
+      await assertRevert(
+        systems().USD.connect(staker()).transferCrossChain(1, stakerAddress, usdAmount),
+        `InsufficientAllowance("${stakerAddress}")`,
+        systems().USD
+      );
+    });
+
+    it('reverts if the sender does not have enough snxUSD', async () => {
+      // approve first
+      // await systems().USD.connect(staker()).approve();
+
+      await assertRevert(
+        systems().USD.connect(staker()).transferCrossChain(1, stakerAddress, usdAmount.mul(100)),
+        `InsufficientBalance("${stakerAddress}")`,
+        systems().USD
+      );
+    });
 
     describe('successful call', () => {
-      it('burns the correct amount of snxUSD on the source chain', async () => {});
+      let usdBalanceBefore: ethers.BigNumber;
+      let transferCrossChainTxn: ethers.providers.TransactionResponse;
 
-      it('triggers cross chain transfer call', async () => {});
+      before('record balances', async () => {
+        usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
+      });
+
+      before('transfer some snxUSD', async () => {
+        await systems().USD.connect(staker()).transferCrossChain(1, stakerAddress, usdAmount);
+      });
+
+      it('burns the correct amount of snxUSD on the source chain', async () => {
+        const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
+        assertBn.equal(usdBalanceAfter, usdBalanceBefore.add(usdAmount));
+      });
+
+      it('transfers the fee into the contract and notifies the rewards distributor', async () => {});
+
+      it('triggers cross chain transfer call', async () => {
+        // calls ccipSend with the expected encoded data (recipient, amount, destChainId)
+      });
+
+      it('emits correct event with the expected values', async () => {
+        await assertEvent(
+          transferCrossChainTxn,
+          `TransferCrossChainInitiated(1, "${stakerAddress}", ${usdAmount}, "${stakerAddress}"`,
+          systems().USD
+        );
+      });
     });
   });
 });

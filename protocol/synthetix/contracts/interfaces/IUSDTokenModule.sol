@@ -7,6 +7,13 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
  * @title Module for managing the snxUSD token as an associated system.
  */
 interface IUSDTokenModule is ITokenModule {
+    event TransferCrossChainInitiated(
+        uint64 indexed destChainId,
+        address indexed to,
+        uint256 indexed amount,
+        address sender
+    );
+
     /**
      * @notice Allows the core system to burn snxUSD held by the `from` address, provided that it has given allowance to `spender`.
      * @param from The address that holds the snxUSD to be burned.
