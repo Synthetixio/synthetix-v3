@@ -23,7 +23,6 @@ interface IAsyncOrderModule {
         address indexed sender
     );*/
 
-    error InvalidOrder(AsyncOrder.Status status);
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
     error OffchainLookup(
         address sender,
