@@ -32,27 +32,8 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
     bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG =
         "setCrossChainPoolConfiguration";
 
-    string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
-
-    string internal constant _REQUEST_TOTAL_DEBT_CODE =
-        "const maxFail = 1;"
-        "const chainMapping = { '11155111': [`https://sepolia.infura.io/${secrets.INFURA_API_KEY}`], '80001': ['https://polygon-mumbai.infura.io/${secrets.INFURA_API_KEY}'] };"
-        "let responses = [];"
-        "for (let i = 0;i < args.length;i += 2) {"
-        "    const chainId = Functions.decodeUint256(args[i]);"
-        "    const callHex = args[i + 1];"
-        "    const urls = chainMapping[chainId];"
-        "    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: callHex }] };"
-        "    const results = await Promise.allSettled(urls.map(u => Functions.makeHttpRequest({ url, params })));"
-        "    let ress = 0;"
-        "    for (const result of results) {"
-        "        ress.push(Functions.decodeInt256(res.data.result));"
-        "    }"
-        "    ress.sort();"
-        "    responses.push(ress[ress.length / 2].slice(2));"
-        "}"
-        "return Buffer.from(responses.join(''));";
-    bytes internal constant _REQUEST_TOTAL_DEBT_SECRETS = "0xwhatever";
+    bytes32 internal constant _CONFIG_SYNC_POOL_CODE_ADDRESS = "performUpkeep_syncPool";
+    bytes32 internal constant _CONFIG_SYNC_POOL_SECRETS_ADDRESS = "performUpkeep_syncPoolSecrets";
 
     /**
      * @notice Callback that is invoked once the DON has resolved the request or hit an error
@@ -203,24 +184,27 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         // we do it here instaed of fulfill because there is no reason for this to fail if for some reason the function fails
 
         string[] memory args = new string[](pool.crossChain[0].pairedChains.length * 2);
-        args[0] = string(abi.encode(block.chainid));
-        args[1] = string(_encodeCrossChainPoolCall(poolId));
+        args[0] = _bytesToHexString(abi.encode(block.chainid));
+        args[1] = _bytesToHexString(_encodeCrossChainPoolCall(poolId));
 
         for (uint i = 0; i < args.length; i += 2) {
             uint64 chainId = pool.crossChain[0].pairedChains[i / 2];
-            args[i] = string(abi.encode(chainId));
+            args[i] = _bytesToHexString(abi.encode(chainId));
 
-            args[i + 1] = string(
+            args[i + 1] = _bytesToHexString(
                 _encodeCrossChainPoolCall(pool.crossChain[0].pairedPoolIds[chainId])
             );
         }
+
+        string memory source = string(_codeAt(Config.getAddress(_CONFIG_SYNC_POOL_CODE_ADDRESS)));
+        bytes memory secrets = _codeAt(Config.getAddress(_CONFIG_SYNC_POOL_SECRETS_ADDRESS));
 
         Functions.Request memory req = Functions.Request({
             codeLocation: Functions.Location.Inline,
             secretsLocation: Functions.Location.Inline,
             language: Functions.CodeLanguage.JavaScript,
-            source: _REQUEST_TOTAL_DEBT_CODE,
-            secrets: _REQUEST_TOTAL_DEBT_SECRETS,
+            source: source,
+            secrets: secrets,
             args: args
         });
         bytes32 requestId = CrossChain.load().chainlinkFunctionsOracle.sendRequest(
@@ -249,7 +233,45 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         return abi.encodeWithSelector(IMulticallModule.multicall.selector, abi.encode(calls));
     }
 
-    function getDONPublicKey() external view returns (bytes memory) {
-        return "";
+    /**
+     * loads the bytes deployed to the specified address
+     * used to get the inline execution code for chainlink
+     */
+    function _codeAt(address _addr) public view returns (bytes o_code) {
+        assembly {
+            // retrieve the size of the code, this needs assembly
+            let size := extcodesize(_addr)
+            // allocate output byte array - this could also be done without assembly
+            // by using o_code = new bytes(size)
+            o_code := mload(0x40)
+            // new "memory end" including padding
+            mstore(0x40, add(o_code, and(add(add(size, 0x20), 0x1f), not(0x1f))))
+            // store length in memory
+            mstore(o_code, size)
+            // actually retrieve the code, this needs assembly
+            extcodecopy(_addr, add(o_code, 0x20), 0, size)
+        }
+    }
+
+    /**
+     * This is basically required to send binary data to chainlink functions
+     */
+    function _bytesToHexString(bytes memory buffer) public pure returns (string memory) {
+
+        // Fixed buffer size for hexadecimal convertion
+        bytes memory converted = new bytes(buffer.length * 2);
+
+        bytes memory _base = "0123456789abcdef";
+
+        for (uint256 i = 0; i < buffer.length; i++) {
+            converted[i * 2] = _base[uint8(buffer[i]) / _base.length];
+            converted[i * 2 + 1] = _base[uint8(buffer[i]) % _base.length];
+        }
+
+        return string(abi.encodePacked("0x", converted));
+    }
+
+    function getDONPublicKey() external view override returns (bytes memory) {
+        return CrossChain.load().chainlinkFunctionsOracle.getDONPublicKey();
     }
 }
