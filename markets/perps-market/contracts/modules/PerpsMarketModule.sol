@@ -30,7 +30,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
         return PerpsPrice.getCurrentPrice(marketId);
     }
 
-    function fillPrice(uint128 marketId) external override returns (uint) {
+    function fillPrice(uint128 marketId) external view override returns (uint) {
         // To get the current fill price we pass in size 0
         int sizeToUse = 0;
         return

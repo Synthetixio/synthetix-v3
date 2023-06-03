@@ -4,22 +4,21 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 describe('Create Order test', () => {
-  const { systems, signers, perpsMarkets, provider, trader1 } = bootstrapMarkets({
+  const { systems, marketOwner, perpsMarkets, provider, trader1 } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
     traderAccountIds: [2, 3],
   });
 
-  let marketOwner: ethers.Signer, marketId: ethers.BigNumber;
+  let marketId: ethers.BigNumber;
 
   before('identify actors', async () => {
-    [, , marketOwner] = signers();
     marketId = perpsMarkets()[0].marketId();
   });
 
   before('create settlement strategy', async () => {
     await systems()
-      .PerpsMarket.connect(marketOwner)
+      .PerpsMarket.connect(marketOwner())
       .addSettlementStrategy(marketId, {
         strategyType: 0,
         settlementDelay: 5,
@@ -34,7 +33,7 @@ describe('Create Order test', () => {
   });
 
   before('set skew scale', async () => {
-    await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId, bn(100_000));
+    await systems().PerpsMarket.connect(marketOwner()).setSkewScale(marketId, bn(100_000));
   });
 
   before('add collateral', async () => {
