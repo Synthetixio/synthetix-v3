@@ -8,6 +8,8 @@ import { bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { wei } from '@synthetixio/wei';
+import { stake } from '../../../common/stakers';
 
 describe('VaultModule', function () {
   const {
@@ -19,6 +21,7 @@ describe('VaultModule', function () {
     depositAmount,
     collateralContract,
     collateralAddress,
+    oracleNodeId,
   } = bootstrapWithStakedPool();
 
   const MAX_UINT = ethers.constants.MaxUint256;
@@ -26,7 +29,7 @@ describe('VaultModule', function () {
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let MockMarket: ethers.Contract;
-  let marketId: number;
+  let marketId: ethers.BigNumber;
 
   before('identify signers', async () => {
     [owner, user1, user2] = signers();
@@ -65,6 +68,21 @@ describe('VaultModule', function () {
           maxDebtShareValueD18: ethers.utils.parseEther('10000000000000000'),
         },
       ]);
+  });
+
+  before('add second collateral type', async () => {
+    // add collateral
+    await (
+      await systems().Core.connect(owner).configureCollateral({
+        tokenAddress: systems().Collateral2Mock.address,
+        oracleNodeId: oracleNodeId(),
+        issuanceRatioD18: '5000000000000000000',
+        liquidationRatioD18: '1500000000000000000',
+        liquidationRewardD18: '20000000000000000000',
+        minDelegationD18: '20000000000000000000',
+        depositingEnabled: true,
+      })
+    ).wait();
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -750,6 +768,57 @@ describe('VaultModule', function () {
           0
         );
       });
+    });
+  });
+
+  describe('distribution chain edge cases', async () => {
+    before(restore);
+    it('edge case: double USD printing on market by not fully flushing with 2 collaterals', async () => {
+
+      // first, mint max debt
+      await MockMarket.withdrawUsd(await systems().Core.getWithdrawableMarketUsd(marketId));
+
+      // sanity 
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+
+      // next flush and rebalance (these methods are both write despite appearance)
+      await systems().Core.getVaultDebt(poolId, systems().Collateral2Mock.address);
+      await systems().Core.getVaultDebt(poolId, systems().Collateral2Mock.address);
+
+      // finally, we shouldn't be able to mint
+      await assertRevert(
+        await MockMarket.withdrawUsd(wei(1).toBN()),
+        "NotEnoughLiquidity(",
+        systems().Core,
+      );
+
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+    });
+
+    it('edge case: double USD printing on market by not fully flushing with `rebalancePool`', async () => {
+      // first, mint max debt
+      await MockMarket.withdrawUsd(await systems().Core.getWithdrawableMarketUsd(marketId));
+
+      // sanity 
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+
+      // next flush and rebalance
+      // two rebalancePool() required because the debt is accumulated on first call, but not actually assumed by market
+      // further rebalancePool() calls have no effect, but another call to `withdrawUsd()` can be made and then this repeated.
+      // NOTE: this attack could also be executed in a pool which has 2 vaults. Just sync only one of the vaults, and the debt from
+      // the other unsynced vault will not have its debt updated. so the security issue is not exclusive to being
+      // caused by the addition of this function, just more convenient
+      await systems().Core.rebalancePool(poolId);
+      await systems().Core.rebalancePool(poolId);
+
+      // finally, we shouldn't be able to mint
+      await assertRevert(
+        await MockMarket.withdrawUsd(wei(1).toBN()),
+        "NotEnoughLiquidity(",
+        systems().Core,
+      );
+
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
     });
   });
 });
