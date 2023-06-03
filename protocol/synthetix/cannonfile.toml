@@ -52,6 +52,9 @@ artifact = "contracts/modules/core/CollateralConfigurationModule.sol:CollateralC
 [contract.CrossChainPoolModule]
 artifact = "contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule"
 
+[contract.CrossChainUpkeepModule]
+artifact = "contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule"
+
 [contract.IssueUSDModule]
 artifact = "contracts/modules/core/IssueUSDModule.sol:IssueUSDModule"
 
@@ -100,6 +103,7 @@ contracts = [
     "CollateralModule",
     "CollateralConfigurationModule",
     "CrossChainPoolModule",
+    "CrossChainUpkeepModule",
     "IssueUSDModule",
     "LiquidationModule",
     "MarketCollateralModule",
@@ -122,6 +126,7 @@ depends = [
   "contract.CollateralModule",
   "contract.CollateralConfigurationModule",
   "contract.CrossChainPoolModule",
+  "contract.CrossChainUpkeepModule",
   "contract.IssueUSDModule",
   "contract.LiquidationModule",
   "contract.MarketCollateralModule",

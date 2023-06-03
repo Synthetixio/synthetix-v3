@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.4;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -322,6 +322,13 @@ contract CrossChainPoolModule {
     bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
     bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
     string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
+}
+
+// @custom:artifact contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule
+contract CrossChainUpkeepModule {
+    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
+    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
+    string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
     string internal constant _REQUEST_TOTAL_DEBT_CODE = "const maxFail = 1;const chainMapping = { '11155111': [`https://sepolia.infura.io/${secrets.INFURA_API_KEY}`], '80001': ['https://polygon-mumbai.infura.io/${secrets.INFURA_API_KEY}'] };let responses = [];for (let i = 0;i < args.length;i += 2) {    const chainId = Functions.decodeUint256(args[i]);    const callHex = args[i + 1];    const urls = chainMapping[chainId];    const params = { method: 'eth_call', params: [{ to: '0xffffffaeff0b96ea8e4f94b2253f31abdd875847', data: callHex }] };    const results = await Promise.allSettled(urls.map(u => Functions.makeHttpRequest({ url, params })));    let ress = 0;    for (const result of results) {        ress.push(Functions.decodeInt256(res.data.result));    }    ress.sort();    responses.push(ress[ress.length / 2].slice(2));}return Buffer.from(responses.join(''));";
     bytes internal constant _REQUEST_TOTAL_DEBT_SECRETS = "0xwhatever";
 }
@@ -491,6 +498,8 @@ library CrossChain {
         address ccipRouter;
         address chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
         mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
     function load() internal pure returns (Data storage crossChain) {
@@ -775,4 +784,9 @@ library CcipClient {
         uint256 gasLimit;
         bool strict;
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
