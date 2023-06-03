@@ -9,7 +9,6 @@ import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
-import { stake } from '../../../common/stakers';
 
 describe('VaultModule', function () {
   const {
@@ -774,11 +773,10 @@ describe('VaultModule', function () {
   describe('distribution chain edge cases', async () => {
     before(restore);
     it('edge case: double USD printing on market by not fully flushing with 2 collaterals', async () => {
-
       // first, mint max debt
       await MockMarket.withdrawUsd(await systems().Core.getWithdrawableMarketUsd(marketId));
 
-      // sanity 
+      // sanity
       assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
 
       // next flush and rebalance (these methods are both write despite appearance)
@@ -788,8 +786,8 @@ describe('VaultModule', function () {
       // finally, we shouldn't be able to mint
       await assertRevert(
         await MockMarket.withdrawUsd(wei(1).toBN()),
-        "NotEnoughLiquidity(",
-        systems().Core,
+        'NotEnoughLiquidity(',
+        systems().Core
       );
 
       assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
@@ -799,7 +797,7 @@ describe('VaultModule', function () {
       // first, mint max debt
       await MockMarket.withdrawUsd(await systems().Core.getWithdrawableMarketUsd(marketId));
 
-      // sanity 
+      // sanity
       assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
 
       // next flush and rebalance
@@ -808,14 +806,14 @@ describe('VaultModule', function () {
       // NOTE: this attack could also be executed in a pool which has 2 vaults. Just sync only one of the vaults, and the debt from
       // the other unsynced vault will not have its debt updated. so the security issue is not exclusive to being
       // caused by the addition of this function, just more convenient
-      await systems().Core.rebalancePool(poolId);
-      await systems().Core.rebalancePool(poolId);
+      await systems().Core.rebalancePool(poolId, ethers.constants.AddressZero);
+      await systems().Core.rebalancePool(poolId, ethers.constants.AddressZero);
 
       // finally, we shouldn't be able to mint
       await assertRevert(
         await MockMarket.withdrawUsd(wei(1).toBN()),
-        "NotEnoughLiquidity(",
-        systems().Core,
+        'NotEnoughLiquidity(',
+        systems().Core
       );
 
       assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
