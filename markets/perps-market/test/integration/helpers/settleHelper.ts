@@ -1,0 +1,67 @@
+import { ethers } from 'ethers';
+import { Systems } from '../bootstrap';
+import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+
+type IncomingChainState = {
+  systems: () => Systems;
+  provider: () => ethers.providers.JsonRpcProvider;
+};
+
+export type SettleOrderData = {
+  // trader: () => ethers.Signer;
+  // marketId: ethers.BigNumber;
+  // accountId: number;
+  // minCollateral: ethers.BigNumber;
+  // sizeDelta: ethers.BigNumber;
+  // settlementStrategyId: number;
+  // acceptablePrice: ethers.BigNumber;
+  // trackingCode: string;
+};
+
+type SettleOrderReturn = {
+  // startTime: () => number;
+  // initialCollateral: () => ethers.BigNumber;
+  // totalCollateral: () => ethers.BigNumber;
+  // commitTx: () => ethers.ContractTransaction;
+};
+
+type SettleOrderType = (data: SettleOrderData, chainState: IncomingChainState) => SettleOrderReturn;
+
+export const settleOrder: SettleOrderType = (data, chainState) => {
+  // let tx: ethers.ContractTransaction;
+  // let startTime: number;
+  // let initialCollateral: ethers.BigNumber;
+  // let totalCollateral: ethers.BigNumber;
+
+  // before('ensure minimum collateral', async () => {
+  //   initialCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId);
+
+  //   if (initialCollateral.lt(data.minCollateral)) {
+  //     await chainState
+  //       .systems()
+  //       .PerpsMarket.connect(data.trader())
+  //       .modifyCollateral(data.accountId, 0, data.minCollateral.sub(initialCollateral)); //bn(10_000));
+  //   }
+
+  //   totalCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId);
+  // });
+
+  // before('commit the order', async () => {
+  //   tx = await chainState.systems().PerpsMarket.connect(data.trader()).commitOrder({
+  //     marketId: data.marketId,
+  //     accountId: data.accountId,
+  //     sizeDelta: data.sizeDelta, //bn(1)
+  //     settlementStrategyId: data.settlementStrategyId,
+  //     acceptablePrice: data.acceptablePrice, //bn(1000),
+  //     trackingCode: data.trackingCode, //ethers.constants.HashZero,
+  //   });
+  //   startTime = await getTime(chainState.provider());
+  // });
+
+  return {
+    // startTime: () => startTime,
+    // initialCollateral: () => initialCollateral,
+    // totalCollateral: () => totalCollateral,
+    // commitTx: () => tx,
+  };
+};
