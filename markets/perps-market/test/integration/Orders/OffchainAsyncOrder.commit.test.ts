@@ -138,7 +138,7 @@ describe('Commit Offchain Async Order test', () => {
       // assertBn.equal(pendingOrder.endTime, bn(startTime + 5 + 120));
     });
 
-    it('reverts if tries to commit another order for same account and market', async () => {
+    it('reverts if attempt to commit another order for same account and market', async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
