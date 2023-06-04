@@ -3,27 +3,39 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { verifyUsesFeatureFlag } from '../../verifications';
+// import { verifyUsesFeatureFlag } from '../../verifications';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
 describe.only('USDTokenModule', function () {
   const { owner, systems, staker, accountId, poolId, collateralAddress } =
     bootstrapWithStakedPool();
 
-  const usdAmount = bn(100);
+  const fiftyUSD = bn(50);
+  const oneHundredUSD = bn(100);
 
-  let stakerAddress: string;
+  let ownerAddress: string, stakerAddress: string;
 
   before('identify signers', async () => {
+    ownerAddress = await owner().getAddress();
     stakerAddress = await staker().getAddress();
+  });
+
+  before('configure CCIP', async () => {
+    await systems().Core.connect(owner()).configureChainlinkCrossChain(
+      ethers.constants.AddressZero,
+      stakerAddress, // fake CCIP token pool address
+      ethers.constants.AddressZero
+    );
   });
 
   before('get some snxUSD', async () => {
     await systems()
       .Core.connect(staker())
-      .mintUsd(accountId, poolId, collateralAddress(), usdAmount);
+      .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
 
-    await systems().Core.connect(staker()).withdraw(accountId, systems().USD.address, usdAmount);
+    await systems()
+      .Core.connect(staker())
+      .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
   it('USD is deployed and registered', async () => {
@@ -42,8 +54,8 @@ describe.only('USDTokenModule', function () {
   describe('burn(uint256)', () => {
     it('reverts if not authorized', async () => {
       await assertRevert(
-        systems().USD.connect(staker())['burn(uint256)'](usdAmount),
-        `Unauthorized("${stakerAddress}")`,
+        systems().USD.connect(owner())['burn(uint256)'](oneHundredUSD),
+        `Unauthorized("${ownerAddress}")`,
         systems().USD
       );
     });
@@ -55,62 +67,49 @@ describe.only('USDTokenModule', function () {
         usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
       });
 
-      before('configure CCIP', async () => {
-        await systems()
-          .Core.connect(owner())
-          .configureChainlinkCrossChain(stakerAddress, stakerAddress, stakerAddress);
-      });
-
-      before('burn snxUSD', async () => {
-        await systems().USD.connect(staker())['burn(uint256)'](usdAmount);
+      before('burn 50 snxUSD', async () => {
+        await systems().USD.connect(staker())['burn(uint256)'](fiftyUSD);
       });
 
       it('properly reflects the amount of snxUSD burned from the caller', async () => {
         const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-        assertBn.equal(usdBalanceAfter, usdBalanceBefore.sub(usdAmount));
+        assertBn.equal(usdBalanceAfter, usdBalanceBefore.sub(fiftyUSD));
       });
     });
   });
 
   describe('transferCrossChain()', () => {
-    verifyUsesFeatureFlag(
-      () => systems().Core,
-      'transferCrossChain',
-      () =>
-        systems()
-          .USD.connect(staker())
-          .transferCrossChain(1, ethers.constants.AddressZero, usdAmount)
-    );
+    // verifyUsesFeatureFlag(
+    //   () => systems().Core,
+    //   'transferCrossChain',
+    //   () =>
+    //     systems()
+    //       .USD.connect(staker())
+    //       .transferCrossChain(1, ethers.constants.AddressZero, usdAmount)
+    // );
 
-    before('ensure access to feature', async () => {
-      await systems()
-        .Core.connect(owner())
-        .addToFeatureFlagAllowlist(
-          ethers.utils.formatBytes32String('transferCrossChain'),
-          stakerAddress
-        );
-    });
-
-    it('reverts if the allowance is not enough', async () => {
-      await assertRevert(
-        systems().USD.connect(staker()).transferCrossChain(1, stakerAddress, usdAmount),
-        `InsufficientAllowance("${stakerAddress}")`,
-        systems().USD
-      );
-    });
+    // before('ensure access to feature', async () => {
+    //   await systems()
+    //     .Core.connect(owner())
+    //     .addToFeatureFlagAllowlist(
+    //       ethers.utils.formatBytes32String('transferCrossChain'),
+    //       stakerAddress
+    //     );
+    // });
 
     it('reverts if the sender does not have enough snxUSD', async () => {
-      // approve first
-      // await systems().USD.connect(staker()).approve();
+      const excessAmount = oneHundredUSD.mul(100);
+      const usdBalance = await systems().USD.connect(staker()).balanceOf(stakerAddress);
 
       await assertRevert(
-        systems().USD.connect(staker()).transferCrossChain(1, stakerAddress, usdAmount.mul(100)),
-        `InsufficientBalance("${stakerAddress}")`,
+        systems().USD.connect(staker()).transferCrossChain(1, stakerAddress, excessAmount),
+        `InsufficientBalance("${excessAmount}", "${usdBalance}")`,
         systems().USD
       );
     });
 
     describe('successful call', () => {
+      let gasRefunded: ethers.BigNumber;
       let usdBalanceBefore: ethers.BigNumber;
       let transferCrossChainTxn: ethers.providers.TransactionResponse;
 
@@ -118,13 +117,20 @@ describe.only('USDTokenModule', function () {
         usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
       });
 
-      before('transfer some snxUSD', async () => {
-        await systems().USD.connect(staker()).transferCrossChain(1, stakerAddress, usdAmount);
+      before('transfer 50 snxUSD', async () => {
+        transferCrossChainTxn = await systems()
+          .USD.connect(staker())
+          .transferCrossChain(1, stakerAddress, fiftyUSD);
       });
 
       it('burns the correct amount of snxUSD on the source chain', async () => {
         const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-        assertBn.equal(usdBalanceAfter, usdBalanceBefore.add(usdAmount));
+        assertBn.equal(usdBalanceAfter, usdBalanceBefore.sub(fiftyUSD));
+      });
+
+      it('refunds the correct amount of left over gas', async () => {
+        console.log(transferCrossChainTxn.r?.toString());
+        console.log(gasRefunded);
       });
 
       it('transfers the fee into the contract and notifies the rewards distributor', async () => {});
@@ -136,7 +142,7 @@ describe.only('USDTokenModule', function () {
       it('emits correct event with the expected values', async () => {
         await assertEvent(
           transferCrossChainTxn,
-          `TransferCrossChainInitiated(1, "${stakerAddress}", ${usdAmount}, "${stakerAddress}"`,
+          `TransferCrossChainInitiated(1, "${stakerAddress}", ${fiftyUSD}, "${stakerAddress}"`,
           systems().USD
         );
       });

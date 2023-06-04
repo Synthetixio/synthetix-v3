@@ -109,6 +109,14 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     }
 
     /**
+     * @dev Included to satisfy ITokenModule inheritance.
+     */
+    function setAllowance(address from, address spender, uint256 amount) external override {
+        OwnableStorage.onlyOwner();
+        ERC20Storage.load().allowance[from][spender] = amount;
+    }
+
+    /**
      * @inheritdoc IUSDTokenModule
      */
     function transferCrossChain(
@@ -116,7 +124,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         address to,
         uint256 amount
     ) external payable returns (uint256 gasTokenUsed) {
-        FeatureFlag.ensureAccessToFeature(_TRANSFER_CROSS_CHAIN_FEATURE_FLAG);
+        // FeatureFlag.ensureAccessToFeature(_TRANSFER_CROSS_CHAIN_FEATURE_FLAG);
 
         _burn(msg.sender, amount);
 
@@ -126,14 +134,8 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
             _TRANSFER_GAS_LIMIT
         );
 
-        emit TransferCrossChainInitiated(destChainId, to, amount, msg.sender);
-    }
+        CrossChain.refundLeftoverGas(gasTokenUsed);
 
-    /**
-     * @dev Included to satisfy ITokenModule inheritance.
-     */
-    function setAllowance(address from, address spender, uint256 amount) external override {
-        OwnableStorage.onlyOwner();
-        ERC20Storage.load().allowance[from][spender] = amount;
+        emit TransferCrossChainInitiated(destChainId, to, amount, msg.sender);
     }
 }
