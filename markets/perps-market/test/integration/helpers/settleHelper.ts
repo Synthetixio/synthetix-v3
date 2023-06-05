@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { Systems } from '../bootstrap';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 type IncomingChainState = {
   systems: () => Systems;
@@ -8,60 +8,71 @@ type IncomingChainState = {
 };
 
 export type SettleOrderData = {
-  // trader: () => ethers.Signer;
-  // marketId: ethers.BigNumber;
-  // accountId: number;
-  // minCollateral: ethers.BigNumber;
-  // sizeDelta: ethers.BigNumber;
-  // settlementStrategyId: number;
-  // acceptablePrice: ethers.BigNumber;
-  // trackingCode: string;
+  keeper: () => ethers.Signer;
+  marketId: () => ethers.BigNumber;
+  accountId: () => number;
+  feedId: () => string;
+  startTime: () => number;
+  settlementDelay: () => number;
+  offChainPrice: () => ethers.BigNumberish;
 };
 
 type SettleOrderReturn = {
-  // startTime: () => number;
-  // initialCollateral: () => ethers.BigNumber;
-  // totalCollateral: () => ethers.BigNumber;
-  // commitTx: () => ethers.ContractTransaction;
+  settleTx: () => ethers.ContractTransaction;
 };
 
 type SettleOrderType = (data: SettleOrderData, chainState: IncomingChainState) => SettleOrderReturn;
 
 export const settleOrder: SettleOrderType = (data, chainState) => {
-  // let tx: ethers.ContractTransaction;
-  // let startTime: number;
-  // let initialCollateral: ethers.BigNumber;
-  // let totalCollateral: ethers.BigNumber;
+  let tx: ethers.ContractTransaction;
+  let updateFee: ethers.BigNumber;
 
-  // before('ensure minimum collateral', async () => {
-  //   initialCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId);
+  let pythPriceData: string, extraData: string;
 
-  //   if (initialCollateral.lt(data.minCollateral)) {
-  //     await chainState
-  //       .systems()
-  //       .PerpsMarket.connect(data.trader())
-  //       .modifyCollateral(data.accountId, 0, data.minCollateral.sub(initialCollateral)); //bn(10_000));
-  //   }
+  before('fast forward to settlement time', async () => {
+    // fast forward to settlement
+    await fastForwardTo(data.startTime() + data.settlementDelay() + 1, chainState.provider());
+  });
 
-  //   totalCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId);
-  // });
+  before('setup bytes data', () => {
+    extraData = ethers.utils.defaultAbiCoder.encode(
+      ['uint128', 'uint128'],
+      [data.marketId(), data.accountId()]
+    );
+    // const pythCallData = ethers.utils.solidityPack(
+    //   ['bytes32', 'uint64'],
+    //   [data.feedId(), data.startTime() + data.settlementDelay()]
+    // );
+  });
 
-  // before('commit the order', async () => {
-  //   tx = await chainState.systems().PerpsMarket.connect(data.trader()).commitOrder({
-  //     marketId: data.marketId,
-  //     accountId: data.accountId,
-  //     sizeDelta: data.sizeDelta, //bn(1)
-  //     settlementStrategyId: data.settlementStrategyId,
-  //     acceptablePrice: data.acceptablePrice, //bn(1000),
-  //     trackingCode: data.trackingCode, //ethers.constants.HashZero,
-  //   });
-  //   startTime = await getTime(chainState.provider());
-  // });
+  before('prepare data', async () => {
+    const pythPriceExpotential = 6;
+    const pythPrice = ethers.BigNumber.from(data.offChainPrice()).mul(10 ** pythPriceExpotential);
+    // Get the latest price
+    pythPriceData = await chainState.systems().MockPyth.createPriceFeedUpdateData(
+      data.feedId(),
+      pythPrice, // price
+      1, // confidence
+      -pythPriceExpotential,
+      pythPrice, // emaPrice
+      1, // emaConfidence
+      data.startTime() + data.settlementDelay() + 1
+    );
+    updateFee = await chainState.systems().MockPyth.getUpdateFee([pythPriceData]);
+  });
+
+  before('settle', async () => {
+    // Using the pyth order directly without getting the data from revert
+    tx = await chainState
+      .systems()
+      .PerpsMarket.connect(data.keeper())
+      .settlePythOrder(pythPriceData, extraData, { value: updateFee });
+  });
 
   return {
     // startTime: () => startTime,
     // initialCollateral: () => initialCollateral,
     // totalCollateral: () => totalCollateral,
-    // commitTx: () => tx,
+    settleTx: () => tx,
   };
 };
