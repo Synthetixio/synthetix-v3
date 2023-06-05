@@ -33,9 +33,7 @@ module.exports = {
     {
       files: ['**/*.ts'],
       extends: ['plugin:@typescript-eslint/recommended'],
-      parserOptions: {
-        project: ['./tsconfig.json'],
-      },
+
       rules: {
         '@typescript-eslint/no-floating-promises': 'error',
         '@typescript-eslint/no-var-requires': 0,
