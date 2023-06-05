@@ -7,7 +7,7 @@ type IncomingChainState = {
   provider: () => ethers.providers.JsonRpcProvider;
 };
 
-export type SettleOrderData = {
+type SettleOrderData = {
   keeper: () => ethers.Signer;
   marketId: () => ethers.BigNumber;
   accountId: () => number;
