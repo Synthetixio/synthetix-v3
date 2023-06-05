@@ -10,7 +10,7 @@ type IncomingChainState = {
   provider: () => ethers.providers.JsonRpcProvider;
 };
 
-type CommitOrderData = {
+export type CommitOrderData = {
   trader: () => ethers.Signer;
   marketId: () => ethers.BigNumber;
   accountId: () => number;
