@@ -3,12 +3,12 @@ import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe('ModifyCollateral', () => {
+describe('ModifyCollateral Deposit', () => {
   const accountIds = [10, 20];
   const oneBTC = bn(1);
   const marginAmount = bn(10_000);
 
-  const { systems, owner, synthMarkets, perpsMarkets, trader1 } = bootstrapMarkets({
+  const { systems, owner, synthMarkets, trader1 } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
@@ -23,10 +23,7 @@ describe('ModifyCollateral', () => {
         sellPrice: bn(1_000),
       },
     ],
-    perpsMarkets: [
-      { name: 'Bitcoin', token: 'snxBTC', price: bn(10_000) },
-      { name: 'Ether', token: 'snxETH', price: bn(1_000) },
-    ],
+    perpsMarkets: [],
     traderAccountIds: accountIds,
   });
   let synthBTCMarketId: ethers.BigNumber;

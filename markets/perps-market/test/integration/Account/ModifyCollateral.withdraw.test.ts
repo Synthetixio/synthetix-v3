@@ -1,10 +1,10 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
+import { bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { wei } from '@synthetixio/wei';
 
-describe('ModifyCollateral', () => {
+describe('ModifyCollateral Withdraw', () => {
   const accountIds = [10, 20];
   const oneBTC = wei(1);
   const marginAmount = wei(10_000);
@@ -20,23 +20,14 @@ describe('ModifyCollateral', () => {
         buyPrice: BTC_PRICE.toBN(),
         sellPrice: BTC_PRICE.toBN(),
       },
-      {
-        name: 'Ether',
-        token: 'snxETH',
-        buyPrice: bn(1_000),
-        sellPrice: bn(1_000),
-      },
     ],
-    perpsMarkets: [
-      { name: 'Bitcoin', token: 'snxBTC', price: bn(10_000) },
-      { name: 'Ether', token: 'snxETH', price: bn(1_000) },
-    ],
+    perpsMarkets: [],
     traderAccountIds: accountIds,
   });
   let synthBTCMarketId: ethers.BigNumber;
 
   before('identify actors', () => {
-    synthBTCMarketId = synthMarkets()[0].marketId(); // 3
+    synthBTCMarketId = synthMarkets()[0].marketId();
   });
 
   describe('withdraw by modifyCollateral()', async () => {
