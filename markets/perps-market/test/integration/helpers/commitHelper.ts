@@ -1,6 +1,9 @@
 import { ethers } from 'ethers';
 import { Systems } from '../bootstrap';
 import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+
+const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
 
 type IncomingChainState = {
   systems: () => Systems;
@@ -14,6 +17,8 @@ export type CommitOrderData = {
   minCollateral: () => ethers.BigNumber;
   sizeDelta: () => ethers.BigNumber;
   settlementStrategyId: () => number;
+  settlementDelay: () => number;
+  settlementWindowDuration: () => number;
   acceptablePrice: () => ethers.BigNumber;
   trackingCode: string;
 };
@@ -58,6 +63,18 @@ export const commitOrder: CommitOrderType = (data, chainState) => {
       trackingCode: data.trackingCode,
     });
     startTime = await getTime(chainState.provider());
+  });
+
+  it('emit commit order event', async () => {
+    await assertEvent(
+      tx,
+      `OrderCommitted(${data.marketId()}, ${data.accountId()}, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${data.sizeDelta()}, ${data.acceptablePrice()}, ${
+        startTime + data.settlementDelay()
+      }, ${startTime + data.settlementDelay() + data.settlementWindowDuration()}, "${
+        ethers.constants.HashZero
+      }", "${await data.trader().getAddress()}"`,
+      chainState.systems().PerpsMarket
+    );
   });
 
   return {

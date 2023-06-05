@@ -16,6 +16,11 @@ describe('Settle Offchain Async Order test', () => {
     traderAccountIds: [2, 3],
   });
 
+  const settlementDelay = 5;
+  const settlementWindowDuration = 120;
+  const settlementReward = bn(5);
+  const priceDeviationTolerance = bn(0.01);
+
   const feedId = ethers.utils.formatBytes32String('ETH/USD');
 
   let priceVerificationContract: string;
@@ -27,41 +32,41 @@ describe('Settle Offchain Async Order test', () => {
   });
 
   before('create settlement strategy', async () => {
-    await systems()
-      .PerpsMarket.connect(marketOwner())
-      .addSettlementStrategy(marketId, {
-        strategyType: ASYNC_OFFCHAIN_ORDER_TYPE, // OFFCHAIN
-        settlementDelay: 5,
-        settlementWindowDuration: 120,
-        priceVerificationContract: priceVerificationContract,
-        feedId: feedId,
-        url: ASYNC_OFFCHAIN_URL,
-        disabled: false,
-        settlementReward: bn(5),
-        priceDeviationTolerance: bn(0.01),
-      });
+    await systems().PerpsMarket.connect(marketOwner()).addSettlementStrategy(marketId, {
+      strategyType: ASYNC_OFFCHAIN_ORDER_TYPE, // OFFCHAIN
+      settlementDelay,
+      settlementWindowDuration,
+      priceVerificationContract,
+      feedId,
+      url: ASYNC_OFFCHAIN_URL,
+      disabled: false,
+      settlementReward,
+      priceDeviationTolerance,
+    });
   });
 
   before('set skew scale', async () => {
     await systems().PerpsMarket.connect(marketOwner()).setSkewScale(marketId, bn(100_000));
   });
 
+  const { startTime } = commitOrder(
+    {
+      trader: trader1,
+      marketId: () => marketId,
+      accountId: () => 2,
+      minCollateral: () => bn(10_000),
+      sizeDelta: () => bn(1),
+      settlementStrategyId: () => 0,
+      settlementDelay: () => settlementDelay,
+      settlementWindowDuration: () => settlementWindowDuration,
+      acceptablePrice: () => bn(1_000),
+      trackingCode: ethers.constants.HashZero,
+    },
+    { systems, provider }
+  );
+
   describe('settle order', () => {
     let pythCallData: string, extraData: string;
-
-    const { startTime } = commitOrder(
-      {
-        trader: trader1,
-        marketId: () => marketId,
-        accountId: () => 2,
-        minCollateral: () => bn(10_000),
-        sizeDelta: () => bn(1),
-        settlementStrategyId: () => 0,
-        acceptablePrice: () => bn(1_000),
-        trackingCode: ethers.constants.HashZero,
-      },
-      { systems, provider }
-    );
 
     before('fast forward to settlement time', async () => {
       // fast forward to settlement

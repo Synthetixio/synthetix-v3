@@ -34,14 +34,14 @@ describe('Commit Offchain Async Order test', () => {
   before('create settlement strategy', async () => {
     await systems().PerpsMarket.connect(marketOwner()).addSettlementStrategy(marketId, {
       strategyType: ASYNC_OFFCHAIN_ORDER_TYPE, // OFFCHAIN
-      settlementDelay: settlementDelay,
-      settlementWindowDuration: settlementWindowDuration,
-      priceVerificationContract: priceVerificationContract,
-      feedId: feedId,
+      settlementDelay,
+      settlementWindowDuration,
+      priceVerificationContract,
+      feedId,
       url: ASYNC_OFFCHAIN_URL,
       disabled: false,
-      settlementReward: settlementReward,
-      priceDeviationTolerance: priceDeviationTolerance,
+      settlementReward,
+      priceDeviationTolerance,
     });
   });
 
