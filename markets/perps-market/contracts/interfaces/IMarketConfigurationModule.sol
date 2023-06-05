@@ -50,7 +50,7 @@ interface IMarketConfigurationModule {
         PerpsMarketConfiguration.OrderType key
     ) external view returns (OrderFee.Data memory);
 
-    function getSettlementStrategy(
+    function getSettlementStrategies(
         uint128 marketId
     ) external view returns (SettlementStrategy.Data[] memory);
 

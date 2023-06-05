@@ -3,13 +3,14 @@ import { bootstrapMarkets } from '../bootstrap';
 import { BigNumber, Signer, utils } from 'ethers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
+import assert from 'assert';
 
-describe.only('MarketConfiguration', async () => {
+describe('MarketConfiguration', async () => {
   const fixture = {
     token: 'snxETH',
     marketName: 'TestPerpsMarket',
     oderFees: { makerFee: 0, takerFee: 1 },
-    settlementStrategies: {
+    settlementStrategy: {
       strategyType: 0,
       settlementDelay: 500,
       settlementWindowDuration: 100,
@@ -63,7 +64,7 @@ describe.only('MarketConfiguration', async () => {
   it('owner can set all market configurations properties', async () => {
     await systems()
       .PerpsMarket.connect(marketOwner)
-      .addSettlementStrategy(marketId, fixture.settlementStrategies);
+      .addSettlementStrategy(marketId, fixture.settlementStrategy);
     await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId, fixture.skewScale);
     await systems().PerpsMarket.connect(marketOwner).setOrderFees(marketId, 0, fixture.oderFees);
     await systems()
@@ -93,54 +94,120 @@ describe.only('MarketConfiguration', async () => {
   });
 
   it('should revert transaction when not market owner sets parameters', async () => {
+    const owner = await marketOwner.getAddress();
+
     await assertRevert(
-      systems().PerpsMarket.addSettlementStrategy(marketId, fixture.settlementStrategies),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .addSettlementStrategy(marketId, fixture.settlementStrategy),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setSkewScale(marketId, fixture.skewScale),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems().PerpsMarket.connect(randomUser).setSkewScale(marketId, fixture.skewScale),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setOrderFees(marketId, 0, fixture.oderFees),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems().PerpsMarket.connect(randomUser).setOrderFees(marketId, 0, fixture.oderFees),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setMaxMarketValue(marketId, fixture.maxMarketValue),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems().PerpsMarket.connect(randomUser).setMaxMarketValue(marketId, fixture.maxMarketValue),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setMaxFundingVelocity(marketId, fixture.maxFundingVelocity),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setMaxFundingVelocity(marketId, fixture.maxFundingVelocity),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setInitialMarginFraction(marketId, fixture.initialMarginFraction),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setInitialMarginFraction(marketId, fixture.initialMarginFraction),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setMaintenanceMarginFraction(
-        marketId,
-        fixture.maintenanceMarginFraction
-      ),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setMaintenanceMarginFraction(marketId, fixture.maintenanceMarginFraction),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setLockedOiPercent(marketId, fixture.lockedOiPercent),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setLockedOiPercent(marketId, fixture.lockedOiPercent),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setMaxLiquidationLimitAccumulationMultiplier(
-        marketId,
-        fixture.maxLiquidationLimitAccumulationMultiplier
-      ),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setMaxLiquidationLimitAccumulationMultiplier(
+          marketId,
+          fixture.maxLiquidationLimitAccumulationMultiplier
+        ),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.setLiquidationRewardRatioD18(
-        marketId,
-        fixture.liquidationRewardRatioD18
-      ),
-      'OnlyMarketOwner("0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")'
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setLiquidationRewardRatioD18(marketId, fixture.liquidationRewardRatioD18),
+      `OnlyMarketOwner("${owner}", "${await randomUser.getAddress()}")`
     );
+  });
+
+  it('get all market properties', async () => {
+    const orderFees = await systems().PerpsMarket.getOrderFees(marketId, 0);
+    assertBn.equal(orderFees.makerFee, fixture.oderFees.makerFee);
+    assertBn.equal(orderFees.takerFee, fixture.oderFees.takerFee);
+    const settlementStrategies = await systems().PerpsMarket.getSettlementStrategies(marketId);
+    assertBn.equal(settlementStrategies[0].strategyType, fixture.settlementStrategy.strategyType);
+    assertBn.equal(
+      settlementStrategies[0].settlementDelay,
+      fixture.settlementStrategy.settlementDelay
+    );
+    assertBn.equal(
+      settlementStrategies[0].settlementWindowDuration,
+      fixture.settlementStrategy.settlementWindowDuration
+    );
+    assertBn.equal(
+      settlementStrategies[0].settlementReward,
+      fixture.settlementStrategy.settlementReward
+    );
+    assertBn.equal(
+      settlementStrategies[0].priceDeviationTolerance,
+      fixture.settlementStrategy.priceDeviationTolerance
+    );
+    assert.equal(settlementStrategies[0].disabled, fixture.settlementStrategy.disabled);
+    assert.equal(settlementStrategies[0].url, fixture.settlementStrategy.url);
+    assert.equal(settlementStrategies[0].feedId, fixture.settlementStrategy.feedId);
+    assert.equal(
+      settlementStrategies[0].priceVerificationContract,
+      fixture.settlementStrategy.priceVerificationContract
+    );
+
+    const maxMarketValue = await systems().PerpsMarket.getMaxMarketValue(marketId);
+    assertBn.equal(maxMarketValue, fixture.maxMarketValue);
+    const maxFundingVelocity = await systems().PerpsMarket.getMaxFundingVelocity(marketId);
+    assertBn.equal(maxFundingVelocity, fixture.maxFundingVelocity);
+    const skewScale = await systems().PerpsMarket.getSkewScale(marketId);
+    assertBn.equal(skewScale, fixture.skewScale);
+    const initialMarginFraction = await systems().PerpsMarket.getInitialMarginFraction(marketId);
+    assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
+    const maintenanceMarginFraction = await systems().PerpsMarket.getMaintenanceMarginFraction(
+      marketId
+    );
+    assertBn.equal(maintenanceMarginFraction, fixture.maintenanceMarginFraction);
+    const lockedOiPercent = await systems().PerpsMarket.getLockedOiPercent(marketId);
+    assertBn.equal(lockedOiPercent, fixture.lockedOiPercent);
+    const maxLiquidationLimitAccumulationMultiplier =
+      await systems().PerpsMarket.getMaxLiquidationLimitAccumulationMultiplier(marketId);
+    assertBn.equal(
+      maxLiquidationLimitAccumulationMultiplier,
+      fixture.maxLiquidationLimitAccumulationMultiplier
+    );
+    const liquidationRewardRatioD18 = await systems().PerpsMarket.getLiquidationRewardRatioD18(
+      marketId
+    );
+    assertBn.equal(liquidationRewardRatioD18, fixture.liquidationRewardRatioD18);
   });
 });
