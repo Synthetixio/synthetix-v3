@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+// import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { commitOrder } from '../helpers';
 
@@ -48,7 +48,6 @@ describe('Settle Offchain Async Order test', () => {
 
   describe('settle order', () => {
     let pythCallData: string, extraData: string;
-    let tx: ethers.ContractTransaction;
 
     const { startTime } = commitOrder(
       {
@@ -110,7 +109,7 @@ describe('Settle Offchain Async Order test', () => {
       });
 
       before('settle', async () => {
-        tx = await systems()
+        await systems()
           .PerpsMarket.connect(keeper())
           .settlePythOrder(pythPriceData, extraData, { value: updateFee });
       });
