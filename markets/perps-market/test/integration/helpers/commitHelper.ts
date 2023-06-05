@@ -9,12 +9,12 @@ type IncomingChainState = {
 
 export type CommitOrderData = {
   trader: () => ethers.Signer;
-  marketId: ethers.BigNumber;
-  accountId: number;
-  minCollateral: ethers.BigNumber;
-  sizeDelta: ethers.BigNumber;
-  settlementStrategyId: number;
-  acceptablePrice: ethers.BigNumber;
+  marketId: () => ethers.BigNumber;
+  accountId: () => number;
+  minCollateral: () => ethers.BigNumber;
+  sizeDelta: () => ethers.BigNumber;
+  settlementStrategyId: () => number;
+  acceptablePrice: () => ethers.BigNumber;
   trackingCode: string;
 };
 
@@ -34,26 +34,28 @@ export const commitOrder: CommitOrderType = (data, chainState) => {
   let totalCollateral: ethers.BigNumber;
 
   before('ensure minimum collateral', async () => {
-    initialCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId);
+    initialCollateral = await chainState
+      .systems()
+      .PerpsMarket.totalCollateralValue(data.accountId());
 
-    if (initialCollateral.lt(data.minCollateral)) {
+    if (initialCollateral.lt(data.minCollateral())) {
       await chainState
         .systems()
         .PerpsMarket.connect(data.trader())
-        .modifyCollateral(data.accountId, 0, data.minCollateral.sub(initialCollateral)); //bn(10_000));
+        .modifyCollateral(data.accountId(), 0, data.minCollateral().sub(initialCollateral));
     }
 
-    totalCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId);
+    totalCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId());
   });
 
   before('commit the order', async () => {
     tx = await chainState.systems().PerpsMarket.connect(data.trader()).commitOrder({
-      marketId: data.marketId,
-      accountId: data.accountId,
-      sizeDelta: data.sizeDelta, //bn(1)
-      settlementStrategyId: data.settlementStrategyId,
-      acceptablePrice: data.acceptablePrice, //bn(1000),
-      trackingCode: data.trackingCode, //ethers.constants.HashZero,
+      marketId: data.marketId(),
+      accountId: data.accountId(),
+      sizeDelta: data.sizeDelta(),
+      settlementStrategyId: data.settlementStrategyId(),
+      acceptablePrice: data.acceptablePrice(),
+      trackingCode: data.trackingCode,
     });
     startTime = await getTime(chainState.provider());
   });
