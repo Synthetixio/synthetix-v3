@@ -14,7 +14,6 @@ export type CommitOrderData = {
   trader: () => ethers.Signer;
   marketId: () => ethers.BigNumber;
   accountId: () => number;
-  minCollateral: () => ethers.BigNumber;
   sizeDelta: () => ethers.BigNumber;
   settlementStrategyId: () => number;
   settlementDelay: () => number;
@@ -25,8 +24,6 @@ export type CommitOrderData = {
 
 type CommitOrderReturn = {
   startTime: () => number;
-  initialCollateral: () => ethers.BigNumber;
-  totalCollateral: () => ethers.BigNumber;
   commitTx: () => ethers.ContractTransaction;
 };
 
@@ -35,23 +32,6 @@ type CommitOrderType = (data: CommitOrderData, chainState: IncomingChainState) =
 export const commitOrder: CommitOrderType = (data, chainState) => {
   let tx: ethers.ContractTransaction;
   let startTime: number;
-  let initialCollateral: ethers.BigNumber;
-  let totalCollateral: ethers.BigNumber;
-
-  before('ensure minimum collateral', async () => {
-    initialCollateral = await chainState
-      .systems()
-      .PerpsMarket.totalCollateralValue(data.accountId());
-
-    if (initialCollateral.lt(data.minCollateral())) {
-      await chainState
-        .systems()
-        .PerpsMarket.connect(data.trader())
-        .modifyCollateral(data.accountId(), 0, data.minCollateral().sub(initialCollateral));
-    }
-
-    totalCollateral = await chainState.systems().PerpsMarket.totalCollateralValue(data.accountId());
-  });
 
   before('commit the order', async () => {
     tx = await chainState.systems().PerpsMarket.connect(data.trader()).commitOrder({
@@ -79,8 +59,6 @@ export const commitOrder: CommitOrderType = (data, chainState) => {
 
   return {
     startTime: () => startTime,
-    initialCollateral: () => initialCollateral,
-    totalCollateral: () => totalCollateral,
     commitTx: () => tx,
   };
 };

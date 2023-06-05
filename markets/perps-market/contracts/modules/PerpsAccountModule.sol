@@ -74,7 +74,7 @@ contract PerpsAccountModule is IAccountModule {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest(accountId);
     }
 
-    function openPosition(
+    function getOpenPosition(
         uint128 accountId,
         uint128 marketId
     ) external view override returns (int, int, int) {
@@ -88,19 +88,14 @@ contract PerpsAccountModule is IAccountModule {
         return (pnl, accruedFunding, position.size);
     }
 
-    function submittedAsyncOrder(
+    function getAsyncOrderClaim(
         uint128 accountId,
         uint128 marketId
-    ) external view override returns (int) {
+    ) external view override returns (AsyncOrder.Data memory) {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
 
-        AsyncOrder.Data storage asyncOrders = perpsMarket.asyncOrders[accountId];
+        AsyncOrder.Data storage asyncOrder = perpsMarket.asyncOrders[accountId];
 
-        // (, int pnl, int accruedFunding, , ) = asyncOrders.getOrderData(
-        //     PerpsPrice.getCurrentPrice(marketId)
-        // );
-
-        // TODO add some useful data
-        return (asyncOrders.sizeDelta);
+        return asyncOrder;
     }
 }

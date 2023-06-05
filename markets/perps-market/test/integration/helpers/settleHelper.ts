@@ -70,9 +70,6 @@ export const settleOrder: SettleOrderType = (data, chainState) => {
   });
 
   return {
-    // startTime: () => startTime,
-    // initialCollateral: () => initialCollateral,
-    // totalCollateral: () => totalCollateral,
     settleTx: () => tx,
   };
 };

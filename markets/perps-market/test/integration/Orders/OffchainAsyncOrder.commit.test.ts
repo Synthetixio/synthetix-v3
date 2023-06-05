@@ -5,6 +5,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { settleOrder } from '../helpers';
+import assert from 'assert';
 
 const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
 const ASYNC_OFFCHAIN_URL = 'https://fakeapi.pyth.synthetix.io/';
@@ -128,18 +129,20 @@ describe('Commit Offchain Async Order test', () => {
           startTime + 5
         }, ${startTime + 5 + 120}, "${
           ethers.constants.HashZero
-        }", "${await trader1().getAddress()}"`,
+        }", "${await trader1().getAddress()}")`,
         systems().PerpsMarket
       );
     });
 
     it('identifies the pending order', async () => {
-      const pendingOrderSizeDelta = await systems().PerpsMarket.submittedAsyncOrder(2, marketId);
-      assertBn.equal(pendingOrderSizeDelta, bn(1));
-      // assertBn.equal(pendingOrder.acceptablePrice, bn(1000));
-      // assertBn.equal(pendingOrder.settlementStrategyId, bn(0));
-      // assertBn.equal(pendingOrder.startTime, bn(startTime + 5));
-      // assertBn.equal(pendingOrder.endTime, bn(startTime + 5 + 120));
+      const ayncOrderClaim = await systems().PerpsMarket.getAsyncOrderClaim(2, marketId);
+      assertBn.equal(ayncOrderClaim.accountId, 2);
+      assertBn.equal(ayncOrderClaim.marketId, marketId);
+      assertBn.equal(ayncOrderClaim.sizeDelta, bn(1));
+      assertBn.equal(ayncOrderClaim.settlementStrategyId, 0);
+      assertBn.equal(ayncOrderClaim.settlementTime, startTime + 5);
+      assertBn.equal(ayncOrderClaim.acceptablePrice, bn(1000));
+      assert.equal(ayncOrderClaim.trackingCode, ethers.constants.HashZero);
     });
 
     it('reverts if attempt to commit another order for same account and market', async () => {
@@ -176,7 +179,7 @@ describe('Commit Offchain Async Order test', () => {
       );
 
       it('check position is live', async () => {
-        const [pnl, funding, size] = await systems().PerpsMarket.openPosition(2, marketId);
+        const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(2, marketId);
         assertBn.equal(pnl, bn(-0.005));
         assertBn.equal(funding, bn(0));
         assertBn.equal(size, bn(1));

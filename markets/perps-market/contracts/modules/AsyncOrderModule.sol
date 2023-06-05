@@ -188,6 +188,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(asyncOrder.marketId);
         perpsMarket.updatePositionData(newPosition);
 
+        asyncOrder.reset();
+
         perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
     }
 
