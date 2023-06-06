@@ -82,6 +82,17 @@ type BootstrapArgs = {
   synthMarkets: SynthArguments;
   perpsMarkets: PerpsMarketData;
   traderAccountIds: Array<number>;
+  globalConfig?: {
+    collateralMax?: Array<{
+      synthId: ethers.BigNumber;
+      maxAmount: ethers.BigNumber;
+    }>;
+    synthDeductionPriority?: Array<ethers.BigNumber>;
+    liquidationGuards?: {
+      minLiquidationReward: ethers.BigNumber;
+      maxLiquidationReward: ethers.BigNumber;
+    };
+  };
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -98,6 +109,35 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     owner,
     accountIds: data.traderAccountIds,
   });
+
+  if (data.globalConfig?.collateralMax) {
+    before('set collateral max', async () => {
+      for (const { synthId, maxAmount } of data.globalConfig.collateralMax!) {
+        await systems()
+          .PerpsMarket.connect(owner())
+          .setMaxCollateralForSynthMarketId(synthId, maxAmount);
+      }
+    });
+  }
+
+  if (data.globalConfig?.synthDeductionPriority) {
+    before('set synth deduction priority', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setSynthDeductionPriority(data.globalConfig.synthDeductionPriority!);
+    });
+  }
+
+  if (data.globalConfig?.liquidationGuards) {
+    before('set liquidation guards', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setLiquidationRewardGuards(
+          data.globalConfig.liquidationGuards!.minLiquidationReward,
+          data.globalConfig.liquidationGuards!.maxLiquidationReward
+        );
+    });
+  }
 
   return {
     systems,

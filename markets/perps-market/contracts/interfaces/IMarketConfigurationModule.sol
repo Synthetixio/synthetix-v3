@@ -14,7 +14,7 @@ interface IMarketConfigurationModule {
         SettlementStrategy.Data memory strategy
     ) external returns (uint256 strategyId);
 
-    function setOrderFees(uint128 marketId, uint256 markerFeeRatio, uint256 takerFeeRatio) external;
+    function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external;
 
     function setFundingParameters(
         uint128 marketId,
