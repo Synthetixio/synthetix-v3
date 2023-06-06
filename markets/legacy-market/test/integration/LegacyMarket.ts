@@ -2,8 +2,9 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
+//@ts-ignore
 import { LegacyMarket__factory } from '../../typechain-types';
-
+//@ts-ignore
 import { LegacyMarket } from '../../typechain-types/contracts/LegacyMarket';
 
 import Wei, { wei } from '@synthetixio/wei';
