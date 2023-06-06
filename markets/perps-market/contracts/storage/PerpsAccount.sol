@@ -277,6 +277,7 @@ library PerpsAccount {
                     marketId,
                     availableAmount
                 );
+
                 if (availableAmountUsd >= leftoverAmount) {
                     // TODO referer/max amt
                     (uint amountToDeduct, ) = spotMarket.sellExactOut(
@@ -286,6 +287,7 @@ library PerpsAccount {
                         address(0)
                     );
                     self.collateralAmounts[marketId] = availableAmount - amountToDeduct;
+                    leftoverAmount = 0;
                     break;
                 } else {
                     // TODO referer
