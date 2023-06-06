@@ -82,16 +82,9 @@ type BootstrapArgs = {
   synthMarkets: SynthArguments;
   perpsMarkets: PerpsMarketData;
   traderAccountIds: Array<number>;
-  globalConfig?: {
-    collateralMax?: Array<{
-      synthId: ethers.BigNumber;
-      maxAmount: ethers.BigNumber;
-    }>;
-    synthDeductionPriority?: Array<ethers.BigNumber>;
-    liquidationGuards?: {
-      minLiquidationReward: ethers.BigNumber;
-      maxLiquidationReward: ethers.BigNumber;
-    };
+  liquidationGuards?: {
+    minLiquidationReward: ethers.BigNumber;
+    maxLiquidationReward: ethers.BigNumber;
   };
 };
 
@@ -110,31 +103,29 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     accountIds: data.traderAccountIds,
   });
 
-  if (data.globalConfig?.collateralMax) {
-    before('set collateral max', async () => {
-      for (const { synthId, maxAmount } of data.globalConfig.collateralMax!) {
-        await systems()
-          .PerpsMarket.connect(owner())
-          .setMaxCollateralForSynthMarketId(synthId, maxAmount);
-      }
-    });
-  }
-
-  if (data.globalConfig?.synthDeductionPriority) {
-    before('set synth deduction priority', async () => {
+  // auto set all synth markets collaterals to max
+  before('set collateral max', async () => {
+    for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setSynthDeductionPriority(data.globalConfig.synthDeductionPriority!);
-    });
-  }
+        .setMaxCollateralForSynthMarketId(marketId(), ethers.constants.MaxUint256);
+    }
+  });
 
-  if (data.globalConfig?.liquidationGuards) {
+  // auto add all synth markets in the row they were created for deduction priority
+  before('set synth deduction priority', async () => {
+    // first item is always snxUSD
+    const synthIds = [bn(0), ...synthMarkets().map((s) => s.marketId())];
+    await systems().PerpsMarket.connect(owner()).setSynthDeductionPriority(synthIds);
+  });
+
+  if (data.liquidationGuards) {
     before('set liquidation guards', async () => {
       await systems()
         .PerpsMarket.connect(owner())
         .setLiquidationRewardGuards(
-          data.globalConfig.liquidationGuards!.minLiquidationReward,
-          data.globalConfig.liquidationGuards!.maxLiquidationReward
+          data.liquidationGuards!.minLiquidationReward,
+          data.liquidationGuards!.maxLiquidationReward
         );
     });
   }
