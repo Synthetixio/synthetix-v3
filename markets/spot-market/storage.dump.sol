@@ -239,7 +239,7 @@ library AsyncOrderClaim {
         uint256 settledAt;
         address referrer;
     }
-    function load(uint128 marketId, uint256 claimId) internal pure returns (Data storage store) {
+    function load(uint128 marketId, uint128 claimId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrderClaim", marketId, claimId));
         assembly {
             store.slot := s
