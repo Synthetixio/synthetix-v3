@@ -13,7 +13,14 @@ const ASYNC_OFFCHAIN_URL = 'https://fakeapi.pyth.synthetix.io/';
 describe('Commit Offchain Async Order test', () => {
   const { systems, marketOwner, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [],
-    perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    perpsMarkets: [
+      {
+        name: 'Ether',
+        token: 'snxETH',
+        price: bn(1000),
+        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+      },
+    ],
     traderAccountIds: [2, 3],
   });
 
@@ -44,12 +51,6 @@ describe('Commit Offchain Async Order test', () => {
       settlementReward,
       priceDeviationTolerance,
     });
-  });
-
-  before('set skew scale', async () => {
-    await systems()
-      .PerpsMarket.connect(marketOwner())
-      .setFundingParameters(marketId, bn(100_000), bn(0));
   });
 
   describe('failures', () => {
