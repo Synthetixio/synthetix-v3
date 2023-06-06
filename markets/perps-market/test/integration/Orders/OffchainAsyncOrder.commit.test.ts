@@ -31,6 +31,12 @@ describe('Commit Offchain Async Order test', () => {
         },
       ],
       traderAccountIds: [2, 3],
+      globalConfig: {
+        synthDeductionPriority: [
+          ethers.BigNumber.from(0), // snxUSD
+          ethers.BigNumber.from(2), // snxBTC TODO - this shouldn't be hardcoded
+        ],
+      },
     });
 
   const settlementDelay = 5;
@@ -41,23 +47,23 @@ describe('Commit Offchain Async Order test', () => {
   const feedId = ethers.utils.formatBytes32String('ETH/USD');
 
   let priceVerificationContract: string;
-  let marketId: ethers.BigNumber;
-  let syntId: ethers.BigNumber;
+  let ethMarketId: ethers.BigNumber;
+  let btcSynthId: ethers.BigNumber;
 
   before('identify actors', async () => {
-    marketId = perpsMarkets()[0].marketId();
-    syntId = synthMarkets()[0].marketId();
+    ethMarketId = perpsMarkets()[0].marketId();
+    btcSynthId = synthMarkets()[0].marketId();
     priceVerificationContract = systems().MockPyth.address;
   });
 
   before('owner sets limits to max', async () => {
     await systems()
       .PerpsMarket.connect(owner())
-      .setMaxCollateralAmount(syntId, ethers.constants.MaxUint256);
+      .setMaxCollateralAmount(btcSynthId, ethers.constants.MaxUint256);
   });
 
   before('create settlement strategy', async () => {
-    await systems().PerpsMarket.connect(marketOwner()).addSettlementStrategy(marketId, {
+    await systems().PerpsMarket.connect(marketOwner()).addSettlementStrategy(ethMarketId, {
       strategyType: ASYNC_OFFCHAIN_ORDER_TYPE, // OFFCHAIN
       settlementDelay,
       settlementWindowDuration,
@@ -92,7 +98,7 @@ describe('Commit Offchain Async Order test', () => {
     //     systems()
     //       .PerpsMarket.connect(trader1())
     //       .commitOrder({
-    //         marketId: marketId,
+    //         ethMarketId: ethMarketId,
     //         accountId: 1337,
     //         sizeDelta: bn(1),
     //         settlementStrategyId: 0,
@@ -108,7 +114,7 @@ describe('Commit Offchain Async Order test', () => {
         systems()
           .PerpsMarket.connect(trader1())
           .commitOrder({
-            marketId: marketId,
+            marketId: ethMarketId,
             accountId: 2,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
@@ -140,14 +146,14 @@ describe('Commit Offchain Async Order test', () => {
       },
     },
     {
-      name: 'only synth',
+      name: 'only snxBTC',
       collateralData: {
         trader: trader1,
         accountId: () => 2,
         trades: [
           {
             synthName: () => 'snxBTC',
-            synthMarketId: () => syntId,
+            synthMarketId: () => btcSynthId,
             synthMarket: synthMarkets()[0].synth,
             marginAmount: () => bn(10_000),
             synthAmount: () => bn(1),
@@ -156,7 +162,7 @@ describe('Commit Offchain Async Order test', () => {
       },
     },
     {
-      name: 'Synth and snxUSD',
+      name: 'snxUSD and snxBTC',
       collateralData: {
         trader: trader1,
         accountId: () => 2,
@@ -166,14 +172,14 @@ describe('Commit Offchain Async Order test', () => {
             synthMarketId: () => 0,
             synthMarket: synthMarkets()[0].synth,
             marginAmount: () => 0,
-            synthAmount: () => bn(5_000),
+            synthAmount: () => bn(2), // less than needed to pay for settlementReward
           },
           {
             synthName: () => 'snxBTC',
-            synthMarketId: synthMarkets()[0].marketId,
+            synthMarketId: () => btcSynthId,
             synthMarket: synthMarkets()[0].synth,
-            marginAmount: () => bn(5_000),
-            synthAmount: () => bn(0.5),
+            marginAmount: () => bn(10_000),
+            synthAmount: () => bn(1),
           },
         ],
       },
@@ -196,7 +202,7 @@ describe('Commit Offchain Async Order test', () => {
         tx = await systems()
           .PerpsMarket.connect(trader1())
           .commitOrder({
-            marketId: marketId,
+            marketId: ethMarketId,
             accountId: 2,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
@@ -209,7 +215,7 @@ describe('Commit Offchain Async Order test', () => {
       it('emit event', async () => {
         await assertEvent(
           tx,
-          `OrderCommitted(${marketId}, 2, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(1)}, ${bn(1000)}, ${
+          `OrderCommitted(${ethMarketId}, 2, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(1)}, ${bn(1000)}, ${
             startTime + 5
           }, ${startTime + 5 + 120}, "${
             ethers.constants.HashZero
@@ -219,9 +225,9 @@ describe('Commit Offchain Async Order test', () => {
       });
 
       it('identifies the pending order', async () => {
-        const ayncOrderClaim = await systems().PerpsMarket.getAsyncOrderClaim(2, marketId);
+        const ayncOrderClaim = await systems().PerpsMarket.getAsyncOrderClaim(2, ethMarketId);
         assertBn.equal(ayncOrderClaim.accountId, 2);
-        assertBn.equal(ayncOrderClaim.marketId, marketId);
+        assertBn.equal(ayncOrderClaim.marketId, ethMarketId);
         assertBn.equal(ayncOrderClaim.sizeDelta, bn(1));
         assertBn.equal(ayncOrderClaim.settlementStrategyId, 0);
         assertBn.equal(ayncOrderClaim.settlementTime, startTime + 5);
@@ -234,14 +240,14 @@ describe('Commit Offchain Async Order test', () => {
           systems()
             .PerpsMarket.connect(trader1())
             .commitOrder({
-              marketId: marketId,
+              marketId: ethMarketId,
               accountId: 2,
               sizeDelta: bn(2),
               settlementStrategyId: 0,
               acceptablePrice: bn(1000),
               trackingCode: ethers.constants.HashZero,
             }),
-          `OrderAlreadyCommitted("${marketId}", "2")`
+          `OrderAlreadyCommitted("${ethMarketId}", "2")`
         );
       });
 
@@ -249,7 +255,7 @@ describe('Commit Offchain Async Order test', () => {
         settleOrder(
           {
             keeper: keeper,
-            marketId: () => marketId,
+            marketId: () => ethMarketId,
             accountId: () => 2,
             feedId: () => feedId,
             startTime: () => startTime,
@@ -263,7 +269,7 @@ describe('Commit Offchain Async Order test', () => {
         );
 
         it('check position is live', async () => {
-          const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(2, marketId);
+          const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(2, ethMarketId);
           assertBn.equal(pnl, bn(-0.005));
           assertBn.equal(funding, bn(0));
           assertBn.equal(size, bn(1));
@@ -274,7 +280,7 @@ describe('Commit Offchain Async Order test', () => {
             tx = await systems()
               .PerpsMarket.connect(trader1())
               .commitOrder({
-                marketId: marketId,
+                marketId: ethMarketId,
                 accountId: 2,
                 sizeDelta: bn(1),
                 settlementStrategyId: 0,
@@ -287,7 +293,7 @@ describe('Commit Offchain Async Order test', () => {
           it('emit event', async () => {
             await assertEvent(
               tx,
-              `OrderCommitted(${marketId}, 2, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(1)}, ${bn(
+              `OrderCommitted(${ethMarketId}, 2, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(1)}, ${bn(
                 1000
               )}, ${startTime + 5}, ${startTime + 5 + 120}, "${
                 ethers.constants.HashZero
@@ -297,9 +303,9 @@ describe('Commit Offchain Async Order test', () => {
           });
 
           it('identifies the pending order', async () => {
-            const ayncOrderClaim = await systems().PerpsMarket.getAsyncOrderClaim(2, marketId);
+            const ayncOrderClaim = await systems().PerpsMarket.getAsyncOrderClaim(2, ethMarketId);
             assertBn.equal(ayncOrderClaim.accountId, 2);
-            assertBn.equal(ayncOrderClaim.marketId, marketId);
+            assertBn.equal(ayncOrderClaim.marketId, ethMarketId);
             assertBn.equal(ayncOrderClaim.sizeDelta, bn(1));
             assertBn.equal(ayncOrderClaim.settlementStrategyId, 0);
             assertBn.equal(ayncOrderClaim.settlementTime, startTime + 5);
