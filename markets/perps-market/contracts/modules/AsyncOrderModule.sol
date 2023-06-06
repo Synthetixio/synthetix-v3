@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
@@ -38,7 +39,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
         PerpsMarket.Data storage market = PerpsMarket.loadValid(commitment.marketId);
 
-        // TODO Check if commitment.accountId is valid
+        // Check if commitment.accountId is valid
+        Account.exists(commitment.accountId);
+
         // TODO Check msg.sender can commit order for commitment.accountId
 
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
