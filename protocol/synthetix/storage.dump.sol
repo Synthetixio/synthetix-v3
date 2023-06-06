@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -324,6 +324,13 @@ contract CrossChainPoolModule {
     string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
 }
 
+// @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
+contract CrossChainUSDModule {
+    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
+    bytes32 internal constant _USD_TOKEN = "USDToken";
+    bytes32 internal constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
+}
+
 // @custom:artifact contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule
 contract CrossChainUpkeepModule {
     bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
@@ -401,9 +408,7 @@ contract VaultModule {
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
 contract USDTokenModule {
-    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-    bytes32 internal constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 }
 
 // @custom:artifact contracts/storage/Account.sol:Account
@@ -784,9 +789,4 @@ library CcipClient {
         uint256 gasLimit;
         bool strict;
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

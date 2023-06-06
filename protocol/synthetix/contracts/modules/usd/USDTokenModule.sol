@@ -16,12 +16,8 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
  */
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     using AssociatedSystem for AssociatedSystem.Data;
-    using CrossChain for CrossChain.Data;
-
-    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
 
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-    bytes32 internal constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 
     /**
      * @dev For use as an associated system.
@@ -114,28 +110,5 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     function setAllowance(address from, address spender, uint256 amount) external override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
-    }
-
-    /**
-     * @inheritdoc IUSDTokenModule
-     */
-    function transferCrossChain(
-        uint64 destChainId,
-        address to,
-        uint256 amount
-    ) external payable returns (uint256 gasTokenUsed) {
-        // FeatureFlag.ensureAccessToFeature(_TRANSFER_CROSS_CHAIN_FEATURE_FLAG);
-
-        _burn(msg.sender, amount);
-
-        gasTokenUsed = CrossChain.load().transmit(
-            destChainId,
-            abi.encodeWithSelector(this.mint.selector, to, amount),
-            _TRANSFER_GAS_LIMIT
-        );
-
-        CrossChain.refundLeftoverGas(gasTokenUsed);
-
-        emit TransferCrossChainInitiated(destChainId, to, amount, msg.sender);
     }
 }
