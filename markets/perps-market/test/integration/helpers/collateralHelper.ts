@@ -37,7 +37,7 @@ type SetCollateralType = (
 ) => Promise<SetCollateralReturn>;
 
 export const depositCollateral: SetCollateralType = async (data, chainState) => {
-  let stats: SynthStats[] = [];
+  const stats: SynthStats[] = [];
 
   for (let i = 0; i < data.trades.length; i++) {
     let spotInitialBalance: ethers.BigNumber;

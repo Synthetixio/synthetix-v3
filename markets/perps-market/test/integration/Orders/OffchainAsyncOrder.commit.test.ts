@@ -190,12 +190,11 @@ describe('Commit Offchain Async Order test', () => {
     describe(`Using ${testCase.name} as collateral`, () => {
       let tx: ethers.ContractTransaction;
       let startTime: number;
-      let result: any;
 
       before(restoreToCommit);
 
       before('add collateral', async () => {
-        result = await depositCollateral(testCase.collateralData, { systems, provider });
+        await depositCollateral(testCase.collateralData, { systems, provider });
       });
 
       before('commit the order', async () => {
@@ -209,6 +208,7 @@ describe('Commit Offchain Async Order test', () => {
             acceptablePrice: bn(1000),
             trackingCode: ethers.constants.HashZero,
           });
+        await tx.wait();
         startTime = await getTime(provider());
       });
 
@@ -287,6 +287,7 @@ describe('Commit Offchain Async Order test', () => {
                 acceptablePrice: bn(1000),
                 trackingCode: ethers.constants.HashZero,
               });
+            await tx.wait();
             startTime = await getTime(provider());
           });
 
