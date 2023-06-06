@@ -8,6 +8,7 @@ import {
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
   PerpsMarketProxy,
+  MockPyth,
   AccountProxy,
 } from '../../generated/typechain';
 import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
@@ -30,6 +31,7 @@ export type Systems = {
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
+  MockPyth: MockPyth;
   OracleManager: SynthetixOracle_managerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
@@ -55,6 +57,7 @@ export function bootstrap() {
       CollateralMock: getContract('synthetix.CollateralMock'),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
+      MockPyth: getContract('MockPyth'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
@@ -86,8 +89,9 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const { systems, signers, provider, owner, perpsMarkets } = chainStateWithPerpsMarkets;
-  const { trader1, trader2, restore } = bootstrapTraders({
+  const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId } =
+    chainStateWithPerpsMarkets;
+  const { trader1, trader2, keeper, restore } = bootstrapTraders({
     systems,
     signers,
     provider,
@@ -102,9 +106,12 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     restore,
     trader1,
     trader2,
+    keeper,
     owner,
     perpsMarkets,
     synthMarkets,
+    marketOwner,
+    poolId,
   };
 }
 

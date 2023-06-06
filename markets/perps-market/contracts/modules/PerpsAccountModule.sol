@@ -8,6 +8,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IAccountModule} from "../interfaces/IAccountModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
@@ -17,6 +18,7 @@ import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/
 contract PerpsAccountModule is IAccountModule {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
+    using AsyncOrder for AsyncOrder.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using PerpsAccount for PerpsAccount.Data;
@@ -37,10 +39,11 @@ contract PerpsAccountModule is IAccountModule {
 
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
-        GlobalPerpsMarket.load().checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
+        GlobalPerpsMarket.Data storage globalPerpsMarket = GlobalPerpsMarket.load();
+        globalPerpsMarket.checkCollateralAmountAndAdjust(synthMarketId, amountDelta);
+        globalPerpsMarket.checkLiquidation(accountId);
 
-        PerpsAccount.Data storage accountData = PerpsAccount.load(accountId);
-        accountData.checkLiquidationFlag();
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
 
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
@@ -48,16 +51,14 @@ contract PerpsAccountModule is IAccountModule {
 
         if (amountDelta > 0) {
             // adding collateral
-            accountData.addCollateralAmount(synthMarketId, amountDelta.toUint());
+            account.addCollateralAmount(synthMarketId, amountDelta.toUint());
 
             synth.transferFrom(msg.sender, address(this), amountDelta.toUint());
         } else {
             uint amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            accountData.checkAvailableCollateralAmount(synthMarketId, amountAbs);
-            accountData.checkAvailableWithdrawableValue(accountId, amountDelta);
-
-            accountData.removeCollateralAmount(synthMarketId, amountAbs);
+            account.checkAvailableWithdrawableValue(accountId, amountAbs);
+            account.withdrawCollateral(synthMarketId, amountAbs);
 
             synth.transfer(msg.sender, amountAbs);
         }
@@ -69,20 +70,32 @@ contract PerpsAccountModule is IAccountModule {
         return PerpsAccount.load(accountId).getTotalCollateralValue();
     }
 
-    function totalAccountOpenInterest(uint128 accountId) external view override returns (int) {
+    function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest(accountId);
     }
 
-    function openPosition(
+    function getOpenPosition(
         uint128 accountId,
         uint128 marketId
     ) external view override returns (int, int, int) {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
+
         Position.Data storage position = perpsMarket.positions[accountId];
 
         (, int pnl, int accruedFunding, , ) = position.getPositionData(
             PerpsPrice.getCurrentPrice(marketId)
         );
         return (pnl, accruedFunding, position.size);
+    }
+
+    function getAsyncOrderClaim(
+        uint128 accountId,
+        uint128 marketId
+    ) external view override returns (AsyncOrder.Data memory) {
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
+
+        AsyncOrder.Data storage asyncOrder = perpsMarket.asyncOrders[accountId];
+
+        return asyncOrder;
     }
 }

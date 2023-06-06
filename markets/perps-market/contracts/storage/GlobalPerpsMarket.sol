@@ -5,12 +5,14 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {PerpsAccount} from "./PerpsAccount.sol";
 
 /*
     Note: This library contains all global perps market data
 */
 library GlobalPerpsMarket {
     using SafeCastI256 for int256;
+    using SetUtil for SetUtil.UintSet;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarket"));
@@ -27,6 +29,12 @@ library GlobalPerpsMarket {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
         assembly {
             marketData.slot := s
+        }
+    }
+
+    function checkLiquidation(Data storage self, uint128 accountId) internal view {
+        if (self.liquidatableAccounts.contains(accountId)) {
+            revert PerpsAccount.AccountLiquidatable(accountId);
         }
     }
 

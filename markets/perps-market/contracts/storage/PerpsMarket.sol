@@ -10,6 +10,7 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
 
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
@@ -25,6 +26,10 @@ library PerpsMarket {
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
+    error InvalidMarket(uint128 marketId);
+
+    error PriceFeedNotSet(uint128 marketId);
+
     struct Data {
         address owner;
         address nominatedOwner;
@@ -37,7 +42,7 @@ library PerpsMarket {
         int lastFundingRate;
         int lastFundingValue;
         uint256 lastFundingTime;
-        // liquidation params
+        // liquidation data
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
         // accountId => asyncOrder
@@ -46,9 +51,17 @@ library PerpsMarket {
         mapping(uint => Position.Data) positions;
     }
 
-    function create(uint128 id) internal returns (Data storage market) {
+    function create(
+        uint128 id,
+        address owner,
+        string memory name,
+        string memory symbol
+    ) internal returns (Data storage market) {
         market = load(id);
         market.id = id;
+        market.owner = owner;
+        market.name = name;
+        market.symbol = symbol;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -59,6 +72,21 @@ library PerpsMarket {
         }
     }
 
+    /**
+     * @dev Reverts if the market does not exist with appropriate error. Otherwise, returns the market.
+     */
+    function loadValid(uint128 marketId) internal view returns (Data storage market) {
+        market = load(marketId);
+        if (market.owner == address(0)) {
+            revert InvalidMarket(marketId);
+        }
+
+        if (PerpsPrice.load(marketId).feedId == "") {
+            revert PriceFeedNotSet(marketId);
+        }
+    }
+
+    // TODO: can remove and use loadWithVerifiedOwner
     function onlyMarketOwner(Data storage self) internal view {
         if (self.owner != msg.sender) {
             revert OnlyMarketOwner(self.owner, msg.sender);

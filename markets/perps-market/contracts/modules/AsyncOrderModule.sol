@@ -10,6 +10,7 @@ import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
@@ -26,62 +27,58 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using AsyncOrder for AsyncOrder.Data;
     using SettlementStrategy for SettlementStrategy.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
     int256 public constant PRECISION = 18;
 
-    struct RuntimeCommitData {
-        uint feesAccrued;
-        AsyncOrder.Status status;
-    }
-
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
-        /*
-            1. check valid market
-            2. check valid account
-            3. check valid settlement strategy
-        */
+        PerpsMarket.Data storage market = PerpsMarket.loadValid(commitment.marketId);
 
-        // order checks
-        /*
-            1. check if size is 0
-            2. check with fees if sufficient margin
-            3. check for liquidation with new position size
-            4. check that initial margin reqs are met
-            5. check order size against max order size
-            6. 
-        */
+        // TODO Check if commitment.accountId is valid
+        // TODO Check msg.sender can commit order for commitment.accountId
 
-        PerpsAccount.load(commitment.accountId).checkLiquidationFlag();
+        GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
-        // TODO: recompute funding
-        RuntimeCommitData memory runtime;
+        AsyncOrder.Data storage order = market.asyncOrders[commitment.accountId];
 
-        AsyncOrder.Data storage order = PerpsMarket.load(commitment.marketId).asyncOrders[
-            commitment.accountId
-        ];
+        if (order.sizeDelta != 0) {
+            revert OrderAlreadyCommitted(commitment.marketId, commitment.accountId);
+        }
 
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
             .settlementStrategies[commitment.settlementStrategyId];
 
-        order.update(commitment, block.timestamp + strategy.settlementDelay);
+        uint256 settlementTime = block.timestamp + strategy.settlementDelay;
+        order.update(commitment, settlementTime);
 
-        (, runtime.feesAccrued, ) = order.validateOrder(
+        (, uint feesAccrued, ) = order.validateOrder(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
 
-        return (order, runtime.feesAccrued);
+        // TODO include fees in event
+        emit OrderCommitted(
+            commitment.marketId,
+            commitment.accountId,
+            strategy.strategyType,
+            commitment.sizeDelta,
+            commitment.acceptablePrice,
+            settlementTime,
+            settlementTime + strategy.settlementWindowDuration,
+            commitment.trackingCode,
+            msg.sender
+        );
+
+        return (order, feesAccrued);
     }
 
     function settle(uint128 marketId, uint128 accountId) external {
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
-        perpsAccount.checkLiquidationFlag();
-        // 1. get order
+        GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
@@ -163,7 +160,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
-        PerpsMarket.load(asyncOrder.marketId).recomputeFunding(price);
+        // check if account is flagged
+        GlobalPerpsMarket.load().checkLiquidation(asyncOrder.accountId);
         (Position.Data memory newPosition, uint totalFees, ) = asyncOrder.validateOrder(
             settlementStrategy,
             price
@@ -187,19 +185,19 @@ contract AsyncOrderModule is IAsyncOrderModule {
             factory.depositToMarketManager(asyncOrder.marketId, amountToDeposit);
         }
 
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(asyncOrder.marketId);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(asyncOrder.marketId);
         perpsMarket.updatePositionData(newPosition);
 
-        PerpsMarket.load(asyncOrder.marketId).positions[asyncOrder.accountId].updatePosition(
-            newPosition
-        );
+        asyncOrder.reset();
+
+        perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
     }
 
     function _performOrderValidityChecks(
         uint128 marketId,
         uint128 accountId
     ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
-        AsyncOrder.Data storage order = PerpsMarket.load(marketId).asyncOrders[accountId];
+        AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];
