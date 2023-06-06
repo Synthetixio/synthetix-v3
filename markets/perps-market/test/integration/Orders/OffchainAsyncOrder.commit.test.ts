@@ -31,12 +31,6 @@ describe('Commit Offchain Async Order test', () => {
         },
       ],
       traderAccountIds: [2, 3],
-      globalConfig: {
-        synthDeductionPriority: [
-          ethers.BigNumber.from(0), // snxUSD
-          ethers.BigNumber.from(2), // snxBTC TODO - this shouldn't be hardcoded
-        ],
-      },
     });
 
   const settlementDelay = 5;
