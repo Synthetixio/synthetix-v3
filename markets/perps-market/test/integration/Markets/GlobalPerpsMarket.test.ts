@@ -46,7 +46,7 @@ describe('GlobalPerpsMarket', () => {
 
   it('transaction should fail if setter function are called by external user', async () => {
     await assertRevert(
-      await systems().PerpsMarket.connect(trader1()).setLiquidationRewardGuards(100, 500),
+      systems().PerpsMarket.connect(trader1()).setLiquidationRewardGuards(100, 500),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
@@ -56,7 +56,7 @@ describe('GlobalPerpsMarket', () => {
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
-      systems().PerpsMarket.connect(trader1()).setSynthDeductionPriorty([1, 2]),
+      systems().PerpsMarket.connect(trader1()).setSynthDeductionPriority([1, 2]),
       `Unauthorized("${await trader1().getAddress()}")`
     );
   });
