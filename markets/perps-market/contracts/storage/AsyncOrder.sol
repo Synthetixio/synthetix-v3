@@ -67,6 +67,12 @@ library AsyncOrder {
         self.accountId = commitment.accountId;
     }
 
+    function reset(Data storage self) internal {
+        self.sizeDelta = 0;
+
+        // setting the rest to 0 is not necessary, and is gas inefficient since it will be overwritten at new order claim.
+    }
+
     function checkWithinSettlementWindow(
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy

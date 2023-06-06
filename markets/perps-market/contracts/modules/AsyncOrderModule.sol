@@ -38,17 +38,40 @@ contract AsyncOrderModule is IAsyncOrderModule {
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
         PerpsMarket.Data storage market = PerpsMarket.loadValid(commitment.marketId);
 
+        // TODO Check if commitment.accountId is valid
+        // TODO Check msg.sender can commit order for commitment.accountId
+
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
         AsyncOrder.Data storage order = market.asyncOrders[commitment.accountId];
+
+        if (order.sizeDelta != 0) {
+            revert OrderAlreadyCommitted(commitment.marketId, commitment.accountId);
+        }
+
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
             .settlementStrategies[commitment.settlementStrategyId];
-        order.update(commitment, block.timestamp + strategy.settlementDelay);
+
+        uint256 settlementTime = block.timestamp + strategy.settlementDelay;
+        order.update(commitment, settlementTime);
 
         (, uint feesAccrued, ) = order.validateOrder(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
+        );
+
+        // TODO include fees in event
+        emit OrderCommitted(
+            commitment.marketId,
+            commitment.accountId,
+            strategy.strategyType,
+            commitment.sizeDelta,
+            commitment.acceptablePrice,
+            settlementTime,
+            settlementTime + strategy.settlementWindowDuration,
+            commitment.trackingCode,
+            msg.sender
         );
 
         return (order, feesAccrued);
@@ -164,6 +187,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(asyncOrder.marketId);
         perpsMarket.updatePositionData(newPosition);
+
+        asyncOrder.reset();
 
         perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
     }

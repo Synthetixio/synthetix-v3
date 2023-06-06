@@ -8,13 +8,17 @@ import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
  * @title Module for committing and settling async orders.
  */
 interface IAsyncOrderModule {
-    /*event OrderCommitted(
+    event OrderCommitted(
         uint128 indexed marketId,
-        Transaction.Type indexed orderType,
-        uint256 amountProvided,
-        uint128 asyncOrderId,
-        address indexed sender
-    );*/
+        uint128 indexed accountId,
+        SettlementStrategy.Type indexed orderType,
+        int256 sizeDelta,
+        uint256 acceptablePrice,
+        uint256 settlementTime,
+        uint256 expirationTime,
+        bytes32 trackingCode,
+        address sender
+    );
 
     /*event OrderCancelled(
         uint128 indexed marketId,
@@ -23,6 +27,7 @@ interface IAsyncOrderModule {
         address indexed sender
     );*/
 
+    error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
     error OffchainLookup(
         address sender,

@@ -8,6 +8,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IAccountModule} from "../interfaces/IAccountModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
@@ -17,6 +18,7 @@ import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/
 contract PerpsAccountModule is IAccountModule {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
+    using AsyncOrder for AsyncOrder.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using PerpsAccount for PerpsAccount.Data;
@@ -72,7 +74,7 @@ contract PerpsAccountModule is IAccountModule {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest(accountId);
     }
 
-    function openPosition(
+    function getOpenPosition(
         uint128 accountId,
         uint128 marketId
     ) external view override returns (int, int, int) {
@@ -84,5 +86,16 @@ contract PerpsAccountModule is IAccountModule {
             PerpsPrice.getCurrentPrice(marketId)
         );
         return (pnl, accruedFunding, position.size);
+    }
+
+    function getAsyncOrderClaim(
+        uint128 accountId,
+        uint128 marketId
+    ) external view override returns (AsyncOrder.Data memory) {
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
+
+        AsyncOrder.Data storage asyncOrder = perpsMarket.asyncOrders[accountId];
+
+        return asyncOrder;
     }
 }
