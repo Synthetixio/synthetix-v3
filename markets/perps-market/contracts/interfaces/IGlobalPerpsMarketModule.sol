@@ -6,20 +6,22 @@ interface IGlobalPerpsMarketModule {
         uint128 synthMarketId
     ) external view returns (uint);
 
-    function getSynthDeductionPriorty() external view returns (uint128[] memory);
-
-    function getMinLiquidationRewardUsd() external view returns (uint256);
-
-    function getMaxLiquidationRewardUsd() external view returns (uint256);
-
     function setMaxCollateralForSynthMarketId(
         uint128 synthMarketId,
         uint collateralAmount
     ) external;
 
-    function setSynthDeductionPriorty(uint128[] memory newSynthDeductionPriority) external;
+    function setSynthDeductionPriority(uint128[] memory newSynthDeductionPriority) external;
 
-    function setMinLiquidationRewardUsd(uint256 minLiquidationRewardUsd) external;
+    function getSynthDeductionPriority() external view returns (uint128[] memory);
 
-    function setMaxLiquidationRewardUsd(uint256 maxLiquidationRewardUsd) external;
+    function setLiquidationRewardGuards(
+        uint256 minLiquidationRewardUsd,
+        uint256 maxLiquidationRewardUsd
+    ) external;
+
+    function getLiquidationRewardGuards()
+        external
+        view
+        returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd);
 }

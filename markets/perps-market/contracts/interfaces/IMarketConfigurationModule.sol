@@ -14,61 +14,47 @@ interface IMarketConfigurationModule {
         SettlementStrategy.Data memory strategy
     ) external returns (uint256 strategyId);
 
-    function setSkewScale(uint128 marketId, uint256 skewScale) external;
+    function setOrderFees(uint128 marketId, uint256 markerFeeRatio, uint256 takerFeeRatio) external;
 
-    function setOrderFees(
+    function setFundingParameters(
         uint128 marketId,
-        PerpsMarketConfiguration.OrderType key,
-        OrderFee.Data memory value
+        uint256 skewScale,
+        uint256 maxFundingVelocity
+    ) external;
+
+    function setLiquidationParameters(
+        uint128 marketId,
+        uint256 initialMarginFraction,
+        uint256 maintenanceMarginFraction,
+        uint256 liquidationRewardRatioD18,
+        uint256 maxLiquidationLimitAccumulationMultiplier
     ) external;
 
     function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external;
 
-    function setMaxFundingVelocity(uint128 marketId, uint256 maxFundingVelocity) external;
-
-    function setInitialMarginFraction(uint128 marketId, uint256 initialMarginFraction) external;
-
-    function setMaintenanceMarginFraction(
-        uint128 marketId,
-        uint256 maintenanceMarginFraction
-    ) external;
-
     function setLockedOiPercent(uint128 marketId, uint256 lockedOiPercent) external;
 
-    function setMaxLiquidationLimitAccumulationMultiplier(
-        uint128 marketId,
-        uint256 maxLiquidationLimitAccumulationMultiplier
-    ) external;
+    function getLiquidationParameters(
+        uint128 marketId
+    )
+        external
+        view
+        returns (
+            uint256 initialMarginFraction,
+            uint256 maintenanceMarginFraction,
+            uint256 liquidationRewardRatioD18,
+            uint256 maxLiquidationLimitAccumulationMultiplier
+        );
 
-    function setLiquidationRewardRatioD18(
-        uint128 marketId,
-        uint256 liquidationRewardRatioD18
-    ) external;
+    function getFundingParameters(
+        uint128 marketId
+    ) external view returns (uint256 skewScale, uint256 maxFundingVelocity);
+
+    function getMaxMarketValue(uint128 marketId) external view returns (uint256 maxMarketValue);
 
     function getOrderFees(
-        uint128 marketId,
-        PerpsMarketConfiguration.OrderType key
-    ) external view returns (OrderFee.Data memory);
-
-    function getSettlementStrategies(
         uint128 marketId
-    ) external view returns (SettlementStrategy.Data[] memory);
+    ) external view returns (uint256 makerFee, uint256 takerFee);
 
-    function getMaxMarketValue(uint128 marketId) external view returns (uint256);
-
-    function getMaxFundingVelocity(uint128 marketId) external view returns (uint256);
-
-    function getSkewScale(uint128 marketId) external view returns (uint256);
-
-    function getInitialMarginFraction(uint128 marketId) external view returns (uint256);
-
-    function getMaintenanceMarginFraction(uint128 marketId) external view returns (uint256);
-
-    function getLockedOiPercent(uint128 marketId) external view returns (uint256);
-
-    function getMaxLiquidationLimitAccumulationMultiplier(
-        uint128 marketId
-    ) external view returns (uint256);
-
-    function getLiquidationRewardRatioD18(uint128 marketId) external view returns (uint256);
+    function getLockedOiPercent(uint128 marketId) external view returns (uint256 lockedOiPercent);
 }

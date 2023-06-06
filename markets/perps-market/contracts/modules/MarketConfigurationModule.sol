@@ -24,19 +24,18 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.settlementStrategies.push(strategy);
     }
 
-    function setSkewScale(uint128 marketId, uint256 skewScale) external override {
-        PerpsMarket.load(marketId).onlyMarketOwner();
-        PerpsMarketConfiguration.load(marketId).skewScale = skewScale;
-    }
-
     function setOrderFees(
         uint128 marketId,
-        PerpsMarketConfiguration.OrderType key,
-        OrderFee.Data memory value
+        uint256 markerFeeRatio,
+        uint256 takerFeeRatio
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config.orderFees[key] = value;
+        // TODO: remove the mapping and move it to the storage directly (we will only use async offchain always)
+        config.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN] = OrderFee.Data({
+            makerFee: markerFeeRatio,
+            takerFee: takerFeeRatio
+        });
     }
 
     function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external override {
@@ -45,28 +44,33 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.maxMarketValue = maxMarketValue;
     }
 
-    function setMaxFundingVelocity(uint128 marketId, uint256 maxFundingVelocity) external override {
+    function setFundingParameters(
+        uint128 marketId,
+        uint256 skewScale,
+        uint256 maxFundingVelocity
+    ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
         config.maxFundingVelocity = maxFundingVelocity;
+        config.skewScale = skewScale;
     }
 
-    function setInitialMarginFraction(
+    function setLiquidationParameters(
         uint128 marketId,
-        uint256 initialMarginFraction
+        uint256 initialMarginFraction,
+        uint256 maintenanceMarginFraction,
+        uint256 liquidationRewardRatioD18,
+        uint256 maxLiquidationLimitAccumulationMultiplier
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
         config.initialMarginFraction = initialMarginFraction;
-    }
-
-    function setMaintenanceMarginFraction(
-        uint128 marketId,
-        uint256 maintenanceMarginFraction
-    ) external override {
-        PerpsMarket.load(marketId).onlyMarketOwner();
-        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.maintenanceMarginFraction = maintenanceMarginFraction;
+        config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
+        config
+            .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
     }
 
     function setLockedOiPercent(uint128 marketId, uint256 lockedOiPercent) external override {
@@ -75,69 +79,58 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.lockedOiPercent = lockedOiPercent;
     }
 
-    function setMaxLiquidationLimitAccumulationMultiplier(
-        uint128 marketId,
-        uint256 maxLiquidationLimitAccumulationMultiplier
-    ) external override {
-        PerpsMarket.load(marketId).onlyMarketOwner();
+    function getLiquidationParameters(
+        uint128 marketId
+    )
+        external
+        view
+        override
+        returns (
+            uint256 initialMarginFraction,
+            uint256 maintenanceMarginFraction,
+            uint256 liquidationRewardRatioD18,
+            uint256 maxLiquidationLimitAccumulationMultiplier
+        )
+    {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config
-            .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
+
+        initialMarginFraction = config.initialMarginFraction;
+        maintenanceMarginFraction = config.maintenanceMarginFraction;
+        liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
+        maxLiquidationLimitAccumulationMultiplier = config
+            .maxLiquidationLimitAccumulationMultiplier;
     }
 
-    function setLiquidationRewardRatioD18(
-        uint128 marketId,
-        uint256 liquidationRewardRatioD18
-    ) external override {
-        PerpsMarket.load(marketId).onlyMarketOwner();
+    function getFundingParameters(
+        uint128 marketId
+    ) external view override returns (uint256 skewScale, uint256 maxFundingVelocity) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
+
+        skewScale = config.skewScale;
+        maxFundingVelocity = config.maxFundingVelocity;
+    }
+
+    function getMaxMarketValue(
+        uint128 marketId
+    ) external view override returns (uint256 maxMarketValue) {
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
+        maxMarketValue = config.maxMarketValue;
     }
 
     function getOrderFees(
-        uint128 marketId,
-        PerpsMarketConfiguration.OrderType key
-    ) external view override returns (OrderFee.Data memory) {
-        return PerpsMarketConfiguration.load(marketId).orderFees[key];
-    }
-
-    function getSettlementStrategies(
         uint128 marketId
-    ) external view override returns (SettlementStrategy.Data[] memory) {
-        return PerpsMarketConfiguration.load(marketId).settlementStrategies;
+    ) external view override returns (uint256 makerFee, uint256 takerFee) {
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
+
+        // TODO: remove mapping on order fees and move fees to top level storage
+        makerFee = config.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN].makerFee;
+        takerFee = config.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN].takerFee;
     }
 
-    function getMaxMarketValue(uint128 marketId) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).maxMarketValue;
-    }
+    function getLockedOiPercent(uint128 marketId) external view override returns (uint256) {
+        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
-    function getMaxFundingVelocity(uint128 marketId) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).maxFundingVelocity;
-    }
-
-    function getSkewScale(uint128 marketId) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).skewScale;
-    }
-
-    function getInitialMarginFraction(uint128 marketId) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).initialMarginFraction;
-    }
-
-    function getMaintenanceMarginFraction(uint128 marketId) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).maintenanceMarginFraction;
-    }
-
-    function getLockedOiPercent(uint128 marketId) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).lockedOiPercent;
-    }
-
-    function getMaxLiquidationLimitAccumulationMultiplier(
-        uint128 marketId
-    ) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier;
-    }
-
-    function getLiquidationRewardRatioD18(uint128 marketId) external view returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).liquidationRewardRatioD18;
+        return config.lockedOiPercent;
     }
 }

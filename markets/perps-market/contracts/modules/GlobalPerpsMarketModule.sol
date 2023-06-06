@@ -8,24 +8,6 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
 
-    function getMaxCollateralAmountsForSynthMarket(
-        uint128 synthMarketId
-    ) external view override returns (uint) {
-        return GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[synthMarketId];
-    }
-
-    function getSynthDeductionPriorty() external view override returns (uint128[] memory) {
-        return GlobalPerpsMarketConfiguration.load().synthDeductionPriority;
-    }
-
-    function getMinLiquidationRewardUsd() external view returns (uint256) {
-        return GlobalPerpsMarketConfiguration.load().minLiquidationRewardUsd;
-    }
-
-    function getMaxLiquidationRewardUsd() external view returns (uint256) {
-        return GlobalPerpsMarketConfiguration.load().maxLiquidationRewardUsd;
-    }
-
     function setMaxCollateralForSynthMarketId(
         uint128 synthMarketId,
         uint collateralAmount
@@ -35,7 +17,13 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         store.maxCollateralAmounts[synthMarketId] = collateralAmount;
     }
 
-    function setSynthDeductionPriorty(
+    function getMaxCollateralAmountsForSynthMarket(
+        uint128 synthMarketId
+    ) external view override returns (uint) {
+        return GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[synthMarketId];
+    }
+
+    function setSynthDeductionPriority(
         uint128[] memory newSynthDeductionPriority
     ) external override {
         OwnableStorage.onlyOwner();
@@ -43,15 +31,28 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         store.synthDeductionPriority = newSynthDeductionPriority;
     }
 
-    function setMinLiquidationRewardUsd(uint256 minLiquidationRewardUsd) external override {
+    function getSynthDeductionPriority() external view override returns (uint128[] memory) {
+        return GlobalPerpsMarketConfiguration.load().synthDeductionPriority;
+    }
+
+    function setLiquidationRewardGuards(
+        uint256 minLiquidationRewardUsd,
+        uint256 maxLiquidationRewardUsd
+    ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minLiquidationRewardUsd = minLiquidationRewardUsd;
+        store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
     }
 
-    function setMaxLiquidationRewardUsd(uint256 maxLiquidationRewardUsd) external override {
-        OwnableStorage.onlyOwner();
+    function getLiquidationRewardGuards()
+        external
+        view
+        override
+        returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
+    {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
+        minLiquidationRewardUsd = store.minLiquidationRewardUsd;
+        maxLiquidationRewardUsd = store.maxLiquidationRewardUsd;
     }
 }
