@@ -26,17 +26,14 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     function setSettlementStrategyEnabled(
         uint128 marketId,
-        SettlementStrategy.Type strategyType,
+        uint256 strategyId,
         bool isEnabled
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
-        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-
-        for (uint256 index = 0; index < config.settlementStrategies.length; index++) {
-            if (config.settlementStrategies[index].strategyType == strategyType) {
-                config.settlementStrategies[index].disabled = isEnabled;
-            }
-        }
+        PerpsMarketConfiguration
+            .load(marketId)
+            .settlementStrategies[strategyId]
+            .disabled = isEnabled;
     }
 
     function setOrderFees(
@@ -96,14 +93,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     function getSettlementStrategy(
         uint128 marketId,
-        SettlementStrategy.Type strategyType
+        uint256 strategyId
     ) external view override returns (SettlementStrategy.Data memory settlementStrategy) {
-        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        for (uint256 index = 0; index < config.settlementStrategies.length; index++) {
-            if (config.settlementStrategies[index].strategyType == strategyType) {
-                return config.settlementStrategies[index];
-            }
-        }
+        return
+            PerpsMarketConfiguration.load(marketId).load(marketId).settlementStrategies[strategyId];
     }
 
     function getLiquidationParameters(

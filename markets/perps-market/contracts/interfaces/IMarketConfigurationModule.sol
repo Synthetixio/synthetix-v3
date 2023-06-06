@@ -36,13 +36,13 @@ interface IMarketConfigurationModule {
 
     function setSettlementStrategyEnabled(
         uint128 marketId,
-        SettlementStrategy.Type strategyId,
+        uint256 strategyId,
         bool isEnabled
     ) external;
 
     function getSettlementStrategy(
         uint128 marketId,
-        SettlementStrategy.Type strategyType
+        uint256 strategyId
     ) external view returns (SettlementStrategy.Data memory settlementStrategy);
 
     function getLiquidationParameters(
