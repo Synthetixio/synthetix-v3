@@ -26,14 +26,14 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
     function setOrderFees(
         uint128 marketId,
-        uint256 markerFeeRatio,
+        uint256 makerFeeRatio,
         uint256 takerFeeRatio
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         // TODO: remove the mapping and move it to the storage directly (we will only use async offchain always)
         config.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN] = OrderFee.Data({
-            makerFee: markerFeeRatio,
+            makerFee: makerFeeRatio,
             takerFee: takerFeeRatio
         });
     }
