@@ -1,7 +1,6 @@
 import { bn } from '@synthetixio/main/test/common';
 import { bootstrapMarkets } from '../bootstrap';
 import { BigNumber, Signer, utils } from 'ethers';
-import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
 
 describe('MarketConfiguration', async () => {
