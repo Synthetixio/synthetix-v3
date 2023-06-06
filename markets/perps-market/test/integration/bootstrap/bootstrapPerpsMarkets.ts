@@ -36,23 +36,11 @@ export type PerpsMarketData = Array<{
 type IncomingChainState =
   | ReturnType<typeof createStakedPool>
   | ReturnType<typeof bootstrapSynthMarkets>;
-type NewChainState = {
-  systems: () => Systems;
-  perpsMarkets: () => PerpsMarkets;
-  marketOwner: () => ethers.Signer;
-  poolId: () => ethers.BigNumber;
-  restore: () => Promise<void>;
-};
-type PerpsMarketsReturn<T> = T extends undefined
-  ? NewChainState & IncomingChainState
-  : NewChainState;
 
-type BootstrapPerpsMarketType = <T extends IncomingChainState | undefined>(
+export const bootstrapPerpsMarkets = (
   data: PerpsMarketData,
-  chainState: T
-) => PerpsMarketsReturn<T>;
-
-export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState) => {
+  chainState: IncomingChainState | undefined
+) => {
   const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(1000));
   let contracts: Systems, marketOwner: ethers.Signer;
 

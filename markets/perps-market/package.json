@@ -28,6 +28,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/router": "workspace:*",
     "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "2.74.4",
     "@usecannon/cli": "2.4.7",

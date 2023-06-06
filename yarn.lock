@@ -2585,6 +2585,7 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/router": "workspace:*"
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": 2.74.4
     "@usecannon/cli": 2.4.7
@@ -2642,7 +2643,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/router@workspace:utils/router":
+"@synthetixio/router@workspace:*, @synthetixio/router@workspace:utils/router":
   version: 0.0.0-use.local
   resolution: "@synthetixio/router@workspace:utils/router"
   dependencies:
@@ -2700,6 +2701,7 @@ __metadata:
     "@synthetixio/core-utils": 3.1.1
     "@synthetixio/main": 3.1.1
     "@synthetixio/oracle-manager": 3.1.1
+    "@synthetixio/router": "workspace:*"
     "@synthetixio/wei": 2.74.4
     "@usecannon/cli": 2.4.7
     ethers: ^5.0.0
