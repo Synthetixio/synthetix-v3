@@ -19,10 +19,10 @@ export function bootstrapTraders(data: Data) {
   const { systems, signers, provider, accountIds, owner } = data;
   bootstrapStakers(systems, signers);
 
-  let trader1: ethers.Signer, trader2: ethers.Signer;
+  let trader1: ethers.Signer, trader2: ethers.Signer, keeper: ethers.Signer;
 
   before('provide access to create account', async () => {
-    [, , , trader1, trader2] = signers();
+    [, , , trader1, trader2, keeper] = signers();
     await systems()
       .PerpsMarket.connect(owner())
       .addToFeatureFlagAllowlist(
@@ -64,6 +64,7 @@ export function bootstrapTraders(data: Data) {
   return {
     trader1: () => trader1,
     trader2: () => trader2,
+    keeper: () => keeper,
     restore,
   };
 }

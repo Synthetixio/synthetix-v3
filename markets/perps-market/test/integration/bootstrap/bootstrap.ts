@@ -8,6 +8,7 @@ import {
   SynthetixOracle_managerProxy,
   SynthetixUSDProxy,
   PerpsMarketProxy,
+  MockPyth,
   AccountProxy,
 } from '../../generated/typechain';
 import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
@@ -30,6 +31,7 @@ export type Systems = {
   Core: SynthetixCoreProxy;
   USD: SynthetixUSDProxy;
   CollateralMock: SynthetixCollateralMock;
+  MockPyth: MockPyth;
   OracleManager: SynthetixOracle_managerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
@@ -55,6 +57,7 @@ export function bootstrap() {
       CollateralMock: getContract('synthetix.CollateralMock'),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
+      MockPyth: getContract('MockPyth'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
@@ -79,6 +82,17 @@ type BootstrapArgs = {
   synthMarkets: SynthArguments;
   perpsMarkets: PerpsMarketData;
   traderAccountIds: Array<number>;
+  globalConfig?: {
+    collateralMax?: Array<{
+      synthId: ethers.BigNumber;
+      maxAmount: ethers.BigNumber;
+    }>;
+    synthDeductionPriority?: Array<ethers.BigNumber>;
+    liquidationGuards?: {
+      minLiquidationReward: ethers.BigNumber;
+      maxLiquidationReward: ethers.BigNumber;
+    };
+  };
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -88,13 +102,42 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId } =
     chainStateWithPerpsMarkets;
-  const { trader1, trader2, restore } = bootstrapTraders({
+  const { trader1, trader2, keeper, restore } = bootstrapTraders({
     systems,
     signers,
     provider,
     owner,
     accountIds: data.traderAccountIds,
   });
+
+  if (data.globalConfig?.collateralMax) {
+    before('set collateral max', async () => {
+      for (const { synthId, maxAmount } of data.globalConfig.collateralMax!) {
+        await systems()
+          .PerpsMarket.connect(owner())
+          .setMaxCollateralForSynthMarketId(synthId, maxAmount);
+      }
+    });
+  }
+
+  if (data.globalConfig?.synthDeductionPriority) {
+    before('set synth deduction priority', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setSynthDeductionPriority(data.globalConfig.synthDeductionPriority!);
+    });
+  }
+
+  if (data.globalConfig?.liquidationGuards) {
+    before('set liquidation guards', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setLiquidationRewardGuards(
+          data.globalConfig.liquidationGuards!.minLiquidationReward,
+          data.globalConfig.liquidationGuards!.maxLiquidationReward
+        );
+    });
+  }
 
   return {
     systems,
@@ -103,6 +146,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     restore,
     trader1,
     trader2,
+    keeper,
     owner,
     perpsMarkets,
     synthMarkets,
