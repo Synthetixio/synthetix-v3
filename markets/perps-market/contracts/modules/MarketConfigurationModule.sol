@@ -27,13 +27,13 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
-        bool isEnabled
+        bool enabled
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[strategyId]
-            .disabled = isEnabled;
+            .disabled = !enabled;
     }
 
     function setOrderFees(

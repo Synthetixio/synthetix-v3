@@ -37,7 +37,7 @@ interface IMarketConfigurationModule {
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
-        bool isEnabled
+        bool enabled
     ) external;
 
     function getSettlementStrategy(
