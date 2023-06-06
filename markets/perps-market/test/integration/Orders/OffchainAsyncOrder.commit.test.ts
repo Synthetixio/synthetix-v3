@@ -93,23 +93,23 @@ describe('Commit Offchain Async Order test', () => {
       );
     });
 
-    // it('reverts if account is invalid', async () => {
-    //   await assertRevert(
-    //     systems()
-    //       .PerpsMarket.connect(trader1())
-    //       .commitOrder({
-    //         ethMarketId: ethMarketId,
-    //         accountId: 1337,
-    //         sizeDelta: bn(1),
-    //         settlementStrategyId: 0,
-    //         acceptablePrice: bn(1000),
-    //         trackingCode: ethers.constants.HashZero,
-    //       }),
-    //     'InvalidAccount("1337")'
-    //   );
-    // });
+    it('reverts if account is invalid', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarketId,
+            accountId: 1337,
+            sizeDelta: bn(1),
+            settlementStrategyId: 0,
+            acceptablePrice: bn(1000),
+            trackingCode: ethers.constants.HashZero,
+          }),
+        'AccountNotFound("1337")'
+      );
+    });
 
-    it('reverts if account not have margin', async () => {
+    it(`reverts if account doesn't have margin`, async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
