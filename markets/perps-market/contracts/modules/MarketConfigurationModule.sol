@@ -95,8 +95,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 marketId,
         uint256 strategyId
     ) external view override returns (SettlementStrategy.Data memory settlementStrategy) {
-        return
-            PerpsMarketConfiguration.load(marketId).load(marketId).settlementStrategies[strategyId];
+        return PerpsMarketConfiguration.load(marketId).settlementStrategies[strategyId];
     }
 
     function getLiquidationParameters(
