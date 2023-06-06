@@ -161,7 +161,7 @@ describe('MarketConfiguration', async () => {
       settlementStrategy.priceDeviationTolerance,
       fixture.settlementStrategy.priceDeviationTolerance
     );
-    assert.equal(settlementStrategy.disabled, fixture.settlementStrategy.disabled);
+    assert.equal(settlementStrategy.disabled, !fixture.settlementStrategy.disabled);
     assert.equal(settlementStrategy.url, fixture.settlementStrategy.url);
     assert.equal(settlementStrategy.feedId, fixture.settlementStrategy.feedId);
     assert.equal(
