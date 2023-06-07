@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
@@ -9,6 +10,8 @@ import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
 
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
+    using AsyncOrder for AsyncOrder.Data;
+    using SetUtil for SetUtil.UintSet;
 
     function skew(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).skew;
@@ -58,5 +61,27 @@ contract PerpsMarketModule is IPerpsMarketModule {
                 indexPrice: this.indexPrice(marketId),
                 fillPrice: this.fillPrice(marketId)
             });
+    }
+
+    function getAsyncOrdersPaginated(
+        uint128 marketId,
+        uint256 cursor,
+        uint256 amount
+    )
+        external
+        view
+        returns (AsyncOrder.Data[] memory orders, uint256 nextCursor, uint256 pageSize)
+    {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+
+        uint256 length = market.asyncOrdersSet.length();
+        pageSize = amount > length - cursor ? length - cursor : amount;
+
+        orders = new AsyncOrder.Data[](amount);
+        for (uint i = 0; i < length; i++) {
+            orders[i] = market.asyncOrders[market.asyncOrdersSet.valueAt(i)];
+        }
+
+        return (orders, cursor + pageSize, pageSize);
     }
 }

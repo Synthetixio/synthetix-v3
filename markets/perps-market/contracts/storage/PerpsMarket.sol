@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
@@ -23,6 +24,7 @@ library PerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+    using SetUtil for SetUtil.UintSet;
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
@@ -47,6 +49,7 @@ library PerpsMarket {
         uint128 lastUtilizedLiquidationCapacity;
         // accountId => asyncOrder
         mapping(uint => AsyncOrder.Data) asyncOrders;
+        SetUtil.UintSet asyncOrdersSet;
         // accountId => position
         mapping(uint => Position.Data) positions;
     }

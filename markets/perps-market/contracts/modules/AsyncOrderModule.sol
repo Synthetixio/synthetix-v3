@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
@@ -31,6 +32,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
+    using SetUtil for SetUtil.UintSet;
 
     int256 public constant PRECISION = 18;
 
@@ -63,6 +65,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
+
+        market.asyncOrdersSet.add(commitment.accountId);
 
         // TODO include fees in event
         emit OrderCommitted(
@@ -193,6 +197,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         asyncOrder.reset();
 
+        perpsMarket.asyncOrdersSet.remove(asyncOrder.accountId);
         perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
     }
 

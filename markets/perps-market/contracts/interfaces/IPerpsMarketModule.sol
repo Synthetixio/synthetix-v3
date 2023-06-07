@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+
 /**
  * @title Perps market module
  */
@@ -35,4 +37,13 @@ interface IPerpsMarketModule {
     function getMarketSummary(
         uint128 marketId
     ) external view returns (MarketSummary memory summary);
+
+    /**
+     * @dev A pagination view starting from `cursor` to retrieve up to `amount` for a given `marketId`.
+     */
+    function getAsyncOrdersPaginated(
+        uint128 marketId,
+        uint256 cursor,
+        uint256 amount
+    ) external view returns (AsyncOrder.Data[] memory orders, uint256 nextCursor, uint256 pageSize);
 }
