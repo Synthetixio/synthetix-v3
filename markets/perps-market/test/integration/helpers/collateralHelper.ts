@@ -17,6 +17,7 @@ export type DepositCollateralData = {
 type SynthStats = {
   spotInitialBalance: () => ethers.BigNumber;
   perpsInitialBalance: () => ethers.BigNumber;
+  tradeFee: () => ethers.BigNumber;
   spotFinalBalance: () => ethers.BigNumber;
   perpsFinalBalance: () => ethers.BigNumber;
 };
@@ -36,11 +37,13 @@ export const depositCollateral: (
     let perpsInitialBalance: ethers.BigNumber;
     let spotFinalBalance: ethers.BigNumber;
     let perpsFinalBalance: ethers.BigNumber;
+    let totalFees: ethers.BigNumber;
 
     const collateral = data.collaterals[i];
 
     if (collateral.synthMarket === undefined || collateral.synthMarket().marketId().isZero()) {
       // if undefined or marketId == 0 it means is snxUSD.
+      totalFees = ethers.constants.Zero;
 
       // Record initial balances
       spotInitialBalance = await systems().USD.balanceOf(await trader().getAddress());
@@ -58,9 +61,11 @@ export const depositCollateral: (
       const marketId = collateral.synthMarket().marketId();
 
       // collateral find out how much synth we'll get
-      const { synthAmount } = await systems()
+      const { synthAmount, fees } = await systems()
         .SpotMarket.connect(trader())
         .quoteBuyExactIn(marketId, collateral.snxUSDAmount());
+
+      totalFees = fees.fixedFees + fees.utilizationFees + fees.skewFees + fees.wrapperFees;
 
       // trade snxUSD for synth
       await systems()
@@ -103,6 +108,7 @@ export const depositCollateral: (
     stats.push({
       spotInitialBalance: () => spotInitialBalance,
       perpsInitialBalance: () => perpsInitialBalance,
+      tradeFee: () => totalFees,
       spotFinalBalance: () => spotFinalBalance,
       perpsFinalBalance: () => perpsFinalBalance,
     });
