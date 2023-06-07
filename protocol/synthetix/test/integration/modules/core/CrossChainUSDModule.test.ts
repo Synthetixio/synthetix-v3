@@ -122,8 +122,7 @@ describe('CrossChainUSDModule', function () {
 
       it('burns the expected amount of snxUSD from the token pool', async () => {
         await systems()
-          .USD.connect(ccipTokenPool())
-          ['burn(address,uint256)'](ccipTokenPoolAddress, fiftyUSD);
+          .USD.connect(ccipTokenPool())['burn(address,uint256)'](ccipTokenPoolAddress, fiftyUSD);
 
         const usdBalanceAfter = await systems()
           .USD.connect(ccipTokenPool())
