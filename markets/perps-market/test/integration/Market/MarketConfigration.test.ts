@@ -3,9 +3,10 @@ import { bootstrapMarkets } from '../bootstrap';
 import { BigNumber, Signer, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
 
-describe('MarketConfiguration', async () => {
+describe.only('MarketConfiguration', async () => {
   const fixture = {
     token: 'snxETH',
     marketName: 'TestPerpsMarket',
@@ -61,34 +62,110 @@ describe('MarketConfiguration', async () => {
     );
   });
 
-  it('owner can set all market configurations properties', async () => {
-    await systems()
-      .PerpsMarket.connect(marketOwner)
-      .addSettlementStrategy(marketId, fixture.settlementStrategy);
-    await systems()
-      .PerpsMarket.connect(marketOwner)
-      .setSettlementStrategyEnabled(marketId, 0, fixture.settlementStrategy.disabled);
-    await systems()
-      .PerpsMarket.connect(marketOwner)
-      .setOrderFees(marketId, fixture.orderFees.makerFee, fixture.orderFees.takerFee);
-    await systems()
-      .PerpsMarket.connect(marketOwner)
-      .setMaxMarketValue(marketId, fixture.maxMarketValue);
-    await systems()
-      .PerpsMarket.connect(marketOwner)
-      .setFundingParameters(marketId, fixture.skewScale, fixture.maxFundingVelocity);
-    await systems()
-      .PerpsMarket.connect(marketOwner)
-      .setLiquidationParameters(
-        marketId,
-        fixture.initialMarginFraction,
-        fixture.maintenanceMarginFraction,
-        fixture.liquidationRewardRatioD18,
-        fixture.maxLiquidationLimitAccumulationMultiplier
-      );
-    await systems()
-      .PerpsMarket.connect(marketOwner)
-      .setLockedOiPercent(marketId, fixture.lockedOiPercent);
+  it('owner can set all market configurations properties and events are emitted', async () => {
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(marketOwner)
+        .addSettlementStrategy(marketId, fixture.settlementStrategy),
+      'SettlementStrategyAdded(' +
+        marketId.toString() +
+        ', [' +
+        fixture.settlementStrategy.strategyType.toString() +
+        ', ' +
+        fixture.settlementStrategy.settlementDelay.toString() +
+        ', ' +
+        fixture.settlementStrategy.settlementWindowDuration.toString() +
+        ', "' +
+        fixture.settlementStrategy.priceVerificationContract.toString() +
+        '", "' +
+        fixture.settlementStrategy.feedId.toString() +
+        '", "' +
+        fixture.settlementStrategy.url.toString() +
+        '", ' +
+        fixture.settlementStrategy.settlementReward.toString() +
+        ', ' +
+        fixture.settlementStrategy.priceDeviationTolerance.toString() +
+        ', ' +
+        fixture.settlementStrategy.disabled.toString() +
+        '])',
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(marketOwner)
+        .setSettlementStrategyEnabled(marketId, 0, fixture.settlementStrategy.disabled),
+      'SettlementStrategyEnabled(' +
+        marketId.toString() +
+        ', ' +
+        0 +
+        ', ' +
+        String(fixture.settlementStrategy.disabled) +
+        ')',
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(marketOwner)
+        .setOrderFees(marketId, fixture.orderFees.makerFee, fixture.orderFees.takerFee),
+      'OrderFeesSet(' +
+        marketId.toString() +
+        ', ' +
+        fixture.orderFees.makerFee.toString() +
+        ', ' +
+        fixture.orderFees.takerFee.toString() +
+        ')',
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(marketOwner)
+        .setMaxMarketValue(marketId, fixture.maxMarketValue),
+      'MaxMarketValueSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(marketOwner)
+        .setFundingParameters(marketId, fixture.skewScale, fixture.maxFundingVelocity),
+      'FundingParametersSet(' +
+        marketId.toString() +
+        ', ' +
+        fixture.skewScale.toString() +
+        ', ' +
+        fixture.maxFundingVelocity.toString() +
+        ')',
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(marketOwner)
+        .setLiquidationParameters(
+          marketId,
+          fixture.initialMarginFraction,
+          fixture.maintenanceMarginFraction,
+          fixture.liquidationRewardRatioD18,
+          fixture.maxLiquidationLimitAccumulationMultiplier
+        ),
+      'LiquidationParametersSet(' +
+        marketId.toString() +
+        ', ' +
+        fixture.initialMarginFraction.toString() +
+        ', ' +
+        fixture.maintenanceMarginFraction.toString() +
+        ', ' +
+        fixture.liquidationRewardRatioD18.toString() +
+        ', ' +
+        fixture.maxLiquidationLimitAccumulationMultiplier.toString() +
+        ')',
+      systems().PerpsMarket
+    );
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(marketOwner)
+        .setLockedOiPercent(marketId, fixture.lockedOiPercent),
+      'LockedOiPercentSet(' + marketId.toString() + ', ' + fixture.lockedOiPercent.toString() + ')',
+      systems().PerpsMarket
+    );
   });
 
   it('should revert transaction when not market owner sets parameters', async () => {
