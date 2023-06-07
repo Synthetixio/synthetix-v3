@@ -127,28 +127,28 @@ library DecimalMath {
     // -----------------
 
     /**
-     * @dev See mulDecimal for uint256.
+     * @dev See mulDecimal for int256.
      */
     function mulDecimal(int256 x, int256 y) internal pure returns (int256) {
         return (x * y) / UNIT_INT;
     }
 
     /**
-     * @dev See divDecimal for uint256.
+     * @dev See divDecimal for int256.
      */
     function divDecimal(int256 x, int256 y) internal pure returns (int256) {
         return (x * UNIT_INT) / y;
     }
 
     /**
-     * @dev See upscale for uint256.
+     * @dev See upscale for int256.
      */
     function upscale(int x, uint factor) internal pure returns (int) {
         return x * (10 ** factor).toInt();
     }
 
     /**
-     * @dev See downscale for uint256.
+     * @dev See downscale for int256.
      */
     function downscale(int x, uint factor) internal pure returns (int) {
         return x / (10 ** factor).toInt();
@@ -159,28 +159,28 @@ library DecimalMath {
     // -----------------
 
     /**
-     * @dev See mulDecimal for uint256.
+     * @dev See mulDecimal for int256.
      */
     function mulDecimalInt128(int128 x, int128 y) internal pure returns (int128) {
         return (x * y) / UNIT_INT128;
     }
 
     /**
-     * @dev See divDecimal for uint256.
+     * @dev See divDecimal for int256.
      */
     function divDecimalInt128(int128 x, int128 y) internal pure returns (int128) {
         return (x * UNIT_INT128) / y;
     }
 
     /**
-     * @dev See upscale for uint256.
+     * @dev See upscale for int256.
      */
     function upscaleInt128(int128 x, uint factor) internal pure returns (int128) {
         return x * ((10 ** factor).toInt()).to128();
     }
 
     /**
-     * @dev See downscale for uint256.
+     * @dev See downscale for int256.
      */
     function downscaleInt128(int128 x, uint factor) internal pure returns (int128) {
         return x / ((10 ** factor).toInt().to128());
