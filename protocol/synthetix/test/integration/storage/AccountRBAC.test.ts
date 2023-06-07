@@ -3,8 +3,13 @@ import { ethers } from 'ethers';
 import assert from 'assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bootstrap } from '../bootstrap';
-import { getContractAst } from '@synthetixio/core-utils/utils/hardhat/contracts';
+
 import { findAll } from '@synthetixio/core-utils/utils/ast/finders';
+import { getContractAst } from '@synthetixio/core-utils/src/utils/hardhat/contracts';
+import ts from 'typescript';
+// import { HardhatRuntimeEnvironment } from 'hardhat/types/runtime';
+
+// import { getContractAst } from '@synthetixio/core-utils/utils/hardhat/contracts';
 
 describe('AccountRBAC', () => {
   const { systems } = bootstrap();
@@ -14,12 +19,15 @@ describe('AccountRBAC', () => {
    * which is where permissions are declared in this contract.
    * */
   async function findAllPermissions() {
+    // @ts-ignore couldn't figure out why the hre type is wrong :(
     const ast = await getContractAst('contracts/storage/AccountRBAC.sol:AccountRBAC', hre);
+
     const variableDeclarations = findAll(
       ast,
       'VariableDeclaration',
       (node) => node.mutability === 'constant'
     );
+    // @ts-ignore according to types value doesn't exists, the tests seems to pass so ignoring type for now
     return variableDeclarations.map((v) => v.value.value);
   }
 

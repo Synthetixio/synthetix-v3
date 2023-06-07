@@ -1,47 +1,50 @@
 import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, BigNumberish, ethers } from 'ethers';
 import hre from 'hardhat';
+import { SafeCastMock } from '../../../typechain-types';
 
 describe('SafeCast', function () {
-  let SafeCast;
-  let castFunction;
+  let SafeCast: SafeCastMock;
+  let castFunction: string;
 
-  function exp(base, exp) {
+  function exp(base: number, exp: number) {
     return BigNumber.from(base).mul(BigNumber.from(10).pow(exp));
   }
 
-  function pow(base, exp) {
+  function pow(base: number, exp: number) {
     return BigNumber.from(base).pow(exp);
   }
 
-  async function assertCast(value) {
+  async function assertCast(value: BigNumberish) {
     // Using callStatic because the mock's functions are not view,
     // i.e. they are regular transactions and don't return a value.
     // They need to not be view because otherwise ethers assumes they can't throw,
     // so it wont parse the returned custom errors.
     // The solution is to use callStatic, which forces ethers to both retrieve the
     // returned value, and parse revert errors.
+    //@ts-ignore
     assertBn.equal(await SafeCast.callStatic[castFunction](value), value);
   }
 
-  async function assertCastBytes(value) {
+  async function assertCastBytes(value: number) {
     assert.equal(
+      //@ts-ignore
       await SafeCast.callStatic[castFunction](value),
       ethers.utils.hexZeroPad(BigNumber.from(value).toHexString(), 32)
     );
   }
 
-  function maxUint(type) {
+  function maxUint(type: number) {
     return pow(2, type).sub(1);
   }
 
-  function maxInt(type) {
+  function maxInt(type: number) {
     return pow(2, type).div(2).sub(1);
   }
 
-  function minInt(type) {
+  function minInt(type: number) {
     return pow(2, type).div(2).mul(-1);
   }
 
@@ -67,6 +70,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        // @ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(32).add(1)), 'OverflowUint32ToInt32()');
       });
     });
@@ -139,6 +143,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](pow(-1, 1)), 'OverflowInt32ToUint32()');
       });
     });
@@ -161,6 +166,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(56).add(1)), 'OverflowUint56ToInt56()');
       });
     });
@@ -185,7 +191,9 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](minInt(24).sub(1)), 'OverflowInt56ToInt24()');
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(24).add(1)), 'OverflowInt56ToInt24()');
       });
     });
@@ -208,6 +216,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(64).add(1)), 'OverflowUint64ToInt64()');
       });
     });
@@ -230,6 +239,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](pow(-1, 1)), 'OverflowInt128ToUint128()');
       });
     });
@@ -258,7 +268,9 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](minInt(32).sub(1)), 'OverflowInt128ToInt32()');
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(32).add(1)), 'OverflowInt128ToInt32()');
       });
     });
@@ -303,7 +315,9 @@ describe('SafeCast', function () {
       });
 
       it('throws Vjon overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](minInt(128).sub(1)), 'OverflowInt256ToInt128()');
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(128).add(1)), 'OverflowInt256ToInt128()');
       });
     });
@@ -327,7 +341,9 @@ describe('SafeCast', function () {
       });
 
       it('throws Vjon overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](minInt(24).sub(1)), 'OverflowInt256ToInt24()');
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(24).add(1)), 'OverflowInt256ToInt24()');
       });
     });
@@ -348,6 +364,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](pow(-1, 1)), 'OverflowInt256ToUint256()');
       });
     });
@@ -392,6 +409,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxUint(128)), 'OverflowUint128ToInt128()');
       });
     });
@@ -425,6 +443,7 @@ describe('SafeCast', function () {
 
       it('throws on overflows', async function () {
         await assertRevert(
+          //@ts-ignore
           SafeCast[castFunction](maxUint(128).add(1)),
           'OverflowUint256ToUint128()'
         );
@@ -448,6 +467,7 @@ describe('SafeCast', function () {
 
       it('throws on overflows', async function () {
         await assertRevert(
+          //@ts-ignore
           SafeCast[castFunction](maxUint(160).add(1)),
           'OverflowUint256ToUint160()'
         );
@@ -470,6 +490,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxUint(64).add(1)), 'OverflowUint256ToUint64()');
       });
     });
@@ -490,6 +511,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxUint(32).add(1)), 'OverflowUint256ToUint32()');
       });
     });
@@ -520,6 +542,7 @@ describe('SafeCast', function () {
       });
 
       it('throws on overflows', async function () {
+        //@ts-ignore
         await assertRevert(SafeCast[castFunction](maxInt(256).add(1)), 'OverflowUint256ToInt256()');
       });
     });
