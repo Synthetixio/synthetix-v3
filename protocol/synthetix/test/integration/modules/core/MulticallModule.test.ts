@@ -53,6 +53,7 @@ describe('MulticallModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
+          //@ts-ignore tests is skipped, fixe type when enabled
           .multicallThrough(
             [systems().Core.address],
             [
@@ -70,6 +71,7 @@ describe('MulticallModule', function () {
       before('call', async () => {
         await systems()
           .Core.connect(user1)
+          //@ts-ignore tests is skipped, fixe type when enabled
           .multicallThrough(
             [systems().Core.address, systems().OracleManager.address],
             [
