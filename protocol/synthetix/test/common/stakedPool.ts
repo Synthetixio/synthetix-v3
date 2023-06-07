@@ -82,6 +82,7 @@ export const createStakedPool = (
     depositAmount: stakedAmount,
     restore,
     staker: () => r.signers()[1],
+    ccipTokenPool: () => r.signers()[2],
     oracleNodeId: () => oracleNodeId,
   };
 };
