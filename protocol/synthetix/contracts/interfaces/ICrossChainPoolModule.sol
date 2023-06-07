@@ -37,8 +37,13 @@ interface ICrossChainPoolModule {
         uint256 newTotalWeight,
         uint64 configTimestamp
     ) external;
-    
-    function getPoolCrossChainInfo(uint128 poolId) external view returns (uint64[] memory pairedChainIds, uint128 primaryPoolId, uint128 secondaryPoolId);
+
+    function getPoolCrossChainInfo(
+        uint128 poolId
+    )
+        external
+        view
+        returns (uint64[] memory pairedChainIds, uint128 primaryPoolId, uint128 secondaryPoolId);
 
     function getThisChainPoolLiquidity(uint128 poolId) external view returns (uint256 liquidityD18);
 
