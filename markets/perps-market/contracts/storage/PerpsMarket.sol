@@ -118,9 +118,7 @@ library PerpsMarket {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
-        OrderFee.Data storage orderFeeData = marketConfig.orderFees[
-            PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN
-        ];
+        OrderFee.Data storage orderFeeData = marketConfig.orderFees;
         return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
     }
 

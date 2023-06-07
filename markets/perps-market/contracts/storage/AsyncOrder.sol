@@ -150,7 +150,7 @@ library AsyncOrder {
                 order.sizeDelta,
                 runtime.fillPrice,
                 perpsMarketData.skew,
-                marketConfig.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN]
+                marketConfig.orderFees
             ) +
             strategy.settlementReward;
 
