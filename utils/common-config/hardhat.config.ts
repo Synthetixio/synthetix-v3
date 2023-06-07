@@ -15,7 +15,7 @@ import '@synthetixio/hardhat-storage';
 
 // Router generation cannon plugin
 import { registerAction } from '@usecannon/builder';
-//@ts-ignore
+
 import pluginRouter from 'cannon-plugin-router';
 registerAction(pluginRouter);
 
