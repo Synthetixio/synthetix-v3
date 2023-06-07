@@ -2,6 +2,8 @@ import { bn } from '@synthetixio/main/test/common';
 import { bootstrapMarkets } from '../bootstrap';
 import { BigNumber, Signer, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import assert from 'assert';
 
 describe('MarketConfiguration', async () => {
   const fixture = {
@@ -17,7 +19,7 @@ describe('MarketConfiguration', async () => {
       url: 'url',
       settlementReward: 100,
       priceDeviationTolerance: 200,
-      disabled: false,
+      disabled: true,
     },
 
     maxMarketValue: bn(10_000),
@@ -65,6 +67,9 @@ describe('MarketConfiguration', async () => {
       .addSettlementStrategy(marketId, fixture.settlementStrategy);
     await systems()
       .PerpsMarket.connect(marketOwner)
+      .setSettlementStrategyEnabled(marketId, 0, fixture.settlementStrategy.disabled);
+    await systems()
+      .PerpsMarket.connect(marketOwner)
       .setOrderFees(marketId, fixture.orderFees.makerFee, fixture.orderFees.takerFee);
     await systems()
       .PerpsMarket.connect(marketOwner)
@@ -94,6 +99,10 @@ describe('MarketConfiguration', async () => {
       systems()
         .PerpsMarket.connect(randomUser)
         .addSettlementStrategy(marketId, fixture.settlementStrategy),
+      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+    );
+    await assertRevert(
+      systems().PerpsMarket.connect(randomUser).setSettlementStrategyEnabled(marketId, 0, true),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
     await assertRevert(
@@ -129,6 +138,65 @@ describe('MarketConfiguration', async () => {
         .PerpsMarket.connect(randomUser)
         .setLockedOiPercent(marketId, fixture.lockedOiPercent),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+    );
+  });
+
+  it('get maxMarketValue', async () => {
+    const maxMarketValue = await systems().PerpsMarket.getMaxMarketValue(marketId);
+    assertBn.equal(maxMarketValue, fixture.maxMarketValue);
+  });
+
+  it('get settlementStrategy', async () => {
+    const settlementStrategy = await systems().PerpsMarket.getSettlementStrategy(marketId, 0);
+    assertBn.equal(settlementStrategy.settlementDelay, fixture.settlementStrategy.settlementDelay);
+    assertBn.equal(
+      settlementStrategy.settlementWindowDuration,
+      fixture.settlementStrategy.settlementWindowDuration
+    );
+    assertBn.equal(
+      settlementStrategy.settlementReward,
+      fixture.settlementStrategy.settlementReward
+    );
+    assertBn.equal(
+      settlementStrategy.priceDeviationTolerance,
+      fixture.settlementStrategy.priceDeviationTolerance
+    );
+    assert.equal(settlementStrategy.disabled, !fixture.settlementStrategy.disabled);
+    assert.equal(settlementStrategy.url, fixture.settlementStrategy.url);
+    assert.equal(settlementStrategy.feedId, fixture.settlementStrategy.feedId);
+    assert.equal(
+      settlementStrategy.priceVerificationContract,
+      fixture.settlementStrategy.priceVerificationContract
+    );
+  });
+
+  it('get orderFees', async () => {
+    const [makerFee, takerFee] = await systems().PerpsMarket.getOrderFees(marketId);
+    assertBn.equal(makerFee, fixture.orderFees.makerFee);
+    assertBn.equal(takerFee, fixture.orderFees.takerFee);
+  });
+
+  it('get fundingParameters', async () => {
+    const [skewScale, maxFundingVelocity] = await systems().PerpsMarket.getFundingParameters(
+      marketId
+    );
+    assertBn.equal(maxFundingVelocity, fixture.maxFundingVelocity);
+    assertBn.equal(skewScale, fixture.skewScale);
+  });
+
+  it('get liquidationParameters', async () => {
+    const [
+      initialMarginFraction,
+      maintenanceMarginFraction,
+      liquidationRewardRatioD18,
+      maxLiquidationLimitAccumulationMultiplier,
+    ] = await systems().PerpsMarket.getLiquidationParameters(marketId);
+    assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
+    assertBn.equal(maintenanceMarginFraction, fixture.maintenanceMarginFraction);
+    assertBn.equal(liquidationRewardRatioD18, fixture.liquidationRewardRatioD18);
+    assertBn.equal(
+      maxLiquidationLimitAccumulationMultiplier,
+      fixture.maxLiquidationLimitAccumulationMultiplier
     );
   });
 });

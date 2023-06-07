@@ -124,7 +124,10 @@ describe('Settle Offchain Async Order test', () => {
           .settlePythOrder(pythPriceData, extraData, { value: updateFee });
       });
 
+      // TODO: test event
       // it('emits event', async () => {});
+
+      // TODO: test fees are paid (keeper should receive settlementReward)
 
       it('check position is live', async () => {
         const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(2, marketId);

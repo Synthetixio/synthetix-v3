@@ -34,6 +34,17 @@ interface IMarketConfigurationModule {
 
     function setLockedOiPercent(uint128 marketId, uint256 lockedOiPercent) external;
 
+    function setSettlementStrategyEnabled(
+        uint128 marketId,
+        uint256 strategyId,
+        bool enabled
+    ) external;
+
+    function getSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId
+    ) external view returns (SettlementStrategy.Data memory settlementStrategy);
+
     function getLiquidationParameters(
         uint128 marketId
     )

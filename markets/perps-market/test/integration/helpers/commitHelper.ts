@@ -42,6 +42,7 @@ export const commitOrder: CommitOrderType = (data, chainState) => {
       acceptablePrice: data.acceptablePrice(),
       trackingCode: data.trackingCode,
     });
+    await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
     startTime = await getTime(chainState.provider());
   });
 
