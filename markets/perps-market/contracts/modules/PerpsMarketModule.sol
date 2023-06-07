@@ -26,19 +26,37 @@ contract PerpsMarketModule is IPerpsMarketModule {
         return PerpsMarket.load(marketId).currentFundingRate();
     }
 
+    function currentFundingVelocity(uint128 marketId) external view override returns (int) {
+        return PerpsMarket.load(marketId).currentFundingVelocity();
+    }
+
     function indexPrice(uint128 marketId) external view override returns (uint) {
         return PerpsPrice.getCurrentPrice(marketId);
     }
 
     function fillPrice(uint128 marketId) external view override returns (uint) {
-        // To get the current fill price we pass in size 0
-        int sizeToUse = 0;
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
                 PerpsMarketConfiguration.load(marketId).skewScale,
-                sizeToUse,
+                0,
                 PerpsPrice.getCurrentPrice(marketId)
             );
+    }
+
+    function getMarketSummary(
+        uint128 marketId
+    ) external view returns (MarketSummary memory summary) {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        return
+            MarketSummary({
+                skew: market.skew,
+                size: market.size,
+                maxOpenInterest: this.maxOpenInterest(marketId),
+                currentFundingRate: market.currentFundingRate(),
+                currentFundingVelocity: market.currentFundingVelocity(),
+                indexPrice: this.indexPrice(marketId),
+                fillPrice: this.fillPrice(marketId)
+            });
     }
 }
