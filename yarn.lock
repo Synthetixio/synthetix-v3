@@ -2703,6 +2703,7 @@ __metadata:
     "@synthetixio/oracle-manager": 3.1.1
     "@synthetixio/router": "workspace:*"
     "@synthetixio/wei": 2.74.4
+    "@types/node-fetch": 2.6.4
     "@usecannon/cli": 2.4.7
     ethers: ^5.0.0
     hardhat: 2.13.0
@@ -3043,6 +3044,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node-fetch@npm:2.6.4":
+  version: 2.6.4
+  resolution: "@types/node-fetch@npm:2.6.4"
+  dependencies:
+    "@types/node": "*"
+    form-data: ^3.0.0
+  checksum: f3e1d881bb42269e676ecaf49f0e096ab345e22823a2b2d071d60619414817fe02df48a31a8d05adb23054028a2a65521bdb3906ceb763ab6d3339c8d8775058
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*, @types/node@npm:>=13.7.0":
   version: 18.15.0
   resolution: "@types/node@npm:18.15.0"
@@ -3283,7 +3294,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:2.4.7, @usecannon/builder@npm:^2.4.7":
+"@usecannon/builder@npm:2.4.7":
   version: 2.4.7
   resolution: "@usecannon/builder@npm:2.4.7"
   dependencies:
@@ -3301,7 +3312,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.4.10":
+"@usecannon/builder@npm:^2.4.10, @usecannon/builder@npm:^2.4.7":
   version: 2.4.10
   resolution: "@usecannon/builder@npm:2.4.10"
   dependencies:
@@ -3319,7 +3330,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:2.4.10":
+"@usecannon/cli@npm:2.4.10, @usecannon/cli@npm:^2.4.7":
   version: 2.4.10
   resolution: "@usecannon/cli@npm:2.4.10"
   dependencies:
@@ -3344,7 +3355,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:2.4.7, @usecannon/cli@npm:^2.4.7":
+"@usecannon/cli@npm:2.4.7":
   version: 2.4.7
   resolution: "@usecannon/cli@npm:2.4.7"
   dependencies:
@@ -7033,6 +7044,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"form-data@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "form-data@npm:3.0.1"
+  dependencies:
+    asynckit: ^0.4.0
+    combined-stream: ^1.0.8
+    mime-types: ^2.1.12
+  checksum: b019e8d35c8afc14a2bd8a7a92fa4f525a4726b6d5a9740e8d2623c30e308fbb58dc8469f90415a856698933c8479b01646a9dff33c87cc4e76d72aedbbf860d
+  languageName: node
+  linkType: hard
+
 "form-data@npm:^4.0.0":
   version: 4.0.0
   resolution: "form-data@npm:4.0.0"
@@ -7648,17 +7670,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graceful-fs@npm:^4.1.11, graceful-fs@npm:^4.2.10":
+"graceful-fs@npm:^4.1.11, graceful-fs@npm:^4.1.15, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.1.9, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.10, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.9":
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
   checksum: ac85f94da92d8eb6b7f5a8b20ce65e43d66761c55ce85ac96df6865308390da45a8d3f0296dd3a663de65d30ba497bd46c696cc1e248c72b13d6d567138a4fc7
-  languageName: node
-  linkType: hard
-
-"graceful-fs@npm:^4.1.15, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.1.9, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.9":
-  version: 4.2.10
-  resolution: "graceful-fs@npm:4.2.10"
-  checksum: 3f109d70ae123951905d85032ebeae3c2a5a7a997430df00ea30df0e3a6c60cf6689b109654d6fdacd28810a053348c4d14642da1d075049e6be1ba5216218da
   languageName: node
   linkType: hard
 
