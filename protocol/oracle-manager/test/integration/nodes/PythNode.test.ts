@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
+import hre from 'hardhat';
 
 const parseUnits = ethers.utils.parseUnits;
 

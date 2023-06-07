@@ -1,8 +1,8 @@
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-/* eslint-disable max-len */
 import { ethers } from 'ethers';
+import hre from 'hardhat';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
 
 const fetch = require('node-fetch');
@@ -109,7 +109,7 @@ describe('AsyncOrdersModule.e2e.test', function () {
       //There is a delay on pyth service
       await new Promise((resolve) => setTimeout(resolve, 30000));
 
-      const response = await fetch(parsedURL).then((res) => res.json());
+      const response = await fetch(parsedURL).then((res: any) => res.json());
 
       await systems().SpotMarket.connect(keeper).settlePythOrder(response.data, extraData, {
         value: fee.toString(),

@@ -2,7 +2,7 @@ import { getContractsAsts } from '@synthetixio/core-utils/utils/hardhat/contract
 import { subtask } from 'hardhat/config';
 import { iterateFunctions } from '../internal/iterators';
 import { SUBTASK_STORAGE_GET_SOURCE_UNITS } from '../task-names';
-
+import 'hardhat/types/runtime';
 // Flag added by solidity-coverage module, necessary so we can check if it is being used
 declare module 'hardhat/types/runtime' {
   export interface HardhatRuntimeEnvironment {

@@ -1,26 +1,26 @@
 import { coreBootstrap } from '@synthetixio/router/utils/tests';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ethers } from 'ethers'; // This is needed because of types
 import {
   AssociatedSystemsModule,
-  AssociatedSystemsModuleRouter,
-  CoreRouter,
   DecayTokenModule,
-  DecayTokenModuleRouter,
   FeatureFlagModule,
-  FeatureFlagModuleRouter,
   GenericModule,
   NftModule,
-  NftModuleRouter,
   OwnerModule,
   Proxy,
   SampleFeatureFlagModule,
   SampleOwnedModule,
-  SampleRouter,
   TokenModule,
-  TokenModuleRouter,
   UpgradeModule,
 } from '../typechain-types';
+import {
+  TokenModuleRouter,
+  SampleRouter,
+  NftModuleRouter,
+  FeatureFlagModuleRouter,
+  DecayTokenModuleRouter,
+  CoreRouter,
+  AssociatedSystemsModuleRouter,
+} from './generated/typechain';
 
 interface Contracts {
   AssociatedSystemsModule: AssociatedSystemsModule;

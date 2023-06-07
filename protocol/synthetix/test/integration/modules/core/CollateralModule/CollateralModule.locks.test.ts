@@ -4,14 +4,15 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assert from 'assert/strict';
-import { ethers as Ethers } from 'ethers';
+import { ContractTransaction, Signer } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider, accountId, collateralAddress, depositAmount } =
     bootstrapWithStakedPool();
 
-  let user1: Ethers.Signer, user2: Ethers.Signer;
+  let user1: Signer;
+  let user2: Signer;
 
   before('identify signers', async () => {
     [, user1, user2] = signers();
@@ -71,7 +72,7 @@ describe('CollateralModule', function () {
     });
 
     describe('successful invoke', async () => {
-      let txn;
+      let txn: ContractTransaction;
       before('invoked', async () => {
         txn = await systems()
           .Core.connect(user1)
@@ -137,7 +138,7 @@ describe('CollateralModule', function () {
     const cleanRestore = snapshotCheckpoint(provider);
 
     describe('invoke on the whole thing', async () => {
-      let txn;
+      let txn: ContractTransaction;
       before(cleanRestore);
       before('clean', async () => {
         txn = await systems()
