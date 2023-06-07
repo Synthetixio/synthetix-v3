@@ -1,65 +1,40 @@
 import { ethers } from 'ethers';
 import { Systems } from '../bootstrap';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-
-const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
-
-type IncomingChainState = {
-  systems: () => Systems;
-  provider: () => ethers.providers.JsonRpcProvider;
-};
 
 export type CommitOrderData = {
-  trader: () => ethers.Signer;
-  marketId: () => ethers.BigNumber;
-  accountId: () => number;
-  sizeDelta: () => ethers.BigNumber;
-  settlementStrategyId: () => number;
-  settlementDelay: () => number;
-  settlementWindowDuration: () => number;
-  acceptablePrice: () => ethers.BigNumber;
-  trackingCode: string;
+  systems: () => Systems;
+  trader: ethers.Signer;
+  marketId: ethers.BigNumber;
+  accountId: number;
+  sizeDelta: ethers.BigNumber;
+  settlementStrategyId: number;
+  acceptablePrice: ethers.BigNumber;
+  trackingCode?: string;
 };
+type CommitOrderType = (data: CommitOrderData) => Promise<ethers.ContractTransaction>;
 
-type CommitOrderReturn = {
-  startTime: () => number;
-  commitTx: () => ethers.ContractTransaction;
-};
+export const commitOrder: CommitOrderType = async (data) => {
+  const {
+    systems,
+    marketId,
+    accountId,
+    sizeDelta,
+    settlementStrategyId,
+    acceptablePrice,
+    trackingCode,
+  } = data;
 
-type CommitOrderType = (data: CommitOrderData, chainState: IncomingChainState) => CommitOrderReturn;
-
-export const commitOrder: CommitOrderType = (data, chainState) => {
-  let tx: ethers.ContractTransaction;
-  let startTime: number;
-
-  before('commit the order', async () => {
-    tx = await chainState.systems().PerpsMarket.connect(data.trader()).commitOrder({
-      marketId: data.marketId(),
-      accountId: data.accountId(),
-      sizeDelta: data.sizeDelta(),
-      settlementStrategyId: data.settlementStrategyId(),
-      acceptablePrice: data.acceptablePrice(),
-      trackingCode: data.trackingCode,
+  const commitTx = await systems()
+    .PerpsMarket.connect(data.trader)
+    .commitOrder({
+      marketId,
+      accountId,
+      sizeDelta,
+      settlementStrategyId,
+      acceptablePrice,
+      trackingCode: trackingCode ?? ethers.constants.HashZero,
     });
-    await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-    startTime = await getTime(chainState.provider());
-  });
+  await commitTx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
 
-  it('emit commit order event', async () => {
-    await assertEvent(
-      tx,
-      `OrderCommitted(${data.marketId()}, ${data.accountId()}, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${data.sizeDelta()}, ${data.acceptablePrice()}, ${
-        startTime + data.settlementDelay()
-      }, ${startTime + data.settlementDelay() + data.settlementWindowDuration()}, "${
-        ethers.constants.HashZero
-      }", "${await data.trader().getAddress()}"`,
-      chainState.systems().PerpsMarket
-    );
-  });
-
-  return {
-    startTime: () => startTime,
-    commitTx: () => tx,
-  };
+  return commitTx;
 };

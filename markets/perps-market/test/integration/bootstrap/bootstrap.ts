@@ -10,6 +10,7 @@ import {
   PerpsMarketProxy,
   MockPyth,
   AccountProxy,
+  SettlementStrategy,
 } from '../../generated/typechain';
 import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
 import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
@@ -147,3 +148,4 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 }
 
 export const bn = (n: number) => wei(n).toBN();
+export const toNum = (n: ethers.BigNumber) => n.div(ethers.constants.WeiPerEther).toNumber();
