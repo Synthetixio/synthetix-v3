@@ -10,7 +10,6 @@ import {
   PerpsMarketProxy,
   MockPyth,
   AccountProxy,
-  SettlementStrategy,
 } from '../../generated/typechain';
 import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
 import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
