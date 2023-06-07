@@ -24,6 +24,18 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.settlementStrategies.push(strategy);
     }
 
+    function setSettlementStrategyEnabled(
+        uint128 marketId,
+        uint256 strategyId,
+        bool enabled
+    ) external override {
+        PerpsMarket.load(marketId).onlyMarketOwner();
+        PerpsMarketConfiguration
+            .load(marketId)
+            .settlementStrategies[strategyId]
+            .disabled = !enabled;
+    }
+
     function setOrderFees(
         uint128 marketId,
         uint256 makerFeeRatio,
@@ -77,6 +89,13 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.lockedOiPercent = lockedOiPercent;
+    }
+
+    function getSettlementStrategy(
+        uint128 marketId,
+        uint256 strategyId
+    ) external view override returns (SettlementStrategy.Data memory settlementStrategy) {
+        return PerpsMarketConfiguration.load(marketId).settlementStrategies[strategyId];
     }
 
     function getLiquidationParameters(

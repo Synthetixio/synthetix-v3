@@ -78,16 +78,9 @@ type BootstrapArgs = {
   synthMarkets: SynthArguments;
   perpsMarkets: PerpsMarketData;
   traderAccountIds: Array<number>;
-  globalConfig?: {
-    collateralMax?: Array<{
-      synthId: ethers.BigNumber;
-      maxAmount: ethers.BigNumber;
-    }>;
-    synthDeductionPriority?: Array<ethers.BigNumber>;
-    liquidationGuards?: {
-      minLiquidationReward: ethers.BigNumber;
-      maxLiquidationReward: ethers.BigNumber;
-    };
+  liquidationGuards?: {
+    minLiquidationReward: ethers.BigNumber;
+    maxLiquidationReward: ethers.BigNumber;
   };
 };
 
@@ -105,27 +98,23 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     owner,
     accountIds: data.traderAccountIds,
   });
-  const { globalConfig = {} } = data;
-  const { collateralMax } = globalConfig;
-  if (collateralMax) {
-    before('set collateral max', async () => {
-      for (const { synthId, maxAmount } of collateralMax) {
-        await systems()
-          .PerpsMarket.connect(owner())
-          .setMaxCollateralForSynthMarketId(synthId, maxAmount);
-      }
-    });
-  }
-  const { synthDeductionPriority } = globalConfig || {};
-  if (synthDeductionPriority) {
-    before('set synth deduction priority', async () => {
+
+  // auto set all synth markets collaterals to max
+  before('set collateral max', async () => {
+    for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setSynthDeductionPriority(synthDeductionPriority!);
-    });
-  }
+        .setMaxCollateralForSynthMarketId(marketId(), ethers.constants.MaxUint256);
+    }
+  });
 
-  const { liquidationGuards } = globalConfig || {};
+  // auto add all synth markets in the row they were created for deduction priority
+  before('set synth deduction priority', async () => {
+    // first item is always snxUSD
+    const synthIds = [bn(0), ...synthMarkets().map((s) => s.marketId())];
+    await systems().PerpsMarket.connect(owner()).setSynthDeductionPriority(synthIds);
+  });
+  const { liquidationGuards } = data;
   if (liquidationGuards) {
     before('set liquidation guards', async () => {
       await systems()
