@@ -147,3 +147,4 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 }
 
 export const bn = (n: number) => wei(n).toBN();
+export const toNum = (n: ethers.BigNumber) => n.div(ethers.constants.WeiPerEther).toNumber();

@@ -145,6 +145,8 @@ library AsyncOrder {
             orderPrice
         );
 
+        // TODO: check against acceptablePrice
+
         runtime.orderFees =
             calculateOrderFee(
                 order.sizeDelta,

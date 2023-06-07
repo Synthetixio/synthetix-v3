@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
-import { bn, bootstrapMarkets } from '../bootstrap';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -8,66 +8,32 @@ import { SetCollateralData, depositCollateral, settleOrder } from '../helpers';
 import assert from 'assert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
-const ASYNC_OFFCHAIN_ORDER_TYPE = 1;
-const ASYNC_OFFCHAIN_URL = 'https://fakeapi.pyth.synthetix.io/';
-
 describe('Commit Offchain Async Order test', () => {
-  const { systems, marketOwner, perpsMarkets, synthMarkets, provider, owner, trader1, keeper } =
-    bootstrapMarkets({
-      synthMarkets: [
-        {
-          name: 'Bitcoin',
-          token: 'snxBTC',
-          buyPrice: bn(10_000),
-          sellPrice: bn(10_000),
-        },
-      ],
-      perpsMarkets: [
-        {
-          name: 'Ether',
-          token: 'snxETH',
-          price: bn(1000),
-          fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
-        },
-      ],
-      traderAccountIds: [2, 3],
-    });
-
-  const settlementDelay = 5;
-  const settlementWindowDuration = 120;
-  const settlementReward = bn(5);
-  const priceDeviationTolerance = bn(0.01);
-
-  const feedId = ethers.utils.formatBytes32String('ETH/USD');
-
-  let priceVerificationContract: string;
+  const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
+    synthMarkets: [
+      {
+        name: 'Bitcoin',
+        token: 'snxBTC',
+        buyPrice: bn(10_000),
+        sellPrice: bn(10_000),
+      },
+    ],
+    perpsMarkets: [
+      {
+        name: 'Ether',
+        token: 'snxETH',
+        price: bn(1000),
+        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+      },
+    ],
+    traderAccountIds: [2, 3],
+  });
   let ethMarketId: ethers.BigNumber;
   let btcSynthId: ethers.BigNumber;
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
     btcSynthId = synthMarkets()[0].marketId();
-    priceVerificationContract = systems().MockPyth.address;
-  });
-
-  before('owner sets limits to max', async () => {
-    await systems()
-      .PerpsMarket.connect(owner())
-      .setMaxCollateralAmount(btcSynthId, ethers.constants.MaxUint256);
-  });
-
-  before('create settlement strategy', async () => {
-    await systems().PerpsMarket.connect(marketOwner()).addSettlementStrategy(ethMarketId, {
-      strategyType: ASYNC_OFFCHAIN_ORDER_TYPE, // OFFCHAIN
-      settlementDelay,
-      settlementWindowDuration,
-      priceVerificationContract,
-      feedId,
-      url: ASYNC_OFFCHAIN_URL,
-      disabled: false,
-      settlementReward,
-      priceDeviationTolerance,
-    });
   });
 
   describe('failures', () => {
@@ -209,9 +175,9 @@ describe('Commit Offchain Async Order test', () => {
       it('emit event', async () => {
         await assertEvent(
           tx,
-          `OrderCommitted(${ethMarketId}, 2, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(1)}, ${bn(1000)}, ${
-            startTime + 5
-          }, ${startTime + 5 + 120}, "${
+          `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
+            1
+          )}, ${bn(1000)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
             ethers.constants.HashZero
           }", "${await trader1().getAddress()}")`,
           systems().PerpsMarket
@@ -246,21 +212,19 @@ describe('Commit Offchain Async Order test', () => {
       });
 
       describe('can settle order', () => {
-        settleOrder(
-          {
-            keeper: keeper,
-            marketId: () => ethMarketId,
-            accountId: () => 2,
-            feedId: () => feedId,
-            startTime: () => startTime,
-            settlementDelay: () => settlementDelay,
-            offChainPrice: () => 1000,
-          },
-          {
+        before('settle', async () => {
+          const settlementTime = startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1;
+          await fastForwardTo(settlementTime, provider());
+          await settleOrder({
             systems,
-            provider,
-          }
-        );
+            keeper: keeper(),
+            marketId: ethMarketId,
+            accountId: 2,
+            feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
+            settlementTime,
+            offChainPrice: 1000,
+          });
+        });
 
         it('check position is live', async () => {
           const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(2, ethMarketId);
@@ -288,9 +252,9 @@ describe('Commit Offchain Async Order test', () => {
           it('emit event', async () => {
             await assertEvent(
               tx,
-              `OrderCommitted(${ethMarketId}, 2, ${ASYNC_OFFCHAIN_ORDER_TYPE}, ${bn(1)}, ${bn(
-                1000
-              )}, ${startTime + 5}, ${startTime + 5 + 120}, "${
+              `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
+                1
+              )}, ${bn(1000)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
                 ethers.constants.HashZero
               }", "${await trader1().getAddress()}")`,
               systems().PerpsMarket
