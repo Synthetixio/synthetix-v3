@@ -12,15 +12,14 @@ export type OpenPositionData = {
   price: ethers.BigNumber;
   trackingCode?: string;
   keeper: ethers.Signer;
-};
-
-type ChainState = {
   systems: () => Systems;
   provider: () => ethers.providers.JsonRpcProvider;
 };
 
-export const openPosition = async (data: OpenPositionData, chainState: ChainState) => {
+export const openPosition = async (data: OpenPositionData) => {
   const {
+    systems,
+    provider,
     trader,
     marketId,
     accountId,
@@ -30,7 +29,6 @@ export const openPosition = async (data: OpenPositionData, chainState: ChainStat
     trackingCode,
     keeper,
   } = data;
-  const { systems, provider } = chainState;
 
   const strategy = await systems().PerpsMarket.getSettlementStrategy(
     data.marketId,

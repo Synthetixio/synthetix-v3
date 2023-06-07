@@ -31,15 +31,18 @@ describe('Settle Offchain Async Order test', () => {
 
   let startTime: number;
   before('commit order', async () => {
-    await commitOrder({
-      trader: trader1(),
-      marketId: marketId,
-      accountId: 2,
-      sizeDelta: bn(1),
-      settlementStrategyId: 0,
-      acceptablePrice: bn(1_000),
-      systems,
-    });
+    await (
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .commitOrder({
+          marketId,
+          accountId: 2,
+          sizeDelta: bn(1),
+          settlementStrategyId: 0,
+          acceptablePrice: bn(1_000),
+          trackingCode: ethers.constants.HashZero,
+        })
+    ).wait();
     startTime = await getTime(provider());
   });
 
