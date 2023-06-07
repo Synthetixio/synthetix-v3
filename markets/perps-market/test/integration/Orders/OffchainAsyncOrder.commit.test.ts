@@ -1,12 +1,13 @@
 import { ethers } from 'ethers';
 import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { SynthMarkets } from '@synthetixio/spot-market/test/common';
+import { DepositCollateralData, depositCollateral, settleOrder } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SetCollateralData, depositCollateral, settleOrder } from '../helpers';
 import assert from 'assert';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Commit Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -29,11 +30,11 @@ describe('Commit Offchain Async Order test', () => {
     traderAccountIds: [2, 3],
   });
   let ethMarketId: ethers.BigNumber;
-  let btcSynthId: ethers.BigNumber;
+  let btcSynth: SynthMarkets[number];
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
-    btcSynthId = synthMarkets()[0].marketId();
+    btcSynth = synthMarkets()[0];
   });
 
   describe('failures', () => {
@@ -88,19 +89,16 @@ describe('Commit Offchain Async Order test', () => {
 
   const restoreToCommit = snapshotCheckpoint(provider);
 
-  const testCases: Array<{ name: string; collateralData: SetCollateralData }> = [
+  const testCases: Array<{ name: string; collateralData: DepositCollateralData }> = [
     {
       name: 'only snxUSD',
       collateralData: {
+        systems,
         trader: trader1,
         accountId: () => 2,
-        trades: [
+        collaterals: [
           {
-            synthName: () => 'snxUSD',
-            synthMarketId: () => 0,
-            synthMarket: synthMarkets()[0].synth,
-            marginAmount: () => 0,
-            synthAmount: () => bn(10_000),
+            snxUSDAmount: () => bn(10_000),
           },
         ],
       },
@@ -108,15 +106,13 @@ describe('Commit Offchain Async Order test', () => {
     {
       name: 'only snxBTC',
       collateralData: {
+        systems,
         trader: trader1,
         accountId: () => 2,
-        trades: [
+        collaterals: [
           {
-            synthName: () => 'snxBTC',
-            synthMarketId: () => btcSynthId,
-            synthMarket: synthMarkets()[0].synth,
-            marginAmount: () => bn(10_000),
-            synthAmount: () => bn(1),
+            synthMarket: () => btcSynth,
+            snxUSDAmount: () => bn(10_000),
           },
         ],
       },
@@ -124,22 +120,16 @@ describe('Commit Offchain Async Order test', () => {
     {
       name: 'snxUSD and snxBTC',
       collateralData: {
+        systems,
         trader: trader1,
         accountId: () => 2,
-        trades: [
+        collaterals: [
           {
-            synthName: () => 'snxUSD',
-            synthMarketId: () => 0,
-            synthMarket: synthMarkets()[0].synth,
-            marginAmount: () => 0,
-            synthAmount: () => bn(2), // less than needed to pay for settlementReward
+            snxUSDAmount: () => bn(2), // less than needed to pay for settlementReward
           },
           {
-            synthName: () => 'snxBTC',
-            synthMarketId: () => btcSynthId,
-            synthMarket: synthMarkets()[0].synth,
-            marginAmount: () => bn(10_000),
-            synthAmount: () => bn(1),
+            synthMarket: () => btcSynth,
+            snxUSDAmount: () => bn(10_000),
           },
         ],
       },
@@ -154,7 +144,7 @@ describe('Commit Offchain Async Order test', () => {
       before(restoreToCommit);
 
       before('add collateral', async () => {
-        await depositCollateral(testCase.collateralData, { systems, provider });
+        await depositCollateral(testCase.collateralData);
       });
 
       before('commit the order', async () => {
@@ -168,8 +158,8 @@ describe('Commit Offchain Async Order test', () => {
             acceptablePrice: bn(1000),
             trackingCode: ethers.constants.HashZero,
           });
-        await tx.wait();
-        startTime = await getTime(provider());
+        const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
+        startTime = (await provider().getBlock(res.blockNumber)).timestamp;
       });
 
       it('emit event', async () => {

@@ -1,23 +1,17 @@
 import { ethers } from 'ethers';
 import { Systems } from '../bootstrap';
+import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 
-type IncomingChainState = {
+type CollateralSynthData = {
+  synthMarket?: () => SynthMarkets[number];
+  snxUSDAmount: () => ethers.BigNumber;
+};
+
+export type DepositCollateralData = {
   systems: () => Systems;
-  provider: () => ethers.providers.JsonRpcProvider;
-};
-
-type TradeSynthData = {
-  synthName: () => string;
-  synthMarketId: () => ethers.BigNumberish;
-  synthMarket: () => ethers.Contract;
-  marginAmount: () => ethers.BigNumberish;
-  synthAmount: () => ethers.BigNumberish;
-};
-
-export type SetCollateralData = {
   trader: () => ethers.Signer;
   accountId: () => number;
-  trades: TradeSynthData[];
+  collaterals: CollateralSynthData[];
 };
 
 type SynthStats = {
@@ -27,84 +21,83 @@ type SynthStats = {
   perpsFinalBalance: () => ethers.BigNumber;
 };
 
-type SetCollateralReturn = {
+type DepositCollateralReturn = {
   stats: () => SynthStats[];
 };
 
-type SetCollateralType = (
-  data: SetCollateralData,
-  chainState: IncomingChainState
-) => Promise<SetCollateralReturn>;
-
-export const depositCollateral: SetCollateralType = async (data, chainState) => {
+export const depositCollateral: (
+  data: DepositCollateralData
+) => Promise<DepositCollateralReturn> = async (data) => {
   const stats: SynthStats[] = [];
+  const { systems, trader, accountId } = data;
 
-  for (let i = 0; i < data.trades.length; i++) {
+  for (let i = 0; i < data.collaterals.length; i++) {
     let spotInitialBalance: ethers.BigNumber;
     let perpsInitialBalance: ethers.BigNumber;
     let spotFinalBalance: ethers.BigNumber;
     let perpsFinalBalance: ethers.BigNumber;
 
-    const trade = data.trades[i];
-    const isSnxUSD = ethers.BigNumber.from(trade.synthMarketId()).isZero();
+    const collateral = data.collaterals[i];
 
-    if (isSnxUSD) {
-      // No need to trade since marketId is 0 (snxUSD)
+    if (collateral.synthMarket === undefined || collateral.synthMarket().marketId().isZero()) {
+      // if undefined or marketId == 0 it means is snxUSD.
 
       // Record initial balances
-      spotInitialBalance = await chainState
-        .systems()
-        .USD.balanceOf(await data.trader().getAddress());
-      perpsInitialBalance = await chainState
-        .systems()
-        .USD.balanceOf(chainState.systems().PerpsMarket.address);
+      spotInitialBalance = await systems().USD.balanceOf(await trader().getAddress());
+      perpsInitialBalance = await systems().USD.balanceOf(systems().PerpsMarket.address);
 
       // Add Collateral
-      await chainState
-        .systems()
-        .PerpsMarket.connect(data.trader())
-        .modifyCollateral(data.accountId(), trade.synthMarketId(), trade.synthAmount());
+      await systems()
+        .PerpsMarket.connect(trader())
+        .modifyCollateral(accountId(), 0, collateral.snxUSDAmount());
 
       // Record final balances
-      spotFinalBalance = await chainState.systems().USD.balanceOf(await data.trader().getAddress());
-      perpsFinalBalance = await chainState
-        .systems()
-        .USD.balanceOf(chainState.systems().PerpsMarket.address);
+      spotFinalBalance = await systems().USD.balanceOf(await trader().getAddress());
+      perpsFinalBalance = await systems().USD.balanceOf(systems().PerpsMarket.address);
     } else {
-      // Trade snxUSD for synth
-      await chainState
-        .systems()
-        .SpotMarket.connect(data.trader())
-        .buy(
-          trade.synthMarketId(),
-          trade.marginAmount(),
-          trade.synthAmount(),
-          ethers.constants.AddressZero
-        );
+      const marketId = collateral.synthMarket().marketId();
 
-      // Trader approves perps market
-      await trade
+      // collateral find out how much synth we'll get
+      const { synthAmount } = await systems()
+        .SpotMarket.connect(trader())
+        .quoteBuyExactIn(marketId, collateral.snxUSDAmount());
+
+      // trade snxUSD for synth
+      await systems()
+        .SpotMarket.connect(trader())
+        .buy(marketId, collateral.snxUSDAmount(), 0, ethers.constants.AddressZero);
+
+      // approve amount of collateral to be transfered to the market
+      await collateral
         .synthMarket()
-        .connect(data.trader())
-        .approve(chainState.systems().PerpsMarket.address, trade.synthAmount());
+        .synth()
+        .connect(trader())
+        .approve(systems().PerpsMarket.address, synthAmount);
 
       // Record initial balances
-      spotInitialBalance = await trade.synthMarket().balanceOf(await data.trader().getAddress());
-      perpsInitialBalance = await trade
+      spotInitialBalance = await collateral
         .synthMarket()
-        .balanceOf(chainState.systems().PerpsMarket.address);
+        .synth()
+        .balanceOf(await trader().getAddress());
+      perpsInitialBalance = await collateral
+        .synthMarket()
+        .synth()
+        .balanceOf(systems().PerpsMarket.address);
 
       // Add Collateral
-      await chainState
-        .systems()
-        .PerpsMarket.connect(data.trader())
-        .modifyCollateral(data.accountId(), trade.synthMarketId(), trade.synthAmount());
+      await systems()
+        .PerpsMarket.connect(trader())
+        .modifyCollateral(data.accountId(), marketId, synthAmount);
 
       // Record final balances
-      spotFinalBalance = await trade.synthMarket().balanceOf(await data.trader().getAddress());
-      perpsFinalBalance = await trade
+      spotFinalBalance = await collateral
         .synthMarket()
-        .balanceOf(chainState.systems().PerpsMarket.address);
+        .synth()
+        .balanceOf(await trader().getAddress());
+      perpsFinalBalance = await collateral
+        .synthMarket()
+        .synth()
+        .balanceOf(systems().PerpsMarket.address);
     }
 
     stats.push({

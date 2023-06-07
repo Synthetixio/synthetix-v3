@@ -4,7 +4,6 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 // import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { commitOrder } from '../helpers';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
