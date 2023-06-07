@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import assert from 'assert/strict';
 import { bootstrap } from '../../bootstrap';
 import { ethers } from 'ethers';

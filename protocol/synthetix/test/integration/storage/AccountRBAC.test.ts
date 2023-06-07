@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 import assert from 'assert/strict';
@@ -6,10 +7,6 @@ import { bootstrap } from '../bootstrap';
 
 import { findAll } from '@synthetixio/core-utils/utils/ast/finders';
 import { getContractAst } from '@synthetixio/core-utils/src/utils/hardhat/contracts';
-import ts from 'typescript';
-// import { HardhatRuntimeEnvironment } from 'hardhat/types/runtime';
-
-// import { getContractAst } from '@synthetixio/core-utils/utils/hardhat/contracts';
 
 describe('AccountRBAC', () => {
   const { systems } = bootstrap();
