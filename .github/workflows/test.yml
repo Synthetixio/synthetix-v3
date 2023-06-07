@@ -83,7 +83,8 @@ jobs:
           else
             echo 'SKIP. No "check:storage" script'
           fi
-
+      - name: Check types
+        run: yarn tsc --noEmit
       - name: Execute tests
         run: |
           if yarn workspace ${{ matrix.workspace }} run | grep coverage; then
