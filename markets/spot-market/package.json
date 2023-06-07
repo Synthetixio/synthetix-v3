@@ -33,7 +33,7 @@
     "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
     "@types/node-fetch": "2.6.4",
-    "@usecannon/cli": "2.4.7",
+    "@usecannon/cli": "2.4.15",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0",
     "node-fetch": "2.6.9",
