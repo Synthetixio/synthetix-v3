@@ -47,21 +47,6 @@ export type PerpsMarketData = Array<{
 type IncomingChainState =
   | ReturnType<typeof createStakedPool>
   | ReturnType<typeof bootstrapSynthMarkets>;
-type NewChainState = {
-  systems: () => Systems;
-  perpsMarkets: () => PerpsMarkets;
-  marketOwner: () => ethers.Signer;
-  poolId: () => ethers.BigNumber;
-  restore: () => Promise<void>;
-};
-type PerpsMarketsReturn<T> = T extends undefined
-  ? NewChainState & IncomingChainState
-  : NewChainState;
-
-type BootstrapPerpsMarketType = <T extends IncomingChainState | undefined>(
-  data: PerpsMarketData,
-  chainState: T
-) => PerpsMarketsReturn<T>;
 
 export const DEFAULT_SETTLEMENT_STRATEGY = {
   strategyType: 1, // OFFCHAIN
@@ -74,7 +59,10 @@ export const DEFAULT_SETTLEMENT_STRATEGY = {
   feedId: ethers.utils.formatBytes32String('ETH/USD'),
 };
 
-export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState) => {
+export const bootstrapPerpsMarkets = (
+  data: PerpsMarketData,
+  chainState: IncomingChainState | undefined
+) => {
   const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(1000));
   let contracts: Systems, marketOwner: ethers.Signer;
 

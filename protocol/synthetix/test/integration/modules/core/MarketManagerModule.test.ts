@@ -3,7 +3,7 @@ import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { MockMarket__factory } from '../../../../typechain-types/index';
@@ -162,8 +162,8 @@ describe('MarketManagerModule', function () {
             );
         });
 
-        let quotedFee;
-        let returnValue;
+        let quotedFee: BigNumber;
+        let returnValue: BigNumber;
 
         before('deposit', async () => {
           quotedFee = (await systems().Core.getMarketFees(marketId(), One))[0];
@@ -304,8 +304,8 @@ describe('MarketManagerModule', function () {
             );
         });
 
-        let quotedFee;
-        let returnValue;
+        let quotedFee: BigNumber;
+        let returnValue: BigNumber;
 
         before('mint USD to use market', async () => {
           quotedFee = (await systems().Core.getMarketFees(marketId(), One.div(2)))[1];

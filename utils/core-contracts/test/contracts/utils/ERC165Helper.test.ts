@@ -11,16 +11,14 @@ describe('ERC165Helper', function () {
   let interfaceIdERC721: string;
 
   before('deploy the contracts', async () => {
-    let factory;
+    const ERC165Factory = await hre.ethers.getContractFactory('ERC165HelperMock');
+    ERC165Helper = await ERC165Factory.deploy();
 
-    factory = await hre.ethers.getContractFactory('ERC165HelperMock');
-    ERC165Helper = await factory.deploy();
+    const ERC20Factory = await hre.ethers.getContractFactory('ERC20');
+    ERC20 = await ERC20Factory.deploy();
 
-    factory = await hre.ethers.getContractFactory('ERC20');
-    ERC20 = await factory.deploy();
-
-    factory = await hre.ethers.getContractFactory('ERC721');
-    ERC721 = await factory.deploy();
+    const ERC721Factory = await hre.ethers.getContractFactory('ERC721');
+    ERC721 = await ERC721Factory.deploy();
   });
 
   before('calculate the interface ids', async function () {
