@@ -41,7 +41,10 @@
   "depcheck": {
     "ignoreMatches": [
       "@synthetixio/core-contracts",
-      "@synthetixio/core-modules"
+      "@synthetixio/core-modules",
+      "@ethersproject/abi",
+      "@ethersproject/providers",
+      "@nomiclabs/hardhat-ethers"
     ]
   }
 }
