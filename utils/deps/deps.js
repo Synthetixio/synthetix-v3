@@ -79,14 +79,6 @@ async function run() {
     dependencies.sort();
     devDependencies.sort();
 
-    // Temporarily filter out internal deps (until we support .sol)
-    dependencies = dependencies
-      .filter((dep) => !deps[dep].startsWith('workspace'))
-      .filter((dep) => dep !== 'synthetix');
-    devDependencies = devDependencies
-      .filter((dep) => !deps[dep].startsWith('workspace'))
-      .filter((dep) => dep !== 'synthetix');
-
     const missingDeps = Object.keys(missing);
     missingDeps.sort();
 
