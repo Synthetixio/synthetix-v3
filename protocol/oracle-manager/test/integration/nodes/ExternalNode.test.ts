@@ -5,6 +5,7 @@ import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
+import hre from 'hardhat';
 
 describe('ExternalNode', function () {
   const { getContract, getSigners } = bootstrap();
