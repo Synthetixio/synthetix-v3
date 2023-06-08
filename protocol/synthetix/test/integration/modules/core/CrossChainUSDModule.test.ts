@@ -7,18 +7,17 @@ import { verifyUsesFeatureFlag } from '../../verifications';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
 describe('CrossChainUSDModule', function () {
-  const { owner, systems, staker, ccipTokenPool, accountId, poolId, collateralAddress } =
+  const { owner, systems, staker, accountId, poolId, collateralAddress } =
     bootstrapWithStakedPool();
 
   const fiftyUSD = bn(50);
   const oneHundredUSD = bn(100);
 
-  let ccipTokenPoolAddress: string, stakerAddress: string;
-  let ccipTokenPoolBalanceBefore: ethers.BigNumber, stakerBalanceBefore: ethers.BigNumber;
+  let stakerAddress: string;
+  let proxyBalanceBefore: ethers.BigNumber, stakerBalanceBefore: ethers.BigNumber;
   let CcipRouterMock: ethers.Contract;
 
   before('identify signers', async () => {
-    ccipTokenPoolAddress = await ccipTokenPool().getAddress();
     stakerAddress = await staker().getAddress();
   });
 
@@ -32,7 +31,7 @@ describe('CrossChainUSDModule', function () {
       .Core.connect(owner())
       .configureChainlinkCrossChain(
         CcipRouterMock.address,
-        await ccipTokenPool().getAddress(),
+        ethers.constants.AddressZero,
         ethers.constants.AddressZero
       );
   });
@@ -49,19 +48,16 @@ describe('CrossChainUSDModule', function () {
 
   before('record balances', async () => {
     stakerBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-    ccipTokenPoolBalanceBefore = await systems()
+    proxyBalanceBefore = await systems()
       .USD.connect(staker())
-      .balanceOf(ccipTokenPoolAddress);
+      .balanceOf(systems().Core.address);
   });
 
   describe('transferCrossChain()', () => {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'transferCrossChain',
-      () =>
-        systems()
-          .Core.connect(staker())
-          .transferCrossChain(1, ethers.constants.AddressZero, fiftyUSD)
+      () => systems().Core.connect(staker()).transferCrossChain(1, fiftyUSD)
     );
 
     before('ensure access to feature', async () => {
@@ -79,7 +75,7 @@ describe('CrossChainUSDModule', function () {
         .allowance(stakerAddress, systems().Core.address);
 
       await assertRevert(
-        systems().Core.connect(staker()).transferCrossChain(1, stakerAddress, oneHundredUSD),
+        systems().Core.connect(staker()).transferCrossChain(1, oneHundredUSD),
         `InsufficientAllowance("${oneHundredUSD}", "${allowance}")`,
         systems().USD
       );
@@ -93,7 +89,7 @@ describe('CrossChainUSDModule', function () {
         .approve(await systems().Core.address, excessAmount);
 
       await assertRevert(
-        systems().Core.connect(staker()).transferCrossChain(1, stakerAddress, excessAmount),
+        systems().Core.connect(staker()).transferCrossChain(1, excessAmount),
         `InsufficientBalance("${excessAmount}", "${stakerBalanceBefore}")`,
         systems().USD
       );
@@ -105,35 +101,25 @@ describe('CrossChainUSDModule', function () {
       before('invokes transferCrossChain', async () => {
         transferCrossChainTxn = await systems()
           .Core.connect(staker())
-          .transferCrossChain(1, stakerAddress, fiftyUSD);
+          .transferCrossChain(1, fiftyUSD);
       });
 
-      it('transfers the snxUSD to the CcipTokenPool', async () => {
+      it('should transfer the snxUSD to the core proxy', async () => {
         const usdBalanceAfter = await systems()
-          .USD.connect(ccipTokenPool())
-          .balanceOf(ccipTokenPoolAddress);
-        assertBn.equal(usdBalanceAfter, ccipTokenPoolBalanceBefore.add(fiftyUSD));
+          .USD.connect(owner())
+          .balanceOf(systems().Core.address);
+        assertBn.equal(usdBalanceAfter, proxyBalanceBefore.add(fiftyUSD));
       });
 
-      it('should decrease the staker snxUSD balance by the expected amount', async () => {
+      it('should decrease the stakers balance by the expected amount', async () => {
         const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
         assertBn.equal(usdBalanceAfter, stakerBalanceBefore.sub(fiftyUSD));
-      });
-
-      it('burns the expected amount of snxUSD from the token pool', async () => {
-        await systems()
-          .USD.connect(ccipTokenPool())['burn(address,uint256)'](ccipTokenPoolAddress, fiftyUSD);
-
-        const usdBalanceAfter = await systems()
-          .USD.connect(ccipTokenPool())
-          .balanceOf(ccipTokenPoolAddress);
-        assertBn.equal(usdBalanceAfter, ccipTokenPoolBalanceBefore);
       });
 
       it('emits correct event with the expected values', async () => {
         await assertEvent(
           transferCrossChainTxn,
-          `TransferCrossChainInitiated(1, "${stakerAddress}", ${fiftyUSD}, "${stakerAddress}"`,
+          `TransferCrossChainInitiated(1, ${fiftyUSD}, "${stakerAddress}"`,
           systems().Core
         );
       });

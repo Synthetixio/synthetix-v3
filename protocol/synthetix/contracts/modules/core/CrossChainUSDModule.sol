@@ -31,31 +31,22 @@ contract CrossChainUSDModule is ICrossChainUSDModule {
      */
     function transferCrossChain(
         uint64 destChainId,
-        address to,
         uint256 amount
     ) external payable returns (uint256 gasTokenUsed) {
         FeatureFlag.ensureAccessToFeature(_TRANSFER_CROSS_CHAIN_FEATURE_FLAG);
 
-        IAssociatedSystemsModule usdSystem = IAssociatedSystemsModule(
-            AssociatedSystem.load(_USD_TOKEN).proxy
-        );
-
-        (address ccipTokenPoolAddress, ) = usdSystem.getAssociatedSystem(
-            _CCIP_CHAINLINK_TOKEN_POOL
-        );
-
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
+        usdToken.transferFrom(msg.sender, address(this), amount);
+        usdToken.approve(address(CrossChain.load().ccipRouter), amount);
 
-        usdToken.transferFrom(msg.sender, ccipTokenPoolAddress, amount);
-
-        gasTokenUsed = CrossChain.load().transmit(
+        gasTokenUsed = CrossChain.load().teleport(
             destChainId,
-            abi.encodeWithSelector(usdToken.burn.selector, ccipTokenPoolAddress, amount),
+            address(usdToken),
+            amount,
             _TRANSFER_GAS_LIMIT
         );
-
         CrossChain.refundLeftoverGas(gasTokenUsed);
 
-        emit TransferCrossChainInitiated(destChainId, to, amount, msg.sender);
+        emit TransferCrossChainInitiated(destChainId, amount, msg.sender);
     }
 }

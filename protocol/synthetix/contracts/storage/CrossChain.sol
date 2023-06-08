@@ -130,6 +130,43 @@ library CrossChain {
         }
     }
 
+    /**
+     * @dev Transfers tokens to a destination chain.
+     */
+    function teleport(
+        Data storage self,
+        uint64 destChainId,
+        address token,
+        uint256 amount,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
+        ICcipRouterClient router = self.ccipRouter;
+
+        CcipClient.EVMTokenAmount[] memory tokenAmounts = new CcipClient.EVMTokenAmount[](1);
+        tokenAmounts[0] = CcipClient.EVMTokenAmount(token, amount);
+
+        bytes memory data;
+        CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
+            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
+            data,
+            tokenAmounts,
+            address(0), // Address of feeToken. address(0) means you will send msg.value.
+            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
+        );
+
+        uint64 chainSelector = self.ccipChainIdToSelector[destChainId];
+        uint256 fee = router.getFee(chainSelector, sentMsg);
+
+        // need to check sufficient fee here or else the error is very confusing
+        if (address(this).balance < fee) {
+            revert InsufficientCcipFee(fee, address(this).balance);
+        }
+
+        router.ccipSend{value: fee}(chainSelector, sentMsg);
+
+        return fee;
+    }
+
     function refundLeftoverGas(uint256 gasTokenUsed) internal returns (uint256 amountRefunded) {
         amountRefunded = msg.value - gasTokenUsed;
 
