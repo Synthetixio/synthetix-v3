@@ -163,15 +163,18 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
+        uint128 accountId = asyncOrder.accountId;
+        uint128 marketId = asyncOrder.marketId;
+
         // check if account is flagged
-        GlobalPerpsMarket.load().checkLiquidation(asyncOrder.accountId);
+        GlobalPerpsMarket.load().checkLiquidation(accountId);
         (Position.Data memory newPosition, uint totalFees, uint fillPrice) = asyncOrder
             .validateOrder(settlementStrategy, price);
 
         uint settlementReward = settlementStrategy.settlementReward;
 
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(asyncOrder.accountId);
-        perpsAccount.updatePositionMarkets(asyncOrder.marketId, newPosition.size);
+        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
+        perpsAccount.updatePositionMarkets(marketId, newPosition.size);
         perpsAccount.deductFromAccount(totalFees);
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
@@ -183,23 +186,22 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
         if (amountToDeposit > 0) {
             // deposit into market manager
-            factory.depositToMarketManager(asyncOrder.marketId, amountToDeposit);
+            factory.depositToMarketManager(marketId, amountToDeposit);
         }
 
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(asyncOrder.marketId);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
         perpsMarket.updatePositionData(newPosition);
 
-        // taken from asyncOrder to use it in event (after order is reset)
+        // exctracted from asyncOrder before order is reset
         bytes32 trackingCode = asyncOrder.trackingCode;
-        uint128 accountId = asyncOrder.accountId;
 
         asyncOrder.reset();
 
-        perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
+        perpsMarket.positions[accountId].updatePosition(newPosition);
 
         // emit event
         emit OrderSettled(
-            newPosition.marketId,
+            marketId,
             accountId,
             fillPrice,
             newPosition.size,
