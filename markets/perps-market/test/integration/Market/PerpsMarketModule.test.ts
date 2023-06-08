@@ -16,13 +16,10 @@ describe('PerpsMarketModule', () => {
     traderAccountIds: [1, 2],
   });
 
-  let marketOwner: ethers.Signer,
-    trader1: ethers.Signer,
-    trader2: ethers.Signer,
-    marketId: ethers.BigNumber;
+  let marketOwner: ethers.Signer, marketId: ethers.BigNumber;
 
   before('identify actors', () => {
-    [, , marketOwner, trader1, trader2] = signers();
+    [, , marketOwner, ,] = signers();
     marketId = perpsMarkets()[0].marketId();
   });
 
