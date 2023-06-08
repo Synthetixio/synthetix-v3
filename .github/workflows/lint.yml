@@ -15,6 +15,10 @@ jobs:
           node-version: "16.16.0"
           cache: "yarn"
       - run: yarn install --immutable --immutable-cache
+      - run: yarn dedupe --check
+      - run: yarn deps
+      - run: yarn deps:mismatched
+      - run: yarn deps:circular
       - run: yarn build
       - run: yarn tsc --noEmit
       - run: yarn lint
