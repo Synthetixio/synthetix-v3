@@ -13,8 +13,6 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 
-import "hardhat/console.sol";
-
 library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
@@ -195,9 +193,6 @@ library AsyncOrder {
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
-        // console.log("req margin", runtime.requiredMaintenanceMargin);
-        // console.log("init req margin", runtime.initialRequiredMargin);
-        // console.log("current market maint margin", currentMarketMaintenanceMargin);
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }

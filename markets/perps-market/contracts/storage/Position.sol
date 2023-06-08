@@ -8,8 +8,6 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
-import "hardhat/console.sol";
-
 library Position {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;

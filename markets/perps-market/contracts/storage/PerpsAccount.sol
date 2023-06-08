@@ -14,8 +14,6 @@ import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
-import "hardhat/console.sol";
-
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**

@@ -16,8 +16,6 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 
-import "hardhat/console.sol";
-
 contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -65,7 +63,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
-        console.log("fees accrued", feesAccrued);
 
         // TODO include fees in event
         emit OrderCommitted(
@@ -79,8 +76,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             commitment.trackingCode,
             msg.sender
         );
-
-        console.log("HELLO");
 
         return (order, feesAccrued);
     }
@@ -167,8 +162,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
         perpsAccount.updatePositionMarkets(marketId, newPosition.size);
         perpsAccount.deductFromAccount(totalFees);
-
-        console.log("totalFees", totalFees);
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
