@@ -139,7 +139,7 @@ describe('Liquidation - margin', async () => {
       { size: bn(5000), pnl: bn(-250) }, // op
     ].forEach(({ size, pnl }, i) => {
       it(`should have correct position for ${perpsMarketConfigs[i].token}`, async () => {
-        const [positionPnl, _, positionSize] = await systems().PerpsMarket.getOpenPosition(
+        const [positionPnl, , positionSize] = await systems().PerpsMarket.getOpenPosition(
           2,
           perpsMarkets()[i].marketId()
         );
