@@ -13,6 +13,8 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 
+import "hardhat/console.sol";
+
 library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
@@ -97,7 +99,7 @@ library AsyncOrder {
     }
 
     error ZeroSizeOrder();
-    error InsufficientMargin(uint availableMargin, uint minMargin);
+    error InsufficientMargin(int availableMargin, uint minMargin);
 
     struct SimulateDataRuntime {
         uint fillPrice;
@@ -106,7 +108,7 @@ library AsyncOrder {
         uint currentLiquidationMargin;
         int128 newPositionSize;
         uint newNotionalValue;
-        uint currentAvailableMargin;
+        int currentAvailableMargin;
         uint requiredMaintenanceMargin;
         uint initialRequiredMargin;
         uint totalRequiredMargin;
@@ -163,7 +165,7 @@ library AsyncOrder {
             ) +
             strategy.settlementReward;
 
-        if (runtime.currentAvailableMargin < runtime.orderFees) {
+        if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
@@ -173,17 +175,16 @@ library AsyncOrder {
         ];
 
         runtime.newPositionSize = position.size + order.sizeDelta.to128();
-        runtime.newNotionalValue = MathUtil.abs(
-            runtime.newPositionSize.to256().mulDecimal(runtime.fillPrice.toInt())
-        );
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
-            runtime.newNotionalValue
+            runtime.newPositionSize,
+            runtime.fillPrice
         );
 
         // use order price to determine notional value here since we need to subtract
         // this amount
         (, , , uint256 currentMarketMaintenanceMargin, ) = marketConfig.calculateRequiredMargins(
-            position.getNotionalValue(orderPrice)
+            position.size,
+            orderPrice
         );
 
         // requiredMaintenanceMargin includes the maintenance margin for the current position that's
@@ -194,7 +195,10 @@ library AsyncOrder {
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
-        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin) {
+        // console.log("req margin", runtime.requiredMaintenanceMargin);
+        // console.log("init req margin", runtime.initialRequiredMargin);
+        // console.log("current market maint margin", currentMarketMaintenanceMargin);
+        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }
 

@@ -14,6 +14,8 @@ import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
+import "hardhat/console.sol";
+
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**
@@ -60,7 +62,7 @@ library PerpsAccount {
     )
         internal
         view
-        returns (bool isEligible, uint256 availableMargin, uint256 requiredMaintenanceMargin)
+        returns (bool isEligible, int256 availableMargin, uint256 requiredMaintenanceMargin)
     {
         availableMargin = getAvailableMargin(self, accountId);
 
@@ -69,7 +71,7 @@ library PerpsAccount {
         }
 
         requiredMaintenanceMargin = getAccountMaintenanceMargin(self, accountId);
-        isEligible = requiredMaintenanceMargin > availableMargin;
+        isEligible = requiredMaintenanceMargin.toInt() > availableMargin;
     }
 
     function flagForLiquidation(Data storage self, uint128 accountId) internal {
@@ -126,7 +128,7 @@ library PerpsAccount {
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
         (
             bool isEligible,
-            uint256 availableMargin,
+            int256 availableMargin,
             uint256 requiredMaintenanceMargin
         ) = isEligibleForLiquidation(self, accountId);
 
@@ -141,7 +143,8 @@ library PerpsAccount {
             );
         }
 
-        availableWithdrawableCollateralUsd = availableMargin - requiredMaintenanceMargin;
+        // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
+        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMaintenanceMargin;
     }
 
     function getTotalCollateralValue(Data storage self) internal view returns (uint) {
@@ -174,21 +177,21 @@ library PerpsAccount {
         }
     }
 
-    function getAvailableMargin(Data storage self, uint128 accountId) internal view returns (uint) {
-        uint totalCollateralValue = getTotalCollateralValue(self);
-        int accountPnl = getAccountPnl(self, accountId);
+    function getAvailableMargin(
+        Data storage self,
+        uint128 accountId
+    ) internal view returns (int256) {
+        int256 totalCollateralValue = getTotalCollateralValue(self).toInt();
+        int256 accountPnl = getAccountPnl(self, accountId);
 
-        return
-            totalCollateralValue.toInt() < accountPnl
-                ? 0
-                : (totalCollateralValue.toInt() + accountPnl).toUint();
+        return totalCollateralValue + accountPnl;
     }
 
     function getTotalNotionalOpenInterest(
         Data storage self,
         uint128 accountId
     ) internal view returns (uint totalAccountOpenInterest) {
-        for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
+        for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[accountId];
@@ -214,9 +217,8 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            uint256 notionalValue = position.getNotionalValue(PerpsPrice.getCurrentPrice(marketId));
             (, , , uint256 positionMaintenanceMargin, uint256 liquidationMargin) = marketConfig
-                .calculateRequiredMargins(notionalValue);
+                .calculateRequiredMargins(position.size, PerpsPrice.getCurrentPrice(marketId));
 
             accumulatedLiquidationRewards += liquidationMargin;
             accountMaintenanceMargin += positionMaintenanceMargin;
@@ -248,6 +250,7 @@ library PerpsAccount {
         Data storage self,
         uint amount // snxUSD
     ) internal {
+        // TODO: deduct from snxUSD first?
         uint leftoverAmount = amount;
         uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
             .load()
@@ -329,7 +332,7 @@ library PerpsAccount {
         runtime.profitableMarkets = new uint128[](self.openPositionMarketIds.length());
         runtime.losingMarkets = new uint128[](self.openPositionMarketIds.length());
 
-        for (uint i = 0; i < self.openPositionMarketIds.length(); i++) {
+        for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 positionMarketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(positionMarketId).positions[
                 accountId
@@ -445,10 +448,11 @@ library PerpsAccount {
 
         (, totalPnl, , , ) = position.getPositionData(price);
 
+        int128 amtToLiquidation128 = amountToLiquidate.toInt().to128();
         // reduce position size
         position.size = position.size > 0
-            ? position.size - amountToLiquidate.toInt().to128()
-            : position.size + amountToLiquidate.toInt().to128();
+            ? position.size - amtToLiquidation128
+            : position.size + amtToLiquidation128;
 
         // update position markets
         updatePositionMarkets(self, positionMarketId, position.size);
@@ -461,7 +465,7 @@ library PerpsAccount {
         // using amountToLiquidate to calculate liquidation reward
         (, , , , liquidationReward) = PerpsMarketConfiguration
             .load(positionMarketId)
-            .calculateRequiredMargins(amountToLiquidate.mulDecimal(price));
+            .calculateRequiredMargins(amtToLiquidation128, price);
 
         return (amountToLiquidate, totalPnl, liquidationReward, position);
     }

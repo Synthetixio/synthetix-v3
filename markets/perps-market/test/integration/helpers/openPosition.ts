@@ -9,7 +9,7 @@ export type OpenPositionData = {
   marketId: ethers.BigNumber;
   accountId: number;
   sizeDelta: ethers.BigNumber;
-  settlementStrategyId: number;
+  settlementStrategyId: ethers.BigNumber;
   price: ethers.BigNumber;
   trackingCode?: string;
   keeper: ethers.Signer;
@@ -35,7 +35,7 @@ export const openPosition = async (data: OpenPositionData) => {
     data.marketId,
     data.settlementStrategyId
   );
-  const delay = toNum(strategy.settlementDelay);
+  const delay = strategy.settlementDelay.toNumber();
 
   const commitTx = await systems()
     .PerpsMarket.connect(trader)
@@ -56,10 +56,11 @@ export const openPosition = async (data: OpenPositionData) => {
     keeper,
     marketId,
     accountId,
-    offChainPrice: price,
+    offChainPrice: toNum(price),
     settlementTime,
     feedId: strategy.feedId,
   });
+  const settleRes = settleTx.wait();
 
-  return { commitTx, settleTx };
+  return { commitRes, settleRes };
 };
