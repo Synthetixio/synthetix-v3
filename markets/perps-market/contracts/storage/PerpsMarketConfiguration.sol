@@ -12,14 +12,8 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
 
-    enum OrderType {
-        ASYNC_ONCHAIN,
-        ASYNC_OFFCHAIN,
-        ATOMIC
-    }
-
     struct Data {
-        mapping(OrderType => OrderFee.Data) orderFees;
+        OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
         uint256 maxMarketValue; // oi cap
         uint256 maxFundingVelocity;

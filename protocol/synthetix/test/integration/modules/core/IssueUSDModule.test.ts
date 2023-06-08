@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
@@ -17,7 +17,7 @@ describe('IssueUSDModule', function () {
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let MockMarket: ethers.Contract;
-  let marketId: number;
+  let marketId: BigNumber;
 
   const feeAddress = '0x1234567890123456789012345678901234567890';
 

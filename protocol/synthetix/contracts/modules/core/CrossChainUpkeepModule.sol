@@ -196,15 +196,16 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
             );
         }
 
-        string memory source = string(_codeAt(Config.getAddress(_CONFIG_SYNC_POOL_CODE_ADDRESS)));
-        bytes memory secrets = _codeAt(Config.getAddress(_CONFIG_SYNC_POOL_SECRETS_ADDRESS));
+        string memory source = string(_codeAt(Config.readAddress(_CONFIG_SYNC_POOL_CODE_ADDRESS, address(0))));
+        //bytes memory secrets = _codeAt(Config.readAddress(_CONFIG_SYNC_POOL_SECRETS_ADDRESS, address(0)));
 
         Functions.Request memory req = Functions.Request({
             codeLocation: Functions.Location.Inline,
             secretsLocation: Functions.Location.Inline,
             language: Functions.CodeLanguage.JavaScript,
             source: source,
-            secrets: secrets,
+            // hardcoded for now--this is just temporary and unlikely to change
+            secrets: "https://gist.github.com/dbeal-eth/1d989d3af81bdd1d5c48cf22b81263a8",
             args: args
         });
         bytes32 requestId = CrossChain.load().chainlinkFunctionsOracle.sendRequest(
@@ -246,7 +247,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
      * loads the bytes deployed to the specified address
      * used to get the inline execution code for chainlink
      */
-    function _codeAt(address _addr) public view returns (bytes o_code) {
+    function _codeAt(address _addr) public view returns (bytes memory o_code) {
         assembly {
             // retrieve the size of the code, this needs assembly
             let size := extcodesize(_addr)

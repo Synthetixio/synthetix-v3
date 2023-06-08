@@ -5,7 +5,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('Atomic Order Module referrer', () => {
-  const { systems, signers, marketId, restore } = bootstrapTraders(
+  const { systems, signers, marketId, aggregator, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
@@ -201,6 +201,53 @@ describe('Atomic Order Module referrer', () => {
 
     it('check mock fee collector balance 4.5 = (10 - 1)/2 (collects 50% of the fees)', async () => {
       assertBn.equal(await systems().USD.balanceOf(systems().FeeCollectorMock.address), bn(4.5));
+    });
+  });
+
+  describe('total fees calc', () => {
+    before(restore);
+
+    // make skew 1 snxETH
+    before('buy 1 snxETH', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+      await systems()
+        .SpotMarket.connect(trader1)
+        .buy(marketId(), bn(1000), bn(0.99), await referrer.getAddress());
+    });
+
+    before('set sell price to $1000', async () => {
+      await aggregator().mockSetCurrentPrice(bn(1000));
+    });
+
+    before('set skew scale to 10 snxETH', async () => {
+      await systems().SpotMarket.connect(marketOwner).setMarketSkewScale(marketId(), bn(10));
+    });
+
+    before('set fixed fee to 10%', async () => {
+      await systems().SpotMarket.connect(marketOwner).setAtomicFixedFee(marketId(), bn(0.1));
+    });
+
+    before('set referrer percentage to 80%', async () => {
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .updateReferrerShare(marketId(), await referrer.getAddress(), bn(0.8));
+    });
+
+    before('sell 1 snxETH', async () => {
+      await synth.connect(trader1).approve(systems().SpotMarket.address, bn(1));
+      // total fees = $50
+      // fixed fee = $1000 * 0.1 = $100
+      // skew fee = 0.05 * $900 = -$50
+      // referrer = $100 * 0.8 = $80
+      // test where total fees is positive but after collected referrer its negative
+
+      await systems()
+        .SpotMarket.connect(trader1)
+        .sellExactIn(marketId(), bn(1), bn(500), await referrer.getAddress());
+    });
+
+    it('referrer received $80', async () => {
+      assertBn.equal(await systems().USD.balanceOf(await referrer.getAddress()), bn(80));
     });
   });
 });

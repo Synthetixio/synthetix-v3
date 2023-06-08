@@ -64,12 +64,12 @@ library Wrapper {
         Data storage self = load(marketId);
         address configuredCollateralType = self.wrapCollateralType;
 
-        // you are only allowed to update the collateral type once for each market
-        // we currently do not support multiple collateral types/market
         uint currentMarketCollateralAmount = SpotMarketFactory
             .load()
             .synthetix
             .getMarketCollateralAmount(marketId, configuredCollateralType);
+        // you are only allowed to update the collateral type if the collateral amount deposited
+        // into the market manager is 0.
         if (currentMarketCollateralAmount != 0) {
             revert InvalidCollateralType("Already set");
         }

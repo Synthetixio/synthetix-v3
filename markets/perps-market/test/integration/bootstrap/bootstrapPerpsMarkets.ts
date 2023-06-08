@@ -9,6 +9,7 @@ import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 type PerpsMarkets = Array<{
   marketId: () => ethers.BigNumber;
   aggregator: () => AggregatorV3Mock;
+  strategyId: () => ethers.BigNumber;
 }>;
 
 export type PerpsMarketData = Array<{
@@ -31,28 +32,37 @@ export type PerpsMarketData = Array<{
   };
   maxMarketValue?: ethers.BigNumber;
   lockedOiPercent?: ethers.BigNumber;
+  settlementStrategy?: Partial<{
+    strategyType: ethers.BigNumber;
+    settlementDelay: ethers.BigNumber;
+    settlementWindowDuration: ethers.BigNumber;
+    feedId: string;
+    url: string;
+    settlementReward: ethers.BigNumber;
+    priceDeviationTolerance: ethers.BigNumber;
+    disabled: boolean;
+  }>;
 }>;
 
 type IncomingChainState =
   | ReturnType<typeof createStakedPool>
   | ReturnType<typeof bootstrapSynthMarkets>;
-type NewChainState = {
-  systems: () => Systems;
-  perpsMarkets: () => PerpsMarkets;
-  marketOwner: () => ethers.Signer;
-  poolId: () => ethers.BigNumber;
-  restore: () => Promise<void>;
+
+export const DEFAULT_SETTLEMENT_STRATEGY = {
+  strategyType: 1, // OFFCHAIN
+  settlementDelay: 5,
+  settlementWindowDuration: 120,
+  settlementReward: bn(5),
+  priceDeviationTolerance: bn(0.01),
+  disabled: false,
+  url: 'https://fakeapi.pyth.synthetix.io/',
+  feedId: ethers.utils.formatBytes32String('ETH/USD'),
 };
-type PerpsMarketsReturn<T> = T extends undefined
-  ? NewChainState & IncomingChainState
-  : NewChainState;
 
-type BootstrapPerpsMarketType = <T extends IncomingChainState | undefined>(
+export const bootstrapPerpsMarkets = (
   data: PerpsMarketData,
-  chainState: T
-) => PerpsMarketsReturn<T>;
-
-export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState) => {
+  chainState: IncomingChainState | undefined
+) => {
   const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(1000));
   let contracts: Systems, marketOwner: ethers.Signer;
 
@@ -74,6 +84,7 @@ export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState
       liquidationParams,
       maxMarketValue,
       lockedOiPercent,
+      settlementStrategy,
     }) => {
       let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: ethers.BigNumber;
       before('create price nodes', async () => {
@@ -152,9 +163,26 @@ export const bootstrapPerpsMarkets: BootstrapPerpsMarketType = (data, chainState
         });
       }
 
+      let strategyId: ethers.BigNumber;
+      // create default settlement strategy
+      before('create default settlement strategy', async () => {
+        const strategy = {
+          ...DEFAULT_SETTLEMENT_STRATEGY,
+          ...(settlementStrategy ?? {}),
+          priceVerificationContract: contracts.MockPyth.address,
+        };
+        // first call is static to get strategyId
+        strategyId = await contracts.PerpsMarket.connect(
+          marketOwner
+        ).callStatic.addSettlementStrategy(marketId, strategy);
+
+        await contracts.PerpsMarket.connect(marketOwner).addSettlementStrategy(marketId, strategy);
+      });
+
       return {
         marketId: () => marketId,
         aggregator: () => aggregator,
+        strategyId: () => strategyId,
       };
     }
   );

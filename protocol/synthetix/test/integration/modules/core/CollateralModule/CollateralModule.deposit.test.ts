@@ -200,7 +200,7 @@ describe('CollateralModule', function () {
               describe('time passes', () => {
                 before('fast forward', async () => {
                   await fastForwardTo(
-                    parseInt(await systems().Core.getAccountLastInteraction(1)) + expireTime,
+                    (await systems().Core.getAccountLastInteraction(1)).toNumber() + expireTime,
                     provider()
                   );
                 });

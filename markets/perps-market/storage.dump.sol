@@ -613,13 +613,8 @@ library PerpsMarket {
 
 // @custom:artifact contracts/storage/PerpsMarketConfiguration.sol:PerpsMarketConfiguration
 library PerpsMarketConfiguration {
-    enum OrderType {
-        ASYNC_ONCHAIN,
-        ASYNC_OFFCHAIN,
-        ATOMIC
-    }
     struct Data {
-        mapping(OrderType => OrderFee.Data) orderFees;
+        OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
         uint256 maxMarketValue;
         uint256 maxFundingVelocity;

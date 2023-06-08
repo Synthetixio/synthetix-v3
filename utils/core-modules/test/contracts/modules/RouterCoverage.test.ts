@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { GenericModule, Router } from '../../../typechain-types';
+import { GenericModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 // TODO: fix assert-revert to parse this error
 describe.skip('RouterCoverage', function () {
   const { getContractBehindProxy } = bootstrap({ implementation: 'CoreRouter' });
-
+  //@ts-ignore This tests is skipped, fix type when enabled tests
   let Router: Router;
 
   before('identify modules', function () {

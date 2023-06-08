@@ -21,13 +21,15 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "3.2.0-xchain.0",
-    "@synthetixio/core-contracts": "3.2.0-xchain.0",
-    "@synthetixio/core-modules": "3.2.0-xchain.0",
-    "@synthetixio/core-utils": "3.2.0-xchain.0",
-    "@synthetixio/oracle-manager": "3.2.0-xchain.0",
+    "@chainlink/contracts": "^0.6.1",
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/builder": "2.4.7",
+    "@usecannon/builder": "2.4.15",
     "ethers": "^5.0.0",
     "handlebars": "^4.7.7",
     "hardhat": "2.13.0",
@@ -36,7 +38,10 @@
     "ts-node": "10.9.1"
   },
   "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27",
-  "dependencies": {
-    "@chainlink/contracts": "0.6.1"
+  "depcheck": {
+    "ignoreMatches": [
+      "@synthetixio/core-contracts",
+      "@synthetixio/core-modules"
+    ]
   }
 }
