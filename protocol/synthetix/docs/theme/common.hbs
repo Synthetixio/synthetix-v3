@@ -15,17 +15,17 @@
 {{/if}}
 
 {{#if natspec.params}}
-  | Name | Type | Description |
+**Parameters**
   {{#each params}}
-    |{{name}}|{{type}}|{{{joinLines natspec}}}|
+* `{{name}}` (*{{type}}*) - {{{joinLines natspec}}}
   {{/each}}
 {{/if}}
 
 {{#if natspec.returns}}
-  | Name | Type | Description |
+**Returns**
   {{#each returns}}
-    |{{#if name}}{{name}}{{else}}[{{@index}}]{{/if}}|{{type}}|{{{joinLines
+* `{{#if name}}{{name}}{{else}}[{{@index}}]{{/if}}` (*{{type}}*) - {{{joinLines
       natspec
-    }}}|
+    }}}
   {{/each}}
 {{/if}}

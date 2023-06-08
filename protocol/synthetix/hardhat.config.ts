@@ -18,6 +18,8 @@ const config = {
       './interfaces/external',
       './interfaces/IUtilsModule.sol',
       './errors',
+      './generated',
+      './routers',
       './routers',
       './modules',
       './mixins',
