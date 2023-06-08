@@ -28,8 +28,14 @@
     "@ethersproject/bignumber": "^5.7.0",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/router": "workspace:*",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0"
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
+  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27",
+  "depcheck": {
+    "ignoreMatches": [
+      "@synthetixio/router"
+    ]
+  }
 }

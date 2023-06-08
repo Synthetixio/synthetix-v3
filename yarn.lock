@@ -2396,6 +2396,7 @@ __metadata:
     "@ethersproject/bignumber": ^5.7.0
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/router": "workspace:*"
     ethers: ^5.0.0
     hardhat: 2.13.0
   languageName: unknown
@@ -2405,6 +2406,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-modules@workspace:utils/core-modules"
   dependencies:
+    "@ethersproject/abi": 5.7.0
+    "@ethersproject/providers": 5.7.2
+    "@nomiclabs/hardhat-ethers": 2.2.1
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/router": "workspace:*"
