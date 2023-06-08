@@ -327,9 +327,8 @@ contract CrossChainPoolModule {
 // @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
 contract CrossChainUSDModule {
     uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-    bytes32 internal constant _USD_TOKEN = "USDToken";
-    bytes32 internal constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-    bytes32 internal constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 }
 
 // @custom:artifact contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule

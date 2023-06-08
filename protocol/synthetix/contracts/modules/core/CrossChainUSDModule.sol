@@ -2,7 +2,6 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../../interfaces/ICrossChainUSDModule.sol";
-import "@synthetixio/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 
 import "../../storage/CrossChain.sol";
@@ -18,13 +17,9 @@ contract CrossChainUSDModule is ICrossChainUSDModule {
     using CrossChain for CrossChain.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
-    error InsufficientBalance(uint256 required, uint256 existing);
-
     uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-
-    bytes32 internal constant _USD_TOKEN = "USDToken";
-    bytes32 internal constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-    bytes32 internal constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 
     /**
      * @inheritdoc ICrossChainUSDModule
