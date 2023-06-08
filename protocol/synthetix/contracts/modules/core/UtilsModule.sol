@@ -116,5 +116,4 @@ contract UtilsModule is IUtilsModule {
             interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
             interfaceId == this.supportsInterface.selector;
     }
-
 }

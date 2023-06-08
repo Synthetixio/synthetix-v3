@@ -245,7 +245,9 @@ describe('Create Market test', () => {
       });
 
       before('set skew scale', async () => {
-        await systems().PerpsMarket.connect(marketOwner).setSkewScale(marketId, bn(100_000));
+        await systems()
+          .PerpsMarket.connect(marketOwner)
+          .setFundingParameters(marketId, bn(100_000), bn(0));
       });
 
       before('add collateral', async () => {

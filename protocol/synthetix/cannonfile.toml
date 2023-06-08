@@ -55,6 +55,9 @@ artifact = "contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule
 [contract.CrossChainUpkeepModule]
 artifact = "contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule"
 
+[contract.CrossChainUSDModule]
+artifact = "contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule"
+
 [contract.IssueUSDModule]
 artifact = "contracts/modules/core/IssueUSDModule.sol:IssueUSDModule"
 
@@ -104,6 +107,7 @@ contracts = [
     "CollateralConfigurationModule",
     "CrossChainPoolModule",
     "CrossChainUpkeepModule",
+    "CrossChainUSDModule",
     "IssueUSDModule",
     "LiquidationModule",
     "MarketCollateralModule",
@@ -127,6 +131,7 @@ depends = [
   "contract.CollateralConfigurationModule",
   "contract.CrossChainPoolModule",
   "contract.CrossChainUpkeepModule",
+  "contract.CrossChainUSDModule",
   "contract.IssueUSDModule",
   "contract.LiquidationModule",
   "contract.MarketCollateralModule",
@@ -179,7 +184,7 @@ depends = [
 contracts = [
     "InitialModuleBundle",
     "AssociatedSystemsModule",
-    "USDTokenModule",
+    "USDTokenModule"
 ]
 depends = [
   "contract.InitialModuleBundle",

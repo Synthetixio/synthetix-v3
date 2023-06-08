@@ -142,12 +142,19 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         pool.lastConfigurationTime = configTimestamp;
     }
 
-    function getPoolCrossChainInfo(uint128 poolId) external override view returns (uint64[] memory pairedChainIds, uint128 primaryPoolId, uint128 secondaryPoolId) {
+    function getPoolCrossChainInfo(
+        uint128 poolId
+    )
+        external
+        view
+        override
+        returns (uint64[] memory pairedChainIds, uint128 primaryPoolId, uint128 secondaryPoolId)
+    {
         Pool.Data storage pool = Pool.loadExisting(poolId);
 
         if (pool.isCrossChainEnabled()) {
             pairedChainIds = new uint64[](pool.crossChain[0].pairedChains.length);
-            for (uint256 i = 0;i < pool.crossChain[0].pairedChains.length;i++) {
+            for (uint256 i = 0; i < pool.crossChain[0].pairedChains.length; i++) {
                 pairedChainIds[i] = pool.crossChain[0].pairedChains[i];
             }
 

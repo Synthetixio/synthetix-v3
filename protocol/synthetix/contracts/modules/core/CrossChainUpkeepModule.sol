@@ -218,13 +218,22 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
 
     function _encodeCrossChainPoolCall(uint128 poolId) internal pure returns (bytes memory) {
         bytes[] memory calls = new bytes[](4);
-        calls[0] = abi.encodeWithSelector(ICrossChainPoolModule.getThisChainPoolLiquidity.selector, poolId);
+        calls[0] = abi.encodeWithSelector(
+            ICrossChainPoolModule.getThisChainPoolLiquidity.selector,
+            poolId
+        );
         calls[1] = abi.encodeWithSelector(
             ICrossChainPoolModule.getThisChainPoolCumulativeMarketDebt.selector,
             poolId
         );
-        calls[2] = abi.encodeWithSelector(ICrossChainPoolModule.getThisChainPoolTotalDebt.selector, poolId);
-        calls[3] = abi.encodeWithSelector(ICrossChainPoolModule.getPoolLastHeartbeat.selector, poolId);
+        calls[2] = abi.encodeWithSelector(
+            ICrossChainPoolModule.getThisChainPoolTotalDebt.selector,
+            poolId
+        );
+        calls[3] = abi.encodeWithSelector(
+            ICrossChainPoolModule.getPoolLastHeartbeat.selector,
+            poolId
+        );
         calls[4] = abi.encodeWithSelector(
             IPoolModule.getPoolLastConfigurationTime.selector,
             poolId

@@ -2,27 +2,30 @@ import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { verifyUsesFeatureFlag } from '../../verifications';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
 describe('USDTokenModule', function () {
   const { owner, systems, staker, accountId, poolId, collateralAddress } =
     bootstrapWithStakedPool();
 
-  const usdAmount = bn(100);
+  const fiftyUSD = bn(50);
+  const oneHundredUSD = bn(100);
 
-  let stakerAddress: string;
+  let ownerAddress: string, stakerAddress: string;
 
   before('identify signers', async () => {
+    ownerAddress = await owner().getAddress();
     stakerAddress = await staker().getAddress();
   });
 
   before('get some snxUSD', async () => {
     await systems()
       .Core.connect(staker())
-      .mintUsd(accountId, poolId, collateralAddress(), usdAmount);
+      .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
 
-    await systems().Core.connect(staker()).withdraw(accountId, systems().USD.address, usdAmount);
+    await systems()
+      .Core.connect(staker())
+      .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
   it('USD is deployed and registered', async () => {
@@ -39,10 +42,18 @@ describe('USDTokenModule', function () {
   });
 
   describe('burn(uint256)', () => {
+    before('configure CCIP', async () => {
+      await systems().Core.connect(owner()).configureChainlinkCrossChain(
+        ethers.constants.AddressZero,
+        stakerAddress, // fake CCIP token pool address
+        ethers.constants.AddressZero
+      );
+    });
+
     it('reverts if not authorized', async () => {
       await assertRevert(
-        systems().USD.connect(staker())['burn(uint256)'](usdAmount),
-        `Unauthorized("${stakerAddress}")`,
+        systems().USD.connect(owner())['burn(uint256)'](oneHundredUSD),
+        `Unauthorized("${ownerAddress}")`,
         systems().USD
       );
     });
@@ -54,39 +65,14 @@ describe('USDTokenModule', function () {
         usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
       });
 
-      before('configure CCIP', async () => {
-        await systems()
-          .Core.connect(owner())
-          .configureChainlinkCrossChain(stakerAddress, stakerAddress, stakerAddress);
-      });
-
-      before('burn snxUSD', async () => {
-        await systems().USD.connect(staker())['burn(uint256)'](usdAmount);
+      before('burn 50 snxUSD', async () => {
+        await systems().USD.connect(staker())['burn(uint256)'](fiftyUSD);
       });
 
       it('properly reflects the amount of snxUSD burned from the caller', async () => {
         const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-        assertBn.equal(usdBalanceAfter, usdBalanceBefore.sub(usdAmount));
+        assertBn.equal(usdBalanceAfter, usdBalanceBefore.sub(fiftyUSD));
       });
-    });
-  });
-
-  describe('transferCrossChain()', () => {
-    verifyUsesFeatureFlag(
-      () => systems().Core,
-      'transferCrossChain',
-      () =>
-        systems()
-          .USD.connect(staker())
-          .transferCrossChain(1, ethers.constants.AddressZero, usdAmount)
-    );
-
-    it('only works if user has enough snxUSD', async () => {});
-
-    describe('successful call', () => {
-      it('burns the correct amount of snxUSD on the source chain', async () => {});
-
-      it('triggers cross chain transfer call', async () => {});
     });
   });
 });

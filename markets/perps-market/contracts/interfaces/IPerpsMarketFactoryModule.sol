@@ -37,6 +37,4 @@ interface IPerpsMarketFactoryModule is IMarket {
     function acceptMarketOwnership(uint128 perpsMarketId) external;
 
     function getMarketOwner(uint128 perpsMarketId) external view returns (address);
-
-    function setSynthDeductionPriority(uint128[] calldata synthDeductionPriority) external;
 }
