@@ -20,12 +20,12 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/router": "workspace:*",
     "@ethersproject/abi": "5.7.0",
     "@ethersproject/providers": "5.7.2",
     "@nomiclabs/hardhat-ethers": "2.2.1",
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/router": "workspace:*",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0"
   },

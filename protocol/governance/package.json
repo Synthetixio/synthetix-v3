@@ -10,6 +10,9 @@
     "size-contracts": "hardhat size-contracts"
   },
   "devDependencies": {
+    "@ethersproject/abi": "5.7.0",
+    "@ethersproject/providers": "5.7.2",
+    "@nomiclabs/hardhat-ethers": "2.2.1",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
@@ -20,6 +23,9 @@
   },
   "depcheck": {
     "ignoreMatches": [
+      "@ethersproject/abi",
+      "@ethersproject/providers",
+      "@nomiclabs/hardhat-ethers",
       "@synthetixio/core-contracts",
       "@synthetixio/core-modules"
     ]
