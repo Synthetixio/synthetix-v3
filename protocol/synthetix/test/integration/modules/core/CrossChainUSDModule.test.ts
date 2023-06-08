@@ -48,9 +48,7 @@ describe('CrossChainUSDModule', function () {
 
   before('record balances', async () => {
     stakerBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-    proxyBalanceBefore = await systems()
-      .USD.connect(staker())
-      .balanceOf(systems().Core.address);
+    proxyBalanceBefore = await systems().USD.connect(staker()).balanceOf(systems().Core.address);
   });
 
   describe('transferCrossChain()', () => {
