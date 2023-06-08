@@ -15,13 +15,9 @@ import '@synthetixio/hardhat-storage';
 
 // Router generation cannon plugin
 import { registerAction } from '@usecannon/builder';
-
 import pluginRouter from 'cannon-plugin-router';
-console.log('_'.repeat(100));
-console.log('pluginRouter', pluginRouter);
+
 registerAction(pluginRouter);
-console.log('plugin router added');
-console.log('_'.repeat(100));
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
