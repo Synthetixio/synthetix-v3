@@ -3,7 +3,6 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { wei } from '@synthetixio/wei';
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
 import { bootstrap } from '../../../bootstrap';
@@ -201,7 +200,7 @@ describe('CollateralModule', function () {
               describe('time passes', () => {
                 before('fast forward', async () => {
                   await fastForwardTo(
-                    wei(await systems().Core.getAccountLastInteraction(1)).toNumber() + expireTime,
+                    (await systems().Core.getAccountLastInteraction(1)).toNumber() + expireTime,
                     provider()
                   );
                 });
