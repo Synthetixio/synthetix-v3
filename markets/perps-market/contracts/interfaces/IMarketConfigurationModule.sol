@@ -9,6 +9,20 @@ import {OrderFee} from "../storage/OrderFee.sol";
  * @title Module for updating configuration in relation to async order modules.
  */
 interface IMarketConfigurationModule {
+    event SettlementStrategyAdded(uint128 marketId, SettlementStrategy.Data strategy);
+    event OrderFeesSet(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio);
+    event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity);
+    event LiquidationParametersSet(
+        uint128 marketId,
+        uint256 initialMarginFraction,
+        uint256 maintenanceMarginFraction,
+        uint256 liquidationRewardRatioD18,
+        uint256 maxLiquidationLimitAccumulationMultiplier
+    );
+    event MaxMarketValueSet(uint128 marketId, uint256 maxMarketValue);
+    event LockedOiPercentSet(uint128 marketId, uint256 lockedOiPercent);
+    event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled);
+
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy

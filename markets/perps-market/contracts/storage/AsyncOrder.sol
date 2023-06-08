@@ -145,12 +145,14 @@ library AsyncOrder {
             orderPrice
         );
 
+        // TODO: check against acceptablePrice
+
         runtime.orderFees =
             calculateOrderFee(
                 order.sizeDelta,
                 runtime.fillPrice,
                 perpsMarketData.skew,
-                marketConfig.orderFees[PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN]
+                marketConfig.orderFees
             ) +
             strategy.settlementReward;
 
