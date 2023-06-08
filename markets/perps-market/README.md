@@ -8,7 +8,7 @@ This system generates markets that allow traders to open positions (ERC-721 toke
 2. Run `yarn` at the root directory: `/synthetix-v3`.
 3. Run `yarn cannon setup` to configure cannon
 
-- Run `cat ~/.local/share/cannon/settings.json` and ensure your `ipfsUrl` is configured to `http://localhost:5001`.
+- Run `cat ~/.local/share/cannon/settings.json` and ensure your `ipfsUrl` is configured to `http://localhost:5001`. If it's still unable to find your IPFS local node, try using `http://0.0.0.0:5001`.
 
 4. Run `yarn build` at the root directory: `/synthetix-v3`.
 5. Run `yarn test` in the synthetix protocol directory: `/protocol/synthetix`.

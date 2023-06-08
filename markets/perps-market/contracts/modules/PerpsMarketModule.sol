@@ -39,28 +39,27 @@ contract PerpsMarketModule is IPerpsMarketModule {
 
     function fillPrice(uint128 marketId) external view override returns (uint) {
         return
-            AsyncOrder.calculateFillPrice(
-                PerpsMarket.load(marketId).skew,
-                PerpsMarketConfiguration.load(marketId).skewScale,
-                0,
-                PerpsPrice.getCurrentPrice(marketId)
-            );
+        AsyncOrder.calculateFillPrice(
+            PerpsMarket.load(marketId).skew,
+            PerpsMarketConfiguration.load(marketId).skewScale,
+            0,
+            PerpsPrice.getCurrentPrice(marketId)
+        );
     }
 
     function getMarketSummary(
         uint128 marketId
-    ) external view returns (MarketSummary memory summary) {
+    ) external view override returns (MarketSummary memory summary) {
         PerpsMarket.Data storage market = PerpsMarket.load(marketId);
-        return
-            MarketSummary({
-                skew: market.skew,
-                size: market.size,
-                maxOpenInterest: this.maxOpenInterest(marketId),
-                currentFundingRate: market.currentFundingRate(),
-                currentFundingVelocity: market.currentFundingVelocity(),
-                indexPrice: this.indexPrice(marketId),
-                fillPrice: this.fillPrice(marketId)
-            });
+        return MarketSummary({
+            skew: market.skew,
+            size: market.size,
+            maxOpenInterest: this.maxOpenInterest(marketId),
+            currentFundingRate: market.currentFundingRate(),
+            currentFundingVelocity: market.currentFundingVelocity(),
+            indexPrice: this.indexPrice(marketId),
+            fillPrice: this.fillPrice(marketId)
+        });
     }
 
     function getAsyncOrdersPaginated(
@@ -68,9 +67,9 @@ contract PerpsMarketModule is IPerpsMarketModule {
         uint256 cursor,
         uint256 amount
     )
-        external
-        view
-        returns (AsyncOrder.Data[] memory orders, uint256 nextCursor, uint256 pageSize)
+    external
+    view
+    returns (AsyncOrder.Data[] memory orders, uint256 nextCursor, uint256 pageSize)
     {
         PerpsMarket.Data storage market = PerpsMarket.load(marketId);
 

@@ -37,6 +37,9 @@ artifact = "AtomicOrderModule"
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
+[contract.PerpsMarketModule]
+artifact = "PerpsMarketModule"
+
 [contract.LimitOrderModule]
 artifact = "LimitOrderModule"
 
@@ -70,6 +73,7 @@ contracts = [
   "CoreModule",
   "PerpsMarketFactoryModule",
   "PerpsAccountModule",
+  "PerpsMarketModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
   "CollateralModule",
@@ -86,6 +90,7 @@ depends = [
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
   "contract.PerpsAccountModule",
+  "contract.PerpsMarketModule",
   "contract.CollateralModule",
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",
@@ -96,7 +101,7 @@ depends = [
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]
-fromCall.func= "owner"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.PerpsMarketRouter.address %>"]
 factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]

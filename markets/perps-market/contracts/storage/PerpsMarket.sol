@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
@@ -12,8 +13,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
-
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 /**
  * @title Data for a single perps market
@@ -107,14 +106,14 @@ library PerpsMarket {
             self.lastUtilizedLiquidationCapacity = 0;
         } else {
             self.lastUtilizedLiquidationCapacity =
-                self.lastUtilizedLiquidationCapacity -
-                unlockedLiquidationCapacity.to128();
+            self.lastUtilizedLiquidationCapacity -
+            unlockedLiquidationCapacity.to128();
         }
 
         return
-            (maxLiquidationValue *
-                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
-            self.lastUtilizedLiquidationCapacity;
+        (maxLiquidationValue *
+            PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
+        self.lastUtilizedLiquidationCapacity;
     }
 
     function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
@@ -165,7 +164,7 @@ library PerpsMarket {
     function unrecordedFunding(Data storage self, uint price) internal view returns (int) {
         int fundingRate = currentFundingRate(self);
         // note the minus sign: funding flows in the opposite direction to the skew.
-        int avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
+        int avgFundingRate = - (self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
         return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
@@ -190,23 +189,28 @@ library PerpsMarket {
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
-
-        return
-            (self.lastFundingRate + currentFundingVelocity(self)).mulDecimal(
-                proportionalElapsed(self)
-            );
+        return (self.lastFundingRate + currentFundingVelocity(self)).mulDecimal(
+            proportionalElapsed(self)
+        );
     }
 
     function currentFundingVelocity(Data storage self) internal view returns (int) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
         int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
-        int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
+        int skewScale = marketConfig.skewScale.toInt();
+
+        // Avoid a panic due to div by zero. Return 0 immediately.
+        if (skewScale == 0) {
+            return 0;
+        }
+
         // Ensures the proportionalSkew is between -1 and 1.
-        int proportionalSkew = MathUtil.min(
-            MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
+        int pSkew = self.skew.divDecimal(skewScale);
+        int pSkewBounded = MathUtil.min(
+            MathUtil.max(- (DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
-        return proportionalSkew.mulDecimal(maxFundingVelocity);
+        return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
@@ -229,8 +233,8 @@ library PerpsMarket {
         // we check that the side of the market their order is on would not break the limit.
         int newSkew = self.skew - oldSize + newSize;
         int newMarketSize = self.size.toInt() -
-            MathUtil.abs(oldSize).toInt() +
-            MathUtil.abs(newSize).toInt();
+        MathUtil.abs(oldSize).toInt() +
+        MathUtil.abs(newSize).toInt();
 
         int newSideSize;
         if (0 < newSize) {
