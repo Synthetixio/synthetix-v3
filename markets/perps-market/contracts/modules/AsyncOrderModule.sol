@@ -165,10 +165,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
     ) private {
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(asyncOrder.accountId);
-        (Position.Data memory newPosition, uint totalFees, ) = asyncOrder.validateOrder(
-            settlementStrategy,
-            price
-        );
+        (Position.Data memory newPosition, uint totalFees, uint fillPrice) = asyncOrder
+            .validateOrder(settlementStrategy, price);
 
         uint settlementReward = settlementStrategy.settlementReward;
 
@@ -191,9 +189,25 @@ contract AsyncOrderModule is IAsyncOrderModule {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(asyncOrder.marketId);
         perpsMarket.updatePositionData(newPosition);
 
+        // taken from asyncOrder to use it in event (after order is reset)
+        bytes32 trackingCode = asyncOrder.trackingCode;
+        uint128 accountId = asyncOrder.accountId;
+
         asyncOrder.reset();
 
         perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
+
+        // emit event
+        emit OrderSettled(
+            newPosition.marketId,
+            accountId,
+            fillPrice,
+            newPosition.size,
+            totalFees,
+            settlementReward,
+            trackingCode,
+            msg.sender
+        );
     }
 
     function _performOrderValidityChecks(

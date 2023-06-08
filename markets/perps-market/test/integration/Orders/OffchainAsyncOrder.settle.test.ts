@@ -5,7 +5,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { DepositCollateralData, depositCollateral } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-// import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('Settle Offchain Async Order test', () => {
@@ -201,7 +201,52 @@ describe('Settle Offchain Async Order test', () => {
         );
       });
 
+      const restoreBeforeSettle = snapshotCheckpoint(provider);
+
       describe('attempts to settle before settlement time', () => {
+        before(restoreBeforeSettle);
+
+        it('with settle', async () => {
+          await assertRevert(
+            systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
+            'SettlementWindowExpired'
+          );
+        });
+
+        it('with settlePythOrder', async () => {
+          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
+            DEFAULT_SETTLEMENT_STRATEGY.feedId,
+            1000_0000,
+            1,
+            -4,
+            1000_0000,
+            1,
+            startTime + 6
+          );
+          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(keeper())
+              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            'SettlementWindowExpired'
+          );
+        });
+      });
+
+      describe('attempts to settle after settlement window', () => {
+        before(restoreBeforeSettle);
+
+        before('fast forward to past settlement window', async () => {
+          // fast forward to settlement
+          await fastForwardTo(
+            startTime +
+              DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
+              DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
+              1,
+            provider()
+          );
+        });
+
         it('with settle', async () => {
           await assertRevert(
             systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
@@ -230,6 +275,8 @@ describe('Settle Offchain Async Order test', () => {
       });
 
       describe('settle order', () => {
+        before(restoreBeforeSettle);
+
         before('fast forward to settlement time', async () => {
           // fast forward to settlement
           await fastForwardTo(
@@ -256,6 +303,7 @@ describe('Settle Offchain Async Order test', () => {
 
         describe('settle pyth order', () => {
           let pythPriceData: string;
+          let settleTx: ethers.ContractTransaction;
 
           before('prepare data', async () => {
             // Get the latest price
@@ -272,15 +320,24 @@ describe('Settle Offchain Async Order test', () => {
           });
 
           before('settle', async () => {
-            await systems()
+            settleTx = await systems()
               .PerpsMarket.connect(keeper())
               .settlePythOrder(pythPriceData, extraData, { value: updateFee });
           });
 
-          // TODO: test event
-          // it('emits event', async () => {});
-
-          // TODO: test fees are paid (keeper should receive settlementReward)
+          it('emits event', async () => {
+            // TODO Calculate the correct fill price instead of hardcoding
+            const fillPrice = bn(1000.005);
+            await assertEvent(
+              settleTx,
+              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, ${bn(1)}, ${
+                DEFAULT_SETTLEMENT_STRATEGY.settlementReward
+              }, ${DEFAULT_SETTLEMENT_STRATEGY.settlementReward}, "${
+                ethers.constants.HashZero
+              }", "${await keeper().getAddress()}")`,
+              systems().PerpsMarket
+            );
+          });
 
           it('check position is live', async () => {
             const [pnl, funding, size] = await systems().PerpsMarket.getOpenPosition(
