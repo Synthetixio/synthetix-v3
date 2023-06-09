@@ -571,7 +571,6 @@ library PerpsMarket {
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
         mapping(uint => AsyncOrder.Data) asyncOrders;
-        SetUtil.UintSet asyncOrdersSet;
         mapping(uint => Position.Data) positions;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {

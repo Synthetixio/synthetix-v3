@@ -66,8 +66,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
 
-        market.asyncOrdersSet.add(commitment.accountId);
-
         // TODO include fees in event
         emit OrderCommitted(
             commitment.marketId,
@@ -197,7 +195,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         asyncOrder.reset();
 
-        perpsMarket.asyncOrdersSet.remove(asyncOrder.accountId);
         perpsMarket.positions[asyncOrder.accountId].updatePosition(newPosition);
     }
 

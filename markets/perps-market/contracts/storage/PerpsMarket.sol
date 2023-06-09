@@ -48,7 +48,6 @@ library PerpsMarket {
         uint128 lastUtilizedLiquidationCapacity;
         // accountId => asyncOrder
         mapping(uint => AsyncOrder.Data) asyncOrders;
-        SetUtil.UintSet asyncOrdersSet;
         // accountId => position
         mapping(uint => Position.Data) positions;
     }
