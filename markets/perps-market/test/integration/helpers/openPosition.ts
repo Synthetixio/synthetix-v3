@@ -9,9 +9,7 @@ export type OpenPositionData = {
   accountId: number;
   sizeDelta: ethers.BigNumber;
   settlementStrategyId: number;
-  price: ethers.BigNumber; // spot price if offchain price is defined
-  offchiainPrice?: ethers.BigNumber; // if undefined will use price
-  acceptablePrice?: ethers.BigNumber; // if undefined will use price
+  price: ethers.BigNumber;
   trackingCode?: string;
   keeper: ethers.Signer;
   systems: () => Systems;
