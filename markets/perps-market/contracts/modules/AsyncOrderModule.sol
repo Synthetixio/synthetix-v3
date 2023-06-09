@@ -87,11 +87,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             SettlementStrategy.Data storage settlementStrategy
         ) = _performOrderValidityChecks(marketId, accountId);
 
-        // if (settlementStrategy.strategyType == SettlementStrategy.Type.ONCHAIN) {
-        //     _settleOnchain(order, settlementStrategy);
-        // } else {
-        //     _settleOffchain(order, settlementStrategy);
-        // }
         _settleOffchain(order, settlementStrategy);
     }
 
@@ -124,16 +119,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
-
-    // function _settleOnchain(
-    //     AsyncOrder.Data storage asyncOrder,
-    //     SettlementStrategy.Data storage settlementStrategy
-    // ) private {
-    //     uint currentPrice = PerpsPrice.getCurrentPrice(asyncOrder.marketId);
-    //     settlementStrategy.checkPriceDeviation(currentPrice, asyncOrder.acceptablePrice);
-
-    //     _settleOrder(currentPrice, asyncOrder, settlementStrategy);
-    // }
 
     function _settleOffchain(
         AsyncOrder.Data storage asyncOrder,
