@@ -20,6 +20,17 @@ interface IAsyncOrderModule {
         address sender
     );
 
+    event OrderSettled(
+        uint128 indexed marketId,
+        uint128 indexed accountId,
+        uint256 fillPrice,
+        int128 newSize,
+        uint256 collectedFees,
+        uint256 settelementReward,
+        bytes32 trackingCode,
+        address indexed settler
+    );
+
     /*event OrderCancelled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
