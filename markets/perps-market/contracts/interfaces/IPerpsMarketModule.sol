@@ -45,5 +45,5 @@ interface IPerpsMarketModule {
         uint128 marketId,
         uint256 cursor,
         uint256 amount
-    ) external view returns (AsyncOrder.Data[] memory orders, uint256 nextCursor, uint256 pageSize);
+    ) external view returns (AsyncOrder.Data[] memory orders, uint256 nextCursor);
 }

@@ -67,21 +67,19 @@ contract PerpsMarketModule is IPerpsMarketModule {
         uint128 marketId,
         uint256 cursor,
         uint256 amount
-    )
-        external
-        view
-        returns (AsyncOrder.Data[] memory orders, uint256 nextCursor, uint256 pageSize)
-    {
+    ) external view returns (AsyncOrder.Data[] memory orders, uint256 nextCursor) {
         PerpsMarket.Data storage market = PerpsMarket.load(marketId);
 
-        uint256 length = market.asyncOrdersSet.length();
-        pageSize = amount > length - cursor ? length - cursor : amount;
+        uint length = market.asyncOrdersSet.length();
 
-        orders = new AsyncOrder.Data[](amount);
-        for (uint i = 0; i < length; i++) {
-            orders[i] = market.asyncOrders[market.asyncOrdersSet.valueAt(i)];
+        uint pageSize = amount;
+        if (pageSize > length - cursor) {
+            pageSize = length - cursor;
         }
-
-        return (orders, cursor + pageSize, pageSize);
+        orders = new AsyncOrder.Data[](pageSize);
+        for (uint i = 0; i < pageSize; i++) {
+            orders[i] = market.asyncOrders[market.asyncOrdersSet.valueAt(cursor + i + 1)];
+        }
+        return (orders, cursor + pageSize);
     }
 }
