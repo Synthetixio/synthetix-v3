@@ -100,7 +100,7 @@ library AsyncOrder {
     ) internal view {
         uint settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
-        if (block.timestamp > self.settlementTime || block.timestamp > settlementExpiration) {
+        if (block.timestamp < self.settlementTime || block.timestamp < settlementExpiration) {
             revert SettlementWindowNotExpired(
                 block.timestamp,
                 self.settlementTime,

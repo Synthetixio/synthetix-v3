@@ -1,13 +1,12 @@
 import { ethers } from 'ethers';
-import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bn, bootstrapMarkets } from '../bootstrap';
-import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { depositCollateral } from '../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
 describe('Cancel Offchain Async Order test', () => {
-  const { systems, perpsMarkets, synthMarkets, provider, trader1 } = bootstrapMarkets({
+  const { systems, perpsMarkets, provider, trader1 } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
@@ -27,11 +26,9 @@ describe('Cancel Offchain Async Order test', () => {
     traderAccountIds: [2, 3],
   });
   let ethMarketId: ethers.BigNumber;
-  let btcSynth: SynthMarkets[number];
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
-    btcSynth = synthMarkets()[0];
   });
 
   before('add collateral', async () => {
@@ -47,21 +44,16 @@ describe('Cancel Offchain Async Order test', () => {
     });
   });
 
-  before('commit async order', async () => {
-    systems()
-      .PerpsMarket.connect(trader1())
-      .commitOrder({
-        marketId: ethMarketId,
-        accountId: 2,
-        sizeDelta: bn(1),
-        settlementStrategyId: 0,
-        acceptablePrice: bn(1000),
-        trackingCode: ethers.constants.HashZero,
-      });
-  });
-
   it('commit can not be canceled when settlement window is withing range', async () => {
-    fastForward(2, provider());
+    const tx = await systems().PerpsMarket.commitOrder({
+      marketId: ethMarketId,
+      accountId: 2,
+      sizeDelta: bn(1),
+      settlementStrategyId: 0,
+      acceptablePrice: bn(1000),
+      trackingCode: ethers.constants.HashZero,
+    });
+    await tx.wait();
     await assertRevert(
       systems().PerpsMarket.cancelOrder(ethMarketId, 2),
       `SettlementWindowNotExpired`,
@@ -70,7 +62,7 @@ describe('Cancel Offchain Async Order test', () => {
   });
 
   it('commit can be canceled when settlement window is outside of range', async () => {
-    fastForward(900000, provider());
+    await fastForwardTo((await getTime(provider())) + 9000000000, provider());
     const orderBeforeCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
     assertBn.equal(orderBeforeCancelation.sizeDelta, bn(1));
     await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
