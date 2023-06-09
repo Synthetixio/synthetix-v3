@@ -34,6 +34,15 @@ export async function getTime(provider: ethers.providers.JsonRpcProvider) {
   return block.timestamp;
 }
 
+export async function getTxTime(
+  provider: ethers.providers.JsonRpcProvider,
+  txReceipt: ethers.ContractReceipt
+) {
+  const block = await provider.getBlock(txReceipt.blockNumber);
+
+  return block.timestamp;
+}
+
 export async function getBlock(provider: ethers.providers.JsonRpcProvider) {
   const block = await provider.getBlock('latest');
 

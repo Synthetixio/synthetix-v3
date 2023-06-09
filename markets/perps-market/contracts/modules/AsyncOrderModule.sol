@@ -80,18 +80,19 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, feesAccrued);
     }
 
-    function settle(uint128 marketId, uint128 accountId) external {
+    function settle(uint128 marketId, uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
         ) = _performOrderValidityChecks(marketId, accountId);
 
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.ONCHAIN) {
-            _settleOnchain(order, settlementStrategy);
-        } else {
-            _settleOffchain(order, settlementStrategy);
-        }
+        // if (settlementStrategy.strategyType == SettlementStrategy.Type.ONCHAIN) {
+        //     _settleOnchain(order, settlementStrategy);
+        // } else {
+        //     _settleOffchain(order, settlementStrategy);
+        // }
+        _settleOffchain(order, settlementStrategy);
     }
 
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
@@ -124,15 +125,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
 
-    function _settleOnchain(
-        AsyncOrder.Data storage asyncOrder,
-        SettlementStrategy.Data storage settlementStrategy
-    ) private {
-        uint currentPrice = PerpsPrice.getCurrentPrice(asyncOrder.marketId);
-        settlementStrategy.checkPriceDeviation(currentPrice, asyncOrder.acceptablePrice);
+    // function _settleOnchain(
+    //     AsyncOrder.Data storage asyncOrder,
+    //     SettlementStrategy.Data storage settlementStrategy
+    // ) private {
+    //     uint currentPrice = PerpsPrice.getCurrentPrice(asyncOrder.marketId);
+    //     settlementStrategy.checkPriceDeviation(currentPrice, asyncOrder.acceptablePrice);
 
-        _settleOrder(currentPrice, asyncOrder, settlementStrategy);
-    }
+    //     _settleOrder(currentPrice, asyncOrder, settlementStrategy);
+    // }
 
     function _settleOffchain(
         AsyncOrder.Data storage asyncOrder,

@@ -7,6 +7,7 @@ import { DepositCollateralData, depositCollateral } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -183,11 +184,11 @@ describe('Settle Offchain Async Order test', () => {
             accountId: 2,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
-            acceptablePrice: bn(1000),
+            acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           });
         const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-        startTime = (await provider().getBlock(res.blockNumber)).timestamp;
+        startTime = await getTxTime(provider(), res);
       });
 
       before('setup bytes data', () => {
@@ -272,6 +273,10 @@ describe('Settle Offchain Async Order test', () => {
             'SettlementWindowExpired'
           );
         });
+      });
+
+      describe('attempts to settle with invalid pyth price data', () => {
+        before(restoreBeforeSettle);
       });
 
       describe('settle order', () => {
