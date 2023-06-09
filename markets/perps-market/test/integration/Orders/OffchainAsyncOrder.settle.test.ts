@@ -277,6 +277,55 @@ describe('Settle Offchain Async Order test', () => {
 
       describe('attempts to settle with invalid pyth price data', () => {
         before(restoreBeforeSettle);
+
+        before('fast forward to settlement time', async () => {
+          // fast forward to settlement
+          await fastForwardTo(
+            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+            provider()
+          );
+        });
+
+        it('reverts with invalid pyth price timestamp (before time)', async () => {
+          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
+            DEFAULT_SETTLEMENT_STRATEGY.feedId,
+            1000_0000,
+            1,
+            -4,
+            1000_0000,
+            1,
+            startTime
+          );
+          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(keeper())
+              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            'PriceFeedNotFoundWithinRange'
+          );
+        });
+
+        it('reverts with invalid pyth price timestamp (after time)', async () => {
+          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
+            DEFAULT_SETTLEMENT_STRATEGY.feedId,
+            1000_0000,
+            1,
+            -4,
+            1000_0000,
+            1,
+            startTime +
+              DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
+              DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
+              1
+          );
+          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(keeper())
+              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            'PriceFeedNotFoundWithinRange'
+          );
+        });
       });
 
       describe('settle order', () => {
