@@ -32,6 +32,12 @@ library AsyncOrder {
         uint256 settlementExpiration
     );
 
+    error SettlementWindowNotExpired(
+        uint256 timestamp,
+        uint256 settlementTime,
+        uint256 settlementExpiration
+    );
+
     error OrderNotValid();
 
     struct Data {
@@ -81,6 +87,21 @@ library AsyncOrder {
             settlementStrategy.settlementWindowDuration;
         if (block.timestamp < self.settlementTime || block.timestamp > settlementExpiration) {
             revert SettlementWindowExpired(
+                block.timestamp,
+                self.settlementTime,
+                settlementExpiration
+            );
+        }
+    }
+
+    function checkOutsideSettlementWindow(
+        Data storage self,
+        SettlementStrategy.Data storage settlementStrategy
+    ) internal view {
+        uint settlementExpiration = self.settlementTime +
+            settlementStrategy.settlementWindowDuration;
+        if (block.timestamp > self.settlementTime || block.timestamp > settlementExpiration) {
+            revert SettlementWindowNotExpired(
                 block.timestamp,
                 self.settlementTime,
                 settlementExpiration

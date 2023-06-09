@@ -52,7 +52,12 @@ interface IAsyncOrderModule {
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external returns (AsyncOrder.Data memory retOrder, uint fees);
 
-    // function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
+    function cancelOrder(uint128 marketId, uint128 accountId) external;
+
+    function getOrder(
+        uint128 marketId,
+        uint128 accountId
+    ) external returns (AsyncOrder.Data memory);
 
     // function getAsyncOrderClaim(
     //     uint128 marketId,
