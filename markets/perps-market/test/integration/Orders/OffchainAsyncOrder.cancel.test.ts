@@ -6,7 +6,7 @@ import { depositCollateral } from '../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
-describe.only('Cancel Offchain Async Order test', () => {
+describe('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1 } = bootstrapMarkets({
     synthMarkets: [
       {
@@ -28,7 +28,6 @@ describe.only('Cancel Offchain Async Order test', () => {
   });
   let ethMarketId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
-  let startTime: number = 10_0000;
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
