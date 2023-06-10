@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
@@ -11,8 +12,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
-
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 /**
  * @title Data for a single perps market
@@ -187,7 +186,6 @@ library PerpsMarket {
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
-
         return
             (self.lastFundingRate + currentFundingVelocity(self)).mulDecimal(
                 proportionalElapsed(self)
@@ -197,13 +195,20 @@ library PerpsMarket {
     function currentFundingVelocity(Data storage self) internal view returns (int) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
         int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
-        int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
+        int skewScale = marketConfig.skewScale.toInt();
+
+        // Avoid a panic due to div by zero. Return 0 immediately.
+        if (skewScale == 0) {
+            return 0;
+        }
+
         // Ensures the proportionalSkew is between -1 and 1.
-        int proportionalSkew = MathUtil.min(
+        int pSkew = self.skew.divDecimal(skewScale);
+        int pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
-        return proportionalSkew.mulDecimal(maxFundingVelocity);
+        return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {

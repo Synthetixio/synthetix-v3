@@ -414,6 +414,19 @@ library OrderFees {
     }
 }
 
+// @custom:artifact contracts/interfaces/IPerpsMarketModule.sol:IPerpsMarketModule
+interface IPerpsMarketModule {
+    struct MarketSummary {
+        int256 skew;
+        uint256 size;
+        uint256 maxOpenInterest;
+        int currentFundingRate;
+        int currentFundingVelocity;
+        uint indexPrice;
+        uint fillPrice;
+    }
+}
+
 // @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
 interface IPythVerifier {
     struct Price {
