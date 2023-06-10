@@ -34,6 +34,8 @@ library AsyncOrder {
 
     error OrderNotValid();
 
+    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
+
     struct Data {
         uint128 accountId;
         uint128 marketId;
@@ -145,7 +147,12 @@ library AsyncOrder {
             orderPrice
         );
 
-        // TODO: check against acceptablePrice
+        if (
+            (order.sizeDelta > 0 && runtime.fillPrice > order.acceptablePrice) ||
+            (order.sizeDelta < 0 && runtime.fillPrice < order.acceptablePrice)
+        ) {
+            revert AcceptablePriceExceeded(runtime.fillPrice, order.acceptablePrice);
+        }
 
         runtime.orderFees =
             calculateOrderFee(

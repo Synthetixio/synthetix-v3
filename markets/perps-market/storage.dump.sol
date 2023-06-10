@@ -646,7 +646,6 @@ library Position {
 // @custom:artifact contracts/storage/SettlementStrategy.sol:SettlementStrategy
 library SettlementStrategy {
     enum Type {
-        ONCHAIN,
         PYTH
     }
     struct Data {

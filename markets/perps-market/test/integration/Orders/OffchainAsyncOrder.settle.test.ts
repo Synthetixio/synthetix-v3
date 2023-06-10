@@ -7,6 +7,7 @@ import { DepositCollateralData, depositCollateral } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -183,11 +184,11 @@ describe('Settle Offchain Async Order test', () => {
             accountId: 2,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
-            acceptablePrice: bn(1000),
+            acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           });
         const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-        startTime = (await provider().getBlock(res.blockNumber)).timestamp;
+        startTime = await getTxTime(provider(), res);
       });
 
       before('setup bytes data', () => {
@@ -270,6 +271,59 @@ describe('Settle Offchain Async Order test', () => {
               .PerpsMarket.connect(keeper())
               .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
             'SettlementWindowExpired'
+          );
+        });
+      });
+
+      describe('attempts to settle with invalid pyth price data', () => {
+        before(restoreBeforeSettle);
+
+        before('fast forward to settlement time', async () => {
+          // fast forward to settlement
+          await fastForwardTo(
+            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+            provider()
+          );
+        });
+
+        it('reverts with invalid pyth price timestamp (before time)', async () => {
+          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
+            DEFAULT_SETTLEMENT_STRATEGY.feedId,
+            1000_0000,
+            1,
+            -4,
+            1000_0000,
+            1,
+            startTime
+          );
+          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(keeper())
+              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            'PriceFeedNotFoundWithinRange'
+          );
+        });
+
+        it('reverts with invalid pyth price timestamp (after time)', async () => {
+          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
+            DEFAULT_SETTLEMENT_STRATEGY.feedId,
+            1000_0000,
+            1,
+            -4,
+            1000_0000,
+            1,
+            startTime +
+              DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
+              DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
+              1
+          );
+          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(keeper())
+              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            'PriceFeedNotFoundWithinRange'
           );
         });
       });

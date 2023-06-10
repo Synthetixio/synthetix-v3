@@ -47,7 +47,7 @@ describe('Commit Offchain Async Order test', () => {
             accountId: 2,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
-            acceptablePrice: bn(1000),
+            acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           }),
         'InvalidMarket("1337")'
@@ -63,7 +63,7 @@ describe('Commit Offchain Async Order test', () => {
             accountId: 1337,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
-            acceptablePrice: bn(1000),
+            acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           }),
         'AccountNotFound("1337")'
@@ -79,7 +79,7 @@ describe('Commit Offchain Async Order test', () => {
             accountId: 2,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
-            acceptablePrice: bn(1000),
+            acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           }),
         'InsufficientMargin'
@@ -155,7 +155,7 @@ describe('Commit Offchain Async Order test', () => {
             accountId: 2,
             sizeDelta: bn(1),
             settlementStrategyId: 0,
-            acceptablePrice: bn(1000),
+            acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           });
         const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
@@ -167,7 +167,7 @@ describe('Commit Offchain Async Order test', () => {
           tx,
           `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
             1
-          )}, ${bn(1000)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
+          )}, ${bn(1050)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
             ethers.constants.HashZero
           }", "${await trader1().getAddress()}")`,
           systems().PerpsMarket
@@ -181,7 +181,7 @@ describe('Commit Offchain Async Order test', () => {
         assertBn.equal(ayncOrderClaim.sizeDelta, bn(1));
         assertBn.equal(ayncOrderClaim.settlementStrategyId, 0);
         assertBn.equal(ayncOrderClaim.settlementTime, startTime + 5);
-        assertBn.equal(ayncOrderClaim.acceptablePrice, bn(1000));
+        assertBn.equal(ayncOrderClaim.acceptablePrice, bn(1050));
         assert.equal(ayncOrderClaim.trackingCode, ethers.constants.HashZero);
       });
 
@@ -194,7 +194,7 @@ describe('Commit Offchain Async Order test', () => {
               accountId: 2,
               sizeDelta: bn(2),
               settlementStrategyId: 0,
-              acceptablePrice: bn(1000),
+              acceptablePrice: bn(1050), // 5% slippage
               trackingCode: ethers.constants.HashZero,
             }),
           `OrderAlreadyCommitted("${ethMarketId}", "2")`
@@ -232,7 +232,7 @@ describe('Commit Offchain Async Order test', () => {
                 accountId: 2,
                 sizeDelta: bn(1),
                 settlementStrategyId: 0,
-                acceptablePrice: bn(1000),
+                acceptablePrice: bn(1050), // 5% slippage
                 trackingCode: ethers.constants.HashZero,
               });
             await tx.wait();
@@ -244,7 +244,7 @@ describe('Commit Offchain Async Order test', () => {
               tx,
               `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
                 1
-              )}, ${bn(1000)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
+              )}, ${bn(1050)}, ${startTime + 5}, ${startTime + 5 + 120}, "${
                 ethers.constants.HashZero
               }", "${await trader1().getAddress()}")`,
               systems().PerpsMarket
@@ -258,7 +258,7 @@ describe('Commit Offchain Async Order test', () => {
             assertBn.equal(ayncOrderClaim.sizeDelta, bn(1));
             assertBn.equal(ayncOrderClaim.settlementStrategyId, 0);
             assertBn.equal(ayncOrderClaim.settlementTime, startTime + 5);
-            assertBn.equal(ayncOrderClaim.acceptablePrice, bn(1000));
+            assertBn.equal(ayncOrderClaim.acceptablePrice, bn(1050));
             assert.equal(ayncOrderClaim.trackingCode, ethers.constants.HashZero);
           });
         });
