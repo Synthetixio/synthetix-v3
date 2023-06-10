@@ -134,15 +134,15 @@ library PerpsAccount {
             revert AccountLiquidatable(accountId);
         }
 
+        // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
+        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMaintenanceMargin;
+
         if (amountToWithdraw > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
                 amountToWithdraw
             );
         }
-
-        // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMaintenanceMargin;
     }
 
     function getTotalCollateralValue(Data storage self) internal view returns (uint) {
