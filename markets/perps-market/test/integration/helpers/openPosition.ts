@@ -44,7 +44,7 @@ export const openPosition = async (data: OpenPositionData) => {
       accountId,
       sizeDelta,
       settlementStrategyId,
-      acceptablePrice: price,
+      acceptablePrice: sizeDelta.gt(0) ? price.mul(2) : price.div(2),
       trackingCode: trackingCode ?? ethers.constants.HashZero,
     });
   const commitmentTime = await getTxTime(provider(), commitTx);
