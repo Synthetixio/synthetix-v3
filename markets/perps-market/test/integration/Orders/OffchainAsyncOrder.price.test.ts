@@ -50,7 +50,7 @@ describe('Offchain Async Order - Price tests', () => {
 
   const restoreToSetCollateralTime = snapshotCheckpoint(provider);
 
-  [
+  const testCases = [
     {
       kind: 'long',
       sizeDelta: bn(1),
@@ -65,7 +65,10 @@ describe('Offchain Async Order - Price tests', () => {
       limitFillPrice: bn(999.995), // .05bps slippage
       tightFillPrice: bn(999.996),
     },
-  ].forEach((iter) => {
+  ];
+
+  for (let i = 0; i < testCases.length; i++) {
+    const iter = testCases[i];
     describe(`${iter.kind} order`, () => {
       describe('offchain vs spot price deviation', () => {
         let updateFee: ethers.BigNumber;
@@ -82,8 +85,7 @@ describe('Offchain Async Order - Price tests', () => {
             acceptablePrice: iter.acceptablePrice,
             trackingCode: ethers.constants.HashZero,
           });
-          const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-          startTime = await getTxTime(provider(), res);
+          startTime = await getTxTime(provider(), tx);
 
           // fast forward to settlement
           await fastForwardTo(
@@ -231,8 +233,7 @@ describe('Offchain Async Order - Price tests', () => {
               acceptablePrice: iter.limitFillPrice,
               trackingCode: ethers.constants.HashZero,
             });
-            const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-            const startTime = await getTxTime(provider(), res);
+            const startTime = await getTxTime(provider(), tx);
 
             // fast forward to settlement
             await fastForwardTo(
@@ -265,5 +266,5 @@ describe('Offchain Async Order - Price tests', () => {
         });
       });
     });
-  });
+  }
 });
