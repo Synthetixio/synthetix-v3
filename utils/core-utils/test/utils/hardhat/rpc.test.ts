@@ -28,8 +28,16 @@ const fakeProvider = {
     return { timestamp: 1337, number: 42 };
   },
 
+  getTransactionReceiptAttemptNumber: 0,
+
   async getTransactionReceipt() {
-    return { blockNumber: 42 };
+    this.getTransactionReceiptAttemptNumber++;
+
+    if (this.getTransactionReceiptAttemptNumber % 2) {
+      return { blockNumber: 42 };
+    }
+
+    return null;
   },
 };
 
@@ -164,6 +172,8 @@ describe('utils/hardhat/rpc.ts', function () {
     const tx = sinon.spy(fakeContractTransaction);
 
     it('returns the expected value', async function () {
+      // do it twice to ensure we hit an attempt were getTransactionReceiptAttemptNumber is even
+      assert.equal(await getTxTime(provider, tx), 1337);
       assert.equal(await getTxTime(provider, tx), 1337);
     });
   });
