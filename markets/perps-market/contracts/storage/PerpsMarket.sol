@@ -13,6 +13,8 @@ import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Data for a single perps market
  */
@@ -156,6 +158,7 @@ library PerpsMarket {
         uint price
     ) internal view returns (int nextFunding) {
         nextFunding = self.lastFundingValue + unrecordedFunding(self, price);
+        console.log("FUNDING");
     }
 
     function unrecordedFunding(Data storage self, uint price) internal view returns (int) {
@@ -186,6 +189,8 @@ library PerpsMarket {
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
+        console.log("FUNDING VELOCITY");
+        console.logInt(currentFundingVelocity(self));
         return
             (self.lastFundingRate + currentFundingVelocity(self)).mulDecimal(
                 proportionalElapsed(self)
@@ -201,13 +206,29 @@ library PerpsMarket {
         if (skewScale == 0) {
             return 0;
         }
+        console.log("SKEW SCALE", marketConfig.skewScale);
+
+        if (self.skew > 0) {
+            console.log("SKEW", self.skew.toUint());
+            console.log(marketConfig.maxFundingVelocity, self.skew.divDecimal(skewScale).toUint());
+            int temp = -500;
+            console.logInt(temp);
+        } else {
+            console.log("SKEW LESS");
+            console.logInt(self.skew);
+        }
 
         // Ensures the proportionalSkew is between -1 and 1.
         int pSkew = self.skew.divDecimal(skewScale);
+        console.log("PSKEW");
+        console.logInt(pSkew);
         int pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
+        console.log("BOUNDED");
+        console.logInt(MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew));
+        console.logInt(pSkewBounded.mulDecimal(maxFundingVelocity));
         return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 

@@ -6,11 +6,13 @@ import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
-type PerpsMarkets = Array<{
+export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
   aggregator: () => AggregatorV3Mock;
   strategyId: () => ethers.BigNumber;
-}>;
+};
+
+export type PerpsMarkets = Array<PerpsMarket>;
 
 export type PerpsMarketData = Array<{
   name: string;
