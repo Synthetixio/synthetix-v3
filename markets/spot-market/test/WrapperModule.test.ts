@@ -149,7 +149,9 @@ describe('WrapperModule', () => {
       it('emits wrap event', async () => {
         await assertEvent(
           txn,
-          `SynthWrapped(${marketId()}, ${bn(0.99)}, [0, 0, 0, ${bn(9)}], ${bn(4.5)})`,
+          `SynthWrapped(${marketId()}, ${bn(0.99)}, [0, 0, 0, ${bn(9)}], ${bn(
+            4.5
+          )}, ${await trader1.getAddress()})`,
           systems().SpotMarket
         );
       });
@@ -247,7 +249,9 @@ describe('WrapperModule', () => {
     it('emits unwrap event', async () => {
       await assertEvent(
         txn,
-        `SynthUnwrapped(${marketId()}, ${bn(0.4975)}, [0, 0, 0, ${bn(2.25)}], ${bn(1.125)})`,
+        `SynthUnwrapped(${marketId()}, ${bn(0.4975)}, [0, 0, 0, ${bn(2.25)}], ${bn(
+          1.125
+        )}, ${await trader1.getAddress()})`,
         systems().SpotMarket
       );
     });

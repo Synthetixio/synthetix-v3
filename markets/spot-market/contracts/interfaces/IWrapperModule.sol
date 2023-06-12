@@ -30,12 +30,14 @@ interface IWrapperModule {
      * @param amountWrapped amount of synth wrapped.
      * @param fees breakdown of all the fees incurred for the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
+     * @param user user address that wrapped the synth
      */
     event SynthWrapped(
         uint256 indexed synthMarketId,
         uint256 amountWrapped,
         OrderFees.Data fees,
-        uint256 feesCollected
+        uint256 feesCollected,
+        address owner
     );
 
     /**
@@ -44,12 +46,14 @@ interface IWrapperModule {
      * @param amountUnwrapped amount of synth unwrapped.
      * @param fees breakdown of all the fees incurred for the transaction.
      * @param feesCollected fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
+     * @param user user address that un-wrapped the synth
      */
     event SynthUnwrapped(
         uint256 indexed synthMarketId,
         uint256 amountUnwrapped,
         OrderFees.Data fees,
-        uint256 feesCollected
+        uint256 feesCollected,
+        address owner
     );
 
     /**

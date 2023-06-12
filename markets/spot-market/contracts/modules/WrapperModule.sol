@@ -92,7 +92,7 @@ contract WrapperModule is IWrapperModule {
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
-        emit SynthWrapped(marketId, amountToMint, fees, collectedFees);
+        emit SynthWrapped(marketId, amountToMint, fees, collectedFees, msg.sender);
     }
 
     /**
@@ -147,6 +147,6 @@ contract WrapperModule is IWrapperModule {
 
         wrapperStore.wrapCollateralType.safeTransfer(msg.sender, returnCollateralAmount);
 
-        emit SynthUnwrapped(marketId, returnCollateralAmount, fees, collectedFees);
+        emit SynthUnwrapped(marketId, returnCollateralAmount, fees, collectedFees, msg.sender);
     }
 }
