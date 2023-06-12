@@ -108,11 +108,11 @@ describe('Liquidation - margin', async () => {
 
   before('open positions', async () => {
     const positionSizes = [
-      bn(1), // btc
-      bn(20), // eth
-      bn(2000), // link
-      bn(5000), // arb
-      bn(5000), // op
+      bn(-1), // btc short
+      bn(20), // eth long
+      bn(2000), // link long
+      bn(5000), // arb long
+      bn(5000), // op long
     ];
 
     for (const [i, perpsMarket] of perpsMarkets().entries()) {
@@ -132,7 +132,7 @@ describe('Liquidation - margin', async () => {
     });
 
     [
-      { size: bn(1), pnl: bn(-150) }, // btc
+      { size: bn(-1), pnl: bn(-150) }, // btc
       { size: bn(20), pnl: bn(-400) }, // eth
       { size: bn(2000), pnl: bn(-100) }, // link
       { size: bn(5000), pnl: bn(-250) }, // arb
@@ -145,6 +145,23 @@ describe('Liquidation - margin', async () => {
         );
         assertBn.equal(positionPnl, pnl);
         assertBn.equal(positionSize, size);
+      });
+    });
+
+    // pnl (due to skew)
+    [
+      bn(-150), // btc
+      bn(-400), // eth
+      bn(-100), // link
+      bn(-250), // arb
+      bn(-250), // op
+    ].forEach((pnl, i) => {
+      it(`should have correct position pnl for ${perpsMarketConfigs[i].token}`, async () => {
+        const [positionPnl] = await systems().PerpsMarket.getOpenPosition(
+          2,
+          perpsMarkets()[i].marketId()
+        );
+        assertBn.equal(positionPnl, pnl);
       });
     });
 
@@ -167,7 +184,7 @@ describe('Liquidation - margin', async () => {
     });
 
     [
-      bn(-2150), // btc
+      bn(1850), // btc
       bn(-2400), // eth
       bn(-900), // link
       bn(-750), // arb
@@ -183,7 +200,7 @@ describe('Liquidation - margin', async () => {
     });
 
     it('has correct available margin', async () => {
-      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(12_550));
+      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(16_550));
     });
   });
 
@@ -201,7 +218,7 @@ describe('Liquidation - margin', async () => {
     });
 
     [
-      bn(850), // btc
+      bn(-1150), // btc
       bn(-4900), // eth
       bn(-4100), // link
       bn(-5250), // arb
@@ -217,7 +234,7 @@ describe('Liquidation - margin', async () => {
     });
 
     it('has correct available margin', async () => {
-      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(1350));
+      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(-650));
     });
 
     it('reverts when trying to withdraw', async () => {
