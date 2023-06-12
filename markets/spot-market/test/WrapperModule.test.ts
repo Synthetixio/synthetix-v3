@@ -151,7 +151,7 @@ describe('WrapperModule', () => {
           txn,
           `SynthWrapped(${marketId()}, ${bn(0.99)}, [0, 0, 0, ${bn(9)}], ${bn(
             4.5
-          )}, ${await trader1.getAddress()})`,
+          )}, "${await trader1.getAddress()}")`,
           systems().SpotMarket
         );
       });
@@ -251,7 +251,7 @@ describe('WrapperModule', () => {
         txn,
         `SynthUnwrapped(${marketId()}, ${bn(0.4975)}, [0, 0, 0, ${bn(2.25)}], ${bn(
           1.125
-        )}, ${await trader1.getAddress()})`,
+        )}, "${await trader1.getAddress()}")`,
         systems().SpotMarket
       );
     });
