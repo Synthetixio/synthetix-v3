@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -10,7 +10,7 @@ import {MathUtil} from "../utils/MathUtil.sol";
 library PerpsMarketConfiguration {
     using DecimalMath for int256;
     using DecimalMath for uint256;
-    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
 
     struct Data {
         OrderFee.Data orderFees;
@@ -49,7 +49,7 @@ library PerpsMarketConfiguration {
         }
     }
 
-    function calculateLiquidationMargin(
+    function calculateLiquidationReward(
         Data storage self,
         uint256 notionalValue
     ) internal view returns (uint256) {
@@ -58,7 +58,8 @@ library PerpsMarketConfiguration {
 
     function calculateRequiredMargins(
         Data storage self,
-        uint256 notionalValue
+        int128 size,
+        uint256 price
     )
         internal
         view
@@ -70,13 +71,16 @@ library PerpsMarketConfiguration {
             uint256 liquidationMargin
         )
     {
-        uint256 impactOnSkew = notionalValue.divDecimal(self.skewScale);
+        uint256 sizeAbs = MathUtil.abs(size.to256());
+        uint256 impactOnSkew = sizeAbs.divDecimal(self.skewScale);
 
         initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginFraction);
         maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginFraction);
-        initialMargin = notionalValue.mulDecimal(initialMarginRatio);
-        maintenanceMargin = notionalValue.mulDecimal(maintenanceMarginRatio);
 
-        liquidationMargin = calculateLiquidationMargin(self, notionalValue);
+        uint256 notional = sizeAbs.mulDecimal(price);
+        initialMargin = notional.mulDecimal(initialMarginRatio);
+        maintenanceMargin = notional.mulDecimal(maintenanceMarginRatio);
+
+        liquidationMargin = calculateLiquidationReward(self, notional);
     }
 }

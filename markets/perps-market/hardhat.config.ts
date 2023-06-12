@@ -18,6 +18,9 @@ const config = {
       './Router.sol',
     ],
   },
+  mocha: {
+    timeout: 200000,
+  },
 };
 
 export default config;

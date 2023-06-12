@@ -479,7 +479,7 @@ library AsyncOrder {
         uint currentLiquidationMargin;
         int128 newPositionSize;
         uint newNotionalValue;
-        uint currentAvailableMargin;
+        int currentAvailableMargin;
         uint requiredMaintenanceMargin;
         uint initialRequiredMargin;
         uint totalRequiredMargin;
