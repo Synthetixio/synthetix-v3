@@ -60,7 +60,7 @@ export const openPosition = async (data: OpenPositionData) => {
     settlementTime,
     feedId: strategy.feedId,
   });
-  const settleRes = settleTx.wait();
+  const settleTime = await getTxTime(provider(), settleTx);
 
-  return { commitRes, settleRes };
+  return settleTime;
 };
