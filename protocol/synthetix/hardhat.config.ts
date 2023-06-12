@@ -1,5 +1,5 @@
+import { join, dirname } from 'path';
 import commonConfig from '@synthetixio/common-config/hardhat.config';
-
 import 'solidity-docgen';
 
 const config = {
@@ -29,7 +29,7 @@ const config = {
       './utils',
       './Proxy.sol',
     ],
-    templates: './docs/theme',
+    templates: join(dirname(require.resolve('@synthetixio/docgen/package.json')), 'natspec/theme'),
   },
   warnings: {
     'contracts/generated/**/*': {
