@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { Systems, toNum } from '../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { settleOrder } from '.';
+import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
 export type OpenPositionData = {
   trader: ethers.Signer;
@@ -46,9 +47,7 @@ export const openPosition = async (data: OpenPositionData) => {
       acceptablePrice: price,
       trackingCode: trackingCode ?? ethers.constants.HashZero,
     });
-  await commitTx.wait();
-
-  const commitmentTime = await getTime(provider());
+  const commitmentTime = await getTxTime(provider(), commitTx);
   const settlementTime = commitmentTime + delay + 1;
   await fastForwardTo(settlementTime, provider());
 
