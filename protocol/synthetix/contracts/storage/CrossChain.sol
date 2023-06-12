@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
 import "../interfaces/external/FunctionsOracleInterface.sol";
 
@@ -13,7 +14,7 @@ import "../interfaces/external/FunctionsOracleInterface.sol";
 library CrossChain {
     using SetUtil for SetUtil.UintSet;
 
-    event ProcessedCcipMessage(bytes data, bytes result);
+    event ProcessedCcipMessage(bytes payload, bytes result);
 
     error NotCcipRouter(address);
     error UnsupportedNetwork(uint64);
@@ -54,9 +55,24 @@ library CrossChain {
             revert AccessError.Unauthorized(sender);
         }
 
+        bytes memory payload;
+        if (data.tokenAmounts.length > 0) {
+            (address to, uint256 amount) = abi.decode(data.data, (address, uint256));
+
+            IERC20(data.tokenAmounts[0].token).approve(to, amount);
+            payload = abi.encodeWithSelector(
+                IERC20.transferFrom.selector,
+                address(this),
+                to,
+                amount
+            );
+        } else {
+            payload = data.data;
+        }
+
         // at this point, everything should be good to send the message to ourselves.
         // the below `onlyCrossChain` function will verify that the caller is self
-        (bool success, bytes memory result) = address(this).call(data.data);
+        (bool success, bytes memory result) = address(this).call(payload);
 
         if (!success) {
             uint len = result.length;
@@ -65,7 +81,7 @@ library CrossChain {
             }
         }
 
-        emit ProcessedCcipMessage(data.data, result);
+        emit ProcessedCcipMessage(payload, result);
     }
 
     function onlyCrossChain() internal view {
@@ -145,7 +161,7 @@ library CrossChain {
         CcipClient.EVMTokenAmount[] memory tokenAmounts = new CcipClient.EVMTokenAmount[](1);
         tokenAmounts[0] = CcipClient.EVMTokenAmount(token, amount);
 
-        bytes memory data;
+        bytes memory data = abi.encode(msg.sender, amount);
         CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
             abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
             data,
