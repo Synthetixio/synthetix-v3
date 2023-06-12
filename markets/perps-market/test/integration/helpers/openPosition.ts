@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { Systems, toNum } from '../bootstrap';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { settleOrder } from '.';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 

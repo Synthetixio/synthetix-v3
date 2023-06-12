@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { DepositCollateralData, depositCollateral, settleOrder } from '../helpers';
