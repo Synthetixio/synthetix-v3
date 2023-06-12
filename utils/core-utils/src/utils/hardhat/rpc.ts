@@ -36,8 +36,17 @@ export async function getTime(provider: ethers.providers.JsonRpcProvider) {
 
 export async function getTxTime(
   provider: ethers.providers.JsonRpcProvider,
-  txReceipt: ethers.ContractReceipt
+  tx: ethers.ContractTransaction
 ) {
+  let txReceipt = null;
+  while (txReceipt == null) {
+    txReceipt = await provider.getTransactionReceipt(tx.hash);
+    if (txReceipt == null) {
+      await new Promise((f) => setTimeout(f, 1000));
+      console.log('waiting for receipt...');
+    }
+  }
+
   const block = await provider.getBlock(txReceipt.blockNumber);
 
   return block.timestamp;

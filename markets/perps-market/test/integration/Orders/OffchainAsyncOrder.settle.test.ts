@@ -163,7 +163,8 @@ describe('Settle Offchain Async Order test', () => {
     },
   ];
 
-  for (const testCase of testCases) {
+  for (let idx = 0; idx < testCases.length; idx++) {
+    const testCase = testCases[idx];
     describe(`Using ${testCase.name} as collateral`, () => {
       let pythCallData: string, extraData: string, updateFee: ethers.BigNumber;
 
@@ -187,8 +188,7 @@ describe('Settle Offchain Async Order test', () => {
             acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           });
-        const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-        startTime = await getTxTime(provider(), res);
+        startTime = await getTxTime(provider(), tx);
       });
 
       before('setup bytes data', () => {
