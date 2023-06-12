@@ -6,6 +6,7 @@ import {
   fastForwardTo,
   getBlock,
   getTime,
+  getTxTime,
   restoreSnapshot,
   takeSnapshot,
 } from '../../../src/utils/hardhat/rpc';
@@ -25,6 +26,10 @@ const fakeProvider = {
 
   async getBlock() {
     return { timestamp: 1337, number: 42 };
+  },
+
+  async getTransactionReceipt() {
+    return { blockNumber: 42 };
   },
 };
 
@@ -146,6 +151,20 @@ describe('utils/hardhat/rpc.ts', function () {
   describe('when calling getTime', function () {
     it('returns the expected value', async function () {
       assert.equal(await getTime(provider), 1337);
+    });
+  });
+
+  describe('when calling getTxTime', function () {
+    const fakeContractTransaction = {
+      hash() {
+        return 'somehash';
+      },
+    };
+
+    const tx = sinon.spy(fakeContractTransaction);
+
+    it('returns the expected value', async function () {
+      assert.equal(await getTxTime(provider, tx), 1337);
     });
   });
 });
