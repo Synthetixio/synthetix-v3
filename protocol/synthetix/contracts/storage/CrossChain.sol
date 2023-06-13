@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
 import "../interfaces/external/FunctionsOracleInterface.sol";
 
@@ -13,7 +14,7 @@ import "../interfaces/external/FunctionsOracleInterface.sol";
 library CrossChain {
     using SetUtil for SetUtil.UintSet;
 
-    event ProcessedCcipMessage(bytes data, bytes result);
+    event ProcessedCcipMessage(bytes payload, bytes result);
 
     error NotCcipRouter(address);
     error UnsupportedNetwork(uint64);
@@ -54,9 +55,21 @@ library CrossChain {
             revert AccessError.Unauthorized(sender);
         }
 
+        address caller;
+        bytes memory payload;
+        if (data.tokenAmounts.length > 0) {
+            (address to, uint256 amount) = abi.decode(data.data, (address, uint256));
+
+            caller = data.tokenAmounts[0].token;
+            payload = abi.encodeWithSelector(IERC20.transfer.selector, to, amount);
+        } else {
+            caller = address(this);
+            payload = data.data;
+        }
+
         // at this point, everything should be good to send the message to ourselves.
         // the below `onlyCrossChain` function will verify that the caller is self
-        (bool success, bytes memory result) = address(this).call(data.data);
+        (bool success, bytes memory result) = caller.call(payload);
 
         if (!success) {
             uint len = result.length;
@@ -65,7 +78,7 @@ library CrossChain {
             }
         }
 
-        emit ProcessedCcipMessage(data.data, result);
+        emit ProcessedCcipMessage(payload, result);
     }
 
     function onlyCrossChain() internal view {
@@ -128,6 +141,43 @@ library CrossChain {
                 gasTokenUsed += fee;
             }
         }
+    }
+
+    /**
+     * @dev Transfers tokens to a destination chain.
+     */
+    function teleport(
+        Data storage self,
+        uint64 destChainId,
+        address token,
+        uint256 amount,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
+        ICcipRouterClient router = self.ccipRouter;
+
+        CcipClient.EVMTokenAmount[] memory tokenAmounts = new CcipClient.EVMTokenAmount[](1);
+        tokenAmounts[0] = CcipClient.EVMTokenAmount(token, amount);
+
+        bytes memory data = abi.encode(msg.sender, amount);
+        CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
+            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
+            data,
+            tokenAmounts,
+            address(0), // Address of feeToken. address(0) means you will send msg.value.
+            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
+        );
+
+        uint64 chainSelector = self.ccipChainIdToSelector[destChainId];
+        uint256 fee = router.getFee(chainSelector, sentMsg);
+
+        // need to check sufficient fee here or else the error is very confusing
+        if (address(this).balance < fee) {
+            revert InsufficientCcipFee(fee, address(this).balance);
+        }
+
+        router.ccipSend{value: fee}(chainSelector, sentMsg);
+
+        return fee;
     }
 
     function refundLeftoverGas(uint256 gasTokenUsed) internal returns (uint256 amountRefunded) {
