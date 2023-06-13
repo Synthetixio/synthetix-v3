@@ -1,0 +1,45 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: SpotMarket
+    source:
+      abi: SpotMarketProxy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      abis:
+        - name: SpotMarketProxy
+          file: ./abis/SpotMarketProxy.json
+      entities:
+        - Wrapper
+        - Order
+        - MarketInfo
+        - SettlementStrategy
+        - SynthWrapped
+      eventHandlers:
+        - event: OrderSettled(indexed uint128,indexed uint128,uint256,(uint256,uint256,int256,int256),uint256,indexed address,uint256)
+          handler: handleOrderSettled
+        - event: SynthWrapped(indexed uint256,uint256,(uint256,uint256,int256,int256),uint256)
+          handler: handleSynthWrapped
+        - event: SynthUnwrapped(indexed uint256,uint256,(uint256,uint256,int256,int256),uint256)
+          handler: handleSynthUnWrapped
+        - event:
+            OrderCommitted(indexed uint128,indexed uint8,uint256,uint128,indexed
+            address,address)
+          handler: handleOrderCommitted
+        - event: OrderCancelled(indexed uint128,indexed
+            uint128,(uint128,address,uint8,uint256,uint256,uint256,uint256,uint256,address),indexed
+            address)
+          handler: handleOrderCancelled
+        - event: WrapperSet(indexed uint256,indexed address,uint256)
+          handler: handleWrapperSet
+        - event: SettlementStrategyAdded(indexed uint128,indexed uint256)
+          handler: handleSettlementStrategyAdded
+        - event: SettlementStrategyUpdated(indexed uint128,indexed uint256,bool)
+          handler: handleSettlementStrategyUpdated
+        - event: SynthPriceDataUpdated(indexed uint256,indexed bytes32,indexed bytes32)
+          handler: handleSynthPriceDataUpdated
+      file: ./src/core.ts

@@ -1,0 +1,14 @@
+{
+  "optimism-goerli": {
+    "SpotMarket": {
+      "address": "0x5FF4b3aacdeC86782d8c757FAa638d8790799E83",
+      "startBlock": 8482768
+    }
+  },
+  "optimism": {
+    "SpotMarket": {
+      "address": "0x38908Ee087D7db73A1Bd1ecab9AAb8E8c9C74595",
+      "startBlock": 94846457
+    }
+  }
+}
