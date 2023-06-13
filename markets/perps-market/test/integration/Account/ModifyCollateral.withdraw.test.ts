@@ -1,9 +1,12 @@
 import { ethers } from 'ethers';
-import { bootstrapMarkets } from '../bootstrap';
+import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { wei } from '@synthetixio/wei';
+import { OpenPositionData, openPosition } from '../helpers';
 
+const sUSDSynthId = 0;
 describe('ModifyCollateral Withdraw', () => {
   const accountIds = [10, 20];
   const oneBTC = wei(1);
@@ -30,7 +33,7 @@ describe('ModifyCollateral Withdraw', () => {
     synthBTCMarketId = synthMarkets()[0].marketId();
   });
 
-  describe('withdraw by modifyCollateral()', async () => {
+  describe('withdraw without open position modifyCollateral()', async () => {
     let spotBalanceBefore: ethers.BigNumber;
     let perpsBalanceBefore: ethers.BigNumber;
     let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
@@ -112,6 +115,157 @@ describe('ModifyCollateral Withdraw', () => {
           .toBN()}, "${await trader1().getAddress()}"`,
         systems().PerpsMarket
       );
+    });
+  });
+  describe('withdraw with open positions', () => {
+    const perpsMarketConfigs = [
+      {
+        name: 'Bitcoin',
+        token: 'BTC',
+        price: bn(30_000),
+        fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
+        liquidationParams: {
+          initialMarginFraction: bn(2),
+          maintenanceMarginFraction: bn(1),
+          maxLiquidationLimitAccumulationMultiplier: bn(1),
+          liquidationRewardRatio: bn(0.05),
+        },
+        settlementStrategy: {
+          settlementReward: bn(0),
+        },
+      },
+      {
+        name: 'Ether',
+        token: 'ETH',
+        price: bn(2000),
+        fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
+        liquidationParams: {
+          initialMarginFraction: bn(2),
+          maintenanceMarginFraction: bn(1),
+          maxLiquidationLimitAccumulationMultiplier: bn(1),
+          liquidationRewardRatio: bn(0.05),
+        },
+        settlementStrategy: {
+          settlementReward: bn(0),
+        },
+      },
+    ];
+    const traderAccountIds = [2, 3];
+    const trader1AccountId = traderAccountIds[0];
+    const { systems, provider, trader1, perpsMarkets } = bootstrapMarkets({
+      synthMarkets: [],
+      perpsMarkets: perpsMarketConfigs,
+      traderAccountIds,
+    });
+    before('add collateral to margin', async () => {
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .modifyCollateral(trader1AccountId, sUSDSynthId, bn(20_000));
+    });
+    let commonOpenPositionProps: Pick<
+      OpenPositionData,
+      'systems' | 'provider' | 'trader' | 'accountId' | 'keeper'
+    >;
+    before('identify common props', async () => {
+      commonOpenPositionProps = {
+        systems,
+        provider,
+        trader: trader1(),
+        accountId: 2,
+        keeper: trader1(),
+      };
+    });
+    before('open positions', async () => {
+      const positionSizes = [
+        bn(-2), // btc short
+        bn(20), // eth long
+      ];
+
+      for (const [i, perpsMarket] of perpsMarkets().entries()) {
+        await openPosition({
+          ...commonOpenPositionProps,
+          marketId: perpsMarket.marketId(),
+          sizeDelta: positionSizes[i],
+          settlementStrategyId: perpsMarket.strategyId(),
+          price: perpsMarketConfigs[i].price,
+        });
+      }
+    });
+    describe('account check after initial positions open', async () => {
+      it('should have correct open interest', async () => {
+        const expectedOi = 100_000; // abs((-2 * 30000) + (20 * 2000))
+        assertBn.equal(
+          await systems().PerpsMarket.totalAccountOpenInterest(trader1AccountId),
+          bn(expectedOi)
+        );
+      });
+      it('has correct pnl, given our position changed the skew', async () => {
+        const [btcPnl] = await systems().PerpsMarket.getOpenPosition(
+          trader1AccountId,
+          perpsMarkets()[0].marketId()
+        );
+        assertBn.equal(btcPnl, bn(-600));
+        const [ethPnl] = await systems().PerpsMarket.getOpenPosition(
+          trader1AccountId,
+          perpsMarkets()[1].marketId()
+        );
+        assertBn.equal(ethPnl, bn(-400));
+      });
+      it('has correct available margin', async () => {
+        assertBn.equal(
+          await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
+          bn(19000) // collateral value  + pnl =  20000 + -1000
+        );
+      });
+    });
+    describe('withdraw with open position', () => {
+      it('allow withdraw when its less than "collateral available for withdraw"', async () => {
+        before('withdraw allowed amount', async () => {
+          await systems()
+            .PerpsMarket.connect(trader1())
+            .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-17000));
+        });
+        it('has correct available margin', async () => {
+          assertBn.equal(
+            await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
+            bn(3000) // collateral value  + pnl =  20000 + -1000
+          );
+        });
+      });
+    });
+    describe('failures', () => {
+      it('reverts when withdrawing more than collateral', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(trader1())
+            .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-20_001)),
+          `InsufficientCollateral("${sUSDSynthId}", "${bn(20_000)}", "${bn(20_001)}")`
+        );
+      });
+      it('reverts when withdrawing more than "collateral available for withdraw"', async () => {
+        // Note that more low level tests related to specific maintenance margins are done in the liquidation tests
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(trader1())
+            .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18000)),
+          `InsufficientCollateralAvailableForWithdraw("${bn(17000)}", "${bn(18000)}")`
+        );
+      });
+
+      describe('account liquidatable', () => {
+        before('eth dumps making our account liquidatable', async () => {
+          await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(5));
+        });
+
+        it('reverts when withdrawing due to position liquidatable', async () => {
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(trader1())
+              .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-100)),
+            `AccountLiquidatable("${trader1AccountId}")`
+          );
+        });
+      });
     });
   });
 });
