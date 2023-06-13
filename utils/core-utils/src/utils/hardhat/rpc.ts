@@ -34,6 +34,24 @@ export async function getTime(provider: ethers.providers.JsonRpcProvider) {
   return block.timestamp;
 }
 
+export async function getTxTime(
+  provider: ethers.providers.JsonRpcProvider,
+  tx: ethers.ContractTransaction
+) {
+  let txReceipt = null;
+  while (txReceipt == null) {
+    txReceipt = await provider.getTransactionReceipt(tx.hash);
+    if (txReceipt == null) {
+      await new Promise((f) => setTimeout(f, 1000));
+      console.log('waiting for receipt...');
+    }
+  }
+
+  const block = await provider.getBlock(txReceipt.blockNumber);
+
+  return block.timestamp;
+}
+
 export async function getBlock(provider: ethers.providers.JsonRpcProvider) {
   const block = await provider.getBlock('latest');
 

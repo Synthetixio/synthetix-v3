@@ -98,4 +98,8 @@ contract PerpsAccountModule is IAccountModule {
 
         return asyncOrder;
     }
+
+    function getAvailableMargin(uint128 accountId) external view override returns (int) {
+        return PerpsAccount.load(accountId).getAvailableMargin(accountId);
+    }
 }
