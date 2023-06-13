@@ -17,7 +17,7 @@ library GlobalPerpsMarket {
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarket"));
 
-    error MaxCollateralExceeded(uint128 marketId);
+    error InsufficientCollateral(uint128 synthMarketId, uint collateralAmount, uint withdrawAmount);
 
     struct Data {
         SetUtil.UintSet liquidatableAccounts;
@@ -47,6 +47,7 @@ library GlobalPerpsMarket {
         uint128 synthMarketId,
         int synthAmount
     ) internal {
+        uint collateralAmount = self.collateralAmounts[synthMarketId];
         if (synthAmount > 0) {
             if (
                 self.collateralAmounts[synthMarketId] + synthAmount.toUint() >
@@ -57,6 +58,11 @@ library GlobalPerpsMarket {
                 self.collateralAmounts[synthMarketId] += synthAmount.toUint();
             }
         } else {
+            uint synthAmountAbs = MathUtil.abs(synthAmount);
+            if (collateralAmount < synthAmountAbs) {
+                revert InsufficientCollateral(synthMarketId, collateralAmount, synthAmountAbs);
+            }
+
             self.collateralAmounts[synthMarketId] -= MathUtil.abs(synthAmount);
         }
     }
