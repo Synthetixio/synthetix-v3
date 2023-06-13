@@ -2,7 +2,7 @@
 
 The oracle manager is a stateless system which allows price data from multiple sources to be combined using a variety of strategies and reverts to be triggered (i.e. "circuit breaking") under various conditions.
 
-The system consists of nodes which can registered by anyone using the `registerNode()` function. This returns a `bytes32` identifier for the node, determined by the parameters passed to the function:
+The system consists of nodes which can be registered by anyone using the `registerNode()` function. This returns a `bytes32` identifier for the node, determined by the parameters passed to the function:
 
 - `uint256 nodeType` - The ID corresponding to the desired the node type. (See below for a comprehensive list.)
 - `bytes parameters` - The parameter data for the selected node type. (This can be generated using `abi.encode()`.)
@@ -25,7 +25,7 @@ There are currently seven types of nodes.
 
 ### Chainlink Node
 
-The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.chain.link/data-feeds/price-feeds/addresses/).
+The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.chain.link/data-feeds/price-feeds/addresses/). **Note that the timestamp returned by this node is the timestamp of Chainlink's latest update, regardless of the TWAP interval.**
 
 - `nodeType` Value: 3
 - Parameters:
@@ -36,7 +36,9 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 
 ### Uniswap Node
 
-The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). **Note that the timestamp returned by this node is always 0.**
+The Uniswap Node retrieves data from a [Uniswap Oracle](https://docs.uniswap.org/concepts/protocol/oracle). **Note that the timestamp returned by this node is always block.timestamp.**
+
+Use the Uniswap Node with caution. For instance, the implementation of `block.timestamp` on various L2s and the depth of the liquidity available in pools may result in unreliable prices.
 
 - `nodeType` Value: 4
 - Parameters:
@@ -77,7 +79,7 @@ The Reducer Node combines the data from multiple parents using the specified ope
 
 ### Price Deviation Circuit Breaker Node
 
-The Price Deviation Circuit Breaker Node passes through value of the first parent if the prices between the first two parents are within the deviation tolerance. Otherwise, it returns the third parent if specified or reverts with `DeviationToleranceExceeded`.
+The Price Deviation Circuit Breaker Node passes through value of the first parent if the prices between the first two parents are within the deviation tolerance. Otherwise, it returns the third parent if specified or reverts with `DeviationToleranceExceeded`. _Note that the third parent will be returned regardless of its price. If this is a concern, the third parent should be another Price Deviation Circuit Breaker._
 
 - `nodeType` Value: 6
 - Parameters:
@@ -86,12 +88,21 @@ The Price Deviation Circuit Breaker Node passes through value of the first paren
 
 ### Staleness Circuit Breaker Node
 
-The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolerance. Otherwise, it returns the second parent if specified or reverts with `StalenessToleranceExceeded`.
+The Staleness Circuit Breaker Node passes through the value of the first parent if the timestamp associated with it is within the staleness tolerance. Otherwise, it returns the second parent if specified or reverts with `StalenessToleranceExceeded`. _Note that the second parent will be returned regardless of its staleness. If this is a concern, the second parent should be another Staleness Circuit Breaker._
 
 - `nodeType` Value: 7
 - Parameters:
   - `uint256 stalenessTolerance` - The number of seconds in the past that determines whether the first parent's data is considered stale. If it's stale, the node will provide the fallback parents node's data or revert.
 - Expected Parents: 1-2
+
+### Constant Node
+
+The Constant Node returns a value for its price, set on registrations. It returns `block.timestamp` for the timestamp. This is useful for test scenarios and in conjunction with the Reducer Node in production. This should _not_ be used instead of an oracle for pegged assets.
+
+- `nodeType` Value: 8
+- Parameters:
+  - `int256 price` - The price for this node to return when processed.
+- Expected Parents: 0
 
 ### External Node
 
@@ -118,5 +129,5 @@ To run the tests:
 2.  Add a new library in `/nodes`. It must have the following function interface:
     ` function process(NodeOutput.Data[] memory prices, bytes memory parameters) internal view returns (NodeOutput.Data memory)`
 3.  Add the new node type into `_validateNodeType()` in `/modules/NodeModule.sol`
-4.  Add a condition for new node type in `_validateNodeDefinition` in `modules/NodeModule.sol` that calls the node library from step 2.
+4.  Add a condition for new node type in `_process` in `modules/NodeModule.sol` that calls the node library from step 2.
 5.  Add appropriate tests and documentation.

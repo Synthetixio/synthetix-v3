@@ -1,34 +1,41 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "../storage/PerpsMarketFactory.sol";
-import "../storage/PerpsMarket.sol";
-import "../interfaces/IPerpsMarketFactoryModule.sol";
-import "../interfaces/external/ISpotMarketSystem.sol";
-
-import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {IMarketManagerModule} from "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
+import {AssociatedSystemsModule, AssociatedSystem} from "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
+import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
+import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
+import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 
 /**
  * @title Module for registering perpetual futures markets. The factory tracks all markets in the system and consolidates implementation.
  * @dev See IPerpsMarketFactoryModule.
  */
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
-    using PerpsMarketFactory for PerpsMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
+    using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
 
     bytes32 private constant _ACCOUNT_TOKEN_SYSTEM = "accountNft";
+
+    error InvalidMarketOwner();
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
@@ -59,52 +66,49 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
 
+        if (marketOwner == address(0)) {
+            revert InvalidMarketOwner();
+        }
+
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
         uint128 perpsMarketId = store.synthetix.registerMarket(address(this));
 
-        PerpsMarket.Data storage market = PerpsMarket.create(perpsMarketId);
-
-        market.owner = marketOwner;
-        market.name = marketName;
-        market.symbol = marketSymbol;
+        PerpsMarket.create(perpsMarketId, marketOwner, marketName, marketSymbol);
 
         emit MarketRegistered(perpsMarketId, marketOwner, marketName, marketSymbol);
 
         return perpsMarketId;
     }
 
-    function name(uint128 marketId) external view override returns (string memory) {
-        return string.concat(PerpsMarket.load(marketId).name, " Perps Market");
+    function name(uint128 perpsMarketId) external view override returns (string memory) {
+        return string.concat(PerpsMarket.load(perpsMarketId).name, " Perps Market");
     }
 
-    function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        return MathUtil.abs(PerpsMarket.load(marketId).skew);
+    function symbol(uint128 perpsMarketId) external view override returns (string memory) {
+        return PerpsMarket.load(perpsMarketId).symbol;
     }
 
-    function locked(uint128 marketId) external view override returns (uint256) {
+    function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
+        return MathUtil.abs(PerpsMarket.load(perpsMarketId).skew);
+    }
+
+    function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         return
-            PerpsMarket.load(marketId).size.mulDecimal(
-                MarketConfiguration.load(marketId).lockedOiPercent
+            PerpsMarket.load(perpsMarketId).size.mulDecimal(
+                PerpsMarketConfiguration.load(perpsMarketId).lockedOiPercent
             );
     }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function getAccountToken(uint128 marketId) external view override returns (address) {
-        return AssociatedSystem.load(_ACCOUNT_TOKEN_SYSTEM).proxy;
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    /*function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
         PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
 
-        Price.load(perpsMarketId).update(feedId);
+        PerpsPrice.load(perpsMarketId).update(feedId);
 
         emit MarketPriceDataUpdated(perpsMarketId, feedId);
-    }*/
+    }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule

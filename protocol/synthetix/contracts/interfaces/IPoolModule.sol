@@ -75,6 +75,12 @@ interface IPoolModule {
     );
 
     /**
+     * @notice Emitted when a system-wide minimum liquidity ratio is set
+     * @param minLiquidityRatio The new system-wide minimum liquidity ratio
+     */
+    event SetMinLiquidityRatio(uint256 minLiquidityRatio);
+
+    /**
      * @notice Creates a pool with the requested pool id.
      * @param requestedPoolId The requested id for the new pool. Reverts if the id is not available.
      * @param owner The address that will own the newly created pool.
@@ -166,4 +172,9 @@ interface IPoolModule {
      * @return minRatioD18 The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function getMinLiquidityRatio() external view returns (uint256 minRatioD18);
+
+    /**
+     * @notice Distributes cached debt in a pool to its vaults and updates market credit capacities.
+     */
+    function rebalancePool(uint128 poolId) external;
 }

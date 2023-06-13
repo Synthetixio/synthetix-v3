@@ -1,9 +1,10 @@
 import { ethers as Ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 
 describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
@@ -77,7 +78,9 @@ describe('Atomic Order Module buy()', () => {
     it('emits SynthBought event', async () => {
       await assertEvent(
         txn,
-        `SynthBought(${marketId()}, ${bn(1)}, [0, 0, 0, 0], 0, "${Ethers.constants.AddressZero}")`,
+        `SynthBought(${marketId()}, ${bn(1)}, [0, 0, 0, 0], 0, "${
+          Ethers.constants.AddressZero
+        }", ${bn(1000)})`,
         systems().SpotMarket
       );
     });
@@ -117,7 +120,7 @@ describe('Atomic Order Module buy()', () => {
         txn,
         `SynthBought(${marketId()}, ${bn(0.99)}, [${bn(10)}, 0, 0, 0], 0, "${
           Ethers.constants.AddressZero
-        }")`,
+        }", ${bn(1000)})`,
         systems().SpotMarket
       );
     });
@@ -264,8 +267,41 @@ describe('Atomic Order Module buy()', () => {
         txn,
         `SynthBought(${marketId()}, ${bn(99)}, [${expectedFee}, 0, 0, 0], ${expectedFee.div(2)}, "${
           Ethers.constants.AddressZero
-        }")`,
+        }", ${bn(1000)})`,
         systems().SpotMarket
+      );
+    });
+  });
+
+  describe('price protection guardrails', () => {
+    before(restore);
+
+    before('set sell price higher than buy price', async () => {
+      const nodeId100 = await generateExternalNode(systems().OracleManager, 100);
+      const nodeId200 = await generateExternalNode(systems().OracleManager, 200);
+
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .updatePriceData(marketId(), nodeId100, nodeId200);
+    });
+
+    it('reverts buyExactIn', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, 100);
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .buyExactIn(marketId(), 100, 0, Ethers.constants.AddressZero),
+        'InvalidPrices'
+      );
+    });
+
+    it('reverts buyExactOut', async () => {
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(400));
+      await assertRevert(
+        systems()
+          .SpotMarket.connect(trader1)
+          .buyExactOut(marketId(), bn(100), 10000, Ethers.constants.AddressZero),
+        'InvalidPrices'
       );
     });
   });

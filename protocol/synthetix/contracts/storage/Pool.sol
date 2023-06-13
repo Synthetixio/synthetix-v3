@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "./Config.sol";
 import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
@@ -40,6 +41,13 @@ library Pool {
      * @dev Thrown when attempting to create a pool that already exists.
      */
     error PoolAlreadyExists(uint128 poolId);
+
+    /**
+     * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
+     */
+    error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
+
+    bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
     struct Data {
         /**
@@ -100,6 +108,10 @@ library Pool {
          * Vaults track user collateral and debt using a debt distribution, which is connected to the debt distribution chain.
          */
         mapping(address => Vault.Data) vaults;
+        uint64 lastConfigurationTime;
+        uint64 __reserved1;
+        uint64 __reserved2;
+        uint64 __reserved3;
     }
 
     /**
@@ -151,7 +163,7 @@ library Pool {
 
         int256 cumulativeDebtChangeD18 = 0;
 
-        uint256 minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
+        uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
         // This debt extracted from markets is then applied to the pool's vault debt distribution, which thus exposes debt to the pool's vaults.
@@ -167,6 +179,11 @@ library Pool {
                 totalWeightsD18;
 
             Market.Data storage marketData = Market.load(marketConfiguration.marketId);
+
+            // Use market-specific minimum liquidity ratio if set, otherwise use system default.
+            uint256 minLiquidityRatioD18 = marketData.minLiquidityRatioD18 > 0
+                ? marketData.minLiquidityRatioD18
+                : systemMinLiquidityRatioD18;
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
@@ -346,6 +363,29 @@ library Pool {
         return Market.load(0);
     }
 
+    function getRequiredMinDelegationTime(
+        Data storage self
+    ) internal view returns (uint32 requiredMinDelegateTime) {
+        for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
+            uint32 marketMinDelegateTime = Market
+                .load(self.marketConfigurations[i].marketId)
+                .minDelegateTime;
+
+            if (marketMinDelegateTime > requiredMinDelegateTime) {
+                requiredMinDelegateTime = marketMinDelegateTime;
+            }
+        }
+
+        // solhint-disable-next-line numcast/safe-cast
+        uint32 maxMinDelegateTime = uint32(
+            Config.readUint(_CONFIG_SET_MARKET_MIN_DELEGATE_MAX, 86400 * 30)
+        );
+        return
+            maxMinDelegateTime < requiredMinDelegateTime
+                ? maxMinDelegateTime
+                : requiredMinDelegateTime;
+    }
+
     /**
      * @dev Returns the debt of the vault that tracks the given collateral type.
      *
@@ -419,6 +459,20 @@ library Pool {
     function onlyPoolOwner(uint128 poolId, address caller) internal view {
         if (Pool.load(poolId).owner != caller) {
             revert AccessError.Unauthorized(caller);
+        }
+    }
+
+    function requireMinDelegationTimeElapsed(
+        Data storage self,
+        uint64 lastDelegationTime
+    ) internal view {
+        uint32 requiredMinDelegationTime = getRequiredMinDelegationTime(self);
+        if (block.timestamp < lastDelegationTime + requiredMinDelegationTime) {
+            revert MinDelegationTimeoutPending(
+                self.id,
+                // solhint-disable-next-line numcast/safe-cast
+                uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
+            );
         }
     }
 }

@@ -1,9 +1,12 @@
 import { ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+
+const ASYNC_BUY_TRANSACTION = 3,
+  ASYNC_SELL_TRANSACTION = 4;
 
 describe('AsyncOrderModule', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -30,6 +33,9 @@ describe('AsyncOrderModule', () => {
         url: '',
         settlementReward: bn(5),
         priceDeviationTolerance: bn(0.01),
+        disabled: false,
+        minimumUsdExchangeAmount: bn(0.000001),
+        maxRoundingLoss: bn(0.000001),
       });
   });
 
@@ -52,7 +58,14 @@ describe('AsyncOrderModule', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), 0, bn(0.8), ethers.constants.AddressZero);
+        .commitOrder(
+          marketId(),
+          ASYNC_BUY_TRANSACTION,
+          bn(1000),
+          0,
+          bn(0.8),
+          ethers.constants.AddressZero
+        );
     });
 
     before('fast forward', async () => {
@@ -110,11 +123,25 @@ describe('AsyncOrderModule', () => {
         // order # 2
         await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.99), ethers.constants.AddressZero);
+          .commitOrder(
+            marketId(),
+            ASYNC_BUY_TRANSACTION,
+            bn(1000),
+            0,
+            bn(0.99),
+            ethers.constants.AddressZero
+          );
         // order # 3
         await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 2, bn(1000), 0, bn(0.98), ethers.constants.AddressZero);
+          .commitOrder(
+            marketId(),
+            ASYNC_BUY_TRANSACTION,
+            bn(1000),
+            0,
+            bn(0.98),
+            ethers.constants.AddressZero
+          );
       });
 
       before('fast forward', async () => {
@@ -143,11 +170,25 @@ describe('AsyncOrderModule', () => {
         // order # 4
         await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 3, bn(0.1), 0, bn(85), ethers.constants.AddressZero); // actual return is 84.15
+          .commitOrder(
+            marketId(),
+            ASYNC_SELL_TRANSACTION,
+            bn(0.1),
+            0,
+            bn(85),
+            ethers.constants.AddressZero
+          ); // actual return is 84.15
         // order # 5
         await systems()
           .SpotMarket.connect(trader1)
-          .commitOrder(marketId(), 3, bn(0.1), 0, bn(83), ethers.constants.AddressZero);
+          .commitOrder(
+            marketId(),
+            ASYNC_SELL_TRANSACTION,
+            bn(0.1),
+            0,
+            bn(83),
+            ethers.constants.AddressZero
+          );
       });
 
       before('fast forward', async () => {

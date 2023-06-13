@@ -6,8 +6,17 @@ library DecayToken {
         keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
 
     struct Data {
+        /**
+         * @dev Annualized decay rate, expressed with 18 decimal precision (1e18 = 100%).
+         */
         uint256 decayRate;
+        /**
+         * @dev Timestamp of the last mint or burn event.
+         */
         uint256 epochStart;
+        /**
+         * @dev Total supply as of the last mint or burn event.
+         */
         uint256 totalSupplyAtEpochStart;
     }
 

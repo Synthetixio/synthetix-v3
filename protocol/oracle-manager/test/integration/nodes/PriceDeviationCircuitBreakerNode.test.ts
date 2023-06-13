@@ -4,12 +4,13 @@ import { ethers } from 'ethers';
 
 import { bn, bootstrapWithNodes } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
+import { NodeModule } from '../../generated/typechain';
 
 describe('PriceDeviationCircuitBreakerNode', function () {
   const { getContract, nodeId1, nodeId3, nodeId4, nodeId5 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;
-  let NodeModule: ethers.Contract;
+  let NodeModule: NodeModule;
   let parents: string[] = [];
 
   before('prepare environment', async () => {
@@ -18,7 +19,8 @@ describe('PriceDeviationCircuitBreakerNode', function () {
   });
 
   describe('register a circuit breaker with 40% tolerance', async () => {
-    let node1, node2;
+    let node1: string;
+    let node2: string;
     before(async () => {
       // 40% Deviation Tolerance
       const deviationTolerance = bn(0.4);
@@ -51,7 +53,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
   });
 
   describe('register a circuit breaker with 50% tolerance', async () => {
-    let nodeId;
+    let nodeId: string;
     before(async () => {
       // 50% Deviation Tolerance
       const deviationTolerance = bn(0.5);
@@ -72,7 +74,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
   });
 
   describe('register a circuit breaker with primary price 0', async () => {
-    let nodeId;
+    let nodeId: string;
     before(async () => {
       // 50% Deviation Tolerance
       // nodeId5 is 0
@@ -90,12 +92,12 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     });
 
     it('expect process to return first node price since prices are 50% different', async () => {
-      await assertRevert(NodeModule.process(nodeId), 'DeviationToleranceExceeded', NodeModule);
+      await assertRevert(NodeModule.process(nodeId), 'InvalidInputPrice', NodeModule);
     });
   });
 
   describe('register a circuit breaker with 60% tolerance', async () => {
-    let nodeId;
+    let nodeId: string;
     before(async () => {
       // 60% Deviation Tolerance
       const deviationTolerance = bn(0.6);
@@ -112,6 +114,21 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     it('expect process to return first node price since prices are 50% different', async () => {
       const priceData = await NodeModule.process(nodeId);
       assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
+    });
+  });
+
+  describe('register a circuit breaker with an unprocessable parent', async () => {
+    it('should revert', async () => {
+      const params = abi.encode(['uint256'], [bn(0.4)]);
+      const parents = [
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+      ];
+      await assertRevert(
+        NodeModule.registerNode(NodeTypes.PRICE_DEVIATION_CIRCUIT_BREAKER, params, parents),
+        'UnprocessableNode',
+        NodeModule
+      );
     });
   });
 });

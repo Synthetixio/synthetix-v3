@@ -1,17 +1,23 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { ethers } from 'ethers';
+import { BigNumberish, ethers, Signer } from 'ethers';
 
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 import NodeOperations from '../mixins/Node.operations';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import hre from 'hardhat';
+import { NodeModule } from '../../../typechain-types/index';
 
 describe('ReducerNode', function () {
   const { getContract, getSigners } = bootstrap();
 
   const abi = ethers.utils.defaultAbiCoder;
-  let NodeModule: ethers.Contract;
-  let owner;
-  let Node10000, Node100, Node10, Node1;
+  let NodeModule: NodeModule;
+  let owner: Signer;
+  let Node10000: string;
+  let Node100: string;
+  let Node10: string;
+  let Node1: string;
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');
@@ -183,7 +189,7 @@ describe('ReducerNode', function () {
     assertBn.equal(nodeOutput.timestamp, 2527);
   });
 
-  async function deployAndRegisterExternalNode(price, timestamp) {
+  async function deployAndRegisterExternalNode(price: BigNumberish, timestamp: BigNumberish) {
     // Deploy the mock
     const factory = await hre.ethers.getContractFactory('MockExternalNode');
     const externalNode = await factory.connect(owner).deploy(price, timestamp);
@@ -195,4 +201,19 @@ describe('ReducerNode', function () {
     // Return the ID
     return await NodeModule.getNodeId(NodeTypes.EXTERNAL, NodeParameters, []);
   }
+
+  describe('register a reducer with an unprocessable parent', async () => {
+    it('should revert', async () => {
+      const params = abi.encode(['uint'], [NodeOperations.MIN]);
+      const parents = [
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+        '0x626164706172656e740000000000000000000000000000000000000000000000',
+      ];
+      await assertRevert(
+        NodeModule.registerNode(NodeTypes.REDUCER, params, parents),
+        'UnprocessableNode',
+        NodeModule
+      );
+    });
+  });
 });

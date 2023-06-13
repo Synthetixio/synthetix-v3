@@ -9,8 +9,12 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "../interfaces/IDecayTokenModule.sol";
 import "../storage/DecayToken.sol";
 
-contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
+import "./TokenModule.sol";
+
+contract DecayTokenModule is IDecayTokenModule, TokenModule {
     using DecimalMath for uint256;
+
+    uint private constant SECONDS_PER_YEAR = 31536000;
 
     modifier _advanceEpoch() {
         _;
@@ -19,31 +23,36 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public {
+    ) public override(TokenModule, ITokenModule) {
         OwnableStorage.onlyOwner();
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
         DecayToken.Data storage store = DecayToken.load();
-        store.epochStart = block.timestamp;
+        if (store.epochStart == 0) {
+            store.epochStart = block.timestamp;
+        }
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
-    function isInitialized() external view returns (bool) {
-        return _isInitialized();
+    function isInitialized() external view override(TokenModule, ITokenModule) returns (bool) {
+        return super._isInitialized();
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
-    function burn(address from, uint256 amount) external override _advanceEpoch {
+    function burn(
+        address from,
+        uint256 amount
+    ) external override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -54,9 +63,12 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     /**
-     * @inheritdoc IDecayTokenModule
+     * @inheritdoc ITokenModule
      */
-    function mint(address to, uint256 amount) external override _advanceEpoch {
+    function mint(
+        address to,
+        uint256 amount
+    ) external override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -70,6 +82,9 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
      * @inheritdoc IDecayTokenModule
      */
     function setDecayRate(uint256 _rate) external _advanceEpoch {
+        if ((10 ** 18) * SECONDS_PER_YEAR < _rate) {
+            revert InvalidDecayRate();
+        }
         OwnableStorage.onlyOwner();
         DecayToken.Data storage store = DecayToken.load();
         store.totalSupplyAtEpochStart = totalSupply();
@@ -95,7 +110,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         }
         uint t = (block.timestamp - _epochStart());
         supply = _totalSupplyAtEpochStart();
-        uint r = _pow(((10 ** 18) - _ratePerSecond()), t);
+        uint r = _pow(((DecimalMath.UNIT) - _ratePerSecond()), t);
         supply = supply.mulDecimal(r);
 
         return (supply);
@@ -103,20 +118,6 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
 
     function balanceOf(address user) public view override(ERC20, IERC20) returns (uint256) {
         return super.balanceOf(user).mulDecimal(_tokensPerShare());
-    }
-
-    function allowance(
-        address user,
-        address spender
-    ) public view virtual override(ERC20, IERC20) returns (uint256) {
-        return super.allowance(user, spender);
-    }
-
-    function approve(
-        address spender,
-        uint256 amount
-    ) public virtual override(ERC20, IERC20) returns (bool) {
-        return super.approve(spender, amount);
     }
 
     function transferFrom(
@@ -135,17 +136,9 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
             store.allowance[from][msg.sender] -= amount;
         }
 
-        _transfer(from, to, _tokenToShare(amount));
+        super._transfer(from, to, _tokenToShare(amount));
 
         return true;
-    }
-
-    /**
-     * @inheritdoc IDecayTokenModule
-     */
-    function setAllowance(address from, address spender, uint256 amount) external override {
-        OwnableStorage.onlyOwner();
-        ERC20Storage.load().allowance[from][spender] = amount;
     }
 
     function transfer(
@@ -159,10 +152,6 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return DecayToken.load().decayRate;
     }
 
-    function _isInitialized() internal view override returns (bool) {
-        return ERC20Storage.load().decimals != 0;
-    }
-
     function _epochStart() internal view returns (uint256) {
         return DecayToken.load().epochStart;
     }
@@ -172,7 +161,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     function _ratePerSecond() internal view returns (uint256) {
-        return decayRate() / 31536000;
+        return decayRate() / SECONDS_PER_YEAR;
     }
 
     function _tokensPerShare() internal view returns (uint256) {
@@ -202,25 +191,5 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
                 n /= 2;
             }
         }
-    }
-
-    function _transfer(address from, address to, uint256 amount) internal virtual override {
-        ERC20Storage.Data storage store = ERC20Storage.load();
-
-        uint256 accountBalance = store.balanceOf[from];
-        if (accountBalance < amount) {
-            revert InsufficientBalance(amount, accountBalance);
-        }
-
-        // We are now sure that we can perform this operation safely
-        // since it didn't revert in the previous step.
-        // The total supply cannot exceed the maximum value of uint256,
-        // thus we can now perform accounting operations in unchecked mode.
-        unchecked {
-            store.balanceOf[from] -= amount;
-            store.balanceOf[to] += amount;
-        }
-
-        emit Transfer(from, to, amount);
     }
 }

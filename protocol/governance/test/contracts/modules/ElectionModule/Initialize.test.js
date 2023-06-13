@@ -1,9 +1,9 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
-const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const assertRevert = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+const { daysToSeconds } = require('@synthetixio/core-utils/utils/misc/dates');
+const { getTime } = require('@synthetixio/core-utils/utils/hardhat/rpc');
+const { bootstrap } = require('@synthetixio/router/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('SynthetixElectionModule (initialization)', () => {

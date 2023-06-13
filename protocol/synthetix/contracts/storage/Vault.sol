@@ -167,7 +167,7 @@ library Vault {
             revert RewardDistributorNotFound();
         }
 
-        dist.distributor.onStakerChanged(accountId, poolId, collateralType, actorSharesD18);
+        dist.distributor.onPositionUpdated(accountId, poolId, collateralType, actorSharesD18);
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 

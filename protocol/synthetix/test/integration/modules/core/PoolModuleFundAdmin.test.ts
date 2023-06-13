@@ -1,3 +1,4 @@
+/* eslint-disable no-unexpected-multiline */
 import assert from 'node:assert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -5,6 +6,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('PoolModule Admin', function () {
   const {
@@ -162,6 +164,45 @@ describe('PoolModule Admin', function () {
           await systems().Core.connect(owner).getMarketCollateral(marketId()),
           depositAmount
         );
+      });
+
+      describe('if one of the markets has a min delegation time', () => {
+        const restore = snapshotCheckpoint(provider);
+
+        before('set market min delegation time to something high', async () => {
+          await MockMarket().setMinDelegationTime(86400);
+        });
+
+        it('fails when min delegation timeout not elapsed', async () => {
+          await assertRevert(
+            systems()
+              .Core.connect(owner)
+              .setPoolConfiguration(poolId, [
+                { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+                { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
+              ]),
+            `MinDelegationTimeoutPending("${poolId}",`,
+            systems().Core
+          );
+        });
+
+        describe('after time passes', () => {
+          before('fast forward', async () => {
+            // for some reason `fastForward` doesn't seem to work with anvil
+            await fastForwardTo((await getTime(provider())) + 86400, provider());
+          });
+
+          it('works', async () => {
+            await systems()
+              .Core.connect(owner)
+              .setPoolConfiguration(poolId, [
+                { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+                { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
+              ]);
+          });
+        });
+
+        after(restore);
       });
 
       describe('pool changes staking position to add another market', async () => {
@@ -359,7 +400,9 @@ describe('PoolModule Admin', function () {
 
       before('raise maxLiquidityRatio', async () => {
         // need to do this for the below test to work
-        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('0.2'));
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('0.2'));
       });
 
       before('set pool position', async () => {
@@ -571,7 +614,9 @@ describe('PoolModule Admin', function () {
 
       before('set minLiquidityRatio', async () => {
         // need to do this for the below test to work
-        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 
       before('set pool position', async () => {
@@ -592,7 +637,9 @@ describe('PoolModule Admin', function () {
 
       describe('when minLiquidityRatio is decreased', async () => {
         before('set minLiquidityRatio', async () => {
-          await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('1'));
+          await systems()
+            .Core.connect(owner)
+            ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('1'));
 
           // bump the vault
           await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
@@ -609,9 +656,13 @@ describe('PoolModule Admin', function () {
   });
 
   describe('setMinLiquidityRatio()', async () => {
+    before(restore);
+
     it('only works for owner', async () => {
       await assertRevert(
-        systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
+        systems()
+          .Core.connect(user1)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2')),
         `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );
@@ -619,11 +670,16 @@ describe('PoolModule Admin', function () {
 
     describe('when invoked successfully', async () => {
       before('set', async () => {
-        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
+        await systems()
+          .Core.connect(owner)
+          ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 
       it('is set', async () => {
-        assertBn.equal(await systems().Core.getMinLiquidityRatio(), ethers.utils.parseEther('2'));
+        assertBn.equal(
+          await systems().Core['getMinLiquidityRatio()'](),
+          ethers.utils.parseEther('2')
+        );
       });
     });
   });

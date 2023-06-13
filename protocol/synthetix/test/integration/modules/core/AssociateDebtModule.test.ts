@@ -89,7 +89,7 @@ describe('AssociateDebtModule', function () {
           .connect(user1)
           .transfer(await user2.getAddress(), depositAmount.mul(2));
 
-        await systems().Core.connect(user2).createAccount(user2AccountId);
+        await systems().Core.connect(user2)['createAccount(uint128)'](user2AccountId);
 
         await collateralContract()
           .connect(user2)

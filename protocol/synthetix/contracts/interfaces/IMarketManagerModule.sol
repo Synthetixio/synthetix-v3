@@ -58,6 +58,22 @@ interface IMarketManagerModule {
         address indexed market
     );
 
+    event MarketSystemFeePaid(uint128 indexed marketId, uint256 feeAmount);
+
+    /**
+     * @notice Emitted when a market sets an updated minimum delegation time
+     * @param marketId The id of the market that the setting is applied to
+     * @param minDelegateTime The minimum amount of time between delegation changes
+     */
+    event SetMinDelegateTime(uint128 indexed marketId, uint32 minDelegateTime);
+
+    /**
+     * @notice Emitted when a market-specific minimum liquidity ratio is set
+     * @param marketId The id of the market that the setting is applied to
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio
+     */
+    event SetMarketMinLiquidityRatio(uint128 indexed marketId, uint256 minLiquidityRatio);
+
     /**
      * @notice Connects an external market to the system.
      * @dev Creates a Market object to track the external market, and returns the newly created market id.
@@ -105,7 +121,7 @@ interface IMarketManagerModule {
      */
     function getMarketFees(
         uint128 marketId,
-        uint amount
+        uint256 amount
     ) external view returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount);
 
     /**
@@ -184,4 +200,32 @@ interface IMarketManagerModule {
         uint128 marketId,
         uint256 maxIter
     ) external returns (bool finishedDistributing);
+
+    /**
+     * @notice allows for a market to set its minimum delegation time. This is useful for preventing stakers from frontrunning rewards or losses
+     * by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) calls. By default, there is no minimum delegation time.
+     * @param marketId the id of the market that wants to set delegation time.
+     * @param minDelegateTime the minimum number of seconds between delegation calls. Note: this value must be less than the globally defined maximum minDelegateTime
+     */
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external;
+
+    /**
+     * @notice Retrieve the minimum delegation time of a market
+     * @param marketId the id of the market
+     */
+    function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32);
+
+    /**
+     * @notice Allows the system owner (not the pool owner) to set a market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @param minLiquidityRatio The new market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external;
+
+    /**
+     * @notice Retrieves the market-specific minimum liquidity ratio.
+     * @param marketId the id of the market
+     * @return minRatioD18 The current market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+     */
+    function getMinLiquidityRatio(uint128 marketId) external view returns (uint256 minRatioD18);
 }

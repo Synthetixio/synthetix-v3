@@ -8,7 +8,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC721Enumerable.sol";
  */
 interface INftModule is IERC721Enumerable {
     /**
-     * @notice Returns wether the token has been initialized.
+     * @notice Returns whether the token has been initialized.
      * @return A boolean with the result of the query.
      */
     function isInitialized() external returns (bool);
@@ -49,4 +49,10 @@ interface INftModule is IERC721Enumerable {
      * @param spender The address that is given allowance.
      */
     function setAllowance(uint tokenId, address spender) external;
+
+    /**
+     * @notice Allows the owner to update the base token URI.
+     * @param uri The new base token uri
+     */
+    function setBaseTokenURI(string memory uri) external;
 }

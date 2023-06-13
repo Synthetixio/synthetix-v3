@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
-import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
-import "../interfaces/IMarketConfigurationModule.sol";
-import "../interfaces/external/IFeeCollector.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../storage/MarketConfiguration.sol";
+import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
+import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 
 /**
  * @title Module for configuring fees for registered synth markets.
@@ -14,12 +13,11 @@ import "../storage/MarketConfiguration.sol";
  */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using AssociatedSystem for AssociatedSystem.Data;
 
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external override {
+    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).atomicFixedFee = atomicFixedFee;
@@ -30,7 +28,27 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAsyncFixedFee(uint128 synthMarketId, uint asyncFixedFee) external override {
+    function getMarketFees(
+        uint128 synthMarketId
+    )
+        external
+        view
+        override
+        returns (uint256 atomicFixedFee, uint256 asyncFixedFee, int256 wrapFee, int256 unwrapFee)
+    {
+        MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(
+            synthMarketId
+        );
+        atomicFixedFee = marketConfiguration.atomicFixedFee;
+        asyncFixedFee = marketConfiguration.asyncFixedFee;
+        wrapFee = marketConfiguration.wrapFixedFee;
+        unwrapFee = marketConfiguration.unwrapFixedFee;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).asyncFixedFee = asyncFixedFee;
@@ -41,7 +59,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMarketSkewScale(uint128 synthMarketId, uint skewScale) external override {
+    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).skewScale = skewScale;
@@ -52,9 +70,18 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getMarketSkewScale(
+        uint128 synthMarketId
+    ) external view override returns (uint256 skewScale) {
+        skewScale = MarketConfiguration.load(synthMarketId).skewScale;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setMarketUtilizationFees(
         uint128 synthMarketId,
-        uint utilizationFeeRate
+        uint256 utilizationFeeRate
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
@@ -66,9 +93,18 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getMarketUtilizationFees(
+        uint128 synthMarketId
+    ) external view override returns (uint256 utilizationFeeRate) {
+        utilizationFeeRate = MarketConfiguration.load(synthMarketId).utilizationFeeRate;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setCollateralLeverage(
         uint128 synthMarketId,
-        uint collateralLeverage
+        uint256 collateralLeverage
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         MarketConfiguration.isValidLeverage(collateralLeverage);
@@ -81,15 +117,34 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
+    function getCollateralLeverage(
+        uint128 synthMarketId
+    ) external view override returns (uint256 collateralLeverage) {
+        collateralLeverage = MarketConfiguration.load(synthMarketId).collateralLeverage;
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setCustomTransactorFees(
         uint128 synthMarketId,
         address transactor,
-        uint fixedFeeAmount
+        uint256 fixedFeeAmount
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
-        MarketConfiguration.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
+        MarketConfiguration.setFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
 
         emit TransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getCustomTransactorFees(
+        uint128 synthMarketId,
+        address transactor
+    ) external view override returns (uint256 fixedFeeAmount) {
+        fixedFeeAmount = MarketConfiguration.getFixedFeeOverride(synthMarketId, transactor);
     }
 
     /**
@@ -107,18 +162,31 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         }
 
         MarketConfiguration.load(synthMarketId).feeCollector = IFeeCollector(feeCollector);
-
-        // set infinite approval for fee collector
-        spotMarketFactory.usdToken.approve(feeCollector, type(uint256).max);
-
         emit FeeCollectorSet(synthMarketId, feeCollector);
     }
 
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setWrapperFees(uint128 synthMarketId, int wrapFee, int unwrapFee) external override {
+    function getFeeCollector(
+        uint128 synthMarketId
+    ) external view override returns (address feeCollector) {
+        feeCollector = address(MarketConfiguration.load(synthMarketId).feeCollector);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function setWrapperFees(
+        uint128 synthMarketId,
+        int256 wrapFee,
+        int256 unwrapFee
+    ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        if (wrapFee + unwrapFee < 0) {
+            revert InvalidWrapperFees();
+        }
 
         MarketConfiguration.Data storage marketConfiguration = MarketConfiguration.load(
             synthMarketId
@@ -135,12 +203,22 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function updateReferrerShare(
         uint128 synthMarketId,
         address referrer,
-        uint sharePercentage
+        uint256 sharePercentage
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).referrerShare[referrer] = sharePercentage;
 
         emit ReferrerShareUpdated(synthMarketId, referrer, sharePercentage);
+    }
+
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getReferrerShare(
+        uint128 synthMarketId,
+        address referrer
+    ) external view override returns (uint256 sharePercentage) {
+        sharePercentage = MarketConfiguration.load(synthMarketId).referrerShare[referrer];
     }
 }

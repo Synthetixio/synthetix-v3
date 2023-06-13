@@ -1,16 +1,16 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
-import "../interfaces/external/IFeeCollector.sol";
-import "./SpotMarketFactory.sol";
-import "./AsyncOrder.sol";
-import "./OrderFees.sol";
-import "../utils/SynthUtil.sol";
-import "../utils/MathUtil.sol";
-import "../utils/TransactionUtil.sol";
+import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
+import {SpotMarketFactory} from "./SpotMarketFactory.sol";
+import {Wrapper} from "./Wrapper.sol";
+import {OrderFees} from "./OrderFees.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Fee storage that tracks all fees for a given market Id.
@@ -24,53 +24,52 @@ library MarketConfiguration {
     using DecimalMath for int256;
 
     error InvalidUtilizationLeverage();
-    error InvalidCollateralLeverage(uint);
+    error InvalidCollateralLeverage(uint256);
 
     struct Data {
         /**
-         * @dev The atomic fixed fee rate for a specific transactor.  Useful for direct integrations to set custom fees for specific addresses.
+         * @dev The fixed fee rate for a specific transactor.  Useful for direct integrations to set custom fees for specific addresses.
          */
-        mapping(address => uint) atomicFixedFeeOverrides;
+        mapping(address => uint256) fixedFeeOverrides;
         /**
          * @dev atomic buy/sell fixed fee that's applied on all trades. Percentage, 18 decimals
          */
-        uint atomicFixedFee;
+        uint256 atomicFixedFee;
         /**
          * @dev buy/sell fixed fee that's applied on all async trades. Percentage, 18 decimals
          */
-        uint asyncFixedFee;
+        uint256 asyncFixedFee;
         /**
          * @dev utilization fee rate (in percentage) is the rate of fees applied based on the ratio of delegated collateral to total outstanding synth exposure. 18 decimals
          * applied on buy trades only.
          */
-        uint utilizationFeeRate;
+        uint256 utilizationFeeRate;
         /**
          * @dev a configurable leverage % that is applied to delegated collateral which is used as a ratio for determining utilization, and locked amounts. D18
          */
-        uint collateralLeverage;
+        uint256 collateralLeverage;
         /**
          * @dev wrapping fee rate represented as a percent, 18 decimals
          */
-        int wrapFixedFee;
+        int256 wrapFixedFee;
         /**
          * @dev unwrapping fee rate represented as a percent, 18 decimals
          */
-        int unwrapFixedFee;
+        int256 unwrapFixedFee;
         /**
          * @dev skewScale is used to determine % of fees that get applied based on the ratio of outstanding synths to skewScale.
          * if outstanding synths = skew scale, then 100% premium is applied to the trade.
          * A negative skew, derived based on the mentioned ratio, is applied on sell trades
          */
-        uint skewScale;
+        uint256 skewScale;
         /**
-         * @dev The fee collector gets sent the calculated fees and can keep some of them to distribute in whichever way it wants.
-         * The rest of the fees are deposited into the market manager.
+         * @dev Once fees are calculated, the quote function is called with the totalFees.  The returned quoted amount is then transferred to this fee collector address
          */
         IFeeCollector feeCollector;
         /**
          * @dev Percentage share for each referrer address
          */
-        mapping(address => uint) referrerShare;
+        mapping(address => uint256) referrerShare;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage marketConfig) {
@@ -80,7 +79,7 @@ library MarketConfiguration {
         }
     }
 
-    function isValidLeverage(uint leverage) internal pure {
+    function isValidLeverage(uint256 leverage) internal pure {
         // add upper bounds for leverage here
         if (leverage == 0) {
             revert InvalidCollateralLeverage(leverage);
@@ -90,24 +89,30 @@ library MarketConfiguration {
     /**
      * @dev Set custom fee for transactor
      */
-    function setAtomicFixedFeeOverride(
-        uint128 marketId,
-        address transactor,
-        uint fixedFee
-    ) internal {
-        load(marketId).atomicFixedFeeOverrides[transactor] = fixedFee;
+    function setFixedFeeOverride(uint128 marketId, address transactor, uint256 fixedFee) internal {
+        load(marketId).fixedFeeOverrides[transactor] = fixedFee;
     }
 
     /**
-     * @dev Get quote for amount of collateral (`amount`) to receive in synths (`synthAmount`)
+     * @dev Get custom fee for transactor
+     */
+    function getFixedFeeOverride(
+        uint128 marketId,
+        address transactor
+    ) internal view returns (uint256 fixedFee) {
+        fixedFee = load(marketId).fixedFeeOverrides[transactor];
+    }
+
+    /**
+     * @dev Get quote for amount of collateral (`baseAmountD18`) to receive in synths (`synthAmount`)
      */
     function quoteWrap(
         uint128 marketId,
-        uint amount,
-        uint synthPrice
-    ) internal view returns (uint synthAmount, OrderFees.Data memory fees, Data storage config) {
+        uint256 baseAmountD18,
+        uint256 synthPrice
+    ) internal view returns (uint256 synthAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
-        uint usdAmount = amount.mulDecimal(synthPrice);
+        uint256 usdAmount = baseAmountD18.mulDecimal(synthPrice);
         fees.wrapperFees = config.wrapFixedFee.mulDecimal(usdAmount.toInt());
         usdAmount = (usdAmount.toInt() - fees.wrapperFees).toUint();
 
@@ -119,11 +124,11 @@ library MarketConfiguration {
      */
     function quoteUnwrap(
         uint128 marketId,
-        uint synthAmount,
-        uint synthPrice
-    ) internal view returns (uint amount, OrderFees.Data memory fees, Data storage config) {
+        uint256 synthAmount,
+        uint256 synthPrice
+    ) internal view returns (uint256 amount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
-        uint usdAmount = synthAmount.mulDecimal(synthPrice);
+        uint256 usdAmount = synthAmount.mulDecimal(synthPrice);
         fees.wrapperFees = config.unwrapFixedFee.mulDecimal(usdAmount.toInt());
         usdAmount = (usdAmount.toInt() - fees.wrapperFees).toUint();
 
@@ -135,19 +140,19 @@ library MarketConfiguration {
      */
     function quoteBuyExactOut(
         uint128 marketId,
-        uint synthAmount,
-        uint synthPrice,
+        uint256 synthAmount,
+        uint256 synthPrice,
         address transactor,
         Transaction.Type transactionType
-    ) internal view returns (uint usdAmount, OrderFees.Data memory fees, Data storage config) {
+    ) internal view returns (uint256 usdAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
         // this amount gets fees applied below and is the return amount to charge user
         usdAmount = synthAmount.mulDecimal(synthPrice);
 
-        int amountInt = usdAmount.toInt();
+        int256 amountInt = usdAmount.toInt();
 
         // compute skew fee based on amount out
-        int skewFee = calculateSkewFeeExact(
+        int256 skewFee = calculateSkewFeeRatioExact(
             config,
             marketId,
             amountInt,
@@ -159,8 +164,17 @@ library MarketConfiguration {
         // apply fees by adding to the amount
         usdAmount = (amountInt + fees.skewFees).toUint();
 
-        uint utilizationFee = calculateUtilizationRateFee(config, marketId, usdAmount, synthPrice);
-        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 utilizationFee = calculateUtilizationFeeRatio(
+            config,
+            marketId,
+            usdAmount,
+            synthPrice
+        );
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         // apply utilization and fixed fees
         // Note: when calculating exact out, we need to apply fees in reverse order.  so instead of
         // multiplying by %, we divide by %
@@ -175,15 +189,24 @@ library MarketConfiguration {
      */
     function quoteBuyExactIn(
         uint128 marketId,
-        uint usdAmount,
-        uint synthPrice,
+        uint256 usdAmount,
+        uint256 synthPrice,
         address transactor,
         Transaction.Type transactionType
-    ) internal view returns (uint synthAmount, OrderFees.Data memory fees, Data storage config) {
+    ) internal view returns (uint256 synthAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
 
-        uint utilizationFee = calculateUtilizationRateFee(config, marketId, usdAmount, synthPrice);
-        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 utilizationFee = calculateUtilizationFeeRatio(
+            config,
+            marketId,
+            usdAmount,
+            synthPrice
+        );
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
 
         fees.utilizationFees = utilizationFee.mulDecimal(usdAmount);
         fees.fixedFees = fixedFee.mulDecimal(usdAmount);
@@ -200,14 +223,14 @@ library MarketConfiguration {
      */
     function quoteSellExactOut(
         uint128 marketId,
-        uint usdAmount,
-        uint synthPrice,
+        uint256 usdAmount,
+        uint256 synthPrice,
         address transactor,
         Transaction.Type transactionType
-    ) internal view returns (uint synthAmount, OrderFees.Data memory fees, Data storage config) {
+    ) internal view returns (uint256 synthAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
 
-        uint synthAmountFromSkew = calculateSkew(
+        uint256 synthAmountFromSkew = calculateSkew(
             config,
             marketId,
             usdAmount.toInt() * -1, // when selling, use negative amount
@@ -217,13 +240,17 @@ library MarketConfiguration {
         fees.skewFees = synthAmountFromSkew.mulDecimal(synthPrice).toInt() - usdAmount.toInt();
         usdAmount = (usdAmount.toInt() + fees.skewFees).toUint();
 
-        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         // use the usd amount _after_ skew fee is applied to the amount
         // when exact out, fees are applied by dividing by %
         fees.fixedFees = usdAmount.divDecimal(DecimalMath.UNIT - fixedFee) - usdAmount;
         // apply fixed fee
         usdAmount += fees.fixedFees;
-        // convert usd amount to synth amount to return to trader
+        // convert usd amount to synth amount to charge the trader
         synthAmount = usdAmount.divDecimal(synthPrice);
     }
 
@@ -232,25 +259,29 @@ library MarketConfiguration {
      */
     function quoteSellExactIn(
         uint128 marketId,
-        uint synthAmount,
-        uint synthPrice,
+        uint256 synthAmount,
+        uint256 synthPrice,
         address transactor,
         Transaction.Type transactionType
-    ) internal view returns (uint usdAmount, OrderFees.Data memory fees, Data storage config) {
+    ) internal view returns (uint256 usdAmount, OrderFees.Data memory fees, Data storage config) {
         config = load(marketId);
 
         usdAmount = synthAmount.mulDecimal(synthPrice);
 
-        uint fixedFee = _getFixedFee(config, transactor, Transaction.isAsync(transactionType));
+        uint256 fixedFee = _getFixedFeeRatio(
+            config,
+            transactor,
+            Transaction.isAsync(transactionType)
+        );
         fees.fixedFees = fixedFee.mulDecimal(usdAmount);
 
         // apply fixed fee by removing from the amount that gets returned to user in exchange
         usdAmount -= fees.fixedFees;
 
         // use the amount _after_ fixed fee is applied to the amount
-        // skew is calcuated based on amount after all other fees applied, to get accurate skew fee
-        int usdAmountInt = usdAmount.toInt();
-        int skewFee = calculateSkewFeeExact(
+        // skew is calculated based on amount after all other fees applied, to get accurate skew fee
+        int256 usdAmountInt = usdAmount.toInt();
+        int256 skewFee = calculateSkewFeeRatioExact(
             config,
             marketId,
             usdAmountInt * -1, // removing value so negative
@@ -262,7 +293,7 @@ library MarketConfiguration {
     }
 
     /**
-     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`amount`)
+     * @dev Returns a skew fee based on the exact amount of synth either being added or removed from the market (`usdAmount`)
      * @dev This function is used when we call `buyExactOut` or `sellExactIn` where we know the exact synth leaving/added to the system.
      * @dev When we only know the USD amount and need to calculate expected synth after fees, we have to use
      *      `calculateSkew` instead.
@@ -272,37 +303,37 @@ library MarketConfiguration {
      *  Before fill outstanding snxETH (minus any wrapped collateral): 100 snxETH
      *  If buy trade:
      *    - user is buying 10 ETH
-     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1005 bips
+     *    - skew fee = (100 / 1000 + 110 / 1000) / 2 = 0.105 = 10.5% = 1050 bips
      *  On a sell, the amount is negative, and so if there's positive skew in the system, the fee is negative to incentize selling
      *  and if the skew is negative, then the fee for a sell would be positive to incentivize neutralizing the skew.
      */
-    function calculateSkewFeeExact(
+    function calculateSkewFeeRatioExact(
         Data storage self,
         uint128 marketId,
-        int amount,
-        uint synthPrice,
+        int256 usdAmount,
+        uint256 synthPrice,
         Transaction.Type transactionType
-    ) internal view returns (int skewFee) {
+    ) internal view returns (int256 skewFee) {
         if (self.skewScale == 0) {
             return 0;
         }
 
-        int skewScaleValue = self.skewScale.mulDecimal(synthPrice).toInt();
+        int256 skewScaleValue = self.skewScale.mulDecimal(synthPrice).toInt();
 
-        uint wrappedCollateralAmount = SpotMarketFactory
+        uint256 wrappedCollateralAmount = SpotMarketFactory
             .load()
             .synthetix
             .getMarketCollateralAmount(marketId, Wrapper.load(marketId).wrapCollateralType)
             .mulDecimal(synthPrice);
 
-        int initialSkew = SynthUtil
+        int256 initialSkew = SynthUtil
             .getToken(marketId)
             .totalSupply()
             .mulDecimal(synthPrice)
             .toInt() - wrappedCollateralAmount.toInt();
 
-        int skewAfterFill = initialSkew + amount;
-        int skewAverage = (skewAfterFill + initialSkew) / 2;
+        int256 skewAfterFill = initialSkew + usdAmount;
+        int256 skewAverage = (skewAfterFill + initialSkew) / 2;
 
         skewFee = skewAverage.divDecimal(skewScaleValue);
         // fee direction is switched on sell
@@ -318,18 +349,18 @@ library MarketConfiguration {
     function calculateSkew(
         Data storage self,
         uint128 marketId,
-        int usdAmount,
-        uint synthPrice
-    ) internal view returns (uint synthAmount) {
+        int256 usdAmount,
+        uint256 synthPrice
+    ) internal view returns (uint256 synthAmount) {
         if (self.skewScale == 0) {
             return MathUtil.abs(usdAmount).divDecimal(synthPrice);
         }
 
-        uint wrappedCollateralAmount = SpotMarketFactory.load().synthetix.getMarketCollateralAmount(
-            marketId,
-            Wrapper.load(marketId).wrapCollateralType
-        );
-        int initialSkew = SynthUtil.getToken(marketId).totalSupply().toInt() -
+        uint256 wrappedCollateralAmount = SpotMarketFactory
+            .load()
+            .synthetix
+            .getMarketCollateralAmount(marketId, Wrapper.load(marketId).wrapCollateralType);
+        int256 initialSkew = SynthUtil.getToken(marketId).totalSupply().toInt() -
             wrappedCollateralAmount.toInt();
 
         synthAmount = MathUtil.abs(
@@ -357,45 +388,50 @@ library MarketConfiguration {
      * Note: we do NOT calculate the inverse of this fee on `buyExactIn` vs `buyExactOut`.  We don't
      * believe this edge case adds any risk.  This means it could be beneficial to use `buyExactIn` vs `buyExactOut`
      */
-    function calculateUtilizationRateFee(
+    function calculateUtilizationFeeRatio(
         Data storage self,
         uint128 marketId,
-        uint amount,
+        uint256 usdAmount,
         uint256 synthPrice
-    ) internal view returns (uint utilFee) {
+    ) internal view returns (uint256 utilFee) {
         if (self.utilizationFeeRate == 0 || self.collateralLeverage == 0) {
             return 0;
         }
 
-        uint leveragedDelegatedCollateralValue = SpotMarketFactory
+        uint256 leveragedDelegatedCollateralValue = SpotMarketFactory
             .load()
             .synthetix
             .getMarketCollateral(marketId)
             .mulDecimal(self.collateralLeverage);
 
-        uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
+        uint256 totalBalance = SynthUtil.getToken(marketId).totalSupply();
 
         // Note: take into account the async order commitment amount in escrow
-        uint totalValueBeforeFill = totalBalance.mulDecimal(synthPrice);
-        uint totalValueAfterFill = totalValueBeforeFill + amount;
+        uint256 totalValueBeforeFill = totalBalance.mulDecimal(synthPrice);
+        uint256 totalValueAfterFill = totalValueBeforeFill + usdAmount;
 
         // utilization is below 100%
         if (leveragedDelegatedCollateralValue > totalValueAfterFill) {
             return 0;
         } else {
-            uint preUtilization = totalValueBeforeFill.divDecimal(
+            uint256 preUtilization = totalValueBeforeFill.divDecimal(
                 leveragedDelegatedCollateralValue
             );
             // use 100% utilization if pre-fill utilization was less than 100%
             // no fees charged below 100% utilization
-            uint preUtilizationDelta = preUtilization > 1e18 ? preUtilization - 1e18 : 0;
-            uint postUtilization = totalValueAfterFill.divDecimal(
+
+            uint256 preUtilizationDelta = preUtilization > DecimalMath.UNIT
+                ? preUtilization - DecimalMath.UNIT
+                : 0;
+            uint256 postUtilization = totalValueAfterFill.divDecimal(
                 leveragedDelegatedCollateralValue
             );
-            uint postUtilizationDelta = postUtilization - 1e18;
+            uint256 postUtilizationDelta = postUtilization - DecimalMath.UNIT;
 
             // utilization is represented as the # of percentage points above 100%
-            uint utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(100e18) / 2;
+            uint256 utilization = (preUtilizationDelta + postUtilizationDelta).mulDecimal(
+                100 * DecimalMath.UNIT
+            ) / 2;
 
             utilFee = utilization.mulDecimal(self.utilizationFeeRate);
         }
@@ -404,14 +440,15 @@ library MarketConfiguration {
     /*
      * @dev if special fee is set for a given transactor that takes precedence over the global fixed fees
      * otherwise, if async order, use async fixed fee, otherwise use atomic fixed fee
+     * @dev the code does not allow setting fixed fee to 0 for a given transactor.  If you want to disable fees for a given actor, set the fee to be very low (e.g. 1 wei)
      */
-    function _getFixedFee(
+    function _getFixedFeeRatio(
         Data storage self,
         address transactor,
         bool async
-    ) private view returns (uint fixedFee) {
-        if (self.atomicFixedFeeOverrides[transactor] > 0) {
-            fixedFee = self.atomicFixedFeeOverrides[transactor];
+    ) private view returns (uint256 fixedFee) {
+        if (self.fixedFeeOverrides[transactor] > 0) {
+            fixedFee = self.fixedFeeOverrides[transactor];
         } else {
             fixedFee = async ? self.asyncFixedFee : self.atomicFixedFee;
         }
@@ -420,7 +457,7 @@ library MarketConfiguration {
     /**
      * @dev First sends referrer fees based on fixed fee amount and configured %
      * Then if total fees for transaction are greater than 0, gets quote from
-     * fee collector and calls collectFees to send fees to fee collector
+     * fee collector and transfers the quoted amount to fee collector
      */
     function collectFees(
         Data storage self,
@@ -430,8 +467,8 @@ library MarketConfiguration {
         address referrer,
         SpotMarketFactory.Data storage factory,
         Transaction.Type transactionType
-    ) internal returns (uint collectedFees) {
-        uint referrerFeesCollected = _collectReferrerFees(
+    ) internal returns (uint256 collectedFees) {
+        uint256 referrerFeesCollected = _collectReferrerFees(
             self,
             marketId,
             fees,
@@ -440,15 +477,16 @@ library MarketConfiguration {
             transactionType
         );
 
-        int totalFees = fees.total();
+        int256 totalFees = fees.total();
+        // remove referrer fees collected prior to comparison
+        totalFees -= referrerFeesCollected.toInt();
+
         if (totalFees <= 0 || address(self.feeCollector) == address(0)) {
             return referrerFeesCollected;
         }
-        // remove fees sent to referrer when calculating fees to collect
-        totalFees -= referrerFeesCollected.toInt();
 
-        uint totalFeesUint = totalFees.toUint();
-        uint feeCollectorQuote = self.feeCollector.quoteFees(
+        uint256 totalFeesUint = totalFees.toUint();
+        uint256 feeCollectorQuote = self.feeCollector.quoteFees(
             marketId,
             totalFeesUint,
             transactor,
@@ -456,13 +494,20 @@ library MarketConfiguration {
             uint8(transactionType)
         );
 
-        // if transaction is a sell or a wrapper type, we need to withdraw the fees from the market manager
-        if (Transaction.isSell(transactionType) || Transaction.isWrapper(transactionType)) {
-            factory.synthetix.withdrawMarketUsd(marketId, address(this), feeCollectorQuote);
+        if (feeCollectorQuote > totalFeesUint) {
+            feeCollectorQuote = totalFeesUint;
         }
 
-        // solhint-disable-next-line numcast/safe-cast
-        self.feeCollector.collectFees(marketId, totalFeesUint, transactor, uint8(transactionType));
+        // if transaction is a sell or a wrapper type, we need to withdraw the fees from the market manager
+        if (Transaction.isSell(transactionType) || Transaction.isWrapper(transactionType)) {
+            factory.synthetix.withdrawMarketUsd(
+                marketId,
+                address(self.feeCollector),
+                feeCollectorQuote
+            );
+        } else {
+            factory.usdToken.transfer(address(self.feeCollector), feeCollectorQuote);
+        }
 
         return referrerFeesCollected + feeCollectorQuote;
     }
@@ -479,12 +524,12 @@ library MarketConfiguration {
         address referrer,
         SpotMarketFactory.Data storage factory,
         Transaction.Type transactionType
-    ) private returns (uint referrerFeesCollected) {
+    ) private returns (uint256 referrerFeesCollected) {
         if (referrer == address(0)) {
             return 0;
         }
 
-        uint referrerPercentage = self.referrerShare[referrer];
+        uint256 referrerPercentage = self.referrerShare[referrer];
         referrerFeesCollected = fees.fixedFees.mulDecimal(referrerPercentage);
 
         if (referrerFeesCollected > 0) {
@@ -499,7 +544,7 @@ library MarketConfiguration {
     /*
      * @dev This equation allows us to calculate skew fee % from any given point on the skew scale
      * to where we should end up after a fill.  The equation is derived from the following:
-     *  K*2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
+     *  K/2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
      *  K = configured skew scale
      *  C = amount (cost in USD)
      *  Ni = initial skew
@@ -509,20 +554,20 @@ library MarketConfiguration {
      */
     function _calculateSkewAmountOut(
         Data storage self,
-        int amount,
-        uint price,
-        int initialSkew
-    ) private view returns (int amountOut) {
-        uint skewPriceRatio = self.skewScale.divDecimal(2 * price);
-        int costPriceSkewRatio = (8 * amount.mulDecimal(price.toInt())).divDecimal(
+        int256 usdAmount,
+        uint256 price,
+        int256 initialSkew
+    ) private view returns (int256 amountOut) {
+        uint256 skewPriceRatio = self.skewScale.divDecimal(2 * price);
+        int256 costPriceSkewRatio = (8 * usdAmount.mulDecimal(price.toInt())).divDecimal(
             self.skewScale.toInt()
         );
-        int initialSkewPriceRatio = (2 * initialSkew.mulDecimal(price.toInt())).divDecimal(
+        int256 initialSkewPriceRatio = (2 * initialSkew.mulDecimal(price.toInt())).divDecimal(
             self.skewScale.toInt()
         );
 
-        int ratioSquared = MathUtil.pow(initialSkewPriceRatio + 2 * price.toInt(), 2);
-        int sqrt = MathUtil.sqrt(costPriceSkewRatio + ratioSquared);
+        int256 ratioSquared = MathUtil.pow(initialSkewPriceRatio + 2 * price.toInt(), 2);
+        int256 sqrt = MathUtil.sqrt(costPriceSkewRatio + ratioSquared);
 
         return skewPriceRatio.toInt().mulDecimal(sqrt) - self.skewScale.toInt() - initialSkew;
     }

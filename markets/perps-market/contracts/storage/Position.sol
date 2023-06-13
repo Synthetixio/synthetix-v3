@@ -1,9 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "./PerpsMarket.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {PerpsMarket} from "./PerpsMarket.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
+import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 library Position {
     using SafeCastI256 for int256;
@@ -14,12 +17,12 @@ library Position {
     using DecimalMath for uint256;
     using DecimalMath for int128;
     using PerpsMarket for PerpsMarket.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     struct Data {
         uint128 marketId;
         int128 size;
         uint128 latestInteractionPrice;
-        uint128 latestInteractionMargin;
         int128 latestInteractionFunding;
     }
 
@@ -27,74 +30,43 @@ library Position {
         self.size = newPosition.size;
         self.marketId = newPosition.marketId;
         self.latestInteractionPrice = newPosition.latestInteractionPrice;
-        self.latestInteractionMargin = newPosition.latestInteractionMargin;
         self.latestInteractionFunding = newPosition.latestInteractionFunding;
     }
 
     function clear(Data storage self) internal {
         self.size = 0;
         self.latestInteractionPrice = 0;
-        self.latestInteractionMargin = 0;
         self.latestInteractionFunding = 0;
     }
 
-    function calculateExpectedPosition(
+    function getPositionData(
         Data storage self,
         uint price
-    ) internal view returns (int, int, int, int, int) {
-        return
-            _calculateExpectedPosition(
-                self.marketId,
-                self.size,
-                self.latestInteractionPrice,
-                self.latestInteractionMargin,
-                self.latestInteractionFunding,
-                price
-            );
-    }
-
-    function calculateExpectedPosition(
-        Data memory self,
-        uint price
-    ) internal view returns (int, int, int, int, int) {
-        return
-            _calculateExpectedPosition(
-                self.marketId,
-                self.size,
-                self.latestInteractionPrice,
-                self.latestInteractionMargin,
-                self.latestInteractionFunding,
-                price
-            );
-    }
-
-    function _calculateExpectedPosition(
-        uint128 marketId,
-        int128 size,
-        uint128 latestInteractionPrice,
-        uint128 latestInteractionMargin,
-        int128 latestInteractionFunding,
-        uint price
     )
-        private
+        internal
         view
         returns (
-            int marginProfitFunding,
+            uint256 notionalValue,
             int pnl,
             int accruedFunding,
             int netFundingPerUnit,
             int nextFunding
         )
     {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(self.marketId);
+
         nextFunding = perpsMarket.lastFundingValue + perpsMarket.unrecordedFunding(price);
-        netFundingPerUnit = nextFunding - latestInteractionFunding;
+        netFundingPerUnit = nextFunding - self.latestInteractionFunding;
 
-        accruedFunding = size.mulDecimal(netFundingPerUnit);
+        accruedFunding = self.size.mulDecimal(netFundingPerUnit);
 
-        int priceShift = price.toInt() - latestInteractionPrice.toInt();
-        pnl = size.mulDecimal(priceShift);
+        int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
+        pnl = self.size.mulDecimal(priceShift) + accruedFunding;
 
-        marginProfitFunding = latestInteractionMargin.toInt() + pnl + accruedFunding;
+        notionalValue = getNotionalValue(self, price);
+    }
+
+    function getNotionalValue(Data storage self, uint256 price) internal view returns (uint256) {
+        return MathUtil.abs(self.size).mulDecimal(price);
     }
 }

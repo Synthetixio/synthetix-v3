@@ -40,16 +40,28 @@ describe('DecayTokenModule', () => {
     await tx.wait();
   });
 
+  const restore = snapshotCheckpoint(getProvider);
+
   describe('When attempting to initialize it again', () => {
-    it('reverts', async () => {
+    it('with new decimal reverts', async () => {
       await assertRevert(
-        TokenModule.initialize('Synthetix Network Token Updated', 'snx', decimal),
+        TokenModule.initialize('Synthetix Network Token Updated', 'snx', decimal + 1),
         'AlreadyInitialized()'
       );
+    });
+
+    it('with the same decimal', async () => {
+      await TokenModule.initialize('Synthetix Network Token Updated', 'snx2', decimal);
+
+      assert.equal(await TokenModule.name(), 'Synthetix Network Token Updated');
+      assert.equal(await TokenModule.symbol(), 'snx2');
+      assertBn.equal(await TokenModule.decimals(), 18);
     });
   });
 
   describe('Before minting any tokens', () => {
+    before(restore);
+
     it('the total supply is 0', async () => {
       assertBn.equal(await TokenModule.totalSupply(), 0);
     });
@@ -59,10 +71,9 @@ describe('DecayTokenModule', () => {
       assert.equal(await TokenModule.symbol(), 'snx');
       assertBn.equal(await TokenModule.decimals(), decimal);
       assertBn.equal(await TokenModule.decayRate(), decayRate);
+      assert.equal(await TokenModule.isInitialized(), true);
     });
   });
-
-  const restore = snapshotCheckpoint(getProvider);
 
   describe('mint', () => {
     before('100 tokens is minted to user1', async () => {
@@ -358,6 +369,24 @@ describe('DecayTokenModule', () => {
       assertBn.equal(
         await TokenModule.balanceOf(await user1.getAddress()),
         parseEther('98.0198673305761728')
+      );
+    });
+  });
+
+  describe('set decay rate limits', async () => {
+    before(restore);
+
+    const DECAY_RATE_UPPER_BOUND = ethers.utils.parseEther('31536000');
+
+    it('can set the decay rate to the upper bound', async () => {
+      await TokenModule.connect(owner).setDecayRate(DECAY_RATE_UPPER_BOUND);
+      assertBn.equal(await TokenModule.decayRate(), DECAY_RATE_UPPER_BOUND);
+    });
+
+    it('cannot set the decay rate above the upper bound', async () => {
+      await assertRevert(
+        TokenModule.connect(owner).setDecayRate(DECAY_RATE_UPPER_BOUND.add(1)),
+        'InvalidDecayRate()'
       );
     });
   });

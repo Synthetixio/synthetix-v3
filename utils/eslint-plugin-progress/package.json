@@ -1,0 +1,6 @@
+{
+  "name": "eslint-plugin-progress",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js"
+}

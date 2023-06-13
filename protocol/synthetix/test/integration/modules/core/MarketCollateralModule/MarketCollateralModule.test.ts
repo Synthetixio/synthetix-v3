@@ -1,7 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { ethers } from 'ethers';
+import { ContractTransaction, ethers, Signer } from 'ethers';
 import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../../verifications';
 
@@ -9,7 +9,7 @@ describe('MarketCollateralModule', function () {
   const { signers, systems, MockMarket, marketId, collateralAddress, collateralContract, restore } =
     bootstrapWithMockMarketAndPool();
 
-  let owner: ethers.Signer, user1: ethers.Signer;
+  let owner: Signer, user1: Signer;
 
   describe('MarketCollateralModule', function () {
     before('identify signers', async () => {
@@ -37,7 +37,7 @@ describe('MarketCollateralModule', function () {
       });
 
       describe('successful invoke', () => {
-        let tx: ethers.providers.TransactionReceipt;
+        let tx: ContractTransaction;
         before('configure', async () => {
           tx = await systems()
             .Core.connect(owner)
@@ -118,7 +118,7 @@ describe('MarketCollateralModule', function () {
       );
 
       describe('invoked successfully', () => {
-        let tx: ethers.providers.TransactionReceipt;
+        let tx: ContractTransaction;
         before('deposit', async () => {
           tx = await MockMarket()
             .connect(user1)

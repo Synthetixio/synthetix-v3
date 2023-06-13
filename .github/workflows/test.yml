@@ -21,6 +21,7 @@ jobs:
             main,
             oracle-manager,
             spot-market,
+            perps-market,
           ]
         include:
           - package: core-contracts
@@ -41,6 +42,8 @@ jobs:
             workspace: "@synthetixio/oracle-manager"
           - package: spot-market
             workspace: "@synthetixio/spot-market"
+          - package: perps-market
+            workspace: "@synthetixio/perps-market"
           - package: main
             workspace: "@synthetixio/main"
     steps:
@@ -80,7 +83,6 @@ jobs:
           else
             echo 'SKIP. No "check:storage" script'
           fi
-
       - name: Execute tests
         run: |
           if yarn workspace ${{ matrix.workspace }} run | grep coverage; then

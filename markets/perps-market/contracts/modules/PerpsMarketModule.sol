@@ -1,14 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../storage/PerpsMarket.sol";
-import "../storage/MarketConfiguration.sol";
-import "../storage/PerpsPrice.sol";
-import "../storage/AsyncOrder.sol";
-import "../interfaces/IPerpsMarketModule.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
 
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
+    using AsyncOrder for AsyncOrder.Data;
 
     function skew(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).skew;
@@ -19,11 +20,15 @@ contract PerpsMarketModule is IPerpsMarketModule {
     }
 
     function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
-        return MarketConfiguration.load(marketId).maxMarketValue;
+        return PerpsMarketConfiguration.load(marketId).maxMarketValue;
     }
 
     function currentFundingRate(uint128 marketId) external view override returns (int) {
         return PerpsMarket.load(marketId).currentFundingRate();
+    }
+
+    function currentFundingVelocity(uint128 marketId) external view override returns (int) {
+        return PerpsMarket.load(marketId).currentFundingVelocity();
     }
 
     function indexPrice(uint128 marketId) external view override returns (uint) {
@@ -31,14 +36,28 @@ contract PerpsMarketModule is IPerpsMarketModule {
     }
 
     function fillPrice(uint128 marketId) external view override returns (uint) {
-        // To get the current fill price we pass in size 0
-        int sizeToUse = 0;
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
-                MarketConfiguration.load(marketId).skewScale,
-                sizeToUse,
+                PerpsMarketConfiguration.load(marketId).skewScale,
+                0,
                 PerpsPrice.getCurrentPrice(marketId)
             );
+    }
+
+    function getMarketSummary(
+        uint128 marketId
+    ) external view override returns (MarketSummary memory summary) {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        return
+            MarketSummary({
+                skew: market.skew,
+                size: market.size,
+                maxOpenInterest: this.maxOpenInterest(marketId),
+                currentFundingRate: market.currentFundingRate(),
+                currentFundingVelocity: market.currentFundingVelocity(),
+                indexPrice: this.indexPrice(marketId),
+                fillPrice: this.fillPrice(marketId)
+            });
     }
 }

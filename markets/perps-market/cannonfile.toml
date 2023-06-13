@@ -34,11 +34,20 @@ artifact = "AsyncOrderModule"
 [contract.AtomicOrderModule]
 artifact = "AtomicOrderModule"
 
+[contract.PerpsAccountModule]
+artifact = "PerpsAccountModule"
+
+[contract.PerpsMarketModule]
+artifact = "PerpsMarketModule"
+
 [contract.LimitOrderModule]
 artifact = "LimitOrderModule"
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
+
+[contract.MarketConfigurationModule]
+artifact = "MarketConfigurationModule"
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
@@ -53,19 +62,26 @@ abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
+[contract.GlobalPerpsMarketModule]
+artifact = "GlobalPerpsMarketModule"
+
 # Core
-[router.SpotMarketRouter]
+[router.PerpsMarketRouter]
 contracts = [
   "synthetix.AccountModule",
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
   "PerpsMarketFactoryModule",
+  "PerpsAccountModule",
+  "PerpsMarketModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
   "CollateralModule",
   "FeatureFlagModule",
   "LimitOrderModule",
-  "LiquidationModule"
+  "LiquidationModule",
+  "MarketConfigurationModule",
+  "GlobalPerpsMarketModule"
 ]
 depends = [
   "import.synthetix",
@@ -73,21 +89,25 @@ depends = [
   "contract.PerpsMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.PerpsAccountModule",
+  "contract.PerpsMarketModule",
   "contract.CollateralModule",
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",
-  "contract.LiquidationModule"
+  "contract.LiquidationModule",
+  "contract.MarketConfigurationModule",
+  "contract.GlobalPerpsMarketModule"
 ]
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]
-fromCall.func= "owner"
+fromCall.func = "owner"
 func = "upgradeTo"
-args = ["<%= contracts.SpotMarketRouter.address %>"]
-factory.PerpsMarketProxy.abiOf = ["SpotMarketRouter"]
+args = ["<%= contracts.PerpsMarketRouter.address %>"]
+factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
-depends = ["contract.InitialProxy", "router.SpotMarketRouter"]
+depends = ["contract.InitialProxy", "router.PerpsMarketRouter"]
 
 [invoke.setSynthetix]
 target = ["PerpsMarketProxy"]

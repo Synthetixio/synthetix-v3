@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.0.4-alpha.0",
+  "version": "3.1.1",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
@@ -14,7 +14,7 @@
     "coverage": "yarn build && hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
-    "publish-contracts": "yarn build && cannon publish synthetix:$(node -p 'require(`./package.json`).version') --quiet --private-key $DEPLOYER_PRIVATE_KEY",
+    "publish-contracts": "yarn build && cannon publish synthetix:$(node -p 'require(`./package.json`).version') --quiet",
     "postpack": "yarn publish-contracts"
   },
   "keywords": [],
@@ -28,12 +28,19 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/builder": "2.1.10",
+    "@usecannon/builder": "2.4.15",
     "ethers": "^5.0.0",
     "handlebars": "^4.7.7",
     "hardhat": "2.13.0",
     "solidity-ast": "0.4.46",
     "solidity-docgen": "0.6.0-beta.31",
     "ts-node": "10.9.1"
+  },
+  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27",
+  "depcheck": {
+    "ignoreMatches": [
+      "@synthetixio/core-contracts",
+      "@synthetixio/core-modules"
+    ]
   }
 }

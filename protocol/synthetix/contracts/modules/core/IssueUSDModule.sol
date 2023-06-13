@@ -74,6 +74,13 @@ contract IssueUSDModule is IIssueUSDModule {
             );
         }
 
+        uint256 feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_MINT_FEE_RATIO, 0));
+        address feeAddress = feeAmount > 0
+            ? Config.readAddress(_CONFIG_MINT_FEE_ADDRESS, address(0))
+            : address(0);
+
+        newDebt += feeAmount.toInt();
+
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         if (newDebt > 0) {
@@ -82,11 +89,6 @@ contract IssueUSDModule is IIssueUSDModule {
                 collateralValue
             );
         }
-
-        uint feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_MINT_FEE_RATIO, 0));
-        address feeAddress = feeAmount > 0
-            ? Config.readAddress(_CONFIG_MINT_FEE_ADDRESS, address(0))
-            : address(0);
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
@@ -99,8 +101,10 @@ contract IssueUSDModule is IIssueUSDModule {
         // Mint stablecoins to the sender
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
 
-        if (feeAmount > 0) {
+        if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
+
+            emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
         }
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
@@ -126,8 +130,8 @@ contract IssueUSDModule is IIssueUSDModule {
             revert InsufficientDebt(debt);
         }
 
-        uint feePercent = Config.readUint(_CONFIG_BURN_FEE_RATIO, 0);
-        uint feeAmount = amount - amount.divDecimal(DecimalMath.UNIT + feePercent);
+        uint256 feePercent = Config.readUint(_CONFIG_BURN_FEE_RATIO, 0);
+        uint256 feeAmount = amount - amount.divDecimal(DecimalMath.UNIT + feePercent);
         address feeAddress = feeAmount > 0
             ? Config.readAddress(_CONFIG_BURN_FEE_ADDRESS, address(0))
             : address(0);
@@ -141,8 +145,10 @@ contract IssueUSDModule is IIssueUSDModule {
         // Burn the stablecoins
         AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
-        if (feeAmount > 0) {
+        if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
+
+            emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
         }
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();

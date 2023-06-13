@@ -18,13 +18,13 @@ interface IRewardDistributor is IERC165 {
         uint256 amount
     ) external returns (bool);
 
-    /// @notice This function is called by the Synthetix CoreProxy whenever a staker changes their
-    /// position on a pool which this distributor is registered
-    function onStakerChanged(
+    /// @notice This function is called by the Synthetix Core Proxy whenever
+    /// a position is updated on a pool which this distributor is registered
+    function onPositionUpdated(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint newShares
+        uint256 newShares
     ) external;
 
     /// @notice Address to ERC-20 token distributed by this distributor, for display purposes only

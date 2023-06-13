@@ -5,6 +5,7 @@ import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
+import hre from 'hardhat';
 
 describe('ExternalNode', function () {
   const { getContract, getSigners } = bootstrap();
@@ -16,7 +17,7 @@ describe('ExternalNode', function () {
     NodeModule = getContract('NodeModule');
   });
 
-  it('can register and process and external node.', async () => {
+  it('can register and process an external node.', async () => {
     const [owner] = getSigners();
     const price = 100;
     const timestamp = 200;

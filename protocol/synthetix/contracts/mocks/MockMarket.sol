@@ -75,12 +75,16 @@ contract MockMarket is IMarket {
         return "MockMarket";
     }
 
-    function locked(uint128) external view override returns (uint256) {
+    function minimumCredit(uint128) external view override returns (uint256) {
         return _locked;
     }
 
     function setPrice(uint256 newPrice) external {
         _price = newPrice;
+    }
+
+    function setMinDelegationTime(uint32 minDelegationTime) external {
+        IMarketManagerModule(_proxy).setMarketMinDelegateTime(_marketId, minDelegationTime);
     }
 
     function price() external view returns (uint256) {

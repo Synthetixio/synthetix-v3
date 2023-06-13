@@ -11,15 +11,13 @@ module.exports = {
     Proxy: 'readonly',
     Promise: 'readonly',
   },
-  plugins: ['no-only-tests'],
-  parser: '@typescript-eslint/parser',
+  plugins: ['progress', 'no-only-tests'],
   parserOptions: {
     ecmaVersion: 12,
-    tsconfigRootDir: __dirname,
-    project: ['./tsconfig.eslint.json'],
   },
   ignorePatterns: ['/*.js'],
   rules: {
+    'progress/enable': process.env.ESLINT_PROGRESS === 'true' ? 1 : 0,
     indent: 'off', // prettier
     'no-only-tests/no-only-tests': 'error',
     'linebreak-style': 'off', // prettier
@@ -32,8 +30,9 @@ module.exports = {
     {
       files: ['**/*.ts'],
       extends: ['plugin:@typescript-eslint/recommended'],
+      parser: '@typescript-eslint/parser',
       parserOptions: {
-        project: ['./tsconfig.json'],
+        project: ['./tsconfig.eslint.json'],
       },
       rules: {
         '@typescript-eslint/no-floating-promises': 'error',

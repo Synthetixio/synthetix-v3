@@ -4,8 +4,11 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
+import { SettlementStrategy } from './generated/typechain/SpotMarketProxy';
+
+const ASYNC_BUY_TRANSACTION = 3;
 
 describe('AsyncOrderModule pyth', () => {
   const { systems, signers, marketId, provider } = bootstrapTraders(
@@ -18,7 +21,7 @@ describe('AsyncOrderModule pyth', () => {
     synth: SynthRouter,
     startTime: number,
     strategyId: number,
-    pythSettlementStrategy: Record<string, unknown>,
+    pythSettlementStrategy: SettlementStrategy.DataStruct,
     pythCallData: string,
     extraData: string;
 
@@ -30,7 +33,7 @@ describe('AsyncOrderModule pyth', () => {
 
   before('add settlement strategy', async () => {
     pythSettlementStrategy = {
-      strategyType: 2,
+      strategyType: 1, // pyth
       settlementDelay: 5,
       settlementWindowDuration: 120,
       priceVerificationContract: systems().OracleVerifierMock.address,
@@ -38,11 +41,16 @@ describe('AsyncOrderModule pyth', () => {
       url: 'https://fakeapi.pyth.network/',
       settlementReward: bn(5),
       priceDeviationTolerance: bn(0.2),
+      disabled: false,
+      minimumUsdExchangeAmount: bn(0.000001),
+      maxRoundingLoss: bn(0.000001),
     };
 
-    strategyId = await systems()
-      .SpotMarket.connect(marketOwner)
-      .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy);
+    strategyId = (
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy)
+    ).toNumber();
     await systems()
       .SpotMarket.connect(marketOwner)
       .addSettlementStrategy(marketId(), pythSettlementStrategy);
@@ -58,14 +66,23 @@ describe('AsyncOrderModule pyth', () => {
       await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
       commitTxn = await systems()
         .SpotMarket.connect(trader1)
-        .commitOrder(marketId(), 2, bn(1000), strategyId, bn(0.8), ethers.constants.AddressZero);
+        .commitOrder(
+          marketId(),
+          ASYNC_BUY_TRANSACTION,
+          bn(1000),
+          strategyId,
+          bn(0.8),
+          ethers.constants.AddressZero
+        );
       startTime = await getTime(provider());
     });
 
     it('emits event', async () => {
       await assertEvent(
         commitTxn,
-        `OrderCommitted(${marketId()}, 2, ${bn(1000)}, 1, "${await trader1.getAddress()}"`,
+        `OrderCommitted(${marketId()}, ${ASYNC_BUY_TRANSACTION}, ${bn(
+          1000
+        )}, 1, "${await trader1.getAddress()}"`,
         systems().SpotMarket
       );
     });
@@ -124,7 +141,7 @@ describe('AsyncOrderModule pyth', () => {
       });
 
       // ($1000 sent - $5 keeper) / ($1100/eth price) * 0.99 (1% fee) = 0.8955
-      const expectedReturnAmt = bn('0.8955');
+      const expectedReturnAmt = bn(0.8955);
 
       it('sent correct amount to trader', async () => {
         assertBn.equal(await synth.balanceOf(await trader1.getAddress()), expectedReturnAmt);
@@ -139,6 +156,64 @@ describe('AsyncOrderModule pyth', () => {
           systems().SpotMarket
         );
       });
+    });
+  });
+
+  describe('no Settlement Reward', () => {
+    before('add settlement strategy with 0 settlement reward and commit an order', async () => {
+      pythSettlementStrategy = {
+        strategyType: 1, // pyth
+        settlementDelay: 5,
+        settlementWindowDuration: 120,
+        priceVerificationContract: systems().OracleVerifierMock.address,
+        feedId: ethers.utils.formatBytes32String('ETH/USD'),
+        url: 'https://fakeapi.pyth.network/',
+        settlementReward: 0,
+        priceDeviationTolerance: bn(0.2),
+        disabled: false,
+        minimumUsdExchangeAmount: bn(0.000001),
+        maxRoundingLoss: bn(0.000001),
+      };
+
+      const noSettlementStrategyId = (
+        await systems()
+          .SpotMarket.connect(marketOwner)
+          .callStatic.addSettlementStrategy(marketId(), pythSettlementStrategy)
+      ).toNumber();
+      await systems()
+        .SpotMarket.connect(marketOwner)
+        .addSettlementStrategy(marketId(), pythSettlementStrategy);
+
+      await systems().USD.connect(trader1).approve(systems().SpotMarket.address, bn(1000));
+      await systems()
+        .SpotMarket.connect(trader1)
+        .commitOrder(
+          marketId(),
+          ASYNC_BUY_TRANSACTION,
+          bn(1000),
+          noSettlementStrategyId,
+          bn(0.8),
+          ethers.constants.AddressZero
+        );
+      startTime = await getTime(provider());
+    });
+
+    before('setup bytes data', () => {
+      extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [marketId(), 2]);
+      pythCallData = ethers.utils.solidityPack(
+        ['bytes32', 'uint64'],
+        [pythSettlementStrategy.feedId, startTime + 5]
+      );
+    });
+
+    before('settle', async () => {
+      await fastForwardTo(startTime + 6, provider());
+      await systems().SpotMarket.connect(keeper).settlePythOrder(pythCallData, extraData);
+    });
+
+    it('sent correct amount to trader', async () => {
+      //0.8955 + 0.9 = 1.7955
+      assertBn.equal(await synth.balanceOf(await trader1.getAddress()), bn(1.7955));
     });
   });
 });

@@ -4,7 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { bootstrapTraders, bootstrapWithSynth } from './bootstrap';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
 
 const bn = (n: number) => wei(n).toBN();
 
@@ -154,6 +154,18 @@ describe('WrapperModule', () => {
         );
       });
     });
+
+    describe('does not allow you to update collateral type with oustanding collateral deposited', () => {
+      it('reverts on update with different collateral type', async () => {
+        await assertRevert(
+          systems()
+            .SpotMarket.connect(marketOwner)
+            // use random address
+            .setWrapper(marketId(), systems().FeeCollectorMock.address, bn(500)),
+          'InvalidCollateralType'
+        );
+      });
+    });
   });
 
   describe('unwrap', () => {
@@ -281,6 +293,23 @@ describe('WrapperModule', () => {
       assertBn.equal(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address),
         previousFeeCollectorBalance
+      );
+    });
+  });
+
+  describe('setWrapperFees guardrails', () => {
+    it('cannot be set such that the sum of the fees is negative', async () => {
+      await assertRevert(
+        systems().SpotMarket.connect(marketOwner).setWrapperFees(marketId(), bn(0.2), bn(-0.3)),
+        'InvalidWrapperFees'
+      );
+      await assertRevert(
+        systems().SpotMarket.connect(marketOwner).setWrapperFees(marketId(), bn(-0.6), bn(0.5)),
+        'InvalidWrapperFees'
+      );
+      await assertRevert(
+        systems().SpotMarket.connect(marketOwner).setWrapperFees(marketId(), bn(-0.1), bn(-0.1)),
+        'InvalidWrapperFees'
       );
     });
   });

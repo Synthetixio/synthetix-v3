@@ -17,7 +17,15 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/hardhat-storage": "workspace:*",
     "@synthetixio/router": "workspace:*",
+    "@usecannon/builder": "2.4.15",
+    "cannon-plugin-router": "1.0.11",
     "hardhat": "2.13.0",
-    "hardhat-cannon": "2.1.10"
+    "hardhat-cannon": "2.4.15"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@synthetixio/core-contracts",
+      "@synthetixio/core-modules"
+    ]
   }
 }

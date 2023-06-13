@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.11 <0.9.0;
 
 import "../interfaces/external/IPythVerifier.sol";
 import "../interfaces/external/IChainlinkVerifier.sol";
@@ -46,7 +46,7 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
         verifierResponse = abi.encode("ETH-USD", block.timestamp, 10, priceFormatted);
     }
 
-    function getUpdateFee(uint updateDataSize) external view override returns (uint) {
+    function getUpdateFee(uint256 updateDataSize) external view override returns (uint256) {
         return 1;
     }
 }

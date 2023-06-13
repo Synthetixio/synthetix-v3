@@ -1,7 +1,8 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
@@ -16,7 +17,7 @@ describe('IssueUSDModule', function () {
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let MockMarket: ethers.Contract;
-  let marketId: number;
+  let marketId: BigNumber;
 
   const feeAddress = '0x1234567890123456789012345678901234567890';
 
@@ -206,8 +207,10 @@ describe('IssueUSDModule', function () {
           );
       });
 
+      let tx: ethers.providers.TransactionResponse;
+
       before('mint', async () => {
-        await systems().Core.connect(user1).mintUsd(
+        tx = await systems().Core.connect(user1).mintUsd(
           accountId,
           poolId,
           collateralAddress(),
@@ -234,6 +237,16 @@ describe('IssueUSDModule', function () {
 
       it('sent USD to the fee address', async () => {
         assertBn.equal(await systems().USD.balanceOf(feeAddress), depositAmount.div(1000));
+      });
+
+      it('emitted event', async () => {
+        await assertEvent(
+          tx,
+          `IssuanceFeePaid(${accountId}, ${poolId}, "${collateralAddress()}", ${depositAmount.div(
+            1000
+          )})`,
+          systems().Core
+        );
       });
     });
   });
@@ -349,9 +362,11 @@ describe('IssueUSDModule', function () {
           );
       });
 
+      let tx: ethers.providers.TransactionResponse;
+
       before('account partial burn debt', async () => {
         // in order to burn all with the fee we need a bit more
-        await systems()
+        tx = await systems()
           .Core.connect(user1)
           .burnUsd(accountId, poolId, collateralAddress(), depositAmount); // pay off everything
       });
@@ -364,6 +379,16 @@ describe('IssueUSDModule', function () {
 
       it('sent money to the fee address', async () => {
         assertBn.equal(await systems().USD.balanceOf(feeAddress), depositAmount.div(1000));
+      });
+
+      it('emitted event', async () => {
+        await assertEvent(
+          tx,
+          `IssuanceFeePaid(${accountId}, ${poolId}, "${collateralAddress()}", ${depositAmount.div(
+            1000
+          )})`,
+          systems().Core
+        );
       });
     });
   });
@@ -412,7 +437,7 @@ describe('IssueUSDModule', function () {
 
     describe('adjust system max c ratio', async () => {
       before('adjust max liquidity ratio', async () => {
-        await systems().Core.setMinLiquidityRatio(ethers.utils.parseEther('2'));
+        await systems().Core['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 
       it('try to create debt beyond system max c ratio', exploit(2));

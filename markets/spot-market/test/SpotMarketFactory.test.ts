@@ -1,9 +1,12 @@
-import { ethers as Ethers } from 'ethers';
+import { ethers as Ethers, ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
-import { SynthRouter } from '../generated/typechain';
+import { SynthRouter } from './generated/typechain';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+
+import { ISynthTokenModule__factory } from '../typechain-types/index';
 
 describe('SpotMarketFactory', () => {
   const { systems, signers, marketId, aggregator, restore } = bootstrapTraders(
@@ -25,6 +28,15 @@ describe('SpotMarketFactory', () => {
   describe('spot market initialization', () => {
     const tokenName = 'Synthetic BTC';
 
+    describe('with zero address for synth owner', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          systems().SpotMarket.createSynth(tokenName, 'sBTC', Ethers.constants.AddressZero),
+          'InvalidMarketOwner'
+        );
+      });
+    });
+
     before('register synth', async () => {
       await systems().SpotMarket.callStatic.createSynth(
         tokenName,
@@ -36,6 +48,68 @@ describe('SpotMarketFactory', () => {
 
     it('check market name', async () => {
       assert.equal(await systems().SpotMarket.name(2), tokenName + ' Spot Market');
+    });
+  });
+
+  describe('upgrade synth', () => {
+    it('fails if no upgrade is available', async () => {
+      await assertRevert(
+        systems().SpotMarket.upgradeSynthImpl(marketId()),
+        'NoChange()',
+        systems().SpotMarket
+      );
+    });
+
+    describe('when upgraded impl is set', () => {
+      let tx: ethers.providers.TransactionResponse;
+      before(async () => {
+        // just set it to USD for testing purposes
+        await systems().SpotMarket.setSynthImplementation(systems().USDRouter.address);
+        tx = await systems().SpotMarket.upgradeSynthImpl(marketId());
+      });
+
+      it('has upgraded impl address', async () => {
+        assert.equal(
+          await systems().SpotMarket.getSynthImpl(marketId()),
+          systems().USDRouter.address
+        );
+      });
+
+      it('emits event', async () => {
+        await assertEvent(
+          tx,
+          `SynthImplementationUpgraded(${marketId()}, "${await systems().SpotMarket.getSynth(
+            marketId()
+          )}", "${systems().USDRouter.address}")`,
+          systems().SpotMarket
+        );
+      });
+    });
+  });
+
+  describe('set decay rate', () => {
+    it('only works for market owner', async () => {
+      await assertRevert(
+        systems().SpotMarket.connect(user1).setDecayRate(marketId(), 1234),
+        'OnlyMarketOwner'
+      );
+    });
+
+    describe('success', () => {
+      before(restore);
+
+      before('set decay', async () => {
+        await systems().SpotMarket.connect(marketOwner).setDecayRate(marketId(), 1234);
+      });
+
+      it('sets the decay rate on the underlying synth', async () => {
+        const decayRate = await ISynthTokenModule__factory.connect(
+          await systems().SpotMarket.getSynth(marketId()),
+          user1
+        ).callStatic.decayRate();
+
+        assertBn.equal(decayRate, 1234);
+      });
     });
   });
 
@@ -133,7 +207,7 @@ describe('SpotMarketFactory', () => {
       });
 
       it('should return $10,000', async () => {
-        assertBn.equal(await systems().SpotMarket.locked(marketId()), bn(10_000));
+        assertBn.equal(await systems().SpotMarket.minimumCredit(marketId()), bn(10_000));
       });
     });
 
@@ -143,7 +217,7 @@ describe('SpotMarketFactory', () => {
       });
 
       it('should return $5,000', async () => {
-        assertBn.equal(await systems().SpotMarket.locked(marketId()), bn(5_000));
+        assertBn.equal(await systems().SpotMarket.minimumCredit(marketId()), bn(5_000));
       });
     });
   });

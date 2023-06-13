@@ -47,7 +47,6 @@ contract VaultModule is IVaultModule {
         uint256 leverage
     ) external override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
-        Pool.loadExisting(poolId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         // Each collateral type may specify a minimum collateral amount that can be delegated.
@@ -63,19 +62,20 @@ contract VaultModule is IVaultModule {
         if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
 
         // Identify the vault that corresponds to this collateral type and pool id.
-        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
+        Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
 
         // Use account interaction to update its rewards.
         vault.updateRewards(accountId, poolId, collateralType);
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
+        // Conditions for collateral amount
+
         // Ensure current collateral amount differs from the new collateral amount.
         if (newCollateralAmountD18 == currentCollateralAmount) revert InvalidCollateralAmount();
-
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
-        if (newCollateralAmountD18 > currentCollateralAmount) {
+        else if (newCollateralAmountD18 > currentCollateralAmount) {
             // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
             CollateralConfiguration.collateralEnabled(collateralType);
 
@@ -83,6 +83,12 @@ contract VaultModule is IVaultModule {
                 accountId,
                 collateralType,
                 newCollateralAmountD18 - currentCollateralAmount
+            );
+
+            // if decreasing delegation amount, ensure min time has elapsed
+        } else {
+            Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
+                vault.currentEpoch().lastDelegationTime[accountId]
             );
         }
 
@@ -121,6 +127,9 @@ contract VaultModule is IVaultModule {
             // connected market has its capacity locked.
             _verifyNotCapacityLocked(poolId);
         }
+
+        // solhint-disable-next-line numcast/safe-cast
+        vault.currentEpoch().lastDelegationTime[accountId] = uint64(block.timestamp);
 
         emit DelegationUpdated(
             accountId,

@@ -1,10 +1,9 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "0.0.2",
-  "description": "Spot Market implementation",
-  "private": true,
+  "version": "3.1.1",
+  "description": "Perps Market implementation",
   "scripts": {
-    "build1": "hardhat storage:verify && hardhat cannon:build",
+    "build": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean",
@@ -12,7 +11,9 @@
     "test": "hardhat test",
     "coverage": "yarn test",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "publish-contracts": "yarn build && cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --quiet",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "postpack": "yarn publish-contracts"
   },
   "keywords": [],
   "author": "Synthetix",
@@ -30,11 +31,20 @@
     "@synthetixio/router": "workspace:*",
     "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/cli": "2.1.10",
+    "@usecannon/cli": "2.4.15",
     "ethers": "^5.0.0",
     "hardhat": "2.13.0",
     "solidity-docgen": "0.6.0-beta.31",
     "ts-node": "10.9.1",
     "typescript": "4.9.3"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@synthetixio/core-contracts",
+      "@synthetixio/core-modules",
+      "@ethersproject/abi",
+      "@ethersproject/providers",
+      "@nomiclabs/hardhat-ethers"
+    ]
   }
 }

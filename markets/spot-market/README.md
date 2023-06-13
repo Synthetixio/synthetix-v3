@@ -41,7 +41,7 @@ quoteSellExactOut(uint128 marketId,uint usdAmount)
 #### Fees
 
 - `uint atomicFixedFee` - This fee (denominated as a percentage with 18 decimals) is applied to both buy and sell atomic orders.
-- `mapping(address => uint) atomicFixedFeeOverrides` - This is a mapping of fees (denominated as a percentage with 18 decimals) that will be used instead of `atomicFixedFee` when `msg.sender` is found in the mapping.
+- `mapping(address => uint) fixedFeeOverrides` - This is a mapping of fees (denominated as a percentage with 18 decimals) that will be used instead of the configured `atomicFixedFee` or `asyncFixedFee` when `msg.sender` is found in the mapping.
 - See Additional Fees section below for other applicable fees.
 
 ### Asyncronous Orders
@@ -126,7 +126,7 @@ The skew fee is calculated in two different ways depending on which asset the tr
 `calculateSkew` equation:
 
 ```
-K*2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
+K/2P * sqrt((8CP/K)+(2NiP/K + 2P)^2) - K - Ni
 K = configured skew scale
 C = amount (cost in USD)
 Ni = initial skew
