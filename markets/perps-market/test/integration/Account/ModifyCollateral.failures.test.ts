@@ -1,5 +1,5 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { BigNumber, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 
 describe('ModifyCollateral', () => {
