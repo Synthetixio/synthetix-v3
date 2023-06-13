@@ -55,24 +55,21 @@ library CrossChain {
             revert AccessError.Unauthorized(sender);
         }
 
+        address caller;
         bytes memory payload;
         if (data.tokenAmounts.length > 0) {
             (address to, uint256 amount) = abi.decode(data.data, (address, uint256));
 
-            IERC20(data.tokenAmounts[0].token).approve(to, amount);
-            payload = abi.encodeWithSelector(
-                IERC20.transferFrom.selector,
-                address(this),
-                to,
-                amount
-            );
+            caller = data.tokenAmounts[0].token;
+            payload = abi.encodeWithSelector(IERC20.transfer.selector, to, amount);
         } else {
+            caller = address(this);
             payload = data.data;
         }
 
         // at this point, everything should be good to send the message to ourselves.
         // the below `onlyCrossChain` function will verify that the caller is self
-        (bool success, bytes memory result) = address(this).call(payload);
+        (bool success, bytes memory result) = caller.call(payload);
 
         if (!success) {
             uint len = result.length;
