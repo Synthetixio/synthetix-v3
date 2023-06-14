@@ -3,6 +3,8 @@ import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+
 import { wei } from '@synthetixio/wei';
 import { OpenPositionData, openPosition } from '../helpers';
 
@@ -218,21 +220,24 @@ describe('ModifyCollateral Withdraw', () => {
         );
       });
     });
-    describe('withdraw with open position', () => {
-      it('allow withdraw when its less than "collateral available for withdraw"', async () => {
-        before('withdraw allowed amount', async () => {
-          await systems()
-            .PerpsMarket.connect(trader1())
-            .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-17000));
-        });
-        it('has correct available margin', async () => {
-          assertBn.equal(
-            await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
-            bn(3000) // collateral value  + pnl =  20000 + -1000
-          );
-        });
+    describe('allow withdraw when its less than "collateral available for withdraw', () => {
+      const restore = snapshotCheckpoint(provider);
+
+      before('withdraw allowed amount', async () => {
+        await systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-17000));
+      });
+      after(restore);
+
+      it('has correct available margin', async () => {
+        assertBn.equal(
+          await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
+          bn(2000) // collateral value  + pnl =  (20000 - 17000) + -1000
+        );
       });
     });
+
     describe('failures', () => {
       it('reverts when withdrawing more than collateral', async () => {
         await assertRevert(
