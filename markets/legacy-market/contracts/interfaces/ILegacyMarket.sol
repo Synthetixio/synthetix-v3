@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "synthetix/contracts/interfaces/IAddressResolver.sol";
+import "./external/IAddressResolver.sol";
 import "./external/IV3CoreProxy.sol";
 
 /**
