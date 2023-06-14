@@ -33,9 +33,9 @@ library PerpsAccount {
     using DecimalMath for uint256;
 
     struct Data {
-        // TODO: add account id to data so we don't have to pass it in
         // synth marketId => amount
         mapping(uint128 => uint256) collateralAmounts;
+        uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
     }
@@ -101,6 +101,10 @@ library PerpsAccount {
         }
 
         self.collateralAmounts[synthMarketId] += amountToAdd;
+    }
+
+    function addAccountId(Data storage self, uint128 accountId) internal {
+        self.id = accountId;
     }
 
     function withdrawCollateral(
