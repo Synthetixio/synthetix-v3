@@ -37,14 +37,14 @@ contract PerpsMarketModule is IPerpsMarketModule {
 
     function fillPrice(
         uint128 marketId,
-        int size,
+        int orderSize,
         uint price
     ) external view override returns (uint) {
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
                 PerpsMarketConfiguration.load(marketId).skewScale,
-                size,
+                orderSize,
                 price
             );
     }
