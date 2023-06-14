@@ -2485,6 +2485,7 @@ __metadata:
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
     "@synthetixio/router": "workspace:*"
     hardhat: 2.13.0
     solidity-docgen: 0.6.0-beta.35
@@ -2553,6 +2554,7 @@ __metadata:
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
     "@synthetixio/router": "workspace:*"
     "@synthetixio/wei": 2.74.4
     "@types/node": 18.11.10
@@ -2572,6 +2574,7 @@ __metadata:
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/router": "workspace:*"
@@ -2641,6 +2644,7 @@ __metadata:
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/router": "workspace:*"

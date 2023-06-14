@@ -14,7 +14,8 @@
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "publish-contracts": "yarn build && cannon publish oracle-manager:$(node -p 'require(`./package.json`).version') --quiet",
-    "postpack": "yarn publish-contracts"
+    "postpack": "yarn publish-contracts",
+    "docgen": "hardhat docgen"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,7 @@
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
     "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
     "@types/node": "18.11.10",
