@@ -14,7 +14,6 @@ interface IPerpsMarketModule {
         int currentFundingRate;
         int currentFundingVelocity;
         uint indexPrice;
-        uint fillPrice;
     }
 
     function skew(uint128 marketId) external view returns (int256);
@@ -29,7 +28,7 @@ interface IPerpsMarketModule {
 
     function indexPrice(uint128 marketId) external view returns (uint);
 
-    function fillPrice(uint128 marketId) external returns (uint);
+    function fillPrice(uint128 marketId, int size, uint price) external returns (uint);
 
     /**
      * @dev Given a marketId return a market's summary details in one call.

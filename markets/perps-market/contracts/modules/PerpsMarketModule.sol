@@ -35,13 +35,17 @@ contract PerpsMarketModule is IPerpsMarketModule {
         return PerpsPrice.getCurrentPrice(marketId);
     }
 
-    function fillPrice(uint128 marketId) external view override returns (uint) {
+    function fillPrice(
+        uint128 marketId,
+        int size,
+        uint price
+    ) external view override returns (uint) {
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
                 PerpsMarketConfiguration.load(marketId).skewScale,
-                0,
-                PerpsPrice.getCurrentPrice(marketId)
+                size,
+                price
             );
     }
 
@@ -56,8 +60,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
                 maxOpenInterest: this.maxOpenInterest(marketId),
                 currentFundingRate: market.currentFundingRate(),
                 currentFundingVelocity: market.currentFundingVelocity(),
-                indexPrice: this.indexPrice(marketId),
-                fillPrice: this.fillPrice(marketId)
+                indexPrice: this.indexPrice(marketId)
             });
     }
 }
