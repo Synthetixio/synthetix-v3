@@ -27,6 +27,7 @@
     "ignoreMatches": [
       "@synthetixio/core-contracts",
       "@synthetixio/core-modules",
+      "@synthetixio/main",
       "@ethersproject/abi",
       "@ethersproject/providers",
       "@nomiclabs/hardhat-ethers"
