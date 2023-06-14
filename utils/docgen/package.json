@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "repository": "github:Synthetixio/js-monorepo",
   "license": "MIT",
+  "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
     "abis": "./abis.js",
     "natspec": "./natspec.js"
