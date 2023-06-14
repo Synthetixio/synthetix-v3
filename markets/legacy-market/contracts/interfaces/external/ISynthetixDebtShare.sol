@@ -1,4 +1,5 @@
-pragma solidity >=0.4.24;
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 // https://docs.synthetix.io/contracts/source/interfaces/isynthetixdebtshare
 interface ISynthetixDebtShare {
