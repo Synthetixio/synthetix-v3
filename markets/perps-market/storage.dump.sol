@@ -106,6 +106,21 @@ library FeatureFlag {
     }
 }
 
+// @custom:artifact @synthetixio/main/contracts/interfaces/external/FunctionsBillingRegistryInterface.sol:FunctionsBillingRegistryInterface
+interface FunctionsBillingRegistryInterface {
+    enum FulfillResult {
+        USER_SUCCESS,
+        USER_ERROR,
+        INVALID_REQUEST_ID
+    }
+    struct RequestBilling {
+        uint64 subscriptionId;
+        address client;
+        uint32 gasLimit;
+        uint256 gasPrice;
+    }
+}
+
 // @custom:artifact @synthetixio/main/contracts/storage/Account.sol:Account
 library Account {
     struct Data {
@@ -188,6 +203,25 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/CrossChain.sol:CrossChain
+library CrossChain {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
+    struct Data {
+        address ccipRouter;
+        address chainlinkFunctionsOracle;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
+        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
     }
 }
 
@@ -408,6 +442,33 @@ library VaultEpoch {
         uint128 totalExitingCollateralD18;
         uint128 _reserved;
         mapping(bytes32 => CollateralLock.Data) exitingCollateral;
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/utils/CcipClient.sol:CcipClient
+library CcipClient {
+    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
+    struct EVMTokenAmount {
+        address token;
+        uint256 amount;
+    }
+    struct Any2EVMMessage {
+        bytes32 messageId;
+        uint64 sourceChainId;
+        bytes sender;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+    }
+    struct EVM2AnyMessage {
+        bytes receiver;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+        address feeToken;
+        bytes extraArgs;
+    }
+    struct EVMExtraArgsV1 {
+        uint256 gasLimit;
+        bool strict;
     }
 }
 

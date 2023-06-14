@@ -94,6 +94,22 @@ interface FunctionsBillingRegistryInterface {
     ) external returns (FulfillResult);
 
     /**
+     * @notice Creates a subscription
+     * @return the Created subscription ID
+     */
+    function createSubscription() external returns (uint64);
+
+    /**
+     * @notice Adds a consumer to a subscription
+     * @param subscriptionId the subscription to add the consumer to
+     * @param consumer the address which can spend from the subscription
+     */
+    function addConsumer(
+    uint64 subscriptionId,
+    address consumer
+  ) external;
+
+    /**
      * @notice Gets subscription owner.
      * @param subscriptionId - ID of the subscription
      * @return owner - owner of the subscription.

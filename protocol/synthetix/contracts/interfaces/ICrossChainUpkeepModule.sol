@@ -13,6 +13,8 @@ import "../storage/PoolCrossChainInfo.sol";
 interface ICrossChainUpkeepModule is FunctionsClientInterface, AutomationCompatibleInterface {
     event PoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data syncData);
 
+    function getSubscriptionId(uint128 poolId) external view returns (uint64);
+
     function _recvPoolHeartbeat(
         uint128 poolId,
         PoolCrossChainSync.Data memory syncData,

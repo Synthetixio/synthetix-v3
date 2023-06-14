@@ -13,6 +13,8 @@ import "../../storage/Config.sol";
 import "../../storage/CrossChain.sol";
 import "../../storage/Pool.sol";
 
+import "hardhat/console.sol";
+
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
@@ -35,6 +37,11 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
     bytes32 internal constant _CONFIG_SYNC_POOL_CODE_ADDRESS = "performUpkeep_syncPool";
     bytes32 internal constant _CONFIG_SYNC_POOL_SECRETS_ADDRESS = "performUpkeep_syncPoolSecrets";
 
+
+    function getSubscriptionId(uint128 poolId) external override view returns (uint64) {
+        return Pool.loadExisting(poolId).crossChain[0].chainlinkSubscriptionId;
+    }
+
     /**
      * @notice Callback that is invoked once the DON has resolved the request or hit an error
      *
@@ -48,15 +55,17 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         bytes memory response,
         bytes memory err
     ) external override {
-        // TODO: check that chainlink functions oracle is the one sending this call
+        CrossChain.Data storage crossChain = CrossChain.load();
+        if (msg.sender != address(crossChain.chainlinkFunctionsOracle)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
 
         if (err.length > 0) {
             return;
         }
 
-        // TODO: be a real pool id
-        Pool.Data storage pool = Pool.load(
-            uint128(uint256(CrossChain.load().chainlinkFunctionsRequestInfo[requestId]))
+        Pool.Data storage pool = Pool.loadExisting(
+            uint128(uint256(crossChain.chainlinkFunctionsRequestInfo[requestId]))
         );
 
         uint256 chainsCount = pool.crossChain[0].pairedChains.length;
@@ -113,7 +122,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
                     sync,
                     chainAssignedDebt
                 ),
-                3000000
+                500000
             );
         }
 
@@ -174,24 +183,35 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
      * returned by checkUpkeep (See Chainlink Automation documentation)
      */
     function performUpkeep(bytes calldata data) external override {
-        (bool upkeepNeeded, ) = checkUpkeep("");
+        (bool upkeepNeeded, ) = checkUpkeep(data);
         require(upkeepNeeded, "Time interval not met");
 
         uint128 poolId = abi.decode(data, (uint128));
         Pool.Data storage pool = Pool.loadExisting(poolId);
 
+        console.log("loaded pool", poolId, pool.crossChain[0].pairedChains.length);
+
         // take this opporitunity to rebalance the markets in this pool
-        // we do it here instaed of fulfill because there is no reason for this to fail if for some reason the function fails
+        // we do it here instead of fulfill because there is no reason for this to fail if for some reason the function fails
 
-        string[] memory args = new string[](pool.crossChain[0].pairedChains.length * 2);
-        args[0] = _bytesToHexString(abi.encode(block.chainid));
-        args[1] = _bytesToHexString(_encodeCrossChainPoolCall(poolId));
+        string[] memory args = new string[](pool.crossChain[0].pairedChains.length * 3 + 1);
+        // max fail param
+        args[0] = _bytesToHexString(abi.encode(1));
 
-        for (uint i = 0; i < args.length; i += 2) {
+        // first pool is ourself
+        /*args[0] = _bytesToHexString(abi.encode(block.chainid));
+        args[1] = _bytesToHexString();
+        args[2] = _bytesToHexString(_encodeCrossChainPoolCall(poolId));*/
+
+        console.log("loaded initial args");
+
+        for (uint i = 0; i < args.length / 3; i++) {
             uint64 chainId = pool.crossChain[0].pairedChains[i / 2];
-            args[i] = _bytesToHexString(abi.encode(chainId));
+            args[i * 3 + 1] = _bytesToHexString(abi.encode(chainId));
 
-            args[i + 1] = _bytesToHexString(
+            args[i * 3 + 2] = _bytesToHexString(abi.encode(address(this)));
+
+            args[i * 3 + 3] = _bytesToHexString(
                 _encodeCrossChainPoolCall(pool.crossChain[0].pairedPoolIds[chainId])
             );
         }
@@ -199,26 +219,28 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         string memory source = string(_codeAt(Config.readAddress(_CONFIG_SYNC_POOL_CODE_ADDRESS, address(0))));
         //bytes memory secrets = _codeAt(Config.readAddress(_CONFIG_SYNC_POOL_SECRETS_ADDRESS, address(0)));
 
+        console.log("loaded source", source);
+
         Functions.Request memory req = Functions.Request({
             codeLocation: Functions.Location.Inline,
-            secretsLocation: Functions.Location.Inline,
+            secretsLocation: Functions.Location.Remote,
             language: Functions.CodeLanguage.JavaScript,
             source: source,
             // hardcoded for now--this is just temporary and unlikely to change
-            secrets: "https://gist.github.com/dbeal-eth/1d989d3af81bdd1d5c48cf22b81263a8",
+            secrets: "https://gist.githubusercontent.com/dbeal-eth/1d989d3af81bdd1d5c48cf22b81263a8/raw/05b3e06ae2671a5f53792cff6ad8fb8ea6004676/offchain-secrets.json",
             args: args
         });
         bytes32 requestId = CrossChain.load().chainlinkFunctionsOracle.sendRequest(
             pool.crossChain[0].chainlinkSubscriptionId,
-            abi.encode(req),
-            100000
+            Functions.encodeCBOR(req),
+            300000
         );
 
         CrossChain.load().chainlinkFunctionsRequestInfo[requestId] = bytes32(uint256(pool.id));
     }
 
     function _encodeCrossChainPoolCall(uint128 poolId) internal pure returns (bytes memory) {
-        bytes[] memory calls = new bytes[](4);
+        bytes[] memory calls = new bytes[](5);
         calls[0] = abi.encodeWithSelector(
             ICrossChainPoolModule.getThisChainPoolLiquidity.selector,
             poolId

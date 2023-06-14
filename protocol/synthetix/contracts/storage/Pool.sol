@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./Config.sol";
+import "./CrossChain.sol";
 import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
@@ -519,6 +520,9 @@ library Pool {
             // kind of redundant but good for consistency to ensure that the primary is always the first pool listed in paired chains
             self.crossChain[0].pairedChains.push(uint64(block.chainid));
             self.crossChain[0].pairedPoolIds[chainId] = self.id;
+
+            // also need to set chainlink subscription id
+            self.crossChain[0].chainlinkSubscriptionId = CrossChain.createChainlinkSubscription(CrossChain.load());
         }
 
         ccPoolId = getCrossChainPoolId(uint64(block.chainid), self.id);
