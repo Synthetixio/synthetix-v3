@@ -2543,8 +2543,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/oracle-manager@workspace:protocol/oracle-manager"
   dependencies:
-    "@ethersproject/abi": 5.7.0
-    "@ethersproject/providers": 5.7.2
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"

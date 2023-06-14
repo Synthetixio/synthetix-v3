@@ -39,9 +39,5 @@
       "@synthetixio/core-contracts",
       "@synthetixio/core-modules"
     ]
-  },
-  "dependencies": {
-    "@ethersproject/abi": "5.7.0",
-    "@ethersproject/providers": "5.7.2"
   }
 }
