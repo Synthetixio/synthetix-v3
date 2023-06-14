@@ -13,8 +13,9 @@ describe('CrossChainUSDModule', function () {
   const fiftyUSD = bn(50);
   const oneHundredUSD = bn(100);
 
-  let CcipRouterMock: ethers.Contract;
   let stakerAddress: string;
+  let proxyBalanceBefore: ethers.BigNumber, stakerBalanceBefore: ethers.BigNumber;
+  let CcipRouterMock: ethers.Contract;
 
   before('identify signers', async () => {
     stakerAddress = await staker().getAddress();
@@ -45,14 +46,16 @@ describe('CrossChainUSDModule', function () {
       .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
+  before('record balances', async () => {
+    stakerBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
+    proxyBalanceBefore = await systems().USD.connect(staker()).balanceOf(systems().Core.address);
+  });
+
   describe('transferCrossChain()', () => {
     verifyUsesFeatureFlag(
       () => systems().Core,
       'transferCrossChain',
-      () =>
-        systems()
-          .Core.connect(staker())
-          .transferCrossChain(1, ethers.constants.AddressZero, fiftyUSD)
+      () => systems().Core.connect(staker()).transferCrossChain(1, fiftyUSD)
     );
 
     before('ensure access to feature', async () => {
@@ -64,40 +67,57 @@ describe('CrossChainUSDModule', function () {
         );
     });
 
-    it('reverts if the sender does not have enough snxUSD', async () => {
-      const excessAmount = oneHundredUSD.mul(100);
-      const usdBalance = await systems().USD.connect(staker()).balanceOf(stakerAddress);
+    it('reverts if the sender did not set enough allownce', async () => {
+      const allowance = await systems()
+        .USD.connect(staker())
+        .allowance(stakerAddress, systems().Core.address);
 
       await assertRevert(
-        systems().Core.connect(staker()).transferCrossChain(1, stakerAddress, excessAmount),
-        `InsufficientBalance("${excessAmount}", "${usdBalance}")`,
+        systems().Core.connect(staker()).transferCrossChain(1, oneHundredUSD),
+        `InsufficientAllowance("${oneHundredUSD}", "${allowance}")`,
+        systems().USD
+      );
+    });
+
+    it('reverts if the sender does not have enough snxUSD', async () => {
+      const excessAmount = oneHundredUSD.mul(100);
+
+      await systems()
+        .USD.connect(staker())
+        .approve(await systems().Core.address, excessAmount);
+
+      await assertRevert(
+        systems().Core.connect(staker()).transferCrossChain(1, excessAmount),
+        `InsufficientBalance("${excessAmount}", "${stakerBalanceBefore}")`,
         systems().USD
       );
     });
 
     describe('successful call', () => {
-      let usdBalanceBefore: ethers.BigNumber;
       let transferCrossChainTxn: ethers.providers.TransactionResponse;
 
-      before('record balances', async () => {
-        usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-      });
-
-      before('transfer 50 snxUSD', async () => {
+      before('invokes transferCrossChain', async () => {
         transferCrossChainTxn = await systems()
           .Core.connect(staker())
-          .transferCrossChain(1, stakerAddress, fiftyUSD);
+          .transferCrossChain(1, fiftyUSD);
       });
 
-      it('burns the correct amount of snxUSD on the source chain', async () => {
+      it('should transfer the snxUSD to the core proxy', async () => {
+        const usdBalanceAfter = await systems()
+          .USD.connect(owner())
+          .balanceOf(systems().Core.address);
+        assertBn.equal(usdBalanceAfter, proxyBalanceBefore.add(fiftyUSD));
+      });
+
+      it('should decrease the stakers balance by the expected amount', async () => {
         const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-        assertBn.equal(usdBalanceAfter, usdBalanceBefore.sub(fiftyUSD));
+        assertBn.equal(usdBalanceAfter, stakerBalanceBefore.sub(fiftyUSD));
       });
 
       it('emits correct event with the expected values', async () => {
         await assertEvent(
           transferCrossChainTxn,
-          `TransferCrossChainInitiated(1, "${stakerAddress}", ${fiftyUSD}, "${stakerAddress}"`,
+          `TransferCrossChainInitiated(1, ${fiftyUSD}, "${stakerAddress}"`,
           systems().Core
         );
       });

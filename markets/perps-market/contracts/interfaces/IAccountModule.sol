@@ -37,4 +37,6 @@ interface IAccountModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (AsyncOrder.Data memory);
+
+    function getAvailableMargin(uint128 accountId) external view returns (int);
 }
