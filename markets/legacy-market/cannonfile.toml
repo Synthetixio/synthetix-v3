@@ -15,7 +15,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.v2x_package]
-defaultValue = "synthetix:2.84.2-alpha"
+defaultValue = "synthetix:2.89.1"
 
 [setting.v3_package]
 defaultValue = "synthetix:<%= package.version %>"
@@ -62,7 +62,7 @@ factory.Proxy.abiOf = ["Market"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 
-depends = ["contract.Market"]
+depends = ["contract.InitialProxy", "contract.Market"]
 
 [invoke.setSystemAddresses]
 target = ["Proxy"]
@@ -110,9 +110,9 @@ depends = ["invoke.setFeatureFlagMarket", "invoke.setSystemAddresses"]
 target = ["v3.oracle_manager.Proxy"]
 func = "registerNode"
 args = [
-    [],
-    3,
-    "0x000000000000000000000000<%= imports.fakeOracle.contracts.aggregator.address.slice(2) %>00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012"
+    3, # Type for Chainlink aggregator
+    "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [imports.fakeOracle.contracts.MockV3Aggregator.address, 0, 18]) %>",
+    []
 ]
 
 extra.snx_oracle_id.event = "NodeRegistered"
