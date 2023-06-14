@@ -384,7 +384,7 @@ describe('Settle Offchain Async Order test', () => {
             const fillPrice = bn(1000.005);
             await assertEvent(
               settleTx,
-              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, ${bn(1)}, ${
+              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, 0, ${bn(1)}, ${
                 DEFAULT_SETTLEMENT_STRATEGY.settlementReward
               }, ${DEFAULT_SETTLEMENT_STRATEGY.settlementReward}, "${
                 ethers.constants.HashZero

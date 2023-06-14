@@ -53,17 +53,20 @@ library Position {
             int nextFunding
         )
     {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(self.marketId);
+        (pnl, accruedFunding, netFundingPerUnit, nextFunding) = getAccountPnl(self, price);
+        notionalValue = getNotionalValue(self, price);
+    }
 
-        nextFunding = perpsMarket.lastFundingValue + perpsMarket.unrecordedFunding(price);
+    function getAccountPnl(
+        Data storage self,
+        uint price
+    ) internal view returns (int pnl, int accruedFunding, int netFundingPerUnit, int nextFunding) {
+        nextFunding = PerpsMarket.load(self.marketId).calculateNextFunding(price);
         netFundingPerUnit = nextFunding - self.latestInteractionFunding;
-
         accruedFunding = self.size.mulDecimal(netFundingPerUnit);
 
         int priceShift = price.toInt() - self.latestInteractionPrice.toInt();
         pnl = self.size.mulDecimal(priceShift) + accruedFunding;
-
-        notionalValue = getNotionalValue(self, price);
     }
 
     function getNotionalValue(Data storage self, uint256 price) internal view returns (uint256) {

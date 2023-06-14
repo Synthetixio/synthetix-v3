@@ -65,7 +65,7 @@ export const bootstrapPerpsMarkets = (
   data: PerpsMarketData,
   chainState: IncomingChainState | undefined
 ) => {
-  const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(1000));
+  const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(2000));
   let contracts: Systems, marketOwner: ethers.Signer;
 
   before('identify contracts', () => {

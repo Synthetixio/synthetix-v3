@@ -14,6 +14,8 @@ import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
+import "hardhat/console.sol";
+
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**
@@ -102,6 +104,7 @@ library PerpsAccount {
         self.collateralAmounts[synthMarketId] += amountToAdd;
     }
 
+    // TODO: rename this maybe?  not really withdrawing collateral, just accounting
     function withdrawCollateral(
         Data storage self,
         uint128 synthMarketId,
@@ -165,7 +168,7 @@ library PerpsAccount {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (, int pnl, , , ) = position.getPositionData(PerpsPrice.getCurrentPrice(marketId));
+            (int pnl, , , ) = position.getAccountPnl(PerpsPrice.getCurrentPrice(marketId));
             totalPnl += pnl;
         }
     }
@@ -240,6 +243,7 @@ library PerpsAccount {
     ) internal {
         // TODO: deduct from snxUSD first?
         uint leftoverAmount = amount;
+        console.log("deductFromAccount", amount);
         uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
             .load()
             .synthDeductionPriority;
@@ -251,23 +255,25 @@ library PerpsAccount {
             }
 
             if (marketId == SNX_USD_MARKET_ID) {
+                console.log("snx_usd");
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
-                    self.collateralAmounts[marketId] = availableAmount - leftoverAmount;
+                    withdrawCollateral(self, marketId, leftoverAmount);
                     leftoverAmount = 0;
                     break;
                 } else {
-                    self.collateralAmounts[marketId] = 0;
+                    withdrawCollateral(self, marketId, availableAmount);
                     leftoverAmount -= availableAmount;
                 }
             } else {
+                console.log("snx_usd not");
                 // TODO: check if market is paused; if not, continue
                 ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
-                // TODO: sell $2 worth of synth
                 (uint availableAmountUsd, ) = spotMarket.quoteSellExactIn(
                     marketId,
                     availableAmount
                 );
+                console.log("available", marketId, availableAmount);
 
                 if (availableAmountUsd >= leftoverAmount) {
                     // TODO referer/max amt
@@ -277,7 +283,8 @@ library PerpsAccount {
                         type(uint).max,
                         address(0)
                     );
-                    self.collateralAmounts[marketId] = availableAmount - amountToDeduct;
+                    console.log("DEDUCT AMT", amountToDeduct);
+                    withdrawCollateral(self, marketId, amountToDeduct);
                     leftoverAmount = 0;
                     break;
                 } else {
@@ -288,7 +295,7 @@ library PerpsAccount {
                         0,
                         address(0)
                     );
-                    self.collateralAmounts[marketId] = 0;
+                    withdrawCollateral(self, marketId, availableAmount);
                     leftoverAmount -= amountToDeduct;
                 }
             }
@@ -326,7 +333,7 @@ library PerpsAccount {
 
             uint price = PerpsPrice.getCurrentPrice(positionMarketId);
 
-            (, int totalPnl, , , ) = position.getPositionData(price);
+            (int totalPnl, , , ) = position.getAccountPnl(price);
 
             if (totalPnl > 0) {
                 runtime.profitableMarkets[runtime.profitableMarketsLength] = positionMarketId;

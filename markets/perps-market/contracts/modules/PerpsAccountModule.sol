@@ -15,6 +15,8 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "hardhat/console.sol";
+
 contract PerpsAccountModule is IAccountModule {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
@@ -81,6 +83,7 @@ contract PerpsAccountModule is IAccountModule {
         uint128 accountId,
         uint128 marketId
     ) external view override returns (int, int, int) {
+        console.log("GET OPEN POSITION");
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
 
         Position.Data storage position = perpsMarket.positions[accountId];
