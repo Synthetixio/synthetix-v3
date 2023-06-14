@@ -2506,9 +2506,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/legacy-market@workspace:markets/legacy-market"
   dependencies:
-    "@ethersproject/abi": 5.7.0
-    "@ethersproject/providers": 5.7.2
-    "@nomiclabs/hardhat-ethers": 2.2.1
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/wei": 2.74.4
