@@ -17,8 +17,6 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 
-import "hardhat/console.sol";
-
 contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -40,7 +38,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
-        console.log("COMMITTT");
         PerpsMarket.Data storage market = PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid
@@ -67,8 +64,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
-
-        console.log("done done", feesAccrued);
 
         // TODO include fees in event
         emit OrderCommitted(
