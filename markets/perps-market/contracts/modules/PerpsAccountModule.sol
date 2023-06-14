@@ -44,6 +44,9 @@ contract PerpsAccountModule is IAccountModule {
         globalPerpsMarket.checkLiquidation(accountId);
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        if (account.accountId == 0) {
+            account.addAccountId(accountId);
+        }
 
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
