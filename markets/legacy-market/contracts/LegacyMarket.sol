@@ -38,6 +38,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
 
+    constructor() Ownable(msg.sender) {}
+
     /**
      * @inheritdoc ILegacyMarket
      */

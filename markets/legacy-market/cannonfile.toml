@@ -15,13 +15,13 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.v2x_package]
-defaultValue = "synthetix:2.79.0-alpha"
+defaultValue = "synthetix:2.84.2-alpha"
 
 [setting.v3_package]
 defaultValue = "synthetix:<%= package.version %>"
 
 [setting.oracle_package]
-defaultValue = "chainlink:0.7-mock"
+defaultValue = "chainlink-mock-v3-aggregator:1.0"
 
 [import.v2x]
 source = "<%= settings.v2x_package %>"
@@ -48,7 +48,7 @@ depends = ["contract.InitialModuleBundle"]
 # deploy the legacy market
 [contract.Market]
 artifact = "LegacyMarket"
-
+from = "<%= settings.owner %>"
 depends = ["import.v2x", "import.v3"]
 
 [invoke.upgradeProxy]
