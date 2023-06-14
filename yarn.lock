@@ -2505,6 +2505,7 @@ __metadata:
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/router": "workspace:*"
     "@synthetixio/wei": 2.74.4
     ethers: ^5.0.0
     hardhat: 2.13.0
