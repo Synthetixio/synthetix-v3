@@ -103,7 +103,7 @@ library PerpsAccount {
     }
 
     // TODO: rename this maybe?  not really withdrawing collateral, just accounting
-    function withdrawCollateral(
+    function removeCollateralAmount(
         Data storage self,
         uint128 synthMarketId,
         uint amountToRemove
@@ -254,11 +254,11 @@ library PerpsAccount {
             if (marketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
-                    withdrawCollateral(self, marketId, leftoverAmount);
+                    removeCollateralAmount(self, marketId, leftoverAmount);
                     leftoverAmount = 0;
                     break;
                 } else {
-                    withdrawCollateral(self, marketId, availableAmount);
+                    removeCollateralAmount(self, marketId, availableAmount);
                     leftoverAmount -= availableAmount;
                 }
             } else {
@@ -277,7 +277,7 @@ library PerpsAccount {
                         type(uint).max,
                         address(0)
                     );
-                    withdrawCollateral(self, marketId, amountToDeduct);
+                    removeCollateralAmount(self, marketId, amountToDeduct);
                     leftoverAmount = 0;
                     break;
                 } else {
@@ -288,7 +288,7 @@ library PerpsAccount {
                         0,
                         address(0)
                     );
-                    withdrawCollateral(self, marketId, availableAmount);
+                    removeCollateralAmount(self, marketId, availableAmount);
                     leftoverAmount -= amountToDeduct;
                 }
             }
