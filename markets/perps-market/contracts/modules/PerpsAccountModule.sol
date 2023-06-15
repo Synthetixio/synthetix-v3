@@ -45,7 +45,7 @@ contract PerpsAccountModule is IAccountModule {
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (account.id == 0) {
-            account.addAccountId(accountId);
+            account.id = accountId;
         }
 
         ITokenModule synth = synthMarketId == 0

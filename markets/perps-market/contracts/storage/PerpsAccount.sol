@@ -102,10 +102,6 @@ library PerpsAccount {
         self.collateralAmounts[synthMarketId] += amountToAdd;
     }
 
-    function addAccountId(Data storage self, uint128 accountId) internal {
-        self.id = accountId;
-    }
-
     function withdrawCollateral(
         Data storage self,
         uint128 synthMarketId,
