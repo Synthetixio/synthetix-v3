@@ -423,7 +423,6 @@ interface IPerpsMarketModule {
         int currentFundingRate;
         int currentFundingVelocity;
         uint indexPrice;
-        uint fillPrice;
     }
 }
 

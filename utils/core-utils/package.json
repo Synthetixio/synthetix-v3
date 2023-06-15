@@ -21,7 +21,7 @@
   },
   "peerDependencies": {
     "@usecannon/builder": "2.4.7",
-    "ethers": "^5.0.0",
+    "ethers": "^5.7.2",
     "solidity-ast": "^0.4.0"
   },
   "peerDependenciesMeta": {
@@ -38,7 +38,7 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/prompts": "2.0.14",
-    "ethers": "^5.0.0",
+    "ethers": "^5.7.2",
     "hardhat": "2.13.0",
     "mocha": "9.1.1",
     "multimatch": "6.0.0",

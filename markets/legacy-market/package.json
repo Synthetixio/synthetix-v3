@@ -22,7 +22,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/wei": "2.74.4",
-    "ethers": "^5.0.0",
+    "ethers": "^5.7.2",
     "hardhat": "2.13.0",
     "solidity-docgen": "0.6.0-beta.31"
   },

@@ -51,7 +51,16 @@ describe('PerpsMarketModule', () => {
       assertBn.equal(summary.currentFundingRate, bn(0));
       assertBn.equal(summary.currentFundingVelocity, bn(0));
       assertBn.equal(summary.indexPrice, fixture.marketTokenPrice);
-      assertBn.equal(summary.fillPrice, fixture.marketTokenPrice);
+    });
+  });
+  describe('fillPrice', () => {
+    it('should return correct value when passing same as onchain price', async () => {
+      const price = await systems().PerpsMarket.fillPrice(marketId, bn(1), bn(1000));
+      assertBn.equal(price, bn(1000.05));
+    });
+    it('should return correct value when passing different price', async () => {
+      const price = await systems().PerpsMarket.fillPrice(marketId, bn(1), bn(1010));
+      assertBn.equal(price, bn(1010.0505));
     });
   });
 });
