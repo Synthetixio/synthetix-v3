@@ -130,7 +130,6 @@ library AsyncOrder {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
-
         SimulateDataRuntime memory runtime;
 
         PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
@@ -211,7 +210,6 @@ library AsyncOrder {
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             size: runtime.newPositionSize
         });
-
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }
 

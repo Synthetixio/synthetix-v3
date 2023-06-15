@@ -115,15 +115,13 @@ export const bootstrapPerpsMarkets = (
         ]);
       });
 
-      if (fundingParams) {
-        before('set funding parameters', async () => {
-          await contracts.PerpsMarket.connect(marketOwner).setFundingParameters(
-            marketId,
-            fundingParams.skewScale,
-            fundingParams.maxFundingVelocity
-          );
-        });
-      }
+      before('set funding parameters', async () => {
+        await contracts.PerpsMarket.connect(marketOwner).setFundingParameters(
+          marketId,
+          fundingParams ? fundingParams.skewScale : bn(1_000_000),
+          fundingParams ? fundingParams.maxFundingVelocity : 0
+        );
+      });
 
       if (orderFees) {
         before('set fees', async () => {

@@ -130,7 +130,7 @@ library PerpsMarket {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
 
-        self.size = MathUtil.abs(oldPositionSize + newPosition.size);
+        self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
         self.skew += newPosition.size - oldPositionSize;
         oldPosition.updatePosition(newPosition);
     }
@@ -196,7 +196,6 @@ library PerpsMarket {
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
-
         return
             self.lastFundingRate +
             (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
@@ -206,12 +205,10 @@ library PerpsMarket {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
         int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int skewScale = marketConfig.skewScale.toInt();
-
         // Avoid a panic due to div by zero. Return 0 immediately.
         if (skewScale == 0) {
             return 0;
         }
-
         // Ensures the proportionalSkew is between -1 and 1.
         int pSkew = self.skew.divDecimal(skewScale);
         int pSkewBounded = MathUtil.min(
