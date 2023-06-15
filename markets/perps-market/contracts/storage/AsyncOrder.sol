@@ -117,19 +117,21 @@ library AsyncOrder {
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    ) internal returns (Position.Data memory, uint, uint) {
+    )
+        internal
+        returns (
+            // return pnl
+            Position.Data memory,
+            uint,
+            uint,
+            Position.Data storage oldPosition
+        )
+    {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
-
         SimulateDataRuntime memory runtime;
 
-        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
-        perpsMarketData.recomputeFunding(orderPrice);
-
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            order.marketId
-        );
         PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
 
         bool isEligible;
@@ -139,6 +141,13 @@ library AsyncOrder {
         if (isEligible) {
             revert PerpsAccount.AccountLiquidatable(order.accountId);
         }
+
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
+        perpsMarketData.recomputeFunding(orderPrice);
+
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            order.marketId
+        );
 
         runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,
@@ -168,11 +177,9 @@ library AsyncOrder {
         }
 
         // TODO: validate position size
-        Position.Data storage position = PerpsMarket.load(order.marketId).positions[
-            order.accountId
-        ];
+        oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
-        runtime.newPositionSize = position.size + order.sizeDelta.to128();
+        runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
             runtime.fillPrice
@@ -181,7 +188,7 @@ library AsyncOrder {
         // use order price to determine notional value here since we need to subtract
         // this amount
         (, , , uint256 currentMarketMaintenanceMargin, ) = marketConfig.calculateRequiredMargins(
-            position.size,
+            oldPosition.size,
             orderPrice
         );
 
@@ -203,8 +210,7 @@ library AsyncOrder {
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             size: runtime.newPositionSize
         });
-
-        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice);
+        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }
 
     function calculateOrderFee(

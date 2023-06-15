@@ -22,6 +22,7 @@ library PerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+    using Position for Position.Data;
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
@@ -121,9 +122,17 @@ library PerpsMarket {
         return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
     }
 
-    function updatePositionData(Data storage self, Position.Data memory newPosition) internal {
-        self.size += MathUtil.abs(newPosition.size);
-        self.skew += newPosition.size;
+    function updatePositionData(
+        Data storage self,
+        uint128 accountId,
+        Position.Data memory newPosition
+    ) internal {
+        Position.Data storage oldPosition = self.positions[accountId];
+        int128 oldPositionSize = oldPosition.size;
+
+        self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPosition.size - oldPositionSize;
+        oldPosition.updatePosition(newPosition);
     }
 
     function loadWithVerifiedOwner(
@@ -164,6 +173,7 @@ library PerpsMarket {
         int avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
+
         return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
     }
 
@@ -187,21 +197,18 @@ library PerpsMarket {
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
         return
-            (self.lastFundingRate + currentFundingVelocity(self)).mulDecimal(
-                proportionalElapsed(self)
-            );
+            self.lastFundingRate +
+            (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
     function currentFundingVelocity(Data storage self) internal view returns (int) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
         int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int skewScale = marketConfig.skewScale.toInt();
-
         // Avoid a panic due to div by zero. Return 0 immediately.
         if (skewScale == 0) {
             return 0;
         }
-
         // Ensures the proportionalSkew is between -1 and 1.
         int pSkew = self.skew.divDecimal(skewScale);
         int pSkewBounded = MathUtil.min(

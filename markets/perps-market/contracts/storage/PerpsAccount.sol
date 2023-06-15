@@ -102,7 +102,8 @@ library PerpsAccount {
         self.collateralAmounts[synthMarketId] += amountToAdd;
     }
 
-    function withdrawCollateral(
+    // TODO: rename this maybe?  not really withdrawing collateral, just accounting
+    function removeCollateralAmount(
         Data storage self,
         uint128 synthMarketId,
         uint amountToRemove
@@ -165,7 +166,7 @@ library PerpsAccount {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (, int pnl, , , ) = position.getPositionData(PerpsPrice.getCurrentPrice(marketId));
+            (int pnl, , , ) = position.getPnl(PerpsPrice.getCurrentPrice(marketId));
             totalPnl += pnl;
         }
     }
@@ -253,17 +254,16 @@ library PerpsAccount {
             if (marketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
-                    self.collateralAmounts[marketId] = availableAmount - leftoverAmount;
+                    removeCollateralAmount(self, marketId, leftoverAmount);
                     leftoverAmount = 0;
                     break;
                 } else {
-                    self.collateralAmounts[marketId] = 0;
+                    removeCollateralAmount(self, marketId, availableAmount);
                     leftoverAmount -= availableAmount;
                 }
             } else {
                 // TODO: check if market is paused; if not, continue
                 ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
-                // TODO: sell $2 worth of synth
                 (uint availableAmountUsd, ) = spotMarket.quoteSellExactIn(
                     marketId,
                     availableAmount
@@ -277,7 +277,7 @@ library PerpsAccount {
                         type(uint).max,
                         address(0)
                     );
-                    self.collateralAmounts[marketId] = availableAmount - amountToDeduct;
+                    removeCollateralAmount(self, marketId, amountToDeduct);
                     leftoverAmount = 0;
                     break;
                 } else {
@@ -288,7 +288,7 @@ library PerpsAccount {
                         0,
                         address(0)
                     );
-                    self.collateralAmounts[marketId] = 0;
+                    removeCollateralAmount(self, marketId, availableAmount);
                     leftoverAmount -= amountToDeduct;
                 }
             }
@@ -326,7 +326,7 @@ library PerpsAccount {
 
             uint price = PerpsPrice.getCurrentPrice(positionMarketId);
 
-            (, int totalPnl, , , ) = position.getPositionData(price);
+            (int totalPnl, , , ) = position.getPnl(price);
 
             if (totalPnl > 0) {
                 runtime.profitableMarkets[runtime.profitableMarketsLength] = positionMarketId;

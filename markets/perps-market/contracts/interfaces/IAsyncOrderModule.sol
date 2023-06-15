@@ -24,6 +24,7 @@ interface IAsyncOrderModule {
         uint128 indexed marketId,
         uint128 indexed accountId,
         uint256 fillPrice,
+        int256 accountPnlRealized,
         int128 newSize,
         uint256 collectedFees,
         uint256 settelementReward,
@@ -51,6 +52,18 @@ interface IAsyncOrderModule {
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external returns (AsyncOrder.Data memory retOrder, uint fees);
+
+    // only used due to stack too deep during settlement
+    struct SettleOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 newPositionSize;
+        int256 pnl;
+        uint256 pnlUint;
+        uint256 amountToDeposit;
+        uint256 settlementReward;
+        bytes32 trackingCode;
+    }
 
     // function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
 

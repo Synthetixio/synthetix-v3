@@ -61,7 +61,7 @@ contract PerpsAccountModule is IAccountModule {
             uint amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
             account.checkAvailableWithdrawableValue(amountAbs);
-            account.withdrawCollateral(synthMarketId, amountAbs);
+            account.removeCollateralAmount(synthMarketId, amountAbs);
 
             synth.transfer(msg.sender, amountAbs);
         }

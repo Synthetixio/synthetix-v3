@@ -1,5 +1,5 @@
 import { bootstrapStakers } from '@synthetixio/main/test/common';
-import { Systems } from './bootstrap';
+import { Systems, bn } from './bootstrap';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 
@@ -17,7 +17,7 @@ type Data = {
 */
 export function bootstrapTraders(data: Data) {
   const { systems, signers, provider, accountIds, owner } = data;
-  bootstrapStakers(systems, signers);
+  bootstrapStakers(systems, signers, bn(100_000));
 
   let trader1: ethers.Signer, trader2: ethers.Signer, keeper: ethers.Signer;
 
