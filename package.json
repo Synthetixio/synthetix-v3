@@ -72,8 +72,7 @@
     "markets/*"
   ],
   "engines": {
-    "node": "^16.16.0",
-    "npm": "^8.11.0"
+    "node": "^18.16.0"
   },
   "packageManager": "yarn@3.6.0"
 }
