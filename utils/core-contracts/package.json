@@ -35,7 +35,10 @@
   "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27",
   "depcheck": {
     "ignoreMatches": [
-      "@synthetixio/router"
+      "@synthetixio/router",
+      "@ethersproject/abi",
+      "@ethersproject/providers",
+      "@nomiclabs/hardhat-ethers"
     ]
   }
 }
