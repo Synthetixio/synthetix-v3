@@ -23,12 +23,20 @@ const options = {
     'dist',
     'out',
     'tmp',
+    'artifacts',
+    'cache',
+    'typechain-types',
   ],
   ignoreMatches: [
     // Must keep ts dependency so depcheck works over Typescript files
     'typescript',
     '@types/jest',
     'webpack-dev-server',
+    '@synthetixio/core-contracts',
+    '@synthetixio/core-modules',
+    '@ethersproject/abi',
+    '@ethersproject/providers',
+    '@nomiclabs/hardhat-ethers',
   ],
   parsers: {
     '**/*.js': [depcheck.parser.es6, depcheck.parser.jsx],
@@ -103,9 +111,9 @@ async function run() {
         if (dep in deps) {
           console.log(`${fgGreen}    "${dep}": "${deps[dep]}"${fgReset}`);
           if (!('dependencies' in packageJson)) {
-            packageJson.dependencies = {};
+            packageJson.devDependencies = {};
           }
-          packageJson.dependencies[dep] = deps[dep];
+          packageJson.devDependencies[dep] = deps[dep];
         } else {
           console.log(`${fgYellow}    "${dep}": "?" <-- ADD MANUALLY${fgReset}`);
         }

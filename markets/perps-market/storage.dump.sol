@@ -414,6 +414,20 @@ library OrderFees {
     }
 }
 
+// @custom:artifact contracts/interfaces/IAsyncOrderModule.sol:IAsyncOrderModule
+interface IAsyncOrderModule {
+    struct SettleOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 newPositionSize;
+        int256 pnl;
+        uint256 pnlUint;
+        uint256 amountToDeposit;
+        uint256 settlementReward;
+        bytes32 trackingCode;
+    }
+}
+
 // @custom:artifact contracts/interfaces/IPerpsMarketModule.sol:IPerpsMarketModule
 interface IPerpsMarketModule {
     struct MarketSummary {
@@ -423,7 +437,6 @@ interface IPerpsMarketModule {
         int currentFundingRate;
         int currentFundingVelocity;
         uint indexPrice;
-        uint fillPrice;
     }
 }
 
@@ -531,6 +544,7 @@ library OrderFee {
 library PerpsAccount {
     struct Data {
         mapping(uint128 => uint256) collateralAmounts;
+        uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
     }
