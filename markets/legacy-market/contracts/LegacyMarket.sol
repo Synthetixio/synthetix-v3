@@ -2,9 +2,9 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
-import "synthetix/contracts/interfaces/IIssuer.sol";
-import "synthetix/contracts/interfaces/ISynthetixDebtShare.sol";
+import "./interfaces/external/ILiquidatorRewards.sol";
+import "./interfaces/external/IIssuer.sol";
+import "./interfaces/external/ISynthetixDebtShare.sol";
 
 import {UUPSImplementation} from "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 
@@ -37,6 +37,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
+
+    constructor() Ownable(msg.sender) {}
 
     /**
      * @inheritdoc ILegacyMarket
