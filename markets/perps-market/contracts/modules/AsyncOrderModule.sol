@@ -80,18 +80,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, feesAccrued);
     }
 
-    function settle(uint128 marketId, uint128 accountId) external {
+    function settle(uint128 marketId, uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
         ) = _performOrderValidityChecks(marketId, accountId);
 
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.ONCHAIN) {
-            _settleOnchain(order, settlementStrategy);
-        } else {
-            _settleOffchain(order, settlementStrategy);
-        }
+        _settleOffchain(order, settlementStrategy);
     }
 
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {

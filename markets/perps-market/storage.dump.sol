@@ -414,6 +414,19 @@ library OrderFees {
     }
 }
 
+// @custom:artifact contracts/interfaces/IPerpsMarketModule.sol:IPerpsMarketModule
+interface IPerpsMarketModule {
+    struct MarketSummary {
+        int256 skew;
+        uint256 size;
+        uint256 maxOpenInterest;
+        int currentFundingRate;
+        int currentFundingVelocity;
+        uint indexPrice;
+        uint fillPrice;
+    }
+}
+
 // @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
 interface IPythVerifier {
     struct Price {
@@ -466,7 +479,7 @@ library AsyncOrder {
         uint currentLiquidationMargin;
         int128 newPositionSize;
         uint newNotionalValue;
-        uint currentAvailableMargin;
+        int currentAvailableMargin;
         uint requiredMaintenanceMargin;
         uint initialRequiredMargin;
         uint totalRequiredMargin;
@@ -633,7 +646,6 @@ library Position {
 // @custom:artifact contracts/storage/SettlementStrategy.sol:SettlementStrategy
 library SettlementStrategy {
     enum Type {
-        ONCHAIN,
         PYTH
     }
     struct Data {

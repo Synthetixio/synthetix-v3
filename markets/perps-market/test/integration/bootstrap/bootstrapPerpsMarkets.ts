@@ -49,7 +49,7 @@ type IncomingChainState =
   | ReturnType<typeof bootstrapSynthMarkets>;
 
 export const DEFAULT_SETTLEMENT_STRATEGY = {
-  strategyType: 1, // OFFCHAIN
+  strategyType: 0, // OFFCHAIN
   settlementDelay: 5,
   settlementWindowDuration: 120,
   settlementReward: bn(5),
