@@ -169,7 +169,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
         // use fill price to calculate realized pnl
-        (runtime.pnl, , , ) = oldPosition.getAccountPnl(fillPrice);
+        (runtime.pnl, , , ) = oldPosition.getPnl(fillPrice);
 
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
         if (runtime.pnl > 0) {

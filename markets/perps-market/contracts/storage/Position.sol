@@ -53,11 +53,11 @@ library Position {
             int nextFunding
         )
     {
-        (pnl, accruedFunding, netFundingPerUnit, nextFunding) = getAccountPnl(self, price);
+        (pnl, accruedFunding, netFundingPerUnit, nextFunding) = getPnl(self, price);
         notionalValue = getNotionalValue(self, price);
     }
 
-    function getAccountPnl(
+    function getPnl(
         Data storage self,
         uint price
     ) internal view returns (int pnl, int accruedFunding, int netFundingPerUnit, int nextFunding) {
