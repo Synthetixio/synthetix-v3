@@ -1,5 +1,5 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { BigNumber, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 
 describe('ModifyCollateral', () => {
@@ -41,7 +41,7 @@ describe('ModifyCollateral', () => {
   before('set setMaxCollateralForSynthMarketId to 1 btc', async () => {
     await systems()
       .PerpsMarket.connect(owner())
-      .setMaxCollateralForSynthMarketId(synthBTCMarketId, BigNumber.from(1));
+      .setMaxCollateralForSynthMarketId(synthBTCMarketId, bn(1));
   });
 
   describe('failure cases', async () => {
@@ -79,7 +79,7 @@ describe('ModifyCollateral', () => {
         systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(accountIds[0], synthBTCMarketId, bn(2)),
-        `MaxCollateralExceeded("1")`
+        `MaxCollateralExceeded("${synthBTCMarketId}", "${bn(1)}", "${bn(0)}", "${bn(2)}")`
       );
     });
 
