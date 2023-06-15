@@ -423,7 +423,6 @@ interface IPerpsMarketModule {
         int currentFundingRate;
         int currentFundingVelocity;
         uint indexPrice;
-        uint fillPrice;
     }
 }
 
@@ -531,6 +530,7 @@ library OrderFee {
 library PerpsAccount {
     struct Data {
         mapping(uint128 => uint256) collateralAmounts;
+        uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
     }
