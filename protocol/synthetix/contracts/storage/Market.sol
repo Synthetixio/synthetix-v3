@@ -324,12 +324,13 @@ library Market {
      * Called by a pool when it distributes its debt.
      *
      */
-    function peekPendingDebtChange(
+    function accumulateDebtChange(
         Data storage self,
         uint128 poolId
     ) internal returns (int256 debtChangeD18) {
-        int256 changedValueD18 = self.poolsDebtDistribution.getActorValueChange(poolId.toBytes32());
+        int256 changedValueD18 = self.poolsDebtDistribution.accumulateActor(poolId.toBytes32());
         debtChangeD18 = self.pools[poolId].pendingDebtD18.toInt() + changedValueD18;
+        self.pools[poolId].pendingDebtD18 = 0;
     }
 
     /**

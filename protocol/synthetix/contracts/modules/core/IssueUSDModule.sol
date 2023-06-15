@@ -90,8 +90,6 @@ contract IssueUSDModule is IIssueUSDModule {
             );
         }
 
-        VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
-
         // Increase the debt of the position
         pool.assignDebtToAccount(collateralType, accountId, (amount + feeAmount).toInt());
 
@@ -150,8 +148,6 @@ contract IssueUSDModule is IIssueUSDModule {
 
             emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
         }
-
-        VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
         // Decrease the debt of the position
         pool.assignDebtToAccount(collateralType, accountId, -(amount - feeAmount).toInt());

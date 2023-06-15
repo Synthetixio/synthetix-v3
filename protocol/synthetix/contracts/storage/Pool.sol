@@ -273,7 +273,7 @@ library Pool {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
             market.distributeDebtToPools(9999999999);
-            cumulativeDebtChange += market.peekPendingDebtChange(myPoolId);
+            cumulativeDebtChange += market.accumulateDebtChange(myPoolId);
         }
 
         assignDebt(self, cumulativeDebtChange);
@@ -322,7 +322,7 @@ library Pool {
         collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-        (uint256 usdWeightD18, , int256 deltaDebtD18) = self
+        (uint256 usdWeightD18, ) = self
             .vaults[collateralType]
             .updateCreditCapacity(collateralPriceD18);
 
