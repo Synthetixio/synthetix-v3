@@ -1,4 +1,4 @@
-import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
+import { DEFAULT_SETTLEMENT_STRATEGY, PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -76,7 +76,13 @@ describe('Position - funding', () => {
   ].forEach(({ daysElapsed, newOrderSize, expectedAccruedFunding }) => {
     describe(`after ${daysElapsed} days`, () => {
       before('move time', async () => {
-        await fastForwardTo(openPositionTime - 8 + SECONDS_IN_DAY * daysElapsed, provider());
+        await fastForwardTo(
+          openPositionTime -
+            // this enables the market summary check to be as close as possible to the settlement time
+            (DEFAULT_SETTLEMENT_STRATEGY.settlementDelay - 1) + // settlement strategy delay accounted for
+            SECONDS_IN_DAY * daysElapsed,
+          provider()
+        );
       });
 
       before('trader2 moves skew', async () => {
