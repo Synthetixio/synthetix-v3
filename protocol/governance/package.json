@@ -4,6 +4,7 @@
   "description": "On-Chain elections for all Synthetix councils",
   "private": true,
   "scripts": {
+    "clean": "hardhat clean",
     "test1": "hardhat test test/unit/**/*.test.js",
     "coverage1": "hardhat coverage --testfiles test/unit/**/*.test.js",
     "compile-contracts": "hardhat compile",

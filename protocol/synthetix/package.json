@@ -6,7 +6,7 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "hardhat clean",
+    "clean": "hardhat clean && rm -rf test/generated",
     "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build",
     "build-testable": "hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
