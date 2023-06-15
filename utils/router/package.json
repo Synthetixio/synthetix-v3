@@ -35,9 +35,9 @@
   },
   "devDependencies": {
     "@types/debug": "4.1.7",
-    "@types/lodash": "4.14.191",
+    "@types/lodash": "4.14.195",
     "@types/mustache": "4.2.2",
-    "@usecannon/builder": "2.4.7",
+    "@usecannon/builder": "2.4.15",
     "mocha": "9.1.1",
     "nyc": "15.1.0",
     "typechain": "8.1.1",
@@ -47,7 +47,7 @@
     "@ethersproject/abi": "5.7.0",
     "ajv": "^8.11.0",
     "debug": "4.3.4",
-    "ethers": "^5.0.0",
+    "ethers": "^5.7.2",
     "lodash": "4.17.21",
     "mustache": "4.2.0",
     "solc": "^0.8.17"
@@ -60,5 +60,12 @@
       "optional": true
     }
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
+  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27",
+  "depcheck": {
+    "ignoreMatches": [
+      "ajv",
+      "lodash",
+      "@types/lodash"
+    ]
+  }
 }

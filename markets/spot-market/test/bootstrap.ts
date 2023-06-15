@@ -4,24 +4,22 @@ import { bootstrapStakers, createStakedPool } from '@synthetixio/main/test/commo
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
-import { SpotMarketProxy, SynthRouter } from './generated/typechain';
+import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
 import {
   USDProxy,
   CollateralMock,
   USDRouter,
   CoreProxy,
   AccountProxy,
-  SynthetixOracle_managerProxy,
-  AggregatorV3Mock,
-  FeeCollectorMock,
-  OracleVerifierMock,
 } from '@synthetixio/main/test/generated/typechain';
+import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
+import { AggregatorV3Mock, OracleVerifierMock } from '../typechain-types';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
   ['synthetix.USDProxy']: USDProxy;
   ['synthetix.CollateralMock']: CollateralMock;
-  ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
+  ['synthetix.oracle_manager.Proxy']: OracleManagerProxy;
   ['synthetix.AccountProxy']: AccountProxy;
   SpotMarketProxy: SpotMarketProxy;
   SynthRouter: SynthRouter;
@@ -36,7 +34,7 @@ export type Systems = {
   USD: USDProxy;
   USDRouter: USDRouter;
   CollateralMock: CollateralMock;
-  OracleManager: SynthetixOracle_managerProxy;
+  OracleManager: OracleManagerProxy;
   OracleVerifierMock: OracleVerifierMock;
   FeeCollectorMock: FeeCollectorMock;
   Account: AccountProxy;

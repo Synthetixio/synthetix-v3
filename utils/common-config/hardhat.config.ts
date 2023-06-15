@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import path from 'node:path';
 import dotenv from 'dotenv';
 
@@ -14,6 +16,7 @@ import '@synthetixio/hardhat-storage';
 // Router generation cannon plugin
 import { registerAction } from '@usecannon/builder';
 import pluginRouter from 'cannon-plugin-router';
+
 registerAction(pluginRouter);
 
 // Load common .env file from root

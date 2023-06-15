@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -73,6 +75,7 @@ describe('SetUtil', function () {
 
     const addValue = async (value: V) => {
       expectedValues.push(value);
+      //@ts-ignore
       await SampleSet.add(value);
     };
 
@@ -86,7 +89,7 @@ describe('SetUtil', function () {
       }
 
       expectedValues.pop();
-
+      //@ts-ignore
       await SampleSet.remove(value);
     };
 
@@ -111,12 +114,14 @@ describe('SetUtil', function () {
 
       it('contains all values', async function () {
         for (const value of expectedValues) {
+          //@ts-ignore
           assert.equal(await SampleSet.contains(value), true);
         }
       });
 
       it('does not contain replaced values', async function () {
         for (const value of replacedValues) {
+          //@ts-ignore
           assert.equal(await SampleSet.contains(value), false);
         }
       });
@@ -130,6 +135,7 @@ describe('SetUtil', function () {
       });
 
       it('does not contain a value not in the set', async function () {
+        //@ts-ignore
         assert.equal(await SampleSet.contains(notContainedValue), false);
       });
 
@@ -139,15 +145,18 @@ describe('SetUtil', function () {
       });
 
       it('reverts when trying to get the position of a value not in the set', async function () {
+        //@ts-ignore
         await assertRevert(SampleSet.positionOf(notContainedValue), 'ValueNotInSet', SampleSet);
       });
 
       it('reverts when trying to remove a value not in the set', async function () {
+        //@ts-ignore
         await assertRevert(SampleSet.remove(notContainedValue), 'ValueNotInSet', SampleSet);
       });
 
       it('reverts when trying to append a value already existing in set', async function () {
         if (expectedValues.length > 0) {
+          //@ts-ignore
           await assertRevert(SampleSet.add(expectedValues[0]), 'ValueAlreadyInSet', SampleSet);
         }
       });
@@ -155,6 +164,7 @@ describe('SetUtil', function () {
       it('reverts when trying replace a value in the set with another value in the set', async function () {
         if (expectedValues.length > 1) {
           await assertRevert(
+            //@ts-ignore
             SampleSet.replace(await SampleSet.valueAt(1), await SampleSet.valueAt(2)),
             'ValueAlreadyInSet',
             SampleSet

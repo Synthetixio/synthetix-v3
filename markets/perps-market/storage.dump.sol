@@ -414,6 +414,32 @@ library OrderFees {
     }
 }
 
+// @custom:artifact contracts/interfaces/IAsyncOrderModule.sol:IAsyncOrderModule
+interface IAsyncOrderModule {
+    struct SettleOrderRuntime {
+        uint128 marketId;
+        uint128 accountId;
+        int128 newPositionSize;
+        int256 pnl;
+        uint256 pnlUint;
+        uint256 amountToDeposit;
+        uint256 settlementReward;
+        bytes32 trackingCode;
+    }
+}
+
+// @custom:artifact contracts/interfaces/IPerpsMarketModule.sol:IPerpsMarketModule
+interface IPerpsMarketModule {
+    struct MarketSummary {
+        int256 skew;
+        uint256 size;
+        uint256 maxOpenInterest;
+        int currentFundingRate;
+        int currentFundingVelocity;
+        uint indexPrice;
+    }
+}
+
 // @custom:artifact contracts/interfaces/external/IPythVerifier.sol:IPythVerifier
 interface IPythVerifier {
     struct Price {
@@ -432,10 +458,6 @@ interface IPythVerifier {
 // @custom:artifact contracts/modules/AsyncOrderModule.sol:AsyncOrderModule
 contract AsyncOrderModule {
     int256 public constant PRECISION = 18;
-    struct RuntimeCommitData {
-        uint feesAccrued;
-        AsyncOrder.Status status;
-    }
 }
 
 // @custom:artifact contracts/modules/PerpsMarketFactoryModule.sol:PerpsMarketFactoryModule
@@ -446,18 +468,6 @@ contract PerpsMarketFactoryModule {
 
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
 library AsyncOrder {
-    enum Status {
-        Success,
-        PriceOutOfBounds,
-        CanLiquidate,
-        MaxMarketValueExceeded,
-        MaxLeverageExceeded,
-        InsufficientMargin,
-        NotPermitted,
-        ZeroSizeOrder,
-        AcceptablePriceExceeded,
-        PositionFlagged
-    }
     struct Data {
         uint128 accountId;
         uint128 marketId;
@@ -477,11 +487,15 @@ library AsyncOrder {
     }
     struct SimulateDataRuntime {
         uint fillPrice;
-        uint fees;
+        uint orderFees;
         uint availableMargin;
         uint currentLiquidationMargin;
         int128 newPositionSize;
-        uint newLiquidationMargin;
+        uint newNotionalValue;
+        int currentAvailableMargin;
+        uint requiredMaintenanceMargin;
+        uint initialRequiredMargin;
+        uint totalRequiredMargin;
         Position.Data newPosition;
     }
 }
@@ -507,31 +521,13 @@ library GlobalPerpsMarketConfiguration {
     struct Data {
         mapping(uint128 => uint) maxCollateralAmounts;
         uint128[] synthDeductionPriority;
-        uint256 maxLeverage;
+        uint minLiquidationRewardUsd;
+        uint maxLiquidationRewardUsd;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
         assembly {
             globalMarketConfig.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/storage/LiquidationConfiguration.sol:LiquidationConfiguration
-library LiquidationConfiguration {
-    struct Data {
-        uint liquidationPremiumMultiplier;
-        uint maxLiquidationDelta;
-        uint maxPremiumDiscount;
-        uint minLiquidationRewardUsd;
-        uint maxLiquidationRewardUsd;
-        uint desiredLiquidationRewardPercentage;
-        uint liquidationBufferRatio;
-    }
-    function load(uint128 marketId) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.LiquidationConfiguration", marketId));
-        assembly {
-            store.slot := s
         }
     }
 }
@@ -547,14 +543,15 @@ library OrderFee {
 // @custom:artifact contracts/storage/PerpsAccount.sol:PerpsAccount
 library PerpsAccount {
     struct Data {
-        mapping(uint128 => uint) collateralAmounts;
+        mapping(uint128 => uint256) collateralAmounts;
+        uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
-        bool flaggedForLiquidation;
     }
     struct RuntimeLiquidationData {
         uint totalLosingPnl;
-        uint totalLiquidationRewards;
+        uint accumulatedLiquidationRewards;
+        uint liquidationReward;
         uint losingMarketsLength;
         uint profitableMarketsLength;
         uint128[] profitableMarkets;
@@ -600,23 +597,17 @@ library PerpsMarket {
 
 // @custom:artifact contracts/storage/PerpsMarketConfiguration.sol:PerpsMarketConfiguration
 library PerpsMarketConfiguration {
-    enum OrderType {
-        ASYNC_ONCHAIN,
-        ASYNC_OFFCHAIN,
-        ATOMIC
-    }
     struct Data {
-        mapping(OrderType => OrderFee.Data) orderFees;
+        OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
         uint256 maxMarketValue;
         uint256 maxFundingVelocity;
         uint256 skewScale;
-        uint256 minInitialMargin;
-        uint256 liquidationPremiumMultiplier;
+        uint256 initialMarginFraction;
+        uint256 maintenanceMarginFraction;
         uint256 lockedOiPercent;
         uint256 maxLiquidationLimitAccumulationMultiplier;
-        uint liquidationRewardPercentage;
-        uint maxLiquidationReward;
+        uint256 liquidationRewardRatioD18;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
@@ -634,7 +625,6 @@ library PerpsMarketFactory {
         address usdToken;
         address synthetix;
         address spotMarket;
-        mapping(uint128 => address) marketOwners;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;
@@ -670,7 +660,6 @@ library Position {
 // @custom:artifact contracts/storage/SettlementStrategy.sol:SettlementStrategy
 library SettlementStrategy {
     enum Type {
-        ONCHAIN,
         PYTH
     }
     struct Data {

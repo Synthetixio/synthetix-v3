@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assert from 'assert/strict';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
@@ -28,7 +28,7 @@ describe('VaultModule', function () {
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let MockMarket: ethers.Contract;
-  let marketId: ethers.BigNumber;
+  let marketId: BigNumber;
 
   before('identify signers', async () => {
     [owner, user1, user2] = signers();

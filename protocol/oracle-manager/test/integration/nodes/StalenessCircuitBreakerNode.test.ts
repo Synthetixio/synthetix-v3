@@ -1,13 +1,18 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { ethers } from 'ethers';
+import { BigNumberish, ethers, Signer } from 'ethers';
 
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
+import hre from 'hardhat';
 
 describe('StalenessCircuitBreakerNode', function () {
   const { getContract, getSigners, getProvider } = bootstrap();
-  let owner, staleNodeId, freshNodeId, fallbackNodeId, zeroPriceNodeId;
+  let owner: Signer;
+  let staleNodeId: string;
+  let freshNodeId: string;
+  let fallbackNodeId: string;
+  let zeroPriceNodeId: string;
 
   const abi = ethers.utils.defaultAbiCoder;
   let NodeModule: ethers.Contract;
@@ -92,7 +97,7 @@ describe('StalenessCircuitBreakerNode', function () {
     await assertRevert(NodeModule.process(nodeId), 'StalenessToleranceExceeded()', NodeModule);
   });
 
-  async function deployAndRegisterExternalNode(price, timestamp) {
+  async function deployAndRegisterExternalNode(price: BigNumberish, timestamp: BigNumberish) {
     // Deploy the mock
     const factory = await hre.ethers.getContractFactory('MockExternalNode');
     const externalNode = await factory.connect(owner).deploy(price, timestamp);

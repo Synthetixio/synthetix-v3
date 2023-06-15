@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
@@ -10,8 +11,7 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
-
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
 
 /**
  * @title Data for a single perps market
@@ -22,8 +22,13 @@ library PerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+    using Position for Position.Data;
 
     error OnlyMarketOwner(address marketOwner, address sender);
+
+    error InvalidMarket(uint128 marketId);
+
+    error PriceFeedNotSet(uint128 marketId);
 
     struct Data {
         address owner;
@@ -37,7 +42,7 @@ library PerpsMarket {
         int lastFundingRate;
         int lastFundingValue;
         uint256 lastFundingTime;
-        // liquidation params
+        // liquidation data
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
         // accountId => asyncOrder
@@ -46,9 +51,17 @@ library PerpsMarket {
         mapping(uint => Position.Data) positions;
     }
 
-    function create(uint128 id) internal returns (Data storage market) {
+    function create(
+        uint128 id,
+        address owner,
+        string memory name,
+        string memory symbol
+    ) internal returns (Data storage market) {
         market = load(id);
         market.id = id;
+        market.owner = owner;
+        market.name = name;
+        market.symbol = symbol;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -59,6 +72,21 @@ library PerpsMarket {
         }
     }
 
+    /**
+     * @dev Reverts if the market does not exist with appropriate error. Otherwise, returns the market.
+     */
+    function loadValid(uint128 marketId) internal view returns (Data storage market) {
+        market = load(marketId);
+        if (market.owner == address(0)) {
+            revert InvalidMarket(marketId);
+        }
+
+        if (PerpsPrice.load(marketId).feedId == "") {
+            revert PriceFeedNotSet(marketId);
+        }
+    }
+
+    // TODO: can remove and use loadWithVerifiedOwner
     function onlyMarketOwner(Data storage self) internal view {
         if (self.owner != msg.sender) {
             revert OnlyMarketOwner(self.owner, msg.sender);
@@ -90,15 +118,21 @@ library PerpsMarket {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
-        OrderFee.Data storage orderFeeData = marketConfig.orderFees[
-            PerpsMarketConfiguration.OrderType.ASYNC_OFFCHAIN
-        ];
+        OrderFee.Data storage orderFeeData = marketConfig.orderFees;
         return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
     }
 
-    function updatePositionData(Data storage self, Position.Data memory newPosition) internal {
-        self.size += MathUtil.abs(newPosition.size);
-        self.skew += newPosition.size;
+    function updatePositionData(
+        Data storage self,
+        uint128 accountId,
+        Position.Data memory newPosition
+    ) internal {
+        Position.Data storage oldPosition = self.positions[accountId];
+        int128 oldPositionSize = oldPosition.size;
+
+        self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPosition.size - oldPositionSize;
+        oldPosition.updatePosition(newPosition);
     }
 
     function loadWithVerifiedOwner(
@@ -139,6 +173,7 @@ library PerpsMarket {
         int avgFundingRate = -(self.lastFundingRate + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
+
         return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
     }
 
@@ -161,23 +196,26 @@ library PerpsMarket {
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
-
         return
-            (self.lastFundingRate + currentFundingVelocity(self)).mulDecimal(
-                proportionalElapsed(self)
-            );
+            self.lastFundingRate +
+            (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
     function currentFundingVelocity(Data storage self) internal view returns (int) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
         int maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
-        int pSkew = self.skew.divDecimal(marketConfig.skewScale.toInt());
+        int skewScale = marketConfig.skewScale.toInt();
+        // Avoid a panic due to div by zero. Return 0 immediately.
+        if (skewScale == 0) {
+            return 0;
+        }
         // Ensures the proportionalSkew is between -1 and 1.
-        int proportionalSkew = MathUtil.min(
+        int pSkew = self.skew.divDecimal(skewScale);
+        int pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
-        return proportionalSkew.mulDecimal(maxFundingVelocity);
+        return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {

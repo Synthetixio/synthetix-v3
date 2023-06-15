@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {MathUtil} from "../utils/MathUtil.sol";
+
 /*
     Note: This library contains all global perps market configuration data
 */
@@ -19,9 +21,13 @@ library GlobalPerpsMarketConfiguration {
          */
         uint128[] synthDeductionPriority;
         /**
-         * @dev max leverage allowed based on notional value of all positions vs. the margin available in account
+         * @dev minimum configured liquidation reward for the sender who liquidates the account
          */
-        uint256 maxLeverage;
+        uint minLiquidationRewardUsd;
+        /**
+         * @dev maximum configured liquidation reward for the sender who liquidates the account
+         */
+        uint maxLiquidationRewardUsd;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
@@ -29,5 +35,19 @@ library GlobalPerpsMarketConfiguration {
         assembly {
             globalMarketConfig.slot := s
         }
+    }
+
+    /**
+     * @dev returns the liquidation reward based on total liquidation rewards from all markets compared against min/max
+     */
+    function liquidationReward(
+        Data storage self,
+        uint256 totalLiquidationRewards
+    ) internal view returns (uint256) {
+        return
+            MathUtil.min(
+                MathUtil.max(totalLiquidationRewards, self.minLiquidationRewardUsd),
+                self.maxLiquidationRewardUsd
+            );
     }
 }
