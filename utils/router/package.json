@@ -44,7 +44,7 @@
     "typescript": "4.9.3"
   },
   "dependencies": {
-    "@ethersproject/abi": "5.7.0",
+    "@ethersproject/abi": "^5.7.0",
     "ajv": "^8.11.0",
     "debug": "4.3.4",
     "ethers": "^5.7.2",

@@ -39,7 +39,10 @@
     "docgen": "yarn workspaces foreach --verbose run docgen"
   },
   "devDependencies": {
+    "@ethersproject/abi": "^5.7.0",
+    "@ethersproject/providers": "^5.0.0",
     "@lerna-lite/cli": "1.17.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@synthetixio/deps": "workspace:*",
     "@types/mocha": "10.0.1",
     "@types/node": "18.11.10",
