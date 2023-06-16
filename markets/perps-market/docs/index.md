@@ -69,68 +69,8 @@
 ### OrderSettled
 
   ```solidity
-  event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int128 newSize, uint256 collectedFees, uint256 settelementReward, bytes32 trackingCode, address settler)
+  event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int256 accountPnlRealized, int128 newSize, uint256 collectedFees, uint256 settelementReward, bytes32 trackingCode, address settler)
   ```
-
-## Collateral Module
-
-### setMaxCollateralAmount
-
-  ```solidity
-  function setMaxCollateralAmount(uint128 synthId, uint256 maxCollateralAmount) external
-  ```
-
-### MaxCollateralSet
-
-  ```solidity
-  event MaxCollateralSet(uint128 synthId, uint256 maxCollateralAmount)
-  ```
-
-  Gets fired when max collateral amount for synth is set by owner.
-
-**Parameters**
-* `synthId` (*uint128*) - Synth market id, 0 for snxUSD.
-* `maxCollateralAmount` (*uint256*) - max amount that was set for the synth
-
-## Global Perps Market Module
-
-### getMaxCollateralAmountsForSynthMarket
-
-  ```solidity
-  function getMaxCollateralAmountsForSynthMarket(uint128 synthMarketId) external view returns (uint256)
-  ```
-
-### setMaxCollateralForSynthMarketId
-
-  ```solidity
-  function setMaxCollateralForSynthMarketId(uint128 synthMarketId, uint256 collateralAmount) external
-  ```
-
-### setSynthDeductionPriority
-
-  ```solidity
-  function setSynthDeductionPriority(uint128[] newSynthDeductionPriority) external
-  ```
-
-### getSynthDeductionPriority
-
-  ```solidity
-  function getSynthDeductionPriority() external view returns (uint128[])
-  ```
-
-### setLiquidationRewardGuards
-
-  ```solidity
-  function setLiquidationRewardGuards(uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd) external
-  ```
-
-### getLiquidationRewardGuards
-
-  ```solidity
-  function getLiquidationRewardGuards() external view returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
-  ```
-
-## Limit Order Module
 
 ## Liquidation Module
 
@@ -421,7 +361,7 @@
 ### fillPrice
 
   ```solidity
-  function fillPrice(uint128 marketId) external returns (uint256)
+  function fillPrice(uint128 marketId, int256 orderSize, uint256 price) external returns (uint256)
   ```
 
 ### getMarketSummary
@@ -431,4 +371,64 @@
   ```
 
   Given a marketId return a market's summary details in one call.
+
+## Collateral Module
+
+### setMaxCollateralAmount
+
+  ```solidity
+  function setMaxCollateralAmount(uint128 synthId, uint256 maxCollateralAmount) external
+  ```
+
+### MaxCollateralSet
+
+  ```solidity
+  event MaxCollateralSet(uint128 synthId, uint256 maxCollateralAmount)
+  ```
+
+  Gets fired when max collateral amount for synth is set by owner.
+
+**Parameters**
+* `synthId` (*uint128*) - Synth market id, 0 for snxUSD.
+* `maxCollateralAmount` (*uint256*) - max amount that was set for the synth
+
+## Global Perps Market Module
+
+### getMaxCollateralAmountsForSynthMarket
+
+  ```solidity
+  function getMaxCollateralAmountsForSynthMarket(uint128 synthMarketId) external view returns (uint256)
+  ```
+
+### setMaxCollateralForSynthMarketId
+
+  ```solidity
+  function setMaxCollateralForSynthMarketId(uint128 synthMarketId, uint256 collateralAmount) external
+  ```
+
+### setSynthDeductionPriority
+
+  ```solidity
+  function setSynthDeductionPriority(uint128[] newSynthDeductionPriority) external
+  ```
+
+### getSynthDeductionPriority
+
+  ```solidity
+  function getSynthDeductionPriority() external view returns (uint128[])
+  ```
+
+### setLiquidationRewardGuards
+
+  ```solidity
+  function setLiquidationRewardGuards(uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd) external
+  ```
+
+### getLiquidationRewardGuards
+
+  ```solidity
+  function getLiquidationRewardGuards() external view returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
+  ```
+
+## Limit Order Module
 
