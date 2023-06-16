@@ -9,3 +9,52 @@ coverage:
     project:
       default:
         threshold: 0.1%
+
+comment:
+  show_carryforward_flags: true
+
+flags:
+  core-contracts:
+    paths:
+      - utils/core-contracts/contracts
+    carryforward: true
+
+  core-utils:
+    paths:
+      - utils/core-utils/src
+    carryforward: true
+
+  core-modules:
+    paths:
+      - utils/core-modules/contracts
+    carryforward: true
+
+  router:
+    paths:
+      - utils/router/src
+    carryforward: true
+
+  sample-project:
+    paths:
+      - utils/sample-project/contracts
+    carryforward: true
+
+  main:
+    paths:
+      - protocol/synthetix/contracts
+    carryforward: true
+
+  oracle-manager:
+    paths:
+      - protocol/oracle-manager/contracts
+    carryforward: true
+
+  spot-market:
+    paths:
+      - markets/spot-market/contracts
+    carryforward: true
+
+  perps-market:
+    paths:
+      - protocol/perps-market/contracts
+    carryforward: true
