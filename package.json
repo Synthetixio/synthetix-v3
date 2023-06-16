@@ -57,6 +57,9 @@
     "solhint-plugin-numcast": "1.0.0",
     "typescript": "4.9.3"
   },
+  "resolutions": {
+    "@synthetixio/router": "workspace:*"
+  },
   "pre-commit": [
     "lint:quick"
   ],
