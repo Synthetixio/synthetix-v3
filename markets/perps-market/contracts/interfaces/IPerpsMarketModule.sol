@@ -13,7 +13,7 @@ interface IPerpsMarketModule {
         uint256 maxOpenInterest;
         int currentFundingRate;
         int currentFundingVelocity;
-        uint indexPrice;
+        // uint indexPrice;
     }
 
     function skew(uint128 marketId) external view returns (int256);
@@ -26,7 +26,7 @@ interface IPerpsMarketModule {
 
     function currentFundingVelocity(uint128 marketId) external view returns (int);
 
-    function indexPrice(uint128 marketId) external view returns (uint);
+    // function indexPrice(uint128 marketId) external view returns (uint);
 
     function fillPrice(uint128 marketId, int orderSize, uint price) external returns (uint);
 

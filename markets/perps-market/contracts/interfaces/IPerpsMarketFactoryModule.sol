@@ -30,7 +30,7 @@ interface IPerpsMarketFactoryModule is IMarket {
 
     function symbol(uint128 marketId) external view returns (string memory);
 
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
+    // function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
 
     function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external;
 

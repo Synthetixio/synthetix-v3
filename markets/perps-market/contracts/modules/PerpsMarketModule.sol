@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
-import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
 
@@ -31,9 +30,9 @@ contract PerpsMarketModule is IPerpsMarketModule {
         return PerpsMarket.load(marketId).currentFundingVelocity();
     }
 
-    function indexPrice(uint128 marketId) external view override returns (uint) {
-        return PerpsPrice.getCurrentPrice(marketId);
-    }
+    // function indexPrice(uint128 marketId) external view override returns (uint) {
+    //     return PerpsPrice.getCurrentPrice(marketId);
+    // }
 
     function fillPrice(
         uint128 marketId,
@@ -59,8 +58,8 @@ contract PerpsMarketModule is IPerpsMarketModule {
                 size: market.size,
                 maxOpenInterest: this.maxOpenInterest(marketId),
                 currentFundingRate: market.currentFundingRate(),
-                currentFundingVelocity: market.currentFundingVelocity(),
-                indexPrice: this.indexPrice(marketId)
+                currentFundingVelocity: market.currentFundingVelocity()
+                // indexPrice: this.indexPrice(marketId)
             });
     }
 }

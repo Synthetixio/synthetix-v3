@@ -11,7 +11,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
-import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
@@ -21,7 +20,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using DecimalMath for int64;
-    using PerpsPrice for PerpsPrice.Data;
     using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
@@ -36,7 +34,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
     int256 public constant PRECISION = 18;
 
     function commitOrder(
-        AsyncOrder.OrderCommitmentRequest memory commitment
+        AsyncOrder.OrderCommitmentRequest memory commitment,
+        uint price
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
         PerpsMarket.Data storage market = PerpsMarket.loadValid(commitment.marketId);
 
@@ -62,7 +61,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         (, uint feesAccrued, , ) = order.validateOrder(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId)
+            price
+            // PerpsPrice.getCurrentPrice(commitment.marketId)
         );
 
         // TODO include fees in event
@@ -116,7 +116,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
         uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
 
-        settlementStrategy.checkPriceDeviation(offchainPrice, PerpsPrice.getCurrentPrice(marketId));
+        // settlementStrategy.checkPriceDeviation(offchainPrice, PerpsPrice.getCurrentPrice(marketId));
 
         _settleOrder(offchainPrice, order, settlementStrategy);
     }

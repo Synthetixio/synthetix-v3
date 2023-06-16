@@ -50,7 +50,8 @@ interface IAsyncOrderModule {
     );
 
     function commitOrder(
-        AsyncOrder.OrderCommitmentRequest memory commitment
+        AsyncOrder.OrderCommitmentRequest memory commitment,
+        uint price
     ) external returns (AsyncOrder.Data memory retOrder, uint fees);
 
     // only used due to stack too deep during settlement

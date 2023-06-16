@@ -11,7 +11,6 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
-import {PerpsPrice} from "./PerpsPrice.sol";
 
 /**
  * @title Data for a single perps market
@@ -81,9 +80,9 @@ library PerpsMarket {
             revert InvalidMarket(marketId);
         }
 
-        if (PerpsPrice.load(marketId).feedId == "") {
-            revert PriceFeedNotSet(marketId);
-        }
+        // if (PerpsPrice.load(marketId).feedId == "") {
+        //     revert PriceFeedNotSet(marketId);
+        // }
     }
 
     // TODO: can remove and use loadWithVerifiedOwner

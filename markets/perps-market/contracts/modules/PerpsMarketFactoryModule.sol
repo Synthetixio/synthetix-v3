@@ -13,7 +13,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
-import {PerpsPrice} from "../storage/PerpsPrice.sol";
+// import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
@@ -28,7 +28,7 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
  */
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using AssociatedSystem for AssociatedSystem.Data;
-    using PerpsPrice for PerpsPrice.Data;
+    // using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
@@ -99,16 +99,16 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             );
     }
 
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
-        PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
+    // /**
+    //  * @inheritdoc IPerpsMarketFactoryModule
+    //  */
+    // function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
+    //     PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
 
-        PerpsPrice.load(perpsMarketId).update(feedId);
+    //     PerpsPrice.load(perpsMarketId).update(feedId);
 
-        emit MarketPriceDataUpdated(perpsMarketId, feedId);
-    }
+    //     emit MarketPriceDataUpdated(perpsMarketId, feedId);
+    // }
 
     /**
      * @inheritdoc IPerpsMarketFactoryModule
