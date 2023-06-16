@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
     strategy:
       matrix:
         package:
@@ -47,7 +50,6 @@ jobs:
           - package: main
             workspace: "@synthetixio/main"
     steps:
-      - run: mkdir -p ~/.local/share/cannon && echo '{"ipfsUrl":"http://localhost:5001"}' > ~/.local/share/cannon/settings.json
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:

@@ -12,6 +12,8 @@ jobs:
     env:
       CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
       INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
+      CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
     strategy:
       matrix:
         network: [goerli, optimistic-goerli]
