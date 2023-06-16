@@ -136,7 +136,7 @@ library AsyncOrder {
 
         bool isEligible;
         (isEligible, runtime.currentAvailableMargin, runtime.requiredMaintenanceMargin) = account
-            .isEligibleForLiquidation();
+            .isEligibleForLiquidation(orderPrice);
 
         if (isEligible) {
             revert PerpsAccount.AccountLiquidatable(order.accountId);

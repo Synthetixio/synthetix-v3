@@ -25,7 +25,8 @@ contract PerpsAccountModule is IAccountModule {
     function modifyCollateral(
         uint128 accountId,
         uint128 synthMarketId,
-        int amountDelta
+        int amountDelta,
+        uint price
     ) external override {
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(
@@ -58,7 +59,7 @@ contract PerpsAccountModule is IAccountModule {
         } else {
             uint amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            account.checkAvailableWithdrawableValue(amountAbs);
+            account.checkAvailableWithdrawableValue(amountAbs, price);
             account.removeCollateralAmount(synthMarketId, amountAbs);
 
             synth.transfer(msg.sender, amountAbs);
@@ -71,8 +72,11 @@ contract PerpsAccountModule is IAccountModule {
         return PerpsAccount.load(accountId).getTotalCollateralValue();
     }
 
-    function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
-        return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
+    function totalAccountOpenInterest(
+        uint128 accountId,
+        uint price
+    ) external view override returns (uint) {
+        return PerpsAccount.load(accountId).getTotalNotionalOpenInterest(price);
     }
 
     function getOpenPosition(
@@ -99,7 +103,10 @@ contract PerpsAccountModule is IAccountModule {
         return asyncOrder;
     }
 
-    function getAvailableMargin(uint128 accountId) external view override returns (int) {
-        return PerpsAccount.load(accountId).getAvailableMargin();
+    function getAvailableMargin(
+        uint128 accountId,
+        uint price
+    ) external view override returns (int) {
+        return PerpsAccount.load(accountId).getAvailableMargin(price);
     }
 }

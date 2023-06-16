@@ -16,15 +16,21 @@ interface IAccountModule {
         address sender
     );
 
-    function modifyCollateral(uint128 accountId, uint128 synthMarketId, int amountDelta) external;
+    function modifyCollateral(
+        uint128 accountId,
+        uint128 synthMarketId,
+        int amountDelta,
+        uint price
+    ) external;
 
     function totalCollateralValue(uint128 accountId) external view returns (uint);
 
-    function totalAccountOpenInterest(uint128 accountId) external view returns (uint);
+    function totalAccountOpenInterest(uint128 accountId, uint price) external view returns (uint);
 
     function getOpenPosition(
         uint128 accountId,
-        uint128 marketId
+        uint128 marketId,
+        uint price
     ) external view returns (int, int, int);
 
     /**
@@ -38,5 +44,5 @@ interface IAccountModule {
         uint128 marketId
     ) external view returns (AsyncOrder.Data memory);
 
-    function getAvailableMargin(uint128 accountId) external view returns (int);
+    function getAvailableMargin(uint128 accountId, uint price) external view returns (int);
 }

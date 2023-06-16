@@ -12,13 +12,13 @@ contract LiquidationModule is ILiquidationModule {
     using SetUtil for SetUtil.UintSet;
     using PerpsAccount for PerpsAccount.Data;
 
-    function liquidate(uint128 accountId) external override {
+    function liquidate(uint128 accountId, uint price) external override {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (!liquidatableAccounts.contains(accountId)) {
-            (bool isEligible, , ) = account.isEligibleForLiquidation();
+            (bool isEligible, , ) = account.isEligibleForLiquidation(price);
 
             if (isEligible) {
                 account.flagForLiquidation();
