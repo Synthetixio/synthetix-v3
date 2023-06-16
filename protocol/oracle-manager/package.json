@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "hardhat test",
-    "coverage": "yarn build && hardhat --network hardhat coverage",
+    "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "build": "hardhat storage:verify && hardhat cannon:build",
     "check:storage": "git diff --exit-code storage.dump.sol",

@@ -3,6 +3,7 @@ const { registerAction } = require('@usecannon/builder');
 require('@nomiclabs/hardhat-ethers');
 require('hardhat-cannon');
 require('@synthetixio/hardhat-storage');
+require('solidity-coverage');
 
 registerAction(require('cannon-plugin-router'));
 

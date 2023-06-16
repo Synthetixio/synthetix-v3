@@ -11,7 +11,7 @@
     "cannon-build": "hardhat cannon:build",
     "test": "hardhat test",
     "test:fork": "hardhat test test-fork/AsyncOrdersModule.e2e.test.ts",
-    "coverage": "yarn test",
+    "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "publish-contracts": "yarn build && cannon publish synthetix-spot-market:$(node -p 'require(`./package.json`).version') --quiet",
     "size-contracts": "hardhat compile && hardhat size-contracts",

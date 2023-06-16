@@ -10,7 +10,7 @@
     "clean": "hardhat clean",
     "cannon-build": "hardhat cannon:build",
     "test": "hardhat test",
-    "coverage": "yarn test",
+    "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "publish-contracts": "yarn build && cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --quiet",
     "size-contracts": "hardhat compile && hardhat size-contracts",
