@@ -1,14 +1,15 @@
 import { ethers } from 'ethers';
 import { Systems, toNum } from '../bootstrap';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { settleOrder } from '.';
+import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
 export type OpenPositionData = {
   trader: ethers.Signer;
   marketId: ethers.BigNumber;
   accountId: number;
   sizeDelta: ethers.BigNumber;
-  settlementStrategyId: number;
+  settlementStrategyId: ethers.BigNumber;
   price: ethers.BigNumber;
   trackingCode?: string;
   keeper: ethers.Signer;
@@ -34,7 +35,7 @@ export const openPosition = async (data: OpenPositionData) => {
     data.marketId,
     data.settlementStrategyId
   );
-  const delay = toNum(strategy.settlementDelay);
+  const delay = strategy.settlementDelay.toNumber();
 
   const commitTx = await systems()
     .PerpsMarket.connect(trader)
@@ -43,12 +44,10 @@ export const openPosition = async (data: OpenPositionData) => {
       accountId,
       sizeDelta,
       settlementStrategyId,
-      acceptablePrice: price,
+      acceptablePrice: sizeDelta.gt(0) ? price.mul(2) : price.div(2),
       trackingCode: trackingCode ?? ethers.constants.HashZero,
     });
-  await commitTx.wait();
-
-  const commitmentTime = await getTime(provider());
+  const commitmentTime = await getTxTime(provider(), commitTx);
   const settlementTime = commitmentTime + delay + 1;
   await fastForwardTo(settlementTime, provider());
 
@@ -57,10 +56,11 @@ export const openPosition = async (data: OpenPositionData) => {
     keeper,
     marketId,
     accountId,
-    offChainPrice: price,
+    offChainPrice: toNum(price),
     settlementTime,
     feedId: strategy.feedId,
   });
+  const settleTime = await getTxTime(provider(), settleTx);
 
-  return { commitTx, settleTx };
+  return settleTime;
 };

@@ -97,7 +97,7 @@ library AsyncOrder {
     }
 
     error ZeroSizeOrder();
-    error InsufficientMargin(uint availableMargin, uint minMargin);
+    error InsufficientMargin(int availableMargin, uint minMargin);
 
     struct SimulateDataRuntime {
         uint fillPrice;
@@ -106,7 +106,7 @@ library AsyncOrder {
         uint currentLiquidationMargin;
         int128 newPositionSize;
         uint newNotionalValue;
-        uint currentAvailableMargin;
+        int currentAvailableMargin;
         uint requiredMaintenanceMargin;
         uint initialRequiredMargin;
         uint totalRequiredMargin;
@@ -117,12 +117,30 @@ library AsyncOrder {
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    ) internal returns (Position.Data memory, uint, uint) {
+    )
+        internal
+        returns (
+            // return pnl
+            Position.Data memory,
+            uint,
+            uint,
+            Position.Data storage oldPosition
+        )
+    {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
-
         SimulateDataRuntime memory runtime;
+
+        PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
+
+        bool isEligible;
+        (isEligible, runtime.currentAvailableMargin, runtime.requiredMaintenanceMargin) = account
+            .isEligibleForLiquidation();
+
+        if (isEligible) {
+            revert PerpsAccount.AccountLiquidatable(order.accountId);
+        }
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
         perpsMarketData.recomputeFunding(orderPrice);
@@ -130,15 +148,6 @@ library AsyncOrder {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             order.marketId
         );
-        PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
-
-        bool isEligible;
-        (isEligible, runtime.currentAvailableMargin, runtime.requiredMaintenanceMargin) = account
-            .isEligibleForLiquidation(order.accountId);
-
-        if (isEligible) {
-            revert PerpsAccount.AccountLiquidatable(order.accountId);
-        }
 
         runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,
@@ -163,27 +172,24 @@ library AsyncOrder {
             ) +
             strategy.settlementReward;
 
-        if (runtime.currentAvailableMargin < runtime.orderFees) {
+        if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
         // TODO: validate position size
-        Position.Data storage position = PerpsMarket.load(order.marketId).positions[
-            order.accountId
-        ];
+        oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
-        runtime.newPositionSize = position.size + order.sizeDelta.to128();
-        runtime.newNotionalValue = MathUtil.abs(
-            runtime.newPositionSize.to256().mulDecimal(runtime.fillPrice.toInt())
-        );
+        runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
-            runtime.newNotionalValue
+            runtime.newPositionSize,
+            runtime.fillPrice
         );
 
         // use order price to determine notional value here since we need to subtract
         // this amount
         (, , , uint256 currentMarketMaintenanceMargin, ) = marketConfig.calculateRequiredMargins(
-            position.getNotionalValue(orderPrice)
+            oldPosition.size,
+            orderPrice
         );
 
         // requiredMaintenanceMargin includes the maintenance margin for the current position that's
@@ -194,7 +200,7 @@ library AsyncOrder {
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
-        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin) {
+        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }
 
@@ -204,8 +210,7 @@ library AsyncOrder {
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             size: runtime.newPositionSize
         });
-
-        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice);
+        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }
 
     function calculateOrderFee(

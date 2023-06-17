@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { DepositCollateralData, depositCollateral, settleOrder } from '../helpers';
@@ -8,6 +8,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
+import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
 describe('Commit Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -136,7 +137,8 @@ describe('Commit Offchain Async Order test', () => {
     },
   ];
 
-  for (const testCase of testCases) {
+  for (let idx = 0; idx < testCases.length; idx++) {
+    const testCase = testCases[idx];
     describe(`Using ${testCase.name} as collateral`, () => {
       let tx: ethers.ContractTransaction;
       let startTime: number;
@@ -158,8 +160,7 @@ describe('Commit Offchain Async Order test', () => {
             acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           });
-        const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-        startTime = (await provider().getBlock(res.blockNumber)).timestamp;
+        startTime = await getTxTime(provider(), tx);
       });
 
       it('emit event', async () => {
@@ -235,8 +236,7 @@ describe('Commit Offchain Async Order test', () => {
                 acceptablePrice: bn(1050), // 5% slippage
                 trackingCode: ethers.constants.HashZero,
               });
-            await tx.wait();
-            startTime = await getTime(provider());
+            startTime = await getTxTime(provider(), tx);
           });
 
           it('emit event', async () => {

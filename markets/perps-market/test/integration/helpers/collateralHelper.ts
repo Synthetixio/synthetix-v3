@@ -65,7 +65,7 @@ export const depositCollateral: (
         .SpotMarket.connect(trader())
         .quoteBuyExactIn(marketId, collateral.snxUSDAmount());
 
-      totalFees = fees.fixedFees + fees.utilizationFees + fees.skewFees + fees.wrapperFees;
+      totalFees = fees.fixedFees.add(fees.utilizationFees).add(fees.skewFees).add(fees.wrapperFees);
 
       // trade snxUSD for synth
       await systems()

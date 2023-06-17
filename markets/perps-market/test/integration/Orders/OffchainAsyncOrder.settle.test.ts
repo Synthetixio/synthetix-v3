@@ -163,7 +163,8 @@ describe('Settle Offchain Async Order test', () => {
     },
   ];
 
-  for (const testCase of testCases) {
+  for (let idx = 0; idx < testCases.length; idx++) {
+    const testCase = testCases[idx];
     describe(`Using ${testCase.name} as collateral`, () => {
       let pythCallData: string, extraData: string, updateFee: ethers.BigNumber;
 
@@ -187,8 +188,7 @@ describe('Settle Offchain Async Order test', () => {
             acceptablePrice: bn(1050), // 5% slippage
             trackingCode: ethers.constants.HashZero,
           });
-        const res = await tx.wait(); // force immediate confirmation to prevent flaky tests due to block timestamp
-        startTime = await getTxTime(provider(), res);
+        startTime = await getTxTime(provider(), tx);
       });
 
       before('setup bytes data', () => {
@@ -384,7 +384,7 @@ describe('Settle Offchain Async Order test', () => {
             const fillPrice = bn(1000.005);
             await assertEvent(
               settleTx,
-              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, ${bn(1)}, ${
+              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, 0, ${bn(1)}, ${
                 DEFAULT_SETTLEMENT_STRATEGY.settlementReward
               }, ${DEFAULT_SETTLEMENT_STRATEGY.settlementReward}, "${
                 ethers.constants.HashZero

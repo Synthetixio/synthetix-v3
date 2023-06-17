@@ -6,7 +6,8 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
-import {PerpsAccount} from "../storage/PerpsAccount.sol";
+import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
@@ -21,7 +22,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for uint256;
     using DecimalMath for int64;
     using PerpsPrice for PerpsPrice.Data;
-    using Position for Position.Data;
     using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
@@ -29,6 +29,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using SettlementStrategy for SettlementStrategy.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using Position for Position.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
@@ -59,7 +60,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 settlementTime = block.timestamp + strategy.settlementDelay;
         order.update(commitment, settlementTime);
 
-        (, uint feesAccrued, ) = order.validateOrder(
+        (, uint feesAccrued, , ) = order.validateOrder(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
@@ -149,50 +150,69 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
-        uint128 accountId = asyncOrder.accountId;
-        uint128 marketId = asyncOrder.marketId;
+        SettleOrderRuntime memory runtime;
+
+        runtime.accountId = asyncOrder.accountId;
+        runtime.marketId = asyncOrder.marketId;
 
         // check if account is flagged
-        GlobalPerpsMarket.load().checkLiquidation(accountId);
-        (Position.Data memory newPosition, uint totalFees, uint fillPrice) = asyncOrder
-            .validateOrder(settlementStrategy, price);
+        GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
+        (
+            Position.Data memory newPosition,
+            uint totalFees,
+            uint fillPrice,
+            Position.Data storage oldPosition
+        ) = asyncOrder.validateOrder(settlementStrategy, price);
 
-        uint settlementReward = settlementStrategy.settlementReward;
-
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
-        perpsAccount.updatePositionMarkets(marketId, newPosition.size);
-        perpsAccount.deductFromAccount(totalFees);
+        runtime.newPositionSize = newPosition.size;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
+        // use fill price to calculate realized pnl
+        (runtime.pnl, , , ) = oldPosition.getPnl(fillPrice);
 
-        uint amountToDeposit = totalFees - settlementReward;
-        if (settlementReward > 0) {
+        runtime.pnlUint = MathUtil.abs(runtime.pnl);
+        if (runtime.pnl > 0) {
+            factory.synthetix.withdrawMarketUsd(runtime.marketId, address(this), runtime.pnlUint);
+            perpsAccount.addCollateralAmount(SNX_USD_MARKET_ID, runtime.pnlUint);
+        } else if (runtime.pnl < 0) {
+            perpsAccount.deductFromAccount(runtime.pnlUint);
+            runtime.amountToDeposit = runtime.pnlUint;
+            // all gets deposited below with fees
+        }
+
+        // after pnl is realized, update position
+        PerpsMarket.loadValid(runtime.marketId).updatePositionData(runtime.accountId, newPosition);
+
+        perpsAccount.updatePositionMarkets(runtime.marketId, runtime.newPositionSize);
+        perpsAccount.deductFromAccount(totalFees);
+
+        runtime.settlementReward = settlementStrategy.settlementReward;
+        runtime.amountToDeposit += totalFees - runtime.settlementReward;
+        if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.usdToken.transfer(msg.sender, settlementReward);
-        }
-        if (amountToDeposit > 0) {
-            // deposit into market manager
-            factory.depositToMarketManager(marketId, amountToDeposit);
+            factory.usdToken.transfer(msg.sender, runtime.settlementReward);
         }
 
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
-        perpsMarket.updatePositionData(newPosition);
+        if (runtime.amountToDeposit > 0) {
+            // deposit into market manager
+            factory.depositToMarketManager(runtime.marketId, runtime.amountToDeposit);
+        }
 
         // exctracted from asyncOrder before order is reset
         bytes32 trackingCode = asyncOrder.trackingCode;
 
         asyncOrder.reset();
 
-        perpsMarket.positions[accountId].updatePosition(newPosition);
-
         // emit event
         emit OrderSettled(
-            marketId,
-            accountId,
+            runtime.marketId,
+            runtime.accountId,
             fillPrice,
-            newPosition.size,
+            runtime.pnl,
+            runtime.newPositionSize,
             totalFees,
-            settlementReward,
+            runtime.settlementReward,
             trackingCode,
             msg.sender
         );
