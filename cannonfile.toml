@@ -1,0 +1,11 @@
+name = "bfp-market"
+version = "<%= package.version %>"
+description = "bfp market for Synthetix v3"
+
+[setting.t]
+defaultValue = "1"
+description = "Example 't' setting variable"
+
+[contract.test]
+artifact = "Test"
+args = ["<%= settings.t %>"]

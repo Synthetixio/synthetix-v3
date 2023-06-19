@@ -1,0 +1,30 @@
+{
+  "name": "bfp-market",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "build": "hardhat cannon:build"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.16.0 <20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:davidvuong/bfp-market.git"
+  },
+  "devDependencies": {
+    "@usecannon/cli": "^2.4.15",
+    "abi-to-sol": "^0.8.0",
+    "hardhat": "^2.15.0",
+    "hardhat-cannon": "^2.4.15",
+    "prettier": "^2.8.8",
+    "prettier-plugin-solidity": "^1.1.3",
+    "solhint": "^3.4.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.3"
+  },
+  "dependencies": {
+    "@synthetixio/core-contracts": "^3.1.1"
+  }
+}
