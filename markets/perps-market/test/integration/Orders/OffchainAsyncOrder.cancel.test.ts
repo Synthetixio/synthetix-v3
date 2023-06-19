@@ -36,36 +36,43 @@ describe.only('Cancel Offchain Async Order test', () => {
       ],
     });
   });
-
-  before('errors', async () => {
-    it('commit can not be canceled when its not existing', async () => {
-      assertRevert(systems().PerpsMarket.cancelOrder(ethMarketId, 2), 'Bla', systems().PerpsMarket);
-    });
-  });
-
-  it('commit can not be canceled when settlement window is withing range', async () => {
+  before('commit order', async () => {
     const tx = await systems().PerpsMarket.commitOrder({
       marketId: ethMarketId,
       accountId: 2,
       sizeDelta: bn(1),
       settlementStrategyId: 0,
-      acceptablePrice: bn(1000),
+      acceptablePrice: bn(1050), // 5% slippage
       trackingCode: ethers.constants.HashZero,
     });
     await tx.wait();
-    await assertRevert(
-      systems().PerpsMarket.cancelOrder(ethMarketId, 2),
-      `SettlementWindowNotExpired`,
-      systems().PerpsMarket
-    );
+  });
+  describe('errors', async () => {
+    it('commit can not be canceled when settlement window is withing range', async () => {
+      await assertRevert(
+        systems().PerpsMarket.cancelOrder(ethMarketId, 2),
+        `SettlementWindowNotExpired`,
+        systems().PerpsMarket
+      );
+    });
+
+    it('commit can not be canceled when its not existing', async () => {
+      await assertRevert(
+        systems().PerpsMarket.cancelOrder(ethMarketId, 3),
+        'OrderDoesNotExists("1", "3")',
+        systems().PerpsMarket
+      );
+    });
   });
 
-  it('commit can be canceled when settlement window is outside of range', async () => {
-    await fastForwardTo((await getTime(provider())) + 9000000000, provider());
-    const orderBeforeCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
-    assertBn.equal(orderBeforeCancelation.sizeDelta, bn(1));
-    await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
-    const orderAfterCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
-    assertBn.equal(orderAfterCancelation.sizeDelta, bn(0));
+  describe('success', async () => {
+    it('commit can be canceled when settlement window is outside of range', async () => {
+      await fastForwardTo((await getTime(provider())) + 9000000000, provider());
+      const orderBeforeCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
+      assertBn.equal(orderBeforeCancelation.sizeDelta, bn(1));
+      await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
+      const orderAfterCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
+      assertBn.equal(orderAfterCancelation.sizeDelta, bn(0));
+    });
   });
 });
