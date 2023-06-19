@@ -55,7 +55,7 @@ export const DEFAULT_SETTLEMENT_STRATEGY = {
   strategyType: 0, // OFFCHAIN
   settlementDelay: 5,
   settlementWindowDuration: 120,
-  priceWindowDuration: 120,
+  priceWindowDuration: 110,
   settlementReward: bn(5),
   priceDeviationTolerance: bn(0.01),
   disabled: false,

@@ -15,7 +15,7 @@ describe('MarketConfiguration', async () => {
       strategyType: 0,
       settlementDelay: 500,
       settlementWindowDuration: 100,
-      priceWindowDuration: 100,
+      priceWindowDuration: 90,
       priceVerificationContract: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
       feedId: utils.formatBytes32String('feedId'),
       url: 'url',
