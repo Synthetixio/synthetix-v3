@@ -87,7 +87,7 @@ library AsyncOrder {
     ) internal view {
         uint settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
-        if (block.timestamp < self.settlementTime || block.timestamp > settlementExpiration) {
+        if (block.timestamp < settlementExpiration) {
             revert SettlementWindowExpired(
                 block.timestamp,
                 self.settlementTime,
@@ -96,7 +96,7 @@ library AsyncOrder {
         }
     }
 
-    function checkOutsideSettlementWindow(
+    function checkCancellationEligibility(
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
     ) internal view {

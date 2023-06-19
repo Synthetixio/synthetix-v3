@@ -5,16 +5,9 @@ import { depositCollateral } from '../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
-describe('Cancel Offchain Async Order test', () => {
+describe.only('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, provider, trader1 } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: bn(10_000),
-        sellPrice: bn(10_000),
-      },
-    ],
+    synthMarkets: [],
     perpsMarkets: [
       {
         name: 'Ether',
@@ -41,6 +34,12 @@ describe('Cancel Offchain Async Order test', () => {
           snxUSDAmount: () => bn(10_000),
         },
       ],
+    });
+  });
+
+  before('errors', async () => {
+    it('commit can not be canceled when its not existing', async () => {
+      assertRevert(systems().PerpsMarket.cancelOrder(ethMarketId, 2), 'Bla', systems().PerpsMarket);
     });
   });
 

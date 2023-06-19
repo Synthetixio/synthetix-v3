@@ -134,18 +134,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];
 
-        order.checkOutsideSettlementWindow(settlementStrategy);
+        order.checkCancellationEligibility(settlementStrategy);
         order.reset();
-    }
-
-    function _settleOnchain(
-        AsyncOrder.Data storage asyncOrder,
-        SettlementStrategy.Data storage settlementStrategy
-    ) private {
-        uint currentPrice = PerpsPrice.getCurrentPrice(asyncOrder.marketId);
-        settlementStrategy.checkPriceDeviation(currentPrice, asyncOrder.acceptablePrice);
-
-        _settleOrder(currentPrice, asyncOrder, settlementStrategy);
+        emit OrderCanceled(
+            marketId,
+            accountId,
+            order.sizeDelta,
+            order.settlementStrategyId,
+            order.settlementTime,
+            order.acceptablePrice
+        );
     }
 
     function _settleOffchain(
