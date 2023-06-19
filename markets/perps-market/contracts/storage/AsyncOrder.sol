@@ -150,8 +150,8 @@ library AsyncOrder {
             order.marketId
         );
         uint256 sizeDeltaInUint256 = order.sizeDelta < 0
-            ? uint256(order.sizeDelta * -1)
-            : uint256(order.sizeDelta);
+            ? order.sizeDelta.mulDecimal(-1).toUint()
+            : order.sizeDelta.toUint();
         if (marketConfig.maxMarketValue < perpsMarketData.size + sizeDeltaInUint256) {
             revert PerpsMarketConfiguration.MaxOpenInterestReached(
                 order.marketId,
