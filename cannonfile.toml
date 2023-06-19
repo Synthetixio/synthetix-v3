@@ -2,6 +2,22 @@ name = "bfp-market"
 version = "<%= package.version %>"
 description = "bfp market for Synthetix v3"
 
-[contract.bigFPerpMarket]
-artifact = "BigFPerpMarket"
+[setting.synthetixPackage]
+defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
+
+[import.synthetix]
+source = "<%= settings.synthetixPackage %>"
+
+[contract.PerpsMarketModule]
+artifact = "PerpsMarketModule"
 args = []
+
+# Core
+[router.BigFPerpsMarketRouter]
+contracts = [
+  "PerpsMarketModule"
+]
+depends = [
+  "import.synthetix",
+  "contract.PerpsMarketModule"
+]

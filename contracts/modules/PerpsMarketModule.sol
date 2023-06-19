@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "./external/IMarket.sol";
+import "../external/IMarket.sol";
 
-contract BigFPerpMarket is IMarket {
+contract PerpsMarketModule is IMarket {
     uint128 public marketId;
 
     function name(
