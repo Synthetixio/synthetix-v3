@@ -4,8 +4,9 @@ import { bn, bootstrapMarkets } from '../bootstrap';
 import { depositCollateral } from '../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 
-describe('Cancel Offchain Async Order test', () => {
+describe.only('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, provider, trader1 } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
@@ -70,7 +71,9 @@ describe('Cancel Offchain Async Order test', () => {
       await fastForwardTo((await getTime(provider())) + 9000000000, provider());
       const orderBeforeCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
       assertBn.equal(orderBeforeCancelation.sizeDelta, bn(1));
-      await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
+      const tx = await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
+      // Ignore settlement time and price for the event
+      await assertEvent(tx, `OrderCanceled(1, 2,`, systems().PerpsMarket);
       const orderAfterCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
       assertBn.equal(orderAfterCancelation.sizeDelta, bn(0));
     });

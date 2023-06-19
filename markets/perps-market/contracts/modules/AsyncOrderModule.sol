@@ -138,14 +138,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .settlementStrategies[order.settlementStrategyId];
         order.checkCancellationEligibility(settlementStrategy);
         order.reset();
-        emit OrderCanceled(
-            marketId,
-            accountId,
-            order.sizeDelta,
-            order.settlementStrategyId,
-            order.settlementTime,
-            order.acceptablePrice
-        );
+        emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
     }
 
     function _settleOffchain(

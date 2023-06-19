@@ -35,8 +35,6 @@ interface IAsyncOrderModule {
     event OrderCanceled(
         uint128 indexed marketId,
         uint128 indexed accountId,
-        int256 sizeDelta,
-        uint256 settlementStrategyId,
         uint256 settlementTime,
         uint256 acceptablePrice
     );
