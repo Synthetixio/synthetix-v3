@@ -6,7 +6,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 
-describe.only('Cancel Offchain Async Order test', () => {
+describe('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, provider, trader1 } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
