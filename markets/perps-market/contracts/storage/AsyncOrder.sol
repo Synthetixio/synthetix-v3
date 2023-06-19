@@ -130,6 +130,7 @@ library AsyncOrder {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
+
         SimulateDataRuntime memory runtime;
 
         PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
@@ -148,6 +149,13 @@ library AsyncOrder {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             order.marketId
         );
+        uint256 sizeDeltaInUint256 = uint256(order.sizeDelta);
+        if (marketConfig.maxMarketValue < perpsMarketData.size + sizeDeltaInUint256) {
+            revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                order.marketId,
+                marketConfig.maxMarketValue
+            );
+        }
 
         runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,

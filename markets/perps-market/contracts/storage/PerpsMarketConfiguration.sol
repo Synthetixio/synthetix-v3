@@ -12,6 +12,8 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
 
+    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketValue);
+
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
