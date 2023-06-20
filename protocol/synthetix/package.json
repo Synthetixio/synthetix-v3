@@ -6,7 +6,7 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "hardhat clean",
+    "clean": "hardhat clean && rm -rf test/generated",
     "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat generate-testable && hardhat cannon:build",
     "build-testable": "hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
@@ -15,7 +15,8 @@
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "publish-contracts": "yarn build && cannon publish synthetix:$(node -p 'require(`./package.json`).version') --quiet",
-    "postpack": "yarn publish-contracts"
+    "postpack": "yarn publish-contracts",
+    "docgen": "hardhat docgen"
   },
   "keywords": [],
   "author": "",
@@ -25,15 +26,15 @@
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
     "@usecannon/builder": "2.4.15",
     "ethers": "^5.7.2",
-    "handlebars": "^4.7.7",
     "hardhat": "2.13.0",
     "solidity-ast": "0.4.46",
-    "solidity-docgen": "0.6.0-beta.31",
+    "solidity-docgen": "0.6.0-beta.35",
     "ts-node": "10.9.1"
   },
   "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"

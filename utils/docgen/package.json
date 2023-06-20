@@ -1,0 +1,19 @@
+{
+  "name": "@synthetixio/docgen",
+  "private": true,
+  "version": "1.0.0",
+  "repository": "github:Synthetixio/js-monorepo",
+  "license": "MIT",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "bin": {
+    "abis": "./abis.js",
+    "natspec": "./natspec.js"
+  },
+  "devDependencies": {
+    "@usecannon/cli": "2.4.15",
+    "handlebars": "4.7.7",
+    "solidity-ast": "0.4.46",
+    "solidity-docgen": "0.6.0-beta.35"
+  }
+}

@@ -11,6 +11,7 @@
     "!contracts/modules/mocks"
   ],
   "scripts": {
+    "clean": "hardhat clean",
     "test": "hardhat test",
     "coverage": "hardhat --network hardhat coverage",
     "compile-contracts": "hardhat compile",

@@ -9,31 +9,25 @@
     "coverage": "hardhat coverage",
     "clean": "hardhat clean",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts"
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "docgen": "echo SKIP SKIP SKIP || hardhat docgen"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@ethersproject/abi": "5.7.0",
-    "@ethersproject/providers": "^5.0.0",
-    "@nomiclabs/hardhat-ethers": "2.2.1",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/main": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/router": "workspace:*",
     "@synthetixio/wei": "2.74.4",
     "ethers": "^5.7.2",
     "hardhat": "2.13.0",
-    "solidity-docgen": "0.6.0-beta.31"
+    "solidity-docgen": "0.6.0-beta.35"
   },
   "depcheck": {
     "ignoreMatches": [
-      "@synthetixio/core-contracts",
-      "@synthetixio/core-modules",
-      "@synthetixio/main",
-      "@ethersproject/abi",
-      "@ethersproject/providers",
-      "@nomiclabs/hardhat-ethers"
+      "@synthetixio/router"
     ]
   }
 }
