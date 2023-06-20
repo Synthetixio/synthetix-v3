@@ -422,13 +422,10 @@ library PerpsAccount {
     {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
 
-        uint maxLiquidatableAmount = PerpsMarket.maxLiquidatableAmount(positionMarketId);
-
         Position.Data storage position = perpsMarket.positions[self.id];
-        uint price = PerpsPrice.getCurrentPrice(positionMarketId);
 
-        // in market units
-        amountToLiquidate = MathUtil.min(maxLiquidatableAmount, MathUtil.abs(position.size));
+        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(position.size));
+        uint price = PerpsPrice.getCurrentPrice(positionMarketId);
 
         (, totalPnl, , , ) = position.getPositionData(price);
 

@@ -22,6 +22,7 @@ library PerpsMarket {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
     using Position for Position.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
@@ -92,33 +93,30 @@ library PerpsMarket {
         }
     }
 
-    function maxLiquidatableAmount(uint128 marketId) internal returns (uint) {
-        Data storage self = load(marketId);
-        uint maxLiquidationValue = maxLiquidationPerSecond(marketId);
+    function maxLiquidatableAmount(
+        Data storage self,
+        uint256 requestedLiquidationAmount
+    ) internal returns (uint256 liquidatableAmount) {
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
+
+        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationPerSecond();
         uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
+        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
 
         self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
-        uint unlockedLiquidationCapacity = timeSinceLastUpdate * maxLiquidationValue;
-        if (unlockedLiquidationCapacity > self.lastUtilizedLiquidationCapacity) {
-            self.lastUtilizedLiquidationCapacity = 0;
+        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
+            maxLiquidationAmountPerSecond;
+
+        uint256 unlockedCapacity;
+        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
+            unlockedCapacity = maxAllowedLiquidationInWindow;
+            liquidatableAmount = MathUtil.min(unlockedCapacity, requestedLiquidationAmount);
+            self.lastUtilizedLiquidationCapacity = liquidatableAmount.to128();
         } else {
-            self.lastUtilizedLiquidationCapacity =
-                self.lastUtilizedLiquidationCapacity -
-                unlockedLiquidationCapacity.to128();
+            unlockedCapacity = maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity;
+            liquidatableAmount = MathUtil.min(unlockedCapacity, requestedLiquidationAmount);
+            self.lastUtilizedLiquidationCapacity += liquidatableAmount.to128();
         }
-
-        return
-            (maxLiquidationValue *
-                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
-            self.lastUtilizedLiquidationCapacity;
-    }
-
-    function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            marketId
-        );
-        OrderFee.Data storage orderFeeData = marketConfig.orderFees;
-        return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
     }
 
     function updatePositionData(
