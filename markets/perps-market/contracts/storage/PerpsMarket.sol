@@ -114,14 +114,17 @@ library PerpsMarket {
         uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
             maxLiquidationAmountPerSecond;
 
-        uint256 unlockedCapacity;
         if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
-            unlockedCapacity = maxAllowedLiquidationInWindow;
-            liquidatableAmount = MathUtil.min(unlockedCapacity, requestedLiquidationAmount);
+            liquidatableAmount = MathUtil.min(
+                maxAllowedLiquidationInWindow,
+                requestedLiquidationAmount
+            );
             self.lastUtilizedLiquidationCapacity = liquidatableAmount.to128();
         } else {
-            unlockedCapacity = maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity;
-            liquidatableAmount = MathUtil.min(unlockedCapacity, requestedLiquidationAmount);
+            liquidatableAmount = MathUtil.min(
+                maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
+                requestedLiquidationAmount
+            );
             self.lastUtilizedLiquidationCapacity += liquidatableAmount.to128();
         }
     }
