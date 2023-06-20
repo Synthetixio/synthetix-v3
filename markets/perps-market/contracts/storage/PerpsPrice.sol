@@ -17,7 +17,8 @@ library PerpsPrice {
     using SafeCastU256 for uint256;
 
     struct Data {
-        bytes32 feedId;
+        bytes32 settleNodeId; // price used for async orders
+        bytes32 indexNodeId; // get index price
     }
 
     function load(uint128 marketId) internal pure returns (Data storage price) {
@@ -27,46 +28,18 @@ library PerpsPrice {
         }
     }
 
-    function getCurrentPriceData(
-        uint128 marketId
-    ) internal view returns (NodeOutput.Data memory price) {
-        Data storage self = load(marketId);
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        price = INodeModule(factory.oracle).process(self.feedId);
+    function getSettlementPrice(uint128 marketId) internal view returns (uint price) {
+        bytes32 nodeId = load(marketId).settleNodeId;
+        return INodeModule(PerpsMarketFactory.load().oracle).process(nodeId).price.toUint();
     }
 
     function getCurrentPrice(uint128 marketId) internal view returns (uint price) {
-        return getCurrentPriceData(marketId).price.toUint();
+        bytes32 nodeId = load(marketId).indexNodeId;
+        return INodeModule(PerpsMarketFactory.load().oracle).process(nodeId).price.toUint();
     }
 
-    function update(Data storage self, bytes32 feedId) internal {
-        self.feedId = feedId;
+    function update(Data storage self, bytes32 settleNodeId, bytes32 indexNodeId) internal {
+        self.settleNodeId = settleNodeId;
+        self.indexNodeId = indexNodeId;
     }
-
-    /**
-     * @dev Utility function that returns the amount of synth to be received for a given amount of usd.
-     * Based on the transaction type, either the buy or sell feed node id is used.
-     */
-    // function usdSynthExchangeRate(
-    //     uint128 marketId,
-    //     uint amountUsd,
-    //     Transaction.Type transactionType
-    // ) internal view returns (uint256 synthAmount) {
-    //     uint256 currentPrice = getCurrentPriceData(marketId, transactionType).price.toUint();
-
-    //     synthAmount = amountUsd.divDecimal(currentPrice);
-    // }
-
-    // /**
-    //  * @dev Utility function that returns the amount of usd to be received for a given amount of synth.
-    //  * Based on the transaction type, either the buy or sell feed node id is used.
-    //  */
-    // function synthUsdExchangeRate(
-    //     uint128 marketId,
-    //     uint sellAmount,
-    //     Transaction.Type transactionType
-    // ) internal view returns (uint256 amountUsd) {
-    //     uint256 currentPrice = getCurrentPrice(marketId, transactionType);
-    //     amountUsd = sellAmount.mulDecimal(currentPrice);
-    // }
 }

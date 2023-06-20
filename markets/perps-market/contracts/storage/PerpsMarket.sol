@@ -28,7 +28,7 @@ library PerpsMarket {
 
     error InvalidMarket(uint128 marketId);
 
-    error PriceFeedNotSet(uint128 marketId);
+    error PriceFeedsNotSet(uint128 marketId);
 
     struct Data {
         address owner;
@@ -81,8 +81,9 @@ library PerpsMarket {
             revert InvalidMarket(marketId);
         }
 
-        if (PerpsPrice.load(marketId).feedId == "") {
-            revert PriceFeedNotSet(marketId);
+        PerpsPrice.Data storage priceConfig = PerpsPrice.load(marketId);
+        if (priceConfig.settleNodeId == "" || priceConfig.indexNodeId == "") {
+            revert PriceFeedsNotSet(marketId);
         }
     }
 

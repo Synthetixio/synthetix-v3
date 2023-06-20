@@ -9,24 +9,38 @@ import {OrderFee} from "../storage/OrderFee.sol";
  * @title Module for updating configuration in relation to async order modules.
  */
 interface IMarketConfigurationModule {
-    event SettlementStrategyAdded(uint128 marketId, SettlementStrategy.Data strategy);
-    event OrderFeesSet(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio);
-    event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity);
+    event SettlementStrategyUpdated(uint128 indexed marketId, SettlementStrategy.Data strategy);
+    event OrderFeesSet(uint128 indexed marketId, uint256 makerFeeRatio, uint256 takerFeeRatio);
+    event FundingParametersSet(
+        uint128 indexed marketId,
+        uint256 skewScale,
+        uint256 maxFundingVelocity
+    );
     event LiquidationParametersSet(
-        uint128 marketId,
+        uint128 indexed marketId,
         uint256 initialMarginFraction,
         uint256 maintenanceMarginFraction,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier
     );
-    event MaxMarketValueSet(uint128 marketId, uint256 maxMarketValue);
-    event LockedOiPercentSet(uint128 marketId, uint256 lockedOiPercent);
-    event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled);
+    event MaxMarketValueSet(uint128 indexed marketId, uint256 maxMarketValue);
+    event LockedOiPercentSet(uint128 indexed marketId, uint256 lockedOiPercent);
+    event MarketPriceNodesSet(
+        uint128 indexed perpsMarketId,
+        bytes32 settleNodeId,
+        bytes32 indexNodeId
+    );
 
-    function addSettlementStrategy(
+    function setPriceNodes(
+        uint128 perpsMarketId,
+        bytes32 settleNodeId,
+        bytes32 indexNodeId
+    ) external;
+
+    function setSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
-    ) external returns (uint256 strategyId);
+    ) external;
 
     function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external;
 
@@ -48,15 +62,10 @@ interface IMarketConfigurationModule {
 
     function setLockedOiPercent(uint128 marketId, uint256 lockedOiPercent) external;
 
-    function setSettlementStrategyEnabled(
-        uint128 marketId,
-        uint256 strategyId,
-        bool enabled
-    ) external;
+    function getPriceData(uint128 marketId) external view returns (bytes32, bytes32);
 
     function getSettlementStrategy(
-        uint128 marketId,
-        uint256 strategyId
+        uint128 marketId
     ) external view returns (SettlementStrategy.Data memory settlementStrategy);
 
     function getLiquidationParameters(

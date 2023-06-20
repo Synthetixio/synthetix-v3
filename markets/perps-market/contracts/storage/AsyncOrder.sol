@@ -40,7 +40,6 @@ library AsyncOrder {
         uint128 accountId;
         uint128 marketId;
         int256 sizeDelta;
-        uint256 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -61,7 +60,6 @@ library AsyncOrder {
         uint256 settlementTime
     ) internal {
         self.sizeDelta = commitment.sizeDelta;
-        self.settlementStrategyId = commitment.settlementStrategyId;
         self.settlementTime = settlementTime;
         self.acceptablePrice = commitment.acceptablePrice;
         self.trackingCode = commitment.trackingCode;

@@ -5,37 +5,27 @@ import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModu
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {OrderFee} from "../storage/OrderFee.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsMarket for PerpsMarket.Data;
+    using PerpsPrice for PerpsPrice.Data;
 
-    function addSettlementStrategy(
+    uint256 private constant _MIN_SETTLEMENT_DELAY = 1;
+
+    function setSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
-    ) external override returns (uint256 strategyId) {
-        PerpsMarket.load(marketId).onlyMarketOwner();
-
-        strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
-
-        PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        strategyId = config.settlementStrategies.length;
-
-        config.settlementStrategies.push(strategy);
-        emit SettlementStrategyAdded(marketId, strategy);
-    }
-
-    function setSettlementStrategyEnabled(
-        uint128 marketId,
-        uint256 strategyId,
-        bool enabled
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
-        PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[strategyId]
-            .disabled = !enabled;
-        emit SettlementStrategyEnabled(marketId, strategyId, enabled);
+
+        strategy.settlementDelay = strategy.settlementDelay == 0
+            ? _MIN_SETTLEMENT_DELAY
+            : strategy.settlementDelay;
+        PerpsMarketConfiguration.load(marketId).settlementStrategy = strategy;
+
+        emit SettlementStrategyUpdated(marketId, strategy);
     }
 
     function setOrderFees(
@@ -101,11 +91,27 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit LockedOiPercentSet(marketId, lockedOiPercent);
     }
 
-    function getSettlementStrategy(
+    function setPriceNodes(
         uint128 marketId,
-        uint256 strategyId
+        bytes32 settleNodeId,
+        bytes32 indexNodeId
+    ) external override {
+        PerpsMarket.load(marketId).onlyMarketOwner();
+
+        PerpsPrice.load(marketId).update(settleNodeId, indexNodeId);
+
+        emit MarketPriceNodesSet(marketId, settleNodeId, indexNodeId);
+    }
+
+    function getPriceData(uint128 marketId) external view override returns (bytes32, bytes32) {
+        PerpsPrice.Data storage priceData = PerpsPrice.load(marketId);
+        return (priceData.settleNodeId, priceData.indexNodeId);
+    }
+
+    function getSettlementStrategy(
+        uint128 marketId
     ) external view override returns (SettlementStrategy.Data memory settlementStrategy) {
-        return PerpsMarketConfiguration.load(marketId).settlementStrategies[strategyId];
+        return PerpsMarketConfiguration.load(marketId).settlementStrategy;
     }
 
     function getLiquidationParameters(

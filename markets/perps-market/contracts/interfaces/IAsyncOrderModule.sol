@@ -11,7 +11,6 @@ interface IAsyncOrderModule {
     event OrderCommitted(
         uint128 indexed marketId,
         uint128 indexed accountId,
-        SettlementStrategy.Type indexed orderType,
         int256 sizeDelta,
         uint256 acceptablePrice,
         uint256 settlementTime,
@@ -40,14 +39,6 @@ interface IAsyncOrderModule {
     );*/
 
     error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
-    error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
-    error OffchainLookup(
-        address sender,
-        string[] urls,
-        bytes callData,
-        bytes4 callbackFunction,
-        bytes extraData
-    );
 
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
@@ -64,6 +55,11 @@ interface IAsyncOrderModule {
         uint256 settlementReward;
         bytes32 trackingCode;
     }
+
+    function settle(
+        uint128 marketId,
+        uint128 accountId
+    ) external returns (int128 newPositionSize, int256 pnl, uint256 totalFees);
 
     // function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
 

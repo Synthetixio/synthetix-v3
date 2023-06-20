@@ -55,21 +55,21 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
-            .settlementStrategies[commitment.settlementStrategyId];
+            .settlementStrategy;
 
         uint256 settlementTime = block.timestamp + strategy.settlementDelay;
         order.update(commitment, settlementTime);
 
+        // TODO: should this use settlement or current price?
         (, uint feesAccrued, , ) = order.validateOrder(
             strategy,
-            PerpsPrice.getCurrentPrice(commitment.marketId)
+            PerpsPrice.getSettlementPrice(commitment.marketId)
         );
 
         // TODO include fees in event
         emit OrderCommitted(
             commitment.marketId,
             commitment.accountId,
-            strategy.strategyType,
             commitment.sizeDelta,
             commitment.acceptablePrice,
             settlementTime,
@@ -81,75 +81,24 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, feesAccrued);
     }
 
-    function settle(uint128 marketId, uint128 accountId) external view {
+    function settle(
+        uint128 marketId,
+        uint128 accountId
+    ) external override returns (int128 newPositionSize, int256 pnl, uint256 totalFees) {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
         ) = _performOrderValidityChecks(marketId, accountId);
 
-        _settleOffchain(order, settlementStrategy);
-    }
-
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
-        (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
-        (
-            AsyncOrder.Data storage order,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = _performOrderValidityChecks(marketId, asyncOrderId);
-
-        bytes32[] memory priceIds = new bytes32[](1);
-        priceIds[0] = settlementStrategy.feedId;
-
-        bytes[] memory updateData = new bytes[](1);
-        updateData[0] = result;
-
-        IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
-            settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates{value: msg.value}(
-            updateData,
-            priceIds,
-            order.settlementTime.to64(),
-            (order.settlementTime + settlementStrategy.settlementWindowDuration).to64()
-        );
-
-        IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
-        uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
-
-        settlementStrategy.checkPriceDeviation(offchainPrice, PerpsPrice.getCurrentPrice(marketId));
-
-        _settleOrder(offchainPrice, order, settlementStrategy);
-    }
-
-    function _settleOffchain(
-        AsyncOrder.Data storage asyncOrder,
-        SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint, int256, uint256) {
-        string[] memory urls = new string[](1);
-        urls[0] = settlementStrategy.url;
-
-        bytes4 selector;
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
-            selector = AsyncOrderModule.settlePythOrder.selector;
-        } else {
-            revert SettlementStrategyNotFound(settlementStrategy.strategyType);
-        }
-
-        // see EIP-3668: https://eips.ethereum.org/EIPS/eip-3668
-        revert OffchainLookup(
-            address(this),
-            urls,
-            abi.encodePacked(settlementStrategy.feedId, _getTimeInBytes(asyncOrder.settlementTime)),
-            selector,
-            abi.encode(asyncOrder.marketId, asyncOrder.accountId) // extraData that gets sent to callback for validation
-        );
+        return _settleOrder(PerpsPrice.getSettlementPrice(marketId), order, settlementStrategy);
     }
 
     function _settleOrder(
         uint256 price,
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
-    ) private {
+    ) private returns (int128, int256, uint256) {
         SettleOrderRuntime memory runtime;
 
         runtime.accountId = asyncOrder.accountId;
@@ -216,6 +165,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
             trackingCode,
             msg.sender
         );
+
+        return (runtime.newPositionSize, runtime.pnl, totalFees);
     }
 
     function _performOrderValidityChecks(
@@ -225,24 +176,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
-            .settlementStrategies[order.settlementStrategyId];
+            .settlementStrategy;
 
         order.checkValidity();
         order.checkWithinSettlementWindow(settlementStrategy);
 
         return (order, settlementStrategy);
-    }
-
-    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
-        bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
-
-        // get last 8 bytes
-        return bytes8(settlementTimeBytes << 192);
-    }
-
-    // borrowed from PythNode.sol
-    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
-        int256 factor = PRECISION + expo;
-        return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());
     }
 }

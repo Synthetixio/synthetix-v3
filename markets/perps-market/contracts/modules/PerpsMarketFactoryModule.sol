@@ -102,17 +102,6 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
-        PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
-
-        PerpsPrice.load(perpsMarketId).update(feedId);
-
-        emit MarketPriceDataUpdated(perpsMarketId, feedId);
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
     function nominateMarketOwner(
         uint128 perpsMarketId,
         address newNominatedOwner
