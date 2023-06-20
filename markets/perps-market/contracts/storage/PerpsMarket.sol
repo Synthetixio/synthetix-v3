@@ -93,6 +93,13 @@ library PerpsMarket {
         }
     }
 
+    /**
+     * @dev Returns the max amount of liquidation that can occur based on the market configuration
+     * @notice Based on the configured liquidation window, a trader can only be liquidated for a certain
+     *   amount within that window.  If the amount requested is greater than the amount allowed, the
+     *   smaller amount is returned.  The function also updates its accounting to ensure the results on
+     *   subsequent liquidations work appropriately.
+     */
     function maxLiquidatableAmount(
         Data storage self,
         uint256 requestedLiquidationAmount
