@@ -9,7 +9,18 @@ import {OrderFee} from "../storage/OrderFee.sol";
  * @title Module for updating configuration in relation to async order modules.
  */
 interface IMarketConfigurationModule {
-    event SettlementStrategyAdded(uint128 marketId, SettlementStrategy.Data strategy);
+    /**
+     * @notice Gets fired when new settlement strategy is added.
+     * @param marketId adds settlement strategy to this specific market.
+     * @param strategy the strategy configuration.
+     * @param strategyId the newly created settlement strategy id.
+     */
+    event SettlementStrategyAdded(
+        uint128 indexed marketId,
+        SettlementStrategy.Data strategy,
+        uint256 indexed strategyId
+    );
+
     event OrderFeesSet(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio);
     event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity);
     event LiquidationParametersSet(

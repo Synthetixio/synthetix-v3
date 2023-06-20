@@ -66,7 +66,7 @@ interface INodeModule {
      * @param nodeId The node ID
      * @return node The node's definition data
      */
-    function getNode(bytes32 nodeId) external view returns (NodeDefinition.Data memory node);
+    function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory node);
 
     /**
      * @notice Returns a node current output data
