@@ -11,7 +11,7 @@
     "coverage": "hardhat test"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "2.2.1",
+    "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",

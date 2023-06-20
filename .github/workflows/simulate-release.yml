@@ -12,39 +12,41 @@ jobs:
     env:
       CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
       INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
+      CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
     strategy:
       matrix:
         network: [goerli, optimistic-goerli]
         project: [protocol/oracle-manager, protocol/synthetix]
         include:
-        - project: protocol/oracle-manager
-          cannonPackage: oracle-manager:latest
-          impersonate: '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9'
-        - project: protocol/synthetix
-          cannonPackage: synthetix:latest
-          impersonate: '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9'
+          - project: protocol/oracle-manager
+            cannonPackage: oracle-manager:latest
+            impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          - project: protocol/synthetix
+            cannonPackage: synthetix:latest
+            impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
     steps:
-    - name: Install Foundry (Cannon)
-      uses: foundry-rs/foundry-toolchain@v1
-      with:
-        version: nightly
-    - run: anvil -V
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: "16.16.0"
-        cache: "yarn"
-    - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
-      with:
-        run_daemon: true
-    - run: yarn install --immutable --immutable-cache
-    - run: yarn build
-    - run: |
-        set -o pipefail
-        cd ${{ matrix.project }}
-        yarn hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
-          --network ${{ matrix.network }} --dry-run \
-          --impersonate ${{ matrix.impersonate}} | tee deployment.txt
-    # verify that a new proxy has not been deployed, we cannot edit the proxy
-    # this is kind of hacky but sufficient for the time being
-    - run: '! grep "exec: contract.InitialProxy\|exec: contract.InitialCoreProxy" ${{ matrix.project }}/deployment.txt'
+      - name: Install Foundry (Cannon)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - run: anvil -V
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.16.0"
+          cache: "yarn"
+      - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
+        with:
+          run_daemon: true
+      - run: yarn install --immutable --immutable-cache
+      - run: yarn build
+      - run: |
+          set -o pipefail
+          cd ${{ matrix.project }}
+          yarn hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
+            --network ${{ matrix.network }} --dry-run \
+            --impersonate ${{ matrix.impersonate}} | tee deployment.txt
+      # verify that a new proxy has not been deployed, we cannot edit the proxy
+      # this is kind of hacky but sufficient for the time being
+      - run: '! grep "exec: contract.InitialProxy\|exec: contract.InitialCoreProxy" ${{ matrix.project }}/deployment.txt'
