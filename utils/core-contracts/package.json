@@ -18,6 +18,7 @@
     "!contracts/mocks"
   ],
   "scripts": {
+    "clean": "hardhat clean",
     "test": "hardhat test --network hardhat",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
@@ -29,13 +30,16 @@
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/router": "workspace:*",
-    "ethers": "^5.0.0",
+    "ethers": "^5.7.2",
     "hardhat": "2.13.0"
   },
   "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27",
   "depcheck": {
     "ignoreMatches": [
-      "@synthetixio/router"
+      "@synthetixio/router",
+      "@ethersproject/abi",
+      "@ethersproject/providers",
+      "@nomiclabs/hardhat-ethers"
     ]
   }
 }

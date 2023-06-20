@@ -44,6 +44,9 @@ contract PerpsAccountModule is IAccountModule {
         globalPerpsMarket.checkLiquidation(accountId);
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        if (account.id == 0) {
+            account.id = accountId;
+        }
 
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
@@ -57,8 +60,8 @@ contract PerpsAccountModule is IAccountModule {
         } else {
             uint amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            account.checkAvailableWithdrawableValue(accountId, amountAbs);
-            account.withdrawCollateral(synthMarketId, amountAbs);
+            account.checkAvailableWithdrawableValue(amountAbs);
+            account.removeCollateralAmount(synthMarketId, amountAbs);
 
             synth.transfer(msg.sender, amountAbs);
         }
@@ -71,7 +74,7 @@ contract PerpsAccountModule is IAccountModule {
     }
 
     function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
-        return PerpsAccount.load(accountId).getTotalNotionalOpenInterest(accountId);
+        return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
     }
 
     function getOpenPosition(
@@ -100,6 +103,6 @@ contract PerpsAccountModule is IAccountModule {
     }
 
     function getAvailableMargin(uint128 accountId) external view override returns (int) {
-        return PerpsAccount.load(accountId).getAvailableMargin(accountId);
+        return PerpsAccount.load(accountId).getAvailableMargin();
     }
 }

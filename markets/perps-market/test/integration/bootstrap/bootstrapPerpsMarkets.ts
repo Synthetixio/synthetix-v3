@@ -6,11 +6,13 @@ import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 
-type PerpsMarkets = Array<{
+export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
   aggregator: () => AggregatorV3Mock;
   strategyId: () => ethers.BigNumber;
-}>;
+};
+
+export type PerpsMarkets = Array<PerpsMarket>;
 
 export type PerpsMarketData = Array<{
   name: string;
@@ -63,7 +65,7 @@ export const bootstrapPerpsMarkets = (
   data: PerpsMarketData,
   chainState: IncomingChainState | undefined
 ) => {
-  const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(1000));
+  const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(2000));
   let contracts: Systems, marketOwner: ethers.Signer;
 
   before('identify contracts', () => {
@@ -113,15 +115,13 @@ export const bootstrapPerpsMarkets = (
         ]);
       });
 
-      if (fundingParams) {
-        before('set funding parameters', async () => {
-          await contracts.PerpsMarket.connect(marketOwner).setFundingParameters(
-            marketId,
-            fundingParams.skewScale,
-            fundingParams.maxFundingVelocity
-          );
-        });
-      }
+      before('set funding parameters', async () => {
+        await contracts.PerpsMarket.connect(marketOwner).setFundingParameters(
+          marketId,
+          fundingParams ? fundingParams.skewScale : bn(1_000_000),
+          fundingParams ? fundingParams.maxFundingVelocity : 0
+        );
+      });
 
       if (orderFees) {
         before('set fees', async () => {
