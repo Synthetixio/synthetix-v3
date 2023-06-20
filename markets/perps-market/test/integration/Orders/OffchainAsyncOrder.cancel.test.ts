@@ -6,7 +6,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 
-describe('Cancel Offchain Async Order test', () => {
+describe.only('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, provider, trader1 } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
@@ -47,6 +47,7 @@ describe('Cancel Offchain Async Order test', () => {
       trackingCode: ethers.constants.HashZero,
     });
     await tx.wait();
+    assertBn.equal((await systems().PerpsMarket.getOrder(ethMarketId, 2)).sizeDelta, bn(1));
   });
   describe('errors', async () => {
     it('commit can not be canceled when settlement window is withing range', async () => {
@@ -60,20 +61,22 @@ describe('Cancel Offchain Async Order test', () => {
     it('commit can not be canceled when its not existing', async () => {
       await assertRevert(
         systems().PerpsMarket.cancelOrder(ethMarketId, 3),
-        'OrderDoesNotExists("1", "3")',
+        'OrderNotValid()',
         systems().PerpsMarket
       );
     });
   });
 
   describe('success', async () => {
-    it('commit can be canceled when settlement window is outside of range', async () => {
+    before('fast forward outside of settlement window', async () => {
       await fastForwardTo((await getTime(provider())) + 9000000000, provider());
-      const orderBeforeCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
-      assertBn.equal(orderBeforeCancelation.sizeDelta, bn(1));
+    });
+    it('emits event when order is canceled', async () => {
       const tx = await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
       // Ignore settlement time and price for the event
       await assertEvent(tx, `OrderCanceled(1, 2,`, systems().PerpsMarket);
+    });
+    it('sizeDelta is 0 when order is canceled', async () => {
       const orderAfterCancelation = await systems().PerpsMarket.getOrder(ethMarketId, 2);
       assertBn.equal(orderAfterCancelation.sizeDelta, bn(0));
     });

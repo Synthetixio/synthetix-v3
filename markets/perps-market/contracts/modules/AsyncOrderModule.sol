@@ -130,9 +130,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
     function cancelOrder(uint128 marketId, uint128 accountId) external override {
         AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
-        if (order.sizeDelta == 0) {
-            revert OrderDoesNotExists(marketId, accountId);
-        }
+        order.checkValidity();
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];

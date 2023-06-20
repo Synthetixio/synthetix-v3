@@ -55,7 +55,6 @@ interface IAsyncOrderModule {
         bytes4 callbackFunction,
         bytes extraData
     );
-    error OrderDoesNotExists(uint128 marketId, uint128 accountId);
 
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
