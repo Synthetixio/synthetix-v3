@@ -19,7 +19,6 @@ jobs:
             core-contracts,
             core-utils,
             core-modules,
-            router,
             sample-project,
             main,
             oracle-manager,
@@ -36,9 +35,6 @@ jobs:
           - package: core-modules
             workspace: "@synthetixio/core-modules"
             coverage-file: utils/core-modules/coverage.json
-          - package: router
-            workspace: "@synthetixio/router"
-            coverage-file: utils/router/coverage/lcov.info
           - package: sample-project
             workspace: "@synthetixio/sample-project"
           - package: oracle-manager

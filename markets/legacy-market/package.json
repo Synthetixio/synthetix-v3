@@ -19,7 +19,7 @@
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/router": "workspace:*",
+    "@synthetixio/router": "^3.1.2",
     "@synthetixio/wei": "2.74.4",
     "ethers": "^5.7.2",
     "hardhat": "2.13.0",
