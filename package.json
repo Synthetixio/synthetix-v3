@@ -68,5 +68,5 @@
     "node": "^16.16.0",
     "npm": "^8.11.0"
   },
-  "packageManager": "yarn@3.4.1"
+  "packageManager": "yarn@3.6.0"
 }
