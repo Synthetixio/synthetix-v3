@@ -29,7 +29,7 @@
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "workspace:*",
+    "@synthetixio/router": "^3.1.2",
     "@synthetixio/wei": "2.74.4",
     "@types/node-fetch": "2.6.4",
     "@usecannon/cli": "2.4.15",

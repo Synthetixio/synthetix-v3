@@ -28,7 +28,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "workspace:*",
+    "@synthetixio/router": "^3.1.2",
     "@synthetixio/wei": "2.74.4",
     "@usecannon/builder": "2.4.15",
     "ethers": "^5.7.2",
