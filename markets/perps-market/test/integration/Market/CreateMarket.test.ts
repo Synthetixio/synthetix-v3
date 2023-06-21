@@ -235,6 +235,7 @@ describe('Create Market test', () => {
             strategyType: 0,
             settlementDelay: 5,
             settlementWindowDuration: 120,
+            priceWindowDuration: 120,
             priceVerificationContract: ethers.constants.AddressZero,
             feedId: ethers.constants.HashZero,
             url: '',
