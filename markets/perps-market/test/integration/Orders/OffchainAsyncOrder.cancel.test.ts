@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ContractTransaction, ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { depositCollateral } from '../helpers';
@@ -68,11 +68,12 @@ describe('Cancel Offchain Async Order test', () => {
   });
 
   describe('success', async () => {
+    let tx: ContractTransaction;
     before('fast forward outside of settlement window', async () => {
       await fastForwardTo((await getTime(provider())) + 9000000000, provider());
+      tx = await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
     });
     it('emits event when order is canceled', async () => {
-      const tx = await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
       // Ignore settlement time and price for the event
       await assertEvent(tx, `OrderCanceled(1, 2,`, systems().PerpsMarket);
     });
