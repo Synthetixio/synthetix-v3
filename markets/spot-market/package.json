@@ -3,7 +3,8 @@
   "version": "3.1.1",
   "description": "Spot Market implementation",
   "scripts": {
-    "build": "rm -rf contracts/generated && hardhat storage:verify && hardhat cannon:build",
+    "build": "yarn build:contracts",
+    "build:contracts": "rm -rf contracts/generated && hardhat storage:verify && hardhat cannon:build",
     "build-testable": "hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "start": "yarn build && yarn cannon-build",

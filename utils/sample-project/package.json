@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "clean": "hardhat clean",
-    "build": "hardhat storage:verify",
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat compile --force && hardhat storage:verify && hardhat cannon:build",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat"
