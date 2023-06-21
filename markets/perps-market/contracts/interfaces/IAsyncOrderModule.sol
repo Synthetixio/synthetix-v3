@@ -32,6 +32,13 @@ interface IAsyncOrderModule {
         address indexed settler
     );
 
+    event OrderCanceled(
+        uint128 indexed marketId,
+        uint128 indexed accountId,
+        uint256 settlementTime,
+        uint256 acceptablePrice
+    );
+
     /*event OrderCancelled(
         uint128 indexed marketId,
         uint128 indexed asyncOrderId,
@@ -53,6 +60,8 @@ interface IAsyncOrderModule {
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external returns (AsyncOrder.Data memory retOrder, uint fees);
 
+    function cancelOrder(uint128 marketId, uint128 accountId) external;
+
     // only used due to stack too deep during settlement
     struct SettleOrderRuntime {
         uint128 marketId;
@@ -65,10 +74,8 @@ interface IAsyncOrderModule {
         bytes32 trackingCode;
     }
 
-    // function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
-
-    // function getAsyncOrderClaim(
-    //     uint128 marketId,
-    //     uint128 asyncOrderId /*returns (AsyncOrderClaim.Data memory)*/
-    // ) external view;
+    function getOrder(
+        uint128 marketId,
+        uint128 accountId
+    ) external returns (AsyncOrder.Data memory);
 }

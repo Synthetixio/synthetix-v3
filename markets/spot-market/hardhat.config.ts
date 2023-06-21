@@ -1,6 +1,7 @@
-import 'solidity-docgen';
-
 import commonConfig from '@synthetixio/common-config/hardhat.config';
+
+import 'solidity-docgen';
+import { templates } from '@synthetixio/docgen';
 
 const config = {
   ...commonConfig,
@@ -17,6 +18,7 @@ const config = {
       './Proxy.sol',
       './Router.sol',
     ],
+    templates,
   },
   warnings: {
     'contracts/mocks/**/*': {

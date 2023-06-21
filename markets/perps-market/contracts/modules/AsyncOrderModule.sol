@@ -22,7 +22,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for uint256;
     using DecimalMath for int64;
     using PerpsPrice for PerpsPrice.Data;
-    using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -110,7 +109,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             updateData,
             priceIds,
             order.settlementTime.to64(),
-            (order.settlementTime + settlementStrategy.settlementWindowDuration).to64()
+            (order.settlementTime + settlementStrategy.priceWindowDuration).to64()
         );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
@@ -119,6 +118,24 @@ contract AsyncOrderModule is IAsyncOrderModule {
         settlementStrategy.checkPriceDeviation(offchainPrice, PerpsPrice.getCurrentPrice(marketId));
 
         _settleOrder(offchainPrice, order, settlementStrategy);
+    }
+
+    function getOrder(
+        uint128 marketId,
+        uint128 accountId
+    ) public view override returns (AsyncOrder.Data memory) {
+        return PerpsMarket.loadValid(marketId).asyncOrders[accountId];
+    }
+
+    function cancelOrder(uint128 marketId, uint128 accountId) external override {
+        AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
+        order.checkValidity();
+        SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
+            .load(marketId)
+            .settlementStrategies[order.settlementStrategyId];
+        order.checkCancellationEligibility(settlementStrategy);
+        order.reset();
+        emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
     }
 
     function _settleOffchain(

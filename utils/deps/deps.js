@@ -26,6 +26,7 @@ const options = {
     'artifacts',
     'cache',
     'typechain-types',
+    'test/generated',
   ],
   ignoreMatches: [
     // Must keep ts dependency so depcheck works over Typescript files
@@ -34,9 +35,6 @@ const options = {
     'webpack-dev-server',
     '@synthetixio/core-contracts',
     '@synthetixio/core-modules',
-    '@ethersproject/abi',
-    '@ethersproject/providers',
-    '@nomiclabs/hardhat-ethers',
   ],
   parsers: {
     '**/*.js': [depcheck.parser.es6, depcheck.parser.jsx],

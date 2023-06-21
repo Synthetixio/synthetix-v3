@@ -14,3 +14,4 @@ markets/*/test/generated
 *Router.sol
 .yarnrc.yml
 lerna.json
+*.hbs
