@@ -22,7 +22,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for uint256;
     using DecimalMath for int64;
     using PerpsPrice for PerpsPrice.Data;
-    using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -110,7 +109,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             updateData,
             priceIds,
             order.settlementTime.to64(),
-            (order.settlementTime + settlementStrategy.settlementWindowDuration).to64()
+            (order.settlementTime + settlementStrategy.priceWindowDuration).to64()
         );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];

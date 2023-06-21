@@ -27,6 +27,10 @@ library SettlementStrategy {
          */
         uint256 settlementWindowDuration;
         /**
+         * @dev the duration of the price window, after which price is not valid.
+         */
+        uint256 priceWindowDuration;
+        /**
          * @dev the address of the contract that will verify the result data blob.
          * @dev used for pyth and chainlink offchain strategies.
          */
