@@ -29,6 +29,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using SettlementStrategy for SettlementStrategy.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using Position for Position.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
@@ -55,7 +56,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
-            .settlementStrategies[commitment.settlementStrategyId];
+            .loadValidSettlementStrategy(commitment.settlementStrategyId);
 
         uint256 settlementTime = block.timestamp + strategy.settlementDelay;
         order.update(commitment, settlementTime);
