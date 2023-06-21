@@ -3,8 +3,12 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build1": "yarn build:mainnet && yarn build:optimism-mainnet && yarn build:goerli && yarn build:optimism-goerli",
+    "deployments": "yarn deployments:mainnet && yarn deployments:optimism-mainnet && yarn deployments:goerli && yarn deployments:optimism-goerli",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
+    "deployments:mainnet": "cannon inspect synthetix:latest --chain-id 1 --write-deployments ./deployments/mainnet",
+    "deployments:optimism-mainnet": "cannon inspect synthetix:latest --chain-id 10 --write-deployments ./deployments/optimism-mainnet",
+    "deployments:goerli": "cannon inspect synthetix:latest --chain-id 5 --write-deployments ./deployments/goerli",
+    "deployments:optimism-goerli": "cannon inspect synthetix:latest --chain-id 420 --write-deployments ./deployments/optimism-goerli",
     "prepare": "cp ./subgraph.base.yaml ./subgraph.yaml",
     "codegen": "yarn prepare && graph codegen && prettier --write .",
     "build:mainnet": "node ./codegen mainnet && yarn codegen && graph build --output-dir ./build/mainnet --network mainnet",
@@ -15,7 +19,8 @@
     "deploy:goerli": "graph deploy --output-dir ./build/goerli --network goerli --product hosted-service snx-v3/goerli",
     "build:optimism-goerli": "node ./codegen optimism-goerli && yarn codegen && graph build --output-dir ./build/optimism-goerli --network optimism-goerli",
     "deploy:optimism-goerli": "graph deploy --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service snx-v3/optimism-goerli",
-    "test1": "yarn prepare && graph test",
+    "test": "yarn prepare && graph test",
+    "coverage": "yarn deployments:optimism-goerli && yarn codegen && graph test",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
     "remove-local": "graph remove --node http://localhost:8020/ snx-v3/goerli",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"
@@ -23,6 +28,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.50.1",
     "@graphprotocol/graph-ts": "^0.30.0",
+    "@usecannon/cli": "2.4.15",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.5.2",
     "prettier": "^2.8.8"

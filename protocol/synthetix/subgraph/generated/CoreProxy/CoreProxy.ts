@@ -3130,6 +3130,44 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBytes());
   }
 
+  getConfigAddress(k: Bytes): Address {
+    let result = super.call('getConfigAddress', 'getConfigAddress(bytes32):(address)', [
+      ethereum.Value.fromFixedBytes(k),
+    ]);
+
+    return result[0].toAddress();
+  }
+
+  try_getConfigAddress(k: Bytes): ethereum.CallResult<Address> {
+    let result = super.tryCall('getConfigAddress', 'getConfigAddress(bytes32):(address)', [
+      ethereum.Value.fromFixedBytes(k),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  getConfigUint(k: Bytes): BigInt {
+    let result = super.call('getConfigUint', 'getConfigUint(bytes32):(uint256)', [
+      ethereum.Value.fromFixedBytes(k),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_getConfigUint(k: Bytes): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getConfigUint', 'getConfigUint(bytes32):(uint256)', [
+      ethereum.Value.fromFixedBytes(k),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getPosition(
     accountId: BigInt,
     poolId: BigInt,
@@ -5164,6 +5202,36 @@ export class NominatePoolOwnerCall__Outputs {
   _call: NominatePoolOwnerCall;
 
   constructor(call: NominatePoolOwnerCall) {
+    this._call = call;
+  }
+}
+
+export class RebalancePoolCall extends ethereum.Call {
+  get inputs(): RebalancePoolCall__Inputs {
+    return new RebalancePoolCall__Inputs(this);
+  }
+
+  get outputs(): RebalancePoolCall__Outputs {
+    return new RebalancePoolCall__Outputs(this);
+  }
+}
+
+export class RebalancePoolCall__Inputs {
+  _call: RebalancePoolCall;
+
+  constructor(call: RebalancePoolCall) {
+    this._call = call;
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class RebalancePoolCall__Outputs {
+  _call: RebalancePoolCall;
+
+  constructor(call: RebalancePoolCall) {
     this._call = call;
   }
 }

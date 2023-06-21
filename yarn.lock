@@ -2682,6 +2682,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
+    "@usecannon/cli": 2.4.15
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^2.8.8
