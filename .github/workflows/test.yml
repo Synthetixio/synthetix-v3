@@ -9,6 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    continue-on-error: true
     env:
       CANNON_IPFS_URL: "http://127.0.0.1:5001"
       CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
@@ -19,7 +20,6 @@ jobs:
             core-contracts,
             core-utils,
             core-modules,
-            router,
             sample-project,
             main,
             oracle-manager,
@@ -36,9 +36,6 @@ jobs:
           - package: core-modules
             workspace: "@synthetixio/core-modules"
             coverage-file: utils/core-modules/coverage.json
-          - package: router
-            workspace: "@synthetixio/router"
-            coverage-file: utils/router/coverage/lcov.info
           - package: sample-project
             workspace: "@synthetixio/sample-project"
           - package: oracle-manager

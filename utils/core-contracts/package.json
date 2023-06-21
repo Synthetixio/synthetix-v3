@@ -29,7 +29,7 @@
     "@ethersproject/bignumber": "^5.7.0",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/router": "workspace:*",
+    "@synthetixio/router": "^3.1.2",
     "ethers": "^5.7.2",
     "hardhat": "2.13.0"
   },

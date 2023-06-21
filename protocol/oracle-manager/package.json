@@ -26,7 +26,7 @@
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/router": "workspace:*",
+    "@synthetixio/router": "^3.1.2",
     "@synthetixio/wei": "2.74.4",
     "@types/node": "18.11.10",
     "ethers": "^5.7.2",
