@@ -1,5 +1,5 @@
 {
-  "name": "@snx-v3/subgraphs",
+  "name": "@synthetixio/main-subgraphs",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -20,22 +20,11 @@
     "remove-local": "graph remove --node http://localhost:8020/ snx-v3/goerli",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"
   },
-  "dependencies": {
-    "@synthetixio/v3-contracts": "workspace:*"
-  },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.50.1",
     "@graphprotocol/graph-ts": "^0.30.0",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.5.2",
     "prettier": "^2.8.8"
-  },
-  "depcheck": {
-    "ignorePatterns": [
-      "build"
-    ],
-    "ignoreMatches": [
-      "@synthetixio/v3-contracts"
-    ]
   }
 }
