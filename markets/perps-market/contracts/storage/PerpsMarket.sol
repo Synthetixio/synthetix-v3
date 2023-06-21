@@ -110,7 +110,6 @@ library PerpsMarket {
         uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
         uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
 
-        self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
         uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
             maxLiquidationAmountPerSecond;
 
@@ -126,6 +125,11 @@ library PerpsMarket {
                 requestedLiquidationAmount
             );
             self.lastUtilizedLiquidationCapacity += liquidatableAmount.to128();
+        }
+
+        // only update timestamp if there is something being liquidated
+        if (liquidatableAmount > 0) {
+            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
         }
     }
 
