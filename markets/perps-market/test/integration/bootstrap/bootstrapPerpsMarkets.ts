@@ -38,6 +38,7 @@ export type PerpsMarketData = Array<{
     strategyType: ethers.BigNumber;
     settlementDelay: ethers.BigNumber;
     settlementWindowDuration: ethers.BigNumber;
+    priceWindowDuration: ethers.BigNumber;
     feedId: string;
     url: string;
     settlementReward: ethers.BigNumber;
@@ -54,6 +55,7 @@ export const DEFAULT_SETTLEMENT_STRATEGY = {
   strategyType: 0, // OFFCHAIN
   settlementDelay: 5,
   settlementWindowDuration: 120,
+  priceWindowDuration: 110,
   settlementReward: bn(5),
   priceDeviationTolerance: bn(0.01),
   disabled: false,
