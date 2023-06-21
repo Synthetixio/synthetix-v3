@@ -31,6 +31,12 @@ library AsyncOrder {
         uint256 settlementExpiration
     );
 
+    error SettlementWindowNotExpired(
+        uint256 timestamp,
+        uint256 settlementTime,
+        uint256 settlementExpiration
+    );
+
     error OrderNotValid();
 
     error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
@@ -82,6 +88,21 @@ library AsyncOrder {
             settlementStrategy.settlementWindowDuration;
         if (block.timestamp < self.settlementTime || block.timestamp > settlementExpiration) {
             revert SettlementWindowExpired(
+                block.timestamp,
+                self.settlementTime,
+                settlementExpiration
+            );
+        }
+    }
+
+    function checkCancellationEligibility(
+        Data storage self,
+        SettlementStrategy.Data storage settlementStrategy
+    ) internal view {
+        uint settlementExpiration = self.settlementTime +
+            settlementStrategy.settlementWindowDuration;
+        if (block.timestamp < settlementExpiration) {
+            revert SettlementWindowNotExpired(
                 block.timestamp,
                 self.settlementTime,
                 settlementExpiration
