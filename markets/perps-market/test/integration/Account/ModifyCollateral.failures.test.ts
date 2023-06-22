@@ -22,6 +22,12 @@ describe('ModifyCollateral', () => {
         buyPrice: bn(1_000),
         sellPrice: bn(1_000),
       },
+      {
+        name: 'Link',
+        token: 'snxLink',
+        buyPrice: bn(5),
+        sellPrice: bn(5),
+      },
     ],
     perpsMarkets: [],
     traderAccountIds: accountIds,
@@ -32,16 +38,31 @@ describe('ModifyCollateral', () => {
 
   let synthBTCMarketId: ethers.BigNumber;
   let synthETHMarketId: ethers.BigNumber;
+  let synthLINKMarketId: ethers.BigNumber;
 
   before('identify actors', () => {
     synthBTCMarketId = synthMarkets()[0].marketId();
     synthETHMarketId = synthMarkets()[1].marketId();
+    synthLINKMarketId = synthMarkets()[2].marketId();
   });
 
   before('set setMaxCollateralForSynthMarketId to 1 btc', async () => {
     await systems()
       .PerpsMarket.connect(owner())
       .setMaxCollateralForSynthMarketId(synthBTCMarketId, bn(1));
+  });
+  before('set setMaxCollateralForSynthMarketId to 0 link', async () => {
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setMaxCollateralForSynthMarketId(synthLINKMarketId, bn(0));
+  });
+  before('trader1 buys 100 snxLink', async () => {
+    const usdAmount = bn(100);
+    const minAmountReceived = bn(20);
+    const referrer = ethers.constants.AddressZero;
+    await systems()
+      .SpotMarket.connect(trader1())
+      .buy(synthLINKMarketId, usdAmount, minAmountReceived, referrer);
   });
 
   describe('failure cases', async () => {
@@ -71,6 +92,15 @@ describe('ModifyCollateral', () => {
           .PerpsMarket.connect(trader1())
           .modifyCollateral(accountIds[0], synthBTCMarketId, bn(0)),
         `InvalidAmountDelta("${bn(0)}")`
+      );
+    });
+
+    it('reverts when trying to add synths not approved for collateral', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountIds[0], synthLINKMarketId, bn(50)),
+        `MaxCollateralExceeded("${synthLINKMarketId}", "${bn(0)}", "${bn(0)}", "${bn(50)}")`
       );
     });
 
