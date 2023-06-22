@@ -770,6 +770,7 @@ library SettlementStrategy {
         Type strategyType;
         uint256 settlementDelay;
         uint256 settlementWindowDuration;
+        uint256 priceWindowDuration;
         address priceVerificationContract;
         bytes32 feedId;
         string url;

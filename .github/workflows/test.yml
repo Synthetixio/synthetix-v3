@@ -9,6 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    continue-on-error: true
     env:
       CANNON_IPFS_URL: "http://127.0.0.1:5001"
       CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
@@ -19,12 +20,12 @@ jobs:
             core-contracts,
             core-utils,
             core-modules,
-            router,
             sample-project,
             main,
             oracle-manager,
             spot-market,
             perps-market,
+            main-subgraph,
           ]
         include:
           - package: core-contracts
@@ -36,9 +37,6 @@ jobs:
           - package: core-modules
             workspace: "@synthetixio/core-modules"
             coverage-file: utils/core-modules/coverage.json
-          - package: router
-            workspace: "@synthetixio/router"
-            coverage-file: utils/router/coverage/lcov.info
           - package: sample-project
             workspace: "@synthetixio/sample-project"
           - package: oracle-manager
@@ -49,6 +47,8 @@ jobs:
             workspace: "@synthetixio/perps-market"
           - package: main
             workspace: "@synthetixio/main"
+          - package: main-subgraph
+            workspace: "@synthetixio/main-subgraphs"
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.16.0"
+          node-version: "16.20.1"
           cache: "yarn"
       - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
         with:

@@ -21,7 +21,6 @@ contract PerpsAccountModule is IAccountModule {
     using AsyncOrder for AsyncOrder.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
-    using PerpsAccount for PerpsAccount.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
 
     function modifyCollateral(

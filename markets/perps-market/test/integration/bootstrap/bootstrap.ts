@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { PerpsMarketProxy, AccountProxy } from '../../generated/typechain';

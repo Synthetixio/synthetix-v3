@@ -152,18 +152,49 @@ describe('ModifyCollateral Withdraw', () => {
         },
       },
     ];
+
+    // Used to ensure non snxUSD collateral works as expected
+    const spotMarketConfig = [
+      {
+        name: 'Ether',
+        token: 'snxETH',
+        buyPrice: bn(2000),
+        sellPrice: bn(2000),
+      },
+    ];
     const traderAccountIds = [2, 3];
     const trader1AccountId = traderAccountIds[0];
-    const { systems, provider, trader1, perpsMarkets } = bootstrapMarkets({
-      synthMarkets: [],
+    const { systems, provider, trader1, perpsMarkets, synthMarkets } = bootstrapMarkets({
+      synthMarkets: spotMarketConfig,
       perpsMarkets: perpsMarketConfigs,
       traderAccountIds,
     });
-    before('add collateral to margin', async () => {
+    before('add some snx collateral to margin', async () => {
       await systems()
         .PerpsMarket.connect(trader1())
-        .modifyCollateral(trader1AccountId, sUSDSynthId, bn(20_000));
+        .modifyCollateral(trader1AccountId, sUSDSynthId, bn(18000));
     });
+    before('trader1 buys 1 snxETH', async () => {
+      const ethSpotMarketId = synthMarkets()[0].marketId();
+      const usdAmount = bn(2000);
+      const minAmountReceived = bn(1);
+      const referrer = ethers.constants.AddressZero;
+      await systems()
+        .SpotMarket.connect(trader1())
+        .buy(ethSpotMarketId, usdAmount, minAmountReceived, referrer);
+    });
+    before('add some stop ETH collateral to margin', async () => {
+      const ethSpotMarketId = synthMarkets()[0].marketId();
+      // approve amount of collateral to be transfered to the market
+      await synthMarkets()[0]
+        .synth()
+        .connect(trader1())
+        .approve(systems().PerpsMarket.address, ethers.constants.MaxUint256);
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .modifyCollateral(trader1AccountId, ethSpotMarketId, bn(1));
+    });
+
     let commonOpenPositionProps: Pick<
       OpenPositionData,
       'systems' | 'provider' | 'trader' | 'accountId' | 'keeper'
@@ -243,8 +274,8 @@ describe('ModifyCollateral Withdraw', () => {
         await assertRevert(
           systems()
             .PerpsMarket.connect(trader1())
-            .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-20_001)),
-          `InsufficientCollateral("${sUSDSynthId}", "${bn(20_000)}", "${bn(20_001)}")`
+            .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18_001)),
+          `InsufficientCollateral("${sUSDSynthId}", "${bn(18_000)}", "${bn(18_001)}")`
         );
       });
       it('reverts when withdrawing more than "collateral available for withdraw"', async () => {
