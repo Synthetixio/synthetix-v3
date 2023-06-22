@@ -11,6 +11,7 @@ describe('Market - size test', () => {
         name: 'Ether',
         token: 'snxETH',
         price: bn(2000),
+        maxMarketValue: bn(9999999),
       },
     ],
     traderAccountIds: [2, 3],

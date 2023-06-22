@@ -169,15 +169,6 @@ library AsyncOrder {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             order.marketId
         );
-        uint256 sizeDeltaInUint256 = order.sizeDelta < 0
-            ? order.sizeDelta.mulDecimal(-1).toUint()
-            : order.sizeDelta.toUint();
-        if (marketConfig.maxMarketValue < perpsMarketData.size + sizeDeltaInUint256) {
-            revert PerpsMarketConfiguration.MaxOpenInterestReached(
-                order.marketId,
-                marketConfig.maxMarketValue
-            );
-        }
 
         runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,
@@ -209,7 +200,22 @@ library AsyncOrder {
         // TODO: validate position size
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
+        if (
+            PerpsMarket.validatePositionSize(
+                perpsMarketData,
+                marketConfig.maxMarketValue,
+                oldPosition.size,
+                order.sizeDelta
+            )
+        ) {
+            revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                order.marketId,
+                marketConfig.maxMarketValue
+            );
+        }
+
         runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
+
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
             runtime.fillPrice

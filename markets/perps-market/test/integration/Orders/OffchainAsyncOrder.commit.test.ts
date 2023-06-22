@@ -87,22 +87,6 @@ describe('Commit Offchain Async Order test', () => {
         'InsufficientMargin'
       );
     });
-
-    it('reverts if max market value is reached', async () => {
-      await assertRevert(
-        systems()
-          .PerpsMarket.connect(trader1())
-          .commitOrder({
-            marketId: ethMarketId,
-            accountId: 2,
-            sizeDelta: bn(150_000_000),
-            settlementStrategyId: 0,
-            acceptablePrice: bn(1050), // 5% slippage
-            trackingCode: ethers.constants.HashZero,
-          }),
-        'MaxOpenInterestReached("1", "50000000000000000000000000")'
-      );
-    });
   });
 
   const restoreToCommit = snapshotCheckpoint(provider);

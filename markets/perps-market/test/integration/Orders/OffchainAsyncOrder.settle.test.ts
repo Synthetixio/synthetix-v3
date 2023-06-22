@@ -25,6 +25,7 @@ describe('Settle Offchain Async Order test', () => {
         token: 'snxETH',
         price: bn(1000),
         fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+        maxMarketValue: bn(9999999),
       },
     ],
     traderAccountIds: [2, 3],

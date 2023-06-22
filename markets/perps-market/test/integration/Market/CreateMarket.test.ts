@@ -74,6 +74,22 @@ describe('Create Market test', () => {
         );
       });
     });
+
+    describe('after market is created', () => {
+      before('set max market value', async () => {
+        tx = await systems()
+          .PerpsMarket.connect(marketOwner)
+          .setMaxMarketValue(marketId, bn(99999999));
+      });
+
+      it('should emit MaxMarketValueSet event', async () => {
+        await assertEvent(
+          tx,
+          `MaxMarketValueSet(${marketId}, ${bn(99999999).toString()})`,
+          systems().PerpsMarket
+        );
+      });
+    });
   });
 
   describe('change ownership', async () => {
@@ -178,6 +194,10 @@ describe('Create Market test', () => {
       await systems().PerpsMarket.createMarket(name, token, marketOwner.getAddress());
     });
 
+    before('set max market value', async () => {
+      await systems().PerpsMarket.connect(marketOwner).setMaxMarketValue(marketId, bn(99999999));
+    });
+
     before('create price nodes', async () => {
       const results = await createOracleNode(owner(), price, systems().OracleManager);
       oracleNodeId = results.oracleNodeId;
@@ -255,7 +275,7 @@ describe('Create Market test', () => {
         await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
       });
 
-      it('sohuld be able to use the market', async () => {
+      it('should be able to use the market', async () => {
         await systems()
           .PerpsMarket.connect(marketOwner)
           .commitOrder({
