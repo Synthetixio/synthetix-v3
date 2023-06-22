@@ -5,7 +5,7 @@ import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-re
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
-// TODO @Fritzschoff add test maxMarketValue
+
 describe('MarketConfiguration', async () => {
   const fixture = {
     token: 'snxETH',
