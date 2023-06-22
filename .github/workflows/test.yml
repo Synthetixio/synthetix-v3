@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     continue-on-error: true
     env:
       CANNON_IPFS_URL: "http://127.0.0.1:5001"
