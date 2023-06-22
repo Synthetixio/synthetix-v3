@@ -343,6 +343,7 @@ library PerpsAccount {
         // withdraw from market keeper fee based on pnl that was liquidated
         // if not, break;
 
+        bool fullyLiquidated = true;
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         for (uint i = 0; i < runtime.profitableMarkets.length; i++) {
             uint128 positionMarketId = runtime.profitableMarkets[i];
@@ -350,6 +351,10 @@ library PerpsAccount {
                 self,
                 positionMarketId
             );
+
+            if (self.openPositionMarketIds.contains(positionMarketId)) {
+                fullyLiquidated = false;
+            }
 
             // withdraw from market
             uint256 amountToWithdraw = totalPnl.toUint() + liquidationReward;
@@ -424,16 +429,18 @@ library PerpsAccount {
 
         Position.Data storage position = perpsMarket.positions[self.id];
 
-        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(position.size));
+        int128 positionSize = position.size;
+
+        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(positionSize));
         uint price = PerpsPrice.getCurrentPrice(positionMarketId);
 
         (, totalPnl, , , ) = position.getPositionData(price);
 
         int128 amtToLiquidation128 = amountToLiquidate.toInt().to128();
         // reduce position size
-        position.size = position.size > 0
-            ? position.size - amtToLiquidation128
-            : position.size + amtToLiquidation128;
+        position.size = positionSize > 0
+            ? positionSize - amtToLiquidation128
+            : positionSize + amtToLiquidation128;
 
         // update position markets
         updatePositionMarkets(self, positionMarketId, position.size);
