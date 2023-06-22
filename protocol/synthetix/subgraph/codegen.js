@@ -25,14 +25,13 @@ async function run() {
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
   networks[graphNetworkName].CoreProxy.address =
-    require(`@synthetixio/v3-contracts/deployments/${networkName}/CoreProxy.json`).address;
+    require(`./deployments/${networkName}/CoreProxy.json`).address;
 
-  const deployTx =
-    require(`@synthetixio/v3-contracts/deployments/${networkName}/InitialCoreProxy.json`).deployTxnHash;
+  const deployTx = require(`./deployments/${networkName}/InitialCoreProxy.json`).deployTxnHash;
   const tx = await provider.getTransactionReceipt(deployTx);
   networks[graphNetworkName].CoreProxy.startBlock = tx.blockNumber;
 
-  const prettierOptions = JSON.parse(fs.readFileSync('../.prettierrc', 'utf8'));
+  const prettierOptions = JSON.parse(fs.readFileSync('../../../.prettierrc', 'utf8'));
 
   const pretty = prettier.format(JSON.stringify(networks, null, 2), {
     parser: 'json',

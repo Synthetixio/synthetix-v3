@@ -16,7 +16,7 @@ defaultValue = "synthetix:<%= package.version %>-testable"
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>-testable"
 
-[provision.synthetix]
+[import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 
 [import.spotMarket]
@@ -84,7 +84,7 @@ contracts = [
   "GlobalPerpsMarketModule"
 ]
 depends = [
-  "provision.synthetix",
+  "import.synthetix",
   "contract.CoreModule",
   "contract.PerpsMarketFactoryModule",
   "contract.AtomicOrderModule",

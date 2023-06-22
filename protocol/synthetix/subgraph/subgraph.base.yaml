@@ -12,7 +12,7 @@ dataSources:
       language: wasm/assemblyscript
       abis:
         - name: CoreProxy
-          file: ../node_modules/@synthetixio/v3-contracts/deployments/goerli/CoreProxy.json
+          file: ./deployments/optimism-goerli/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
@@ -42,15 +42,18 @@ dataSources:
           handler: handlePoolNominationRevoked
         - event: PoolOwnerNominated(indexed uint128,indexed address,indexed address)
           handler: handlePoolOwnerNominated
-        - event: PoolConfigurationSet(indexed uint128,(uint128,uint128,int128)[],indexed
+        - event:
+            PoolConfigurationSet(indexed uint128,(uint128,uint128,int128)[],indexed
             address)
           handler: handlePoolConfigurationSet
         - event: MarketRegistered(indexed address,indexed uint128,indexed address)
           handler: handleMarketCreated
-        - event: MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed
+        - event:
+            MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed
             address)
           handler: handleMarketUsdDeposited
-        - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed
+        - event:
+            MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed
             address)
           handler: handleMarketUsdWithdrawn
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
@@ -68,10 +71,12 @@ dataSources:
         - event: DelegationUpdated(indexed uint128,indexed
             uint128,address,uint256,uint256,indexed address)
           handler: handleDelegationUpdated
-        - event: UsdMinted(indexed uint128,indexed uint128,address,uint256,indexed
+        - event:
+            UsdMinted(indexed uint128,indexed uint128,address,uint256,indexed
             address)
           handler: handleUSDMinted
-        - event: UsdBurned(indexed uint128,indexed uint128,address,uint256,indexed
+        - event:
+            UsdBurned(indexed uint128,indexed uint128,address,uint256,indexed
             address)
           handler: handleUSDBurned
         - event: RewardsDistributed(indexed uint128,indexed
@@ -80,7 +85,8 @@ dataSources:
         - event: RewardsClaimed(indexed uint128,indexed uint128,indexed
             address,address,uint256)
           handler: handleRewardsClaimed
-        - event: RewardsDistributorRegistered(indexed uint128,indexed address,indexed
+        - event:
+            RewardsDistributorRegistered(indexed uint128,indexed address,indexed
             address)
           handler: handleRewardsDistributorRegistered
         - event: Liquidation(indexed uint128,indexed uint128,indexed
