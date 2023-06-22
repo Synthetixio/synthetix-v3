@@ -104,6 +104,16 @@ describe('ModifyCollateral', () => {
       );
     });
 
+    it('reverts when trying to add non existent synth as collateral', async () => {
+      const nonExistingSynthMarketId = bn(42069);
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountIds[0], nonExistingSynthMarketId, bn(2)),
+        `MaxCollateralExceeded("${nonExistingSynthMarketId}", "${bn(0)}", "${bn(0)}", "${bn(2)}")`
+      );
+    });
+
     it('reverts when it exceeds the max collateral amount', async () => {
       await assertRevert(
         systems()
