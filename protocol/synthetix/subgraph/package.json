@@ -1,7 +1,8 @@
 {
-  "name": "@synthetixio/main-subgraphs",
+  "name": "@synthetixio/core-subgraph",
   "license": "MIT",
   "private": true,
+  "version": "1.0.0",
   "scripts": {
     "deployments": "yarn deployments:mainnet && yarn deployments:optimism-mainnet && yarn deployments:goerli && yarn deployments:optimism-goerli",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
