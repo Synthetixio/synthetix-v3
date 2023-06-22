@@ -23,14 +23,7 @@ yarn codegen
 ## Testing the subgraph
 
 ```bash
-# 1. generate the Subgraph files (we are relying on CoreProxy only for optimism-goerli)
-yarn build:optimism-goerli
-
-# 2. prepare subgraph.yaml (only once)
-yarn prepare
-
-# 3. Run subgraph test with matchstick
-yarn graph test
+yarn test
 ```
 
 ### Deploying subgraph for each network
