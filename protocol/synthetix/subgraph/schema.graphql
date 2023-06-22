@@ -23,7 +23,8 @@ type Market @entity {
   configurations: [MarketConfiguration!] @derivedFrom(field: "market")
 
   market_snapshots_by_day: [MarketSnapshotByDay!] @derivedFrom(field: "market")
-  market_snapshots_by_week: [MarketSnapshotByWeek!] @derivedFrom(field: "market")
+  market_snapshots_by_week: [MarketSnapshotByWeek!]
+    @derivedFrom(field: "market")
   updated_at: BigInt!
   updated_at_block: BigInt!
   usd_deposited: BigDecimal!
