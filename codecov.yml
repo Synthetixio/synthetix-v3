@@ -29,11 +29,6 @@ flags:
       - utils/core-modules/contracts
     carryforward: true
 
-  router:
-    paths:
-      - utils/router/src
-    carryforward: true
-
   sample-project:
     paths:
       - utils/sample-project/contracts
@@ -48,13 +43,15 @@ flags:
     paths:
       - protocol/oracle-manager/contracts
     carryforward: true
-
-  spot-market:
-    paths:
-      - markets/spot-market/contracts
-    carryforward: true
-
-  perps-market:
-    paths:
-      - protocol/perps-market/contracts
-    carryforward: true
+#
+#
+#  TODO: enable when we have coverage again
+#  spot-market:
+#    paths:
+#      - markets/spot-market/contracts
+#    carryforward: true
+#
+#  perps-market:
+#    paths:
+#      - protocol/perps-market/contracts
+#    carryforward: true
