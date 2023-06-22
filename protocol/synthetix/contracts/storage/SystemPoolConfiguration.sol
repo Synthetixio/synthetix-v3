@@ -26,6 +26,7 @@ library SystemPoolConfiguration {
          * @dev List of pools approved by the system owner.
          */
         SetUtil.UintSet approvedPools;
+        uint128 lastPoolId;
     }
 
     /**

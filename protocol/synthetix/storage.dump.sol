@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -216,6 +216,56 @@ library NodeOutput {
     }
 }
 
+// @custom:artifact contracts/external/Buffer.sol:Buffer
+library Buffer {
+    struct buffer {
+        bytes buf;
+        uint256 capacity;
+    }
+}
+
+// @custom:artifact contracts/external/CBOR.sol:CBOR
+library CBOR {
+    uint8 private constant MAJOR_TYPE_INT = 0;
+    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
+    uint8 private constant MAJOR_TYPE_BYTES = 2;
+    uint8 private constant MAJOR_TYPE_STRING = 3;
+    uint8 private constant MAJOR_TYPE_ARRAY = 4;
+    uint8 private constant MAJOR_TYPE_MAP = 5;
+    uint8 private constant MAJOR_TYPE_TAG = 6;
+    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
+    uint8 private constant TAG_TYPE_BIGNUM = 2;
+    uint8 private constant TAG_TYPE_NEGATIVE_BIGNUM = 3;
+    uint8 private constant CBOR_FALSE = 20;
+    uint8 private constant CBOR_TRUE = 21;
+    uint8 private constant CBOR_NULL = 22;
+    uint8 private constant CBOR_UNDEFINED = 23;
+    struct CBORBuffer {
+        Buffer.buffer buf;
+        uint256 depth;
+    }
+}
+
+// @custom:artifact contracts/external/Functions.sol:Functions
+library Functions {
+    uint256 internal constant DEFAULT_BUFFER_SIZE = 256;
+    enum Location {
+        Inline,
+        Remote
+    }
+    enum CodeLanguage {
+        JavaScript
+    }
+    struct Request {
+        Location codeLocation;
+        Location secretsLocation;
+        CodeLanguage language;
+        string source;
+        bytes secrets;
+        string[] args;
+    }
+}
+
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
 interface IAccountModule {
     struct AccountPermissions {
@@ -233,25 +283,18 @@ interface ILiquidationModule {
     }
 }
 
-// @custom:artifact contracts/interfaces/external/IAny2EVMMessageReceiverInterface.sol:IAny2EVMMessageReceiverInterface
-interface IAny2EVMMessageReceiverInterface {
-    struct Any2EVMMessage {
-        uint256 srcChainId;
-        bytes sender;
-        bytes data;
-        address[] destTokens;
-        uint256[] amounts;
+// @custom:artifact contracts/interfaces/external/FunctionsBillingRegistryInterface.sol:FunctionsBillingRegistryInterface
+interface FunctionsBillingRegistryInterface {
+    enum FulfillResult {
+        USER_SUCCESS,
+        USER_ERROR,
+        INVALID_REQUEST_ID
     }
-}
-
-// @custom:artifact contracts/interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol:IEVM2AnySubscriptionOnRampRouterInterface
-interface IEVM2AnySubscriptionOnRampRouterInterface {
-    struct EVM2AnySubscriptionMessage {
-        bytes receiver;
-        bytes data;
-        address[] tokens;
-        uint256[] amounts;
-        uint256 gasLimit;
+    struct RequestBilling {
+        uint64 subscriptionId;
+        address client;
+        uint32 gasLimit;
+        uint256 gasPrice;
     }
 }
 
@@ -272,6 +315,28 @@ contract CollateralModule {
     bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
     bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
+}
+
+// @custom:artifact contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule
+contract CrossChainPoolModule {
+    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
+    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
+    string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
+}
+
+// @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
+contract CrossChainUSDModule {
+    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
+}
+
+// @custom:artifact contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule
+contract CrossChainUpkeepModule {
+    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
+    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
+    bytes32 internal constant _CONFIG_SYNC_POOL_CODE_ADDRESS = "performUpkeep_syncPool";
+    bytes32 internal constant _CONFIG_SYNC_POOL_SECRETS_ADDRESS = "performUpkeep_syncPoolSecrets";
 }
 
 // @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
@@ -342,9 +407,6 @@ contract VaultModule {
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
 contract USDTokenModule {
-    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 }
 
@@ -421,6 +483,8 @@ library CollateralLock {
     struct Data {
         uint128 amountD18;
         uint64 lockExpirationTime;
+        uint128 lockExpirationPoolSync;
+        address lockExpirationPoolSyncVault;
     }
 }
 
@@ -428,6 +492,25 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
+    }
+}
+
+// @custom:artifact contracts/storage/CrossChain.sol:CrossChain
+library CrossChain {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
+    struct Data {
+        address ccipRouter;
+        address chainlinkFunctionsOracle;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
+        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
     }
 }
 
@@ -544,12 +627,48 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        uint128 totalCapacityD18;
+        int128 cumulativeDebtD18;
+        mapping(uint256 => uint256) heldMarketConfigurationWeights;
+        mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
+    }
+    struct AnalyzePoolConfigRuntime {
+        uint256 oldIdx;
+        uint256 potentiallyLockedMarketsIdx;
+        uint256 potentiallyDelayedMarketsIdx;
+        uint256 removedMarketsIdx;
+        uint128 lastMarketId;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
+library PoolCrossChainInfo {
+    struct Data {
+        PoolCrossChainSync.Data latestSync;
+        uint128 latestTotalWeights;
+        uint64[] pairedChains;
+        mapping(uint64 => uint128) pairedPoolIds;
+        uint64 chainlinkSubscriptionId;
+        uint32 chainlinkSubscriptionInterval;
+        bytes32 latestRequestId;
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCrossChainSync.sol:PoolCrossChainSync
+library PoolCrossChainSync {
+    struct Data {
+        uint128 liquidity;
+        int128 cumulativeMarketDebt;
+        int128 totalDebt;
+        uint64 dataTimestamp;
+        uint64 oldestDataTimestamp;
+        uint64 oldestPoolConfigTimestamp;
     }
 }
 
@@ -606,6 +725,7 @@ library SystemPoolConfiguration {
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
         SetUtil.UintSet approvedPools;
+        uint128 lastPoolId;
     }
     function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
@@ -620,6 +740,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
+        uint128 prevCapacityD18;
         int128 prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
@@ -636,5 +757,35 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
+        uint128 totalExitingCollateralD18;
+        uint128 _reserved;
+        mapping(bytes32 => CollateralLock.Data) exitingCollateral;
+    }
+}
+
+// @custom:artifact contracts/utils/CcipClient.sol:CcipClient
+library CcipClient {
+    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
+    struct EVMTokenAmount {
+        address token;
+        uint256 amount;
+    }
+    struct Any2EVMMessage {
+        bytes32 messageId;
+        uint64 sourceChainId;
+        bytes sender;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+    }
+    struct EVM2AnyMessage {
+        bytes receiver;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+        address feeToken;
+        bytes extraArgs;
+    }
+    struct EVMExtraArgsV1 {
+        uint256 gasLimit;
+        bool strict;
     }
 }

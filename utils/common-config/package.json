@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/common-config",
-  "version": "3.1.1",
+  "version": "3.2.0-xchain.0",
   "publishConfig": {
     "access": "public"
   },

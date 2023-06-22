@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {OrderFees} from "../storage/OrderFees.sol";
+import {Transaction} from "../utils/TransactionUtil.sol";
 
 /**
  * @title Module for committing and settling async orders.
@@ -24,7 +25,8 @@ interface IAsyncOrderSettlementModule {
         OrderFees.Data fees,
         uint256 collectedFees,
         address indexed settler,
-        uint256 price
+        uint256 price,
+        Transaction.Type orderType
     );
 
     /**

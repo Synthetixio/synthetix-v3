@@ -1,6 +1,7 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../generated/typechain';
@@ -114,3 +115,5 @@ export function bootstrapWithMockMarketAndPool() {
     restore,
   };
 }
+
+export const bn = (n: number) => wei(n).toBN();

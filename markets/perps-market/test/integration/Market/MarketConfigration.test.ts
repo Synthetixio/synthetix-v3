@@ -90,7 +90,7 @@ describe('MarketConfiguration', async () => {
         fixture.settlementStrategy.priceDeviationTolerance.toString() +
         ', ' +
         fixture.settlementStrategy.disabled.toString() +
-        '])',
+        '], 0)',
       systems().PerpsMarket
     );
     await assertEvent(

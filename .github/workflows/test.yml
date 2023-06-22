@@ -25,7 +25,7 @@ jobs:
             oracle-manager,
             spot-market,
             perps-market,
-            main-subgraph,
+            core-subgraph,
           ]
         include:
           - package: core-contracts
@@ -47,8 +47,8 @@ jobs:
             workspace: "@synthetixio/perps-market"
           - package: main
             workspace: "@synthetixio/main"
-          - package: main-subgraph
-            workspace: "@synthetixio/main-subgraphs"
+          - package: core-subgraph
+            workspace: "@synthetixio/core-subgraph"
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
