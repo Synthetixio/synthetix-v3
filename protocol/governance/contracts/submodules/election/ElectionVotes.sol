@@ -104,6 +104,12 @@ contract ElectionVotes is ElectionBase {
         return ballot.votesByUser[user];
     }
 
+    // TODO: New vote power computation:
+    // e.g. # of SNX tokens in 'SC-approved' v3 pools + merkle tree for v2x
+    //
+    // Bonus: with the current merkle tree implementation, we are storing the results on the contract when the user submits a vote.
+    // This defeats one of the purposes of having the merkle tree (not having to store the data)
+    // So if there's time it would be great to refactor this to not store any data.
     function _getVotePower(address) internal view virtual returns (uint) {
         return 1;
     }

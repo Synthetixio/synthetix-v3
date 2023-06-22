@@ -229,6 +229,8 @@ contract BaseElectionModule is
         nominees.add(msg.sender);
 
         emit CandidateNominated(msg.sender, Council.load().lastElectionId);
+
+        // TODO: add ballot id to emitted event
     }
 
     function withdrawNomination()
@@ -245,6 +247,9 @@ contract BaseElectionModule is
         emit NominationWithdrawn(msg.sender, Council.load().lastElectionId);
     }
 
+    /// TODO: Cross-chain voting;
+    /// i.e. you vote on the chain you're LPing on, it sends a message to a mothership deployment to tabulate,
+    /// and then it sends a message back at the end of the period to all the chains to transfer NFTs.
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
     function cast(
         address[] calldata candidates
