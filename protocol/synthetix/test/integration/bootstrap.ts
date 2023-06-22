@@ -1,6 +1,6 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../generated/typechain';

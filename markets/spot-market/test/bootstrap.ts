@@ -1,5 +1,5 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { bootstrapStakers, createStakedPool } from '@synthetixio/main/test/common';
 import { wei } from '@synthetixio/wei';
 import { BigNumber, ethers } from 'ethers';
