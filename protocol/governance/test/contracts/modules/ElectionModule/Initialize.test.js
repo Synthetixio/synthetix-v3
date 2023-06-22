@@ -3,7 +3,7 @@ const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-utils/utils/assertions/assert-revert');
 const { daysToSeconds } = require('@synthetixio/core-utils/utils/misc/dates');
 const { getTime } = require('@synthetixio/core-utils/utils/hardhat/rpc');
-const { bootstrap } = require('@synthetixio/router/utils/tests');
+const { bootstrap } = require('@synthetixio/router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('SynthetixElectionModule (initialization)', () => {

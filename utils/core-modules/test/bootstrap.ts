@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import {
   AssociatedSystemsModule,
   DecayTokenModule,
