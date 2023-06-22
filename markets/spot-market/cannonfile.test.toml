@@ -13,7 +13,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.version %>-testable"
 
-[provision.synthetix]
+[import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 
 [contract.SpotMarketFactoryModule]
@@ -106,7 +106,7 @@ func = "setSynthetix"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>"
 ]
-depends = ["invoke.upgrade_spot_market_proxy", "provision.synthetix"]
+depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix"]
 
 [invoke.set_synth_implementation]
 target = ["SpotMarketProxy"]
@@ -142,7 +142,7 @@ artifact = "contracts/mocks/OracleVerifierMock.sol:OracleVerifierMock"
 target = ["FeeCollectorMock"]
 func = "setUsdToken"
 args = ["<%= imports.synthetix.contracts.USDProxy.address %>"]
-depends = ["contract.FeeCollectorMock", "provision.synthetix"]
+depends = ["contract.FeeCollectorMock", "import.synthetix"]
 
 [invoke.set_initial_price]
 target = ["OracleVerifierMock"]
