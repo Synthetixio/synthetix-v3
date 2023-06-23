@@ -1,11 +1,10 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
-import { OpenPositionData, openPosition } from '../helpers';
+import { openPosition } from '../helpers';
 import { fastForwardTo, getTxTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 
-describe.only('Liquidation - max liquidatable amount', async () => {
+describe('Liquidation - max liquidatable amount', async () => {
   const { systems, provider, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
