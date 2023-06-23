@@ -100,7 +100,7 @@ describe('ModifyCollateral', () => {
         systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(accountIds[0], synthLINKMarketId, bn(50)),
-        `MaxCollateralExceeded("${synthLINKMarketId}", "${bn(0)}", "${bn(0)}", "${bn(50)}")`
+        `SynthNotEnabledForCollateral("${synthLINKMarketId}")`
       );
     });
 
@@ -110,7 +110,7 @@ describe('ModifyCollateral', () => {
         systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(accountIds[0], nonExistingSynthMarketId, bn(2)),
-        `MaxCollateralExceeded("${nonExistingSynthMarketId}", "${bn(0)}", "${bn(0)}", "${bn(2)}")`
+        `SynthNotEnabledForCollateral("${nonExistingSynthMarketId}")`
       );
     });
 
