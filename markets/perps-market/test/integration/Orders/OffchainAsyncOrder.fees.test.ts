@@ -11,7 +11,6 @@ import {
   settleOrder,
 } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assert from 'assert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
 describe('Offchain Async Order test - fees', () => {
@@ -35,7 +34,7 @@ describe('Offchain Async Order test - fees', () => {
         name: 'Ether',
         token: 'snxETH',
         price: ethPrice,
-        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+        fundingParams: { skewScale: bn(0), maxFundingVelocity: bn(0) },
         orderFees,
       },
     ],
@@ -65,37 +64,37 @@ describe('Offchain Async Order test - fees', () => {
         ],
       },
     },
-    // {
-    //   name: 'only snxBTC',
-    //   collateralData: {
-    //     systems,
-    //     trader: trader1,
-    //     accountId: () => 2,
-    //     collaterals: [
-    //       {
-    //         synthMarket: () => btcSynth,
-    //         snxUSDAmount: () => bn(10_000),
-    //       },
-    //     ],
-    //   },
-    // },
-    // {
-    //   name: 'snxUSD and snxBTC',
-    //   collateralData: {
-    //     systems,
-    //     trader: trader1,
-    //     accountId: () => 2,
-    //     collaterals: [
-    //       {
-    //         snxUSDAmount: () => bn(2), // less than needed to pay for settlementReward
-    //       },
-    //       {
-    //         synthMarket: () => btcSynth,
-    //         snxUSDAmount: () => bn(10_000),
-    //       },
-    //     ],
-    //   },
-    // },
+    {
+      name: 'only snxBTC',
+      collateralData: {
+        systems,
+        trader: trader1,
+        accountId: () => 2,
+        collaterals: [
+          {
+            synthMarket: () => btcSynth,
+            snxUSDAmount: () => bn(10_000),
+          },
+        ],
+      },
+    },
+    {
+      name: 'snxUSD and snxBTC',
+      collateralData: {
+        systems,
+        trader: trader1,
+        accountId: () => 2,
+        collaterals: [
+          {
+            snxUSDAmount: () => bn(2), // less than needed to pay for settlementReward
+          },
+          {
+            synthMarket: () => btcSynth,
+            snxUSDAmount: () => bn(10_000),
+          },
+        ],
+      },
+    },
   ];
 
   for (let idx = 0; idx < testCases.length; idx++) {
@@ -223,6 +222,7 @@ describe('Offchain Async Order test - fees', () => {
           traderBalance: ethers.BigNumber;
           perpMarketWithdrawable: ethers.BigNumber;
           keeperBalance: ethers.BigNumber;
+          accountPnl: ethers.BigNumber;
         };
 
         let commonOpenPositionProps: Pick<
@@ -293,6 +293,7 @@ describe('Offchain Async Order test - fees', () => {
 
           before(restoreToLongOrder);
 
+          let previous: ethers.BigNumber;
           before('open a small short order', async () => {
             feesPaidOnShort = computeFees(
               initialLongSize,
@@ -300,18 +301,7 @@ describe('Offchain Async Order test - fees', () => {
               await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)
             );
 
-            console.log(
-              'feesPaidOnShort - fixed price',
-              computeFees(initialLongSize, sizeDelta, ethPrice)
-            );
-            console.log('feesPaidOnShort - fill price ', feesPaidOnShort);
-
-            console.log('- fixed price', ethPrice);
-            console.log(
-              '- fill price ',
-              await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)
-            );
-
+            previous = (await systems().PerpsMarket.getOpenPosition(2, ethMarketId))[0];
             await openPosition({
               ...commonOpenPositionProps,
               sizeDelta,
@@ -319,27 +309,20 @@ describe('Offchain Async Order test - fees', () => {
             });
           });
 
-          it('validate fees paid on short position', async () => {
+          it('validate fees paid on short position ddd', async () => {
             const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
-            console.log('feesPaidOnShort', feesPaidOnShort);
-            console.log(
-              balancesAfterLong.traderBalance.toString(),
-              balancesAfterLong.perpMarketWithdrawable.toString(),
-              balancesAfterLong.keeperBalance.toString()
-            );
-            console.log(
-              traderBalance.toString(),
-              perpMarketWithdrawable.toString(),
-              keeperBalance.toString()
-            );
 
             assertBn.equal(
               traderBalance,
-              balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees)
+              balancesAfterLong.traderBalance
+                .sub(feesPaidOnShort.totalFees)
+                .add(balancesAfterLong.accountPnl)
             );
             assertBn.equal(
               perpMarketWithdrawable,
-              balancesAfterLong.perpMarketWithdrawable.add(feesPaidOnShort.perpsMarketFee)
+              balancesAfterLong.perpMarketWithdrawable
+                .add(feesPaidOnShort.perpsMarketFee)
+                .sub(balancesAfterLong.accountPnl)
             );
             assertBn.equal(
               keeperBalance,
@@ -348,7 +331,7 @@ describe('Offchain Async Order test - fees', () => {
           });
         });
 
-        describe.skip('flip the order side (maker + taker)', () => {
+        describe('flip the order side (maker + taker)', () => {
           let feesPaidOnShort: ReturnType<typeof computeFees>;
           const sizeDelta = bn(-3); // original size is 2, reduce by 3 => flip to short -1
 
@@ -371,13 +354,35 @@ describe('Offchain Async Order test - fees', () => {
           it('validate fees paid', async () => {
             const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
 
-            assertBn.equal(
-              traderBalance,
-              balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees)
+            // using near since it can be +/- 10000 wei due to rounding
+            console.log('traderBalance    ', traderBalance.toString());
+            console.log(
+              'traderBalance exp',
+              balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees).toString()
             );
-            assertBn.equal(
+            console.log('perpMarketWithdrawable    ', perpMarketWithdrawable.toString());
+            console.log(
+              'perpMarketWithdrawable exp',
+              balancesAfterLong.perpMarketWithdrawable
+                .add(feesPaidOnShort.perpsMarketFee)
+                .toString()
+            );
+            console.log('keeperBalance    ', keeperBalance.toString());
+            console.log(
+              'keeperBalance exp',
+              balancesAfterLong.keeperBalance.add(feesPaidOnShort.keeperFee).toString()
+            );
+
+            assertBn.near(
+              traderBalance,
+              balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees),
+              10000
+            );
+            // using near since it can be +/- 1 wei due to rounding
+            assertBn.near(
               perpMarketWithdrawable,
-              balancesAfterLong.perpMarketWithdrawable.add(feesPaidOnShort.perpsMarketFee)
+              balancesAfterLong.perpMarketWithdrawable.add(feesPaidOnShort.perpsMarketFee),
+              1
             );
             assertBn.equal(
               keeperBalance,
@@ -393,10 +398,12 @@ describe('Offchain Async Order test - fees', () => {
     const traderBalance = await systems().PerpsMarket.totalCollateralValue(2);
     const perpMarketWithdrawable = await systems().Core.getWithdrawableMarketUsd(ethMarketId);
     const keeperBalance = await systems().USD.balanceOf(keeper().getAddress());
+    const accountPnl = (await systems().PerpsMarket.getOpenPosition(2, ethMarketId))[0];
     return {
       traderBalance,
       perpMarketWithdrawable,
       keeperBalance,
+      accountPnl,
     };
   };
 
