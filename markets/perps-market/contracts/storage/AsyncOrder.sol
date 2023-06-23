@@ -12,8 +12,6 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 
-import "hardhat/console.sol";
-
 library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
