@@ -294,7 +294,6 @@ describe('Offchain Async Order test - fees', () => {
 
           before(restoreToLongOrder);
 
-          let previous: ethers.BigNumber;
           before('open a small short order', async () => {
             feesPaidOnShort = computeFees(
               initialLongSize,
@@ -302,7 +301,6 @@ describe('Offchain Async Order test - fees', () => {
               await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)
             );
 
-            previous = (await systems().PerpsMarket.getOpenPosition(2, ethMarketId))[0];
             await openPosition({
               ...commonOpenPositionProps,
               sizeDelta,
