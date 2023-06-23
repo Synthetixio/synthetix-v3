@@ -44,8 +44,8 @@ library AsyncOrder {
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -54,8 +54,8 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta; // TODO: change to int128
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
     }
@@ -199,7 +199,7 @@ library AsyncOrder {
         // TODO: validate position size
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
-        runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
+        runtime.newPositionSize = oldPosition.size + order.sizeDelta;
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
             runtime.fillPrice
@@ -234,7 +234,7 @@ library AsyncOrder {
     }
 
     function calculateOrderFee(
-        int sizeDelta,
+        int128 sizeDelta,
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData

@@ -12,7 +12,7 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
 
-    error InvalidSettlementStrategy(uint256 settlementStrategyId);
+    error InvalidSettlementStrategy(uint128 settlementStrategyId);
 
     struct Data {
         OrderFee.Data orderFees;
@@ -91,7 +91,7 @@ library PerpsMarketConfiguration {
      */
     function loadValidSettlementStrategy(
         Data storage self,
-        uint256 settlementStrategyId
+        uint128 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
         if (settlementStrategyId >= self.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
