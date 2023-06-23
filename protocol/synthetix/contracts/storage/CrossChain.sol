@@ -41,7 +41,9 @@ library CrossChain {
     }
 
     function createChainlinkSubscription(Data storage self) internal returns (uint64 id) {
-        FunctionsBillingRegistryInterface billingRegistry = FunctionsBillingRegistryInterface(self.chainlinkFunctionsOracle.getRegistry());
+        FunctionsBillingRegistryInterface billingRegistry = FunctionsBillingRegistryInterface(
+            self.chainlinkFunctionsOracle.getRegistry()
+        );
         id = billingRegistry.createSubscription();
         billingRegistry.addConsumer(id, address(this));
     }
@@ -65,10 +67,14 @@ library CrossChain {
         address caller;
         bytes memory payload;
         if (data.tokenAmounts.length > 0) {
-            (address to, uint256 amount) = abi.decode(data.data, (address, uint256));
+            address to = abi.decode(data.data, (address));
 
             caller = data.tokenAmounts[0].token;
-            payload = abi.encodeWithSelector(IERC20.transfer.selector, to, amount);
+            payload = abi.encodeWithSelector(
+                IERC20.transfer.selector,
+                to,
+                data.tokenAmounts[0].amount
+            );
         } else {
             caller = address(this);
             payload = data.data;
@@ -165,7 +171,7 @@ library CrossChain {
         CcipClient.EVMTokenAmount[] memory tokenAmounts = new CcipClient.EVMTokenAmount[](1);
         tokenAmounts[0] = CcipClient.EVMTokenAmount(token, amount);
 
-        bytes memory data = abi.encode(msg.sender, amount);
+        bytes memory data = abi.encode(msg.sender);
         CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
             abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
             data,
