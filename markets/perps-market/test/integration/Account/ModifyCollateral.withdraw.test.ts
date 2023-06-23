@@ -119,7 +119,7 @@ describe('ModifyCollateral Withdraw', () => {
       );
     });
   });
-  describe('withdraw with open positions', () => {
+  describe.only('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
         name: 'Bitcoin',
@@ -132,6 +132,7 @@ describe('ModifyCollateral Withdraw', () => {
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: bn(10),
+          minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
           settlementReward: bn(0),
@@ -148,6 +149,7 @@ describe('ModifyCollateral Withdraw', () => {
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: bn(10),
+          minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
           settlementReward: bn(0),

@@ -31,6 +31,7 @@ describe('MarketConfiguration', async () => {
     maintenanceMarginFraction: bn(10),
     lockedOiPercent: bn(15),
     maxLiquidationLimitAccumulationMultiplier: bn(5),
+    minimumPositionMargin: bn(50),
     liquidationRewardRatioD18: bn(10e9),
     maxSecondsInLiquidationWindow: bn(10),
   };
@@ -149,21 +150,11 @@ describe('MarketConfiguration', async () => {
           fixture.maintenanceMarginFraction,
           fixture.liquidationRewardRatioD18,
           fixture.maxLiquidationLimitAccumulationMultiplier,
-          fixture.maxSecondsInLiquidationWindow
+          fixture.maxSecondsInLiquidationWindow,
+          fixture.minimumPositionMargin
         ),
-      'LiquidationParametersSet(' +
-        marketId.toString() +
-        ', ' +
-        fixture.initialMarginFraction.toString() +
-        ', ' +
-        fixture.maintenanceMarginFraction.toString() +
-        ', ' +
-        fixture.liquidationRewardRatioD18.toString() +
-        ', ' +
-        fixture.maxLiquidationLimitAccumulationMultiplier.toString() +
-        ', ' +
-        fixture.maxSecondsInLiquidationWindow.toString() +
-        ')',
+      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginFraction.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()},  ${fixture.minimumPositionMargin.toString()},  ${fixture.minimumPositionMargin.toString()})`,
+
       systems().PerpsMarket
     );
     await assertEvent(
@@ -214,7 +205,8 @@ describe('MarketConfiguration', async () => {
           fixture.maintenanceMarginFraction,
           fixture.liquidationRewardRatioD18,
           fixture.maxLiquidationLimitAccumulationMultiplier,
-          fixture.maxSecondsInLiquidationWindow
+          fixture.maxSecondsInLiquidationWindow,
+          fixture.minimumPositionMargin
         ),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
