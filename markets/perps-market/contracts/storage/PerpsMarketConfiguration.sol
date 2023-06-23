@@ -12,6 +12,8 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
 
+    error InvalidSettlementStrategy(uint256 settlementStrategyId);
+
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
@@ -82,5 +84,22 @@ library PerpsMarketConfiguration {
         maintenanceMargin = notional.mulDecimal(maintenanceMarginRatio);
 
         liquidationMargin = calculateLiquidationReward(self, notional);
+    }
+
+    /**
+     * @notice given a strategy id, returns the entire settlement strategy struct
+     */
+    function loadValidSettlementStrategy(
+        Data storage self,
+        uint256 settlementStrategyId
+    ) internal view returns (SettlementStrategy.Data storage strategy) {
+        if (settlementStrategyId >= self.settlementStrategies.length) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
+
+        strategy = self.settlementStrategies[settlementStrategyId];
+        if (strategy.disabled) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
     }
 }

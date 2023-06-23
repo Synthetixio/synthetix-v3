@@ -22,7 +22,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         strategyId = config.settlementStrategies.length;
 
         config.settlementStrategies.push(strategy);
-        emit SettlementStrategyAdded(marketId, strategy);
+        emit SettlementStrategyAdded(marketId, strategy, strategyId);
     }
 
     function setSettlementStrategyEnabled(

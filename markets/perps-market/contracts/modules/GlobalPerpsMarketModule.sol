@@ -15,6 +15,8 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.maxCollateralAmounts[synthMarketId] = collateralAmount;
+
+        emit MaxCollateralForSynthSet(synthMarketId, collateralAmount);
     }
 
     function getMaxCollateralAmountsForSynthMarket(
@@ -29,6 +31,8 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.synthDeductionPriority = newSynthDeductionPriority;
+
+        emit SynthDeductionPrioritySet(newSynthDeductionPriority);
     }
 
     function getSynthDeductionPriority() external view override returns (uint128[] memory) {
@@ -43,6 +47,8 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minLiquidationRewardUsd = minLiquidationRewardUsd;
         store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
+
+        emit LiquidationRewardGuardsSet(minLiquidationRewardUsd, maxLiquidationRewardUsd);
     }
 
     function getLiquidationRewardGuards()
