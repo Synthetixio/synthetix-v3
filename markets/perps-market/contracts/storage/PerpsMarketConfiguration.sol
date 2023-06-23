@@ -45,6 +45,10 @@ library PerpsMarketConfiguration {
          * @dev This value is multiplied by the notional value of a position to determine liquidation reward
          */
         uint256 liquidationRewardRatioD18;
+        /**
+         * @dev minimum position value in USD, this is used when we calculate maintenance margin
+         */
+        uint256 minimumPositionMargin;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
