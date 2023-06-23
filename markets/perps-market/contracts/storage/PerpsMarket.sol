@@ -106,7 +106,7 @@ library PerpsMarket {
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
-        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationPerSecond();
+        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
         uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
         uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
 

@@ -56,7 +56,7 @@ library PerpsMarketConfiguration {
         }
     }
 
-    function maxLiquidationPerSecond(Data storage self) internal view returns (uint256) {
+    function maxLiquidationAmountPerSecond(Data storage self) internal view returns (uint256) {
         OrderFee.Data storage orderFeeData = self.orderFees;
         return
             (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(self.skewScale).mulDecimal(
