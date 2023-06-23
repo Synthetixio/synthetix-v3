@@ -344,8 +344,7 @@ library PerpsAccount {
         // loop over profitable
         // close position if you can (maxLiquidatableValue)
         // withdraw from market keeper fee based on pnl that was liquidated
-        // if not, break;
-
+        // If any position is open after _processMarketLiquidation, set fullLiquidation to false since it's not a partial liquidation.
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         for (uint i = 0; i < runtime.profitableMarketsLength; i++) {
             uint128 positionMarketId = runtime.profitableMarkets[i];

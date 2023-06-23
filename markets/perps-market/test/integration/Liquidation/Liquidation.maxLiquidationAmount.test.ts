@@ -110,7 +110,7 @@ describe('Liquidation - max liquidatable amount', async () => {
     before('fastforward', async () => {
       await fastForwardTo(initialLiquidationTime + 11, provider());
     });
-    // liquidate call does nothing
+    // liquidate call liquidate the rest
     before('call liquidate', async () => {
       await systems().PerpsMarket.connect(keeper()).liquidate(2);
     });
@@ -127,7 +127,7 @@ describe('Liquidation - max liquidatable amount', async () => {
       await systems().PerpsMarket.connect(keeper()).liquidate(3);
     });
 
-    it('liquidated only 100 OP', async () => {
+    it('liquidated only 50 OP, 100 OP left', async () => {
       const [, , size] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
       // 150 original size - 50
       assertBn.equal(size, bn(100));
@@ -139,7 +139,7 @@ describe('Liquidation - max liquidatable amount', async () => {
     before('fastforward', async () => {
       await fastForwardTo(initialLiquidationTime + 23, provider());
     });
-    // liquidate call does nothing
+    // liquidate call liquidate the rest
     before('call liquidate', async () => {
       await systems().PerpsMarket.connect(keeper()).liquidate(3);
     });
