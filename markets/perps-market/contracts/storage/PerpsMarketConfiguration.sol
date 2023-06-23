@@ -74,7 +74,7 @@ library PerpsMarketConfiguration {
         )
     {
         uint256 sizeAbs = MathUtil.abs(size.to256());
-        uint256 impactOnSkew = sizeAbs.divDecimal(self.skewScale);
+        uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.divDecimal(self.skewScale);
 
         initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginFraction);
         maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginFraction);
