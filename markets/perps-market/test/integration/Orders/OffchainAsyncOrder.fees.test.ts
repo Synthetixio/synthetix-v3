@@ -34,6 +34,7 @@ describe('Offchain Async Order test - fees', () => {
         name: 'Ether',
         token: 'snxETH',
         price: ethPrice,
+        // setting to 0 to avoid funding and p/d price change affecting pnl
         fundingParams: { skewScale: bn(0), maxFundingVelocity: bn(0) },
         orderFees,
       },
@@ -309,7 +310,7 @@ describe('Offchain Async Order test - fees', () => {
             });
           });
 
-          it('validate fees paid on short position ddd', async () => {
+          it('validate fees paid on short position', async () => {
             const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
 
             assertBn.equal(
@@ -354,35 +355,13 @@ describe('Offchain Async Order test - fees', () => {
           it('validate fees paid', async () => {
             const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
 
-            // using near since it can be +/- 10000 wei due to rounding
-            console.log('traderBalance    ', traderBalance.toString());
-            console.log(
-              'traderBalance exp',
-              balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees).toString()
-            );
-            console.log('perpMarketWithdrawable    ', perpMarketWithdrawable.toString());
-            console.log(
-              'perpMarketWithdrawable exp',
-              balancesAfterLong.perpMarketWithdrawable
-                .add(feesPaidOnShort.perpsMarketFee)
-                .toString()
-            );
-            console.log('keeperBalance    ', keeperBalance.toString());
-            console.log(
-              'keeperBalance exp',
-              balancesAfterLong.keeperBalance.add(feesPaidOnShort.keeperFee).toString()
-            );
-
-            assertBn.near(
+            assertBn.equal(
               traderBalance,
-              balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees),
-              10000
+              balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees)
             );
-            // using near since it can be +/- 1 wei due to rounding
-            assertBn.near(
+            assertBn.equal(
               perpMarketWithdrawable,
-              balancesAfterLong.perpMarketWithdrawable.add(feesPaidOnShort.perpsMarketFee),
-              1
+              balancesAfterLong.perpMarketWithdrawable.add(feesPaidOnShort.perpsMarketFee)
             );
             assertBn.equal(
               keeperBalance,
