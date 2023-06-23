@@ -6,7 +6,8 @@
   },
   "description": "Common configuration used by all Hardhat packages",
   "scripts": {
-    "build": "echo 'Needed because https://github.com/yarnpkg/berry/issues/3995'"
+    "build": "yarn build:ts",
+    "build:ts": "echo 'Needed because https://github.com/yarnpkg/berry/issues/3995'"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
