@@ -197,22 +197,7 @@ library AsyncOrder {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
-        // TODO: validate position size
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
-
-        if (
-            PerpsMarket.validatePositionSize(
-                perpsMarketData,
-                marketConfig.maxMarketValue,
-                oldPosition.size,
-                order.sizeDelta
-            )
-        ) {
-            revert PerpsMarketConfiguration.MaxOpenInterestReached(
-                order.marketId,
-                marketConfig.maxMarketValue
-            );
-        }
 
         runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
 

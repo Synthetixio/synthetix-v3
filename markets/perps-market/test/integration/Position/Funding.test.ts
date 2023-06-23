@@ -14,7 +14,6 @@ describe('Position - funding', () => {
         token: 'snxETH',
         price: bn(2000),
         fundingParams: { skewScale: bn(10_000), maxFundingVelocity: bn(3) },
-        maxMarketValue: bn(999999999999999),
       },
     ],
     traderAccountIds: [2, 3],

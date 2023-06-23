@@ -183,6 +183,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         runtime.newPositionSize = newPosition.size;
 
+        PerpsMarket.validatePositionSize(
+            PerpsMarket.loadValid(asyncOrder.marketId),
+            PerpsMarketConfiguration.load(asyncOrder.marketId).maxMarketValue,
+            oldPosition.size,
+            runtime.newPositionSize
+        );
+
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
         // use fill price to calculate realized pnl

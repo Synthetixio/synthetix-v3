@@ -125,6 +125,13 @@ export const bootstrapPerpsMarkets = (
         );
       });
 
+      before('set max market value', async () => {
+        await contracts.PerpsMarket.connect(marketOwner).setMaxMarketValue(
+          marketId,
+          bn(10_000_000)
+        );
+      });
+
       if (orderFees) {
         before('set fees', async () => {
           await contracts.PerpsMarket.connect(marketOwner).setOrderFees(

@@ -26,7 +26,6 @@ describe('Commit Offchain Async Order test', () => {
         token: 'snxETH',
         price: bn(1000),
         fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
-        maxMarketValue: bn(5000),
       },
     ],
     traderAccountIds: [2, 3],
@@ -85,28 +84,6 @@ describe('Commit Offchain Async Order test', () => {
             trackingCode: ethers.constants.HashZero,
           }),
         'InsufficientMargin'
-      );
-    });
-
-    it('reverts if max market value is reached', async () => {
-      await depositCollateral({
-        accountId: () => 2,
-        collaterals: [{ snxUSDAmount: () => bn(100_000) }],
-        systems,
-        trader: trader1,
-      });
-      await assertRevert(
-        systems()
-          .PerpsMarket.connect(trader1())
-          .commitOrder({
-            marketId: ethMarketId,
-            accountId: 2,
-            sizeDelta: bn(90_000),
-            settlementStrategyId: 0,
-            acceptablePrice: bn(1450), // 5% slippage
-            trackingCode: ethers.constants.HashZero,
-          }),
-        `MaxOpenInterestReached(${ethMarketId}, ${bn(5000).toString()})`
       );
     });
   });
