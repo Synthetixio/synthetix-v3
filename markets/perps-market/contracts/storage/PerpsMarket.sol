@@ -12,6 +12,8 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Data for a single perps market
  */
@@ -103,7 +105,7 @@ library PerpsMarket {
     function maxLiquidatableAmount(
         Data storage self,
         uint256 requestedLiquidationAmount
-    ) internal returns (uint256 liquidatableAmount) {
+    ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationPerSecond();
@@ -112,19 +114,19 @@ library PerpsMarket {
 
         uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
             maxLiquidationAmountPerSecond;
-
         if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
-            liquidatableAmount = MathUtil.min(
-                maxAllowedLiquidationInWindow,
-                requestedLiquidationAmount
-            );
-            self.lastUtilizedLiquidationCapacity = liquidatableAmount.to128();
+            liquidatableAmount = MathUtil
+                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
+                .to128();
+            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
         } else {
-            liquidatableAmount = MathUtil.min(
-                maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
-                requestedLiquidationAmount
-            );
-            self.lastUtilizedLiquidationCapacity += liquidatableAmount.to128();
+            liquidatableAmount = MathUtil
+                .min(
+                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
+                    requestedLiquidationAmount
+                )
+                .to128();
+            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
         }
 
         // only update timestamp if there is something being liquidated

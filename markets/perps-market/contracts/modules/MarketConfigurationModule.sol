@@ -75,7 +75,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint256 initialMarginFraction,
         uint256 maintenanceMarginFraction,
         uint256 liquidationRewardRatioD18,
-        uint256 maxLiquidationLimitAccumulationMultiplier
+        uint256 maxLiquidationLimitAccumulationMultiplier,
+        uint256 maxSecondsInLiquidationWindow
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
@@ -85,12 +86,14 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
         config
             .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
+        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
         emit LiquidationParametersSet(
             marketId,
             initialMarginFraction,
             maintenanceMarginFraction,
             liquidationRewardRatioD18,
-            maxLiquidationLimitAccumulationMultiplier
+            maxLiquidationLimitAccumulationMultiplier,
+            maxSecondsInLiquidationWindow
         );
     }
 
@@ -118,7 +121,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             uint256 initialMarginFraction,
             uint256 maintenanceMarginFraction,
             uint256 liquidationRewardRatioD18,
-            uint256 maxLiquidationLimitAccumulationMultiplier
+            uint256 maxLiquidationLimitAccumulationMultiplier,
+            uint256 maxSecondsInLiquidationWindow
         )
     {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
@@ -128,6 +132,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
         maxLiquidationLimitAccumulationMultiplier = config
             .maxLiquidationLimitAccumulationMultiplier;
+        maxSecondsInLiquidationWindow = config.maxSecondsInLiquidationWindow;
     }
 
     function getFundingParameters(

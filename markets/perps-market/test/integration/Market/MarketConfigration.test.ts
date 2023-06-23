@@ -32,6 +32,7 @@ describe('MarketConfiguration', async () => {
     lockedOiPercent: bn(15),
     maxLiquidationLimitAccumulationMultiplier: bn(5),
     liquidationRewardRatioD18: bn(10e9),
+    maxSecondsInLiquidationWindow: bn(10),
   };
 
   const { systems, signers } = bootstrapMarkets({
@@ -147,7 +148,8 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.maintenanceMarginFraction,
           fixture.liquidationRewardRatioD18,
-          fixture.maxLiquidationLimitAccumulationMultiplier
+          fixture.maxLiquidationLimitAccumulationMultiplier,
+          fixture.maxSecondsInLiquidationWindow
         ),
       'LiquidationParametersSet(' +
         marketId.toString() +
@@ -159,6 +161,8 @@ describe('MarketConfiguration', async () => {
         fixture.liquidationRewardRatioD18.toString() +
         ', ' +
         fixture.maxLiquidationLimitAccumulationMultiplier.toString() +
+        ', ' +
+        fixture.maxSecondsInLiquidationWindow.toString() +
         ')',
       systems().PerpsMarket
     );
@@ -209,7 +213,8 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.maintenanceMarginFraction,
           fixture.liquidationRewardRatioD18,
-          fixture.maxLiquidationLimitAccumulationMultiplier
+          fixture.maxLiquidationLimitAccumulationMultiplier,
+          fixture.maxSecondsInLiquidationWindow
         ),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
@@ -270,6 +275,7 @@ describe('MarketConfiguration', async () => {
       maintenanceMarginFraction,
       liquidationRewardRatioD18,
       maxLiquidationLimitAccumulationMultiplier,
+      maxSecondsInLiquidationWindow,
     ] = await systems().PerpsMarket.getLiquidationParameters(marketId);
     assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
     assertBn.equal(maintenanceMarginFraction, fixture.maintenanceMarginFraction);
@@ -278,5 +284,6 @@ describe('MarketConfiguration', async () => {
       maxLiquidationLimitAccumulationMultiplier,
       fixture.maxLiquidationLimitAccumulationMultiplier
     );
+    assertBn.equal(maxSecondsInLiquidationWindow, fixture.maxSecondsInLiquidationWindow);
   });
 });
