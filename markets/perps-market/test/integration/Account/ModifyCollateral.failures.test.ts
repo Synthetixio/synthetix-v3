@@ -39,9 +39,7 @@ describe('ModifyCollateral', () => {
   });
 
   before('set setMaxCollateralForSynthMarketId to 1 btc', async () => {
-    await systems()
-      .PerpsMarket.connect(owner())
-      .setMaxCollateralForSynthMarketId(synthBTCMarketId, bn(1));
+    await systems().PerpsMarket.connect(owner()).setMaxCollateralAmount(synthBTCMarketId, bn(1));
   });
 
   describe('failure cases', async () => {

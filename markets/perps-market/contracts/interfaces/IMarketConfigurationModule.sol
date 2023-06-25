@@ -28,7 +28,8 @@ interface IMarketConfigurationModule {
         uint256 initialMarginFraction,
         uint256 maintenanceMarginFraction,
         uint256 liquidationRewardRatioD18,
-        uint256 maxLiquidationLimitAccumulationMultiplier
+        uint256 maxLiquidationLimitAccumulationMultiplier,
+        uint256 maxSecondsInLiquidationWindow
     );
     event MaxMarketValueSet(uint128 marketId, uint256 maxMarketValue);
     event LockedOiPercentSet(uint128 marketId, uint256 lockedOiPercent);
@@ -52,7 +53,8 @@ interface IMarketConfigurationModule {
         uint256 initialMarginFraction,
         uint256 maintenanceMarginFraction,
         uint256 liquidationRewardRatioD18,
-        uint256 maxLiquidationLimitAccumulationMultiplier
+        uint256 maxLiquidationLimitAccumulationMultiplier,
+        uint256 maxSecondsInLiquidationWindow
     ) external;
 
     function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external;
@@ -79,7 +81,8 @@ interface IMarketConfigurationModule {
             uint256 initialMarginFraction,
             uint256 maintenanceMarginFraction,
             uint256 liquidationRewardRatioD18,
-            uint256 maxLiquidationLimitAccumulationMultiplier
+            uint256 maxLiquidationLimitAccumulationMultiplier,
+            uint256 maxSecondsInLiquidationWindow
         );
 
     function getFundingParameters(

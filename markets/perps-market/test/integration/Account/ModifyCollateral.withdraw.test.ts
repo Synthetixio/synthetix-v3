@@ -131,6 +131,7 @@ describe('ModifyCollateral Withdraw', () => {
           maintenanceMarginFraction: bn(1),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
+          maxSecondsInLiquidationWindow: bn(10),
         },
         settlementStrategy: {
           settlementReward: bn(0),
@@ -146,6 +147,7 @@ describe('ModifyCollateral Withdraw', () => {
           maintenanceMarginFraction: bn(1),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
+          maxSecondsInLiquidationWindow: bn(10),
         },
         settlementStrategy: {
           settlementReward: bn(0),

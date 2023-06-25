@@ -198,7 +198,6 @@ library AsyncOrder {
 
         // TODO: validate position size
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
-
         runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
@@ -219,6 +218,7 @@ library AsyncOrder {
             runtime.requiredMaintenanceMargin +
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
+
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
@@ -280,6 +280,10 @@ library AsyncOrder {
         int size,
         uint price
     ) internal pure returns (uint) {
+        if (skewScale == 0) {
+            return price;
+        }
+
         int pdBefore = skew.divDecimal(skewScale.toInt());
         int pdAfter = (skew + size).divDecimal(skewScale.toInt());
         int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
