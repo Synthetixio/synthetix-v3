@@ -28,8 +28,8 @@ interface IAsyncOrderModule {
         int128 newSize,
         uint256 collectedFees,
         uint256 settelementReward,
-        bytes32 trackingCode,
-        address indexed settler
+        bytes32 indexed trackingCode,
+        address settler
     );
 
     event OrderCanceled(

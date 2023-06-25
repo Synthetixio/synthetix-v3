@@ -31,9 +31,6 @@ source = "<%= settings.oracleManagerPackage %>"
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
-[contract.CollateralModule]
-artifact = "CollateralModule"
-
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
@@ -82,7 +79,6 @@ contracts = [
   "PerpsMarketModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
-  "CollateralModule",
   "FeatureFlagModule",
   "LimitOrderModule",
   "LiquidationModule",
@@ -97,7 +93,6 @@ depends = [
   "contract.AsyncOrderModule",
   "contract.PerpsAccountModule",
   "contract.PerpsMarketModule",
-  "contract.CollateralModule",
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",
   "contract.LiquidationModule",

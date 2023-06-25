@@ -13,10 +13,7 @@ describe('GlobalPerpsMarket', () => {
   before(
     'set maxCollateralAmounts, synthDeductionPriority, minLiquidationRewardUsd, maxLiquidationRewardUsd',
     async () => {
-      await systems().PerpsMarket.setMaxCollateralForSynthMarketId(
-        perpsMarkets()[0].marketId(),
-        bn(10000)
-      );
+      await systems().PerpsMarket.setMaxCollateralAmount(perpsMarkets()[0].marketId(), bn(10000));
       await systems().PerpsMarket.setSynthDeductionPriority([1, 2]);
       await systems().PerpsMarket.setLiquidationRewardGuards(100, 500);
     }
@@ -24,9 +21,7 @@ describe('GlobalPerpsMarket', () => {
 
   it('returns maxCollateralAmounts for synth market id', async () => {
     assertBn.equal(
-      await systems().PerpsMarket.getMaxCollateralAmountsForSynthMarket(
-        perpsMarkets()[0].marketId()
-      ),
+      await systems().PerpsMarket.getMaxCollateralAmount(perpsMarkets()[0].marketId()),
       bn(10000)
     );
   });
@@ -52,7 +47,7 @@ describe('GlobalPerpsMarket', () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(trader1())
-        .setMaxCollateralForSynthMarketId(perpsMarkets()[0].marketId(), bn(10000)),
+        .setMaxCollateralAmount(perpsMarkets()[0].marketId(), bn(10000)),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(

@@ -2,21 +2,16 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface IGlobalPerpsMarketModule {
-    event MaxCollateralForSynthSet(uint128 indexed synthMarketId, uint256 collateralAmount);
+    event MaxCollateralAmountSet(uint128 indexed synthMarketId, uint256 collateralAmount);
     event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority);
     event LiquidationRewardGuardsSet(
         uint256 indexed minLiquidationRewardUsd,
         uint256 indexed maxLiquidationRewardUsd
     );
 
-    function getMaxCollateralAmountsForSynthMarket(
-        uint128 synthMarketId
-    ) external view returns (uint);
+    function getMaxCollateralAmount(uint128 synthMarketId) external view returns (uint);
 
-    function setMaxCollateralForSynthMarketId(
-        uint128 synthMarketId,
-        uint collateralAmount
-    ) external;
+    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
 
     function setSynthDeductionPriority(uint128[] memory newSynthDeductionPriority) external;
 
