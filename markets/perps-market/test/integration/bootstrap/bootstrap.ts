@@ -104,7 +104,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralForSynthMarketId(marketId(), ethers.constants.MaxUint256);
+        .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
     }
   });
 

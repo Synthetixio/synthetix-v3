@@ -37,6 +37,11 @@ library PerpsMarketConfiguration {
          */
         uint256 maxLiquidationLimitAccumulationMultiplier;
         /**
+         * @dev This configured window is the max liquidation amount that can be accumulated.
+         * @dev If you multiply maxLiquidationPerSecond * this window in seconds, you get the max liquidation amount that can be accumulated within this window
+         */
+        uint256 maxSecondsInLiquidationWindow;
+        /**
          * @dev This value is multiplied by the notional value of a position to determine liquidation reward
          */
         uint256 liquidationRewardRatioD18;
@@ -49,6 +54,14 @@ library PerpsMarketConfiguration {
         assembly {
             store.slot := s
         }
+    }
+
+    function maxLiquidationAmountPerSecond(Data storage self) internal view returns (uint256) {
+        OrderFee.Data storage orderFeeData = self.orderFees;
+        return
+            (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(self.skewScale).mulDecimal(
+                self.maxLiquidationLimitAccumulationMultiplier
+            );
     }
 
     function calculateLiquidationReward(
