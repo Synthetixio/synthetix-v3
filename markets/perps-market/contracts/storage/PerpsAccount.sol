@@ -316,13 +316,13 @@ library PerpsAccount {
         Data storage self
     ) internal returns (bool fullLiquidation, uint256 reward) {
         RuntimeLiquidationData memory runtime;
-        // loop through all positions
-        // profitable / unprofitable
         runtime.profitableMarkets = new uint128[](self.openPositionMarketIds.length());
         runtime.losingMarkets = new uint128[](self.openPositionMarketIds.length());
 
         fullLiquidation = true;
 
+        // loop through all positions
+        // split into profitable / unprofitable
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 positionMarketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(positionMarketId).positions[self.id];
@@ -379,8 +379,7 @@ library PerpsAccount {
             2. loss = find the min of loss, max liquidatable
             3. % = (loss * pnl) / all losing positions pnl
             4. colateral balance * % = value to deposit for that market
-            5. withdraw from market keeper fee based on pnl that was liquidated
-        */
+            */
             // ---
 
             for (uint i = 0; i < runtime.losingMarketsLength; i++) {
