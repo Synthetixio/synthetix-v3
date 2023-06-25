@@ -472,8 +472,8 @@ library AsyncOrder {
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -481,8 +481,8 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
     }
