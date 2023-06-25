@@ -145,11 +145,8 @@ export const bootstrapPerpsMarkets = (
             liquidationParams.maintenanceMarginFraction,
             liquidationParams.liquidationRewardRatio,
             liquidationParams.maxLiquidationLimitAccumulationMultiplier,
-<<<<<<< HEAD
-            liquidationParams.maxSecondsInLiquidationWindow
-=======
+            liquidationParams.maxSecondsInLiquidationWindow,
             liquidationParams.minimumPositionMargin
->>>>>>> e8b310d2 (minimumPositionMargin gets set with setLiquidationParameters)
           );
         });
       }
