@@ -53,7 +53,7 @@ module.exports = {
     },
 
     {
-      files: ['protocol/synthetix/subgraph/**/*'],
+      files: ['protocol/synthetix/subgraph/**/*', 'markets/spot-market/subgraph/**/*'],
       env: {},
       globals: {
         changetype: true,
