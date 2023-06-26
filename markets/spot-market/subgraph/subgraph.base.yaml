@@ -3,7 +3,7 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: SpotMarket
+    name: SpotMarketProxy
     source:
       abi: SpotMarketProxy
     mapping:

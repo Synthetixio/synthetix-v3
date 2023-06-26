@@ -6,7 +6,7 @@ import {
   SpotMarketProxy,
   SynthUnwrapped,
   SynthWrapped,
-} from '../generated/SpotMarket/SpotMarketProxy';
+} from '../generated/SpotMarketProxy/SpotMarketProxy';
 
 import { Order, WrappSynth } from '../generated/schema';
 

@@ -1,4 +1,4 @@
-import { WrapperSet } from '../generated/SpotMarket/SpotMarketProxy';
+import { WrapperSet } from '../generated/SpotMarketProxy/SpotMarketProxy';
 
 import { Wrapper } from '../generated/schema';
 

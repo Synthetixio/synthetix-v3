@@ -1,4 +1,4 @@
-import { SynthPriceDataUpdated } from '../generated/SpotMarket/SpotMarketProxy';
+import { SynthPriceDataUpdated } from '../generated/SpotMarketProxy/SpotMarketProxy';
 
 import { MarketInfo } from '../generated/schema';
 

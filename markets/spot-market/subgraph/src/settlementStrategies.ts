@@ -2,7 +2,7 @@ import {
   SpotMarketProxy,
   SettlementStrategyUpdated,
   SettlementStrategyAdded,
-} from '../generated/SpotMarket/SpotMarketProxy';
+} from '../generated/SpotMarketProxy/SpotMarketProxy';
 
 import { SettlementStrategy } from '../generated/schema';
 
