@@ -3,13 +3,7 @@ import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets, decimalMul } from '.
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
-import {
-  DepositCollateralData,
-  OpenPositionData,
-  depositCollateral,
-  openPosition,
-  settleOrder,
-} from '../helpers';
+import { OpenPositionData, depositCollateral, openPosition, settleOrder } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
@@ -51,7 +45,7 @@ describe('Offchain Async Order test - fees', () => {
 
   const restoreToDepositCollateral = snapshotCheckpoint(provider);
 
-  const testCases: Array<{ name: string; collateralData: DepositCollateralData }> = [
+  const testCases = [
     {
       name: 'only snxUSD',
       collateralData: {
@@ -98,8 +92,7 @@ describe('Offchain Async Order test - fees', () => {
     },
   ];
 
-  for (let idx = 0; idx < testCases.length; idx++) {
-    const testCase = testCases[idx];
+  testCases.forEach((testCase) => {
     describe(`Using ${testCase.name} as collateral`, () => {
       let balancesBeforeLong: {
         traderBalance: ethers.BigNumber;
@@ -369,7 +362,7 @@ describe('Offchain Async Order test - fees', () => {
         });
       });
     });
-  }
+  });
 
   const getBalances = async () => {
     const traderBalance = await systems().PerpsMarket.totalCollateralValue(2);
