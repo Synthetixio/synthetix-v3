@@ -199,6 +199,13 @@ library AsyncOrder {
 
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
+        PerpsMarket.validatePositionSize(
+            perpsMarketData,
+            marketConfig.maxMarketValue,
+            oldPosition.size,
+            order.sizeDelta
+        );
+
         runtime.newPositionSize = oldPosition.size + order.sizeDelta;
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
