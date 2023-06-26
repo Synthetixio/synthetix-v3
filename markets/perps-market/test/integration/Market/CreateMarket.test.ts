@@ -235,6 +235,7 @@ describe('Create Market test', () => {
             strategyType: 0,
             settlementDelay: 5,
             settlementWindowDuration: 120,
+            priceWindowDuration: 120,
             priceVerificationContract: ethers.constants.AddressZero,
             feedId: ethers.constants.HashZero,
             url: '',
@@ -254,9 +255,9 @@ describe('Create Market test', () => {
         await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
       });
 
-      it('sohuld be able to use the market', async () => {
+      it('should be able to use the market', async () => {
         await systems()
-          .PerpsMarket.connect(marketOwner)
+          .PerpsMarket.connect(trader1())
           .commitOrder({
             marketId: marketId,
             accountId: 2,

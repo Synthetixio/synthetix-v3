@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
@@ -104,7 +104,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralForSynthMarketId(marketId(), ethers.constants.MaxUint256);
+        .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
     }
   });
 

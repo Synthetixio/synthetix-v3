@@ -56,7 +56,7 @@ contract NodeModule is INodeModule {
     /**
      * @inheritdoc INodeModule
      */
-    function getNode(bytes32 nodeId) external view returns (NodeDefinition.Data memory node) {
+    function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory node) {
         return _getNode(nodeId);
     }
 
@@ -70,7 +70,7 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns node definition data for a given node id.
      */
-    function _getNode(bytes32 nodeId) internal view returns (NodeDefinition.Data storage node) {
+    function _getNode(bytes32 nodeId) internal pure returns (NodeDefinition.Data storage node) {
         return NodeDefinition.load(nodeId);
     }
 
@@ -127,7 +127,7 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns whether a given node ID has already been registered.
      */
-    function _isNodeRegistered(bytes32 nodeId) internal view returns (bool nodeRegistered) {
+    function _isNodeRegistered(bytes32 nodeId) internal pure returns (bool nodeRegistered) {
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.load(nodeId);
         return (nodeDefinition.nodeType != NodeDefinition.NodeType.NONE);
     }

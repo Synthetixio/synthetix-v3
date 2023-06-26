@@ -150,7 +150,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             fees,
             collectedFees,
             msg.sender,
-            price
+            price,
+            asyncOrderClaim.orderType
         );
     }
 

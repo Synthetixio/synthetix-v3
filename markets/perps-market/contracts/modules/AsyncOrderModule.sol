@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
@@ -22,13 +23,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for uint256;
     using DecimalMath for int64;
     using PerpsPrice for PerpsPrice.Data;
-    using AsyncOrder for AsyncOrder.Data;
     using PerpsAccount for PerpsAccount.Data;
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
     using SettlementStrategy for SettlementStrategy.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using Position for Position.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
@@ -43,7 +44,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // Check if commitment.accountId is valid
         Account.exists(commitment.accountId);
 
-        // TODO Check msg.sender can commit order for commitment.accountId
+        // Check msg.sender can commit order for commitment.accountId
+        Account.loadAccountAndValidatePermission(
+            commitment.accountId,
+            AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
+        );
 
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
@@ -55,7 +60,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)
-            .settlementStrategies[commitment.settlementStrategyId];
+            .loadValidSettlementStrategy(commitment.settlementStrategyId);
 
         uint256 settlementTime = block.timestamp + strategy.settlementDelay;
         order.update(commitment, settlementTime);
@@ -110,7 +115,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             updateData,
             priceIds,
             order.settlementTime.to64(),
-            (order.settlementTime + settlementStrategy.settlementWindowDuration).to64()
+            (order.settlementTime + settlementStrategy.priceWindowDuration).to64()
         );
 
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
@@ -119,6 +124,24 @@ contract AsyncOrderModule is IAsyncOrderModule {
         settlementStrategy.checkPriceDeviation(offchainPrice, PerpsPrice.getCurrentPrice(marketId));
 
         _settleOrder(offchainPrice, order, settlementStrategy);
+    }
+
+    function getOrder(
+        uint128 marketId,
+        uint128 accountId
+    ) public view override returns (AsyncOrder.Data memory) {
+        return PerpsMarket.loadValid(marketId).asyncOrders[accountId];
+    }
+
+    function cancelOrder(uint128 marketId, uint128 accountId) external override {
+        AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
+        order.checkValidity();
+        SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
+            .load(marketId)
+            .settlementStrategies[order.settlementStrategyId];
+        order.checkCancellationEligibility(settlementStrategy);
+        order.reset();
+        emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
     }
 
     function _settleOffchain(

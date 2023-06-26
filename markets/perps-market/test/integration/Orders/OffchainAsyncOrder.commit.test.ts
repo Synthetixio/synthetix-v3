@@ -33,6 +33,10 @@ describe('Commit Offchain Async Order test', () => {
   let ethMarketId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
 
+  const PERPS_COMMIT_ASYNC_ORDER_PERMISSION_NAME = ethers.utils.formatBytes32String(
+    'PERPS_COMMIT_ASYNC_ORDER'
+  );
+
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
     btcSynth = synthMarkets()[0];
@@ -84,6 +88,22 @@ describe('Commit Offchain Async Order test', () => {
             trackingCode: ethers.constants.HashZero,
           }),
         'InsufficientMargin'
+      );
+    });
+
+    it(`reverts if msg.sender not authorized`, async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(keeper())
+          .commitOrder({
+            marketId: ethMarketId,
+            accountId: 2,
+            sizeDelta: bn(1),
+            settlementStrategyId: 0,
+            acceptablePrice: bn(1050), // 5% slippage
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `PermissionDenied("${2}", "${PERPS_COMMIT_ASYNC_ORDER_PERMISSION_NAME}", "${await keeper().getAddress()}")`
       );
     });
   });

@@ -132,6 +132,7 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
+    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -471,8 +472,8 @@ library AsyncOrder {
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -480,8 +481,8 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
     }
@@ -607,6 +608,7 @@ library PerpsMarketConfiguration {
         uint256 maintenanceMarginFraction;
         uint256 lockedOiPercent;
         uint256 maxLiquidationLimitAccumulationMultiplier;
+        uint256 maxSecondsInLiquidationWindow;
         uint256 liquidationRewardRatioD18;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -666,6 +668,7 @@ library SettlementStrategy {
         Type strategyType;
         uint256 settlementDelay;
         uint256 settlementWindowDuration;
+        uint256 priceWindowDuration;
         address priceVerificationContract;
         bytes32 feedId;
         string url;
