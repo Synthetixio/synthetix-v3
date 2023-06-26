@@ -608,6 +608,7 @@ library PerpsMarketConfiguration {
         uint256 maintenanceMarginFraction;
         uint256 lockedOiPercent;
         uint256 maxLiquidationLimitAccumulationMultiplier;
+        uint256 maxSecondsInLiquidationWindow;
         uint256 liquidationRewardRatioD18;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
