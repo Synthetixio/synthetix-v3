@@ -558,8 +558,8 @@ library PerpsAccount {
         uint128[] profitableMarkets;
         uint128[] losingMarkets;
         uint amountToDeposit;
-        uint amountToLiquidatePercentage;
-        uint percentageOfTotalLosingPnl;
+        uint amountToLiquidatePercentageRatioD18;
+        uint percentageOfTotalLosingPnlRatioD18;
         uint totalAvailableForDeposit;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
@@ -606,7 +606,7 @@ library PerpsMarketConfiguration {
         uint256 skewScale;
         uint256 initialMarginFraction;
         uint256 maintenanceMarginFraction;
-        uint256 lockedOiPercent;
+        uint256 lockedOiPercentRatioD18;
         uint256 maxLiquidationLimitAccumulationMultiplier;
         uint256 maxSecondsInLiquidationWindow;
         uint256 liquidationRewardRatioD18;

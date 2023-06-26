@@ -100,7 +100,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function setLockedOiPercent(uint128 marketId, uint256 lockedOiPercent) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config.lockedOiPercent = lockedOiPercent;
+        config.lockedOiPercentRatioD18 = lockedOiPercent;
         emit LockedOiPercentSet(marketId, lockedOiPercent);
     }
 
@@ -164,6 +164,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function getLockedOiPercent(uint128 marketId) external view override returns (uint256) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
-        return config.lockedOiPercent;
+        return config.lockedOiPercentRatioD18;
     }
 }

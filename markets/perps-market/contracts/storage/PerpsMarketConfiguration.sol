@@ -31,7 +31,7 @@ library PerpsMarketConfiguration {
          * @dev this fraction is multiplied by the impact of the position on the skew (position size / skewScale)
          */
         uint256 maintenanceMarginFraction;
-        uint256 lockedOiPercent;
+        uint256 lockedOiPercentRatioD18;
         /**
          * @dev This multiplier is applied to the max liquidation value when calculating max liquidation for a given market
          */
