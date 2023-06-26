@@ -153,7 +153,7 @@ describe('MarketConfiguration', async () => {
           fixture.maxSecondsInLiquidationWindow,
           fixture.minimumPositionMargin
         ),
-      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginFraction.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()},  ${fixture.minimumPositionMargin.toString()},  ${fixture.minimumPositionMargin.toString()})`,
+      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginFraction.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()}, ${fixture.maxSecondsInLiquidationWindow.toString()}, ${fixture.minimumPositionMargin.toString()})`,
 
       systems().PerpsMarket
     );
