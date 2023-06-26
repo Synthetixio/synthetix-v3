@@ -1,6 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
-import { openPosition } from '../helpers';
+import { depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { BigNumber, ethers } from 'ethers';
 import { wei } from '@synthetixio/wei';
@@ -82,26 +82,145 @@ describe.only('Market - size test', () => {
   // });
 
   describe('max market value', () => {
-    before(restore);
-    before('add collateral to margin', async () => {
-      await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(50_000));
-      await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(1_000_000));
-    });
+    describe('success', () => {
+      beforeEach(restore);
+      beforeEach('add collateral to margin', async () => {
+        await depositCollateral({
+          accountId: () => 2,
+          collaterals: [
+            {
+              snxUSDAmount() {
+                return bn(1_000_000);
+              },
+            },
+          ],
+          systems,
+          trader: () => trader1(),
+        });
+        await depositCollateral({
+          accountId: () => 3,
+          collaterals: [
+            {
+              snxUSDAmount() {
+                return bn(1_000_000);
+              },
+            },
+          ],
+          systems,
+          trader: () => trader2(),
+        });
+      });
+      beforeEach('open position that uses all of available market size', async () => {
+        await openPosition({
+          systems,
+          provider,
+          trader: trader1(),
+          accountId: 2,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(10_000),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(2000),
+        });
+      });
 
-    before('open position that uses all of available market size', async () => {
-      await openPosition({
-        systems,
-        provider,
-        trader: trader1(),
-        accountId: 2,
-        keeper: keeper(),
-        marketId: ethMarket.marketId(),
-        sizeDelta: bn(10_000),
-        settlementStrategyId: ethMarket.strategyId(),
-        price: bn(2000),
+      it('if user reduces size of his own trade', async () => {
+        await openPosition({
+          systems,
+          provider,
+          trader: trader1(),
+          accountId: 2,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(-1000),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(2000),
+        });
+        assertBn.equal(
+          (await systems().PerpsMarket.getMarketSummary(ethMarket.marketId())).size,
+          bn(9_000)
+        );
+      });
+
+      it('max market size: 10_000, current size: 10_000, opening short: -9_000, results in 19_000 oi', async () => {
+        await openPosition({
+          systems,
+          provider,
+          trader: trader2(),
+          accountId: 3,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(-9_000),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(2000),
+        });
+        assertBn.equal(
+          (await systems().PerpsMarket.getMarketSummary(ethMarket.marketId())).size,
+          bn(19_000)
+        );
+      });
+
+      it('max market size: 10_000, current size: 10_000, opening short: 10_000, results in 20_000 oi ', async () => {
+        await openPosition({
+          systems,
+          provider,
+          trader: trader2(),
+          accountId: 3,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(-10_000),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(2000),
+        });
+        assertBn.equal(
+          (await systems().PerpsMarket.getMarketSummary(ethMarket.marketId())).size,
+          bn(20_000)
+        );
       });
     });
+
     describe('reverts', () => {
+      beforeEach(restore);
+      beforeEach('add collateral to margin', async () => {
+        await depositCollateral({
+          accountId: () => 2,
+          collaterals: [
+            {
+              snxUSDAmount() {
+                return bn(1_000_000);
+              },
+            },
+          ],
+          systems,
+          trader: () => trader1(),
+        });
+        await depositCollateral({
+          accountId: () => 3,
+          collaterals: [
+            {
+              snxUSDAmount() {
+                return bn(1_000_000);
+              },
+            },
+          ],
+          systems,
+          trader: () => trader2(),
+        });
+      });
+      beforeEach('open position that uses all of available market size', async () => {
+        await openPosition({
+          systems,
+          provider,
+          trader: trader1(),
+          accountId: 2,
+          keeper: keeper(),
+          marketId: ethMarket.marketId(),
+          sizeDelta: bn(10_000),
+          settlementStrategyId: ethMarket.strategyId(),
+          price: bn(2000),
+        });
+      });
+
       it('if max market value is reached', async () => {
         await assertRevert(
           openPosition({
@@ -115,33 +234,28 @@ describe.only('Market - size test', () => {
             settlementStrategyId: ethMarket.strategyId(),
             price: bn(2000),
           }),
-          `MaxOpenInterestReached(${ethMarket.marketId()}, ${bn(10_000).toString()})`
+          `MaxOpenInterestReached(${ethMarket.marketId()}, ${bn(10_000).toString()}, ${bn(
+            10_001
+          ).toString()})`
         );
       });
-    });
 
-    // console.log(await systems().PerpsMarket.connect(trader1()).getMarketSummary(ethMarket.marketId()));
-
-    describe('success', () => {
-      it('if user reduces size of his own trade', async () => {
-        console.log(
-          await systems().PerpsMarket.connect(trader1()).getMarketSummary(ethMarket.marketId())
-        );
-        await openPosition({
-          systems,
-          provider,
-          trader: trader1(),
-          accountId: 2,
-          keeper: keeper(),
-          marketId: ethMarket.marketId(),
-          sizeDelta: bn(-1_000),
-          settlementStrategyId: ethMarket.strategyId(),
-          price: bn(2000),
-        });
-        assertBn.equal(
-          (await systems().PerpsMarket.connect(trader1()).getMarketSummary(ethMarket.marketId()))
-            .size,
-          bn(9_000)
+      it('if exceeds max market value with short', async () => {
+        await assertRevert(
+          openPosition({
+            systems,
+            provider,
+            trader: trader2(),
+            accountId: 3,
+            keeper: keeper(),
+            marketId: ethMarket.marketId(),
+            sizeDelta: bn(-20_000),
+            settlementStrategyId: ethMarket.strategyId(),
+            price: bn(2000),
+          }),
+          `MaxOpenInterestReached(${ethMarket.marketId()}, ${bn(10_000).toString()}, ${bn(
+            20_000
+          ).toString()})`
         );
       });
     });

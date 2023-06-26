@@ -231,8 +231,6 @@ library PerpsMarket {
         if (
             !(MathUtil.sameSide(oldSize, newSize) && MathUtil.abs(newSize) <= MathUtil.abs(oldSize))
         ) {
-            // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
-            // we check that the side of the market their order is on would not break the limit.
             int newSkew = self.skew - oldSize + newSize;
 
             int newMarketSize = self.size.toInt() -
@@ -254,7 +252,11 @@ library PerpsMarket {
 
             // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
             if (maxSize < MathUtil.abs(newSideSize / 2)) {
-                revert PerpsMarketConfiguration.MaxOpenInterestReached(self.id, maxSize);
+                revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                    self.id,
+                    maxSize,
+                    newSideSize / 2
+                );
             }
         }
     }

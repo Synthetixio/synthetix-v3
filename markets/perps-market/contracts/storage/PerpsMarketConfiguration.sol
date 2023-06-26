@@ -12,7 +12,7 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
 
-    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketValue);
+    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketValue, int newSideSize);
 
     struct Data {
         OrderFee.Data orderFees;
