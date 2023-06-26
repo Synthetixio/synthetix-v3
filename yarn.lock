@@ -2843,6 +2843,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/spot-market-subgraph@workspace:markets/spot-market/subgraph":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/spot-market-subgraph@workspace:markets/spot-market/subgraph"
+  dependencies:
+    "@graphprotocol/graph-cli": ^0.50.1
+    "@graphprotocol/graph-ts": ^0.30.0
+    "@usecannon/cli": ^2.4.17
+    ethers: ^5.7.2
+    prettier: ^2.8.8
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/spot-market@workspace:*, @synthetixio/spot-market@workspace:markets/spot-market":
   version: 0.0.0-use.local
   resolution: "@synthetixio/spot-market@workspace:markets/spot-market"

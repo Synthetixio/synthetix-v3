@@ -1,0 +1,30 @@
+{
+  "name": "@synthetixio/spot-market-subgraph",
+  "license": "MIT",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "deployments": "yarn deployments:optimism-mainnet && yarn deployments:optimism-goerli",
+    "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
+    "deployments:optimism-mainnet": "cannon inspect synthetix-spot-market:latest --chain-id 10 --write-deployments ./deployments/optimism-mainnet",
+    "deployments:optimism-goerli": "cannon inspect synthetix-spot-market:latest --chain-id 420 --write-deployments ./deployments/optimism-goerli",
+    "prepare": "cp ./subgraph.base.yaml ./subgraph.yaml",
+    "codegen": "yarn prepare && graph codegen && prettier --write .",
+    "build:optimism-mainnet": "node ./codegen optimism-mainnet && yarn codegen && graph build --output-dir ./build/optimism-mainnet --network optimism",
+    "deploy:optimism-mainnet": "graph deploy --output-dir ./build/optimism-mainnet --network optimism --product hosted-service snx-v3/spot-market-optimism-mainnet",
+    "build:optimism-goerli": "node ./codegen optimism-goerli && yarn codegen && graph build --output-dir ./build/optimism-goerli --network optimism-goerli",
+    "deploy:optimism-goerli": "graph deploy --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service snx-v3/spot-market-optimism-goerli",
+    "test": "echo 'SKIP: No tests' || graph test",
+    "coverage": "yarn deployments:optimism-goerli && yarn codegen && git diff --exit-code && yarn test",
+    "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
+    "remove-local": "graph remove --node http://localhost:8020/ snx-v3/goerli",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.50.1",
+    "@graphprotocol/graph-ts": "^0.30.0",
+    "@usecannon/cli": "^2.4.17",
+    "ethers": "^5.7.2",
+    "prettier": "^2.8.8"
+  }
+}
