@@ -119,7 +119,7 @@ describe('ModifyCollateral Withdraw', () => {
       );
     });
   });
-  describe.only('withdraw with open positions', () => {
+  describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
         name: 'Bitcoin',
