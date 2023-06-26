@@ -3,7 +3,7 @@ import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
-describe.only('Market - size test', () => {
+describe('Market - size test', () => {
   const { systems, perpsMarkets, provider, trader1, trader2, keeper, restore } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
