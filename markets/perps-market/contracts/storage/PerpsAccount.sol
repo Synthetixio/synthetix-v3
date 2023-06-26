@@ -307,8 +307,8 @@ library PerpsAccount {
         uint128[] profitableMarkets;
         uint128[] losingMarkets;
         uint amountToDeposit;
-        uint amountToLiquidatePercentageRatioD18;
-        uint percentageOfTotalLosingPnlRatioD18;
+        uint amountToLiquidateRatioD18;
+        uint totalLosingPnlRatioD18;
         uint totalAvailableForDeposit;
     }
 
@@ -400,19 +400,19 @@ library PerpsAccount {
                     continue;
                 }
 
-                runtime.amountToLiquidatePercentageRatioD18 = amountToLiquidate.divDecimal(
+                runtime.amountToLiquidateRatioD18 = amountToLiquidate.divDecimal(
                     MathUtil.abs(oldPositionSize)
                 );
 
-                runtime.percentageOfTotalLosingPnlRatioD18 = MathUtil.abs(totalPnl).divDecimal(
+                runtime.totalLosingPnlRatioD18 = MathUtil.abs(totalPnl).divDecimal(
                     runtime.totalLosingPnl
                 );
                 runtime.totalAvailableForDeposit = totalAvailableUsd.mulDecimal(
-                    runtime.percentageOfTotalLosingPnlRatioD18
+                    runtime.totalLosingPnlRatioD18
                 );
 
                 runtime.amountToDeposit = runtime.totalAvailableForDeposit.mulDecimal(
-                    runtime.amountToLiquidatePercentageRatioD18
+                    runtime.amountToLiquidateRatioD18
                 );
 
                 runtime.amountToDeposit -= liquidationReward;

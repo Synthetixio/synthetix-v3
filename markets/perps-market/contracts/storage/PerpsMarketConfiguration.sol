@@ -24,14 +24,14 @@ library PerpsMarketConfiguration {
          * @dev the initial margin requirements for this market when opening a position
          * @dev this fraction is multiplied by the impact of the position on the skew (open position size / skewScale)
          */
-        uint256 initialMarginFraction;
+        uint256 initialMarginRatioD18;
         /**
          * @dev the maintenance margin requirements for this market when opening a position
          * @dev this generally will be lower than initial margin but is used to determine when to liquidate a position
          * @dev this fraction is multiplied by the impact of the position on the skew (position size / skewScale)
          */
-        uint256 maintenanceMarginFraction;
-        uint256 lockedOiPercentRatioD18;
+        uint256 maintenanceMarginRatioD18;
+        uint256 lockedOiRatioD18;
         /**
          * @dev This multiplier is applied to the max liquidation value when calculating max liquidation for a given market
          */
@@ -89,8 +89,8 @@ library PerpsMarketConfiguration {
         uint256 sizeAbs = MathUtil.abs(size.to256());
         uint256 impactOnSkew = sizeAbs.divDecimal(self.skewScale);
 
-        initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginFraction);
-        maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginFraction);
+        initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginRatioD18);
+        maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginRatioD18);
 
         uint256 notional = sizeAbs.mulDecimal(price);
         initialMargin = notional.mulDecimal(initialMarginRatio);

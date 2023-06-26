@@ -29,7 +29,7 @@ describe('MarketConfiguration', async () => {
     skewScale: bn(1),
     initialMarginFraction: bn(2),
     maintenanceMarginFraction: bn(10),
-    lockedOiPercent: bn(15),
+    lockedOiPercentRatioD18: bn(15),
     maxLiquidationLimitAccumulationMultiplier: bn(5),
     liquidationRewardRatioD18: bn(10e9),
     maxSecondsInLiquidationWindow: bn(10),
@@ -169,8 +169,12 @@ describe('MarketConfiguration', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
-        .setLockedOiPercent(marketId, fixture.lockedOiPercent),
-      'LockedOiPercentSet(' + marketId.toString() + ', ' + fixture.lockedOiPercent.toString() + ')',
+        .setLockedOiRatioD18(marketId, fixture.lockedOiPercentRatioD18),
+      'LockedOiRatioD18Set(' +
+        marketId.toString() +
+        ', ' +
+        fixture.lockedOiPercentRatioD18.toString() +
+        ')',
       systems().PerpsMarket
     );
   });
@@ -221,7 +225,7 @@ describe('MarketConfiguration', async () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
-        .setLockedOiPercent(marketId, fixture.lockedOiPercent),
+        .setLockedOiRatioD18(marketId, fixture.lockedOiPercentRatioD18),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
   });
