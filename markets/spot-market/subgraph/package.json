@@ -15,7 +15,7 @@
     "build:optimism-goerli": "node ./codegen optimism-goerli && yarn codegen && graph build --output-dir ./build/optimism-goerli --network optimism-goerli",
     "deploy:optimism-goerli": "graph deploy --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service snx-v3/spot-market-optimism-goerli",
     "test": "echo 'SKIP: No tests' || graph test",
-    "coverage": "yarn deployments:optimism-goerli && yarn codegen && yarn test",
+    "coverage": "yarn deployments:optimism-goerli && yarn codegen && git diff --exit-code && yarn test",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
     "remove-local": "graph remove --node http://localhost:8020/ snx-v3/goerli",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"
