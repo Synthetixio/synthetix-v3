@@ -277,7 +277,7 @@ describe('Create Market test', () => {
 
       it('should be able to use the market', async () => {
         await systems()
-          .PerpsMarket.connect(marketOwner)
+          .PerpsMarket.connect(trader1())
           .commitOrder({
             marketId: marketId,
             accountId: 2,

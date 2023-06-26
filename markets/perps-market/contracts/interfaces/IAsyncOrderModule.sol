@@ -12,7 +12,7 @@ interface IAsyncOrderModule {
         uint128 indexed marketId,
         uint128 indexed accountId,
         SettlementStrategy.Type indexed orderType,
-        int256 sizeDelta,
+        int128 sizeDelta,
         uint256 acceptablePrice,
         uint256 settlementTime,
         uint256 expirationTime,
@@ -28,8 +28,8 @@ interface IAsyncOrderModule {
         int128 newSize,
         uint256 collectedFees,
         uint256 settelementReward,
-        bytes32 trackingCode,
-        address indexed settler
+        bytes32 indexed trackingCode,
+        address settler
     );
 
     event OrderCanceled(

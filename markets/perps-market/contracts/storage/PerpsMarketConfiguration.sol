@@ -14,6 +14,8 @@ library PerpsMarketConfiguration {
 
     error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketValue, int newSideSize);
 
+    error InvalidSettlementStrategy(uint128 settlementStrategyId);
+
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
@@ -37,6 +39,11 @@ library PerpsMarketConfiguration {
          */
         uint256 maxLiquidationLimitAccumulationMultiplier;
         /**
+         * @dev This configured window is the max liquidation amount that can be accumulated.
+         * @dev If you multiply maxLiquidationPerSecond * this window in seconds, you get the max liquidation amount that can be accumulated within this window
+         */
+        uint256 maxSecondsInLiquidationWindow;
+        /**
          * @dev This value is multiplied by the notional value of a position to determine liquidation reward
          */
         uint256 liquidationRewardRatioD18;
@@ -49,6 +56,14 @@ library PerpsMarketConfiguration {
         assembly {
             store.slot := s
         }
+    }
+
+    function maxLiquidationAmountPerSecond(Data storage self) internal view returns (uint256) {
+        OrderFee.Data storage orderFeeData = self.orderFees;
+        return
+            (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(self.skewScale).mulDecimal(
+                self.maxLiquidationLimitAccumulationMultiplier
+            );
     }
 
     function calculateLiquidationReward(
@@ -84,5 +99,22 @@ library PerpsMarketConfiguration {
         maintenanceMargin = notional.mulDecimal(maintenanceMarginRatio);
 
         liquidationMargin = calculateLiquidationReward(self, notional);
+    }
+
+    /**
+     * @notice given a strategy id, returns the entire settlement strategy struct
+     */
+    function loadValidSettlementStrategy(
+        Data storage self,
+        uint128 settlementStrategyId
+    ) internal view returns (SettlementStrategy.Data storage strategy) {
+        if (settlementStrategyId >= self.settlementStrategies.length) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
+
+        strategy = self.settlementStrategies[settlementStrategyId];
+        if (strategy.disabled) {
+            revert InvalidSettlementStrategy(settlementStrategyId);
+        }
     }
 }

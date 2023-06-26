@@ -22,6 +22,7 @@ library PerpsMarket {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
     using Position for Position.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
@@ -92,33 +93,44 @@ library PerpsMarket {
         }
     }
 
-    function maxLiquidatableAmount(uint128 marketId) internal returns (uint) {
-        Data storage self = load(marketId);
-        uint maxLiquidationValue = maxLiquidationPerSecond(marketId);
-        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
+    /**
+     * @dev Returns the max amount of liquidation that can occur based on the market configuration
+     * @notice Based on the configured liquidation window, a trader can only be liquidated for a certain
+     *   amount within that window.  If the amount requested is greater than the amount allowed, the
+     *   smaller amount is returned.  The function also updates its accounting to ensure the results on
+     *   subsequent liquidations work appropriately.
+     */
+    function maxLiquidatableAmount(
+        Data storage self,
+        uint256 requestedLiquidationAmount
+    ) internal returns (uint128 liquidatableAmount) {
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
-        self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
-        uint unlockedLiquidationCapacity = timeSinceLastUpdate * maxLiquidationValue;
-        if (unlockedLiquidationCapacity > self.lastUtilizedLiquidationCapacity) {
-            self.lastUtilizedLiquidationCapacity = 0;
+        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
+        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
+        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
+
+        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
+            maxLiquidationAmountPerSecond;
+        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
+            liquidatableAmount = MathUtil
+                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
+                .to128();
+            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
         } else {
-            self.lastUtilizedLiquidationCapacity =
-                self.lastUtilizedLiquidationCapacity -
-                unlockedLiquidationCapacity.to128();
+            liquidatableAmount = MathUtil
+                .min(
+                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
+                    requestedLiquidationAmount
+                )
+                .to128();
+            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
         }
 
-        return
-            (maxLiquidationValue *
-                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
-            self.lastUtilizedLiquidationCapacity;
-    }
-
-    function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            marketId
-        );
-        OrderFee.Data storage orderFeeData = marketConfig.orderFees;
-        return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
+        // only update timestamp if there is something being liquidated
+        if (liquidatableAmount > 0) {
+            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+        }
     }
 
     function updatePositionData(

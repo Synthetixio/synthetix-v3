@@ -44,8 +44,8 @@ library AsyncOrder {
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -54,8 +54,8 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta; // TODO: change to int128
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
     }
@@ -199,8 +199,7 @@ library AsyncOrder {
 
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
-        runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
-
+        runtime.newPositionSize = oldPosition.size + order.sizeDelta;
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
             runtime.fillPrice
@@ -220,6 +219,7 @@ library AsyncOrder {
             runtime.requiredMaintenanceMargin +
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
+
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
@@ -235,7 +235,7 @@ library AsyncOrder {
     }
 
     function calculateOrderFee(
-        int sizeDelta,
+        int128 sizeDelta,
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData
@@ -281,6 +281,10 @@ library AsyncOrder {
         int size,
         uint price
     ) internal pure returns (uint) {
+        if (skewScale == 0) {
+            return price;
+        }
+
         int pdBefore = skew.divDecimal(skewScale.toInt());
         int pdAfter = (skew + size).divDecimal(skewScale.toInt());
         int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));

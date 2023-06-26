@@ -15,6 +15,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginFraction: bn(1),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
+        maxSecondsInLiquidationWindow: bn(10),
       },
       settlementStrategy: {
         settlementReward: bn(0),
@@ -30,6 +31,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginFraction: bn(1),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
+        maxSecondsInLiquidationWindow: bn(10),
       },
       settlementStrategy: {
         settlementReward: bn(0),
@@ -45,6 +47,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginFraction: bn(1),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
+        maxSecondsInLiquidationWindow: bn(10),
       },
       settlementStrategy: {
         settlementReward: bn(0),
@@ -60,6 +63,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginFraction: bn(0.75),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
+        maxSecondsInLiquidationWindow: bn(10),
       },
       settlementStrategy: {
         settlementReward: bn(0),
@@ -75,6 +79,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginFraction: bn(0.75),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
+        maxSecondsInLiquidationWindow: bn(10),
       },
       settlementStrategy: {
         settlementReward: bn(0),
