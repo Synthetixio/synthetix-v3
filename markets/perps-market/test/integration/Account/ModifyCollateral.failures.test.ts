@@ -46,13 +46,11 @@ describe('ModifyCollateral', () => {
     synthLINKMarketId = synthMarkets()[2].marketId();
   });
 
-  before('set setMaxCollateralForSynthMarketId to 1 btc', async () => {
+  before('set setMaxCollateralAmount to 1 btc', async () => {
     await systems().PerpsMarket.connect(owner()).setMaxCollateralAmount(synthBTCMarketId, bn(1));
   });
-  before('set setMaxCollateralForSynthMarketId to 0 link', async () => {
-    await systems()
-      .PerpsMarket.connect(owner())
-      .setMaxCollateralForSynthMarketId(synthLINKMarketId, bn(0));
+  before('set setMaxCollateralAmount to 0 link', async () => {
+    await systems().PerpsMarket.connect(owner()).setMaxCollateralAmount(synthLINKMarketId, bn(0));
   });
   before('trader1 buys 100 snxLink', async () => {
     const usdAmount = bn(100);
