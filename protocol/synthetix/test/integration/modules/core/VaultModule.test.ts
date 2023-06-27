@@ -789,7 +789,7 @@ describe('VaultModule', function () {
 
       // finally, we shouldn't be able to mint
       await assertRevert(
-        await MockMarket.withdrawUsd(wei(1).toBN()),
+        MockMarket.withdrawUsd(wei(1).toBN()),
         'NotEnoughLiquidity(',
         systems().Core
       );
@@ -819,7 +819,7 @@ describe('VaultModule', function () {
 
       // finally, we shouldn't be able to mint
       await assertRevert(
-        await MockMarket.withdrawUsd(wei(1).toBN()),
+        MockMarket.withdrawUsd(wei(1).toBN()),
         'NotEnoughLiquidity(',
         systems().Core
       );
