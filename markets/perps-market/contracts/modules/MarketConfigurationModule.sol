@@ -76,7 +76,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint256 maintenanceMarginRatioD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
-        uint256 maxSecondsInLiquidationWindow
+        uint256 maxSecondsInLiquidationWindow,
+        uint256 minimumPositionMargin
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
@@ -87,13 +88,16 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config
             .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
         config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
+        config.minimumPositionMargin = minimumPositionMargin;
+
         emit LiquidationParametersSet(
             marketId,
             initialMarginRatioD18,
             maintenanceMarginRatioD18,
             liquidationRewardRatioD18,
             maxLiquidationLimitAccumulationMultiplier,
-            maxSecondsInLiquidationWindow
+            maxSecondsInLiquidationWindow,
+            minimumPositionMargin
         );
     }
 

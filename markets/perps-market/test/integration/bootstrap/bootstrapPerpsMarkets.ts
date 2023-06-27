@@ -32,6 +32,7 @@ export type PerpsMarketData = Array<{
     maxLiquidationLimitAccumulationMultiplier: ethers.BigNumber;
     liquidationRewardRatio: ethers.BigNumber;
     maxSecondsInLiquidationWindow: ethers.BigNumber;
+    minimumPositionMargin: ethers.BigNumber;
   };
   maxMarketValue?: ethers.BigNumber;
   lockedOiRatioD18?: ethers.BigNumber;
@@ -144,7 +145,8 @@ export const bootstrapPerpsMarkets = (
             liquidationParams.maintenanceMarginFraction,
             liquidationParams.liquidationRewardRatio,
             liquidationParams.maxLiquidationLimitAccumulationMultiplier,
-            liquidationParams.maxSecondsInLiquidationWindow
+            liquidationParams.maxSecondsInLiquidationWindow,
+            liquidationParams.minimumPositionMargin
           );
         });
       }
