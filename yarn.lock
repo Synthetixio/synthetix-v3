@@ -2778,6 +2778,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/perps-market-subgraph@workspace:markets/perps-market/subgraph":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/perps-market-subgraph@workspace:markets/perps-market/subgraph"
+  dependencies:
+    "@graphprotocol/graph-cli": ^0.50.1
+    "@graphprotocol/graph-ts": ^0.30.0
+    prettier: ^2.8.8
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/perps-market@workspace:markets/perps-market":
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market@workspace:markets/perps-market"
