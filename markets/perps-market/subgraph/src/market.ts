@@ -11,8 +11,8 @@ import {
 import { Market } from '../generated/schema';
 
 export function handleMarketRegistered(event: MarketRegistered): void {
-  let id = event.params.perpsMarketId.toString();
-  let market = new Market(id);
+  const id = event.params.perpsMarketId.toString();
+  const market = new Market(id);
 
   market.perpsMarketId = event.params.perpsMarketId;
   market.marketOwner = event.params.marketOwner.toHexString();
@@ -22,8 +22,8 @@ export function handleMarketRegistered(event: MarketRegistered): void {
 }
 
 export function handleMarketPriceDataUpdated(event: MarketPriceDataUpdated): void {
-  let id = event.params.perpsMarketId.toString();
-  let market = Market.load(id);
+  const id = event.params.perpsMarketId.toString();
+  const market = Market.load(id);
 
   if (market) {
     market.feedId = event.params.feedId;
@@ -32,8 +32,8 @@ export function handleMarketPriceDataUpdated(event: MarketPriceDataUpdated): voi
 }
 
 export function handleMarketOwnerChanged(event: MarketOwnerChanged): void {
-  let id = event.params.perpsMarketId.toString();
-  let market = Market.load(id);
+  const id = event.params.perpsMarketId.toString();
+  const market = Market.load(id);
 
   if (market) {
     market.owner = event.params.newOwner.toHexString();
@@ -42,8 +42,8 @@ export function handleMarketOwnerChanged(event: MarketOwnerChanged): void {
 }
 
 export function handleFundingParametersSet(event: FundingParametersSet): void {
-  let id = event.params.marketId.toString();
-  let market = Market.load(id);
+  const id = event.params.marketId.toString();
+  const market = Market.load(id);
 
   if (market) {
     market.maxFundingVelocity = event.params.maxFundingVelocity;
@@ -53,8 +53,8 @@ export function handleFundingParametersSet(event: FundingParametersSet): void {
 }
 
 export function handleLockedOiPercentSet(event: LockedOiPercentSet): void {
-  let id = event.params.marketId.toString();
-  let market = Market.load(id);
+  const id = event.params.marketId.toString();
+  const market = Market.load(id);
 
   if (market) {
     market.lockedOiPercent = event.params.lockedOiPercent;
@@ -63,8 +63,8 @@ export function handleLockedOiPercentSet(event: LockedOiPercentSet): void {
 }
 
 export function handleLiquidationParametersSet(event: LiquidationParametersSet): void {
-  let id = event.params.marketId.toString();
-  let market = Market.load(id);
+  const id = event.params.marketId.toString();
+  const market = Market.load(id);
 
   if (market) {
     market.initialMarginFraction = event.params.initialMarginFraction;
@@ -77,8 +77,8 @@ export function handleLiquidationParametersSet(event: LiquidationParametersSet):
 }
 
 export function handleOrderFeesSet(event: OrderFeesSet): void {
-  let id = event.params.marketId.toString();
-  let market = Market.load(id);
+  const id = event.params.marketId.toString();
+  const market = Market.load(id);
 
   if (market) {
     market.makerFee = event.params.makerFeeRatio;

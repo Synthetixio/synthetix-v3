@@ -6,8 +6,8 @@ import {
 import { SettlementStrategy } from '../generated/schema';
 
 export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): void {
-  let id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();
-  let strategy = new SettlementStrategy(id);
+  const id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();
+  const strategy = new SettlementStrategy(id);
 
   strategy.strategyId = event.params.strategyId;
   strategy.marketId = event.params.marketId;
@@ -26,8 +26,8 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
 }
 
 export function handleSettlementStrategyEnabled(event: SettlementStrategyEnabled): void {
-  let id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();
-  let strategy = SettlementStrategy.load(id);
+  const id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();
+  const strategy = SettlementStrategy.load(id);
 
   if (!strategy) {
     return;

@@ -4,7 +4,7 @@ import { ZERO_BI } from './helpers';
 import { Order } from '../generated/schema';
 
 export function handleOrderCommitted(event: OrderCommitted): void {
-  let id =
+  const id =
     event.params.sender.toHexString() +
     '-' +
     event.params.marketId.toString() +
@@ -27,7 +27,7 @@ export function handleOrderCommitted(event: OrderCommitted): void {
   order.trackingCode = event.params.trackingCode;
   order.owner = event.params.sender.toHexString();
 
-  let sizeDelta = BigInt.fromString(event.params.sizeDelta.toString());
+  const sizeDelta = BigInt.fromString(event.params.sizeDelta.toString());
   order.size = order.size.plus(sizeDelta);
 
   order.block = event.block.number;
