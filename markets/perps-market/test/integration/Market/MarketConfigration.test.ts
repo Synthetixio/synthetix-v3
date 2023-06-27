@@ -169,7 +169,7 @@ describe('MarketConfiguration', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
-        .setLockedOiRatioD18(marketId, fixture.lockedOiPercentRatioD18),
+        .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
       'LockedOiRatioD18Set(' +
         marketId.toString() +
         ', ' +
@@ -225,7 +225,7 @@ describe('MarketConfiguration', async () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
-        .setLockedOiRatioD18(marketId, fixture.lockedOiPercentRatioD18),
+        .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
   });

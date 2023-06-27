@@ -151,7 +151,7 @@ export const bootstrapPerpsMarkets = (
 
       if (lockedOiRatioD18) {
         before('set locked oi percent', async () => {
-          await contracts.PerpsMarket.connect(marketOwner).setLockedOiRatioD18(
+          await contracts.PerpsMarket.connect(marketOwner).setLockedOiRatio(
             marketId,
             lockedOiRatioD18
           );

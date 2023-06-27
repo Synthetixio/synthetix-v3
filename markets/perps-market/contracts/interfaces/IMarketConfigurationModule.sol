@@ -59,7 +59,7 @@ interface IMarketConfigurationModule {
 
     function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external;
 
-    function setLockedOiRatioD18(uint128 marketId, uint256 lockedOiRatioD18) external;
+    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external;
 
     function setSettlementStrategyEnabled(
         uint128 marketId,

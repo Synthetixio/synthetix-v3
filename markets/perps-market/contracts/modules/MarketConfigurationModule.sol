@@ -97,7 +97,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         );
     }
 
-    function setLockedOiRatioD18(uint128 marketId, uint256 lockedOiRatioD18) external override {
+    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.lockedOiRatioD18 = lockedOiRatioD18;
