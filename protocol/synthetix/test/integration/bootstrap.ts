@@ -11,6 +11,7 @@ import type {
   USDProxy,
   CollateralMock,
   Oracle_managerProxy,
+  Collateral2Mock,
 } from '../generated/typechain';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
@@ -21,6 +22,7 @@ interface Proxies {
   CoreProxy: CoreProxy;
   USDProxy: USDProxy;
   CollateralMock: CollateralMock;
+  Collateral2Mock: Collateral2Mock;
   ['oracle_manager.Proxy']: Oracle_managerProxy;
 }
 
@@ -29,6 +31,7 @@ interface Systems {
   Core: CoreProxy;
   USD: USDProxy;
   CollateralMock: CollateralMock;
+  Collateral2Mock: Collateral2Mock;
   OracleManager: Oracle_managerProxy;
 }
 
@@ -47,6 +50,7 @@ before('load system proxies', function () {
     USD: getContract('USDProxy'),
     OracleManager: getContract('oracle_manager.Proxy'),
     CollateralMock: getContract('CollateralMock'),
+    Collateral2Mock: getContract('Collateral2Mock'),
   } as Systems;
 });
 
@@ -165,6 +169,7 @@ export function bootstrapWithStakedPool() {
     collateralContract: () => r.systems().CollateralMock,
     collateralAddress: () => collateralAddress,
     depositAmount,
+    oracleNodeId: () => oracleNodeId,
     restore,
   };
 }

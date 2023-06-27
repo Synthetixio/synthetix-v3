@@ -17,6 +17,7 @@ describe('VaultModule', function () {
     depositAmount,
     collateralContract,
     collateralAddress,
+    oracleNodeId,
   } = bootstrapWithStakedPool();
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
@@ -61,6 +62,21 @@ describe('VaultModule', function () {
           maxDebtShareValueD18: ethers.utils.parseEther('10000000000000000'),
         },
       ]);
+  });
+
+  before('add second collateral type', async () => {
+    // add collateral
+    await (
+      await systems().Core.connect(owner).configureCollateral({
+        tokenAddress: systems().Collateral2Mock.address,
+        oracleNodeId: oracleNodeId(),
+        issuanceRatioD18: '5000000000000000000',
+        liquidationRatioD18: '1500000000000000000',
+        liquidationRewardD18: '20000000000000000000',
+        minDelegationD18: '20000000000000000000',
+        depositingEnabled: true,
+      })
+    ).wait();
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -597,6 +613,30 @@ describe('VaultModule', function () {
           0
         );
       });
+    });
+  });
+
+  describe('distribution chain edge cases', async () => {
+    before(restore);
+    it('edge case: double USD printing on market by not fully flushing with 2 collaterals', async () => {
+      // first, mint max debt
+      await MockMarket.withdrawUsd(await systems().Core.getWithdrawableMarketUsd(marketId));
+
+      // sanity
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
+
+      // next flush and rebalance (these methods are both write despite appearance)
+      await systems().Core.getVaultDebt(poolId, systems().Collateral2Mock.address);
+      await systems().Core.getVaultDebt(poolId, systems().Collateral2Mock.address);
+
+      // finally, we shouldn't be able to mint
+      await assertRevert(
+        await MockMarket.withdrawUsd(ethers.utils.parseEther('1')),
+        'NotEnoughLiquidity(',
+        systems().Core
+      );
+
+      assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
     });
   });
 });

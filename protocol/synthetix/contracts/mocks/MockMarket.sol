@@ -51,6 +51,14 @@ contract MockMarket is IMarket {
         IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
+    function depositUsd(uint256 amount) external {
+        IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, amount);
+    }
+
+    function withdrawUsd(uint256 amount) external {
+        IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, amount);
+    }
+
     function setReportedDebt(uint newReportedDebt) external {
         _reportedDebt = newReportedDebt;
     }
