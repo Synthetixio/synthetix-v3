@@ -39,13 +39,6 @@ interface IAsyncOrderModule {
         uint256 acceptablePrice
     );
 
-    /*event OrderCancelled(
-        uint128 indexed marketId,
-        uint128 indexed asyncOrderId,
-        AsyncOrderClaim.Data asyncOrderClaim,
-        address indexed sender
-    );*/
-
     error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
     error OffchainLookup(
