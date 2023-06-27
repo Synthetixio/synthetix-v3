@@ -95,7 +95,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         return
             PerpsMarket.load(perpsMarketId).size.mulDecimal(
-                PerpsMarketConfiguration.load(perpsMarketId).lockedOiPercent
+                PerpsMarketConfiguration.load(perpsMarketId).lockedOiRatioD18
             );
     }
 

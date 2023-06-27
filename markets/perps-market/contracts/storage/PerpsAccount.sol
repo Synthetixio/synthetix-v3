@@ -209,7 +209,9 @@ library PerpsAccount {
                 .calculateRequiredMargins(position.size, PerpsPrice.getCurrentPrice(marketId));
 
             accumulatedLiquidationRewards += liquidationMargin;
-            accountMaintenanceMargin += positionMaintenanceMargin;
+            accountMaintenanceMargin +=
+                positionMaintenanceMargin +
+                marketConfig.minimumPositionMargin;
         }
 
         return
@@ -307,8 +309,8 @@ library PerpsAccount {
         uint128[] profitableMarkets;
         uint128[] losingMarkets;
         uint amountToDeposit;
-        uint amountToLiquidatePercentage;
-        uint percentageOfTotalLosingPnl;
+        uint amountToLiquidateRatioD18;
+        uint totalLosingPnlRatioD18;
         uint totalAvailableForDeposit;
     }
 
@@ -400,19 +402,19 @@ library PerpsAccount {
                     continue;
                 }
 
-                runtime.amountToLiquidatePercentage = amountToLiquidate.divDecimal(
+                runtime.amountToLiquidateRatioD18 = amountToLiquidate.divDecimal(
                     MathUtil.abs(oldPositionSize)
                 );
 
-                runtime.percentageOfTotalLosingPnl = MathUtil.abs(totalPnl).divDecimal(
+                runtime.totalLosingPnlRatioD18 = MathUtil.abs(totalPnl).divDecimal(
                     runtime.totalLosingPnl
                 );
                 runtime.totalAvailableForDeposit = totalAvailableUsd.mulDecimal(
-                    runtime.percentageOfTotalLosingPnl
+                    runtime.totalLosingPnlRatioD18
                 );
 
                 runtime.amountToDeposit = runtime.totalAvailableForDeposit.mulDecimal(
-                    runtime.amountToLiquidatePercentage
+                    runtime.amountToLiquidateRatioD18
                 );
 
                 runtime.amountToDeposit -= liquidationReward;

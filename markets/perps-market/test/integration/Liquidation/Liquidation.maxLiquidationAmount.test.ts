@@ -23,6 +23,7 @@ describe('Liquidation - max liquidatable amount', async () => {
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
+          minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
           settlementReward: bn(0),
