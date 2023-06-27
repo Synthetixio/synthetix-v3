@@ -30,6 +30,8 @@ library PerpsMarket {
 
     error PriceFeedNotSet(uint128 marketId);
 
+    error MarketAlreadyExists(uint128 marketId);
+
     struct Data {
         address owner;
         address nominatedOwner;
@@ -55,7 +57,12 @@ library PerpsMarket {
         string memory name,
         string memory symbol
     ) internal returns (Data storage market) {
+        if (id == 0 || load(id).id == id) {
+            revert InvalidMarket(id);
+        }
+
         market = load(id);
+
         market.id = id;
         market.owner = owner;
         market.name = name;
@@ -84,7 +91,6 @@ library PerpsMarket {
         }
     }
 
-    // TODO: can remove and use loadWithVerifiedOwner
     function onlyMarketOwner(Data storage self) internal view {
         if (self.owner != msg.sender) {
             revert OnlyMarketOwner(self.owner, msg.sender);

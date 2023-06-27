@@ -7,6 +7,11 @@ import {AsyncOrder} from "../storage/AsyncOrder.sol";
  * @title Perps market module
  */
 interface IPerpsMarketModule {
+    event MarketOwnerNominated(uint128 indexed perpsMarketId, address newNominatedOwner);
+    event MarketOwnerChanged(uint128 indexed perpsMarketId, address oldOwner, address newOwner);
+
+    error NotNominated(address notNominatedAddress);
+
     struct MarketSummary {
         int256 skew;
         uint256 size;
@@ -15,6 +20,10 @@ interface IPerpsMarketModule {
         int currentFundingVelocity;
         uint indexPrice;
     }
+
+    function metadata(
+        uint128 marketId
+    ) external view returns (string memory name, string memory symbol);
 
     function skew(uint128 marketId) external view returns (int256);
 
@@ -36,4 +45,10 @@ interface IPerpsMarketModule {
     function getMarketSummary(
         uint128 marketId
     ) external view returns (MarketSummary memory summary);
+
+    function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external;
+
+    function acceptMarketOwnership(uint128 perpsMarketId) external;
+
+    function getMarketOwner(uint128 perpsMarketId) external view returns (address);
 }

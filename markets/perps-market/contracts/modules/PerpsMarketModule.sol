@@ -6,10 +6,18 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
+
+    function metadata(
+        uint128 marketId
+    ) external view override returns (string memory name, string memory symbol) {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        return (market.name, market.symbol);
+    }
 
     function skew(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).skew;
@@ -62,5 +70,49 @@ contract PerpsMarketModule is IPerpsMarketModule {
                 currentFundingVelocity: market.currentFundingVelocity(),
                 indexPrice: this.indexPrice(marketId)
             });
+    }
+
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
+    function nominateMarketOwner(
+        uint128 perpsMarketId,
+        address newNominatedOwner
+    ) external override {
+        PerpsMarket.Data storage market = PerpsMarket.loadWithVerifiedOwner(
+            perpsMarketId,
+            msg.sender
+        );
+
+        if (newNominatedOwner == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        market.nominatedOwner = newNominatedOwner;
+
+        emit MarketOwnerNominated(perpsMarketId, newNominatedOwner);
+    }
+
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
+    function acceptMarketOwnership(uint128 perpsMarketId) external override {
+        PerpsMarket.Data storage market = PerpsMarket.load(perpsMarketId);
+        address currentNominatedOwner = market.nominatedOwner;
+        if (msg.sender != currentNominatedOwner) {
+            revert NotNominated(msg.sender);
+        }
+
+        emit MarketOwnerChanged(perpsMarketId, market.owner, currentNominatedOwner);
+
+        market.owner = currentNominatedOwner;
+        market.nominatedOwner = address(0);
+    }
+
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
+    function getMarketOwner(uint128 perpsMarketId) external view override returns (address) {
+        return PerpsMarket.load(perpsMarketId).owner;
     }
 }

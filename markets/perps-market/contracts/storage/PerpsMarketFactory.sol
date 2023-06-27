@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {IMarketCollateralModule} from "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
-
+import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
@@ -17,6 +17,9 @@ library PerpsMarketFactory {
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
+    error PerpsMarketNotInitialized();
+    error PerpsMarketAlreadyInitialized();
+
     struct Data {
         /**
          * @dev oracle manager address used for price feeds
@@ -28,6 +31,31 @@ library PerpsMarketFactory {
          */
         ISynthetixSystem synthetix;
         ISpotMarketSystem spotMarket;
+        uint128 perpsFactoryMarketId;
+        address owner;
+        address nominatedOwner;
+    }
+
+    function onlyIfInitialized(Data storage self) internal view {
+        if (self.perpsFactoryMarketId == 0) {
+            revert PerpsMarketNotInitialized();
+        }
+    }
+
+    function onlyIfNotInitialized(Data storage self) internal view {
+        if (self.perpsFactoryMarketId != 0) {
+            revert PerpsMarketAlreadyInitialized();
+        }
+    }
+
+    function loadWithVerifiedOwner(
+        address possibleOwner
+    ) internal view returns (Data storage factory) {
+        factory = load();
+
+        if (factory.owner != possibleOwner) {
+            revert AccessError.Unauthorized(possibleOwner);
+        }
     }
 
     function load() internal pure returns (Data storage perpsMarketFactory) {
