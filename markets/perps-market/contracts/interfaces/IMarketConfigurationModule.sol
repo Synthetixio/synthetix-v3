@@ -25,15 +25,15 @@ interface IMarketConfigurationModule {
     event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity);
     event LiquidationParametersSet(
         uint128 marketId,
-        uint256 initialMarginFraction,
-        uint256 maintenanceMarginFraction,
+        uint256 initialMarginRatioD18,
+        uint256 maintenanceMarginRatioD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
         uint256 maxSecondsInLiquidationWindow,
         uint256 minimumPositionMargin
     );
     event MaxMarketValueSet(uint128 marketId, uint256 maxMarketValue);
-    event LockedOiPercentSet(uint128 marketId, uint256 lockedOiPercent);
+    event LockedOiRatioD18Set(uint128 marketId, uint256 lockedOiRatioD18);
     event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled);
 
     function addSettlementStrategy(
@@ -51,8 +51,8 @@ interface IMarketConfigurationModule {
 
     function setLiquidationParameters(
         uint128 marketId,
-        uint256 initialMarginFraction,
-        uint256 maintenanceMarginFraction,
+        uint256 initialMarginRatioD18,
+        uint256 maintenanceMarginRatioD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
         uint256 maxSecondsInLiquidationWindow,
@@ -61,7 +61,7 @@ interface IMarketConfigurationModule {
 
     function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external;
 
-    function setLockedOiPercent(uint128 marketId, uint256 lockedOiPercent) external;
+    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external;
 
     function setSettlementStrategyEnabled(
         uint128 marketId,
@@ -80,8 +80,8 @@ interface IMarketConfigurationModule {
         external
         view
         returns (
-            uint256 initialMarginFraction,
-            uint256 maintenanceMarginFraction,
+            uint256 initialMarginRatioD18,
+            uint256 maintenanceMarginRatioD18,
             uint256 liquidationRewardRatioD18,
             uint256 maxLiquidationLimitAccumulationMultiplier,
             uint256 maxSecondsInLiquidationWindow
@@ -97,5 +97,5 @@ interface IMarketConfigurationModule {
         uint128 marketId
     ) external view returns (uint256 makerFee, uint256 takerFee);
 
-    function getLockedOiPercent(uint128 marketId) external view returns (uint256 lockedOiPercent);
+    function getLockedOiRatioD18(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
 }
