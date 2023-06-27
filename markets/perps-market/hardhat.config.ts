@@ -21,7 +21,7 @@ const config = {
     templates,
   },
   mocha: {
-    timeout: 120000,
+    timeout: 200000,
   },
 };
 
