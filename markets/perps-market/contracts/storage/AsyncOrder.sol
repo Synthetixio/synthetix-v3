@@ -268,14 +268,18 @@ library AsyncOrder {
         // as a maker (reducing skew) as it's now taking (increasing skew) in the opposite direction. hence,
         // a different fee is applied on the proportion increasing the skew.
 
-        // proportion of size that's on the other direction
-        uint takerSize = MathUtil.abs((marketSkew + sizeDelta).divDecimal(sizeDelta));
-        uint makerSize = DecimalMath.UNIT - takerSize;
-        uint takerFee = MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(
-            orderFeeData.takerFee
-        );
-        uint makerFee = MathUtil.abs(notionalDiff).mulDecimal(makerSize).mulDecimal(
+        // The proportions are computed as follows:
+        // makerSize = abs(marketSkew) => since we are reversing the skew, the maker size is the current skew
+        // takerSize = abs(marketSkew + sizeDelta) => since we are reversing the skew, the taker size is the new skew
+        //
+        // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
+
+        uint makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
             orderFeeData.makerFee
+        );
+
+        uint takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
+            orderFeeData.takerFee
         );
 
         return takerFee + makerFee;

@@ -47,6 +47,10 @@ library PerpsMarketConfiguration {
          * @dev This value is multiplied by the notional value of a position to determine liquidation reward
          */
         uint256 liquidationRewardRatioD18;
+        /**
+         * @dev minimum position value in USD, this is used when we calculate maintenance margin
+         */
+        uint256 minimumPositionMargin;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -89,7 +93,7 @@ library PerpsMarketConfiguration {
         )
     {
         uint256 sizeAbs = MathUtil.abs(size.to256());
-        uint256 impactOnSkew = sizeAbs.divDecimal(self.skewScale);
+        uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.divDecimal(self.skewScale);
 
         initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginFraction);
         maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginFraction);

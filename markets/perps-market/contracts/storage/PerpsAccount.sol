@@ -209,7 +209,9 @@ library PerpsAccount {
                 .calculateRequiredMargins(position.size, PerpsPrice.getCurrentPrice(marketId));
 
             accumulatedLiquidationRewards += liquidationMargin;
-            accountMaintenanceMargin += positionMaintenanceMargin;
+            accountMaintenanceMargin +=
+                positionMaintenanceMargin +
+                marketConfig.minimumPositionMargin;
         }
 
         return
