@@ -13,30 +13,29 @@ describe('PerpsMarketModule', () => {
     marketTokenPrice: bn(1000),
   };
 
-  const { systems, perpsMarkets, synthMarkets, marketOwner, provider, trader2, keeper } =
-    bootstrapMarkets({
-      synthMarkets: [
-        {
-          name: 'Ether',
-          token: 'snxETH',
-          buyPrice: fixture.marketTokenPrice,
-          sellPrice: fixture.marketTokenPrice,
+  const { systems, perpsMarkets, marketOwner, provider, trader2, keeper } = bootstrapMarkets({
+    synthMarkets: [
+      {
+        name: 'Ether',
+        token: 'snxETH',
+        buyPrice: fixture.marketTokenPrice,
+        sellPrice: fixture.marketTokenPrice,
+      },
+    ],
+    perpsMarkets: [
+      {
+        name: 'Ether',
+        token: 'snxETH',
+        price: fixture.marketTokenPrice,
+        fundingParams: {
+          skewScale: fixture.skewScale,
+          maxFundingVelocity: fixture.maxFundingVelocity,
         },
-      ],
-      perpsMarkets: [
-        {
-          name: 'Ether',
-          token: 'snxETH',
-          price: fixture.marketTokenPrice,
-          fundingParams: {
-            skewScale: fixture.skewScale,
-            maxFundingVelocity: fixture.maxFundingVelocity,
-          },
-          maxMarketValue: fixture.maxMarketValue,
-        },
-      ],
-      traderAccountIds: [1, 2],
-    });
+        maxMarketValue: fixture.maxMarketValue,
+      },
+    ],
+    traderAccountIds: [1, 2],
+  });
 
   let marketId: ethers.BigNumber;
 
