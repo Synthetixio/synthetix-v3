@@ -2,6 +2,7 @@
   "name": "@synthetixio/perps-market-subgraph",
   "license": "MIT",
   "private": true,
+  "version": "1.0.0",
   "scripts": {
     "build": "yarn build:optimism-goerli",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
@@ -15,18 +16,10 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.49.0",
+    "@graphprotocol/graph-cli": "^0.50.1",
     "@graphprotocol/graph-ts": "^0.30.0",
+    "@usecannon/cli": "^2.4.17",
     "ethers": "^5.7.2",
-    "prettier": "^2.8.4"
-  },
-  "dependencies": {
-    "babel-polyfill": "^6.26.0",
-    "babel-register": "^6.26.0"
-  },
-  "depcheck": {
-    "ignorePatterns": [
-      "build"
-    ]
+    "prettier": "^2.8.8"
   }
 }

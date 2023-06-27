@@ -6,9 +6,9 @@ import {
   LiquidationParametersSet,
   LockedOiPercentSet,
   OrderFeesSet,
-} from "../generated/PerpsMarket/PerpsMarketProxy";
+} from '../generated/PerpsMarket/PerpsMarketProxy';
 
-import { Market } from "../generated/schema";
+import { Market } from '../generated/schema';
 
 export function handleMarketRegistered(event: MarketRegistered): void {
   let id = event.params.perpsMarketId.toString();
@@ -21,9 +21,7 @@ export function handleMarketRegistered(event: MarketRegistered): void {
   market.save();
 }
 
-export function handleMarketPriceDataUpdated(
-  event: MarketPriceDataUpdated
-): void {
+export function handleMarketPriceDataUpdated(event: MarketPriceDataUpdated): void {
   let id = event.params.perpsMarketId.toString();
   let market = Market.load(id);
 
@@ -64,9 +62,7 @@ export function handleLockedOiPercentSet(event: LockedOiPercentSet): void {
   }
 }
 
-export function handleLiquidationParametersSet(
-  event: LiquidationParametersSet
-): void {
+export function handleLiquidationParametersSet(event: LiquidationParametersSet): void {
   let id = event.params.marketId.toString();
   let market = Market.load(id);
 

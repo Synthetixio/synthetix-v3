@@ -9,128 +9,128 @@ import {
   Bytes,
   BigInt,
   BigDecimal,
-} from "@graphprotocol/graph-ts";
+} from '@graphprotocol/graph-ts';
 
 export class Account extends Entity {
   constructor(id: string) {
     super();
-    this.set("id", Value.fromString(id));
+    this.set('id', Value.fromString(id));
   }
 
   save(): void {
-    let id = this.get("id");
-    assert(id != null, "Cannot save Account entity without an ID");
+    let id = this.get('id');
+    assert(id != null, 'Cannot save Account entity without an ID');
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
         `Entities of type Account must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("Account", id.toString(), this);
+      store.set('Account', id.toString(), this);
     }
   }
 
   static loadInBlock(id: string): Account | null {
-    return changetype<Account | null>(store.get_in_block("Account", id));
+    return changetype<Account | null>(store.get_in_block('Account', id));
   }
 
   static load(id: string): Account | null {
-    return changetype<Account | null>(store.get("Account", id));
+    return changetype<Account | null>(store.get('Account', id));
   }
 
   get id(): string {
-    let value = this.get("id");
+    let value = this.get('id');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toString();
     }
   }
 
   set id(value: string) {
-    this.set("id", Value.fromString(value));
+    this.set('id', Value.fromString(value));
   }
 
   get accountId(): BigInt {
-    let value = this.get("accountId");
+    let value = this.get('accountId');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set accountId(value: BigInt) {
-    this.set("accountId", Value.fromBigInt(value));
+    this.set('accountId', Value.fromBigInt(value));
   }
 
   get owner(): string {
-    let value = this.get("owner");
+    let value = this.get('owner');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toString();
     }
   }
 
   set owner(value: string) {
-    this.set("owner", Value.fromString(value));
+    this.set('owner', Value.fromString(value));
   }
 }
 
 export class Market extends Entity {
   constructor(id: string) {
     super();
-    this.set("id", Value.fromString(id));
+    this.set('id', Value.fromString(id));
   }
 
   save(): void {
-    let id = this.get("id");
-    assert(id != null, "Cannot save Market entity without an ID");
+    let id = this.get('id');
+    assert(id != null, 'Cannot save Market entity without an ID');
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
         `Entities of type Market must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("Market", id.toString(), this);
+      store.set('Market', id.toString(), this);
     }
   }
 
   static loadInBlock(id: string): Market | null {
-    return changetype<Market | null>(store.get_in_block("Market", id));
+    return changetype<Market | null>(store.get_in_block('Market', id));
   }
 
   static load(id: string): Market | null {
-    return changetype<Market | null>(store.get("Market", id));
+    return changetype<Market | null>(store.get('Market', id));
   }
 
   get id(): string {
-    let value = this.get("id");
+    let value = this.get('id');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toString();
     }
   }
 
   set id(value: string) {
-    this.set("id", Value.fromString(value));
+    this.set('id', Value.fromString(value));
   }
 
   get perpsMarketId(): BigInt {
-    let value = this.get("perpsMarketId");
+    let value = this.get('perpsMarketId');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set perpsMarketId(value: BigInt) {
-    this.set("perpsMarketId", Value.fromBigInt(value));
+    this.set('perpsMarketId', Value.fromBigInt(value));
   }
 
   get marketOwner(): string | null {
-    let value = this.get("marketOwner");
+    let value = this.get('marketOwner');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -140,14 +140,14 @@ export class Market extends Entity {
 
   set marketOwner(value: string | null) {
     if (!value) {
-      this.unset("marketOwner");
+      this.unset('marketOwner');
     } else {
-      this.set("marketOwner", Value.fromString(<string>value));
+      this.set('marketOwner', Value.fromString(<string>value));
     }
   }
 
   get marketName(): string | null {
-    let value = this.get("marketName");
+    let value = this.get('marketName');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -157,14 +157,14 @@ export class Market extends Entity {
 
   set marketName(value: string | null) {
     if (!value) {
-      this.unset("marketName");
+      this.unset('marketName');
     } else {
-      this.set("marketName", Value.fromString(<string>value));
+      this.set('marketName', Value.fromString(<string>value));
     }
   }
 
   get marketSymbol(): string | null {
-    let value = this.get("marketSymbol");
+    let value = this.get('marketSymbol');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -174,14 +174,14 @@ export class Market extends Entity {
 
   set marketSymbol(value: string | null) {
     if (!value) {
-      this.unset("marketSymbol");
+      this.unset('marketSymbol');
     } else {
-      this.set("marketSymbol", Value.fromString(<string>value));
+      this.set('marketSymbol', Value.fromString(<string>value));
     }
   }
 
   get feedId(): Bytes | null {
-    let value = this.get("feedId");
+    let value = this.get('feedId');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -191,14 +191,14 @@ export class Market extends Entity {
 
   set feedId(value: Bytes | null) {
     if (!value) {
-      this.unset("feedId");
+      this.unset('feedId');
     } else {
-      this.set("feedId", Value.fromBytes(<Bytes>value));
+      this.set('feedId', Value.fromBytes(<Bytes>value));
     }
   }
 
   get owner(): string | null {
-    let value = this.get("owner");
+    let value = this.get('owner');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -208,14 +208,14 @@ export class Market extends Entity {
 
   set owner(value: string | null) {
     if (!value) {
-      this.unset("owner");
+      this.unset('owner');
     } else {
-      this.set("owner", Value.fromString(<string>value));
+      this.set('owner', Value.fromString(<string>value));
     }
   }
 
   get maxFundingVelocity(): BigInt | null {
-    let value = this.get("maxFundingVelocity");
+    let value = this.get('maxFundingVelocity');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -225,14 +225,14 @@ export class Market extends Entity {
 
   set maxFundingVelocity(value: BigInt | null) {
     if (!value) {
-      this.unset("maxFundingVelocity");
+      this.unset('maxFundingVelocity');
     } else {
-      this.set("maxFundingVelocity", Value.fromBigInt(<BigInt>value));
+      this.set('maxFundingVelocity', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get skewScale(): BigInt | null {
-    let value = this.get("skewScale");
+    let value = this.get('skewScale');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -242,14 +242,14 @@ export class Market extends Entity {
 
   set skewScale(value: BigInt | null) {
     if (!value) {
-      this.unset("skewScale");
+      this.unset('skewScale');
     } else {
-      this.set("skewScale", Value.fromBigInt(<BigInt>value));
+      this.set('skewScale', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get initialMarginFraction(): BigInt | null {
-    let value = this.get("initialMarginFraction");
+    let value = this.get('initialMarginFraction');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -259,14 +259,14 @@ export class Market extends Entity {
 
   set initialMarginFraction(value: BigInt | null) {
     if (!value) {
-      this.unset("initialMarginFraction");
+      this.unset('initialMarginFraction');
     } else {
-      this.set("initialMarginFraction", Value.fromBigInt(<BigInt>value));
+      this.set('initialMarginFraction', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get maintenanceMarginFraction(): BigInt | null {
-    let value = this.get("maintenanceMarginFraction");
+    let value = this.get('maintenanceMarginFraction');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -276,14 +276,14 @@ export class Market extends Entity {
 
   set maintenanceMarginFraction(value: BigInt | null) {
     if (!value) {
-      this.unset("maintenanceMarginFraction");
+      this.unset('maintenanceMarginFraction');
     } else {
-      this.set("maintenanceMarginFraction", Value.fromBigInt(<BigInt>value));
+      this.set('maintenanceMarginFraction', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get liquidationRewardRatioD18(): BigInt | null {
-    let value = this.get("liquidationRewardRatioD18");
+    let value = this.get('liquidationRewardRatioD18');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -293,14 +293,14 @@ export class Market extends Entity {
 
   set liquidationRewardRatioD18(value: BigInt | null) {
     if (!value) {
-      this.unset("liquidationRewardRatioD18");
+      this.unset('liquidationRewardRatioD18');
     } else {
-      this.set("liquidationRewardRatioD18", Value.fromBigInt(<BigInt>value));
+      this.set('liquidationRewardRatioD18', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get maxLiquidationLimitAccumulationMultiplier(): BigInt | null {
-    let value = this.get("maxLiquidationLimitAccumulationMultiplier");
+    let value = this.get('maxLiquidationLimitAccumulationMultiplier');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -310,17 +310,14 @@ export class Market extends Entity {
 
   set maxLiquidationLimitAccumulationMultiplier(value: BigInt | null) {
     if (!value) {
-      this.unset("maxLiquidationLimitAccumulationMultiplier");
+      this.unset('maxLiquidationLimitAccumulationMultiplier');
     } else {
-      this.set(
-        "maxLiquidationLimitAccumulationMultiplier",
-        Value.fromBigInt(<BigInt>value)
-      );
+      this.set('maxLiquidationLimitAccumulationMultiplier', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get lockedOiPercent(): BigInt | null {
-    let value = this.get("lockedOiPercent");
+    let value = this.get('lockedOiPercent');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -330,14 +327,14 @@ export class Market extends Entity {
 
   set lockedOiPercent(value: BigInt | null) {
     if (!value) {
-      this.unset("lockedOiPercent");
+      this.unset('lockedOiPercent');
     } else {
-      this.set("lockedOiPercent", Value.fromBigInt(<BigInt>value));
+      this.set('lockedOiPercent', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get makerFee(): BigInt | null {
-    let value = this.get("makerFee");
+    let value = this.get('makerFee');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -347,14 +344,14 @@ export class Market extends Entity {
 
   set makerFee(value: BigInt | null) {
     if (!value) {
-      this.unset("makerFee");
+      this.unset('makerFee');
     } else {
-      this.set("makerFee", Value.fromBigInt(<BigInt>value));
+      this.set('makerFee', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get takerFee(): BigInt | null {
-    let value = this.get("takerFee");
+    let value = this.get('takerFee');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -364,9 +361,9 @@ export class Market extends Entity {
 
   set takerFee(value: BigInt | null) {
     if (!value) {
-      this.unset("takerFee");
+      this.unset('takerFee');
     } else {
-      this.set("takerFee", Value.fromBigInt(<BigInt>value));
+      this.set('takerFee', Value.fromBigInt(<BigInt>value));
     }
   }
 }
@@ -374,44 +371,44 @@ export class Market extends Entity {
 export class Order extends Entity {
   constructor(id: string) {
     super();
-    this.set("id", Value.fromString(id));
+    this.set('id', Value.fromString(id));
   }
 
   save(): void {
-    let id = this.get("id");
-    assert(id != null, "Cannot save Order entity without an ID");
+    let id = this.get('id');
+    assert(id != null, 'Cannot save Order entity without an ID');
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
         `Entities of type Order must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("Order", id.toString(), this);
+      store.set('Order', id.toString(), this);
     }
   }
 
   static loadInBlock(id: string): Order | null {
-    return changetype<Order | null>(store.get_in_block("Order", id));
+    return changetype<Order | null>(store.get_in_block('Order', id));
   }
 
   static load(id: string): Order | null {
-    return changetype<Order | null>(store.get("Order", id));
+    return changetype<Order | null>(store.get('Order', id));
   }
 
   get id(): string {
-    let value = this.get("id");
+    let value = this.get('id');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toString();
     }
   }
 
   set id(value: string) {
-    this.set("id", Value.fromString(value));
+    this.set('id', Value.fromString(value));
   }
 
   get marketId(): BigInt | null {
-    let value = this.get("marketId");
+    let value = this.get('marketId');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -421,14 +418,14 @@ export class Order extends Entity {
 
   set marketId(value: BigInt | null) {
     if (!value) {
-      this.unset("marketId");
+      this.unset('marketId');
     } else {
-      this.set("marketId", Value.fromBigInt(<BigInt>value));
+      this.set('marketId', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get accountId(): BigInt | null {
-    let value = this.get("accountId");
+    let value = this.get('accountId');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -438,14 +435,14 @@ export class Order extends Entity {
 
   set accountId(value: BigInt | null) {
     if (!value) {
-      this.unset("accountId");
+      this.unset('accountId');
     } else {
-      this.set("accountId", Value.fromBigInt(<BigInt>value));
+      this.set('accountId', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get amountProvided(): BigInt | null {
-    let value = this.get("amountProvided");
+    let value = this.get('amountProvided');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -455,14 +452,14 @@ export class Order extends Entity {
 
   set amountProvided(value: BigInt | null) {
     if (!value) {
-      this.unset("amountProvided");
+      this.unset('amountProvided');
     } else {
-      this.set("amountProvided", Value.fromBigInt(<BigInt>value));
+      this.set('amountProvided', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get orderType(): i32 {
-    let value = this.get("orderType");
+    let value = this.get('orderType');
     if (!value || value.kind == ValueKind.NULL) {
       return 0;
     } else {
@@ -471,24 +468,24 @@ export class Order extends Entity {
   }
 
   set orderType(value: i32) {
-    this.set("orderType", Value.fromI32(value));
+    this.set('orderType', Value.fromI32(value));
   }
 
   get size(): BigInt {
-    let value = this.get("size");
+    let value = this.get('size');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set size(value: BigInt) {
-    this.set("size", Value.fromBigInt(value));
+    this.set('size', Value.fromBigInt(value));
   }
 
   get acceptablePrice(): BigInt | null {
-    let value = this.get("acceptablePrice");
+    let value = this.get('acceptablePrice');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -498,14 +495,14 @@ export class Order extends Entity {
 
   set acceptablePrice(value: BigInt | null) {
     if (!value) {
-      this.unset("acceptablePrice");
+      this.unset('acceptablePrice');
     } else {
-      this.set("acceptablePrice", Value.fromBigInt(<BigInt>value));
+      this.set('acceptablePrice', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get settlementTime(): BigInt | null {
-    let value = this.get("settlementTime");
+    let value = this.get('settlementTime');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -515,14 +512,14 @@ export class Order extends Entity {
 
   set settlementTime(value: BigInt | null) {
     if (!value) {
-      this.unset("settlementTime");
+      this.unset('settlementTime');
     } else {
-      this.set("settlementTime", Value.fromBigInt(<BigInt>value));
+      this.set('settlementTime', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get expirationTime(): BigInt | null {
-    let value = this.get("expirationTime");
+    let value = this.get('expirationTime');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -532,14 +529,14 @@ export class Order extends Entity {
 
   set expirationTime(value: BigInt | null) {
     if (!value) {
-      this.unset("expirationTime");
+      this.unset('expirationTime');
     } else {
-      this.set("expirationTime", Value.fromBigInt(<BigInt>value));
+      this.set('expirationTime', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get trackingCode(): Bytes | null {
-    let value = this.get("trackingCode");
+    let value = this.get('trackingCode');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -549,14 +546,14 @@ export class Order extends Entity {
 
   set trackingCode(value: Bytes | null) {
     if (!value) {
-      this.unset("trackingCode");
+      this.unset('trackingCode');
     } else {
-      this.set("trackingCode", Value.fromBytes(<Bytes>value));
+      this.set('trackingCode', Value.fromBytes(<Bytes>value));
     }
   }
 
   get owner(): string | null {
-    let value = this.get("owner");
+    let value = this.get('owner');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -566,14 +563,14 @@ export class Order extends Entity {
 
   set owner(value: string | null) {
     if (!value) {
-      this.unset("owner");
+      this.unset('owner');
     } else {
-      this.set("owner", Value.fromString(<string>value));
+      this.set('owner', Value.fromString(<string>value));
     }
   }
 
   get fillPrice(): BigInt | null {
-    let value = this.get("fillPrice");
+    let value = this.get('fillPrice');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -583,14 +580,14 @@ export class Order extends Entity {
 
   set fillPrice(value: BigInt | null) {
     if (!value) {
-      this.unset("fillPrice");
+      this.unset('fillPrice');
     } else {
-      this.set("fillPrice", Value.fromBigInt(<BigInt>value));
+      this.set('fillPrice', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get accountPnlRealized(): BigInt | null {
-    let value = this.get("accountPnlRealized");
+    let value = this.get('accountPnlRealized');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -600,27 +597,27 @@ export class Order extends Entity {
 
   set accountPnlRealized(value: BigInt | null) {
     if (!value) {
-      this.unset("accountPnlRealized");
+      this.unset('accountPnlRealized');
     } else {
-      this.set("accountPnlRealized", Value.fromBigInt(<BigInt>value));
+      this.set('accountPnlRealized', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get newSize(): BigInt {
-    let value = this.get("newSize");
+    let value = this.get('newSize');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set newSize(value: BigInt) {
-    this.set("newSize", Value.fromBigInt(value));
+    this.set('newSize', Value.fromBigInt(value));
   }
 
   get collectedFees(): BigInt | null {
-    let value = this.get("collectedFees");
+    let value = this.get('collectedFees');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -630,14 +627,14 @@ export class Order extends Entity {
 
   set collectedFees(value: BigInt | null) {
     if (!value) {
-      this.unset("collectedFees");
+      this.unset('collectedFees');
     } else {
-      this.set("collectedFees", Value.fromBigInt(<BigInt>value));
+      this.set('collectedFees', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get settelementReward(): BigInt | null {
-    let value = this.get("settelementReward");
+    let value = this.get('settelementReward');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -647,14 +644,14 @@ export class Order extends Entity {
 
   set settelementReward(value: BigInt | null) {
     if (!value) {
-      this.unset("settelementReward");
+      this.unset('settelementReward');
     } else {
-      this.set("settelementReward", Value.fromBigInt(<BigInt>value));
+      this.set('settelementReward', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get settler(): string | null {
-    let value = this.get("settler");
+    let value = this.get('settler');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -664,123 +661,119 @@ export class Order extends Entity {
 
   set settler(value: string | null) {
     if (!value) {
-      this.unset("settler");
+      this.unset('settler');
     } else {
-      this.set("settler", Value.fromString(<string>value));
+      this.set('settler', Value.fromString(<string>value));
     }
   }
 
   get block(): BigInt {
-    let value = this.get("block");
+    let value = this.get('block');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set block(value: BigInt) {
-    this.set("block", Value.fromBigInt(value));
+    this.set('block', Value.fromBigInt(value));
   }
 
   get timestamp(): BigInt {
-    let value = this.get("timestamp");
+    let value = this.get('timestamp');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set timestamp(value: BigInt) {
-    this.set("timestamp", Value.fromBigInt(value));
+    this.set('timestamp', Value.fromBigInt(value));
   }
 }
 
 export class SettlementStrategy extends Entity {
   constructor(id: string) {
     super();
-    this.set("id", Value.fromString(id));
+    this.set('id', Value.fromString(id));
   }
 
   save(): void {
-    let id = this.get("id");
-    assert(id != null, "Cannot save SettlementStrategy entity without an ID");
+    let id = this.get('id');
+    assert(id != null, 'Cannot save SettlementStrategy entity without an ID');
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
         `Entities of type SettlementStrategy must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("SettlementStrategy", id.toString(), this);
+      store.set('SettlementStrategy', id.toString(), this);
     }
   }
 
   static loadInBlock(id: string): SettlementStrategy | null {
-    return changetype<SettlementStrategy | null>(
-      store.get_in_block("SettlementStrategy", id)
-    );
+    return changetype<SettlementStrategy | null>(store.get_in_block('SettlementStrategy', id));
   }
 
   static load(id: string): SettlementStrategy | null {
-    return changetype<SettlementStrategy | null>(
-      store.get("SettlementStrategy", id)
-    );
+    return changetype<SettlementStrategy | null>(store.get('SettlementStrategy', id));
   }
 
   get id(): string {
-    let value = this.get("id");
+    let value = this.get('id');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toString();
     }
   }
 
   set id(value: string) {
-    this.set("id", Value.fromString(value));
+    this.set('id', Value.fromString(value));
   }
 
   get strategyId(): BigInt {
-    let value = this.get("strategyId");
+    let value = this.get('strategyId');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set strategyId(value: BigInt) {
-    this.set("strategyId", Value.fromBigInt(value));
+    this.set('strategyId', Value.fromBigInt(value));
   }
 
   get marketId(): BigInt {
-    let value = this.get("marketId");
+    let value = this.get('marketId');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set marketId(value: BigInt) {
-    this.set("marketId", Value.fromBigInt(value));
+    this.set('marketId', Value.fromBigInt(value));
   }
 
   get settlementStrategyId(): BigInt {
-    let value = this.get("settlementStrategyId");
+    let value = this.get('settlementStrategyId');
     if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
+      throw new Error('Cannot return null for a required field.');
     } else {
       return value.toBigInt();
     }
   }
 
   set settlementStrategyId(value: BigInt) {
-    this.set("settlementStrategyId", Value.fromBigInt(value));
+    this.set('settlementStrategyId', Value.fromBigInt(value));
   }
 
   get enabled(): boolean {
-    let value = this.get("enabled");
+    let value = this.get('enabled');
     if (!value || value.kind == ValueKind.NULL) {
       return false;
     } else {
@@ -789,11 +782,11 @@ export class SettlementStrategy extends Entity {
   }
 
   set enabled(value: boolean) {
-    this.set("enabled", Value.fromBoolean(value));
+    this.set('enabled', Value.fromBoolean(value));
   }
 
   get strategyType(): i32 {
-    let value = this.get("strategyType");
+    let value = this.get('strategyType');
     if (!value || value.kind == ValueKind.NULL) {
       return 0;
     } else {
@@ -802,11 +795,11 @@ export class SettlementStrategy extends Entity {
   }
 
   set strategyType(value: i32) {
-    this.set("strategyType", Value.fromI32(value));
+    this.set('strategyType', Value.fromI32(value));
   }
 
   get settlementDelay(): BigInt | null {
-    let value = this.get("settlementDelay");
+    let value = this.get('settlementDelay');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -816,14 +809,14 @@ export class SettlementStrategy extends Entity {
 
   set settlementDelay(value: BigInt | null) {
     if (!value) {
-      this.unset("settlementDelay");
+      this.unset('settlementDelay');
     } else {
-      this.set("settlementDelay", Value.fromBigInt(<BigInt>value));
+      this.set('settlementDelay', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get settlementWindowDuration(): BigInt | null {
-    let value = this.get("settlementWindowDuration");
+    let value = this.get('settlementWindowDuration');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -833,14 +826,14 @@ export class SettlementStrategy extends Entity {
 
   set settlementWindowDuration(value: BigInt | null) {
     if (!value) {
-      this.unset("settlementWindowDuration");
+      this.unset('settlementWindowDuration');
     } else {
-      this.set("settlementWindowDuration", Value.fromBigInt(<BigInt>value));
+      this.set('settlementWindowDuration', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get priceVerificationContract(): string | null {
-    let value = this.get("priceVerificationContract");
+    let value = this.get('priceVerificationContract');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -850,14 +843,14 @@ export class SettlementStrategy extends Entity {
 
   set priceVerificationContract(value: string | null) {
     if (!value) {
-      this.unset("priceVerificationContract");
+      this.unset('priceVerificationContract');
     } else {
-      this.set("priceVerificationContract", Value.fromString(<string>value));
+      this.set('priceVerificationContract', Value.fromString(<string>value));
     }
   }
 
   get feedId(): Bytes | null {
-    let value = this.get("feedId");
+    let value = this.get('feedId');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -867,14 +860,14 @@ export class SettlementStrategy extends Entity {
 
   set feedId(value: Bytes | null) {
     if (!value) {
-      this.unset("feedId");
+      this.unset('feedId');
     } else {
-      this.set("feedId", Value.fromBytes(<Bytes>value));
+      this.set('feedId', Value.fromBytes(<Bytes>value));
     }
   }
 
   get url(): string | null {
-    let value = this.get("url");
+    let value = this.get('url');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -884,14 +877,14 @@ export class SettlementStrategy extends Entity {
 
   set url(value: string | null) {
     if (!value) {
-      this.unset("url");
+      this.unset('url');
     } else {
-      this.set("url", Value.fromString(<string>value));
+      this.set('url', Value.fromString(<string>value));
     }
   }
 
   get settlementReward(): BigInt | null {
-    let value = this.get("settlementReward");
+    let value = this.get('settlementReward');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -901,14 +894,14 @@ export class SettlementStrategy extends Entity {
 
   set settlementReward(value: BigInt | null) {
     if (!value) {
-      this.unset("settlementReward");
+      this.unset('settlementReward');
     } else {
-      this.set("settlementReward", Value.fromBigInt(<BigInt>value));
+      this.set('settlementReward', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get priceDeviationTolerance(): BigInt | null {
-    let value = this.get("priceDeviationTolerance");
+    let value = this.get('priceDeviationTolerance');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -918,14 +911,14 @@ export class SettlementStrategy extends Entity {
 
   set priceDeviationTolerance(value: BigInt | null) {
     if (!value) {
-      this.unset("priceDeviationTolerance");
+      this.unset('priceDeviationTolerance');
     } else {
-      this.set("priceDeviationTolerance", Value.fromBigInt(<BigInt>value));
+      this.set('priceDeviationTolerance', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get minimumUsdExchangeAmount(): BigInt | null {
-    let value = this.get("minimumUsdExchangeAmount");
+    let value = this.get('minimumUsdExchangeAmount');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -935,14 +928,14 @@ export class SettlementStrategy extends Entity {
 
   set minimumUsdExchangeAmount(value: BigInt | null) {
     if (!value) {
-      this.unset("minimumUsdExchangeAmount");
+      this.unset('minimumUsdExchangeAmount');
     } else {
-      this.set("minimumUsdExchangeAmount", Value.fromBigInt(<BigInt>value));
+      this.set('minimumUsdExchangeAmount', Value.fromBigInt(<BigInt>value));
     }
   }
 
   get maxRoundingLoss(): BigInt | null {
-    let value = this.get("maxRoundingLoss");
+    let value = this.get('maxRoundingLoss');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -952,9 +945,9 @@ export class SettlementStrategy extends Entity {
 
   set maxRoundingLoss(value: BigInt | null) {
     if (!value) {
-      this.unset("maxRoundingLoss");
+      this.unset('maxRoundingLoss');
     } else {
-      this.set("maxRoundingLoss", Value.fromBigInt(<BigInt>value));
+      this.set('maxRoundingLoss', Value.fromBigInt(<BigInt>value));
     }
   }
 }
