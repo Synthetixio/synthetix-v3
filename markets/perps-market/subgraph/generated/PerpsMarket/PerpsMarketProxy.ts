@@ -1383,7 +1383,11 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   }
 
   try_getAccountTokenAddress(): ethereum.CallResult<Address> {
-    const result = super.tryCall('getAccountTokenAddress', 'getAccountTokenAddress():(address)', []);
+    const result = super.tryCall(
+      'getAccountTokenAddress',
+      'getAccountTokenAddress():(address)',
+      []
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1779,9 +1783,11 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   }
 
   try_totalCollateralValue(accountId: bigint): ethereum.CallResult<bigint> {
-    const result = super.tryCall('totalCollateralValue', 'totalCollateralValue(uint128):(uint256)', [
-      ethereum.Value.fromUnsignedBigInt(accountId),
-    ]);
+    const result = super.tryCall(
+      'totalCollateralValue',
+      'totalCollateralValue(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(accountId)]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1809,9 +1815,11 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   }
 
   currentFundingVelocity(marketId: bigint): bigint {
-    const result = super.call('currentFundingVelocity', 'currentFundingVelocity(uint128):(int256)', [
-      ethereum.Value.fromUnsignedBigInt(marketId),
-    ]);
+    const result = super.call(
+      'currentFundingVelocity',
+      'currentFundingVelocity(uint128):(int256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
 
     return result[0].toBigInt();
   }
@@ -2065,9 +2073,11 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   }
 
   try_getFeatureFlagAllowAll(feature: Bytes): ethereum.CallResult<boolean> {
-    const result = super.tryCall('getFeatureFlagAllowAll', 'getFeatureFlagAllowAll(bytes32):(bool)', [
-      ethereum.Value.fromFixedBytes(feature),
-    ]);
+    const result = super.tryCall(
+      'getFeatureFlagAllowAll',
+      'getFeatureFlagAllowAll(bytes32):(bool)',
+      [ethereum.Value.fromFixedBytes(feature)]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -2362,9 +2372,11 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   }
 
   getMaxCollateralAmount(synthMarketId: bigint): bigint {
-    const result = super.call('getMaxCollateralAmount', 'getMaxCollateralAmount(uint128):(uint256)', [
-      ethereum.Value.fromUnsignedBigInt(synthMarketId),
-    ]);
+    const result = super.call(
+      'getMaxCollateralAmount',
+      'getMaxCollateralAmount(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(synthMarketId)]
+    );
 
     return result[0].toBigInt();
   }
