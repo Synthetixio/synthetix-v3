@@ -771,10 +771,15 @@ describe('VaultModule', function () {
   });
 
   describe('distribution chain edge cases', async () => {
-    before(restore);
+    beforeEach(restore);
     it('edge case: double USD printing on market by not fully flushing with 2 collaterals', async () => {
+
+      const startingWithdrawable = await systems().Core.getWithdrawableMarketUsd(marketId);
+
+      assertBn.gt(startingWithdrawable, 0);
+
       // first, mint max debt
-      await MockMarket.withdrawUsd(await systems().Core.getWithdrawableMarketUsd(marketId));
+      await MockMarket.withdrawUsd(startingWithdrawable);
 
       // sanity
       assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
@@ -794,8 +799,13 @@ describe('VaultModule', function () {
     });
 
     it('edge case: double USD printing on market by not fully flushing with `rebalancePool`', async () => {
+
+      const startingWithdrawable = await systems().Core.getWithdrawableMarketUsd(marketId);
+
+      assertBn.gt(startingWithdrawable, 0);
+
       // first, mint max debt
-      await MockMarket.withdrawUsd(await systems().Core.getWithdrawableMarketUsd(marketId));
+      await MockMarket.withdrawUsd(startingWithdrawable);
 
       // sanity
       assertBn.equal(await systems().Core.getWithdrawableMarketUsd(marketId), 0);
