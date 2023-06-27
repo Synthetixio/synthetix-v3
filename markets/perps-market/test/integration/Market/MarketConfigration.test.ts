@@ -65,7 +65,7 @@ describe('MarketConfiguration', async () => {
     );
   });
 
-  it('owner can set all market configurations properties and events are emitted', async () => {
+  it('owner can set settlement strategy and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -95,6 +95,8 @@ describe('MarketConfiguration', async () => {
         '], 0)',
       systems().PerpsMarket
     );
+  });
+  it('owner can enable settlement strategy and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -108,6 +110,9 @@ describe('MarketConfiguration', async () => {
         ')',
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set order fees and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -121,6 +126,8 @@ describe('MarketConfiguration', async () => {
         ')',
       systems().PerpsMarket
     );
+  });
+  it('owner can set max market value and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -128,6 +135,9 @@ describe('MarketConfiguration', async () => {
       'MaxMarketValueSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set funding parameters and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -141,6 +151,9 @@ describe('MarketConfiguration', async () => {
         ')',
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set liquidation parameters and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -157,6 +170,9 @@ describe('MarketConfiguration', async () => {
 
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set all locked OI percentage and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
