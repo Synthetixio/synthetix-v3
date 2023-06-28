@@ -104,4 +104,11 @@ contract PerpsAccountModule is IAccountModule {
     function getAvailableMargin(uint128 accountId) external view override returns (int) {
         return PerpsAccount.load(accountId).getAvailableMargin();
     }
+
+    function getCollateralAmount(
+        uint128 accountId,
+        uint128 synthMarketId
+    ) external view returns (uint256) {
+        return PerpsAccount.load(accountId).collateralAmounts[synthMarketId];
+    }
 }
