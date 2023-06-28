@@ -24,7 +24,6 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@chainlink/contracts": "^0.6.1",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
