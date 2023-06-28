@@ -233,43 +233,43 @@ library PerpsMarket {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
-    // TODO: David will refactor this
     function validatePositionSize(
         Data storage self,
         uint maxSize,
         int oldSize,
         int newSize
-    ) internal view returns (bool) {
+    ) internal view {
         // Allow users to reduce an order no matter the market conditions.
-        if (MathUtil.sameSide(oldSize, newSize) && MathUtil.abs(newSize) <= MathUtil.abs(oldSize)) {
-            return false;
+        bool isNotReducingInterest = !(MathUtil.sameSide(oldSize, newSize) &&
+            MathUtil.abs(newSize) <= MathUtil.abs(oldSize));
+        if (isNotReducingInterest) {
+            int newSkew = self.skew - oldSize + newSize;
+
+            int newMarketSize = self.size.toInt() -
+                MathUtil.abs(oldSize).toInt() +
+                MathUtil.abs(newSize).toInt();
+
+            int newSideSize;
+            if (0 < newSize) {
+                // long case: marketSize + skew
+                //            = (|longSize| + |shortSize|) + (longSize + shortSize)
+                //            = 2 * longSize
+                newSideSize = newMarketSize + newSkew;
+            } else {
+                // short case: marketSize - skew
+                //            = (|longSize| + |shortSize|) - (longSize + shortSize)
+                //            = 2 * -shortSize
+                newSideSize = newMarketSize - newSkew;
+            }
+
+            // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
+            if (maxSize < MathUtil.abs(newSideSize / 2)) {
+                revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                    self.id,
+                    maxSize,
+                    newSideSize / 2
+                );
+            }
         }
-
-        // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
-        // we check that the side of the market their order is on would not break the limit.
-        int newSkew = self.skew - oldSize + newSize;
-        int newMarketSize = self.size.toInt() -
-            MathUtil.abs(oldSize).toInt() +
-            MathUtil.abs(newSize).toInt();
-
-        int newSideSize;
-        if (0 < newSize) {
-            // long case: marketSize + skew
-            //            = (|longSize| + |shortSize|) + (longSize + shortSize)
-            //            = 2 * longSize
-            newSideSize = newMarketSize + newSkew;
-        } else {
-            // short case: marketSize - skew
-            //            = (|longSize| + |shortSize|) - (longSize + shortSize)
-            //            = 2 * -shortSize
-            newSideSize = newMarketSize - newSkew;
-        }
-
-        // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
-        if (maxSize < MathUtil.abs(newSideSize / 2)) {
-            return true;
-        }
-
-        return false;
     }
 }
