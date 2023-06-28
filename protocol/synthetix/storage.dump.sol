@@ -553,31 +553,6 @@ library Pool {
     }
 }
 
-// @custom:artifact contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
-library PoolCrossChainInfo {
-    struct Data {
-        PoolCrossChainSync.Data latestSync;
-        uint128 latestTotalWeights;
-        uint64[] pairedChains;
-        mapping(uint64 => uint128) pairedPoolIds;
-        uint64 chainlinkSubscriptionId;
-        uint32 chainlinkSubscriptionInterval;
-        bytes32 latestRequestId;
-    }
-}
-
-// @custom:artifact contracts/storage/PoolCrossChainSync.sol:PoolCrossChainSync
-library PoolCrossChainSync {
-    struct Data {
-        uint128 liquidity;
-        int128 cumulativeMarketDebt;
-        int128 totalDebt;
-        uint64 dataTimestamp;
-        uint64 oldestDataTimestamp;
-        uint64 oldestPoolConfigTimestamp;
-    }
-}
-
 // @custom:artifact contracts/storage/RewardDistribution.sol:RewardDistribution
 library RewardDistribution {
     struct Data {
