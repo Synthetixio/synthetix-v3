@@ -216,56 +216,6 @@ library NodeOutput {
     }
 }
 
-// @custom:artifact contracts/external/Buffer.sol:Buffer
-library Buffer {
-    struct buffer {
-        bytes buf;
-        uint256 capacity;
-    }
-}
-
-// @custom:artifact contracts/external/CBOR.sol:CBOR
-library CBOR {
-    uint8 private constant MAJOR_TYPE_INT = 0;
-    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
-    uint8 private constant MAJOR_TYPE_BYTES = 2;
-    uint8 private constant MAJOR_TYPE_STRING = 3;
-    uint8 private constant MAJOR_TYPE_ARRAY = 4;
-    uint8 private constant MAJOR_TYPE_MAP = 5;
-    uint8 private constant MAJOR_TYPE_TAG = 6;
-    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
-    uint8 private constant TAG_TYPE_BIGNUM = 2;
-    uint8 private constant TAG_TYPE_NEGATIVE_BIGNUM = 3;
-    uint8 private constant CBOR_FALSE = 20;
-    uint8 private constant CBOR_TRUE = 21;
-    uint8 private constant CBOR_NULL = 22;
-    uint8 private constant CBOR_UNDEFINED = 23;
-    struct CBORBuffer {
-        Buffer.buffer buf;
-        uint256 depth;
-    }
-}
-
-// @custom:artifact contracts/external/Functions.sol:Functions
-library Functions {
-    uint256 internal constant DEFAULT_BUFFER_SIZE = 256;
-    enum Location {
-        Inline,
-        Remote
-    }
-    enum CodeLanguage {
-        JavaScript
-    }
-    struct Request {
-        Location codeLocation;
-        Location secretsLocation;
-        CodeLanguage language;
-        string source;
-        bytes secrets;
-        string[] args;
-    }
-}
-
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
 interface IAccountModule {
     struct AccountPermissions {
