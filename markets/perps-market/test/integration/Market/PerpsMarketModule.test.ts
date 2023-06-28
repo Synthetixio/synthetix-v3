@@ -56,17 +56,6 @@ describe('PerpsMarketModule', () => {
   });
 
   describe('fillPrice', () => {
-    describe('skewScale 0', () => {
-      const restoreSkewScale = snapshotCheckpoint(provider);
-      before('set skewScale to 0', async () => {
-        await systems().PerpsMarket.connect(marketOwner()).setFundingParameters(marketId, 0, 0);
-      });
-      it('should return the index price', async () => {
-        const price = await systems().PerpsMarket.fillPrice(marketId, bn(1), bn(1000));
-        assertBn.equal(price, fixture.marketTokenPrice);
-      });
-      after('restore skewScale', restoreSkewScale);
-    });
     let commonOpenPositionProps: Pick<
       OpenPositionData,
       | 'systems'
@@ -88,6 +77,22 @@ describe('PerpsMarketModule', () => {
         settlementStrategyId: bn(0),
       };
     });
+
+    before('add collateral', async () => {
+      await systems().PerpsMarket.connect(trader2()).modifyCollateral(2, 0, bn(10000000));
+    });
+    describe('skewScale 0', () => {
+      const restoreSkewScale = snapshotCheckpoint(provider);
+      before('set skewScale to 0', async () => {
+        await systems().PerpsMarket.connect(marketOwner()).setFundingParameters(marketId, 0, 0);
+      });
+      it('should return the index price', async () => {
+        const price = await systems().PerpsMarket.fillPrice(marketId, bn(1), bn(1000));
+        assertBn.equal(price, fixture.marketTokenPrice);
+      });
+      after('restore skewScale', restoreSkewScale);
+    });
+
     const tests = [
       {
         marketSkew: 0,
@@ -113,10 +118,6 @@ describe('PerpsMarketModule', () => {
         ],
       },
     ];
-    before('add collateral', async () => {
-      await systems().PerpsMarket.connect(trader2()).modifyCollateral(2, 0, bn(10000000));
-    });
-
     tests.forEach(({ marketSkew, sizeAndExpectedPrice }) => {
       describe(`marketSkew ${marketSkew}`, () => {
         const restoreMarketSkew = snapshotCheckpoint(provider);
