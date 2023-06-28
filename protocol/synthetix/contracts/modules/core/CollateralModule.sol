@@ -10,7 +10,6 @@ import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/Config.sol";
-import "../../storage/Pool.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -25,7 +24,6 @@ contract CollateralModule is ICollateralModule {
     using Account for Account.Data;
     using AccountRBAC for AccountRBAC.Data;
     using Collateral for Collateral.Data;
-    using Pool for Pool.Data;
     using SafeCastU256 for uint256;
 
     bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
@@ -156,25 +154,12 @@ contract CollateralModule is ICollateralModule {
 
         uint256 index = offset;
         for (uint256 i = 0; i < count; i++) {
-            uint64 lockExpirationTime = locks[index].lockExpirationTime;
-            uint128 lockPoolSync = locks[index].lockExpirationPoolSync;
-
-            if (
-                lockExpirationTime <= currentTime &&
-                (lockPoolSync == 0 ||
-                    (// can only unlock if pool sync time is met and the account is above the target ratio
-                    Pool.load(lockPoolSync).getOldestSync() >= lockExpirationTime &&
-                        Pool.load(lockPoolSync).currentAccountCollateralRatio(
-                            locks[index].lockExpirationPoolSyncVault,
-                            accountId
-                        ) >=
-                        CollateralConfiguration.load(collateralType).issuanceRatioD18))
-            ) {
+            if (locks[index].lockExpirationTime <= currentTime) {
                 emit CollateralLockExpired(
                     accountId,
                     collateralType,
                     locks[index].amountD18,
-                    lockExpirationTime
+                    locks[index].lockExpirationTime
                 );
 
                 locks[index] = locks[locks.length - 1];
@@ -244,7 +229,7 @@ contract CollateralModule is ICollateralModule {
         }
 
         account.collaterals[collateralType].locks.push(
-            CollateralLock.Data(amount.to128(), expireTimestamp, 0, address(0))
+            CollateralLock.Data(amount.to128(), expireTimestamp)
         );
 
         emit CollateralLockCreated(accountId, collateralType, amount, expireTimestamp);

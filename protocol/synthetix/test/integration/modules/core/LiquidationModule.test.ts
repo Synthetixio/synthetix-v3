@@ -283,10 +283,6 @@ describe('LiquidationModule', function () {
           await systems()
             .Core.connect(user2)
             .mintUsd(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
-
-          await systems()
-            .Core.connect(user2)
-            .withdraw(liquidatorAccountId, systems().USD.address, liquidatorAccountStartingBalance);
         });
 
         before('record collateral ratio', async () => {

@@ -40,7 +40,6 @@ contract UtilsModule is IUtilsModule {
         CrossChain.Data storage cc = CrossChain.load();
 
         cc.ccipRouter = ICcipRouterClient(ccipRouter);
-        cc.chainlinkFunctionsOracle = FunctionsOracleInterface(chainlinkFunctions);
 
         IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
             AssociatedSystem.load(_USD_TOKEN).proxy

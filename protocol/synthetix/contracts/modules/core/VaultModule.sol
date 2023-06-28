@@ -141,55 +141,6 @@ contract VaultModule is IVaultModule {
         );
     }
 
-    function releaseExitedCollateral(
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType
-    ) external override returns (uint256 amountReleased) {
-        VaultEpoch.Data storage epoch = Pool
-            .loadExisting(poolId)
-            .vaults[collateralType]
-            .currentEpoch();
-
-        CollateralLock.Data storage lock = epoch.exitingCollateral[bytes32(uint256(accountId))];
-
-        if (lock.amountD18 == 0) {
-            revert NoExitingPoolCollateral(accountId);
-        }
-
-        // released collateral must have occured prior to oldest update
-        if (Pool.load(poolId).getOldestSync() < lock.lockExpirationTime) {
-            revert PoolExitTemporaryLock(
-                accountId,
-                Pool.load(poolId).getOldestSync(),
-                epoch.exitingCollateral[bytes32(uint256(accountId))].lockExpirationTime
-            );
-        }
-
-        // c-ratio must still be healthy (or no debt if removing all collateral)
-        int256 debt = Pool.load(poolId).updateAccountDebt(collateralType, accountId);
-
-        // Minimum collateralization ratios are configured in the system per collateral type.abi
-        // Ensure that the account's updated position satisfies this requirement.
-        CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
-            debt < 0 ? 0 : debt.toUint(),
-            epoch.getAccountCollateral(accountId)
-        );
-
-        amountReleased = lock.amountD18;
-
-        lock.amountD18 = 0;
-
-        epoch.increaseAccountPosition(accountId, 0, 1);
-
-        epoch.exitingCollateral[bytes32(uint256(accountId))].amountD18 = 0;
-        epoch.totalExitingCollateralD18 -= amountReleased.to128();
-
-        Account.load(accountId).collaterals[collateralType].increaseAvailableCollateral(
-            amountReleased
-        );
-    }
-
     /**
      * @inheritdoc IVaultModule
      */
@@ -304,22 +255,20 @@ contract VaultModule is IVaultModule {
         // Adjust collateral depending on increase/decrease of amount.
         if (newCollateralAmount > oldCollateralAmount) {
             collateral.decreaseAvailableCollateral(newCollateralAmount - oldCollateralAmount);
-
-            pool.vaults[collateralType].currentEpoch().increaseAccountPosition(
-                accountId,
-                newCollateralAmount - oldCollateralAmount,
-                leverage
-            );
-
-            // If the collateral amount is not negative, make sure that the pool exists
-            // in the collateral entry's pool array. Otherwise remove it.
-            _updateAccountCollateralPools(accountId, poolId, collateralType, true);
         } else {
-            pool.vaults[collateralType].currentEpoch().decreaseAccountPosition(
-                accountId,
-                oldCollateralAmount - newCollateralAmount
-            );
+            collateral.increaseAvailableCollateral(oldCollateralAmount - newCollateralAmount);
         }
+
+        // If the collateral amount is not negative, make sure that the pool exists
+        // in the collateral entry's pool array. Otherwise remove it.
+        _updateAccountCollateralPools(accountId, poolId, collateralType, newCollateralAmount > 0);
+
+        // Update the account's position in the vault data structure.
+        pool.vaults[collateralType].currentEpoch().updateAccountPosition(
+            accountId,
+            newCollateralAmount,
+            leverage
+        );
 
         // Trigger another update in the debt distribution chain,
         // and surface the latest price for the given collateral type (which is retrieved in the update).

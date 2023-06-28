@@ -5,7 +5,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('PoolModule Admin', function () {
@@ -461,7 +461,7 @@ describe('PoolModule Admin', function () {
           // in the market, and then reset the market
 
           await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), Hundred);
-          await systems().Core.connect(user1).withdraw(accountId, systems().USD.address, Hundred);
+          //await systems().Core.connect(user1).withdraw(accountId, systems().USD.address, Hundred);
           await systems().USD.connect(user1).approve(MockMarket().address, Hundred);
           await MockMarket().connect(user1).buySynth(Hundred);
 

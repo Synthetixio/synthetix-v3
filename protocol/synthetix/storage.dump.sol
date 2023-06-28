@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -283,21 +283,6 @@ interface ILiquidationModule {
     }
 }
 
-// @custom:artifact contracts/interfaces/external/FunctionsBillingRegistryInterface.sol:FunctionsBillingRegistryInterface
-interface FunctionsBillingRegistryInterface {
-    enum FulfillResult {
-        USER_SUCCESS,
-        USER_ERROR,
-        INVALID_REQUEST_ID
-    }
-    struct RequestBilling {
-        uint64 subscriptionId;
-        address client;
-        uint32 gasLimit;
-        uint256 gasPrice;
-    }
-}
-
 // @custom:artifact contracts/modules/core/AccountModule.sol:AccountModule
 contract AccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
@@ -317,26 +302,11 @@ contract CollateralModule {
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
 }
 
-// @custom:artifact contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule
-contract CrossChainPoolModule {
-    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
-    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
-    string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
-}
-
 // @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
 contract CrossChainUSDModule {
     uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
-}
-
-// @custom:artifact contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule
-contract CrossChainUpkeepModule {
-    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
-    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
-    bytes32 internal constant _CONFIG_SYNC_POOL_CODE_ADDRESS = "performUpkeep_syncPool";
-    bytes32 internal constant _CONFIG_SYNC_POOL_SECRETS_ADDRESS = "performUpkeep_syncPoolSecrets";
 }
 
 // @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
@@ -483,8 +453,6 @@ library CollateralLock {
     struct Data {
         uint128 amountD18;
         uint64 lockExpirationTime;
-        uint128 lockExpirationPoolSync;
-        address lockExpirationPoolSyncVault;
     }
 }
 
@@ -500,11 +468,9 @@ library CrossChain {
     bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
     struct Data {
         address ccipRouter;
-        address chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
     function load() internal pure returns (Data storage crossChain) {
         bytes32 s = _SLOT_CROSS_CHAIN;
@@ -627,17 +593,6 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        uint128 totalCapacityD18;
-        int128 cumulativeDebtD18;
-        mapping(uint256 => uint256) heldMarketConfigurationWeights;
-        mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
-    }
-    struct AnalyzePoolConfigRuntime {
-        uint256 oldIdx;
-        uint256 potentiallyLockedMarketsIdx;
-        uint256 potentiallyDelayedMarketsIdx;
-        uint256 removedMarketsIdx;
-        uint128 lastMarketId;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
@@ -725,7 +680,6 @@ library SystemPoolConfiguration {
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
         SetUtil.UintSet approvedPools;
-        uint128 lastPoolId;
     }
     function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
@@ -740,7 +694,6 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
-        uint128 prevCapacityD18;
         int128 prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
@@ -757,9 +710,6 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
-        uint128 totalExitingCollateralD18;
-        uint128 _reserved;
-        mapping(bytes32 => CollateralLock.Data) exitingCollateral;
     }
 }
 
@@ -788,9 +738,4 @@ library CcipClient {
         uint256 gasLimit;
         bool strict;
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

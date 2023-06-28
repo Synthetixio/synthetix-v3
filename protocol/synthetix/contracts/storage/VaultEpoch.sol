@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./Distribution.sol";
 import "./ScalableMapping.sol";
-import "./CollateralLock.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
@@ -71,14 +70,6 @@ library VaultEpoch {
          * Needed to validate min delegation time compliance to prevent small scale debt pool frontrunning
          */
         mapping(uint128 => uint64) lastDelegationTime;
-        uint128 totalExitingCollateralD18;
-        uint128 _reserved;
-        /**
-         * @dev When collateral is removed from a pool, it must first go into "exiting" collateral. This allows
-         * for any debt which is accumulated asynchronously from the pool to be accounted before completely
-         * closing the position.
-         */
-        mapping(bytes32 => CollateralLock.Data) exitingCollateral;
     }
 
     /**
@@ -134,12 +125,12 @@ library VaultEpoch {
      * @dev Updates a user's collateral value, and sets their exposure to debt
      * according to the collateral they delegated and the leverage used.
      *
-     * Called whenever a user's collateral increases.
+     * Called whenever a user's collateral changes.
      */
-    function increaseAccountPosition(
+    function updateAccountPosition(
         Data storage self,
         uint128 accountId,
-        uint256 collateralIncreaseD18,
+        uint256 collateralAmountD18,
         uint256 leverageD18
     ) internal {
         bytes32 actorId = accountId.toBytes32();
@@ -147,39 +138,11 @@ library VaultEpoch {
         // Ensure account debt is consolidated before we do next things.
         consolidateAccountDebt(self, accountId);
 
-        uint256 newCollateralAmountD18 = self.collateralAmounts.get(actorId) +
-            collateralIncreaseD18;
-
-        self.collateralAmounts.set(actorId, newCollateralAmountD18);
+        self.collateralAmounts.set(actorId, collateralAmountD18);
         self.accountsDebtDistribution.setActorShares(
             actorId,
             self.collateralAmounts.sharesD18[actorId].mulDecimal(leverageD18)
         );
-    }
-
-    /**
-     * @dev Updates a user's collateral value, but leaves their exposure to debt the same. This is
-     * to ensure debt responsibility has a chance to propagate.
-     *
-     * Called whenever a user's collateral decreases.
-     */
-    function decreaseAccountPosition(
-        Data storage self,
-        uint128 accountId,
-        uint256 collateralReductionD18
-    ) internal {
-        bytes32 actorId = accountId.toBytes32();
-        self.collateralAmounts.set(
-            actorId,
-            self.collateralAmounts.get(actorId) - collateralReductionD18
-        );
-        self.exitingCollateral[actorId] = CollateralLock.Data(
-            self.exitingCollateral[actorId].amountD18 + collateralReductionD18.to128(),
-            uint64(block.timestamp),
-            0,
-            address(0)
-        );
-        self.totalExitingCollateralD18 += collateralReductionD18.to128();
     }
 
     /**

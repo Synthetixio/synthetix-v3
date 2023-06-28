@@ -6,8 +6,6 @@ import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessEr
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
-import "../interfaces/external/FunctionsOracleInterface.sol";
-import "../interfaces/external/FunctionsBillingRegistryInterface.sol";
 
 /**
  * @title System wide configuration for anything
@@ -26,11 +24,9 @@ library CrossChain {
 
     struct Data {
         ICcipRouterClient ccipRouter;
-        FunctionsOracleInterface chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -38,14 +34,6 @@ library CrossChain {
         assembly {
             crossChain.slot := s
         }
-    }
-
-    function createChainlinkSubscription(Data storage self) internal returns (uint64 id) {
-        FunctionsBillingRegistryInterface billingRegistry = FunctionsBillingRegistryInterface(
-            self.chainlinkFunctionsOracle.getRegistry()
-        );
-        id = billingRegistry.createSubscription();
-        billingRegistry.addConsumer(id, address(this));
     }
 
     function processCcipReceive(Data storage self, CcipClient.Any2EVMMessage memory data) internal {

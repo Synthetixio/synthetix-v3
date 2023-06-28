@@ -71,24 +71,5 @@ describe('CcipReceiverModule', function () {
         systems().Core
       );
     });
-
-    it('forwards message to specified caller', async () => {
-      const tx = await systems()
-        .Core.connect(FakeCcip)
-        .ccipReceive({
-          messageId: '0x2dceae8882534bd66b5a42c80a3a9daad0f3b4853c404516bdd57b246d80f823',
-          sourceChainId: 1234,
-          sender: ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
-          data: systems().Core.interface.encodeFunctionData(
-            '_recvCreateCrossChainPool',
-            [11155111, 3]
-          ),
-          tokenAmounts: [],
-        });
-
-      //console.log(await tx.wait());
-
-      await assertEvent(tx, 'CrossChainSecondaryPoolCreated(', systems().Core);
-    });
   });
 });

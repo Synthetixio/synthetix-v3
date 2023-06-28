@@ -23,9 +23,9 @@ describe('USDTokenModule', function () {
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
 
-    await systems()
-      .Core.connect(staker())
-      .withdraw(accountId, systems().USD.address, oneHundredUSD);
+    // await systems()
+    //   .Core.connect(staker())
+    //   .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
   it('USD is deployed and registered', async () => {
