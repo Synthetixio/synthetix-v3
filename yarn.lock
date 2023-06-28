@@ -2719,13 +2719,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
-    "@usecannon/cli": ^2.4.17
     handlebars: 4.7.7
     solidity-ast: 0.4.46
     solidity-docgen: 0.6.0-beta.35
-  bin:
-    abis: ./abis.js
-    natspec: ./natspec.js
   languageName: unknown
   linkType: soft
 
