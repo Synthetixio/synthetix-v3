@@ -27,6 +27,7 @@ jobs:
             perps-market,
             core-subgraph,
             spot-market-subgraph,
+            perps-market-subgraph,
           ]
         include:
           - package: core-contracts
@@ -52,6 +53,8 @@ jobs:
             workspace: "@synthetixio/core-subgraph"
           - package: spot-market-subgraph
             workspace: "@synthetixio/spot-market-subgraph"
+          - package: perps-market-subgraph
+            workspace: "@synthetixio/perps-market-subgraph"
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1

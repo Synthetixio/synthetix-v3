@@ -1,0 +1,8 @@
+{
+  "optimism-goerli": {
+    "PerpsMarket": {
+      "address": "0x54D71285871C5a0914F5B53740b70bA3eDb51Fbb",
+      "startBlock": 9727531
+    }
+  }
+}
