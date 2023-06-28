@@ -8,16 +8,22 @@ defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 
-[contract.PerpsMarketModule]
-artifact = "PerpsMarketModule"
+[contract.OrderModule]
+artifact = "OrderModule"
+args = []
+
+[contract.PerpMarketModule]
+artifact = "PerpMarketModule"
 args = []
 
 # Core
 [router.BigFPerpsMarketRouter]
 contracts = [
-  "PerpsMarketModule"
+  "PerpMarketModule",
+  "OrderModule"
 ]
 depends = [
   "import.synthetix",
-  "contract.PerpsMarketModule"
+  "contract.PerpMarketModule",
+  "contract.OrderModule"
 ]
