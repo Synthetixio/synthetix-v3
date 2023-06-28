@@ -61,6 +61,9 @@ describe('SynthetixElectionModule - general elections', function () {
     },
   ];
 
+  // TODO: when your testing crosschain functionality,
+  // add tests specifically for receivers, check for ccip and mothership, etc.
+
   before('identify signers', async () => {
     [owner, user1, user2, user3, user4, user5, user6, user7, user8, user9] =
       await ethers.getSigners();

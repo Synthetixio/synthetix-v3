@@ -251,6 +251,16 @@ contract BaseElectionModule is
     /// i.e. you vote on the chain you're LPing on, it sends a message to a mothership deployment to tabulate,
     /// and then it sends a message back at the end of the period to all the chains to transfer NFTs.
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
+    ///
+    // * if im the mothership -> call recv on self; dop same thig but ccipSend call
+    /// * _recvCast func is a majority of  the actual code that was in cast before; is would take user and voting power and tally up based on that info
+    // * configure mothership func
+    /// * on tally, if not mothership, revert; else do the final tally and distribute NFTs ( in seprate recvEvaluation func and check if mothership self/broadcast msg via CCIP)
+
+    /// * election module provisioned with CREATE2
+
+    //// for next voting period, we'll support v2x voting power through merkle tree; reuse existing code and then disable merkle tree later on when were moved over to v3
+
     function cast(
         address[] calldata candidates
     ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
