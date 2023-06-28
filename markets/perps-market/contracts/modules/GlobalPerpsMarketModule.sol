@@ -8,7 +8,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
 
-    function setMaxCollateralForSynthMarketId(
+    function setMaxCollateralAmount(
         uint128 synthMarketId,
         uint collateralAmount
     ) external override {
@@ -16,12 +16,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.maxCollateralAmounts[synthMarketId] = collateralAmount;
 
-        emit MaxCollateralForSynthSet(synthMarketId, collateralAmount);
+        emit MaxCollateralAmountSet(synthMarketId, collateralAmount);
     }
 
-    function getMaxCollateralAmountsForSynthMarket(
-        uint128 synthMarketId
-    ) external view override returns (uint) {
+    function getMaxCollateralAmount(uint128 synthMarketId) external view override returns (uint) {
         return GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[synthMarketId];
     }
 

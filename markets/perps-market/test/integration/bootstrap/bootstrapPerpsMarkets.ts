@@ -31,9 +31,11 @@ export type PerpsMarketData = Array<{
     maintenanceMarginFraction: ethers.BigNumber;
     maxLiquidationLimitAccumulationMultiplier: ethers.BigNumber;
     liquidationRewardRatio: ethers.BigNumber;
+    maxSecondsInLiquidationWindow: ethers.BigNumber;
+    minimumPositionMargin: ethers.BigNumber;
   };
   maxMarketValue?: ethers.BigNumber;
-  lockedOiPercent?: ethers.BigNumber;
+  lockedOiRatioD18?: ethers.BigNumber;
   settlementStrategy?: Partial<{
     strategyType: ethers.BigNumber;
     settlementDelay: ethers.BigNumber;
@@ -87,7 +89,7 @@ export const bootstrapPerpsMarkets = (
       fundingParams,
       liquidationParams,
       maxMarketValue,
-      lockedOiPercent,
+      lockedOiRatioD18,
       settlementStrategy,
     }) => {
       let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: ethers.BigNumber;
@@ -142,16 +144,18 @@ export const bootstrapPerpsMarkets = (
             liquidationParams.initialMarginFraction,
             liquidationParams.maintenanceMarginFraction,
             liquidationParams.liquidationRewardRatio,
-            liquidationParams.maxLiquidationLimitAccumulationMultiplier
+            liquidationParams.maxLiquidationLimitAccumulationMultiplier,
+            liquidationParams.maxSecondsInLiquidationWindow,
+            liquidationParams.minimumPositionMargin
           );
         });
       }
 
-      if (lockedOiPercent) {
+      if (lockedOiRatioD18) {
         before('set locked oi percent', async () => {
-          await contracts.PerpsMarket.connect(marketOwner).setLockedOiPercent(
+          await contracts.PerpsMarket.connect(marketOwner).setLockedOiRatio(
             marketId,
-            lockedOiPercent
+            lockedOiRatioD18
           );
         });
       }

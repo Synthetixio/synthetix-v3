@@ -13,7 +13,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "test": "hardhat test",
-    "coverage": "hardhat --network hardhat coverage",
+    "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },

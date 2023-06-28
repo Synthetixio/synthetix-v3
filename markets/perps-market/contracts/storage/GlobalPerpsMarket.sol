@@ -23,6 +23,7 @@ library GlobalPerpsMarket {
         uint collateralAmount,
         uint depositAmount
     );
+    error SynthNotEnabledForCollateral(uint128 synthMarketId);
     error InsufficientCollateral(uint128 synthMarketId, uint collateralAmount, uint withdrawAmount);
 
     struct Data {
@@ -58,6 +59,9 @@ library GlobalPerpsMarket {
             uint maxAmount = GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[
                 synthMarketId
             ];
+            if (maxAmount == 0) {
+                revert SynthNotEnabledForCollateral(synthMarketId);
+            }
             uint newCollateralAmount = collateralAmount + synthAmount.toUint();
             if (newCollateralAmount > maxAmount) {
                 revert MaxCollateralExceeded(

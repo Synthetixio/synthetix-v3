@@ -1,0 +1,67 @@
+type Wrapper @entity {
+  id: ID!
+  marketId: BigInt!
+  maxWrappableAmount: BigInt!
+  wrapCollateralType: String!
+}
+
+type SettlementStrategy @entity {
+  id: ID!
+  marketId: BigInt!
+  settlementStrategyId: BigInt!
+  disabled: Boolean!
+  strategyType: Int
+  settlementDelay: BigInt
+  settlementWindowDuration: BigInt
+  priceVerificationContract: String
+  feedId: Bytes
+  url: String
+  settlementReward: BigInt
+  priceDeviationTolerance: BigInt
+  minimumUsdExchangeAmount: BigInt
+  maxRoundingLoss: BigInt
+}
+
+type Order @entity {
+  id: ID!
+  marketId: BigInt
+  amountProvided: BigInt
+  asyncOrderId: BigInt
+  orderType: Int
+  referrer: String
+  finalOrderAmount: BigInt
+  collectedFees: BigInt
+  settler: String
+  fixedFees: BigInt
+  skewFees: BigInt
+  utilizationFees: BigInt
+  wrapperFees: BigInt
+  status: String
+  owner: String
+  amountEscrowed: BigInt
+  settlementStrategyId: BigInt
+  settlementTime: BigInt
+  minimumSettlementAmount: BigInt
+  settledAt: BigInt
+  price: BigInt
+  block: BigInt!
+  timestamp: BigInt!
+}
+
+type MarketInfo @entity {
+  id: ID!
+  marketId: BigInt!
+  buyFeedId: Bytes
+  sellFeedId: Bytes
+}
+
+type WrappSynth @entity {
+  id: ID!
+  marketId: BigInt
+  amount: BigInt
+  collectedFees: BigInt
+  wrapperFees: BigInt
+  type: String
+  block: BigInt
+  timestamp: BigInt
+}

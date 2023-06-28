@@ -29,9 +29,11 @@ describe('MarketConfiguration', async () => {
     skewScale: bn(1),
     initialMarginFraction: bn(2),
     maintenanceMarginFraction: bn(10),
-    lockedOiPercent: bn(15),
+    lockedOiPercentRatioD18: bn(15),
     maxLiquidationLimitAccumulationMultiplier: bn(5),
+    minimumPositionMargin: bn(50),
     liquidationRewardRatioD18: bn(10e9),
+    maxSecondsInLiquidationWindow: bn(10),
   };
 
   const { systems, signers } = bootstrapMarkets({
@@ -63,7 +65,7 @@ describe('MarketConfiguration', async () => {
     );
   });
 
-  it('owner can set all market configurations properties and events are emitted', async () => {
+  it('owner can set settlement strategy and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -93,6 +95,8 @@ describe('MarketConfiguration', async () => {
         '], 0)',
       systems().PerpsMarket
     );
+  });
+  it('owner can enable settlement strategy and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -106,6 +110,9 @@ describe('MarketConfiguration', async () => {
         ')',
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set order fees and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -119,6 +126,8 @@ describe('MarketConfiguration', async () => {
         ')',
       systems().PerpsMarket
     );
+  });
+  it('owner can set max market value and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -126,6 +135,9 @@ describe('MarketConfiguration', async () => {
       'MaxMarketValueSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set funding parameters and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -139,6 +151,9 @@ describe('MarketConfiguration', async () => {
         ')',
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set liquidation parameters and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
@@ -147,26 +162,26 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.maintenanceMarginFraction,
           fixture.liquidationRewardRatioD18,
-          fixture.maxLiquidationLimitAccumulationMultiplier
+          fixture.maxLiquidationLimitAccumulationMultiplier,
+          fixture.maxSecondsInLiquidationWindow,
+          fixture.minimumPositionMargin
         ),
-      'LiquidationParametersSet(' +
-        marketId.toString() +
-        ', ' +
-        fixture.initialMarginFraction.toString() +
-        ', ' +
-        fixture.maintenanceMarginFraction.toString() +
-        ', ' +
-        fixture.liquidationRewardRatioD18.toString() +
-        ', ' +
-        fixture.maxLiquidationLimitAccumulationMultiplier.toString() +
-        ')',
+      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginFraction.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()}, ${fixture.maxSecondsInLiquidationWindow.toString()}, ${fixture.minimumPositionMargin.toString()})`,
+
       systems().PerpsMarket
     );
+  });
+
+  it('owner can set all locked OI percentage and events are emitted', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
-        .setLockedOiPercent(marketId, fixture.lockedOiPercent),
-      'LockedOiPercentSet(' + marketId.toString() + ', ' + fixture.lockedOiPercent.toString() + ')',
+        .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
+      'LockedOiRatioD18Set(' +
+        marketId.toString() +
+        ', ' +
+        fixture.lockedOiPercentRatioD18.toString() +
+        ')',
       systems().PerpsMarket
     );
   });
@@ -209,14 +224,16 @@ describe('MarketConfiguration', async () => {
           fixture.initialMarginFraction,
           fixture.maintenanceMarginFraction,
           fixture.liquidationRewardRatioD18,
-          fixture.maxLiquidationLimitAccumulationMultiplier
+          fixture.maxLiquidationLimitAccumulationMultiplier,
+          fixture.maxSecondsInLiquidationWindow,
+          fixture.minimumPositionMargin
         ),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
-        .setLockedOiPercent(marketId, fixture.lockedOiPercent),
+        .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
   });
@@ -270,6 +287,7 @@ describe('MarketConfiguration', async () => {
       maintenanceMarginFraction,
       liquidationRewardRatioD18,
       maxLiquidationLimitAccumulationMultiplier,
+      maxSecondsInLiquidationWindow,
     ] = await systems().PerpsMarket.getLiquidationParameters(marketId);
     assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
     assertBn.equal(maintenanceMarginFraction, fixture.maintenanceMarginFraction);
@@ -278,5 +296,6 @@ describe('MarketConfiguration', async () => {
       maxLiquidationLimitAccumulationMultiplier,
       fixture.maxLiquidationLimitAccumulationMultiplier
     );
+    assertBn.equal(maxSecondsInLiquidationWindow, fixture.maxSecondsInLiquidationWindow);
   });
 });

@@ -147,6 +147,7 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
+    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -575,8 +576,8 @@ library AsyncOrder {
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -584,8 +585,8 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
     }
@@ -661,8 +662,8 @@ library PerpsAccount {
         uint128[] profitableMarkets;
         uint128[] losingMarkets;
         uint amountToDeposit;
-        uint amountToLiquidatePercentage;
-        uint percentageOfTotalLosingPnl;
+        uint amountToLiquidateRatioD18;
+        uint totalLosingPnlRatioD18;
         uint totalAvailableForDeposit;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
@@ -707,11 +708,13 @@ library PerpsMarketConfiguration {
         uint256 maxMarketValue;
         uint256 maxFundingVelocity;
         uint256 skewScale;
-        uint256 initialMarginFraction;
-        uint256 maintenanceMarginFraction;
-        uint256 lockedOiPercent;
+        uint256 initialMarginRatioD18;
+        uint256 maintenanceMarginRatioD18;
+        uint256 lockedOiRatioD18;
         uint256 maxLiquidationLimitAccumulationMultiplier;
+        uint256 maxSecondsInLiquidationWindow;
         uint256 liquidationRewardRatioD18;
+        uint256 minimumPositionMargin;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));

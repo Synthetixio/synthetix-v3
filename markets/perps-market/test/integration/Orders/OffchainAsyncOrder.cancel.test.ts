@@ -38,14 +38,16 @@ describe('Cancel Offchain Async Order test', () => {
     });
   });
   before('commit order', async () => {
-    const tx = await systems().PerpsMarket.commitOrder({
-      marketId: ethMarketId,
-      accountId: 2,
-      sizeDelta: bn(1),
-      settlementStrategyId: 0,
-      acceptablePrice: bn(1050), // 5% slippage
-      trackingCode: ethers.constants.HashZero,
-    });
+    const tx = await systems()
+      .PerpsMarket.connect(trader1())
+      .commitOrder({
+        marketId: ethMarketId,
+        accountId: 2,
+        sizeDelta: bn(1),
+        settlementStrategyId: 0,
+        acceptablePrice: bn(1050), // 5% slippage
+        trackingCode: ethers.constants.HashZero,
+      });
     await tx.wait();
     assertBn.equal((await systems().PerpsMarket.getOrder(ethMarketId, 2)).sizeDelta, bn(1));
   });

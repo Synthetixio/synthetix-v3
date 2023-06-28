@@ -12,7 +12,8 @@
     "utils/**/*.d.ts.map"
   ],
   "scripts": {
-    "build": "tsc --project src/tsconfig.json",
+    "build": "yarn build:ts",
+    "build:ts": "tsc --project src/tsconfig.json",
     "watch": "yarn build --watch",
     "test": "mocha --require ts-node/register",
     "coverage": "nyc yarn test",

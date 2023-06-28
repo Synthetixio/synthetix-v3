@@ -41,7 +41,7 @@ describe('PerpsMarketModule', () => {
   });
 
   describe('getMarketSummary', () => {
-    beforeEach(() => restore());
+    beforeEach(restore);
 
     it('should return all values successfully', async () => {
       const summary = await systems().PerpsMarket.getMarketSummary(marketId);
