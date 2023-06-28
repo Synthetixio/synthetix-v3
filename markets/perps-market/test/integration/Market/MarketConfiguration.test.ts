@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
 
-describe('MarketConfiguration', async () => {
+describe.only('MarketConfiguration', async () => {
   const fixture = {
     token: 'snxETH',
     marketName: 'TestPerpsMarket',
