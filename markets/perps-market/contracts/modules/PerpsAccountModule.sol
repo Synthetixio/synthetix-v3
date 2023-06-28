@@ -108,7 +108,7 @@ contract PerpsAccountModule is IAccountModule {
     function getCollateralAmount(
         uint128 accountId,
         uint128 synthMarketId
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         return PerpsAccount.load(accountId).collateralAmounts[synthMarketId];
     }
 }
