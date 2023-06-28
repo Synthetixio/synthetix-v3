@@ -12,8 +12,8 @@ interface IAccountModule {
     event CollateralModified(
         uint128 indexed accountId,
         uint128 indexed synthMarketId,
-        int indexed amountDelta,
-        address sender
+        int amountDelta,
+        address indexed sender
     );
 
     function modifyCollateral(uint128 accountId, uint128 synthMarketId, int amountDelta) external;

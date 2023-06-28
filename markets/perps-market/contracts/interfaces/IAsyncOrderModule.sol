@@ -11,12 +11,12 @@ interface IAsyncOrderModule {
     event OrderCommitted(
         uint128 indexed marketId,
         uint128 indexed accountId,
-        SettlementStrategy.Type indexed orderType,
+        SettlementStrategy.Type orderType,
         int128 sizeDelta,
         uint256 acceptablePrice,
         uint256 settlementTime,
         uint256 expirationTime,
-        bytes32 trackingCode,
+        bytes32 indexed trackingCode,
         address sender
     );
 
