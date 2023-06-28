@@ -21,10 +21,14 @@ interface IMarketConfigurationModule {
         uint256 indexed strategyId
     );
 
-    event OrderFeesSet(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio);
-    event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity);
+    event OrderFeesSet(uint128 indexed marketId, uint256 makerFeeRatio, uint256 takerFeeRatio);
+    event FundingParametersSet(
+        uint128 indexed marketId,
+        uint256 skewScale,
+        uint256 maxFundingVelocity
+    );
     event LiquidationParametersSet(
-        uint128 marketId,
+        uint128 indexed marketId,
         uint256 initialMarginRatioD18,
         uint256 maintenanceMarginRatioD18,
         uint256 liquidationRewardRatioD18,
@@ -32,9 +36,9 @@ interface IMarketConfigurationModule {
         uint256 maxSecondsInLiquidationWindow,
         uint256 minimumPositionMargin
     );
-    event MaxMarketValueSet(uint128 marketId, uint256 maxMarketValue);
-    event LockedOiRatioD18Set(uint128 marketId, uint256 lockedOiRatioD18);
-    event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled);
+    event MaxMarketValueSet(uint128 indexed marketId, uint256 maxMarketValue);
+    event LockedOiRatioD18Set(uint128 indexed marketId, uint256 lockedOiRatioD18);
+    event SettlementStrategyEnabled(uint128 indexed marketId, uint256 strategyId, bool enabled);
 
     function addSettlementStrategy(
         uint128 marketId,
