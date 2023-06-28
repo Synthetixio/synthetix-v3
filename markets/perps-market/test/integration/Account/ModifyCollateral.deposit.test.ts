@@ -109,5 +109,13 @@ describe('ModifyCollateral Deposit', () => {
         systems().PerpsMarket
       );
     });
+
+    it('returns the correct amount when calling getCollateralAmount', async () => {
+      const collateralBalance = await systems().PerpsMarket.getCollateralAmount(
+        accountIds[0],
+        synthBTCMarketId
+      );
+      assertBn.equal(collateralBalance, bn(1));
+    });
   });
 });
