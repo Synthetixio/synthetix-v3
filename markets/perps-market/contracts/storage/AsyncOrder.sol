@@ -150,6 +150,7 @@ library AsyncOrder {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
+
         SimulateDataRuntime memory runtime;
 
         PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
@@ -196,8 +197,14 @@ library AsyncOrder {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
-        // TODO: validate position size
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
+
+        PerpsMarket.validatePositionSize(
+            perpsMarketData,
+            marketConfig.maxMarketValue,
+            oldPosition.size,
+            order.sizeDelta
+        );
 
         runtime.newPositionSize = oldPosition.size + order.sizeDelta;
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(

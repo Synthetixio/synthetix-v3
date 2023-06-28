@@ -127,6 +127,13 @@ export const bootstrapPerpsMarkets = (
         );
       });
 
+      before('set max market value', async () => {
+        await contracts.PerpsMarket.connect(marketOwner).setMaxMarketValue(
+          marketId,
+          maxMarketValue ? maxMarketValue : bn(10_000_000)
+        );
+      });
+
       if (orderFees) {
         before('set fees', async () => {
           await contracts.PerpsMarket.connect(marketOwner).setOrderFees(
@@ -156,15 +163,6 @@ export const bootstrapPerpsMarkets = (
           await contracts.PerpsMarket.connect(marketOwner).setLockedOiRatio(
             marketId,
             lockedOiRatioD18
-          );
-        });
-      }
-
-      if (maxMarketValue) {
-        before('set max market value', async () => {
-          await contracts.PerpsMarket.connect(marketOwner).setMaxMarketValue(
-            marketId,
-            maxMarketValue
           );
         });
       }

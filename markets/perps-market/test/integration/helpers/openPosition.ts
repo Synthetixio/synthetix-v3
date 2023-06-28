@@ -47,6 +47,7 @@ export const openPosition = async (data: OpenPositionData) => {
       acceptablePrice: sizeDelta.gt(0) ? price.mul(2) : price.div(2),
       trackingCode: trackingCode ?? ethers.constants.HashZero,
     });
+
   const commitmentTime = await getTxTime(provider(), commitTx);
   const settlementTime = commitmentTime + delay + 1;
   await fastForwardTo(settlementTime, provider());
