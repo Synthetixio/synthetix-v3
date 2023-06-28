@@ -39,4 +39,9 @@ interface IAccountModule {
     ) external view returns (AsyncOrder.Data memory);
 
     function getAvailableMargin(uint128 accountId) external view returns (int);
+
+    function getCollateralAmount(
+        uint128 accountId,
+        uint128 synthMarketId
+    ) external view returns (uint256);
 }
