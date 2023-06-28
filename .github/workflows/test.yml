@@ -26,6 +26,8 @@ jobs:
             spot-market,
             perps-market,
             core-subgraph,
+            spot-market-subgraph,
+            perps-market-subgraph,
           ]
         include:
           - package: core-contracts
@@ -49,6 +51,10 @@ jobs:
             workspace: "@synthetixio/main"
           - package: core-subgraph
             workspace: "@synthetixio/core-subgraph"
+          - package: spot-market-subgraph
+            workspace: "@synthetixio/spot-market-subgraph"
+          - package: perps-market-subgraph
+            workspace: "@synthetixio/perps-market-subgraph"
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -66,8 +72,8 @@ jobs:
 
       - run: yarn install --immutable --immutable-cache
 
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build
-      # TODO: optimize
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build:ts
+
       - run: yarn workspaces foreach --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build-testable
 
       - name: Regenerate docs and check for changes

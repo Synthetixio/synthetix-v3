@@ -15,6 +15,7 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "clean": "yarn workspaces foreach --parallel --verbose run clean",
+    "build-prerelease-dev": "git diff --exit-code && yarn lerna exec -- npm version prepatch --no-git-tag-version --no-workspaces-update && yarn && yarn build && git stash && yarn",
     "build": "yarn workspaces foreach --topological-dev --verbose run build",
     "test": "yarn workspaces foreach --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --verbose run coverage",
@@ -42,6 +43,7 @@
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.0.0",
     "@lerna-lite/cli": "1.17.0",
+    "@lerna-lite/exec": "1.17.0",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@synthetixio/deps": "workspace:*",
     "@types/mocha": "10.0.1",

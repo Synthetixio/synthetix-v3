@@ -44,8 +44,8 @@ library AsyncOrder {
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -54,8 +54,8 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta; // TODO: change to int128
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
     }
@@ -199,7 +199,7 @@ library AsyncOrder {
         // TODO: validate position size
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
-        runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
+        runtime.newPositionSize = oldPosition.size + order.sizeDelta;
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
             runtime.fillPrice
@@ -219,6 +219,7 @@ library AsyncOrder {
             runtime.requiredMaintenanceMargin +
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
+
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
@@ -234,7 +235,7 @@ library AsyncOrder {
     }
 
     function calculateOrderFee(
-        int sizeDelta,
+        int128 sizeDelta,
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData
@@ -260,14 +261,18 @@ library AsyncOrder {
         // as a maker (reducing skew) as it's now taking (increasing skew) in the opposite direction. hence,
         // a different fee is applied on the proportion increasing the skew.
 
-        // proportion of size that's on the other direction
-        uint takerSize = MathUtil.abs((marketSkew + sizeDelta).divDecimal(sizeDelta));
-        uint makerSize = DecimalMath.UNIT - takerSize;
-        uint takerFee = MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(
-            orderFeeData.takerFee
-        );
-        uint makerFee = MathUtil.abs(notionalDiff).mulDecimal(makerSize).mulDecimal(
+        // The proportions are computed as follows:
+        // makerSize = abs(marketSkew) => since we are reversing the skew, the maker size is the current skew
+        // takerSize = abs(marketSkew + sizeDelta) => since we are reversing the skew, the taker size is the new skew
+        //
+        // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
+
+        uint makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
             orderFeeData.makerFee
+        );
+
+        uint takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
+            orderFeeData.takerFee
         );
 
         return takerFee + makerFee;
@@ -280,6 +285,10 @@ library AsyncOrder {
         int size,
         uint price
     ) internal pure returns (uint) {
+        if (skewScale == 0) {
+            return price;
+        }
+
         int pdBefore = skew.divDecimal(skewScale.toInt());
         int pdAfter = (skew + size).divDecimal(skewScale.toInt());
         int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
