@@ -137,6 +137,10 @@ depends = [
 [contract.CollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 
+[contract.Collateral2Mock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+salt = "2"
+
 [invoke.intializeCollateralMock]
 target = ["CollateralMock"]
 func = "initialize"
