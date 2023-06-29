@@ -2,11 +2,20 @@ name = "bfp-market"
 version = "<%= package.version %>"
 description = "bfp market for Synthetix v3"
 
+# TODO: Replace burn address with a real market owner once ready.
+[setting.owner]
+description = "bfp market owner"
+defaultValue = "0x0000000000000000000000000000000000000000"
+
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
+# --- External Imports --- #
+
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+
+# --- Market Contracts --- #
 
 [contract.OrderModule]
 artifact = "OrderModule"
@@ -16,14 +25,63 @@ args = []
 artifact = "PerpMarketModule"
 args = []
 
-# Core
-[router.BigFPerpsMarketRouter]
+[contract.PerpAccountModule]
+artifact = "PerpAccountModule"
+args = []
+
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
+# --- Market Proxy Contract --- #
+
+[contract.InitialProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
+abiOf = ["CoreModule"]
+# @see: https://usecannon.com/docs/technical-reference
+# salt - The salt is a string which, when changed, will result in a new contract deployment.
+salt = "<%= settings.salt %>"
+depends = ["contract.CoreModule"]
+
+# --- Core Router --- #
+
+[router.Router]
 contracts = [
+  "synthetix.AccountModule",
+  "synthetix.AssociatedSystemsModule",
+  "CoreModule",
   "PerpMarketModule",
+  "PerpAccountModule",
   "OrderModule"
 ]
 depends = [
   "import.synthetix",
+  "contract.CoreModule",
   "contract.PerpMarketModule",
+  "contract.PerpAccountModule",
   "contract.OrderModule"
 ]
+
+# --- Post Deployment --- #
+
+[invoke.upgradeProxy]
+target = ["InitialProxy"]
+fromCall.func = "owner"
+func = "upgradeTo"
+args = ["<%= contracts.Router.address %>"]
+# Referencing Factory-deployed Contracts
+#
+# @see: https://usecannon.com/docs/technical-reference/
+factory.MarketProxy.abiOf = ["Router"]
+factory.MarketProxy.event = "Upgraded"
+factory.MarketProxy.arg = 0
+depends = ["contract.InitialProxy", "router.Router"]
+
+[invoke.setSynthetix]
+target = ["MarketProxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "setSynthetix"
+args = [
+  "<%= imports.synthetix.contracts.CoreProxy.address %>",
+]
+depends = ["invoke.upgradeProxy"]

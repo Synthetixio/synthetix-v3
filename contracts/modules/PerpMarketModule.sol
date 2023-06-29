@@ -1,15 +1,29 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../external/IMarket.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import "../interfaces/IPerpMarketModule.sol";
 
-contract PerpMarketModule is IMarket {
+contract PerpMarketModule is IPerpMarketModule {
     uint128 public marketId;
 
     function name(uint128 _marketId) external view override returns (string memory n) {
         if (_marketId == marketId) {
             n = string(abi.encodePacked("Market ", bytes32(uint256(_marketId))));
         }
+    }
+
+    function setSynthetix(ISynthetixSystem synthetix) external {
+        OwnableStorage.onlyOwner();
+        MarketConfiguration.Data storage store = MarketConfiguration.load();
+
+        store.synthetix = synthetix;
+        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
+        store.usdToken = ITokenModule(usdTokenAddress);
     }
 
     // --- Required functions to be IMarket compatiable --- //

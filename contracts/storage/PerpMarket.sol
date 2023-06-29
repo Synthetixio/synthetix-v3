@@ -13,7 +13,9 @@ library PerpMarket {
         int256 lastComputedFundingRate;
         int256 lastAccumulatedFunding;
         uint256 lastFundingTime;
+        // accountId => Order
         mapping(uint128 => Order.Data) orders;
+        // accountId => Position
         mapping(uint128 => Position.Data) positions;
     }
 
