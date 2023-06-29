@@ -35,7 +35,7 @@
 ### getNode
 
   ```solidity
-  function getNode(bytes32 nodeId) external view returns (struct NodeDefinition.Data node)
+  function getNode(bytes32 nodeId) external pure returns (struct NodeDefinition.Data node)
   ```
 
   Returns a node's definition (type, parameters, and parents)
@@ -249,25 +249,5 @@
 
   ```solidity
   function isValid(struct NodeDefinition.Data nodeDefinition) internal view returns (bool valid)
-  ```
-
-## Router
-
-### fallback
-
-  ```solidity
-  fallback() external payable
-  ```
-
-### receive
-
-  ```solidity
-  receive() external payable
-  ```
-
-### _forward
-
-  ```solidity
-  function _forward() internal
   ```
 
