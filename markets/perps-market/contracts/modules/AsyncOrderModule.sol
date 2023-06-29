@@ -97,11 +97,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
     }
 
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
-        (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
+        (uint128 marketId, uint128 accountId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
-        ) = _performOrderValidityChecks(marketId, asyncOrderId);
+        ) = _performOrderValidityChecks(marketId, accountId);
 
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = settlementStrategy.feedId;
