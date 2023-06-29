@@ -224,6 +224,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // exctracted from asyncOrder before order is reset
         bytes32 trackingCode = asyncOrder.trackingCode;
+        int128 sizeDelta = asyncOrder.sizeDelta;
 
         asyncOrder.reset();
 
@@ -233,6 +234,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             runtime.accountId,
             fillPrice,
             runtime.pnl,
+            sizeDelta,
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,

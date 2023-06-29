@@ -25,6 +25,7 @@ interface IAsyncOrderModule {
         uint128 indexed accountId,
         uint256 fillPrice,
         int256 accountPnlRealized,
+        int128 sizeDelta,
         int128 newSize,
         uint256 collectedFees,
         uint256 settelementReward,
