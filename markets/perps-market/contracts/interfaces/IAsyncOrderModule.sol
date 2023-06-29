@@ -60,6 +60,7 @@ interface IAsyncOrderModule {
     struct SettleOrderRuntime {
         uint128 marketId;
         uint128 accountId;
+        int128 sizeDelta;
         int128 newPositionSize;
         int256 pnl;
         uint256 pnlUint;

@@ -177,6 +177,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         runtime.accountId = asyncOrder.accountId;
         runtime.marketId = asyncOrder.marketId;
+        runtime.sizeDelta = asyncOrder.sizeDelta;
 
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
@@ -224,7 +225,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // exctracted from asyncOrder before order is reset
         bytes32 trackingCode = asyncOrder.trackingCode;
-        int128 sizeDelta = asyncOrder.sizeDelta;
 
         asyncOrder.reset();
 
@@ -234,7 +234,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             runtime.accountId,
             fillPrice,
             runtime.pnl,
-            sizeDelta,
+            runtime.sizeDelta,
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
