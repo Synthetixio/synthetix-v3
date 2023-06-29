@@ -175,6 +175,11 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
      * @dev Migrates {staker} from V2 to {accountId} in V3.
      */
     function _migrate(address staker, uint128 accountId) internal {
+
+        if (staker == address(this)) {
+            revert ParameterError.InvalidParameter("staker", "must not be legacy market");
+        }
+
         // sanity
         if (migrationInProgress) {
             revert MigrationInProgress();
