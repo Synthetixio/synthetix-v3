@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import "./interfaces/external/ILiquidatorRewards.sol";
 import "./interfaces/external/IIssuer.sol";
@@ -16,11 +17,13 @@ import "./interfaces/external/IRewardEscrowV2.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC721Receiver.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
-contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
+contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IERC721Receiver {
+    using SafeCastU256 for uint256;
     using DecimalMath for uint256;
 
     uint128 public marketId;
@@ -28,11 +31,14 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     bool public pauseMigration;
 
     // used by _migrate to temporarily set reportedDebt to another value before
-    uint256 tmpLockedDebt;
+    uint128 tmpLockedDebt;
+
+    bool migrationInProgress;
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
 
+    error MigrationInProgress();
     error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
@@ -77,7 +83,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         if (marketId == requestedMarketId) {
             // in cases where we are in the middle of an account migration, we want to prevent the debt from changing, so we "lock" the value to the amount as the call starts
             // so we can detect the increase and associate it properly later.
-            if (tmpLockedDebt != 0) {
+            if (migrationInProgress) {
                 return tmpLockedDebt;
             }
 
@@ -166,11 +172,17 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
      * @dev Migrates {staker} from V2 to {accountId} in V3.
      */
     function _migrate(address staker, uint128 accountId) internal {
-        // start building the staker's v3 account
-        v3System.createAccount(accountId);
+        // sanity
+        if (migrationInProgress) {
+            revert MigrationInProgress();
+        }
 
         // find out how much debt is on the v2x system
-        tmpLockedDebt = reportedDebt(marketId);
+        tmpLockedDebt = reportedDebt(marketId).to128();
+        migrationInProgress = true;
+
+        // start building the staker's v3 account
+        v3System.createAccount(accountId);
 
         // get the address of the synthetix v2x proxy contract so we can manipulate the debt
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
@@ -216,6 +228,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
 
         // unlock the debt. now it will suddenly appear in subsequent call for association
         tmpLockedDebt = 0;
+        migrationInProgress = false;
 
         // now we can associate the debt to a single staker
         v3System.associateDebt(
@@ -319,5 +332,22 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
 
     function upgradeTo(address to) external onlyOwner {
         _upgradeTo(to);
+    }
+
+    function onERC721Received(
+        address operator,
+        address /*from*/,
+        uint256 /*tokenId*/,
+        bytes memory /*data*/
+    ) external view override returns (bytes4) {
+        if (operator != address(v3System)) {
+            revert ParameterError.InvalidParameter("operator", "should be account token");
+        }
+
+        if (!migrationInProgress) {
+            revert ParameterError.InvalidParameter("tokenId", "must be migrating account token");
+        }
+
+        return IERC721Receiver.onERC721Received.selector;
     }
 }

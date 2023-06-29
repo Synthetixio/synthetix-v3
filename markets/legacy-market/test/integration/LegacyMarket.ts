@@ -152,7 +152,7 @@ describe('LegacyMarket', () => {
           ).toString()
         );
         assertBn.gte(
-          await v3System.getWithdrawableUsd(await market.marketId()),
+          await v3System.getWithdrawableMarketUsd(await market.marketId()),
           convertedAmount.toBN()
         );
       });
@@ -334,6 +334,62 @@ describe('LegacyMarket', () => {
       return market.connect(snxStaker).migrate(migratedAccountId);
     });
 
+    describe('when we have some collateral already deposited from outside the v3 market', () => {
+      const accountId = 100;
+      const delegateAmount = ethers.utils.parseEther('100');
+
+      before(restore);
+
+      before('delegate collateral outside of market', async () => {
+        // create user account
+        await v3System.connect(owner)['createAccount(uint128)'](100);
+
+        // approve
+        await snxToken.connect(owner).approve(v3System.address, ethers.constants.MaxUint256);
+
+        // stake collateral
+        await v3System.connect(owner).deposit(accountId, snxToken.address, delegateAmount);
+
+        // invest in the pool
+        await v3System
+          .connect(owner)
+          .delegateCollateral(
+            accountId,
+            await v3System.getPreferredPool(),
+            snxToken.address,
+            delegateAmount,
+            ethers.utils.parseEther('1')
+          );
+
+        // sanity
+        assertBn.equal(
+          await v3System.callStatic.getPositionDebt(
+            accountId,
+            await v3System.getPreferredPool(),
+            snxToken.address
+          ),
+          0
+        );
+      });
+
+      testMigrate(async () => {
+        return market.connect(snxStaker).migrate(migratedAccountId);
+      });
+
+      describe('post check', async () => {
+        it('should have no debt', async () => {
+          assertBn.equal(
+            await v3System.callStatic.getPositionDebt(
+              accountId,
+              await v3System.getPreferredPool(),
+              snxToken.address
+            ),
+            0
+          );
+        });
+      });
+    });
+
     // the below tests are fork only
     if (hre.network.name === 'cannon') {
       describe('when all accounts migrate to v3', function () {
@@ -368,5 +424,18 @@ describe('LegacyMarket', () => {
     it('only works for owner', async () => {});
 
     it('sets the value', async () => {});
+  });
+
+  describe('onERC721Received()', async () => {
+    before(restore);
+    it('fails if you just send an account token nft to the market without migrating', async () => {
+      const func = 'safeTransferFrom(address,address,uint256)';
+      await v3System.connect(owner)['createAccount(uint128)'](12341234);
+      await assertRevert(
+        v3Account.connect(owner)[func](await owner.getAddress(), market.address, 12341234),
+        'InvalidTransferRecipient("0xD931006FdC3ba62E74Ae181CCBb1eA243AbE8956")',
+        market
+      );
+    });
   });
 });
