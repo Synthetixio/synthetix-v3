@@ -21,7 +21,7 @@ describe('Cancel Offchain Async Order test', () => {
   });
   let ethMarketId: ethers.BigNumber;
 
-  before('identify actors', async () => {
+  before('identify actors', () => {
     ethMarketId = perpsMarkets()[0].marketId();
   });
 
@@ -51,7 +51,7 @@ describe('Cancel Offchain Async Order test', () => {
     await tx.wait();
     assertBn.equal((await systems().PerpsMarket.getOrder(ethMarketId, 2)).sizeDelta, bn(1));
   });
-  describe('errors', async () => {
+  describe('errors', () => {
     it('commit can not be canceled when settlement window is withing range', async () => {
       await assertRevert(
         systems().PerpsMarket.cancelOrder(ethMarketId, 2),
@@ -69,7 +69,7 @@ describe('Cancel Offchain Async Order test', () => {
     });
   });
 
-  describe('success', async () => {
+  describe('success', () => {
     let tx: ContractTransaction;
     before('fast forward outside of settlement window', async () => {
       await fastForwardTo((await getTime(provider())) + 9000000000, provider());
