@@ -26,6 +26,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     using SafeCastU256 for uint256;
     using DecimalMath for uint256;
 
+    uint32 public constant MIN_DELEGATION_TIME = 86400 * 7; // 7 days, matches v2x limit for the longest time
+
     uint128 public marketId;
     bool public pauseStablecoinConversion;
     bool public pauseMigration;
@@ -73,6 +75,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         }
 
         newMarketId = v3System.registerMarket(address(this));
+        v3System.setMarketMinDelegateTime(newMarketId, MIN_DELEGATION_TIME);
         marketId = newMarketId;
     }
 
