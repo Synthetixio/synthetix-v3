@@ -381,14 +381,33 @@ describe('Settle Offchain Async Order test', () => {
 
           it('emits event', async () => {
             // TODO Calculate the correct fill price instead of hardcoding
+
+            const accountId = 2;
             const fillPrice = bn(1000.005);
+            const pnl = 0;
+            const newPositionSize = bn(1);
+            const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const marketSize = bn(1);
+            const marketSkew = bn(1);
+            const trackingCode = `"${ethers.constants.HashZero}"`;
+            const msgSender = `"${await keeper().getAddress()}"`;
+            const params = [
+              ethMarketId,
+              accountId,
+              fillPrice,
+              pnl,
+              newPositionSize,
+              totalFees,
+              settlementReward,
+              marketSize,
+              marketSkew,
+              trackingCode,
+              msgSender,
+            ];
             await assertEvent(
               settleTx,
-              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, 0, ${bn(1)}, ${
-                DEFAULT_SETTLEMENT_STRATEGY.settlementReward
-              }, ${DEFAULT_SETTLEMENT_STRATEGY.settlementReward}, "${
-                ethers.constants.HashZero
-              }", "${await keeper().getAddress()}")`,
+              `OrderSettled(${params.join(', ')})`,
               systems().PerpsMarket
             );
           });
