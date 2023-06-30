@@ -223,7 +223,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
 
         // exctracted from asyncOrder before order is reset
-        bytes32 trackingCode = asyncOrder.trackingCode;
+        runtime.trackingCode = asyncOrder.trackingCode;
 
         asyncOrder.reset();
 
@@ -236,7 +236,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            trackingCode,
+            runtime.trackingCode,
             msg.sender
         );
     }
