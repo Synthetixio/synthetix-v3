@@ -8,8 +8,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
+import { calculateFillPrice } from '../helpers/fillPrice';
+import { wei } from '@synthetixio/wei';
 
-describe('Settle Offchain Async Order test', () => {
+describe.only('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [
       {
@@ -380,10 +382,8 @@ describe('Settle Offchain Async Order test', () => {
           });
 
           it('emits event', async () => {
-            // TODO Calculate the correct fill price instead of hardcoding
-
             const accountId = 2;
-            const fillPrice = bn(1000.005);
+            const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
             const pnl = 0;
             const newPositionSize = bn(1);
             const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
