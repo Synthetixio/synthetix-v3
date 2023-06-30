@@ -31,17 +31,23 @@ args = []
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
+args = []
 
 # --- Market Proxy Contract --- #
 
-[contract.InitialProxy]
+[contract.InitialPerpMarketProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
-# @see: https://usecannon.com/docs/technical-reference
+# What is salt?
+#
 # salt - The salt is a string which, when changed, will result in a new contract deployment.
+# @see: https://usecannon.com/docs/technical-reference
 salt = "<%= settings.salt %>"
-depends = ["contract.CoreModule"]
+depends = [
+  "import.synthetix",
+  "contract.CoreModule"
+]
 
 # --- Core Router --- #
 
@@ -64,8 +70,8 @@ depends = [
 
 # --- Post Deployment --- #
 
-[invoke.upgradeProxy]
-target = ["InitialProxy"]
+[invoke.upgrade_proxy]
+target = ["InitialPerpMarketProxy"]
 fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.Router.address %>"]
@@ -75,13 +81,13 @@ args = ["<%= contracts.Router.address %>"]
 factory.MarketProxy.abiOf = ["Router"]
 factory.MarketProxy.event = "Upgraded"
 factory.MarketProxy.arg = 0
-depends = ["contract.InitialProxy", "router.Router"]
+depends = ["contract.InitialPerpMarketProxy", "router.Router"]
 
-[invoke.setSynthetix]
+[invoke.set_synthetix]
 target = ["MarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
+fromCall.func = "owner"
 func = "setSynthetix"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
 ]
-depends = ["invoke.upgradeProxy"]
+depends = ["invoke.upgrade_proxy"]

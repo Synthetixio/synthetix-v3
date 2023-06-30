@@ -15,6 +15,7 @@
     "url": "git@github.com:davidvuong/bfp-market.git"
   },
   "devDependencies": {
+    "@synthetixio/v3-contracts": "^3.1.0",
     "@usecannon/builder": "^2.4.15",
     "@usecannon/cli": "^2.4.15",
     "abi-to-sol": "^0.8.0",
