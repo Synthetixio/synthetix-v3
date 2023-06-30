@@ -28,6 +28,8 @@ interface IAsyncOrderModule {
         int128 newSize,
         uint256 collectedFees,
         uint256 settelementReward,
+        uint256 marketSize,
+        int256 marketSkew,
         bytes32 indexed trackingCode,
         address settler
     );
