@@ -13,6 +13,13 @@ interface IPerpAccountModule {
         // Any pending orders associated with this account
     }
 
+    // --- Events --- //
+
+    /**
+     * @dev Fired when collateral is transferred between user and Account.
+     */
+    event TransferCollateral(address from, address to, int256 value);
+
     // --- Errors --- //
 
     error InsufficientCollateral(int256 accountCollateral, int256 amountDelta);
@@ -27,24 +34,17 @@ interface IPerpAccountModule {
      * issues are found. A transfer, even when there is no open position will immediately deposit the
      * collateral into the Synthetix core system.
      *
-     * There are no fees associated with the transfer of collateral.
-     */
-    function transferUsd(uint128 accountId, uint128 marketId, int256 amountDelta) external;
-
-    /**
-     * @dev Transfers wstETH into an existing PerpAccount.
-     *
-     * Structurally, this behaves very similarly to `transferUsd` except, it reads from wstETH. This
-     * piece is still TBD.
-     *
      * Core system allows _any_ collateral to be depoisted via `depositMarketCollateral`. However, for this to
      * work, each collateral _needs_ an oracle node. This is referenced thruogh an `oracleNodeId`. There are
      * also limitations on the maximum amount that can be deposited per market. Additionally, collaterals must
      * be enabled through `depositingEnabled`.
      *
-     * So, seemingly, for this to work, the core system must allow wstETH as collateral before first.
+     * So, seemingly, for this to work, the core system must allow wstETH as collateral before first. As of writing,
+     * there are only two collateral types configured, SNX and WETH but WETH is disabled.
+     *
+     * There are no fees associated with the transfer of collateral.
      */
-    function transferWsteth(uint128 accountId, uint128 marketId, int256 amountDelta) external;
+    function transferCollateral(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
 
     // --- Views --- //
 
