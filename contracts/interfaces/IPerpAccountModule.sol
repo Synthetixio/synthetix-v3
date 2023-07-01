@@ -2,9 +2,23 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface IPerpAccountModule {
+    // --- Data Structures --- //
+
+    struct AccountDigest {
+        uint128 accountId;
+        // TODO: Include for details
+        //
+        // Deposited collateral and the price of each
+        // Any open positions associated with this account
+        // Any pending orders associated with this account
+    }
+
     // --- Errors --- //
+
     error InsufficientCollateral(int256 accountCollateral, int256 amountDelta);
     error MaxCollateralExceeded(int256 amountDelta, uint256 maxCollateral);
+
+    // --- Mutative --- //
 
     /**
      * @dev Transfers snxUSD into an existing PerpAccount.
@@ -15,7 +29,7 @@ interface IPerpAccountModule {
      *
      * There are no fees associated with the transfer of collateral.
      */
-    function transferUsd(uint128 accountId, int256 amountDelta) external;
+    function transferUsd(uint128 accountId, uint128 marketId, int256 amountDelta) external;
 
     /**
      * @dev Transfers wstETH into an existing PerpAccount.
@@ -30,5 +44,12 @@ interface IPerpAccountModule {
      *
      * So, seemingly, for this to work, the core system must allow wstETH as collateral before first.
      */
-    function transferWsteth(uint128 accountId, int256 amountDelta) external;
+    function transferWsteth(uint128 accountId, uint128 marketId, int256 amountDelta) external;
+
+    // --- Views --- //
+
+    /**
+     * @dev Returns a digest of the account including, but not limited to collteral, orders, positions etc.
+     */
+    function accountDigest(uint128 accountId) external view returns (AccountDigest memory digest);
 }

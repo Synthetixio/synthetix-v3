@@ -6,9 +6,9 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import "../interfaces/IPerpMarketModule.sol";
+import "../interfaces/IPerpMarketFactoryModule.sol";
 
-contract PerpMarketModule is IPerpMarketModule {
+contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     uint128 public marketId;
 
     function name(uint128 _marketId) external view override returns (string memory n) {
@@ -23,7 +23,7 @@ contract PerpMarketModule is IPerpMarketModule {
 
         store.synthetix = synthetix;
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
-        store.usdToken = ITokenModule(usdTokenAddress);
+        store.snxUsdToken = ITokenModule(usdTokenAddress);
     }
 
     // --- Required functions to be IMarket compatiable --- //

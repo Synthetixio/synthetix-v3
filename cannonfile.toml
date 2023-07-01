@@ -21,8 +21,8 @@ source = "<%= settings.synthetixPackage %>"
 artifact = "OrderModule"
 args = []
 
-[contract.PerpMarketModule]
-artifact = "PerpMarketModule"
+[contract.PerpMarketFactoryModule]
+artifact = "PerpMarketFactoryModule"
 args = []
 
 [contract.PerpAccountModule]
@@ -56,14 +56,14 @@ contracts = [
   "synthetix.AccountModule",
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
-  "PerpMarketModule",
+  "PerpMarketFactoryModule",
   "PerpAccountModule",
   "OrderModule"
 ]
 depends = [
   "import.synthetix",
   "contract.CoreModule",
-  "contract.PerpMarketModule",
+  "contract.PerpMarketFactoryModule",
   "contract.PerpAccountModule",
   "contract.OrderModule"
 ]
