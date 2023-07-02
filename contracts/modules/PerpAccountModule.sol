@@ -32,25 +32,47 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 accountCollateral = account.depositedCollateral[collateral];
 
+        // TODO: Prevent collateral transfers when there's a pending order.
+
+        // TODO: Prevent transfers below a minimum usd?
+
+        // TODO: Check if market actually exists
+
+        // TODO: Check if collateral is supported by bfp-markets (not just Synthetix Core)
+
         if (amountDelta > 0) {
             // Positive means to deposit into the markets.
             uint256 maxDepositsAllowed = config.maxCollateralDeposits[collateral];
             uint256 currentTotalDeposits = market.totalCollateralDeposited[collateral];
+
+            // Verify whether this will exceed the maximum allowable collateral amount.
             if (currentTotalDeposits + absAmountDelta > maxDepositsAllowed) {
                 revert MaxCollateralExceeded(amountDelta, maxDepositsAllowed);
             }
+
+            // Perform deposit.
             IERC20(collateral).transferFrom(msg.sender, address(this), absAmountDelta);
             account.depositedCollateral[collateral] += absAmountDelta;
             market.totalCollateralDeposited[collateral] += absAmountDelta;
+
+            // Emit event.
             emit TransferCollateral(msg.sender, address(this), amountDelta);
         } else if (amountDelta < 0) {
             // Negative means to withdraw from the markets.
+
+            // Verify the collateral previously associated to this account is enough to cover withdraws.
             if (accountCollateral < absAmountDelta) {
                 revert InsufficientCollateral(accountCollateral.toInt(), amountDelta);
             }
+
+            // Perform withdrawal.
             IERC20(collateral).transferFrom(address(this), msg.sender, absAmountDelta);
             account.depositedCollateral[collateral] -= absAmountDelta;
             market.totalCollateralDeposited[collateral] -= absAmountDelta;
+
+            // TODO: If an open position exists, verify this does _not_ place them into instant liquidation.
+
+            // Emit event.
             emit TransferCollateral(address(this), msg.sender, amountDelta);
         } else {
             // A zero amount is a no-op.
