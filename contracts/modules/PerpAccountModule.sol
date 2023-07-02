@@ -22,12 +22,11 @@ contract PerpAccountModule is IPerpAccountModule {
      * @inheritdoc IPerpAccountModule
      */
     function transferCollateral(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external {
-        // Check if this account exists & correct permissions (How to define market specific permissions?)
+        // Ensure account actually exists (reverts with `AccountNotFound`).
         Account.exists(accountId);
-
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
         MarketConfiguration.Data storage config = MarketConfiguration.load();
         PerpAccount.Data storage account = PerpAccount.load(accountId);
-        PerpMarket.Data storage market = PerpMarket.load(marketId);
 
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 accountCollateral = account.depositedCollateral[collateral];

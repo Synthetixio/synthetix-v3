@@ -2,31 +2,33 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface IOrderModule {
-    /* --- Order commitment/settlement --- */
+    // --- Events --- //
 
-    function commitOrder(int256 sizeDelta, uint256 desiredFillPrice, uint256 marketId) external;
+    // --- Errors --- //
 
-    function settledOrder(address account) external;
+    error InvalidPrice();
+    error PriceOutOfBounds();
+    error CanLiquidate();
+    error CannotLiquidate();
+    error MaxOiExceeded();
+    error MaxLeverageExceeded();
+    error OrderNotFound();
+    error PendingOrderFound();
+    error PriceToleranceExceeded();
 
-    function cancelOrder(address account) external;
+    // --- Mutative --- //
 
-    /* --- Position liquidations --- */
+    /**
+     * @dev Creates an order to be submitted for settlement.
+     */
+    function commitOrder(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 desiredFillPrice) external;
 
-    // function flagPosition(address account) external;
+    /**
+     * @dev Given an accountId, find the associated market by `marketId` and settles the order.
+     */
+    function settledOrder(uint128 accountId, uint128 marketId) external;
 
-    // function liquidatePosition(address account) external;
-
-    // function forceLiquidatePosition(address account) external;
-
-    // function canLiquidate(address account) external view returns (bool);
-
-    // function isFlagged(address account) external view returns (bool);
-
-    /* --- Views --- */
+    function cancelOrder(uint128 accountId, uint128 marketId) external;
 
     // function orderFee(int sizeDelta) external view returns (uint fee);
-
-    /* --- Errors --- */
-
-    /* --- Events --- */
 }

@@ -13,6 +13,12 @@ import {Position} from "./Position.sol";
  * We track the marketId here because each PerpMarket is a separate market in Synthetix core.
  */
 library PerpMarket {
+    // --- Errors --- //
+
+    error MarketNotFound(uint128 id);
+
+    // --- Storage --- //
+
     struct Data {
         // A unique market id for market reference.
         uint128 id;
@@ -42,5 +48,16 @@ library PerpMarket {
         assembly {
             market.slot := s
         }
+    }
+
+    /**
+     * @dev Reverts if the market does not exist with appropriate error. Otherwise, returns the market.
+     */
+    function exists(uint128 id) internal view returns (Data storage market) {
+        Data storage m = load(id);
+        if (m.id == 0) {
+            revert MarketNotFound(id);
+        }
+        return m;
     }
 }

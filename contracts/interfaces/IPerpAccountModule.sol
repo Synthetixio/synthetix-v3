@@ -18,12 +18,12 @@ interface IPerpAccountModule {
     /**
      * @dev Fired when collateral is transferred between user and Account.
      */
-    event TransferCollateral(address from, address to, int256 value);
+    event TransferCollateral(address indexed from, address indexed to, int256 value);
 
     // --- Errors --- //
 
-    error InsufficientCollateral(int256 accountCollateral, int256 amountDelta);
-    error MaxCollateralExceeded(int256 amountDelta, uint256 maxCollateral);
+    error InsufficientCollateral(int256 collateral, int256 value);
+    error MaxCollateralExceeded(int256 value, uint256 max);
 
     // --- Mutative --- //
 
