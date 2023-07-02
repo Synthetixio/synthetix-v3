@@ -35,6 +35,28 @@ contract OrderModule is IOrderModule {
         }
 
         Position.Data storage position = market.positions[accountId];
+
+        uint256 oraclePrice = PerpMarket.assetPrice(marketId);
+
+        Position.TradeParams memory params = Position.TradeParams({
+            sizeDelta: sizeDelta,
+            oraclePrice: oraclePrice,
+            fillPrice: _fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice),
+            makerFee: market.makerFee,
+            takerFee: market.takerFee,
+            desiredFillPrice: desiredFillPrice
+        });
+
+        // Validate whether this order would lead to a valid 'next' next position.
+        Position.postTradeDetails(position, params);
+
+        // TODO: Check if this new position can be insta liquidated (this might already be done in postTradeDetails)
+
+        // TODO: Create an order object if successful (minExecutedTime etc.)
+
+        // TODO: Store order object
+
+        // TODO: Emit an event to signal such order has been submitted.
     }
 
     /**

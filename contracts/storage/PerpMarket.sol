@@ -51,6 +51,10 @@ library PerpMarket {
         bytes32 oracleNodeId;
         // Skew scaling denominator constant.
         uint128 skewScale;
+        // Fee paid (in bps) when the order _decreases_ skew.
+        uint128 makerFee;
+        // Fee paid (in bps) when the order _increases_ skew.
+        uint128 takerFee;
     }
 
     function load(uint128 id) internal pure returns (Data storage market) {

@@ -9,6 +9,11 @@ library Position {
 
     struct TradeParams {
         int128 sizeDelta;
+        uint256 oraclePrice;
+        uint256 fillPrice;
+        uint128 makerFee;
+        uint128 takerFee;
+        uint256 desiredFillPrice;
     }
 
     // --- Storage --- //
@@ -27,8 +32,10 @@ library Position {
 
     /**
      * @dev Given an open position (same account) and trade params return the subsequent position.
+     *
+     * Keeping this as postTradeDetails (same as perps v2) until I can figure out a better name.
      */
-    function simulateTrade(
+    function postTradeDetails(
         Data storage currentPosition,
         TradeParams memory params
     ) internal returns (Data memory position, uint256 fee) {}
