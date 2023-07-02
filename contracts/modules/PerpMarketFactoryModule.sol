@@ -24,6 +24,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         store.synthetix = synthetix;
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
         store.snxUsdToken = ITokenModule(usdTokenAddress);
+        store.oracleManager = synthetix.getOracleManager();
     }
 
     // --- Required functions to be IMarket compatiable --- //

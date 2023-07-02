@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 
 /**
@@ -9,10 +10,12 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
  */
 library MarketConfiguration {
     struct Data {
+        // A reference to the core Synthetix v3 system.
+        ISynthetixSystem synthetix;
         // A reference to the snxUSD stablecoin.
         ITokenModule snxUsdToken;
-        // A reference back to the core Synthetix v3 system.
-        ISynthetixSystem synthetix;
+        // A reference to the Synthetix oracle manager (used to fetch market prices).
+        INodeModule oracleManager;
         // {collateralAddress: maxDepositAmountAllowed}.
         mapping(address => uint256) maxCollateralDeposits;
     }
