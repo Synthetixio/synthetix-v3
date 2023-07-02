@@ -31,7 +31,7 @@ library PerpMarket {
         // Semi readable key e.g. bytes32(WSTETHPERP) for this market.
         bytes32 key;
         // sum(positions.map(p => p.size)).
-        int256 skew;
+        int128 skew;
         // sum(positions.map(p => abs(p.size))).
         uint256 size;
         // The value of the funding rate last time this was computed.

@@ -1,12 +1,25 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../interfaces/IOrderModule.sol";
 import {Order} from "../storage/Order.sol";
+import {Position} from "../storage/Position.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 
 contract OrderModule is IOrderModule {
+    using DecimalMath for int256;
+    using DecimalMath for int128;
+    using DecimalMath for uint256;
+    using DecimalMath for int64;
+    using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastU128 for uint128;
+
     using Order for Order.Data;
+    using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
 
     /**
@@ -20,6 +33,8 @@ contract OrderModule is IOrderModule {
         if (order.sizeDelta != 0) {
             revert PendingOrderFound();
         }
+
+        Position.Data storage position = market.positions[accountId];
     }
 
     /**
@@ -31,4 +46,59 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function cancelOrder(uint128 accountId, uint128 marketId) external {}
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function orderFee(int128 sizeDelta) external view returns (uint256 fee) {}
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function fillPrice(uint128 marketId, int128 sizeDelta, uint256 oraclePrice) external view returns (uint256 price) {
+        uint128 skewScale = 1; // TODO
+        price = _fillPrice(PerpMarket.exists(marketId).skew, skewScale, sizeDelta, oraclePrice);
+    }
+
+    // --- Internal --- //
+
+    function _fillPrice(
+        int128 skew,
+        uint128 skewScale,
+        int128 sizeDelta,
+        uint256 oraclePrice
+    ) internal pure returns (uint256) {
+        // How is the p/d-adjusted price calculated using an example:
+        //
+        // price      = $1200 USD (oracle)
+        // size       = 100
+        // skew       = 0
+        // skew_scale = 1,000,000 (1M)
+        //
+        // Then,
+        //
+        // pd_before = 0 / 1,000,000
+        //           = 0
+        // pd_after  = (0 + 100) / 1,000,000
+        //           = 100 / 1,000,000
+        //           = 0.0001
+        //
+        // price_before = 1200 * (1 + pd_before)
+        //              = 1200 * (1 + 0)
+        //              = 1200
+        // price_after  = 1200 * (1 + pd_after)
+        //              = 1200 * (1 + 0.0001)
+        //              = 1200 * (1.0001)
+        //              = 1200.12
+        // Finally,
+        //
+        // fill_price = (price_before + price_after) / 2
+        //            = (1200 + 1200.12) / 2
+        //            = 1200.06
+        int256 pdBefore = skew.divDecimal(skewScale.toInt());
+        int256 pdAfter = (skew + sizeDelta).divDecimal(skewScale.toInt());
+        int256 priceBefore = oraclePrice.toInt() + (oraclePrice.toInt().mulDecimal(pdBefore));
+        int256 priceAfter = oraclePrice.toInt() + (oraclePrice.toInt().mulDecimal(pdAfter));
+        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+    }
 }
