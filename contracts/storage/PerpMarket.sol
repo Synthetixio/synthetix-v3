@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
-import {MarketConfiguration} from "./MarketConfiguration.sol";
+import {PerpMarketFactoryConfiguration} from "./PerpMarketFactoryConfiguration.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
@@ -46,8 +46,11 @@ library PerpMarket {
         mapping(uint128 => Position.Data) positions;
         // {collateralAddress: totalDeposited}
         mapping(address => uint256) totalCollateralDeposited;
+        // TODO: Move these config params into a PerpMarketConfiguration.sol storage lib.
         // Oracle node id for price feed data.
         bytes32 oracleNodeId;
+        // Skew scaling denominator constant.
+        uint128 skewScale;
     }
 
     function load(uint128 id) internal pure returns (Data storage market) {
@@ -71,7 +74,7 @@ library PerpMarket {
 
     function assetPrice(uint128 id) internal view returns (uint256 price) {
         Data storage self = load(id);
-        MarketConfiguration.Data storage config = MarketConfiguration.load();
+        PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
         price = INodeModule(config.oracleManager).process(self.oracleNodeId).price.toUint();
     }
 }

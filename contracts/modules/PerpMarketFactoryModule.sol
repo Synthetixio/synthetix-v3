@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
-import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
+import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import "../interfaces/IPerpMarketFactoryModule.sol";
 
@@ -19,7 +19,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     function setSynthetix(ISynthetixSystem synthetix) external {
         OwnableStorage.onlyOwner();
-        MarketConfiguration.Data storage store = MarketConfiguration.load();
+        PerpMarketFactoryConfiguration.Data storage store = PerpMarketFactoryConfiguration.load();
 
         store.synthetix = synthetix;
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");

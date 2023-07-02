@@ -8,7 +8,7 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 /**
  * @dev Global bfp-market configuration across all perp markets.
  */
-library MarketConfiguration {
+library PerpMarketFactoryConfiguration {
     struct Data {
         // A reference to the core Synthetix v3 system.
         ISynthetixSystem synthetix;
@@ -16,12 +16,12 @@ library MarketConfiguration {
         ITokenModule snxUsdToken;
         // A reference to the Synthetix oracle manager (used to fetch market prices).
         INodeModule oracleManager;
-        // {collateralAddress: maxDepositAmountAllowed}.
+        // {collateralAddress: maxDepositAmountAllowed} (globally for all bfp markets).
         mapping(address => uint256) maxCollateralDeposits;
     }
 
     function load() internal pure returns (Data storage market) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.MarketConfiguration"));
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketFactoryConfiguration"));
 
         assembly {
             market.slot := s

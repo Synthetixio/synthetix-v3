@@ -6,6 +6,7 @@ interface IOrderModule {
 
     // --- Errors --- //
 
+    // TODO: Consider moving all errors into a `Errors.sol` library to be imported everywhere that needs it.
     error InvalidPrice();
     error PriceOutOfBounds();
     error CanLiquidate();

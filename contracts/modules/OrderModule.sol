@@ -56,8 +56,8 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function fillPrice(uint128 marketId, int128 sizeDelta, uint256 oraclePrice) external view returns (uint256 price) {
-        uint128 skewScale = 1; // TODO
-        price = _fillPrice(PerpMarket.exists(marketId).skew, skewScale, sizeDelta, oraclePrice);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        price = _fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice);
     }
 
     // --- Internal --- //
