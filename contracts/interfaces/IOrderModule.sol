@@ -4,18 +4,23 @@ pragma solidity >=0.8.11 <0.9.0;
 interface IOrderModule {
     // --- Events --- //
 
-    // --- Errors --- //
+    event OrderSubmitted(
+        uint128 indexed accountId,
+        uint128 indexed marketId,
+        int256 sizeDelta,
+        uint256 intentionTime,
+        uint256 executableAtTime
+    );
 
-    // TODO: Consider moving all errors into a `Errors.sol` library to be imported everywhere that needs it.
-    error InvalidPrice();
-    error PriceOutOfBounds();
-    error CanLiquidate();
-    error CannotLiquidate();
-    error MaxOiExceeded();
-    error MaxLeverageExceeded();
-    error OrderNotFound();
-    error PendingOrderFound();
-    error PriceToleranceExceeded();
+    event OrderSettled(
+        uint128 indexed accountId,
+        uint128 indexed marketId,
+        int256 sizeDelta,
+        uint256 orderFee,
+        uint256 keeperFee
+    );
+
+    event OrderCancelled(uint128 indexed accountId, uint128 indexed marketId, int256 sizeDelta, uint256 keeperFee);
 
     // --- Mutative --- //
 
@@ -27,8 +32,14 @@ interface IOrderModule {
     /**
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.
      */
-    function settledOrder(uint128 accountId, uint128 marketId) external;
+    function settledOrder(uint128 accountId, uint128 marketId) external payable;
 
+    /**
+     * @dev Cancels a pending order.
+     *
+     * An order can only be cancelled after a certain amount of time (i.e. when an order becomes stale). The keeperFee
+     * is not charged if the caller is the same owner as the order.
+     */
     function cancelOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //

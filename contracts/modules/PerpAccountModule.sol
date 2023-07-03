@@ -7,6 +7,7 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpAccount} from "../storage/PerpAccount.sol";
+import {Error} from "../storage/Error.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/IPerpAccountModule.sol";
@@ -45,7 +46,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (currentTotalDeposits + absAmountDelta > maxDepositsAllowed) {
-                revert MaxCollateralExceeded(amountDelta, maxDepositsAllowed);
+                revert Error.MaxCollateralExceeded(amountDelta, maxDepositsAllowed);
             }
 
             // Perform deposit.
@@ -60,7 +61,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
             // Verify the collateral previously associated to this account is enough to cover withdraws.
             if (accountCollateral < absAmountDelta) {
-                revert InsufficientCollateral(accountCollateral.toInt(), amountDelta);
+                revert Error.InsufficientCollateral(accountCollateral.toInt(), amountDelta);
             }
 
             // Perform withdrawal.

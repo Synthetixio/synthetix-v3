@@ -3,10 +3,11 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../interfaces/IOrderModule.sol";
+import {Error} from "../storage/Error.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import "../interfaces/IOrderModule.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -31,7 +32,7 @@ contract OrderModule is IOrderModule {
 
         // A new order cannot be submitted if one is already pending.
         if (order.sizeDelta != 0) {
-            revert PendingOrderFound();
+            revert Error.OrderAlreadyExists(accountId);
         }
 
         Position.Data storage position = market.positions[accountId];
@@ -64,7 +65,7 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function settledOrder(uint128 accountId, uint128 marketId) external {}
+    function settledOrder(uint128 accountId, uint128 marketId) external payable {}
 
     /**
      * @inheritdoc IOrderModule

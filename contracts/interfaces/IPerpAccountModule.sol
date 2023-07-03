@@ -20,11 +20,6 @@ interface IPerpAccountModule {
      */
     event TransferCollateral(address indexed from, address indexed to, int256 value);
 
-    // --- Errors --- //
-
-    error InsufficientCollateral(int256 collateral, int256 value);
-    error MaxCollateralExceeded(int256 value, uint256 max);
-
     // --- Mutative --- //
 
     /**
