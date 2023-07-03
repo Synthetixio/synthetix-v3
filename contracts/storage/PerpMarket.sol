@@ -76,8 +76,9 @@ library PerpMarket {
         return self;
     }
 
-    function assetPrice(uint128 id) internal view returns (uint256 price) {
-        Data storage self = load(id);
+    // --- Members --- //
+
+    function assetPrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
         PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
         price = INodeModule(config.oracleManager).process(self.oracleNodeId).price.toUint();
     }

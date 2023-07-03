@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {Error} from "./Error.sol";
+
 /**
  * @dev An open position on a specific perp market within bfp-market.
  */
@@ -38,5 +40,11 @@ library Position {
     function postTradeDetails(
         Data storage currentPosition,
         TradeParams memory params
-    ) internal returns (Data memory position, uint256 fee) {}
+    ) internal returns (Data memory position, uint256 fee) {
+        if (params.sizeDelta == 0) {
+            revert Error.NilOrder();
+        }
+
+        // TODO: Check if the `currentPosition` can be liquidated, if so, revert.
+    }
 }

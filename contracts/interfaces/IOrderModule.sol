@@ -33,7 +33,13 @@ interface IOrderModule {
 
     // --- Views --- //
 
-    function orderFee(int128 sizeDelta) external view returns (uint256 fee);
+    /**
+     * @dev Returns fee charged to open/close an order.
+     *
+     * This incorporates the scenario where a if a trade flips the skew, the proportion that reduces the skew
+     * is charged a makerFee but the flipped side that expands skew is charged a takerFee.
+     */
+    function orderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee);
 
     /**
      * @dev Returns an oracle price adjusted by a premium/discount based on how the sizeDelta affects skew.

@@ -36,12 +36,12 @@ contract OrderModule is IOrderModule {
 
         Position.Data storage position = market.positions[accountId];
 
-        uint256 oraclePrice = PerpMarket.assetPrice(marketId);
+        uint256 oraclePrice = market.assetPrice();
 
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: sizeDelta,
             oraclePrice: oraclePrice,
-            fillPrice: _fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice),
+            fillPrice: Order.fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice),
             makerFee: market.makerFee,
             takerFee: market.takerFee,
             desiredFillPrice: desiredFillPrice
@@ -72,55 +72,27 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function orderFee(int128 sizeDelta) external view returns (uint256 fee) {}
+    function orderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee) {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        uint256 oraclePrice = market.assetPrice();
+        int128 skew = market.skew;
+        uint128 skewScale = market.skewScale;
+
+        fee = Order.orderFee(
+            sizeDelta,
+            Order.fillPrice(skew, skewScale, sizeDelta, oraclePrice),
+            skew,
+            market.makerFee,
+            market.takerFee
+        );
+    }
 
     /**
      * @inheritdoc IOrderModule
      */
     function fillPrice(uint128 marketId, int128 sizeDelta, uint256 oraclePrice) external view returns (uint256 price) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        price = _fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice);
-    }
-
-    // --- Internal --- //
-
-    function _fillPrice(
-        int128 skew,
-        uint128 skewScale,
-        int128 sizeDelta,
-        uint256 oraclePrice
-    ) internal pure returns (uint256) {
-        // How is the p/d-adjusted price calculated using an example:
-        //
-        // price      = $1200 USD (oracle)
-        // size       = 100
-        // skew       = 0
-        // skew_scale = 1,000,000 (1M)
-        //
-        // Then,
-        //
-        // pd_before = 0 / 1,000,000
-        //           = 0
-        // pd_after  = (0 + 100) / 1,000,000
-        //           = 100 / 1,000,000
-        //           = 0.0001
-        //
-        // price_before = 1200 * (1 + pd_before)
-        //              = 1200 * (1 + 0)
-        //              = 1200
-        // price_after  = 1200 * (1 + pd_after)
-        //              = 1200 * (1 + 0.0001)
-        //              = 1200 * (1.0001)
-        //              = 1200.12
-        // Finally,
-        //
-        // fill_price = (price_before + price_after) / 2
-        //            = (1200 + 1200.12) / 2
-        //            = 1200.06
-        int256 pdBefore = skew.divDecimal(skewScale.toInt());
-        int256 pdAfter = (skew + sizeDelta).divDecimal(skewScale.toInt());
-        int256 priceBefore = oraclePrice.toInt() + (oraclePrice.toInt().mulDecimal(pdBefore));
-        int256 priceAfter = oraclePrice.toInt() + (oraclePrice.toInt().mulDecimal(pdAfter));
-        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+        price = Order.fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice);
     }
 }
