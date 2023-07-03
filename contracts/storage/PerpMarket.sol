@@ -44,7 +44,7 @@ library PerpMarket {
         // The value of the funding rate last time this was computed.
         int256 fundingRateLastComputed;
         // The value (in native units) of total market funding accumulated.
-        int256 fundingAccumulationLastComputed;
+        int256 fundingAccruedLastComputed;
         // block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
         // {accountId: Order}.
@@ -116,7 +116,7 @@ library PerpMarket {
         return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 
-    function proportionalElapsed(Data storage self) internal view returns (int256) {
+    function proportionalElapsed(PerpMarket.Data storage self) internal view returns (int256) {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
@@ -153,7 +153,27 @@ library PerpMarket {
         return self.fundingRateLastComputed + (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
-    function recomputeFunding(PerpMarket.Data storage self, uint256 oraclePrice) internal {
-        // if (self.size > 0) {}
+    function unrecordedFunding(Data storage self, uint price) internal view returns (int256) {
+        int256 fundingRate = currentFundingRate(self);
+
+        // NOTE: The minus sign - funding flows in the opposite direction to skew.
+        int256 avgFundingRate = -(self.fundingRateLastComputed + fundingRate).divDecimal(
+            (DecimalMath.UNIT * 2).toInt()
+        );
+        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
+    }
+
+    function recomputeFunding(
+        PerpMarket.Data storage self,
+        uint256 oraclePrice
+    ) internal returns (int256 fundingRate, int256 fundingAccrued) {
+        fundingRate = currentFundingRate(self);
+        fundingAccrued = self.fundingAccruedLastComputed + unrecordedFunding(self, oraclePrice);
+
+        self.fundingRateLastComputed = fundingRate;
+        self.fundingAccruedLastComputed = fundingAccrued;
+        self.lastFundingTime = block.timestamp;
+
+        // TODO: Emit FundingRecomputed event.
     }
 }
