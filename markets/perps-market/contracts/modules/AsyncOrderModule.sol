@@ -18,6 +18,10 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 
+/**
+ * @title Module for committing and settling async orders.
+ * @dev See IAsyncOrderModule.
+ */
 contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -36,6 +40,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
     int256 public constant PRECISION = 18;
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
@@ -86,6 +93,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, feesAccrued);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function settle(uint128 marketId, uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
@@ -96,6 +106,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         _settleOffchain(order, settlementStrategy);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
@@ -126,6 +139,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function getOrder(
         uint128 marketId,
         uint128 accountId
@@ -133,6 +149,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return PerpsMarket.loadValid(marketId).asyncOrders[accountId];
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function cancelOrder(uint128 marketId, uint128 accountId) external override {
         AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
         order.checkValidity();
@@ -144,6 +163,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
     }
 
+    /**
+     * @dev used for settleing offchain orders. This will revert with OffchainLookup.
+     */
     function _settleOffchain(
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
@@ -168,6 +190,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @dev used for settleing an order.
+     */
     function _settleOrder(
         uint256 price,
         AsyncOrder.Data storage asyncOrder,
@@ -241,6 +266,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @dev performs the order validity checks (existance and timing).
+     */
     function _performOrderValidityChecks(
         uint128 marketId,
         uint128 accountId
@@ -256,6 +284,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, settlementStrategy);
     }
 
+    /**
+     * @dev converts the settlement time into bytes8.
+     */
     function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
         bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
 
@@ -263,7 +294,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return bytes8(settlementTimeBytes << 192);
     }
 
-    // borrowed from PythNode.sol
+    /**
+     * @dev gets scaled price. Borrowed from PythNode.sol.
+     */
     function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
         int256 factor = PRECISION + expo;
         return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());

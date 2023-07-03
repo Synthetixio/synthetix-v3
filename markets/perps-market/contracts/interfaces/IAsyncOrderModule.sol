@@ -109,6 +109,23 @@ interface IAsyncOrderModule {
     function cancelOrder(uint128 marketId, uint128 accountId) external;
 
     /**
+     * @notice Settles an offchain order. It's expected to revert with the OffchainLookup error with the data needed to perform the offchain lookup.
+     * @param marketId Id of the market used for the trade.
+     * @param accountId Id of the account used for the trade.
+     */
+    function settle(uint128 marketId, uint128 accountId) external view;
+
+    /**
+     * @notice Settles an offchain order using the offchain retrieved data from pyth.
+     * @param offchainQueryResult the blob of data retrieved offchain.
+     * @param extraData Extra data from OffchainLookupData.
+     */
+    function settlePythOrder(
+        bytes calldata offchainQueryResult,
+        bytes calldata extraData
+    ) external payable;
+
+    /**
      * @notice Get an order details via this function
      * @param marketId Id of the market used for the trade.
      * @param accountId Id of the account used for the trade.
