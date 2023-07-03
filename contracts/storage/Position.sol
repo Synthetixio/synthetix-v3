@@ -2,11 +2,15 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {Error} from "./Error.sol";
+import {Order} from "./Order.sol";
+import {PerpMarket} from "./PerpMarket.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
  */
 library Position {
+    using PerpMarket for PerpMarket.Data;
+
     // --- Structs --- //
 
     struct TradeParams {
@@ -19,6 +23,7 @@ library Position {
     }
 
     // --- Storage --- //
+
     struct Data {
         // Owner of position.
         uint128 accountId;
@@ -33,11 +38,20 @@ library Position {
     }
 
     /**
+     * @dev Return a position's 'remaining margin' in the form: (collateral * price) + pnl + funding in USD.
+     */
+    function computeMarginPlusProfitFunding(
+        Data storage currentPosition,
+        uint oraclePrice
+    ) internal view returns (int256) {}
+
+    /**
      * @dev Given an open position (same account) and trade params return the subsequent position.
      *
      * Keeping this as postTradeDetails (same as perps v2) until I can figure out a better name.
      */
     function postTradeDetails(
+        uint128 marketId,
         Data storage currentPosition,
         TradeParams memory params
     ) internal returns (Data memory position, uint256 fee) {
@@ -46,5 +60,14 @@ library Position {
         }
 
         // TODO: Check if the `currentPosition` can be liquidated, if so, revert.
+
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        int128 skew = market.skew;
+        uint128 skewScale = market.skewScale;
+
+        uint256 oraclePrice = market.assetPrice();
+        uint256 fillPrice = Order.fillPrice(skew, skewScale, params.sizeDelta, oraclePrice);
+
+        fee = Order.orderFee(params.sizeDelta, fillPrice, skew, params.makerFee, params.takerFee);
     }
 }

@@ -48,7 +48,7 @@ contract OrderModule is IOrderModule {
         });
 
         // Validate whether this order would lead to a valid 'next' next position.
-        Position.postTradeDetails(position, params);
+        Position.postTradeDetails(marketId, position, params);
 
         // TODO: Check if this new position can be insta liquidated (this might already be done in postTradeDetails)
 
