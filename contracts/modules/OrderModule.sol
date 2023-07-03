@@ -57,6 +57,8 @@ contract OrderModule is IOrderModule {
         // TODO: Store order object
 
         // TODO: Emit an event to signal such order has been submitted.
+
+        // TODO: Critical we ensure that removing keeper fee on commitment will not insta liquidate the user.
     }
 
     /**
