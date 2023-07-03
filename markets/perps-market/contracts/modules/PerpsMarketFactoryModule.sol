@@ -105,8 +105,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     }
 
     function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
-        // TODO
-        return 0;
+        // skew * price - accumulator
+        uint price = PerpsPrice.getCurrentPrice(perpsMarketId);
+
+        // TODO - this is a temporary fix since reportedDebt requires a uint and marketDebt is an int (not taking into account margin)
+        return MathUtil.abs(PerpsMarket.marketDebt(PerpsMarket.load(perpsMarketId), price));
     }
 
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {

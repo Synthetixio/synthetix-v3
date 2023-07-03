@@ -36,12 +36,17 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        int lastFundingRate;
-        int lastFundingValue;
+        // TODO: move to new data structure?
+        int256 lastFundingRate;
+        int256 lastFundingValue;
         uint256 lastFundingTime;
         // liquidation data
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
+        // debt calculation
+        int256 debtCorrectionAccumulator;
+        // accountId => asyncOrder
+        mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
     }
@@ -147,6 +152,25 @@ library PerpsMarket {
         Position.Data memory newPosition
     ) internal returns (MarketUpdateData memory) {
         Position.Data storage oldPosition = self.positions[accountId];
+
+        // update market debt correction before losing oldPosition details
+        uint currentPrice = newPosition.latestInteractionPrice;
+        (int oldPositionPnl, , , ) = oldPosition.getPnl(currentPrice);
+
+        self.debtCorrectionAccumulator +=
+            currentPrice.toInt() *
+            (newPosition.size - oldPosition.size) -
+            oldPositionPnl;
+
+        // self.debtCorrectionAccumulator += newPosition.size * currentPrice.toInt();
+        // self.debtCorrectionAccumulator -= oldPosition.size * currentPrice.toInt() - oldPositionPnl ;
+        // self.debtCorrectionAccumulator += calculatePositionDebt(newPosition.size, 0, currentPrice);
+        // self.debtCorrectionAccumulator -= calculatePositionDebt(
+        //     oldPosition.size,
+        //     oldPositionPnl,
+        //     currentPrice
+        // );
+
         int128 oldPositionSize = oldPosition.size;
         int128 newPositionSize = newPosition.size;
 
@@ -280,4 +304,77 @@ library PerpsMarket {
             }
         }
     }
+
+    function marketDebt(Data storage self, uint price) internal view returns (int) {
+        // skew * price - debtCorrectionAccumulator
+        // debtCorrectionAccumulator is the accumulated debt correction due to pnl from previous positions
+        // debtCorrectionAccumulator = sum(positions[i].size * price + positions[i].pnl )
+        // on each interaction that updates a position (size) we update the debtCorrectionAccumulator as
+        // debtCorrectionAccumulator += (deltaSize * price ) + positionPnlBefureUpdate
+
+        return self.skew.mulDecimal(price.toInt()) - self.debtCorrectionAccumulator;
+    }
+
+    // called at every position update, after funding is recomputed
+    // function marketDebtCorrection(
+    //     Position.Data storage oldPosition,
+    //     Position.Data storage newPosition,
+    //     uint currentPrice
+    // ) internal view returns (int) {
+    //     /*
+    //     (newSize - oldSize) * newPrice + pnl
+    //     pnl = oldSize * (newPrice - oldPrice) + oldSize * (newFunding - oldFunding)
+
+    //     (newSize - oldSize) * newPrice + oldSize * (newPrice - oldPrice) + oldSize * (newFunding - oldFunding)
+    //     (newSize - oldSize) * newPrice + oldSize * (newPrice - oldPrice + newFunding - oldFunding)
+    //     newSize * newPrice - oldSize * newPrice + oldSize * newPrice - oldSize * oldPrice + oldSize * newFunding - oldSize * oldFunding
+
+    //     ; currentPrice = newPrice
+    //     ; currentFunding = newFunding
+    //     newSize * currentPrice - newSize * (currentPrice - newPrice) - newSize * (currentFunding - newFunding)
+    //     -
+    //     oldSize * currentPrice - oldSize * (currentPrice - oldPrice) - oldSize * (currentFunding - oldFunding)
+
+    //     oldP { size: oldSize, price: oldPrice, funding: oldFunding }
+    //     newP { size: newSize, price: newPrice, funding: newFunding }
+
+    //     newP.size * currentPrice - newP.size * (currentPrice - newP.price) - newP.size * (currentFunding - newP.funding)
+    //     oldP.size * currentPrice - oldP.size * (currentPrice - newP.price) - newP.size * (currentFunding - newP.funding)
+
+    //     calculateFix (position, currentPrice, currentFunding)
+    //         position.size * currentPrice - position.size * (currentPrice - position.price) - position.size * (currentFunding - position.funding
+
+    //     return calculateFix(newPosition, currentPrice, currentFunding) - calculateFix(oldPosition, currentPrice, currentFunding);
+    //     */
+    //     (int newPositionPnl, , , ) = newPosition.getPnl(currentPrice);
+    //     (int oldPositionPnl, , , ) = oldPosition.getPnl(currentPrice);
+    //     return
+    //         calculatePositionDebt(newPosition.size, newPositionPnl, currentPrice) -
+    //         calculatePositionDebt(oldPosition.size, oldPositionPnl, currentPrice);
+    // }
+
+    // function calculatePositionDebt(
+    //     int positionSize,
+    //     int positionPnl,
+    //     uint currentPrice
+    // ) internal pure returns (int) {
+    //     if (positionSize == 0) {
+    //         return 0;
+    //     }
+    //     return positionSize * currentPrice.toInt() - positionPnl;
+    //     // calculatePositionPnL(position, currentPrice, currentFunding);
+    // }
+
+    // function calculatePositionPnL(
+    //     Position.Data storage position,
+    //     uint currentPrice,
+    //     int currentFunding
+    // ) internal view returns (int) {
+    //     // pnl = pricePnl + funding Pnl = size * (currentPrice - price) + size * (currentFunding - funding)
+    //     return
+    //         position.size *
+    //         (currentPrice.toInt() - position.latestInteractionPrice.toInt()) +
+    //         position.size *
+    //         (currentFunding - position.latestInteractionFunding);
+    // }
 }
