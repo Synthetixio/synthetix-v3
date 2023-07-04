@@ -8,6 +8,8 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
+import { wei } from '@synthetixio/wei';
+import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -24,7 +26,7 @@ describe('Settle Offchain Async Order test', () => {
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
-        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
       },
     ],
     traderAccountIds: [2, 3],
@@ -412,7 +414,20 @@ describe('Settle Offchain Async Order test', () => {
             const marketSize = bn(1);
             const marketSkew = bn(1);
             const sizeDelta = bn(1);
-            const params = [ethMarketId, marketSkew, marketSize, sizeDelta];
+            const currentFundingRate = bn(0);
+            const currentFundingVelocity = calcCurrentFundingVelocity({
+              skew: wei(1),
+              skewScale: wei(100_000),
+              maxFundingVelocity: wei(10),
+            });
+            const params = [
+              ethMarketId,
+              marketSkew,
+              marketSize,
+              sizeDelta,
+              currentFundingRate,
+              currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
+            ];
             await assertEvent(
               settleTx,
               `MarketUpdated(${params.join(', ')})`,

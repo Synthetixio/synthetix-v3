@@ -39,7 +39,14 @@ interface IAsyncOrderModule {
         uint256 acceptablePrice
     );
 
-    event MarketUpdated(uint128 marketId, int256 skew, uint256 size, int256 sizeDelta);
+    event MarketUpdated(
+        uint128 marketId,
+        int256 skew,
+        uint256 size,
+        int256 sizeDelta,
+        int256 currentFundingRate,
+        int256 currentFundingVelocity
+    );
 
     error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);
