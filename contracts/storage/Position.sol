@@ -12,8 +12,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
- *
- * TODO: Rename to PerpPosition
  */
 library Position {
     using SafeCastI256 for int256;
@@ -69,23 +67,26 @@ library Position {
         fee = Order.orderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
         keeperFee = Order.keeperFee(market.minKeeperFeeUsd, market.maxKeeperFeeUsd);
 
-        // Determine if the resulting position will _not_ be in a bad place (i.e. instant liquidation).
+        // Assuming there is an existing position (no open position will be a noop), determine if they have enough
+        // margin to continue this operation. Ensuring we do not allow them to place an open position into instant
+        // liquidation. This can be done by inferring their "remainingMargin".
         //
         // We do this by inferring the `remainingMargin = (sum(collateral * price)) + pnl + fundingAcrrued - fee` such that
         // if remainingMargin < minMarginThreshold then this must revert.
         //
-        // NOTE: The use of fillPrice and not oraclePrice to perform calculations below.
+        // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
+        // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
         int256 _remainingMargin = remainingMargin(currentPosition, params.fillPrice);
-
         if (_remainingMargin < 0) {
             revert Error.InsufficientMargin();
         }
 
         uint256 absSize = MathUtil.abs(currentPosition.size);
-        uint256 _liquidationMargin = liquidationMargin(currentPosition, params.fillPrice);
 
+        // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liqudations.
+        uint256 _liquidationMargin = liquidationMargin(currentPosition, params.fillPrice);
         if (absSize != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
-            revert Error.PositionCanLiquidate(accountId);
+            revert Error.CanLiquidatePosition(accountId);
         }
 
         newPosition = Position.Data({
@@ -96,6 +97,9 @@ library Position {
             entryPrice: params.fillPrice,
             feesIncurredUsd: fee + keeperFee
         });
+
+        // Check if the new position is safe... but why not just perform the update to newPosition and perform
+        // all checks on `newPosition`? :thinking:
 
         // TODO: V2 checks if the min margin is met. If not throw, however we may not need this.
 

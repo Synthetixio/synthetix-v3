@@ -45,8 +45,8 @@ library Error {
     error PositionNotFlagged();
 
     // @dev Thrown when performing an update will cause a position to be instantly liquidated.
-    error PositionCanLiquidate(uint128 accountId);
+    error CanLiquidatePosition(uint128 accountId);
 
     // @dev Thrown when a position cannot be liquidated.
-    error PositionCannotLiquidate();
+    error CannotLiquidatePosition();
 }
