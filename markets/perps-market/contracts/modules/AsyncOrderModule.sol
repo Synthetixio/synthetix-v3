@@ -126,13 +126,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
 
-    function getOrder(
-        uint128 marketId,
-        uint128 accountId
-    ) public view override returns (AsyncOrder.Data memory) {
-        return PerpsMarket.loadValid(marketId).asyncOrders[accountId];
-    }
-
     function cancelOrder(uint128 marketId, uint128 accountId) external override {
         AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
         order.checkValidity();
