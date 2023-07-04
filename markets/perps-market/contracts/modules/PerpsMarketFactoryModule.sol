@@ -11,6 +11,7 @@ import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFl
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
@@ -18,6 +19,7 @@ import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
@@ -29,6 +31,7 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
 
@@ -63,12 +66,12 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         factory.onlyIfNotInitialized();
 
-        uint128 globalPerpsMarketId = factory.synthetix.registerMarket(address(this));
-        factory.perpsFactoryMarketId = globalPerpsMarketId;
+        uint128 perpsMarketId = factory.synthetix.registerMarket(address(this));
+        factory.perpsMarketId = perpsMarketId;
 
-        emit FactoryInitialized(globalPerpsMarketId);
+        emit FactoryInitialized(perpsMarketId);
 
-        return globalPerpsMarketId;
+        return perpsMarketId;
     }
 
     /**
@@ -85,7 +88,12 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             revert AddressError.ZeroAddress();
         }
 
-        PerpsMarket.create(requestedMarketId, marketOwner, marketName, marketSymbol);
+        if (requestedMarketId == 0) {
+            revert ParameterError.InvalidParameter("requestedMarketId", "cannot be 0");
+        }
+
+        PerpsMarket.createValid(requestedMarketId, marketOwner, marketName, marketSymbol);
+        GlobalPerpsMarket.load().addMarket(requestedMarketId);
 
         emit MarketCreated(requestedMarketId, marketOwner, marketName, marketSymbol);
 
@@ -98,7 +106,8 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     }
 
     function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
-        return MathUtil.abs(PerpsMarket.load(perpsMarketId).skew * price);
+        // TODO
+        return 0;
     }
 
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {

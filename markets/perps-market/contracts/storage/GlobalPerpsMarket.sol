@@ -4,14 +4,19 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
-import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
+import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
+import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
 /*
     Note: This library contains all global perps market data
 */
 library GlobalPerpsMarket {
     using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
     using SetUtil for SetUtil.UintSet;
 
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
@@ -30,12 +35,45 @@ library GlobalPerpsMarket {
         SetUtil.UintSet liquidatableAccounts;
         // collateral amounts running total
         mapping(uint128 => uint) collateralAmounts;
+        SetUtil.UintSet activeCollateralTypes;
+        SetUtil.UintSet activeMarkets;
     }
 
     function load() internal pure returns (Data storage marketData) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
         assembly {
             marketData.slot := s
+        }
+    }
+
+    function totalCollateralValue(Data storage self) internal view returns (uint256 total) {
+        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
+        SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
+        uint256 activeCollateralLength = activeCollateralTypes.length();
+        for (uint i = 1; i < activeCollateralLength; i++) {
+            uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
+
+            (uint collateralValue, ) = spotMarket.quoteSellExactIn(
+                synthMarketId,
+                self.collateralAmounts[synthMarketId]
+            );
+            total += collateralValue;
+        }
+    }
+
+    function updateCollateralAmount(
+        Data storage self,
+        uint128 synthMarketId,
+        int amountDelta
+    ) internal returns (uint collateralAmount) {
+        collateralAmount = (self.collateralAmounts[synthMarketId].toInt() + amountDelta).toUint();
+        self.collateralAmounts[synthMarketId] = collateralAmount;
+
+        bool isActiveCollateral = self.activeCollateralTypes.contains(synthMarketId);
+        if (collateralAmount > 0 && !isActiveCollateral) {
+            self.activeCollateralTypes.add(synthMarketId.to256());
+        } else if (collateralAmount == 0 && isActiveCollateral) {
+            self.activeCollateralTypes.remove(synthMarketId.to256());
         }
     }
 
@@ -49,11 +87,11 @@ library GlobalPerpsMarket {
         1. checks to ensure max cap isn't hit
         2. adjusts accounting for collateral amounts
     */
-    function checkCollateralAmountAndAdjust(
+    function validateCollateralAmount(
         Data storage self,
         uint128 synthMarketId,
         int synthAmount
-    ) internal {
+    ) internal view {
         uint collateralAmount = self.collateralAmounts[synthMarketId];
         if (synthAmount > 0) {
             uint maxAmount = GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[
@@ -70,16 +108,16 @@ library GlobalPerpsMarket {
                     collateralAmount,
                     synthAmount.toUint()
                 );
-            } else {
-                self.collateralAmounts[synthMarketId] += synthAmount.toUint();
             }
         } else {
             uint synthAmountAbs = MathUtil.abs(synthAmount);
             if (collateralAmount < synthAmountAbs) {
                 revert InsufficientCollateral(synthMarketId, collateralAmount, synthAmountAbs);
             }
-
-            self.collateralAmounts[synthMarketId] -= MathUtil.abs(synthAmount);
         }
+    }
+
+    function addMarket(Data storage self, uint128 marketId) internal {
+        self.activeMarkets.add(marketId.to256());
     }
 }

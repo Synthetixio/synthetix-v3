@@ -51,7 +51,15 @@ library PerpsMarket {
         mapping(uint => Position.Data) positions;
     }
 
-    function create(
+    function load(uint128 marketId) internal pure returns (Data storage market) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));
+
+        assembly {
+            market.slot := s
+        }
+    }
+
+    function createValid(
         uint128 id,
         address owner,
         string memory name,
@@ -67,14 +75,6 @@ library PerpsMarket {
         market.owner = owner;
         market.name = name;
         market.symbol = symbol;
-    }
-
-    function load(uint128 marketId) internal pure returns (Data storage market) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));
-
-        assembly {
-            market.slot := s
-        }
     }
 
     /**

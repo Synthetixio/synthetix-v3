@@ -31,19 +31,19 @@ library PerpsMarketFactory {
          */
         ISynthetixSystem synthetix;
         ISpotMarketSystem spotMarket;
-        uint128 perpsFactoryMarketId;
+        uint128 perpsMarketId;
         address owner;
         address nominatedOwner;
     }
 
     function onlyIfInitialized(Data storage self) internal view {
-        if (self.perpsFactoryMarketId == 0) {
+        if (self.perpsMarketId == 0) {
             revert PerpsMarketNotInitialized();
         }
     }
 
     function onlyIfNotInitialized(Data storage self) internal view {
-        if (self.perpsFactoryMarketId != 0) {
+        if (self.perpsMarketId != 0) {
             revert PerpsMarketAlreadyInitialized();
         }
     }

@@ -59,6 +59,16 @@ library PerpsAccount {
         }
     }
 
+    /**
+        @notice allows us to update the account id in case it needs to be
+     */
+    function loadUpdate(uint128 id) internal returns (Data storage account) {
+        account = load(id);
+        if (account.id == 0) {
+            account.id = id;
+        }
+    }
+
     function isEligibleForLiquidation(
         Data storage self
     )
@@ -93,11 +103,27 @@ library PerpsAccount {
         }
     }
 
-    function checkPendingOrder(Data storage self) internal {
+    function checkPendingOrder(Data storage self) internal view {
         // Check if there are pending orders
         AsyncOrder.Data memory asyncOrder = AsyncOrder.load(self.id);
         if (asyncOrder.sizeDelta != 0) {
             revert AsyncOrder.PendingOrderExist();
+        }
+    }
+
+    function updateCollateralAmount(
+        Data storage self,
+        uint128 synthMarketId,
+        int amountDelta
+    ) internal returns (uint256 collateralAmount) {
+        collateralAmount = (self.collateralAmounts[synthMarketId].toInt() + amountDelta).toUint();
+        self.collateralAmounts[synthMarketId] = collateralAmount;
+
+        bool isActiveCollateral = self.activeCollateralTypes.contains(synthMarketId);
+        if (collateralAmount > 0 && !isActiveCollateral) {
+            self.activeCollateralTypes.add(synthMarketId);
+        } else if (collateralAmount == 0 && isActiveCollateral) {
+            self.activeCollateralTypes.remove(synthMarketId);
         }
     }
 
@@ -130,7 +156,7 @@ library PerpsAccount {
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your margin maintenance value.
      */
-    function checkAvailableWithdrawableValue(
+    function validateWithdrawableAmount(
         Data storage self,
         uint256 amountToWithdraw
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
@@ -257,6 +283,7 @@ library PerpsAccount {
         uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
             .load()
             .synthDeductionPriority;
+        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint i = 0; i < synthDeductionPriority.length; i++) {
             uint128 marketId = synthDeductionPriority[i];
             uint availableAmount = self.collateralAmounts[marketId];
@@ -276,7 +303,6 @@ library PerpsAccount {
                 }
             } else {
                 // TODO: check if market is paused; if not, continue
-                ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
                 (uint availableAmountUsd, ) = spotMarket.quoteSellExactIn(
                     marketId,
                     availableAmount
