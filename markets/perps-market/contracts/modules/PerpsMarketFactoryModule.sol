@@ -88,10 +88,6 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return PerpsMarket.load(perpsMarketId).symbol;
     }
 
-    function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
-        return MathUtil.abs(PerpsMarket.load(perpsMarketId).skew);
-    }
-
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         return
             PerpsMarket.load(perpsMarketId).size.mulDecimal(

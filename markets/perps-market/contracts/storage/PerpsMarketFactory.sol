@@ -41,4 +41,42 @@ library PerpsMarketFactory {
         self.usdToken.approve(address(this), amount);
         self.synthetix.depositMarketUsd(marketId, address(this), amount);
     }
+
+    function getSynth(Data storage self, uint128 synthMarketId) internal view returns (address) {
+        return self.spotMarket.getSynth(synthMarketId);
+    }
+
+    function addCollateral(
+        Data storage self,
+        uint128 perpsMarketId,
+        uint128 synthMarketId,
+        uint amountToAdd
+    ) internal {
+        if (synthMarketId == 0) {
+            depositToMarketManager(self, perpsMarketId, amountToAdd);
+        } else {
+            self.synthetix.depositMarketCollateral(
+                perpsMarketId,
+                getSynth(self, synthMarketId),
+                amountToAdd
+            );
+        }
+    }
+
+    function removeCollateral(
+        Data storage self,
+        uint128 perpsMarketId,
+        uint128 synthMarketId,
+        uint amountToRemove
+    ) internal {
+        if (synthMarketId == 0) {
+            self.synthetix.withdrawMarketUsd(perpsMarketId, address(this), amountToRemove);
+        } else {
+            self.synthetix.withdrawMarketCollateral(
+                perpsMarketId,
+                getSynth(self, synthMarketId),
+                amountToRemove
+            );
+        }
+    }
 }

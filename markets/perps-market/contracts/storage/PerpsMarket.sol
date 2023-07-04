@@ -38,6 +38,7 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
+        uint256 pendingLiquidationSize;
         // TODO: move to new data structure?
         int lastFundingRate;
         int lastFundingValue;
@@ -93,6 +94,11 @@ library PerpsMarket {
         }
     }
 
+    function getMarketValue(Data storage self) internal returns (uint256 marketValue) {
+        uint netSize = self.size - self.pendingLiquidationSize;
+        return PerpsPrice.load(self.id).price * netSize.to256();
+    }
+
     /**
      * @dev Returns the max amount of liquidation that can occur based on the market configuration
      * @notice Based on the configured liquidation window, a trader can only be liquidated for a certain
@@ -141,9 +147,18 @@ library PerpsMarket {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
 
-        self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
-        self.skew += newPosition.size - oldPositionSize;
+        updateMarketSizes(self, newPosition.size, oldPositionSize);
+
         oldPosition.updatePosition(newPosition);
+    }
+
+    function updateMarketSizes(
+        Data storage self,
+        int128 newPositionSize,
+        int128 oldPositionSize
+    ) internal {
+        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPositionSize - oldPositionSize;
     }
 
     function loadWithVerifiedOwner(

@@ -75,6 +75,14 @@ library PerpsAccount {
             .load()
             .liquidatableAccounts;
 
+        for (uint i = 1; i < self.openPositionMarketIds.length(); i++) {
+            uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
+            PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+            perpsMarket.pendingLiquidationSize += MathUtil.abs(perpsMarket.positions[self.id].size);
+        }
+
+        GlobalPerpsMarket.withdrawCollateralToAccount(self);
+
         if (!liquidatableAccounts.contains(self.id)) {
             liquidatableAccounts.add(self.id);
             convertAllCollateralToUsd(self);
@@ -99,6 +107,8 @@ library PerpsAccount {
         }
 
         self.collateralAmounts[synthMarketId] += amountToAdd;
+
+        GlobalPerpsMarket.rebalanceCollateralToMarkets();
     }
 
     // TODO: rename this maybe?  not really withdrawing collateral, just accounting
@@ -112,6 +122,8 @@ library PerpsAccount {
         if (self.collateralAmounts[synthMarketId] == 0) {
             self.activeCollateralTypes.remove(synthMarketId);
         }
+
+        GlobalPerpsMarket.rebalanceCollateralToMarkets();
     }
 
     /**
@@ -220,6 +232,7 @@ library PerpsAccount {
     }
 
     function convertAllCollateralToUsd(Data storage self) internal {
+        GlobalPerpsMarket.Data storage globalPerpsMarket = GlobalPerpsMarket.load();
         for (uint i = 1; i < self.activeCollateralTypes.length(); i++) {
             uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
             if (synthMarketId != SNX_USD_MARKET_ID) {
@@ -232,6 +245,9 @@ library PerpsAccount {
                     address(0)
                 );
                 self.collateralAmounts[SNX_USD_MARKET_ID] += amountSold;
+                self.collateralAmounts[synthMarketId] = 0;
+                globalPerpsMarket.collateralAmounts[synthMarketId] -= amount;
+                globalPerpsMarket.collateralAmounts[SNX_USD_MARKET_ID] += amountSold;
             }
         }
     }
@@ -350,10 +366,14 @@ library PerpsAccount {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         for (uint i = 0; i < runtime.profitableMarketsLength; i++) {
             uint128 positionMarketId = runtime.profitableMarkets[i];
-            (, int totalPnl, uint liquidationReward, ) = _processMarketLiquidation(
-                self,
-                positionMarketId
-            );
+            (
+                uint amountToLiquidate,
+                int totalPnl,
+                uint liquidationReward,
+
+            ) = _processMarketLiquidation(self, positionMarketId);
+
+            PerpsMarket.load(positionMarketId).pendingLiquidationSize -= amountToLiquidate;
 
             if (self.openPositionMarketIds.contains(positionMarketId)) {
                 // partial liquidation
@@ -363,7 +383,8 @@ library PerpsAccount {
             // withdraw from market
             uint256 amountToWithdraw = totalPnl.toUint() + liquidationReward;
             factory.synthetix.withdrawMarketUsd(positionMarketId, address(this), amountToWithdraw);
-            self.collateralAmounts[SNX_USD_MARKET_ID] += amountToWithdraw - liquidationReward;
+            uint amountChange = amountToWithdraw - liquidationReward;
+            self.collateralAmounts[SNX_USD_MARKET_ID] += amountChange;
 
             runtime.accumulatedLiquidationRewards += liquidationReward;
         }
@@ -392,6 +413,8 @@ library PerpsAccount {
                     uint liquidationReward,
                     int128 oldPositionSize
                 ) = _processMarketLiquidation(self, positionMarketId);
+
+                PerpsMarket.load(positionMarketId).pendingLiquidationSize -= amountToLiquidate;
 
                 if (self.openPositionMarketIds.contains(positionMarketId)) {
                     // partial liquidation
@@ -467,10 +490,13 @@ library PerpsAccount {
         (, totalPnl, , , ) = position.getPositionData(price);
 
         int128 amtToLiquidationInt = amountToLiquidate.toInt();
+
         // reduce position size
         position.size = oldPositionSize > 0
             ? oldPositionSize - amtToLiquidationInt
             : oldPositionSize + amtToLiquidationInt;
+
+        perpsMarket.updateMarketSizes(oldPositionSize, position.size);
 
         // update position markets
         updatePositionMarkets(self, positionMarketId, position.size);

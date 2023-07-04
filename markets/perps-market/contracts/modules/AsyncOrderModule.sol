@@ -205,7 +205,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
 
         // after pnl is realized, update position
-        PerpsMarket.loadValid(runtime.marketId).updatePositionData(runtime.accountId, newPosition);
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(runtime.marketId);
+        perpsMarket.updatePositionData(runtime.accountId, newPosition);
 
         perpsAccount.updatePositionMarkets(runtime.marketId, runtime.newPositionSize);
         perpsAccount.deductFromAccount(totalFees);
@@ -224,6 +225,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // exctracted from asyncOrder before order is reset
         bytes32 trackingCode = asyncOrder.trackingCode;
+
+        GlobalPerpsMarket.load().rebalanceCollateralToMarkets();
 
         asyncOrder.reset();
 
