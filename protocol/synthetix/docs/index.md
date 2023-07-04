@@ -1111,6 +1111,19 @@ See `IMarket`.
 
 **Returns**
 * `withdrawableD18` (*uint256*) - The total amount of snxUSD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
+### getMarketAddress
+
+  ```solidity
+  function getMarketAddress(uint128 marketId) external view returns (address marketAddress)
+  ```
+
+  Returns the contract address for the specified market.
+
+**Parameters**
+* `marketId` (*uint128*) - The id of the market
+
+**Returns**
+* `marketAddress` (*address*) - The contract address for the specified market
 ### getMarketNetIssuance
 
   ```solidity

@@ -134,6 +134,13 @@ interface IMarketManagerModule {
     ) external view returns (uint256 withdrawableD18);
 
     /**
+     * @notice Returns the contract address for the specified market.
+     * @param marketId The id of the market
+     * @return marketAddress The contract address for the specified market
+     */
+    function getMarketAddress(uint128 marketId) external view returns (address marketAddress);
+
+    /**
      * @notice Returns the net issuance of the specified market (snxUSD withdrawn - snxUSD deposited).
      * @param marketId The id of the market whose net issuance is being queried.
      * @return issuanceD18 The net issuance of the market, denominated with 18 decimals of precision.

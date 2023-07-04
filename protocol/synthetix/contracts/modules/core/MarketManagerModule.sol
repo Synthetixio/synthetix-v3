@@ -75,6 +75,13 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
+    function getMarketAddress(uint128 marketId) external view override returns (address) {
+        return Market.load(marketId).marketAddress;
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
     function getMarketNetIssuance(uint128 marketId) external view override returns (int128) {
         return Market.load(marketId).netIssuanceD18;
     }
