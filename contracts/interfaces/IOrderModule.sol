@@ -30,7 +30,7 @@ interface IOrderModule {
     /**
      * @dev Creates an order to be submitted for settlement.
      */
-    function commitOrder(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 desiredFillPrice) external;
+    function commitOrder(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 limitPrice) external;
 
     /**
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.

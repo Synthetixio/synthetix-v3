@@ -20,6 +20,9 @@ library Error {
     // @dev Thrown when an account has insufficient collateral to transfer.
     error InsufficientCollateral(int256 collateral, int256 value);
 
+    // @dev Thrown when an account has insufficient margin to perform a trade.
+    error InsufficientMargin();
+
     // @dev Thrown when attempting to deposit a collateral that has reached max deportable amount.
     error MaxCollateralExceeded(int256 value, uint256 max);
 
@@ -29,7 +32,7 @@ library Error {
     // @dev Thrown when an order already exists when it is expected not to have been.
     error OrderAlreadyExists(uint128 accountId);
 
-    // @dev Thrown when an order cannot settle due to desiredFillPrice tolerance not met.
+    // @dev Thrown when an order cannot settle due to limitPrice tolerance not met.
     error PriceToleranceExceeded(uint128 accountId);
 
     // @dev Thrown when an expected position cannot be found.

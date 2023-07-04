@@ -26,7 +26,7 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function commitOrder(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 desiredFillPrice) external {
+    function commitOrder(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 limitPrice) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
 
@@ -45,7 +45,7 @@ contract OrderModule is IOrderModule {
             fillPrice: Order.fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice),
             makerFee: market.makerFee,
             takerFee: market.takerFee,
-            desiredFillPrice: desiredFillPrice
+            limitPrice: limitPrice
         });
 
         // Compute next funding entry/rate

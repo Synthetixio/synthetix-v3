@@ -20,7 +20,7 @@ library Order {
         uint128 accountId;
         int128 sizeDelta;
         uint256 commitmentTime;
-        uint256 desiredFillPrice;
+        uint256 limitPrice;
     }
 
     /**
