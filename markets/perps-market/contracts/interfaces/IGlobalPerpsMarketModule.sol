@@ -36,7 +36,7 @@ interface IGlobalPerpsMarketModule {
     function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
 
     /**
-     * @notice Obtain the max collateral amount for a specific synth market.
+     * @notice Gets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @return maxCollateralAmount max collateral amount of the specified synth market id
      */
@@ -49,13 +49,28 @@ interface IGlobalPerpsMarketModule {
      */
     function setSynthDeductionPriority(uint128[] memory newSynthDeductionPriority) external;
 
+    /**
+     * @notice Gets the synth deduction priority ordered list.
+     * @dev The synth deduction priority is used to determine the order in which synths are deducted from an account. Id 0 is snxUSD and should be first in the list.
+     * @return synthDeductionPriority Ordered array of synth market ids for deduction priority.
+     */
     function getSynthDeductionPriority() external view returns (uint128[] memory);
 
+    /**
+     * @notice Sets the liquidation reward guard (min and max).
+     * @param minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
+     * @param maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     */
     function setLiquidationRewardGuards(
         uint256 minLiquidationRewardUsd,
         uint256 maxLiquidationRewardUsd
     ) external;
 
+    /**
+     * @notice Gets the liquidation reward guard (min and max).
+     * @return minLiquidationRewardUsd Minimum liquidation reward expressed as USD value.
+     * @return maxLiquidationRewardUsd Maximum liquidation reward expressed as USD value.
+     */
     function getLiquidationRewardGuards()
         external
         view
