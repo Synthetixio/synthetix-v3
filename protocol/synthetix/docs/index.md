@@ -740,6 +740,29 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `tokenAmount` (*uint256*) - The amount of collateral that was withdrawn, denominated in the token's native decimal representation.
 * `sender` (*address*) - The address of the account that triggered the withdrawal.
 
+## Cross ChainUSD Module
+
+### transferCrossChain
+
+  ```solidity
+  function transferCrossChain(uint64 destChainId, uint256 amount) external payable returns (uint256 gasTokenUsed)
+  ```
+
+  Allows users to transfer tokens cross-chain using CCIP.
+
+**Parameters**
+* `destChainId` (*uint64*) - The id of the chain where tokens are to be transferred to.
+* `amount` (*uint256*) - The amount of tokens to be transferred, denominated with 18 decimals of precision.
+
+**Returns**
+* `gasTokenUsed` (*uint256*) - The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
+
+### TransferCrossChainInitiated
+
+  ```solidity
+  event TransferCrossChainInitiated(uint64 destChainId, uint256 amount, address sender)
+  ```
+
 ## IssueUSD Module
 
 ### mintUsd
@@ -1912,21 +1935,17 @@ rewards-over-time will be halted)
 * `spender` (*address*) - The address to which the holder has given allowance to.
 * `amount` (*uint256*) - The amount of snxUSD to be burned, denominated with 18 decimals of precision.
 
-### transferCrossChain
+### burn
 
   ```solidity
-  function transferCrossChain(uint256 destChainId, address to, uint256 amount) external returns (uint256 feesPaidD18)
+  function burn(uint256 amount) external
   ```
 
-  Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
+  Destroys `amount` of snxUSD tokens from the caller. This is derived from ERC20Burnable.sol and is currently included for testing purposes with CCIP token pools.
 
 **Parameters**
-* `destChainId` (*uint256*) - The id of the chain where tokens are to be transferred to.
-* `to` (*address*) - The destination address in the target chain.
-* `amount` (*uint256*) - The amount of tokens to be transferred, denominated with 18 decimals of precision.
+* `amount` (*uint256*) - The amount of snxUSD to be burned, denominated with 18 decimals of precision.
 
-**Returns**
-* `feesPaidD18` (*uint256*) - The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
 ### isInitialized
 
   ```solidity
