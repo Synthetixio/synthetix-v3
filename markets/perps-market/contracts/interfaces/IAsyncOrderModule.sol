@@ -62,6 +62,11 @@ interface IAsyncOrderModule {
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external returns (AsyncOrder.Data memory retOrder, uint fees);
 
+    function getOrder(
+        uint128 marketId,
+        uint128 accountId
+    ) external returns (AsyncOrder.Data memory);
+
     function cancelOrder(uint128 marketId, uint128 accountId) external;
 
     // only used due to stack too deep during settlement

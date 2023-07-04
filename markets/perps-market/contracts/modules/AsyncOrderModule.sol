@@ -86,6 +86,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, feesAccrued);
     }
 
+    function getOrder(
+        uint128 marketId,
+        uint128 accountId
+    ) public view override returns (AsyncOrder.Data memory) {
+        return PerpsMarket.loadValid(marketId).asyncOrders[accountId];
+    }
+
     function settle(uint128 marketId, uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
