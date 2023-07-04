@@ -27,7 +27,7 @@ library Position {
         uint256 fillPrice;
         uint128 makerFee;
         uint128 takerFee;
-        uint256 desiredFillPrice;
+        uint256 limitPrice;
     }
 
     // --- Storage --- //
@@ -77,6 +77,13 @@ library Position {
         //
         // We do this by inferring the `remainingMargin = (sum(collateral * price)) + pnl + fundingAcrrued - fee` such that
         // if remainingMargin < minMarginThreshold then this must revert.
+        //
+        // NOTE: The use of fillPrice and not oraclePrice to perform calculations below.
+        int256 _remainingMargin = remainingMargin(currentPosition, fillPrice);
+
+        if (_remainingMargin < 0) {
+            revert Error.InsufficientMargin();
+        }
 
         // TODO: Replace this with a real position to be returned upon success postTradeDetails.
         position = Position.Data({
@@ -90,21 +97,22 @@ library Position {
     }
 
     // --- Memebr --- //
+
     /**
      * @dev Returns a position's accrued funding.
      */
-    function accruedFunding(Position.Data storage self, uint256 oraclePrice) internal view returns (int256) {
+    function accruedFunding(Position.Data storage self, uint256 price) internal view returns (int256) {
         if (self.size == 0) {
             return 0;
         }
 
         PerpMarket.Data storage market = PerpMarket.load(self.marketId);
-        int256 netFundingPerUnit = market.nextFunding(oraclePrice) - self.entryFundingValue;
+        int256 netFundingPerUnit = market.nextFunding(price) - self.entryFundingValue;
         return self.size * netFundingPerUnit;
     }
 
     /**
-     * @dev Returns the `sum(p.collaterals.map(c => c.amount * c.oraclePrice))`.
+     * @dev Returns the `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
     function collateralUsd(Position.Data storage self) internal view returns (uint256) {
         PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
@@ -136,12 +144,12 @@ library Position {
      * We return an `int` here as after all fees and PnL, this can be negative. The caller should verify that this
      * is positive before proceeding with further operations.
      */
-    function remainingMargin(Position.Data storage self, uint256 oraclePrice) internal view returns (int256) {
+    function remainingMargin(Position.Data storage self, uint256 price) internal view returns (int256) {
         int256 margin = collateralUsd(self).toInt();
-        int256 funding = accruedFunding(self, oraclePrice);
+        int256 funding = accruedFunding(self, price);
 
         // Calculcate this position's PnL
-        int256 priceDelta = oraclePrice.toInt() - self.entryPrice.toInt();
+        int256 priceDelta = price.toInt() - self.entryPrice.toInt();
         int256 pnl = self.size * priceDelta;
 
         return margin + pnl + funding;
