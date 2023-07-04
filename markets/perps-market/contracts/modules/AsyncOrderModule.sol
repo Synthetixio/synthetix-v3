@@ -237,8 +237,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            market.size,
-            market.skew,
             runtime.trackingCode,
             msg.sender
         );

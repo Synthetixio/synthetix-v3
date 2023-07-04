@@ -28,8 +28,6 @@ interface IAsyncOrderModule {
         int128 newSize,
         uint256 collectedFees,
         uint256 settelementReward,
-        uint256 marketSize,
-        int256 marketSkew,
         bytes32 indexed trackingCode,
         address settler
     );
@@ -40,6 +38,8 @@ interface IAsyncOrderModule {
         uint256 settlementTime,
         uint256 acceptablePrice
     );
+
+    event MarketUpdated(uint128 marketId, int256 skew, uint256 size, int256 sizeDelta);
 
     error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
     error SettlementStrategyNotFound(SettlementStrategy.Type strategyType);

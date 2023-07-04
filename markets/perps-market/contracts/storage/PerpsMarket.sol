@@ -30,6 +30,8 @@ library PerpsMarket {
 
     error PriceFeedNotSet(uint128 marketId);
 
+    event MarketUpdated(uint128 marketId, int256 skew, uint256 size, int256 sizeDelta);
+
     struct Data {
         address owner;
         address nominatedOwner;
@@ -144,6 +146,9 @@ library PerpsMarket {
         self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
         self.skew += newPosition.size - oldPositionSize;
         oldPosition.updatePosition(newPosition);
+        int128 sizeDelta = newPosition.size - oldPositionSize;
+        // TODO add current market debt
+        emit MarketUpdated(self.id, self.skew, self.size, sizeDelta);
     }
 
     function loadWithVerifiedOwner(

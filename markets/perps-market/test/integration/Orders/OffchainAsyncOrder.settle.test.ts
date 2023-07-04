@@ -379,7 +379,7 @@ describe('Settle Offchain Async Order test', () => {
               .settlePythOrder(pythPriceData, extraData, { value: updateFee });
           });
 
-          it('emits event', async () => {
+          it('emits event settle event', async () => {
             // TODO Calculate the correct fill price instead of hardcoding
 
             const accountId = 2;
@@ -388,8 +388,6 @@ describe('Settle Offchain Async Order test', () => {
             const newPositionSize = bn(1);
             const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
             const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
-            const marketSize = bn(1);
-            const marketSkew = bn(1);
             const trackingCode = `"${ethers.constants.HashZero}"`;
             const msgSender = `"${await keeper().getAddress()}"`;
             const params = [
@@ -400,14 +398,24 @@ describe('Settle Offchain Async Order test', () => {
               newPositionSize,
               totalFees,
               settlementReward,
-              marketSize,
-              marketSkew,
               trackingCode,
               msgSender,
             ];
             await assertEvent(
               settleTx,
               `OrderSettled(${params.join(', ')})`,
+              systems().PerpsMarket
+            );
+          });
+
+          it('emits market updated event', async () => {
+            const marketSize = bn(1);
+            const marketSkew = bn(1);
+            const sizeDelta = bn(1);
+            const params = [ethMarketId, marketSkew, marketSize, sizeDelta];
+            await assertEvent(
+              settleTx,
+              `MarketUpdated(${params.join(', ')})`,
               systems().PerpsMarket
             );
           });
