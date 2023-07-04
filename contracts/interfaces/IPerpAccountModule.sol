@@ -15,9 +15,7 @@ interface IPerpAccountModule {
 
     // --- Events --- //
 
-    /**
-     * @dev Fired when collateral is transferred between user and Account.
-     */
+    // @dev Emitted when collateral is transferred between user <-> Account.
     event TransferCollateral(address indexed from, address indexed to, int256 value);
 
     // --- Mutative --- //

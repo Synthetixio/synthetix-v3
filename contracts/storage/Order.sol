@@ -23,6 +23,9 @@ library Order {
         uint256 desiredFillPrice;
     }
 
+    /**
+     * @dev See IOrderModule.fillPrice
+     */
     function fillPrice(
         int128 skew,
         uint128 skewScale,
@@ -63,6 +66,9 @@ library Order {
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
+    /**
+     * @dev See IOrderModule.orderFee
+     */
     function orderFee(
         int128 sizeDelta,
         uint256 _fillPrice,

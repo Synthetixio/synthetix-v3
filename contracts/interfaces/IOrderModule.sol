@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 interface IOrderModule {
     // --- Events --- //
 
+    // @dev Emitted when a new order is submitted/created.
     event OrderSubmitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
@@ -12,6 +13,7 @@ interface IOrderModule {
         uint256 executableAtTime
     );
 
+    // @dev Emitted when a pending order was successfully settled/executed.
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
@@ -20,6 +22,7 @@ interface IOrderModule {
         uint256 keeperFee
     );
 
+    // @dev Emitted when a stale odrder was cancelled.
     event OrderCancelled(uint128 indexed accountId, uint128 indexed marketId, int256 sizeDelta, uint256 keeperFee);
 
     // --- Mutative --- //

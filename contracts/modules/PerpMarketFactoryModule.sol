@@ -11,12 +11,9 @@ import "../interfaces/IPerpMarketFactoryModule.sol";
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     uint128 public marketId;
 
-    function name(uint128 _marketId) external view override returns (string memory n) {
-        if (_marketId == marketId) {
-            n = string(abi.encodePacked("Market ", bytes32(uint256(_marketId))));
-        }
-    }
-
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
     function setSynthetix(ISynthetixSystem synthetix) external {
         OwnableStorage.onlyOwner();
         PerpMarketFactoryConfiguration.Data storage store = PerpMarketFactoryConfiguration.load();
@@ -29,10 +26,25 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
     // --- Required functions to be IMarket compatiable --- //
 
+    /**
+     * @inheritdoc IMarket
+     */
+    function name(uint128 _marketId) external view override returns (string memory n) {
+        if (_marketId == marketId) {
+            n = string(abi.encodePacked("Market ", bytes32(uint256(_marketId))));
+        }
+    }
+
+    /**
+     * @inheritdoc IMarket
+     */
     function reportedDebt(uint128) external pure override returns (uint256) {
         return 0;
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function minimumCredit(uint128 _marketId) external view override returns (uint256) {
         return 0;
     }
