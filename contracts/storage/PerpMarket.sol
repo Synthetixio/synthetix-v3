@@ -94,7 +94,7 @@ library PerpMarket {
     /**
      * @dev Returns the latest oracle price from the pre-configured `oracleNodeId`.
      */
-    function assetPrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
+    function oraclePrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
         PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
         price = INodeModule(config.oracleManager).process(self.oracleNodeId).price.toUint();
     }
@@ -160,26 +160,26 @@ library PerpMarket {
         return self.fundingRateLastComputed + (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
-    function unrecordedFunding(PerpMarket.Data storage self, uint256 oraclePrice) internal view returns (int256) {
+    function unrecordedFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
         int256 fundingRate = currentFundingRate(self);
 
         // NOTE: The minus sign - funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.fundingRateLastComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
-        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(oraclePrice.toInt());
+        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(_oraclePrice.toInt());
     }
 
-    function nextFunding(PerpMarket.Data storage self, uint256 oraclePrice) internal view returns (int256) {
-        return self.fundingAccruedLastComputed + unrecordedFunding(self, oraclePrice);
+    function nextFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
+        return self.fundingAccruedLastComputed + unrecordedFunding(self, _oraclePrice);
     }
 
     function recomputeFunding(
         PerpMarket.Data storage self,
-        uint256 oraclePrice
+        uint256 _oraclePrice
     ) internal returns (int256 fundingRate, int256 fundingAccrued) {
         fundingRate = currentFundingRate(self);
-        fundingAccrued = self.fundingAccruedLastComputed + unrecordedFunding(self, oraclePrice);
+        fundingAccrued = self.fundingAccruedLastComputed + unrecordedFunding(self, _oraclePrice);
 
         self.fundingRateLastComputed = fundingRate;
         self.fundingAccruedLastComputed = fundingAccrued;

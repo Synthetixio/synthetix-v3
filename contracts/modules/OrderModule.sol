@@ -37,7 +37,7 @@ contract OrderModule is IOrderModule {
 
         Position.Data storage position = market.positions[accountId];
 
-        uint256 oraclePrice = market.assetPrice();
+        uint256 oraclePrice = market.oraclePrice();
 
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: sizeDelta,
@@ -86,7 +86,7 @@ contract OrderModule is IOrderModule {
     function orderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
-        uint256 oraclePrice = market.assetPrice();
+        uint256 oraclePrice = market.oraclePrice();
         int128 skew = market.skew;
         uint128 skewScale = market.skewScale;
 

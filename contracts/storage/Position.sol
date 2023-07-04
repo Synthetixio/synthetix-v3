@@ -67,7 +67,7 @@ library Position {
         int128 skew = market.skew;
         uint128 skewScale = market.skewScale;
 
-        uint256 oraclePrice = market.assetPrice();
+        uint256 oraclePrice = market.oraclePrice();
         uint256 fillPrice = Order.fillPrice(skew, skewScale, params.sizeDelta, oraclePrice);
 
         fee = Order.orderFee(params.sizeDelta, fillPrice, skew, params.makerFee, params.takerFee);
