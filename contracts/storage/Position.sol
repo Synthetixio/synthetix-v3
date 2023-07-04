@@ -8,6 +8,7 @@ import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketFactoryConfiguration} from "./PerpMarketFactoryConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
@@ -40,7 +41,7 @@ library Position {
         // Size (in native units e.g. wstETH)
         int128 size;
         // The market's accumulated accrued funding at position open.
-        int128 entryFundingValue;
+        int256 entryFundingValue;
         // The fill price at which this position was opened with.
         uint256 entryPrice;
         // Cost in USD to open this positions (e.g. keeper + order fees).
@@ -53,24 +54,19 @@ library Position {
      * Keeping this as postTradeDetails (same as perps v2) until I can figure out a better name.
      */
     function postTradeDetails(
+        uint128 accountId,
         uint128 marketId,
         Position.Data storage currentPosition,
         TradeParams memory params
-    ) internal returns (Position.Data memory position, uint256 fee, uint256 keeperFee) {
+    ) internal returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
         if (params.sizeDelta == 0) {
             revert Error.NilOrder();
         }
 
-        // TODO: Check if the `currentPosition` can be liquidated, if so, revert.
+        // TODO: Check if the `currentPosition` can be immediately liquidated, if so, revert.
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        int128 skew = market.skew;
-        uint128 skewScale = market.skewScale;
-
-        uint256 oraclePrice = market.oraclePrice();
-        uint256 fillPrice = Order.fillPrice(skew, skewScale, params.sizeDelta, oraclePrice);
-
-        fee = Order.orderFee(params.sizeDelta, fillPrice, skew, params.makerFee, params.takerFee);
+        fee = Order.orderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
         keeperFee = Order.keeperFee(market.minKeeperFeeUsd, market.maxKeeperFeeUsd);
 
         // Determine if the resulting position will _not_ be in a bad place (i.e. instant liquidation).
@@ -79,21 +75,35 @@ library Position {
         // if remainingMargin < minMarginThreshold then this must revert.
         //
         // NOTE: The use of fillPrice and not oraclePrice to perform calculations below.
-        int256 _remainingMargin = remainingMargin(currentPosition, fillPrice);
+        int256 _remainingMargin = remainingMargin(currentPosition, params.fillPrice);
 
         if (_remainingMargin < 0) {
             revert Error.InsufficientMargin();
         }
 
-        // TODO: Replace this with a real position to be returned upon success postTradeDetails.
-        position = Position.Data({
-            accountId: 0,
+        uint256 absSize = MathUtil.abs(currentPosition.size);
+        uint256 _liquidationMargin = liquidationMargin(currentPosition, params.fillPrice);
+
+        if (absSize != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
+            revert Error.PositionCanLiquidate(accountId);
+        }
+
+        newPosition = Position.Data({
+            accountId: accountId,
             marketId: marketId,
-            size: 0,
-            entryFundingValue: 0,
-            entryPrice: 0,
-            feesIncurredUsd: 0
+            size: currentPosition.size + params.sizeDelta,
+            entryFundingValue: market.fundingAccruedLastComputed,
+            entryPrice: params.fillPrice,
+            feesIncurredUsd: fee + keeperFee
         });
+
+        // TODO: V2 checks if the min margin is met. If not throw, however we may not need this.
+
+        // TODO: Check that the resulting new postion's margin is above liquidationMargin + liqPremium
+
+        // TODO: Check new position hasn't hit max leverage.
+
+        // TODO: Check new position hasn't hit max oi on either side.
     }
 
     // --- Memebr --- //
@@ -153,5 +163,36 @@ library Position {
         int256 pnl = self.size * priceDelta;
 
         return margin + pnl + funding;
+    }
+
+    /**
+     * @dev Returns a number in USD which if a position's remaining margin is lte then position can be liquidated.
+     */
+    function liquidationMargin(Position.Data storage self, uint256 price) internal view returns (uint256) {
+        PerpMarket.Data storage market = PerpMarket.load(self.marketId);
+        uint256 absSize = MathUtil.abs(self.size);
+
+        // Calculcates the liquidation buffer (penalty).
+        //
+        // e.g. 3 * 1800 * 0.0075 = 40.5
+        uint256 liquidationBuffer = absSize * price * market.liquidationBufferRatio;
+
+        // Calculcates the liquidation fee.
+        //
+        // This is a fee charged against the margin on liquidation and paid to LPers. The fee is proportional to
+        // the position size and bounded by `min >= liqFee <= max`. This proportion is based on each market's
+        // configured liquidation fee ratio.
+        //
+        // e.g. 3 * 1800 * 0.0002 = 1.08
+        uint256 proportionalFee = absSize * price * market.liquidationFeeRatio;
+        uint256 maxKeeperFee = market.maxKeeperFeeUsd;
+        uint256 boundedProportionalFee = proportionalFee > maxKeeperFee ? maxKeeperFee : proportionalFee;
+        uint256 minKeeperFee = market.minKeeperFeeUsd;
+        uint256 boundedLiquidationFee = boundedProportionalFee > minKeeperFee ? boundedProportionalFee : minKeeperFee;
+
+        // If the remainingMargin is <= this number then position can be liquidated.
+        //
+        // e.g. 40.5 + 1.08 + 2 = 43.58
+        return liquidationBuffer + boundedLiquidationFee + market.keeperLiquidationFee;
     }
 }

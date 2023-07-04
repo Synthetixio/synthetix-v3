@@ -10,6 +10,8 @@ library MathUtil {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
+    // TODO: What about support for int128/uint128?
+
     function abs(int x) internal pure returns (uint) {
         return x >= 0 ? x.toUint() : (-x).toUint();
     }

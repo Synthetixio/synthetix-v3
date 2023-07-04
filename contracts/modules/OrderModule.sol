@@ -52,7 +52,7 @@ contract OrderModule is IOrderModule {
         market.recomputeFunding(oraclePrice);
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        Position.postTradeDetails(marketId, position, params);
+        Position.postTradeDetails(accountId, marketId, position, params);
 
         // Using keeper fee and order fees, deduct from their collateral value and then determine whether this position is "good"
         // look at the current position's remaining margin p.collateral.map(c => c.amount * c.price), include their pnl and funding accrued

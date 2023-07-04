@@ -42,6 +42,7 @@ library PerpMarket {
         // sum(positions.map(p => abs(p.size))).
         uint256 size;
         // The value of the funding rate last time this was computed.
+        // TODO: Rename this as it reads like this is a time rather than a value (append Value).
         int256 fundingRateLastComputed;
         // The value (in native units) of total market funding accumulated.
         int256 fundingAccruedLastComputed;
@@ -68,6 +69,12 @@ library PerpMarket {
         uint256 minKeeperFeeUsd;
         // The maximum amount in USD a keeper should receive on any executions/liquidations.
         uint256 maxKeeperFeeUsd;
+        // Liquidation buffer (penality) in bps (on p.size * price) to prevent negative margin on liquidation.
+        uint256 liquidationBufferRatio;
+        // Liquidation fee in bps (% of p.size * price) paid to LPers.
+        uint256 liquidationFeeRatio;
+        // A fixed fee sent to the liquidator upon position liqudation.
+        uint256 keeperLiquidationFee;
     }
 
     function load(uint128 id) internal pure returns (Data storage market) {
