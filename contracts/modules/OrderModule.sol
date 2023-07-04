@@ -48,8 +48,16 @@ contract OrderModule is IOrderModule {
             desiredFillPrice: desiredFillPrice
         });
 
-        // Validate whether this order would lead to a valid 'next' next position.
+        // Compute next funding entry/rate
+        market.recomputeFunding(oraclePrice);
+
+        // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         Position.postTradeDetails(marketId, position, params);
+
+        // Using keeper fee and order fees, deduct from their collateral value and then determine whether this position is "good"
+        // look at the current position's remaining margin p.collateral.map(c => c.amount * c.price), include their pnl and funding accrued
+        // also, consider the fees incurred on this settlement (keeper and order fees) to determine if this position, had it been executed,
+        // would correctly be in a bad place (i.e instant liquidation)
 
         // TODO: Check if this new position can be insta liquidated (this might already be done in postTradeDetails)
 

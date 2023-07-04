@@ -64,6 +64,10 @@ library PerpMarket {
         uint128 takerFee;
         // The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
+        // The minimum amount in USD a keeper should receive on any executions/liquidations.
+        uint256 minKeeperFeeUsd;
+        // The maximum amount in USD a keeper should receive on any executions/liquidations.
+        uint256 maxKeeperFeeUsd;
     }
 
     function load(uint128 id) internal pure returns (Data storage market) {
@@ -116,6 +120,9 @@ library PerpMarket {
         return pSkewBounded.mulDecimal(maxFundingVelocity);
     }
 
+    /**
+     * @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
+     */
     function proportionalElapsed(PerpMarket.Data storage self) internal view returns (int256) {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
@@ -153,14 +160,18 @@ library PerpMarket {
         return self.fundingRateLastComputed + (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
-    function unrecordedFunding(Data storage self, uint price) internal view returns (int256) {
+    function unrecordedFunding(PerpMarket.Data storage self, uint256 oraclePrice) internal view returns (int256) {
         int256 fundingRate = currentFundingRate(self);
 
         // NOTE: The minus sign - funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.fundingRateLastComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
-        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(price.toInt());
+        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(oraclePrice.toInt());
+    }
+
+    function nextFunding(PerpMarket.Data storage self, uint256 oraclePrice) internal view returns (int256) {
+        return self.fundingAccruedLastComputed + unrecordedFunding(self, oraclePrice);
     }
 
     function recomputeFunding(

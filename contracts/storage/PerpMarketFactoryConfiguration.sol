@@ -9,6 +9,15 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
  * @dev Global bfp-market configuration across all perp markets.
  */
 library PerpMarketFactoryConfiguration {
+    // --- Structs --- //
+
+    struct Collateral {
+        // Address of collateral.
+        address collateral;
+        // Oracle price feed node id.
+        bytes32 oracleNodeId;
+    }
+
     struct Data {
         // A reference to the core Synthetix v3 system.
         ISynthetixSystem synthetix;
@@ -18,6 +27,8 @@ library PerpMarketFactoryConfiguration {
         INodeModule oracleManager;
         // {collateralAddress: maxDepositAmountAllowed} (globally for all bfp markets).
         mapping(address => uint256) maxCollateralDeposits;
+        // An array of supported collateral structs (see PerpMarketFactoryConfiguration.Collateral).
+        Collateral[] supportedCollateral;
     }
 
     function load() internal pure returns (Data storage market) {

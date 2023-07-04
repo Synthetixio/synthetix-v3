@@ -101,4 +101,12 @@ library Order {
             MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(takerFee) +
             MathUtil.abs(notionalDiff).mulDecimal(makerSize).mulDecimal(makerFee);
     }
+
+    /**
+     * @dev Returns the keeper fee, a fee paid to keepers for order executions and liquidations (in usd).
+     */
+    function keeperFee(uint256 minKeeperFeeUsd, uint256 maxKeeperFeeUsd) internal pure returns (uint256) {
+        // TODO: Replace hardcoded $1 USD with a real fee to be incurred.
+        return MathUtil.max(MathUtil.min(DecimalMath.UNIT, minKeeperFeeUsd), maxKeeperFeeUsd);
+    }
 }
