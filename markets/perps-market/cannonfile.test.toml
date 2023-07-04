@@ -28,17 +28,11 @@ artifact = "PerpsMarketFactoryModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
-
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
 [contract.PerpsMarketModule]
 artifact = "PerpsMarketModule"
-
-[contract.LimitOrderModule]
-artifact = "LimitOrderModule"
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
@@ -71,10 +65,8 @@ contracts = [
   "PerpsMarketFactoryModule",
   "PerpsAccountModule",
   "PerpsMarketModule",
-  "AtomicOrderModule",
   "AsyncOrderModule",
   "FeatureFlagModule",
-  "LimitOrderModule",
   "LiquidationModule",
   "MarketConfigurationModule",
   "GlobalPerpsMarketModule"
@@ -83,12 +75,10 @@ depends = [
   "import.synthetix",
   "contract.CoreModule",
   "contract.PerpsMarketFactoryModule",
-  "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
   "contract.PerpsAccountModule",
   "contract.PerpsMarketModule",
   "contract.FeatureFlagModule",
-  "contract.LimitOrderModule",
   "contract.LiquidationModule",
   "contract.MarketConfigurationModule",
   "contract.GlobalPerpsMarketModule"
