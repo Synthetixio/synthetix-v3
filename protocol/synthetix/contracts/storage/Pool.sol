@@ -252,7 +252,7 @@ library Pool {
      */
     function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
-            if (self.marketConfigurations[i].marketId == marketId) {
+            if (self.marketConfigurations[i].marketId == marketId && Market.load(marketId).isPoolInRange(self.id)) {
                 return true;
             }
         }
