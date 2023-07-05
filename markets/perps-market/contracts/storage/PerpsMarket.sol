@@ -30,15 +30,6 @@ library PerpsMarket {
 
     error PriceFeedNotSet(uint128 marketId);
 
-    event MarketUpdated(
-        uint128 marketId,
-        int256 skew,
-        uint256 size,
-        int256 sizeDelta,
-        int256 currentFundingRate,
-        int256 currentFundingVelocity
-    );
-
     struct Data {
         address owner;
         address nominatedOwner;
@@ -142,11 +133,23 @@ library PerpsMarket {
         }
     }
 
+    struct MarketUpdateData {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 sizeDelta;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
+    }
+
+    /**
+     * @dev If you call this method, please ensure you emit an event so offchain solution can index market state history properly
+     */
     function updatePositionData(
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal {
+    ) internal returns (MarketUpdateData memory) {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
 
@@ -155,14 +158,15 @@ library PerpsMarket {
         oldPosition.updatePosition(newPosition);
         int128 sizeDelta = newPosition.size - oldPositionSize;
         // TODO add current market debt
-        emit MarketUpdated(
-            self.id,
-            self.skew,
-            self.size,
-            sizeDelta,
-            currentFundingRate(self),
-            currentFundingVelocity(self)
-        );
+        return
+            MarketUpdateData(
+                self.id,
+                self.skew,
+                self.size,
+                sizeDelta,
+                self.lastFundingRate,
+                currentFundingVelocity(self)
+            );
     }
 
     function loadWithVerifiedOwner(

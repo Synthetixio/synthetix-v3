@@ -18,8 +18,9 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
-contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
+contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvents {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using DecimalMath for int64;
@@ -37,7 +38,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
 
     int256 public constant PRECISION = 18;
 
-    function settle(uint128 marketId, uint128 accountId) external {
+    function settle(uint128 marketId, uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
@@ -137,9 +138,18 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             // all gets deposited below with fees
         }
 
-        // after pnl is realized, update position
-        PerpsMarket.Data storage market = PerpsMarket.loadValid(runtime.marketId);
-        market.updatePositionData(runtime.accountId, newPosition);
+        // after pnl is realized, update position on the perps market, this will also update the position.
+        PerpsMarket.MarketUpdateData memory updateData = PerpsMarket
+            .loadValid(runtime.marketId)
+            .updatePositionData(runtime.accountId, newPosition);
+        emit MarketUpdated(
+            updateData.marketId,
+            updateData.skew,
+            updateData.size,
+            updateData.sizeDelta,
+            updateData.currentFundingRate,
+            updateData.currentFundingVelocity
+        );
 
         perpsAccount.updatePositionMarkets(runtime.marketId, runtime.newPositionSize);
         perpsAccount.deductFromAccount(totalFees);

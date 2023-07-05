@@ -36,7 +36,7 @@ interface IAsyncOrderSettlementModule {
         bytes32 trackingCode;
     }
 
-    function settle(uint128 marketId, uint128 accountId) external;
+    function settle(uint128 marketId, uint128 accountId) external view;
 
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable;
 }
