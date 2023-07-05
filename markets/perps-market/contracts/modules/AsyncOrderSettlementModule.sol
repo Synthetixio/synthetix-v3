@@ -122,6 +122,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         ) = asyncOrder.validateOrder(settlementStrategy, price);
 
         runtime.newPositionSize = newPosition.size;
+        runtime.sizeDelta = asyncOrder.sizeDelta;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
@@ -146,7 +147,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             updateData.marketId,
             updateData.skew,
             updateData.size,
-            updateData.sizeDelta,
+            runtime.sizeDelta,
             updateData.currentFundingRate,
             updateData.currentFundingVelocity
         );
@@ -166,9 +167,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             factory.depositToMarketManager(runtime.marketId, runtime.amountToDeposit);
         }
 
-        // exctracted from asyncOrder before order is reset
-        runtime.trackingCode = asyncOrder.trackingCode;
-
         asyncOrder.reset();
 
         // emit event
@@ -176,11 +174,11 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.marketId,
             runtime.accountId,
             fillPrice,
-            runtime.pnl,
+            runtime.sizeDelta,
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            runtime.trackingCode,
+            asyncOrder.trackingCode,
             msg.sender
         );
     }

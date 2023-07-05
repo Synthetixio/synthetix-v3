@@ -137,7 +137,6 @@ library PerpsMarket {
         uint128 marketId;
         int256 skew;
         uint256 size;
-        int256 sizeDelta;
         int256 currentFundingRate;
         int256 currentFundingVelocity;
     }
@@ -156,14 +155,12 @@ library PerpsMarket {
         self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
         self.skew += newPosition.size - oldPositionSize;
         oldPosition.updatePosition(newPosition);
-        int128 sizeDelta = newPosition.size - oldPositionSize;
         // TODO add current market debt
         return
             MarketUpdateData(
                 self.id,
                 self.skew,
                 self.size,
-                sizeDelta,
                 self.lastFundingRate,
                 currentFundingVelocity(self)
             );
