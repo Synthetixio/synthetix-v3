@@ -610,7 +610,7 @@ library PerpsMarketConfiguration {
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketValue;
+        uint256 maxMarketSize;
         uint256 maxFundingVelocity;
         uint256 skewScale;
         uint256 initialMarginRatioD18;

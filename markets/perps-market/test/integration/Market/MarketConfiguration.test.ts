@@ -131,8 +131,8 @@ describe('MarketConfiguration', async () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(marketOwner)
-        .setMaxMarketValue(marketId, fixture.maxMarketValue),
-      'MaxMarketValueSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
+        .setMaxMarketSize(marketId, fixture.maxMarketValue),
+      'MaxMarketSizeSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
       systems().PerpsMarket
     );
   });
@@ -207,7 +207,7 @@ describe('MarketConfiguration', async () => {
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
     await assertRevert(
-      systems().PerpsMarket.connect(randomUser).setMaxMarketValue(marketId, fixture.maxMarketValue),
+      systems().PerpsMarket.connect(randomUser).setMaxMarketSize(marketId, fixture.maxMarketValue),
       `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
     );
     await assertRevert(
@@ -239,7 +239,7 @@ describe('MarketConfiguration', async () => {
   });
 
   it('get maxMarketValue', async () => {
-    const maxMarketValue = await systems().PerpsMarket.getMaxMarketValue(marketId);
+    const maxMarketValue = await systems().PerpsMarket.getMaxMarketSize(marketId);
     assertBn.equal(maxMarketValue, fixture.maxMarketValue);
   });
 

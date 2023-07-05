@@ -64,9 +64,9 @@ interface IMarketConfigurationModule {
     /**
      * @notice Gets fired when max market value is updated.
      * @param marketId udpates funding parameters to this specific market.
-     * @param maxMarketValue the max market value.
+     * @param maxMarketSize the max market value.
      */
-    event MaxMarketValueSet(uint128 indexed marketId, uint256 maxMarketValue);
+    event MaxMarketSizeSet(uint128 indexed marketId, uint256 maxMarketSize);
 
     /**
      * @notice Gets fired when locked oi ratio is updated.
@@ -135,11 +135,12 @@ interface IMarketConfigurationModule {
     ) external;
 
     /**
-     * @notice Set Max market value for a market with this function.
+     * @notice Set the max size of an specific market with this function.
+     * @dev This controls the maximum open interest a market can have on either side (Long | Short). So the total Open Interest (with zero skew) for a market can be up to max market size * 2.
      * @param marketId id of the market to set the max market value.
-     * @param maxMarketValue the max market value.
+     * @param maxMarketSize the max market size in market asset units.
      */
-    function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external;
+    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external;
 
     /**
      * @notice Set the locked OI Ratio for a market with this function.
@@ -204,11 +205,11 @@ interface IMarketConfigurationModule {
     ) external view returns (uint256 skewScale, uint256 maxFundingVelocity);
 
     /**
-     * @notice Gets the max market value of a market.
+     * @notice Gets the max size of an specific market.
      * @param marketId id of the market.
-     * @return maxMarketValue the max market value.
+     * @return maxMarketSize the max market size in market asset units.
      */
-    function getMaxMarketValue(uint128 marketId) external view returns (uint256 maxMarketValue);
+    function getMaxMarketSize(uint128 marketId) external view returns (uint256 maxMarketSize);
 
     /**
      * @notice Gets the order fees of a market.

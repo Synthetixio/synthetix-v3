@@ -48,7 +48,7 @@ interface IAccountModule {
     /**
      * @notice Gets the account's total collateral value.
      * @param accountId Id of the account.
-     * @return collateralValue total collateral value of the account.
+     * @return collateralValue total collateral value of the account. USD denominated.
      */
     function totalCollateralValue(uint128 accountId) external view returns (uint);
 
