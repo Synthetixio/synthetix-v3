@@ -1,9 +1,9 @@
-import Wei, { wei } from '@synthetixio/wei';
+import Wei from '@synthetixio/wei';
 
 // Calculates PD
-const calculatePD = (skew: Wei, skewScale: Wei) => wei(skew).div(wei(skewScale));
+const calculatePD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
 // Calculates the price with pd applied
-const calculateAdjustedPrice = (price: Wei, pd: Wei) => wei(price).add(wei(price).mul(pd));
+const calculateAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
 
 export function calculateFillPrice(skew: Wei, skewScale: Wei, size: Wei, price: Wei) {
   if (skewScale.eq(0)) {
