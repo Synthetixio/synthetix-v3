@@ -46,6 +46,12 @@
   function getAvailableMargin(uint128 accountId) external view returns (int256)
   ```
 
+### getCollateralAmount
+
+  ```solidity
+  function getCollateralAmount(uint128 accountId, uint128 synthMarketId) external view returns (uint256)
+  ```
+
 ### CollateralModified
 
   ```solidity
@@ -60,16 +66,16 @@
   function commitOrder(struct AsyncOrder.OrderCommitmentRequest commitment) external returns (struct AsyncOrder.Data retOrder, uint256 fees)
   ```
 
-### cancelOrder
-
-  ```solidity
-  function cancelOrder(uint128 marketId, uint128 accountId) external
-  ```
-
 ### getOrder
 
   ```solidity
   function getOrder(uint128 marketId, uint128 accountId) external returns (struct AsyncOrder.Data)
+  ```
+
+### cancelOrder
+
+  ```solidity
+  function cancelOrder(uint128 marketId, uint128 accountId) external
   ```
 
 ### OrderCommitted
@@ -78,16 +84,30 @@
   event OrderCommitted(uint128 marketId, uint128 accountId, enum SettlementStrategy.Type orderType, int128 sizeDelta, uint256 acceptablePrice, uint256 settlementTime, uint256 expirationTime, bytes32 trackingCode, address sender)
   ```
 
-### OrderSettled
-
-  ```solidity
-  event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int256 accountPnlRealized, int128 newSize, uint256 collectedFees, uint256 settelementReward, bytes32 trackingCode, address settler)
-  ```
-
 ### OrderCanceled
 
   ```solidity
   event OrderCanceled(uint128 marketId, uint128 accountId, uint256 settlementTime, uint256 acceptablePrice)
+  ```
+
+## Async Order Settlement Module
+
+### settle
+
+  ```solidity
+  function settle(uint128 marketId, uint128 accountId) external view
+  ```
+
+### settlePythOrder
+
+  ```solidity
+  function settlePythOrder(bytes result, bytes extraData) external payable
+  ```
+
+### OrderSettled
+
+  ```solidity
+  event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int256 accountPnlRealized, int128 newSize, uint256 collectedFees, uint256 settelementReward, bytes32 trackingCode, address settler)
   ```
 
 ## Collateral Module
@@ -309,6 +329,14 @@
 
   ```solidity
   event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled)
+  ```
+
+## IMarketEvents
+
+### MarketUpdated
+
+  ```solidity
+  event MarketUpdated(uint128 marketId, int256 skew, uint256 size, int256 sizeDelta, int256 currentFundingRate, int256 currentFundingVelocity)
   ```
 
 ## Perps Market Factory Module
