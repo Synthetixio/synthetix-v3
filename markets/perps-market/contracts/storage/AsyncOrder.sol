@@ -131,6 +131,7 @@ library AsyncOrder {
         uint initialRequiredMargin;
         uint totalRequiredMargin;
         Position.Data newPosition;
+        bytes32 trackingCode;
     }
 
     function validateOrder(
@@ -285,22 +286,12 @@ library AsyncOrder {
         return takerFee + makerFee;
     }
 
-    // TODO: refactor possibly
     function calculateFillPrice(
         int skew,
         uint skewScale,
         int size,
         uint price
     ) internal pure returns (uint) {
-        if (skewScale == 0) {
-            return price;
-        }
-
-        int pdBefore = skew.divDecimal(skewScale.toInt());
-        int pdAfter = (skew + size).divDecimal(skewScale.toInt());
-        int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
-
         // How is the p/d-adjusted price calculated using an example:
         //
         // price      = $1200 USD (oracle)
@@ -328,6 +319,19 @@ library AsyncOrder {
         // fill_price = (price_before + price_after) / 2
         //            = (1200 + 1200.12) / 2
         //            = 1200.06
+        if (skewScale == 0) {
+            return price;
+        }
+        // calculate pd (premium/discount) before and after trade
+        int pdBefore = skew.divDecimal(skewScale.toInt());
+        int newSkew = skew + size;
+        int pdAfter = newSkew.divDecimal(skewScale.toInt());
+
+        // calculate price before and after trade with pd applied
+        int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
+        int priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+
+        // the fill price is the average of those prices
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 }
