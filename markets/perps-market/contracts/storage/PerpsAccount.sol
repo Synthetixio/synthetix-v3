@@ -407,6 +407,9 @@ library PerpsAccount {
         // update position markets
         updateOpenPositions(self, marketId, position.size);
 
+        // update market data
+        perpsMarket.updateMarketSizes(oldPositionSize, position.size);
+
         // using amountToLiquidate to calculate liquidation reward
         (, , , , liquidationReward) = PerpsMarketConfiguration
             .load(marketId)
