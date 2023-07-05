@@ -383,8 +383,6 @@ describe('Settle Offchain Async Order test', () => {
           });
 
           it('emits event settle event', async () => {
-            // TODO Calculate the correct fill price instead of hardcoding
-
             const accountId = 2;
             const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
             const pnl = 0;
