@@ -40,7 +40,6 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        // TODO: move to new data structure?
         int lastFundingRate;
         int lastFundingValue;
         uint256 lastFundingTime;

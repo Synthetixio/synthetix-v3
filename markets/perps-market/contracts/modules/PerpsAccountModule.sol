@@ -66,7 +66,6 @@ contract PerpsAccountModule is IAccountModule {
 
         // accounting
         account.updateCollateralAmount(synthMarketId, amountDelta);
-        globalPerpsMarket.updateCollateralAmount(synthMarketId, amountDelta);
 
         emit CollateralModified(accountId, synthMarketId, amountDelta, msg.sender);
     }

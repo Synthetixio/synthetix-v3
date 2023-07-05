@@ -95,7 +95,7 @@ library PerpsAccount {
         }
     }
 
-    function updatePositionMarkets(Data storage self, uint positionMarketId, int size) internal {
+    function updateOpenPositions(Data storage self, uint positionMarketId, int size) internal {
         if (size == 0) {
             self.openPositionMarketIds.remove(positionMarketId);
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
@@ -125,31 +125,9 @@ library PerpsAccount {
         } else if (collateralAmount == 0 && isActiveCollateral) {
             self.activeCollateralTypes.remove(synthMarketId);
         }
-    }
 
-    function addCollateralAmount(
-        Data storage self,
-        uint128 synthMarketId,
-        uint amountToAdd
-    ) internal {
-        if (!self.activeCollateralTypes.contains(synthMarketId)) {
-            self.activeCollateralTypes.add(synthMarketId);
-        }
-
-        self.collateralAmounts[synthMarketId] += amountToAdd;
-    }
-
-    // TODO: rename this maybe?  not really withdrawing collateral, just accounting
-    function removeCollateralAmount(
-        Data storage self,
-        uint128 synthMarketId,
-        uint amountToRemove
-    ) internal {
-        self.collateralAmounts[synthMarketId] -= amountToRemove;
-
-        if (self.collateralAmounts[synthMarketId] == 0) {
-            self.activeCollateralTypes.remove(synthMarketId);
-        }
+        // always update global values when account collateral is changed
+        GlobalPerpsMarket.load().updateCollateralAmount(synthMarketId, amountDelta);
     }
 
     /**
@@ -258,18 +236,29 @@ library PerpsAccount {
     }
 
     function convertAllCollateralToUsd(Data storage self) internal {
-        for (uint i = 1; i < self.activeCollateralTypes.length(); i++) {
-            uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
+        uint256 activeCollateralTypesLength = activeCollateralTypes.length();
+
+        // 1. withdraw all collateral from synthetix
+        // 2. sell all collateral for snxUSD
+        // 3. deposit snxUSD into synthetix
+        for (uint i = 1; i < activeCollateralTypesLength; i++) {
+            uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
             if (synthMarketId != SNX_USD_MARKET_ID) {
                 uint amount = self.collateralAmounts[synthMarketId];
+                address synth = factory.spotMarket.getSynth(synthMarketId);
+                factory.synthetix.withdrawMarketCollateral(factory.perpsMarketId, synth, amount);
+
                 // TODO what do we use for referer here/ min amount?
-                (uint amountSold, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
+                (uint amountUsd, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
                     synthMarketId,
                     amount,
                     0,
                     address(0)
                 );
-                self.collateralAmounts[SNX_USD_MARKET_ID] += amountSold;
+                factory.synthetix.depositMarketUsd(factory.perpsMarketId, amountUsd);
+                self.collateralAmounts[synthMarketId] = 0;
             }
         }
     }
@@ -278,7 +267,6 @@ library PerpsAccount {
         Data storage self,
         uint amount // snxUSD
     ) internal {
-        // TODO: deduct from snxUSD first?
         uint leftoverAmount = amount;
         uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
             .load()
@@ -294,11 +282,11 @@ library PerpsAccount {
             if (marketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
-                    removeCollateralAmount(self, marketId, leftoverAmount);
+                    updateCollateralAmount(self, marketId, -leftoverAmount);
                     leftoverAmount = 0;
                     break;
                 } else {
-                    removeCollateralAmount(self, marketId, availableAmount);
+                    updateCollateralAmount(self, marketId, -availableAmount);
                     leftoverAmount -= availableAmount;
                 }
             } else {
@@ -316,7 +304,7 @@ library PerpsAccount {
                         type(uint).max,
                         address(0)
                     );
-                    removeCollateralAmount(self, marketId, amountToDeduct);
+                    updateCollateralAmount(self, marketId, -amountToDeduct);
                     leftoverAmount = 0;
                     break;
                 } else {
@@ -327,7 +315,7 @@ library PerpsAccount {
                         0,
                         address(0)
                     );
-                    removeCollateralAmount(self, marketId, availableAmount);
+                    updateCollateralAmount(self, marketId, -availableAmount);
                     leftoverAmount -= amountToDeduct;
                 }
             }
@@ -355,112 +343,18 @@ library PerpsAccount {
     function liquidateAccount(
         Data storage self
     ) internal returns (bool fullLiquidation, uint256 reward) {
-        RuntimeLiquidationData memory runtime;
-        runtime.profitableMarkets = new uint128[](self.openPositionMarketIds.length());
-        runtime.losingMarkets = new uint128[](self.openPositionMarketIds.length());
+        SetUtil.UintSet storage openPositionMarketIds = self.openPositionMarketIds;
+        uint256 openPositionsLength = openPositionMarketIds.length();
 
-        fullLiquidation = true;
+        uint accumulatedLiquidationRewards;
 
-        // loop through all positions
-        // split into profitable / unprofitable
-        for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
-            uint128 positionMarketId = self.openPositionMarketIds.valueAt(i).to128();
-            Position.Data storage position = PerpsMarket.load(positionMarketId).positions[self.id];
+        for (uint i = 1; i < openPositionsLength; i++) {
+            uint128 positionMarketId = openPositionMarketIds.valueAt(i).to128();
+            PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
+            Position.Data storage position = perpsMarket.positions[self.id];
 
-            uint price = PerpsPrice.getCurrentPrice(positionMarketId);
-
-            (int totalPnl, , , ) = position.getPnl(price);
-
-            if (totalPnl > 0) {
-                runtime.profitableMarkets[runtime.profitableMarketsLength] = positionMarketId;
-                runtime.profitableMarketsLength++;
-            } else {
-                runtime.losingMarkets[runtime.losingMarketsLength] = positionMarketId;
-                runtime.losingMarketsLength++;
-                runtime.totalLosingPnl += MathUtil.abs(totalPnl);
-            }
-        }
-
-        // loop over profitable
-        // close position if you can (maxLiquidatableValue)
-        // withdraw from market keeper fee based on pnl that was liquidated
-        // If any position is open after _processMarketLiquidation, set fullLiquidation to false since it's not a partial liquidation.
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        for (uint i = 0; i < runtime.profitableMarketsLength; i++) {
-            uint128 positionMarketId = runtime.profitableMarkets[i];
-            (, int totalPnl, uint liquidationReward, ) = _processMarketLiquidation(
-                self,
-                positionMarketId
-            );
-
-            if (self.openPositionMarketIds.contains(positionMarketId)) {
-                // partial liquidation
-                fullLiquidation = false;
-            }
-
-            // withdraw from market
-            uint256 amountToWithdraw = totalPnl.toUint() + liquidationReward;
-            factory.synthetix.withdrawMarketUsd(positionMarketId, address(this), amountToWithdraw);
-            self.collateralAmounts[SNX_USD_MARKET_ID] += amountToWithdraw - liquidationReward;
-
-            runtime.accumulatedLiquidationRewards += liquidationReward;
-        }
-
-        // if all profitable positions are closed, then proceed to losing positions.
-        // waiting for all profitable markets to be fully closed is required to ensure
-        // we accrue all snxUSD before closing out losing positions
-        if (fullLiquidation) {
-            uint totalAvailableUsd = self.collateralAmounts[SNX_USD_MARKET_ID];
-
-            // loop over losing positions,
-            // -- in loop
-            /*
-            1. get the loss amount
-            2. loss = find the min of loss, max liquidatable
-            3. % = (loss * pnl) / all losing positions pnl
-            4. colateral balance * % = value to deposit for that market
-            */
-            // ---
-
-            for (uint i = 0; i < runtime.losingMarketsLength; i++) {
-                uint128 positionMarketId = runtime.losingMarkets[i];
-                (
-                    uint amountToLiquidate,
-                    int totalPnl,
-                    uint liquidationReward,
-                    int128 oldPositionSize
-                ) = _processMarketLiquidation(self, positionMarketId);
-
-                if (self.openPositionMarketIds.contains(positionMarketId)) {
-                    // partial liquidation
-                    fullLiquidation = false;
-                }
-
-                if (amountToLiquidate == 0) {
-                    continue;
-                }
-
-                runtime.amountToLiquidateRatioD18 = amountToLiquidate.divDecimal(
-                    MathUtil.abs(oldPositionSize)
-                );
-
-                runtime.totalLosingPnlRatioD18 = MathUtil.abs(totalPnl).divDecimal(
-                    runtime.totalLosingPnl
-                );
-                runtime.totalAvailableForDeposit = totalAvailableUsd.mulDecimal(
-                    runtime.totalLosingPnlRatioD18
-                );
-
-                runtime.amountToDeposit = runtime.totalAvailableForDeposit.mulDecimal(
-                    runtime.amountToLiquidateRatioD18
-                );
-
-                runtime.amountToDeposit -= liquidationReward;
-                runtime.accumulatedLiquidationRewards += liquidationReward;
-
-                factory.depositToMarketManager(positionMarketId, runtime.amountToDeposit);
-                self.collateralAmounts[SNX_USD_MARKET_ID] -= runtime.amountToDeposit;
-            }
+            (, , uint liquidationReward, ) = _liquidatePosition(positionMarketId, position);
+            accumulatedLiquidationRewards += liquidationReward;
         }
 
         reward = _processLiquidationRewards(factory, runtime.accumulatedLiquidationRewards);
@@ -479,13 +373,14 @@ library PerpsAccount {
         //     // send to fee collector
         // }
         if (reward > 0) {
-            factory.usdToken.transfer(msg.sender, reward);
+            factory.usdToken.withdrawMarketUsd(msg.sender, reward);
         }
     }
 
-    function _processMarketLiquidation(
+    function _liquidatePosition(
         Data storage self,
-        uint128 positionMarketId
+        uint128 marketId,
+        Position.Data storage position
     )
         private
         returns (
@@ -495,12 +390,11 @@ library PerpsAccount {
             int128 oldPositionSize
         )
     {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
-        Position.Data storage position = perpsMarket.positions[self.id];
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
 
         oldPositionSize = position.size;
         amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
-        uint price = PerpsPrice.getCurrentPrice(positionMarketId);
+        uint price = PerpsPrice.getCurrentPrice(marketId);
 
         (, totalPnl, , , ) = position.getPositionData(price);
 
@@ -511,11 +405,11 @@ library PerpsAccount {
             : oldPositionSize + amtToLiquidationInt;
 
         // update position markets
-        updatePositionMarkets(self, positionMarketId, position.size);
+        updateOpenPositions(self, marketId, position.size);
 
         // using amountToLiquidate to calculate liquidation reward
         (, , , , liquidationReward) = PerpsMarketConfiguration
-            .load(positionMarketId)
+            .load(marketId)
             .calculateRequiredMargins(amtToLiquidationInt, price);
     }
 }
