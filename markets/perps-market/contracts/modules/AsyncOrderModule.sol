@@ -34,8 +34,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
-    int256 public constant PRECISION = 18;
-
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
@@ -86,46 +84,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, feesAccrued);
     }
 
-    function settle(uint128 marketId, uint128 accountId) external view {
-        GlobalPerpsMarket.load().checkLiquidation(accountId);
-        (
-            AsyncOrder.Data storage order,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = _performOrderValidityChecks(marketId, accountId);
-
-        _settleOffchain(order, settlementStrategy);
-    }
-
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
-        (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
-        (
-            AsyncOrder.Data storage order,
-            SettlementStrategy.Data storage settlementStrategy
-        ) = _performOrderValidityChecks(marketId, asyncOrderId);
-
-        bytes32[] memory priceIds = new bytes32[](1);
-        priceIds[0] = settlementStrategy.feedId;
-
-        bytes[] memory updateData = new bytes[](1);
-        updateData[0] = result;
-
-        IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
-            settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates{value: msg.value}(
-            updateData,
-            priceIds,
-            order.settlementTime.to64(),
-            (order.settlementTime + settlementStrategy.priceWindowDuration).to64()
-        );
-
-        IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
-        uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
-
-        settlementStrategy.checkPriceDeviation(offchainPrice, PerpsPrice.getCurrentPrice(marketId));
-
-        _settleOrder(offchainPrice, order, settlementStrategy);
-    }
-
     function getOrder(
         uint128 marketId,
         uint128 accountId
@@ -142,133 +100,5 @@ contract AsyncOrderModule is IAsyncOrderModule {
         order.checkCancellationEligibility(settlementStrategy);
         order.reset();
         emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
-    }
-
-    function _settleOffchain(
-        AsyncOrder.Data storage asyncOrder,
-        SettlementStrategy.Data storage settlementStrategy
-    ) private view returns (uint, int256, uint256) {
-        string[] memory urls = new string[](1);
-        urls[0] = settlementStrategy.url;
-
-        bytes4 selector;
-        if (settlementStrategy.strategyType == SettlementStrategy.Type.PYTH) {
-            selector = AsyncOrderModule.settlePythOrder.selector;
-        } else {
-            revert SettlementStrategyNotFound(settlementStrategy.strategyType);
-        }
-
-        // see EIP-3668: https://eips.ethereum.org/EIPS/eip-3668
-        revert OffchainLookup(
-            address(this),
-            urls,
-            abi.encodePacked(settlementStrategy.feedId, _getTimeInBytes(asyncOrder.settlementTime)),
-            selector,
-            abi.encode(asyncOrder.marketId, asyncOrder.accountId) // extraData that gets sent to callback for validation
-        );
-    }
-
-    function _settleOrder(
-        uint256 price,
-        AsyncOrder.Data storage asyncOrder,
-        SettlementStrategy.Data storage settlementStrategy
-    ) private {
-        SettleOrderRuntime memory runtime;
-
-        runtime.accountId = asyncOrder.accountId;
-        runtime.marketId = asyncOrder.marketId;
-
-        // check if account is flagged
-        GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
-        (
-            Position.Data memory newPosition,
-            uint totalFees,
-            uint fillPrice,
-            Position.Data storage oldPosition
-        ) = asyncOrder.validateOrder(settlementStrategy, price);
-
-        runtime.newPositionSize = newPosition.size;
-
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
-        // use fill price to calculate realized pnl
-        (runtime.pnl, , , ) = oldPosition.getPnl(fillPrice);
-
-        runtime.pnlUint = MathUtil.abs(runtime.pnl);
-        if (runtime.pnl > 0) {
-            factory.synthetix.withdrawMarketUsd(runtime.marketId, address(this), runtime.pnlUint);
-            perpsAccount.addCollateralAmount(SNX_USD_MARKET_ID, runtime.pnlUint);
-        } else if (runtime.pnl < 0) {
-            perpsAccount.deductFromAccount(runtime.pnlUint);
-            runtime.amountToDeposit = runtime.pnlUint;
-            // all gets deposited below with fees
-        }
-
-        // after pnl is realized, update position
-        PerpsMarket.Data storage market = PerpsMarket.loadValid(runtime.marketId);
-        market.updatePositionData(runtime.accountId, newPosition);
-
-        perpsAccount.updatePositionMarkets(runtime.marketId, runtime.newPositionSize);
-        perpsAccount.deductFromAccount(totalFees);
-
-        runtime.settlementReward = settlementStrategy.settlementReward;
-        runtime.amountToDeposit += totalFees - runtime.settlementReward;
-        if (runtime.settlementReward > 0) {
-            // pay keeper
-            factory.usdToken.transfer(msg.sender, runtime.settlementReward);
-        }
-
-        if (runtime.amountToDeposit > 0) {
-            // deposit into market manager
-            factory.depositToMarketManager(runtime.marketId, runtime.amountToDeposit);
-        }
-
-        // exctracted from asyncOrder before order is reset
-        runtime.trackingCode = asyncOrder.trackingCode;
-
-        asyncOrder.reset();
-
-        // emit event
-        emit OrderSettled(
-            runtime.marketId,
-            runtime.accountId,
-            fillPrice,
-            runtime.pnl,
-            runtime.newPositionSize,
-            totalFees,
-            runtime.settlementReward,
-            market.size,
-            market.skew,
-            runtime.trackingCode,
-            msg.sender
-        );
-    }
-
-    function _performOrderValidityChecks(
-        uint128 marketId,
-        uint128 accountId
-    ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
-        AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
-        SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[order.settlementStrategyId];
-
-        order.checkValidity();
-        order.checkWithinSettlementWindow(settlementStrategy);
-
-        return (order, settlementStrategy);
-    }
-
-    function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
-        bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
-
-        // get last 8 bytes
-        return bytes8(settlementTimeBytes << 192);
-    }
-
-    // borrowed from PythNode.sol
-    function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
-        int256 factor = PRECISION + expo;
-        return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());
     }
 }
