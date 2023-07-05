@@ -79,6 +79,8 @@ library PerpMarket {
         uint256 liquidationBufferRatio;
         // Liquidation fee in bps (% of p.size * price) paid to LPers.
         uint256 liquidationFeeRatio;
+        // Multiplier applied when calculating the liquidation premium margin.
+        uint256 liquidationPremiumMultiplier;
         // A fixed fee sent to the liquidator upon position liqudation.
         uint256 keeperLiquidationFee;
     }

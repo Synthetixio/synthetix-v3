@@ -18,7 +18,6 @@ contract OrderModule is IOrderModule {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastU128 for uint128;
-
     using Order for Order.Data;
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
@@ -52,24 +51,26 @@ contract OrderModule is IOrderModule {
         market.recomputeFunding(oraclePrice);
 
         // TODO: Emit the FundingRecomputed event
+        //
+        // FundingRecomputed will be an event that's shared throughout so it may be worth defining this in a single location.
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        Position.postTradeDetails(accountId, marketId, position, params);
+        //
+        // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
+        // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
+        // order will reach liquidation or insufficient margin for the desired leverage.
+        (, uint256 orderfee, uint256 keeperFee) = Position.postTradeDetails(accountId, marketId, position, params);
 
-        // Using keeper fee and order fees, deduct from their collateral value and then determine whether this position is "good"
-        // look at the current position's remaining margin p.collateral.map(c => c.amount * c.price), include their pnl and funding accrued
-        // also, consider the fees incurred on this settlement (keeper and order fees) to determine if this position, had it been executed,
-        // would correctly be in a bad place (i.e instant liquidation)
+        Order.Data memory newOrder = Order.Data({
+            accountId: accountId,
+            sizeDelta: sizeDelta,
+            commitmentTime: block.timestamp,
+            limitPrice: limitPrice
+        });
 
-        // TODO: Check if this new position can be insta liquidated (this might already be done in postTradeDetails)
+        order.update(newOrder);
 
-        // TODO: Create an order object if successful (minExecutedTime etc.)
-
-        // TODO: Store order object
-
-        // TODO: Emit an event to signal such order has been submitted.
-
-        // TODO: Critical we ensure that removing keeper fee on commitment will not insta liquidate the user.
+        emit OrderSubmitted(accountId, marketId, sizeDelta, newOrder.commitmentTime, keeperFee, orderfee);
     }
 
     /**

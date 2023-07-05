@@ -9,8 +9,9 @@ interface IOrderModule {
         uint128 indexed accountId,
         uint128 indexed marketId,
         int256 sizeDelta,
-        uint256 intentionTime,
-        uint256 executableAtTime
+        uint256 commitmentTime,
+        uint256 estimatedKeeperFee,
+        uint256 estimatedOrderFee
     );
 
     // @dev Emitted when a pending order was successfully settled/executed.
@@ -18,12 +19,18 @@ interface IOrderModule {
         uint128 indexed accountId,
         uint128 indexed marketId,
         int256 sizeDelta,
-        uint256 orderFee,
-        uint256 keeperFee
+        uint256 keeperFee,
+        uint256 orderFee
     );
 
     // @dev Emitted when a stale odrder was cancelled.
-    event OrderCancelled(uint128 indexed accountId, uint128 indexed marketId, int256 sizeDelta, uint256 keeperFee);
+    event OrderCancelled(
+        uint128 indexed accountId,
+        uint128 indexed marketId,
+        int256 sizeDelta,
+        uint256 keeperFee,
+        uint256 orderFee
+    );
 
     // --- Mutative --- //
 

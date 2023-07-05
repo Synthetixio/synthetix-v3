@@ -109,4 +109,13 @@ library Order {
         // TODO: Replace hardcoded $1 USD with a real fee to be incurred.
         return MathUtil.max(MathUtil.min(DecimalMath.UNIT, minKeeperFeeUsd), maxKeeperFeeUsd);
     }
+
+    // --- Member --- //
+
+    function update(Order.Data storage self, Order.Data memory data) internal {
+        self.accountId = data.accountId;
+        self.commitmentTime = data.commitmentTime;
+        self.limitPrice = data.limitPrice;
+        self.sizeDelta = data.sizeDelta;
+    }
 }

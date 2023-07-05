@@ -110,7 +110,10 @@ library Position {
             revert Error.NilOrder();
         }
 
-        // TODO: Check if the `currentPosition` can be immediately liquidated, if so, revert.
+        // Check if the `currentPosition` can be immediately liquidated.
+        if (canLiquidate(currentPosition, params.fillPrice)) {
+            revert Error.CanLiquidatePosition(accountId);
+        }
 
         // Fetch the market and verify if it actually exists.
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -293,5 +296,42 @@ library Position {
         //
         // e.g. 40.5 + 1.08 + 2 = 43.58
         return liquidationBuffer + boundedLiquidationFee + market.keeperLiquidationFee;
+    }
+
+    /**
+     * @dev This is the additional premium we charge upon liquidation.
+     *
+     * Similar to fillPrice, but we disregard the skew (by assuming it's zero). Which is basically the calculation
+     * when we compute as if taking the position from 0 to x. In practice, the premium component of the
+     * liquidation will just be (size / skewScale) * (size * price).
+     *
+     * It adds a configurable multiplier that can be used to increase the margin that goes to feePool.
+     *
+     * For instance, if size of the liquidation position is 100, oracle price is 1200 and skewScale is 1M then,
+     *  size    = abs(-100)
+     *          = 100
+     *  premium = 100 / 1,000,000 * (100 * 1200) * multiplier
+     *          = 12 * multiplier
+     */
+    function liquidationPremium(Position.Data storage self, uint256 price) internal view returns (uint256) {
+        if (self.size == 0) {
+            return 0;
+        }
+
+        PerpMarket.Data storage market = PerpMarket.load(self.marketId);
+        uint256 notionalUsd = MathUtil.abs(self.size) * price;
+        return (MathUtil.abs(self.size) / (market.skewScale)) * notionalUsd * market.liquidationPremiumMultiplier;
+    }
+
+    function canLiquidate(Position.Data storage self, uint256 price) internal view returns (bool) {
+        // No liquidating empty positions.
+        if (self.size == 0) {
+            return false;
+        }
+
+        uint256 remaining = MathUtil
+            .max(0, remainingMargin(self, price) - liquidationPremium(self, price).toInt())
+            .toUint();
+        return remaining <= liquidationMargin(self, price);
     }
 }
