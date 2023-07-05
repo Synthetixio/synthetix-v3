@@ -29,11 +29,7 @@ describe('CrossChainUSDModule', function () {
   before('configure CCIP', async () => {
     await systems()
       .Core.connect(owner())
-      .configureChainlinkCrossChain(
-        CcipRouterMock.address,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero
-      );
+      .configureChainlinkCrossChain(CcipRouterMock.address, ethers.constants.AddressZero);
   });
 
   before('get some snxUSD', async () => {

@@ -45,8 +45,7 @@ describe('USDTokenModule', function () {
     before('configure CCIP', async () => {
       await systems().Core.connect(owner()).configureChainlinkCrossChain(
         ethers.constants.AddressZero,
-        stakerAddress, // fake CCIP token pool address
-        ethers.constants.AddressZero
+        stakerAddress // fake CCIP token pool address
       );
     });
 

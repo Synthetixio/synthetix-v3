@@ -648,7 +648,7 @@ library CcipClient {
     }
     struct Any2EVMMessage {
         bytes32 messageId;
-        uint64 sourceChainId;
+        uint64 sourceChainSelector;
         bytes sender;
         bytes data;
         EVMTokenAmount[] tokenAmounts;

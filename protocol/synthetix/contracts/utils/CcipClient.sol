@@ -9,7 +9,7 @@ library CcipClient {
 
     struct Any2EVMMessage {
         bytes32 messageId; // MessageId corresponding to ccipSend on source
-        uint64 sourceChainId;
+        uint64 sourceChainSelector;
         bytes sender; // abi.decode(sender) if coming from an EVM chain
         bytes data; // payload sent in original message
         EVMTokenAmount[] tokenAmounts;

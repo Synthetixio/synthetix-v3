@@ -17,11 +17,7 @@ describe('UtilsModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .configureChainlinkCrossChain(
-            ethers.constants.AddressZero,
-            ethers.constants.AddressZero,
-            ethers.constants.AddressZero
-          ),
+          .configureChainlinkCrossChain(ethers.constants.AddressZero, ethers.constants.AddressZero),
         `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );
@@ -31,7 +27,7 @@ describe('UtilsModule', function () {
       before('call', async () => {
         await systems()
           .Core.connect(owner)
-          .configureChainlinkCrossChain(user1.getAddress(), user1.getAddress(), user1.getAddress());
+          .configureChainlinkCrossChain(user1.getAddress(), user1.getAddress());
       });
 
       it('sets ccip values in usd token', async () => {

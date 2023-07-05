@@ -34,8 +34,7 @@ contract UtilsModule is IUtilsModule {
      */
     function configureChainlinkCrossChain(
         address ccipRouter,
-        address ccipTokenPool,
-        address chainlinkFunctions
+        address ccipTokenPool
     ) external override {
         OwnableStorage.onlyOwner();
 
@@ -69,6 +68,7 @@ contract UtilsModule is IUtilsModule {
 
         CrossChain.Data storage cc = CrossChain.load();
         for (uint i = 0; i < supportedNetworks.length; i++) {
+            if (supportedNetworks[i] == myChainId) continue;
             if (
                 supportedNetworks[i] != myChainId &&
                 !cc.supportedNetworks.contains(supportedNetworks[i])
