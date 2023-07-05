@@ -51,6 +51,8 @@ contract OrderModule is IOrderModule {
         // Compute next funding entry/rate
         market.recomputeFunding(oraclePrice);
 
+        // TODO: Emit the FundingRecomputed event
+
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         Position.postTradeDetails(accountId, marketId, position, params);
 

@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {Error} from "./Error.sol";
 import {Order} from "./Order.sol";
@@ -14,6 +15,10 @@ import {MathUtil} from "../utils/MathUtil.sol";
  * @dev An open position on a specific perp market within bfp-market.
  */
 library Position {
+    using DecimalMath for uint256;
+    using DecimalMath for int256;
+    using DecimalMath for int128;
+    using SafeCastU128 for uint128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
@@ -47,6 +52,50 @@ library Position {
     }
 
     /**
+     * @dev Return whether a change in a position's size would violate the max market value constraint.
+     *
+     * A perp market has one configurable variable `maxOi` which constraints the maximum open interest
+     * a market can have on either side.
+     */
+    function isSizeExceedsOi(
+        uint256 maxOi,
+        int256 marketSkew,
+        uint256 marketSize,
+        int256 currentSize,
+        int256 newSize
+    ) internal pure returns (bool) {
+        // Allow users to reduce an order no matter the market conditions.
+        if (MathUtil.sameSide(currentSize, newSize) && MathUtil.abs(newSize) <= MathUtil.abs(currentSize)) {
+            return false;
+        }
+
+        // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
+        // we check that the side of the market their order is on would not break the limit.
+        int256 newSkew = marketSkew - currentSize + newSize;
+        int256 newMarketSize = (marketSize - MathUtil.abs(currentSize) + MathUtil.abs(newSize)).toInt();
+
+        int256 newSideSize;
+        if (0 < newSize) {
+            // long case: marketSize + skew
+            //            = (|longSize| + |shortSize|) + (longSize + shortSize)
+            //            = 2 * longSize
+            newSideSize = newMarketSize + newSkew;
+        } else {
+            // short case: marketSize - skew
+            //            = (|longSize| + |shortSize|) - (longSize + shortSize)
+            //            = 2 * -shortSize
+            newSideSize = newMarketSize - newSkew;
+        }
+
+        // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
+        if (maxOi < MathUtil.abs(newSideSize / 2)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * @dev Given an open position (same account) and trade params return the subsequent position.
      *
      * Keeping this as postTradeDetails (same as perps v2) until I can figure out a better name.
@@ -56,14 +105,18 @@ library Position {
         uint128 marketId,
         Position.Data storage currentPosition,
         TradeParams memory params
-    ) internal returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
+    ) internal view returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
         if (params.sizeDelta == 0) {
             revert Error.NilOrder();
         }
 
         // TODO: Check if the `currentPosition` can be immediately liquidated, if so, revert.
 
+        // Fetch the market and verify if it actually exists.
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        // Derive fees incurred if this order were to be settled successfully.
+        int256 marketSkew = market.skew;
         fee = Order.orderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
         keeperFee = Order.keeperFee(market.minKeeperFeeUsd, market.maxKeeperFeeUsd);
 
@@ -98,16 +151,57 @@ library Position {
             feesIncurredUsd: fee + keeperFee
         });
 
-        // Check if the new position is safe... but why not just perform the update to newPosition and perform
-        // all checks on `newPosition`? :thinking:
-
-        // TODO: V2 checks if the min margin is met. If not throw, however we may not need this.
+        // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
+        // avoid this completely due to positions at min margin would never be allowed to lower size.
+        bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
+            MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
+        if (!positionDecreasing) {
+            // Again, to deal with positions at minMarginUsd, we add back to fee (keeper and order) because
+            // position may never be able to open on the first trade due to fees deducted on entry.
+            //
+            // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
+            if (_remainingMargin.toUint() < market.minMarginUsd) {
+                revert Error.InsufficientMargin();
+            }
+        }
 
         // TODO: Check that the resulting new postion's margin is above liquidationMargin + liqPremium
+        //
+        // Check on liqMargin + liqPremium is from PerpsV2. This may change so leaving it TODO for now. Might add
+        // this back temporarily for completelness.
+        //
+        // ---
+        //
+        // check that new position margin is above liquidation margin
+        // (above, in _recomputeMarginWithDelta() we checked the old position, here we check the new one)
+        //
+        // Liquidation margin is considered without a fee (but including premium), because it wouldn't make sense to allow
+        // a trade that will make the position liquidatable.
+        //
+        // note: we use `oraclePrice` here as `liquidationPremium` calcs premium based not current skew.
+        // uint liqPremium = _liquidationPremium(newPos.size, params.oraclePrice);
+        // uint liqMargin = _liquidationMargin(newPos.size, params.oraclePrice).add(liqPremium);
+        // if (newMargin <= liqMargin) {
+        //     return (newPos, 0, Status.CanLiquidate);
+        // }
 
-        // TODO: Check new position hasn't hit max leverage.
+        // Check new position hasn't hit max leverage.
+        //
+        // NOTE: We also consider including the paid fee as part of the margin, again due to UX. Otherwise,
+        // maxLeverage would always below position leverage due to fees paid out to open trade. We'll allow
+        // a little extra headroom for rounding errors.
+        //
+        // NOTE: maxLeverage is stored as a uint8 but leverage is uint256
+        int256 leverage = (newPosition.size * params.fillPrice.toInt()) /
+            (_remainingMargin + fee.toInt() + keeperFee.toInt());
+        if (market.maxLeverage < MathUtil.abs(leverage)) {
+            revert Error.MaxLeverageExceeded();
+        }
 
-        // TODO: Check new position hasn't hit max oi on either side.
+        // Check new position hasn't hit max oi on either side.
+        if (isSizeExceedsOi(market.maxOi, marketSkew, market.size, currentPosition.size, newPosition.size)) {
+            revert Error.MaxOiExceeded();
+        }
     }
 
     // --- Memebr --- //
@@ -126,7 +220,7 @@ library Position {
     }
 
     /**
-     * @dev Returns the `sum(p.collaterals.map(c => c.amount * c.price))`.
+     * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
     function collateralUsd(Position.Data storage self) internal view returns (uint256) {
         PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
@@ -166,7 +260,8 @@ library Position {
         int256 priceDelta = price.toInt() - self.entryPrice.toInt();
         int256 pnl = self.size * priceDelta;
 
-        return margin + pnl + funding;
+        // Ensure we also deduct the realised losses in fees to open trade.
+        return margin + pnl + funding - self.feesIncurredUsd.toInt();
     }
 
     /**

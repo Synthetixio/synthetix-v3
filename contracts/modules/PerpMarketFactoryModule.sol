@@ -11,6 +11,8 @@ import "../interfaces/IPerpMarketFactoryModule.sol";
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     uint128 public marketId;
 
+    // TODO: Add more views/events based on v2x events feedback (see Notion).
+
     /**
      * @inheritdoc IPerpMarketFactoryModule
      */

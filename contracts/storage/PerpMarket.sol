@@ -63,6 +63,12 @@ library PerpMarket {
         uint128 makerFee;
         // Fee paid (in bps) when the order _increases_ skew.
         uint128 takerFee;
+        // Maximum amount of leverage a position can take on in this market (e.g. 25x)
+        uint128 maxLeverage;
+        // Maximum amount in OI in native units for either side of the market.
+        uint128 maxOi;
+        // The minimum required margin in USD a position must hold.
+        uint256 minMarginUsd;
         // The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
         // The minimum amount in USD a keeper should receive on any executions/liquidations.
@@ -191,7 +197,5 @@ library PerpMarket {
         self.fundingRateLastComputed = fundingRate;
         self.fundingAccruedLastComputed = fundingAccrued;
         self.lastFundingTime = block.timestamp;
-
-        // TODO: Emit FundingRecomputed event.
     }
 }
