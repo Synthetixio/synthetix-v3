@@ -421,11 +421,11 @@ interface IAsyncOrderSettlementModule {
         uint128 marketId;
         uint128 accountId;
         int128 newPositionSize;
+        int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
         uint256 amountToDeposit;
         uint256 settlementReward;
-        bytes32 trackingCode;
     }
 }
 

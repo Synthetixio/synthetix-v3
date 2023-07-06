@@ -23,10 +23,10 @@ interface IAsyncOrderSettlementModule {
      * @param marketId Id of the market used for the trade.
      * @param accountId Id of the account used for the trade.
      * @param fillPrice Price at which the order was settled.
-     * @param accountPnlRealized Realized PnL of the position at the time of settlement.
+     * @param sizeDelta Size delta from order.
      * @param newSize New size of the position after settlement.
      * @param collectedFees Amount of fees collected by the protocol.
-     * @param settelementReward Amount of fees collected by the settler.
+     * @param settlementReward Amount of fees collected by the settler.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param settler address of the settler of the order.
      */
@@ -34,10 +34,10 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed marketId,
         uint128 indexed accountId,
         uint256 fillPrice,
-        int256 accountPnlRealized,
+        int128 sizeDelta,
         int128 newSize,
         uint256 collectedFees,
-        uint256 settelementReward,
+        uint256 settlementReward,
         bytes32 indexed trackingCode,
         address settler
     );
@@ -47,11 +47,11 @@ interface IAsyncOrderSettlementModule {
         uint128 marketId;
         uint128 accountId;
         int128 newPositionSize;
+        int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
         uint256 amountToDeposit;
         uint256 settlementReward;
-        bytes32 trackingCode;
     }
 
     /**
