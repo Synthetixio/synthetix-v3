@@ -131,6 +131,7 @@ library AsyncOrder {
         uint initialRequiredMargin;
         uint totalRequiredMargin;
         Position.Data newPosition;
+        bytes32 trackingCode;
     }
 
     function validateOrder(
@@ -201,7 +202,7 @@ library AsyncOrder {
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
-            marketConfig.maxMarketValue,
+            marketConfig.maxMarketSize,
             oldPosition.size,
             order.sizeDelta
         );

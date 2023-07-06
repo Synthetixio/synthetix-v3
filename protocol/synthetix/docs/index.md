@@ -1618,10 +1618,14 @@ Incoming market ids need to be provided in ascending order.
 ### rebalancePool
 
   ```solidity
-  function rebalancePool(uint128 poolId) external
+  function rebalancePool(uint128 poolId, address optionalCollateralType) external
   ```
 
   Distributes cached debt in a pool to its vaults and updates market credit capacities.
+
+**Parameters**
+* `poolId` (*uint128*) - the pool to rebalance
+* `optionalCollateralType` (*address*) - in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
 
 ### PoolCreated
 

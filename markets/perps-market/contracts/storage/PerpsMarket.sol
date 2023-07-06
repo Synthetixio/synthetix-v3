@@ -133,17 +133,37 @@ library PerpsMarket {
         }
     }
 
+    struct MarketUpdateData {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
+    }
+
+    /**
+     * @dev If you call this method, please ensure you emit an event so offchain solution can index market state history properly
+     */
     function updatePositionData(
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal {
+    ) internal returns (MarketUpdateData memory) {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
 
         self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
         self.skew += newPosition.size - oldPositionSize;
         oldPosition.updatePosition(newPosition);
+        // TODO add current market debt
+        return
+            MarketUpdateData(
+                self.id,
+                self.skew,
+                self.size,
+                self.lastFundingRate,
+                currentFundingVelocity(self)
+            );
     }
 
     function loadWithVerifiedOwner(

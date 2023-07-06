@@ -15,6 +15,10 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+/**
+ * @title Module to manage accounts
+ * @dev See IAccountModule.
+ */
 contract PerpsAccountModule is IAccountModule {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
@@ -23,6 +27,9 @@ contract PerpsAccountModule is IAccountModule {
     using SafeCastI256 for int256;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function modifyCollateral(
         uint128 accountId,
         uint128 synthMarketId,
@@ -68,14 +75,23 @@ contract PerpsAccountModule is IAccountModule {
         emit CollateralModified(accountId, synthMarketId, amountDelta, msg.sender);
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalCollateralValue();
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function getOpenPosition(
         uint128 accountId,
         uint128 marketId
@@ -90,6 +106,9 @@ contract PerpsAccountModule is IAccountModule {
         return (pnl, accruedFunding, position.size);
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function getAsyncOrderClaim(
         uint128 accountId,
         uint128 marketId
@@ -101,10 +120,16 @@ contract PerpsAccountModule is IAccountModule {
         return asyncOrder;
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function getAvailableMargin(uint128 accountId) external view override returns (int) {
         return PerpsAccount.load(accountId).getAvailableMargin();
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function getCollateralAmount(
         uint128 accountId,
         uint128 synthMarketId
