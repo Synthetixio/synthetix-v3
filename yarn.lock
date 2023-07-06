@@ -2721,11 +2721,9 @@ __metadata:
   dependencies:
     "@usecannon/cli": ^2.4.17
     handlebars: 4.7.7
+    prettier: ^2.8.8
     solidity-ast: 0.4.46
     solidity-docgen: 0.6.0-beta.35
-  bin:
-    abis: ./abis.js
-    natspec: ./natspec.js
   languageName: unknown
   linkType: soft
 

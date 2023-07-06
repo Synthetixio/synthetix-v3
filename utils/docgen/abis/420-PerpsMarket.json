@@ -801,6 +801,11 @@
     },
     {
       "inputs": [],
+      "name": "InvalidMarketOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [],
       "name": "OverflowInt256ToUint256",
       "type": "error"
     },
@@ -963,7 +968,7 @@
       "inputs": [
         {
           "internalType": "uint128",
-          "name": "marketId",
+          "name": "perpsMarketId",
           "type": "uint128"
         }
       ],
@@ -982,7 +987,7 @@
       "inputs": [
         {
           "internalType": "uint128",
-          "name": "marketId",
+          "name": "perpsMarketId",
           "type": "uint128"
         }
       ],
@@ -1019,7 +1024,7 @@
       "inputs": [
         {
           "internalType": "uint128",
-          "name": "marketId",
+          "name": "perpsMarketId",
           "type": "uint128"
         }
       ],
@@ -1043,19 +1048,6 @@
         }
       ],
       "name": "setSpotMarket",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint128[]",
-          "name": "synthDeductionPriority",
-          "type": "uint128[]"
-        }
-      ],
-      "name": "setSynthDeductionPriority",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1098,6 +1090,25 @@
           "internalType": "uint128",
           "name": "perpsMarketId",
           "type": "uint128"
+        }
+      ],
+      "name": "symbol",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "perpsMarketId",
+          "type": "uint128"
         },
         {
           "internalType": "bytes32",
@@ -1118,12 +1129,39 @@
           "type": "uint128"
         }
       ],
+      "name": "AccountLiquidatable",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        }
+      ],
       "name": "AccountNotFound",
       "type": "error"
     },
     {
-      "inputs": [],
-      "name": "FlaggedForLiquidation",
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collateralAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "withdrawAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "InsufficientCollateral",
       "type": "error"
     },
     {
@@ -1145,9 +1183,46 @@
     {
       "inputs": [
         {
+          "internalType": "int256",
+          "name": "amountDelta",
+          "type": "int256"
+        }
+      ],
+      "name": "InvalidAmountDelta",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
+        }
+      ],
+      "name": "InvalidMarket",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collateralAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "depositAmount",
+          "type": "uint256"
         }
       ],
       "name": "MaxCollateralExceeded",
@@ -1167,6 +1242,173 @@
       "inputs": [],
       "name": "OverflowUint256ToUint128",
       "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "PriceFeedNotSet",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "SynthNotEnabledForCollateral",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": true,
+          "internalType": "int256",
+          "name": "amountDelta",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "CollateralModified",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getAsyncOrderClaim",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint128",
+              "name": "accountId",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "marketId",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int128",
+              "name": "sizeDelta",
+              "type": "int128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "settlementStrategyId",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "acceptablePrice",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "trackingCode",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct AsyncOrder.Data",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getAvailableMargin",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getOpenPosition",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
     },
     {
       "inputs": [
@@ -1197,48 +1439,14 @@
           "internalType": "uint128",
           "name": "accountId",
           "type": "uint128"
-        },
-        {
-          "internalType": "uint128",
-          "name": "marketId",
-          "type": "uint128"
-        }
-      ],
-      "name": "openPosition",
-      "outputs": [
-        {
-          "internalType": "int256",
-          "name": "",
-          "type": "int256"
-        },
-        {
-          "internalType": "int256",
-          "name": "",
-          "type": "int256"
-        },
-        {
-          "internalType": "int256",
-          "name": "",
-          "type": "int256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint128",
-          "name": "accountId",
-          "type": "uint128"
         }
       ],
       "name": "totalAccountOpenInterest",
       "outputs": [
         {
-          "internalType": "int256",
+          "internalType": "uint256",
           "name": "",
-          "type": "int256"
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -1266,9 +1474,219 @@
     {
       "inputs": [
         {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "currentFundingRate",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "currentFundingVelocity",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int256",
+          "name": "orderSize",
+          "type": "int256"
+        },
+        {
           "internalType": "uint256",
-          "name": "availableMargin",
+          "name": "price",
           "type": "uint256"
+        }
+      ],
+      "name": "fillPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getMarketSummary",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "int256",
+              "name": "skew",
+              "type": "int256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "size",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxOpenInterest",
+              "type": "uint256"
+            },
+            {
+              "internalType": "int256",
+              "name": "currentFundingRate",
+              "type": "int256"
+            },
+            {
+              "internalType": "int256",
+              "name": "currentFundingVelocity",
+              "type": "int256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "indexPrice",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IPerpsMarketModule.MarketSummary",
+          "name": "summary",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "indexPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "maxOpenInterest",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "size",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "skew",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "acceptablePrice",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "fillPrice",
+          "type": "uint256"
+        }
+      ],
+      "name": "AcceptablePriceExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "availableMargin",
+          "type": "int256"
         },
         {
           "internalType": "uint256",
@@ -1293,12 +1711,12 @@
     {
       "inputs": [
         {
-          "internalType": "enum AsyncOrder.Status",
-          "name": "status",
-          "type": "uint8"
+          "internalType": "uint128",
+          "name": "settlementStrategyId",
+          "type": "uint128"
         }
       ],
-      "name": "InvalidOrder",
+      "name": "InvalidSettlementStrategy",
       "type": "error"
     },
     {
@@ -1330,6 +1748,22 @@
         }
       ],
       "name": "OffchainLookup",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        }
+      ],
+      "name": "OrderAlreadyCommitted",
       "type": "error"
     },
     {
@@ -1396,9 +1830,183 @@
       "type": "error"
     },
     {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "settlementTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "settlementExpiration",
+          "type": "uint256"
+        }
+      ],
+      "name": "SettlementWindowNotExpired",
+      "type": "error"
+    },
+    {
       "inputs": [],
       "name": "ZeroSizeOrder",
       "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "settlementTime",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "acceptablePrice",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrderCanceled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "indexed": true,
+          "internalType": "enum SettlementStrategy.Type",
+          "name": "orderType",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "int128",
+          "name": "sizeDelta",
+          "type": "int128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "acceptablePrice",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "settlementTime",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "expirationTime",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "trackingCode",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "OrderCommitted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "fillPrice",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "accountPnlRealized",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int128",
+          "name": "newSize",
+          "type": "int128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "collectedFees",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "settelementReward",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "trackingCode",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "settler",
+          "type": "address"
+        }
+      ],
+      "name": "OrderSettled",
+      "type": "event"
     },
     {
       "inputs": [],
@@ -1416,6 +2024,24 @@
     {
       "inputs": [
         {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        }
+      ],
+      "name": "cancelOrder",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "components": [
             {
               "internalType": "uint128",
@@ -1428,14 +2054,14 @@
               "type": "uint128"
             },
             {
-              "internalType": "int256",
+              "internalType": "int128",
               "name": "sizeDelta",
-              "type": "int256"
+              "type": "int128"
             },
             {
-              "internalType": "uint256",
+              "internalType": "uint128",
               "name": "settlementStrategyId",
-              "type": "uint256"
+              "type": "uint128"
             },
             {
               "internalType": "uint256",
@@ -1468,14 +2094,14 @@
               "type": "uint128"
             },
             {
-              "internalType": "int256",
+              "internalType": "int128",
               "name": "sizeDelta",
-              "type": "int256"
+              "type": "int128"
             },
             {
-              "internalType": "uint256",
+              "internalType": "uint128",
               "name": "settlementStrategyId",
-              "type": "uint256"
+              "type": "uint128"
             },
             {
               "internalType": "uint256",
@@ -1519,9 +2145,70 @@
           "type": "uint128"
         }
       ],
+      "name": "getOrder",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint128",
+              "name": "accountId",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "marketId",
+              "type": "uint128"
+            },
+            {
+              "internalType": "int128",
+              "name": "sizeDelta",
+              "type": "int128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "settlementStrategyId",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "acceptablePrice",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "trackingCode",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct AsyncOrder.Data",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        }
+      ],
       "name": "settle",
       "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -1540,24 +2227,6 @@
       "name": "settlePythOrder",
       "outputs": [],
       "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint128",
-          "name": "synthId",
-          "type": "uint128"
-        },
-        {
-          "internalType": "uint256",
-          "name": "maxCollateralAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "setMaxCollateralAmount",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -1848,12 +2517,12 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "availableCollateralUsd",
-          "type": "uint256"
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
         }
       ],
-      "name": "IneligibleForLiquidation",
+      "name": "NotEligibleForLiquidation",
       "type": "error"
     },
     {
@@ -1893,6 +2562,239 @@
       "type": "error"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "skewScale",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "maxFundingVelocity",
+          "type": "uint256"
+        }
+      ],
+      "name": "FundingParametersSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "initialMarginFraction",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "maintenanceMarginFraction",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "liquidationRewardRatioD18",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "maxLiquidationLimitAccumulationMultiplier",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "maxSecondsInLiquidationWindow",
+          "type": "uint256"
+        }
+      ],
+      "name": "LiquidationParametersSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "lockedOiPercent",
+          "type": "uint256"
+        }
+      ],
+      "name": "LockedOiPercentSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "maxMarketValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "MaxMarketValueSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "makerFeeRatio",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "takerFeeRatio",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrderFeesSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "components": [
+            {
+              "internalType": "enum SettlementStrategy.Type",
+              "name": "strategyType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementDelay",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementWindowDuration",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "priceWindowDuration",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "priceVerificationContract",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "feedId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "string",
+              "name": "url",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementReward",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "priceDeviationTolerance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "disabled",
+              "type": "bool"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct SettlementStrategy.Data",
+          "name": "strategy",
+          "type": "tuple"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "strategyId",
+          "type": "uint256"
+        }
+      ],
+      "name": "SettlementStrategyAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "strategyId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "enabled",
+          "type": "bool"
+        }
+      ],
+      "name": "SettlementStrategyEnabled",
+      "type": "event"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint128",
@@ -1914,6 +2816,11 @@
             {
               "internalType": "uint256",
               "name": "settlementWindowDuration",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "priceWindowDuration",
               "type": "uint256"
             },
             {
@@ -1969,14 +2876,490 @@
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
+        }
+      ],
+      "name": "getFundingParameters",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "skewScale",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxFundingVelocity",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getLiquidationParameters",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "initialMarginFraction",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maintenanceMarginFraction",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidationRewardRatioD18",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxLiquidationLimitAccumulationMultiplier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxSecondsInLiquidationWindow",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getLockedOiPercent",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getMaxMarketValue",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "maxMarketValue",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getOrderFees",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "makerFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "takerFee",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "strategyId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getSettlementStrategy",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum SettlementStrategy.Type",
+              "name": "strategyType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementDelay",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementWindowDuration",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "priceWindowDuration",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "priceVerificationContract",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "feedId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "string",
+              "name": "url",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settlementReward",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "priceDeviationTolerance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "disabled",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct SettlementStrategy.Data",
+          "name": "settlementStrategy",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
         },
         {
           "internalType": "uint256",
           "name": "skewScale",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxFundingVelocity",
+          "type": "uint256"
         }
       ],
-      "name": "setSkewScale",
+      "name": "setFundingParameters",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "initialMarginFraction",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maintenanceMarginFraction",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "liquidationRewardRatioD18",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxLiquidationLimitAccumulationMultiplier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxSecondsInLiquidationWindow",
+          "type": "uint256"
+        }
+      ],
+      "name": "setLiquidationParameters",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lockedOiPercent",
+          "type": "uint256"
+        }
+      ],
+      "name": "setLockedOiPercent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxMarketValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "setMaxMarketValue",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "makerFeeRatio",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "takerFeeRatio",
+          "type": "uint256"
+        }
+      ],
+      "name": "setOrderFees",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "strategyId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "enabled",
+          "type": "bool"
+        }
+      ],
+      "name": "setSettlementStrategyEnabled",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "minLiquidationRewardUsd",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "maxLiquidationRewardUsd",
+          "type": "uint256"
+        }
+      ],
+      "name": "LiquidationRewardGuardsSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "collateralAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "MaxCollateralAmountSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128[]",
+          "name": "newSynthDeductionPriority",
+          "type": "uint128[]"
+        }
+      ],
+      "name": "SynthDeductionPrioritySet",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "getLiquidationRewardGuards",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "minLiquidationRewardUsd",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxLiquidationRewardUsd",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getMaxCollateralAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getSynthDeductionPriority",
+      "outputs": [
+        {
+          "internalType": "uint128[]",
+          "name": "",
+          "type": "uint128[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "minLiquidationRewardUsd",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxLiquidationRewardUsd",
+          "type": "uint256"
+        }
+      ],
+      "name": "setLiquidationRewardGuards",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collateralAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "setMaxCollateralAmount",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128[]",
+          "name": "newSynthDeductionPriority",
+          "type": "uint128[]"
+        }
+      ],
+      "name": "setSynthDeductionPriority",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
