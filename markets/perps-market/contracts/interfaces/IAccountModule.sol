@@ -12,8 +12,8 @@ interface IAccountModule {
     event CollateralModified(
         uint128 indexed accountId,
         uint128 indexed synthMarketId,
-        int indexed amountDelta,
-        address sender
+        int amountDelta,
+        address indexed sender
     );
 
     function modifyCollateral(uint128 accountId, uint128 synthMarketId, int amountDelta) external;
@@ -39,4 +39,9 @@ interface IAccountModule {
     ) external view returns (AsyncOrder.Data memory);
 
     function getAvailableMargin(uint128 accountId) external view returns (int);
+
+    function getCollateralAmount(
+        uint128 accountId,
+        uint128 synthMarketId
+    ) external view returns (uint256);
 }

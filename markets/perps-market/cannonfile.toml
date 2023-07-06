@@ -25,11 +25,11 @@ source = "<%= settings.spotMarketPackage %>"
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
-[contract.CollateralModule]
-artifact = "CollateralModule"
-
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
+
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
 
 [contract.AtomicOrderModule]
 artifact = "AtomicOrderModule"
@@ -76,7 +76,7 @@ contracts = [
   "PerpsMarketModule",
   "AtomicOrderModule",
   "AsyncOrderModule",
-  "CollateralModule",
+  "AsyncOrderSettlementModule",
   "FeatureFlagModule",
   "LimitOrderModule",
   "LiquidationModule",
@@ -89,9 +89,9 @@ depends = [
   "contract.PerpsMarketFactoryModule",
   "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
   "contract.PerpsAccountModule",
   "contract.PerpsMarketModule",
-  "contract.CollateralModule",
   "contract.FeatureFlagModule",
   "contract.LimitOrderModule",
   "contract.LiquidationModule",
