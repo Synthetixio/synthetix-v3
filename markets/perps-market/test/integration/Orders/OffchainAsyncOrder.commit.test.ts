@@ -196,14 +196,14 @@ describe('Commit Offchain Async Order test', () => {
       });
 
       it('identifies the pending order', async () => {
-        const ayncOrderClaim = await systems().PerpsMarket.getAsyncOrderClaim(2, ethMarketId);
-        assertBn.equal(ayncOrderClaim.accountId, 2);
-        assertBn.equal(ayncOrderClaim.marketId, ethMarketId);
-        assertBn.equal(ayncOrderClaim.sizeDelta, bn(1));
-        assertBn.equal(ayncOrderClaim.settlementStrategyId, 0);
-        assertBn.equal(ayncOrderClaim.settlementTime, startTime + 5);
-        assertBn.equal(ayncOrderClaim.acceptablePrice, bn(1050));
-        assert.equal(ayncOrderClaim.trackingCode, ethers.constants.HashZero);
+        const order = await systems().PerpsMarket.getOrder(ethMarketId, 2);
+        assertBn.equal(order.accountId, 2);
+        assertBn.equal(order.marketId, ethMarketId);
+        assertBn.equal(order.sizeDelta, bn(1));
+        assertBn.equal(order.settlementStrategyId, 0);
+        assertBn.equal(order.settlementTime, startTime + 5);
+        assertBn.equal(order.acceptablePrice, bn(1050));
+        assert.equal(order.trackingCode, ethers.constants.HashZero);
       });
 
       it('reverts if attempt to commit another order for same account and market', async () => {
@@ -272,14 +272,14 @@ describe('Commit Offchain Async Order test', () => {
           });
 
           it('identifies the pending order', async () => {
-            const ayncOrderClaim = await systems().PerpsMarket.getAsyncOrderClaim(2, ethMarketId);
-            assertBn.equal(ayncOrderClaim.accountId, 2);
-            assertBn.equal(ayncOrderClaim.marketId, ethMarketId);
-            assertBn.equal(ayncOrderClaim.sizeDelta, bn(1));
-            assertBn.equal(ayncOrderClaim.settlementStrategyId, 0);
-            assertBn.equal(ayncOrderClaim.settlementTime, startTime + 5);
-            assertBn.equal(ayncOrderClaim.acceptablePrice, bn(1050));
-            assert.equal(ayncOrderClaim.trackingCode, ethers.constants.HashZero);
+            const order = await systems().PerpsMarket.getOrder(ethMarketId, 2);
+            assertBn.equal(order.accountId, 2);
+            assertBn.equal(order.marketId, ethMarketId);
+            assertBn.equal(order.sizeDelta, bn(1));
+            assertBn.equal(order.settlementStrategyId, 0);
+            assertBn.equal(order.settlementTime, startTime + 5);
+            assertBn.equal(order.acceptablePrice, bn(1050));
+            assert.equal(order.trackingCode, ethers.constants.HashZero);
           });
         });
       });

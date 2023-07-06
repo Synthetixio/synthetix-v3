@@ -33,6 +33,12 @@ interface IAsyncOrderModule {
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external returns (AsyncOrder.Data memory retOrder, uint fees);
 
+    /**
+     * @notice Get async order claim details
+     * @param accountId id of the account.
+     * @param marketId Id of the market used for the trade.
+     * @return asyncOrderClaim claim details (see AsyncOrder.Data struct).
+     */
     function getOrder(
         uint128 marketId,
         uint128 accountId

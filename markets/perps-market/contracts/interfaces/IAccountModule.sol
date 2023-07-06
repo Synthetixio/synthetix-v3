@@ -27,17 +27,6 @@ interface IAccountModule {
         uint128 marketId
     ) external view returns (int, int, int);
 
-    /**
-     * @notice Get async order claim details
-     * @param accountId id of the account.
-     * @param marketId Id of the market used for the trade.
-     * @return asyncOrderClaim claim details (see AsyncOrder.Data struct).
-     */
-    function getAsyncOrderClaim(
-        uint128 accountId,
-        uint128 marketId
-    ) external view returns (AsyncOrder.Data memory);
-
     function getAvailableMargin(uint128 accountId) external view returns (int);
 
     function getCollateralAmount(
