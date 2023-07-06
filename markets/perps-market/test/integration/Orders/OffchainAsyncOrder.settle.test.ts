@@ -410,6 +410,7 @@ describe('Settle Offchain Async Order test', () => {
           });
 
           it('emits market updated event', async () => {
+            const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
             const marketSize = bn(1);
             const marketSkew = bn(1);
             const sizeDelta = bn(1);
@@ -421,6 +422,7 @@ describe('Settle Offchain Async Order test', () => {
             });
             const params = [
               ethMarketId,
+              fillPrice,
               marketSkew,
               marketSize,
               sizeDelta,
