@@ -106,7 +106,6 @@ contract PerpsAccountModule is IAccountModule {
         return (pnl, accruedFunding, position.size);
     }
 
-
     /**
      * @inheritdoc IAccountModule
      */
