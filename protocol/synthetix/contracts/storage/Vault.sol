@@ -84,7 +84,7 @@ library Vault {
     function updateCreditCapacity(
         Data storage self,
         uint256 collateralPriceD18
-    ) internal returns (uint256 usdWeightD18, int256 totalDebtD18) {
+    ) internal view returns (uint256 usdWeightD18, int256 totalDebtD18) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         usdWeightD18 = (epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18);
