@@ -18,6 +18,10 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 
+/**
+ * @title Module for committing and settling async orders.
+ * @dev See IAsyncOrderModule.
+ */
 contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -34,6 +38,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
@@ -84,6 +91,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return (order, feesAccrued);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function getOrder(
         uint128 marketId,
         uint128 accountId
@@ -91,6 +101,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         return PerpsMarket.loadValid(marketId).asyncOrders[accountId];
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function cancelOrder(uint128 marketId, uint128 accountId) external override {
         AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
         order.checkValidity();

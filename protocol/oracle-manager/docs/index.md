@@ -35,7 +35,7 @@
 ### getNode
 
   ```solidity
-  function getNode(bytes32 nodeId) external view returns (struct NodeDefinition.Data node)
+  function getNode(bytes32 nodeId) external pure returns (struct NodeDefinition.Data node)
   ```
 
   Returns a node's definition (type, parameters, and parents)
