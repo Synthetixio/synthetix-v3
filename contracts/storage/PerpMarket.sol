@@ -57,6 +57,10 @@ library PerpMarket {
         // TODO: Move these config params into a PerpMarketConfiguration.sol storage lib.
         // Oracle node id for price feed data.
         bytes32 oracleNodeId;
+        // The Pyth price feedId for this market
+        bytes32 pythPriceFeedId;
+        // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
+        uint128 priceDeviationRatio;
         // Skew scaling denominator constant.
         uint128 skewScale;
         // Fee paid (in bps) when the order _decreases_ skew.
@@ -82,7 +86,7 @@ library PerpMarket {
         // Multiplier applied when calculating the liquidation premium margin.
         uint256 liquidationPremiumMultiplier;
         // A fixed fee sent to the liquidator upon position liqudation.
-        uint256 keeperLiquidationFee;
+        uint256 keeperLiquidationFeeUsd;
     }
 
     function load(uint128 id) internal pure returns (Data storage market) {

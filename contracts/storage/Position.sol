@@ -295,7 +295,7 @@ library Position {
         // If the remainingMargin is <= this number then position can be liquidated.
         //
         // e.g. 40.5 + 1.08 + 2 = 43.58
-        return liquidationBuffer + boundedLiquidationFee + market.keeperLiquidationFee;
+        return liquidationBuffer + boundedLiquidationFee + market.keeperLiquidationFeeUsd;
     }
 
     /**
