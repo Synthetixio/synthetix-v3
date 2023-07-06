@@ -12,7 +12,7 @@ library Error {
     error StalePrice();
 
     // @dev Thrown when an order pushes past a market's max allowable open interest (OI).
-    error MaxOiExceeded();
+    error MaxMarketSizeExceeded();
 
     // @dev Thrown when an order pushes a position (new or current) past max market leverage.
     error MaxLeverageExceeded();

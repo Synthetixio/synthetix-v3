@@ -65,8 +65,8 @@ library PerpMarket {
         uint128 takerFee;
         // Maximum amount of leverage a position can take on in this market (e.g. 25x)
         uint128 maxLeverage;
-        // Maximum amount in OI in native units for either side of the market.
-        uint128 maxOi;
+        // Maximum amount of size in native units for either side of the market.
+        uint128 maxMarketSize;
         // The minimum required margin in USD a position must hold.
         uint256 minMarginUsd;
         // The maximum velocity funding rate can change by.

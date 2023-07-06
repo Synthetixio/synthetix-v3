@@ -54,11 +54,11 @@ library Position {
     /**
      * @dev Return whether a change in a position's size would violate the max market value constraint.
      *
-     * A perp market has one configurable variable `maxOi` which constraints the maximum open interest
+     * A perp market has one configurable variable `maxMarketSize` which constraints the maximum open interest
      * a market can have on either side.
      */
     function isSizeExceedsOi(
-        uint256 maxOi,
+        uint256 maxMarketSize,
         int256 marketSkew,
         uint256 marketSize,
         int256 currentSize,
@@ -88,7 +88,7 @@ library Position {
         }
 
         // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
-        if (maxOi < MathUtil.abs(newSideSize / 2)) {
+        if (maxMarketSize < MathUtil.abs(newSideSize / 2)) {
             return true;
         }
 
@@ -202,8 +202,8 @@ library Position {
         }
 
         // Check new position hasn't hit max oi on either side.
-        if (isSizeExceedsOi(market.maxOi, marketSkew, market.size, currentPosition.size, newPosition.size)) {
-            revert Error.MaxOiExceeded();
+        if (isSizeExceedsOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size)) {
+            revert Error.MaxMarketSizeExceeded();
         }
     }
 
