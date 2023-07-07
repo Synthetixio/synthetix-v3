@@ -10,7 +10,7 @@
     "abis": "node ./abis.js"
   },
   "devDependencies": {
-    "@usecannon/cli": "^2.4.17",
+    "@usecannon/cli": "^2.4.19",
     "handlebars": "4.7.7",
     "prettier": "^2.8.8",
     "solidity-ast": "0.4.46",
