@@ -1,0 +1,8 @@
+version = "<%= package.version %>-testable"
+
+include = [
+  "cannonfile.toml"
+]
+
+[contract.DebtShareMock]
+artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
