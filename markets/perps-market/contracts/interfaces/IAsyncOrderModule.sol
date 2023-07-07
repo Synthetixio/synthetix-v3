@@ -70,10 +70,10 @@ interface IAsyncOrderModule {
     function cancelOrder(uint128 marketId, uint128 accountId) external;
 
     /**
-     * @notice Get an order details via this function
+     * @notice Get async order claim details
+     * @param accountId id of the account.
      * @param marketId Id of the market used for the trade.
-     * @param accountId Id of the account used for the trade.
-     * @return order order details (see AsyncOrder.Data struct).
+     * @return order async order claim details (see AsyncOrder.Data struct).
      */
     function getOrder(
         uint128 marketId,
