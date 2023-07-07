@@ -385,7 +385,7 @@ describe('Settle Offchain Async Order test', () => {
           it('emits event settle event', async () => {
             const accountId = 2;
             const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
-            const pnl = 0;
+            const sizeDelta = bn(1);
             const newPositionSize = bn(1);
             const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
             const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
@@ -395,7 +395,7 @@ describe('Settle Offchain Async Order test', () => {
               ethMarketId,
               accountId,
               fillPrice,
-              pnl,
+              sizeDelta,
               newPositionSize,
               totalFees,
               settlementReward,

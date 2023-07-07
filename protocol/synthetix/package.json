@@ -6,7 +6,7 @@
     "access": "public"
   },
   "scripts": {
-    "clean": "hardhat clean && rm -rf test/generated",
+    "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
     "build:contracts": "hardhat storage:verify && hardhat cannon:build",
     "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
