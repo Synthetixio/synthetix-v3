@@ -35,8 +35,6 @@ contract PerpAccountModule is IPerpAccountModule {
 
         // TODO: Prevent transfers below a minimum usd?
 
-        // TODO: Check if market actually exists
-
         // TODO: Check if collateral is supported by bfp-markets (not just Synthetix Core)
 
         if (amountDelta > 0) {

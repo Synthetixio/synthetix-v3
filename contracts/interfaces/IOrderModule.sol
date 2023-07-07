@@ -42,7 +42,7 @@ interface IOrderModule {
     /**
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.
      */
-    function settledOrder(uint128 accountId, uint128 marketId) external payable;
+    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata vaa) external payable;
 
     /**
      * @dev Cancels a pending order.
@@ -61,6 +61,16 @@ interface IOrderModule {
      * is charged a makerFee but the flipped side that expands skew is charged a takerFee.
      */
     function orderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee);
+
+    /**
+     * @dev Returns fee rewarded to keeper required to perform a permissionless operation.
+     *
+     * Calculcation is as follows `orderSettlementGasUnits * block.basefee * ETH/USD + bufferUsd. Which, can roughly
+     * be related to (units * baseFee) / 10e9 * oraclePrice.
+     *
+     * The fee is then bounded between between a configurable min/max and a buffer is then provided.
+     */
+    function orderKeeperFee(uint256 keeperFeeBufferUsd) external view returns (uint256 fee);
 
     /**
      * @dev Returns an oracle price adjusted by a premium/discount based on how the sizeDelta affects skew.

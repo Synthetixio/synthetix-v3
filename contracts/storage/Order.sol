@@ -104,6 +104,8 @@ library Order {
 
     /**
      * @dev Returns the keeper fee, a fee paid to keepers for order executions and liquidations (in usd).
+     *
+     * Seee IOrderModule.orderKeeperFee for more details.
      */
     function keeperFee(uint256 minKeeperFeeUsd, uint256 maxKeeperFeeUsd) internal pure returns (uint256) {
         // TODO: Replace hardcoded $1 USD with a real fee to be incurred.
@@ -117,5 +119,12 @@ library Order {
         self.commitmentTime = data.commitmentTime;
         self.limitPrice = data.limitPrice;
         self.sizeDelta = data.sizeDelta;
+    }
+
+    function clear(Order.Data storage self) internal {
+        self.accountId = 0;
+        self.commitmentTime = 0;
+        self.limitPrice = 0;
+        self.sizeDelta = 0;
     }
 }

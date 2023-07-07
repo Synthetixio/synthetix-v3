@@ -69,12 +69,16 @@ library PerpMarket {
         uint128 takerFee;
         // Maximum amount of leverage a position can take on in this market (e.g. 25x)
         uint128 maxLeverage;
-        // Maximum amount of size in native units for either side of the market.
+        // Maximum amount of size in native units for either side of the market (OI would be maxMarketSize * 2).
         uint128 maxMarketSize;
         // The minimum required margin in USD a position must hold.
         uint256 minMarginUsd;
         // The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
+        // Minimum amount of time (in seconds) required for an order to exist before settlement.
+        uint128 minOrderAge;
+        // Maximum order age (in seconds) before the order becomes stale.
+        uint128 maxOrderAge;
         // The minimum amount in USD a keeper should receive on any executions/liquidations.
         uint256 minKeeperFeeUsd;
         // The maximum amount in USD a keeper should receive on any executions/liquidations.

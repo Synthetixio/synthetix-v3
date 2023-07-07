@@ -8,6 +8,9 @@ library Error {
     // @dev Thrown when attempting to operate with an order with 0 size delta.
     error NilOrder();
 
+    // @dev Thrown when an order is too old (stale) and can no longer be executed.
+    error StaleOrder();
+
     // @dev Thrown when using an off-chain oracle price is too old.
     error StalePrice();
 
@@ -27,7 +30,7 @@ library Error {
     error MaxCollateralExceeded(int256 value, uint256 max);
 
     // @dev Thrown when an expected cannot be found.
-    error OrderNotFound();
+    error OrderNotFound(uint128);
 
     // @dev Thrown when an order already exists when it is expected not to have been.
     error OrderAlreadyExists(uint128 accountId);

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Error} from "../storage/Error.sol";
@@ -26,6 +27,7 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function commitOrder(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 limitPrice) external {
+        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
 
@@ -76,7 +78,62 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function settledOrder(uint128 accountId, uint128 marketId) external payable {}
+    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata vaa) external payable {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Order.Data storage order = market.orders[accountId];
+
+        // No order available to settle.
+        if (order.sizeDelta != 0) {
+            revert Error.OrderNotFound(accountId);
+        }
+
+        // Get this time from the vaa publishTime.
+        uint256 publishTime = 0;
+        uint256 commitmentTime = order.commitmentTime;
+
+        /*
+            // Old publish times before commitment should be thrown out.
+            if (publishTime < commitmentTime) {
+                revert Error.StalePrice();
+            }
+
+            // Throw out stale orders, they can only be cancelled.
+            if (block.timestamp - commitmentTime > market.maxOrderAge) {
+                revert Error.StaleOrder();
+            }
+
+            // Check that the publishTime is
+            if (publishTime - commitmentTime < market.minOrderAge) {
+                revert Error.OrderSettlementNotReady();
+            }
+
+            // Check the publishTime is within an acceptable range.
+            //
+            // Time difference (in seconds) between the publishTime and commitmentTime (above check ensures this is always
+            // positive). Essentially, how much time has passed since this order was committed. It must be within a range,
+            // where it's defined as `t - 4 > d < t - 2`.
+            uint256 delta = publishTime - commitmentTime;
+
+        */
+
+        // Check that the order can be executed (old enough but not too old).
+
+        // // Check the publishTime is older than
+
+        // require((executionTimestamp > order.intentionTime), "price not updated");
+        // require((executionTimestamp - order.intentionTime > minAge), "executability not reached");
+        // require((block.timestamp - order.intentionTime < maxAge), "order too old, use cancel");
+
+        // Ensure said order is in a state which it can be executed (postTradeDetails)
+        // Validate the provided VAA from WH sent through from Pyth
+        // Validate the publishTimes
+        // Derive fees, infer fillPrice etc.
+        // Insert collateral into Synthetix Core to track
+        // Remove order
+        // Modify position
+        // Emit events
+    }
 
     /**
      * @inheritdoc IOrderModule
@@ -101,6 +158,11 @@ contract OrderModule is IOrderModule {
             market.takerFee
         );
     }
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function orderKeeperFee(uint256 keeperFeeBufferUsd) external view returns (uint256 fee) {}
 
     /**
      * @inheritdoc IOrderModule
