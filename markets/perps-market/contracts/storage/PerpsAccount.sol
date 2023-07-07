@@ -39,6 +39,7 @@ library PerpsAccount {
         uint128 id;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
+        SetUtil.UintSet openOrderMarketIds;
     }
 
     error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
@@ -87,6 +88,20 @@ library PerpsAccount {
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.add(positionMarketId);
         }
+    }
+
+    function addOrderMarket(Data storage self, uint orderMarketId) internal {
+        if (!self.openOrderMarketIds.contains(orderMarketId)) {
+            self.openOrderMarketIds.add(orderMarketId);
+        }
+    }
+
+    function removeOrderMarket(Data storage self, uint orderMarketId) internal {
+        self.openOrderMarketIds.remove(orderMarketId);
+    }
+
+    function hasPendingOrders(Data storage self) internal view returns (bool) {
+        return self.openOrderMarketIds.length() > 0;
     }
 
     function addCollateralAmount(
