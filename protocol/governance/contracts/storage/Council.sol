@@ -5,6 +5,9 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "./Election.sol";
 
 library Council {
+    bytes32 private constant _SLOT_COUNCIL_STORAGE =
+        keccak256(abi.encode("io.synthetix.governance.Council"));
+
     struct Data {
         // True if initializeElectionModule was called
         bool initialized;
@@ -31,9 +34,9 @@ library Council {
     }
 
     function load() internal pure returns (Data storage store) {
+        bytes32 s = _SLOT_COUNCIL_STORAGE;
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.election")) - 1)
-            store.slot := 0x4a7bae7406c7467d50a80c6842d6ba8287c729469098e48fc594351749ba4b22
+            store.slot := s
         }
     }
 
@@ -55,24 +58,24 @@ library Council {
     }
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
-    function getCurrentPeriod(Data storage self) internal view returns (ElectionPeriod) {
+    function getCurrentPeriod(Data storage self) internal view returns (Council.ElectionPeriod) {
         Epoch.Data storage epoch = getCurrentElection(self).epoch;
 
         // solhint-disable-next-line numcast/safe-cast
         uint64 currentTime = uint64(block.timestamp);
 
         if (currentTime >= epoch.endDate) {
-            return ElectionPeriod.Evaluation;
+            return Council.ElectionPeriod.Evaluation;
         }
 
         if (currentTime >= epoch.votingPeriodStartDate) {
-            return ElectionPeriod.Vote;
+            return Council.ElectionPeriod.Vote;
         }
 
         if (currentTime >= epoch.nominationPeriodStartDate) {
-            return ElectionPeriod.Nomination;
+            return Council.ElectionPeriod.Nomination;
         }
 
-        return ElectionPeriod.Administration;
+        return Council.ElectionPeriod.Administration;
     }
 }

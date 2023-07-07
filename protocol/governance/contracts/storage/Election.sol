@@ -33,7 +33,7 @@ library Election {
     }
 
     function load(uint id) internal pure returns (Data storage election) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Election", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", id));
         assembly {
             election.slot := s
         }

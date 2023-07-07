@@ -7,7 +7,7 @@ import "./CrossChainDebtShare.sol";
 
 library DebtShare {
     bytes32 private constant _SLOT_DEBT_SHARE_STORAGE =
-        keccak256(abi.encode("io.synthetix.election-module.debtshare"));
+        keccak256(abi.encode("io.synthetix.governance.DebtShare"));
 
     struct Data {
         // Synthetix c2 DebtShare contract used to determine vote power in the local chain
