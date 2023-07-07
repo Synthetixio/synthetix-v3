@@ -109,20 +109,6 @@ contract PerpsAccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function getAsyncOrderClaim(
-        uint128 accountId,
-        uint128 marketId
-    ) external view override returns (AsyncOrder.Data memory) {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
-
-        AsyncOrder.Data storage asyncOrder = perpsMarket.asyncOrders[accountId];
-
-        return asyncOrder;
-    }
-
-    /**
-     * @inheritdoc IAccountModule
-     */
     function getAvailableMargin(uint128 accountId) external view override returns (int) {
         return PerpsAccount.load(accountId).getAvailableMargin();
     }
