@@ -3563,6 +3563,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@usecannon/builder@npm:^2.4.19":
+  version: 2.4.19
+  resolution: "@usecannon/builder@npm:2.4.19"
+  dependencies:
+    ajv: ^8.11.0
+    axios: ^1.2.2
+    buffer: ^6.0.3
+    debug: ^4.3.4
+    form-data: ^4.0.0
+    lodash: ^4.17.21
+    pako: ^2.1.0
+    promise-events: ^0.2.4
+  peerDependencies:
+    ethers: ">=5.6.0"
+  checksum: 1ec415fa4f2c33fbfc2d1459293234d59952e66c8c043a95ae616efdcd8f61ca988f9ee19212da0252612aabadb728728be9cb4c3b676648452ef9eac6908289
+  languageName: node
+  linkType: hard
+
 "@usecannon/cli@npm:^2.4.17":
   version: 2.4.17
   resolution: "@usecannon/cli@npm:2.4.17"
@@ -3586,6 +3604,32 @@ __metadata:
   bin:
     cannon: dist/bin/cannon.js
   checksum: c658e149e6fc527bda0ce9d032a6341a4cde5adfd318098f58bb52c4936c1c4e46568b7c18a91b1b37ccbd4840d0977776efdc39ec32abb12d1f8e8e3a656871
+  languageName: node
+  linkType: hard
+
+"@usecannon/cli@npm:^2.4.19":
+  version: 2.4.19
+  resolution: "@usecannon/cli@npm:2.4.19"
+  dependencies:
+    "@iarna/toml": ^3.0.0
+    "@synthetixio/wei": ^2.74.1
+    "@usecannon/builder": ^2.4.19
+    chalk: ^4.1.2
+    commander: ^9.3.0
+    debug: ^4.3.4
+    eth-provider: ^0.13.6
+    ethers: ^5.7.1
+    fastq: ^1.15.0
+    fs-extra: ^10.1.0
+    lodash: ^4.17.21
+    prompts: ^2.4.2
+    semver: ^7.3.7
+    table: ^6.8.0
+    tildify: 2.0.0
+    untildify: ^4.0.0
+  bin:
+    cannon: dist/bin/cannon.js
+  checksum: 78c5691c12d9d93691f382328423b6dc756253709102878992570cdfc6d9da39b82058d9298b1c20d2f3188d756811a7d95eed44a452d998250c03f2444088d3
   languageName: node
   linkType: hard
 
@@ -15088,7 +15132,7 @@ __metadata:
     "@types/node": 18.11.10
     "@typescript-eslint/eslint-plugin": 5.45.0
     "@typescript-eslint/parser": 5.45.0
-    "@usecannon/cli": ^2.4.17
+    "@usecannon/cli": ^2.4.19
     eslint: 8.29.0
     eslint-config-prettier: 8.5.0
     eslint-plugin-no-only-tests: 3.1.0
