@@ -34,6 +34,28 @@ interface IAccountModule {
      */
     function modifyCollateral(uint128 accountId, uint128 synthMarketId, int amountDelta) external;
 
+    struct PositionDetails {
+        int pnl;
+        int accruedFunding;
+        int size;
+        uint256 price;
+        uint256 notionalValue;
+        int availableMargin;
+        bool isEligibleForLiquidation;
+        uint256 requiredMaintenanceMargin;
+    }
+
+    /**
+     * @notice Gets the details of an open position.
+     * @param accountId Id of the account.
+     * @param marketId Id of the position market.
+     * @return  PositionDetails
+     */
+    function getOpenPosition(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (PositionDetails memory);
+
     /**
      * @notice Gets the account's collateral value for a specific collateral.
      * @param accountId Id of the account.
@@ -58,19 +80,6 @@ interface IAccountModule {
      * @return openInterestValue total open interest value of the account.
      */
     function totalAccountOpenInterest(uint128 accountId) external view returns (uint);
-
-    /**
-     * @notice Gets the details of an open position.
-     * @param accountId Id of the account.
-     * @param marketId Id of the position market.
-     * @return pnl pnl of the position.
-     * @return accruedFunding accrued funding of the position.
-     * @return size size of the position.
-     */
-    function getOpenPosition(
-        uint128 accountId,
-        uint128 marketId
-    ) external view returns (int pnl, int accruedFunding, int size);
 
     /**
      * @notice Gets the available margin of an account. It can be negative due to pnl.
