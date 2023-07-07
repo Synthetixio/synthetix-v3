@@ -36,7 +36,6 @@ args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
 abiOf = ["InitialModuleBundle"]
 create2 = true
-
 depends = ["contract.InitialModuleBundle"]
 
 [contract.AssociatedSystemsModule]
@@ -61,7 +60,6 @@ contracts = [
   "ElectionInspectorModule",
   "InitialModuleBundle",
 ]
-
 depends = [
   "contract.AssociatedSystemsModule",
   "contract.ElectionModule",
@@ -84,7 +82,6 @@ contracts = [
   "CouncilTokenModule",
   "InitialModuleBundle",
 ]
-
 depends = [
   "contract.CouncilTokenModule",
   "contract.InitialModuleBundle"
@@ -121,5 +118,4 @@ args = [
   "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
-
 depends = ["invoke.init_council_token", "contract.DebtShareMock"]

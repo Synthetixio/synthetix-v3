@@ -1,5 +1,2 @@
-contracts/Router.sol
 contracts/generated
-deployments/hardhat
-deployments/local
-deployments/localhost
+test/generated
