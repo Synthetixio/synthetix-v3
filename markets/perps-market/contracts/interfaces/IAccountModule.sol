@@ -73,17 +73,6 @@ interface IAccountModule {
     ) external view returns (int pnl, int accruedFunding, int size);
 
     /**
-     * @notice Get async order claim details
-     * @param accountId id of the account.
-     * @param marketId Id of the market used for the trade.
-     * @return asyncOrderClaim claim details (see AsyncOrder.Data struct).
-     */
-    function getAsyncOrderClaim(
-        uint128 accountId,
-        uint128 marketId
-    ) external view returns (AsyncOrder.Data memory);
-
-    /**
      * @notice Gets the available margin of an account. It can be negative due to pnl.
      * @param accountId Id of the account.
      * @return availableMargin available margin of the position.
