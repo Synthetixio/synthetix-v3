@@ -4,8 +4,8 @@ import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrap } from './bootstrap';
-import { CoreProxy, CoreProxy__factory } from './generated/typechain';
+import { bootstrap } from '../bootstrap';
+import { CoreProxy, CoreProxy__factory } from '../generated/typechain';
 
 describe('SynthetixElectionModule (initialization)', () => {
   const { c, getSigners } = bootstrap();

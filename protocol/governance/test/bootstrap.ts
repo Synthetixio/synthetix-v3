@@ -29,11 +29,13 @@ export function bootstrap() {
   before(restoreSnapshot);
 
   before('load contracts', function () {
-    contracts.CoreRouter = getContract('CoreRouter');
-    contracts.CoreProxy = getContract('CoreProxy');
-    contracts.AccountProxy = getContract('AccountProxy');
-    contracts.DebtShareMock = getContract('DebtShareMock');
-    contracts.CouncilTokenRouter = getContract('CouncilTokenRouter');
+    Object.assign(contracts, {
+      CoreRouter: getContract('CoreRouter'),
+      CoreProxy: getContract('CoreProxy'),
+      AccountProxy: getContract('AccountProxy'),
+      DebtShareMock: getContract('DebtShareMock'),
+      CouncilTokenRouter: getContract('CouncilTokenRouter'),
+    } satisfies Contracts);
   });
 
   return {
