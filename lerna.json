@@ -14,7 +14,8 @@
     "version": {
       "allowBranch": [
         "main",
-        "lerna"
+        "lerna",
+        "teleporters"
       ]
     }
   }

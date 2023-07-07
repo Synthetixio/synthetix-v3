@@ -81,6 +81,7 @@ export const createStakedPool = (
     collateralAddress: () => r.systems().CollateralMock.address,
     depositAmount: stakedAmount,
     restore,
+    staker: () => r.signers()[1],
     oracleNodeId: () => oracleNodeId,
   };
 };
