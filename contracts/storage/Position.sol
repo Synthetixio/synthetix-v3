@@ -192,7 +192,7 @@ library Position {
         //
         // NOTE: We also consider including the paid fee as part of the margin, again due to UX. Otherwise,
         // maxLeverage would always below position leverage due to fees paid out to open trade. We'll allow
-        // a little extra headroom for rounding PerpErrors.
+        // a little extra headroom for rounding errors.
         //
         // NOTE: maxLeverage is stored as a uint8 but leverage is uint256
         int256 leverage = (newPosition.size * params.fillPrice.toInt()) /

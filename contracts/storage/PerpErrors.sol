@@ -23,6 +23,9 @@ library PerpErrors {
     // @dev Thrown when an order pushes a position (new or current) past max market leverage.
     error MaxLeverageExceeded();
 
+    // @dev Thrown when the operating market does not exist.
+    error MarketNotFound(uint128 marketId);
+
     // @dev Thrown when an account has insufficient collateral to transfer.
     error InsufficientCollateral(int256 collateral, int256 value);
 

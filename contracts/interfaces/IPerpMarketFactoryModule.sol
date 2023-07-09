@@ -5,5 +5,8 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 
 interface IPerpMarketFactoryModule is IMarket {
+    /**
+     * @dev Initialises references to the Synthetix core system.
+     */
     function setSynthetix(ISynthetixSystem synthetix) external;
 }

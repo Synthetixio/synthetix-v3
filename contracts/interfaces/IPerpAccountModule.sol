@@ -32,8 +32,8 @@ interface IPerpAccountModule {
      * also limitations on the maximum amount that can be deposited per market. Additionally, collaterals must
      * be enabled through `depositingEnabled`.
      *
-     * So, seemingly, for this to work, the core system must allow wstETH as collateral before first. As of writing,
-     * there are only two collateral types configured, SNX and WETH but WETH is disabled.
+     * So, seemingly, for this to work, the core system must allow wstETH as collateral before first. As of
+     * writing, there are only two collateral types configured, SNX and WETH but WETH is disabled.
      *
      * There are no fees associated with the transfer of collateral.
      */

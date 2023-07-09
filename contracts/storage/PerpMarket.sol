@@ -3,13 +3,14 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {Order} from "./Order.sol";
-import {Position} from "./Position.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpMarketFactoryConfiguration} from "./PerpMarketFactoryConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PythStructs} from "../external/pyth/PythStructs.sol";
+import {Order} from "./Order.sol";
+import {Position} from "./Position.sol";
+import {PerpErrors} from "./PerpErrors.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 /**
  * @dev Storage for a specific perp market within the bfp-market.
@@ -27,10 +28,6 @@ library PerpMarket {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastU128 for uint128;
-
-    // --- Errors --- //
-
-    error MarketNotFound(uint128 id);
 
     // --- Storage --- //
 
@@ -109,12 +106,12 @@ library PerpMarket {
     }
 
     /**
-     * @dev Reverts if the market does not exist with appropriate PerpErrors. Otherwise, returns the market.
+     * @dev Reverts if the market does not exist. Otherwise, returns the market.
      */
     function exists(uint128 id) internal view returns (Data storage market) {
         Data storage self = load(id);
         if (self.id == 0) {
-            revert MarketNotFound(id);
+            revert PerpErrors.MarketNotFound(id);
         }
         return self;
     }
