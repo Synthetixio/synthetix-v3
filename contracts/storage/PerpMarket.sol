@@ -8,6 +8,8 @@ import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpMarketFactoryConfiguration} from "./PerpMarketFactoryConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {IPyth} from "../external/pyth/IPyth.sol";
+import {PythStructs} from "../external/pyth/PythStructs.sol";
 
 /**
  * @dev Storage for a specific perp market within the bfp-market.
@@ -57,8 +59,10 @@ library PerpMarket {
         // TODO: Move these config params into a PerpMarketConfiguration.sol storage lib.
         // Oracle node id for price feed data.
         bytes32 oracleNodeId;
-        // The Pyth price feedId for this market
+        // The Pyth price feedId for this market.
         bytes32 pythPriceFeedId;
+        // The Pyth EVM contract address (this never changes).
+        address pythContract;
         // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
         uint128 priceDeviationRatio;
         // Skew scaling denominator constant.
@@ -79,6 +83,9 @@ library PerpMarket {
         uint128 minOrderAge;
         // Maximum order age (in seconds) before the order becomes stale.
         uint128 maxOrderAge;
+        // TODO: Need a better name for pythPriceAgeBounded{Min,Mage}
+        int128 pythPublishTimeMin;
+        int128 pythPublishTimeMax;
         // The minimum amount in USD a keeper should receive on any executions/liquidations.
         uint256 minKeeperFeeUsd;
         // The maximum amount in USD a keeper should receive on any executions/liquidations.
@@ -120,6 +127,43 @@ library PerpMarket {
     function oraclePrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
         PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
         price = INodeModule(config.oracleManager).process(self.oracleNodeId).price.toUint();
+    }
+
+    /**
+     * @dev Updates the Pyth price with the supplied off-chain update data for `pythPriceFeedId`.
+     */
+    function updatePythPrice(PerpMarket.Data storage self, bytes[] calldata updateData) internal {
+        IPyth pyth = IPyth(self.pythContract);
+        pyth.updatePriceFeeds{value: msg.value}(updateData);
+    }
+
+    /**
+     * @dev Returns the 'latest' Pyth price from the oracle pre-defined `pythPriceFeedId` between min/max.
+     */
+    function pythPrice(
+        PerpMarket.Data storage self,
+        uint256 commitmentTime
+    ) internal view returns (uint256 price, uint256 publishTime) {
+        // @see: external/pyth/IPyth.sol for more details.
+        IPyth pyth = IPyth(self.pythContract);
+        uint256 maxAge = (commitmentTime.toInt() + self.minOrderAge.toInt() + self.pythPublishTimeMax).toUint();
+        PythStructs.Price memory latestPrice = pyth.getPriceNoOlderThan(self.pythPriceFeedId, maxAge);
+
+        // How to calculcate the Pyth price:
+        //
+        // latestPrice.price fixed-point representation base
+        // latestPrice.expo  fixed-point representation exponent (to go from base to decimal)
+        // latestPrice.conf  fixed-point representation of confidence
+        //
+        // price = 12276250
+        // expo = -5
+        // price = 12276250 * 10^(-5) =  122.76250
+        //
+        // 18 decimals => rebasedPrice = 12276250 * 10^(18-5) = 122762500000000000000
+
+        uint256 baseConvertion = 10 ** uint(int(18) + latestPrice.expo);
+        price = (latestPrice.price * int(baseConvertion)).toUint();
+        publishTime = latestPrice.publishTime;
     }
 
     /**
@@ -168,15 +212,13 @@ library PerpMarket {
         //
         // example:
         //  - prev_funding_rate     = 0
-        //  - prev_velocity         = 0.0025
+        //  - velocity              = 0.0025
         //  - time_delta            = 29,000s
         //  - max_funding_velocity  = 0.025 (2.5%)
         //  - skew                  = 300
         //  - skew_scale            = 10,000
         //
-        // note: prev_velocity just refs to the velocity _before_ modifying the market skew.
-        //
-        // funding_rate = prev_funding_rate + prev_velocity * (time_delta / seconds_in_day)
+        // funding_rate = prev_funding_rate + velocity * (time_delta / seconds_in_day)
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912

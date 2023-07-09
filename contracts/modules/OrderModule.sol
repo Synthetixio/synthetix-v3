@@ -78,7 +78,7 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata vaa) external payable {
+    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
@@ -88,51 +88,83 @@ contract OrderModule is IOrderModule {
             revert Error.OrderNotFound(accountId);
         }
 
-        // Get this time from the vaa publishTime.
-        uint256 publishTime = 0;
         uint256 commitmentTime = order.commitmentTime;
 
-        /*
-            // Old publish times before commitment should be thrown out.
-            if (publishTime < commitmentTime) {
-                revert Error.StalePrice();
-            }
+        // TODO: This can be optimised as not all settlements may need the Pyth priceUpdateData.
+        market.updatePythPrice(priceUpdateData);
+        (uint256 pythPrice, uint256 publishTime) = market.pythPrice(commitmentTime);
 
-            // Throw out stale orders, they can only be cancelled.
-            if (block.timestamp - commitmentTime > market.maxOrderAge) {
-                revert Error.StaleOrder();
-            }
+        // The publishTime is _before_ the commitmentTime
+        if (publishTime < commitmentTime) {
+            revert Error.StalePrice();
+        }
+        // Stale order can only be cancelled.
+        if (block.timestamp - commitmentTime > market.maxOrderAge) {
+            revert Error.StaleOrder();
+        }
+        // publishTime commitmentTime delta must be at least minAge.
+        if (publishTime - commitmentTime < market.minOrderAge) {
+            revert Error.OrderNotReady();
+        }
+        // publishTime must be within `ct + minAge + ptm <= pt <= ct + maxAge + ptm'`
+        //
+        // ct     = commitmentTime
+        // pt     = publishTime
+        // minAge = minimum time passed (not ready)
+        // maxAge = maximum time passed (stale)
+        // ptm    = publishTimeMin
+        // ptm'   = publishTimeMax
+        uint256 ctptd = publishTime - commitmentTime; // ctptd is commitmentTimePublishTimeDelta
+        if (ctptd < (commitmentTime.toInt() + market.minOrderAge.toInt() + market.pythPublishTimeMin).toUint()) {
+            revert Error.InvalidPrice();
+        }
+        if (ctptd > (commitmentTime.toInt() + market.maxOrderAge.toInt() + market.pythPublishTimeMax).toUint()) {
+            revert Error.InvalidPrice();
+        }
 
-            // Check that the publishTime is
-            if (publishTime - commitmentTime < market.minOrderAge) {
-                revert Error.OrderSettlementNotReady();
-            }
+        Position.Data storage position = market.positions[accountId];
 
-            // Check the publishTime is within an acceptable range.
-            //
-            // Time difference (in seconds) between the publishTime and commitmentTime (above check ensures this is always
-            // positive). Essentially, how much time has passed since this order was committed. It must be within a range,
-            // where it's defined as `t - 4 > d < t - 2`.
-            uint256 delta = publishTime - commitmentTime;
+        Position.TradeParams memory params = Position.TradeParams({
+            sizeDelta: order.sizeDelta,
+            oraclePrice: pythPrice,
+            fillPrice: Order.fillPrice(market.skew, market.skewScale, order.sizeDelta, pythPrice),
+            makerFee: market.makerFee,
+            takerFee: market.takerFee,
+            limitPrice: order.limitPrice
+        });
 
-        */
+        // TODO: Insert collateral into Synthetix Core to track
+        //
+        // When do we deposit?
+        //
+        // If we deposit during the transferCollateral call, a perp position is crediting the market without a position. What
+        // impact does this have to debt and can this mean other positions can use that credit unintentionally?
+        //
+        // If we deposit collateral when the position is opened then oder settlement needs to perform a variety of different
+        // checks depending if it's increase, decreasing and whether an existing position is already opened.
+        //
+        // Needs some thinking.
 
-        // Check that the order can be executed (old enough but not too old).
+        // Compute next funding entry/rate
+        market.recomputeFunding(pythPrice);
 
-        // // Check the publishTime is older than
+        // TODO: Verify the deviation between pythPrice and oraclePrice.
 
-        // require((executionTimestamp > order.intentionTime), "price not updated");
-        // require((executionTimestamp - order.intentionTime > minAge), "executability not reached");
-        // require((block.timestamp - order.intentionTime < maxAge), "order too old, use cancel");
+        // TODO: Emit the FundingRecomputed event
+        //
+        // FundingRecomputed will be an event that's shared throughout so it may be worth defining this in a single location.
 
-        // Ensure said order is in a state which it can be executed (postTradeDetails)
-        // Validate the provided VAA from WH sent through from Pyth
-        // Validate the publishTimes
-        // Derive fees, infer fillPrice etc.
-        // Insert collateral into Synthetix Core to track
-        // Remove order
-        // Modify position
-        // Emit events
+        // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
+        //
+        // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
+        // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
+        // order will reach liquidation or insufficient margin for the desired leverage.
+        (Position.Data memory newPosition, , ) = Position.postTradeDetails(accountId, marketId, position, params);
+
+        position.update(newPosition);
+        order.clear();
+
+        // TODO: Emit events
     }
 
     /**

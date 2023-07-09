@@ -42,7 +42,7 @@ interface IOrderModule {
     /**
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.
      */
-    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata vaa) external payable;
+    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
 
     /**
      * @dev Cancels a pending order.

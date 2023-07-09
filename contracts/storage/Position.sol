@@ -43,7 +43,7 @@ library Position {
         uint128 marketId;
         // Size (in native units e.g. wstETH)
         int128 size;
-        // The market's accumulated accrued funding at position open.
+        // The market's accumulated accrued funding at position open. TODO: Rename to consider suffix Usd.
         int256 entryFundingValue;
         // The fill price at which this position was opened with.
         uint256 entryPrice;
@@ -333,5 +333,14 @@ library Position {
             .max(0, remainingMargin(self, price) - liquidationPremium(self, price).toInt())
             .toUint();
         return remaining <= liquidationMargin(self, price);
+    }
+
+    function update(Position.Data storage self, Position.Data memory data) internal {
+        self.accountId = data.accountId;
+        self.marketId = data.marketId;
+        self.size = data.size;
+        self.entryFundingValue = data.entryFundingValue;
+        self.entryPrice = data.entryPrice;
+        self.feesIncurredUsd = data.feesIncurredUsd;
     }
 }

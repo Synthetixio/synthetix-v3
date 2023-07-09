@@ -14,6 +14,9 @@ library Error {
     // @dev Thrown when using an off-chain oracle price is too old.
     error StalePrice();
 
+    // @dev Thrown when a price is not acceptable.
+    error InvalidPrice();
+
     // @dev Thrown when an order pushes past a market's max allowable open interest (OI).
     error MaxMarketSizeExceeded();
 
@@ -30,7 +33,10 @@ library Error {
     error MaxCollateralExceeded(int256 value, uint256 max);
 
     // @dev Thrown when an expected cannot be found.
-    error OrderNotFound(uint128);
+    error OrderNotFound(uint128 accountId);
+
+    // @dev Thrown when order not ready for settlement.
+    error OrderNotReady();
 
     // @dev Thrown when an order already exists when it is expected not to have been.
     error OrderAlreadyExists(uint128 accountId);
