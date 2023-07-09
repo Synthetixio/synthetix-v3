@@ -144,6 +144,10 @@ contract OrderModule is IOrderModule {
         // checks depending if it's increase, decreasing and whether an existing position is already opened.
         //
         // Needs some thinking.
+        //
+        // I think it should be done during the transfer. What if you want to increase your collateral to prevent a liquidation. If
+        // you never open a subsequent position then it will be seen as credit within so you may be prevented from liquidation but
+        // none of that credit is available to the market.
 
         // Compute next funding entry/rate
         market.recomputeFunding(pythPrice);
