@@ -33,7 +33,7 @@ contract OrderModule is IOrderModule {
 
         // A new order cannot be submitted if one is already pending.
         if (order.sizeDelta != 0) {
-            revert Error.OrderAlreadyExists(accountId);
+            revert Error.OrderFound(accountId);
         }
 
         Position.Data storage position = market.positions[accountId];

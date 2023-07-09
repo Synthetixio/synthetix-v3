@@ -38,8 +38,8 @@ library Error {
     // @dev Thrown when order not ready for settlement.
     error OrderNotReady();
 
-    // @dev Thrown when an order already exists when it is expected not to have been.
-    error OrderAlreadyExists(uint128 accountId);
+    // @dev Thrown when an order exists when none is expected.
+    error OrderFound(uint128 accountId);
 
     // @dev Thrown when an order cannot settle due to limitPrice tolerance not met.
     error PriceToleranceExceeded(uint128 accountId);

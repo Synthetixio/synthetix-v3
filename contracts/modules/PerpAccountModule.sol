@@ -7,6 +7,7 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpAccount} from "../storage/PerpAccount.sol";
+import {Order} from "../storage/Order.sol";
 import {Error} from "../storage/Error.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
@@ -31,7 +32,11 @@ contract PerpAccountModule is IPerpAccountModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 accountCollateral = account.depositedCollateral[collateral];
 
-        // TODO: Prevent collateral transfers when there's a pending order.
+        // Prevent collateral transfers when there's a pending order.
+        Order.Data storage order = market.orders[accountId];
+        if (order.sizeDelta != 0) {
+            revert Error.OrderFound(accountId);
+        }
 
         // TODO: Prevent transfers below a minimum usd?
 
