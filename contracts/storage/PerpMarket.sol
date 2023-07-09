@@ -109,7 +109,7 @@ library PerpMarket {
     }
 
     /**
-     * @dev Reverts if the market does not exist with appropriate error. Otherwise, returns the market.
+     * @dev Reverts if the market does not exist with appropriate PerpErrors. Otherwise, returns the market.
      */
     function exists(uint128 id) internal view returns (Data storage market) {
         Data storage self = load(id);

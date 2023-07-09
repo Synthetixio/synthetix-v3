@@ -8,7 +8,7 @@ import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfig
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpAccount} from "../storage/PerpAccount.sol";
 import {Order} from "../storage/Order.sol";
-import {Error} from "../storage/Error.sol";
+import {PerpErrors} from "../storage/PerpErrors.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/IPerpAccountModule.sol";
@@ -35,7 +35,7 @@ contract PerpAccountModule is IPerpAccountModule {
         // Prevent collateral transfers when there's a pending order.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
-            revert Error.OrderFound(accountId);
+            revert PerpErrors.OrderFound(accountId);
         }
 
         // TODO: Prevent transfers below a minimum usd?
@@ -49,7 +49,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (currentTotalDeposits + absAmountDelta > maxDepositsAllowed) {
-                revert Error.MaxCollateralExceeded(amountDelta, maxDepositsAllowed);
+                revert PerpErrors.MaxCollateralExceeded(amountDelta, maxDepositsAllowed);
             }
 
             // Perform deposit.
@@ -64,7 +64,7 @@ contract PerpAccountModule is IPerpAccountModule {
 
             // Verify the collateral previously associated to this account is enough to cover withdraws.
             if (accountCollateral < absAmountDelta) {
-                revert Error.InsufficientCollateral(accountCollateral.toInt(), amountDelta);
+                revert PerpErrors.InsufficientCollateral(accountCollateral.toInt(), amountDelta);
             }
 
             // Perform withdrawal.

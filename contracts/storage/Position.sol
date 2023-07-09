@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {Error} from "./Error.sol";
+import {PerpErrors} from "./PerpErrors.sol";
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketFactoryConfiguration} from "./PerpMarketFactoryConfiguration.sol";
@@ -107,12 +107,12 @@ library Position {
         TradeParams memory params
     ) internal view returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
         if (params.sizeDelta == 0) {
-            revert Error.NilOrder();
+            revert PerpErrors.NilOrder();
         }
 
         // Check if the `currentPosition` can be immediately liquidated.
         if (canLiquidate(currentPosition, params.fillPrice)) {
-            revert Error.CanLiquidatePosition(accountId);
+            revert PerpErrors.CanLiquidatePosition(accountId);
         }
 
         // Fetch the market and verify if it actually exists.
@@ -134,7 +134,7 @@ library Position {
         // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
         int256 _remainingMargin = remainingMargin(currentPosition, params.fillPrice);
         if (_remainingMargin < 0) {
-            revert Error.InsufficientMargin();
+            revert PerpErrors.InsufficientMargin();
         }
 
         uint256 absSize = MathUtil.abs(currentPosition.size);
@@ -142,7 +142,7 @@ library Position {
         // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liqudations.
         uint256 _liquidationMargin = liquidationMargin(currentPosition, params.fillPrice);
         if (absSize != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
-            revert Error.CanLiquidatePosition(accountId);
+            revert PerpErrors.CanLiquidatePosition(accountId);
         }
 
         newPosition = Position.Data({
@@ -164,7 +164,7 @@ library Position {
             //
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
             if (_remainingMargin.toUint() < market.minMarginUsd) {
-                revert Error.InsufficientMargin();
+                revert PerpErrors.InsufficientMargin();
             }
         }
 
@@ -192,18 +192,18 @@ library Position {
         //
         // NOTE: We also consider including the paid fee as part of the margin, again due to UX. Otherwise,
         // maxLeverage would always below position leverage due to fees paid out to open trade. We'll allow
-        // a little extra headroom for rounding errors.
+        // a little extra headroom for rounding PerpErrors.
         //
         // NOTE: maxLeverage is stored as a uint8 but leverage is uint256
         int256 leverage = (newPosition.size * params.fillPrice.toInt()) /
             (_remainingMargin + fee.toInt() + keeperFee.toInt());
         if (market.maxLeverage < MathUtil.abs(leverage)) {
-            revert Error.MaxLeverageExceeded();
+            revert PerpErrors.MaxLeverageExceeded();
         }
 
         // Check new position hasn't hit max oi on either side.
         if (isSizeExceedsOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size)) {
-            revert Error.MaxMarketSizeExceeded();
+            revert PerpErrors.MaxMarketSizeExceeded();
         }
     }
 

@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {Error} from "../storage/Error.sol";
+import {PerpErrors} from "../storage/PerpErrors.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
@@ -33,7 +33,7 @@ contract OrderModule is IOrderModule {
 
         // A new order cannot be submitted if one is already pending.
         if (order.sizeDelta != 0) {
-            revert Error.OrderFound(accountId);
+            revert PerpErrors.OrderFound(accountId);
         }
 
         Position.Data storage position = market.positions[accountId];
@@ -85,7 +85,7 @@ contract OrderModule is IOrderModule {
 
         // No order available to settle.
         if (order.sizeDelta != 0) {
-            revert Error.OrderNotFound(accountId);
+            revert PerpErrors.OrderNotFound(accountId);
         }
 
         uint256 commitmentTime = order.commitmentTime;
@@ -96,15 +96,15 @@ contract OrderModule is IOrderModule {
 
         // The publishTime is _before_ the commitmentTime
         if (publishTime < commitmentTime) {
-            revert Error.StalePrice();
+            revert PerpErrors.StalePrice();
         }
         // Stale order can only be cancelled.
         if (block.timestamp - commitmentTime > market.maxOrderAge) {
-            revert Error.StaleOrder();
+            revert PerpErrors.StaleOrder();
         }
         // publishTime commitmentTime delta must be at least minAge.
         if (publishTime - commitmentTime < market.minOrderAge) {
-            revert Error.OrderNotReady();
+            revert PerpErrors.OrderNotReady();
         }
         // publishTime must be within `ct + minAge + ptm <= pt <= ct + maxAge + ptm'`
         //
@@ -116,10 +116,10 @@ contract OrderModule is IOrderModule {
         // ptm'   = publishTimeMax
         uint256 ctptd = publishTime - commitmentTime; // ctptd is commitmentTimePublishTimeDelta
         if (ctptd < (commitmentTime.toInt() + market.minOrderAge.toInt() + market.pythPublishTimeMin).toUint()) {
-            revert Error.InvalidPrice();
+            revert PerpErrors.InvalidPrice();
         }
         if (ctptd > (commitmentTime.toInt() + market.maxOrderAge.toInt() + market.pythPublishTimeMax).toUint()) {
-            revert Error.InvalidPrice();
+            revert PerpErrors.InvalidPrice();
         }
 
         Position.Data storage position = market.positions[accountId];

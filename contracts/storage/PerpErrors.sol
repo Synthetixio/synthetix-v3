@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 /**
  * @dev A library that encapsulates error related definitions and functions.
  */
-library Error {
+library PerpErrors {
     // @dev Thrown when attempting to operate with an order with 0 size delta.
     error NilOrder();
 
