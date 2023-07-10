@@ -7,7 +7,6 @@ import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpAccount} from "../storage/PerpAccount.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
@@ -16,7 +15,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import "../interfaces/IPerpCollateralModule.sol";
 
 contract PerpCollateralModule is IPerpCollateralModule {
-    using PerpAccount for PerpAccount.Data;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
     using SafeCastU256 for uint256;
@@ -29,11 +27,8 @@ contract PerpCollateralModule is IPerpCollateralModule {
         // Ensure account actually exists (reverts with `AccountNotFound`).
         Account.exists(accountId);
 
-        // TODO: Is it weird to specify a marketId?
-        //
-        // There's only ever one market. Can we simply just extract it directly?
         PerpMarket.Data storage market = PerpMarket.load(marketId);
-        PerpCollateral.Data storage collaterals = PerpCollateral.load(accountId);
+        PerpCollateral.Data storage collaterals = PerpCollateral.load(accountId, marketId);
 
         // Prevent collateral transfers when there's a pending order.
         Order.Data storage order = market.orders[accountId];

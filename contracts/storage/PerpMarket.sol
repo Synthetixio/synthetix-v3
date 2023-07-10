@@ -34,8 +34,8 @@ library PerpMarket {
     struct Data {
         // A unique market id for market reference.
         uint128 id;
-        // Semi readable key e.g. bytes32(WSTETHPERP) for this market.
-        bytes32 key;
+        // Human readable name e.g. bytes32(WSTETHPERP).
+        bytes32 name;
         // sum(positions.map(p => p.size)).
         int128 skew;
         // sum(positions.map(p => abs(p.size))).
@@ -114,6 +114,17 @@ library PerpMarket {
             revert PerpErrors.MarketNotFound(id);
         }
         return self;
+    }
+
+    /**
+     * @dev Creates a market by updating storage for at `id`.
+     */
+    function create(uint128 id, bytes32 name) internal {
+        PerpMarket.Data storage market = load(id);
+        market.id = id;
+        market.name = name;
+
+        // TODO: The handful of params e.g. minOrderAge/maxOrderAge are not initialised here.
     }
 
     // --- Members --- //

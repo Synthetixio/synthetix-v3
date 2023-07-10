@@ -230,7 +230,7 @@ library Position {
 
         uint256 collateralValueUsd = 0;
         uint256 length = config.supportedCollaterals.length;
-        PerpCollateral.Data storage collaterals = PerpCollateral.load(self.accountId);
+        PerpCollateral.Data storage collaterals = PerpCollateral.load(self.accountId, self.marketId);
 
         PerpMarketFactoryConfiguration.Collateral memory currentCollateral;
         for (uint256 i = 0; i < length; ) {

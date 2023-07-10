@@ -16,8 +16,8 @@ library PerpCollateral {
         mapping(address => uint256) available;
     }
 
-    function load(uint128 accountId) internal pure returns (PerpCollateral.Data storage collateral) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpCollateral", accountId));
+    function load(uint128 accountId, uint128 marketId) internal pure returns (PerpCollateral.Data storage collateral) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpCollateral", accountId, marketId));
 
         assembly {
             collateral.slot := s

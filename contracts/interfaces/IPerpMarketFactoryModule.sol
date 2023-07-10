@@ -5,8 +5,17 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 
 interface IPerpMarketFactoryModule is IMarket {
+    struct CreatePerpMarket {
+        bytes32 name;
+    }
+
     /**
      * @dev Initialises references to the Synthetix core system.
      */
     function setSynthetix(ISynthetixSystem synthetix) external;
+
+    /**
+     * @dev Registers a new PerpMarket with Synthetix and initialises storage.
+     */
+    function create(IPerpMarketFactoryModule.CreatePerpMarket memory data) external returns (uint128 id);
 }

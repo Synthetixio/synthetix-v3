@@ -6,10 +6,13 @@ import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/IToke
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
 import "../interfaces/IPerpMarketFactoryModule.sol";
 
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
-    uint128 public marketId;
+    // --- Events --- //
+
+    event MarketCreated(uint128 id, bytes32 name);
 
     // TODO: Add more views/events based on v2x events feedback (see Notion).
 
@@ -26,15 +29,26 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         store.oracleManager = synthetix.getOracleManager();
     }
 
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
+    function create(IPerpMarketFactoryModule.CreatePerpMarket memory data) external returns (uint128 id) {
+        OwnableStorage.onlyOwner();
+
+        PerpMarketFactoryConfiguration.Data storage store = PerpMarketFactoryConfiguration.load();
+        id = store.synthetix.registerMarket(address(this));
+
+        PerpMarket.create(id, data.name);
+        emit MarketCreated(id, data.name);
+    }
+
     // --- Required functions to be IMarket compatiable --- //
 
     /**
      * @inheritdoc IMarket
      */
-    function name(uint128 _marketId) external view override returns (string memory n) {
-        if (_marketId == marketId) {
-            n = string(abi.encodePacked("Market ", bytes32(uint256(_marketId))));
-        }
+    function name(uint128 id) external view override returns (string memory) {
+        return string(abi.encodePacked("Market ", PerpMarket.load(id).name)); // e.g. "Market wstETHPERP"
     }
 
     /**
