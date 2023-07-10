@@ -128,7 +128,7 @@ library Position {
         // margin to continue this operation. Ensuring we do not allow them to place an open position into instant
         // liquidation. This can be done by inferring their "remainingMargin".
         //
-        // We do this by inferring the `remainingMargin = (sum(collateral * price)) + pnl + fundingAcrrued - fee` such that
+        // We do this by inferring the `remainingMargin = (sum(collateral * price)) + pnl + fundingAccrued - fee` such that
         // if remainingMargin < minMarginThreshold then this must revert.
         //
         // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
@@ -140,7 +140,7 @@ library Position {
 
         uint256 absSize = MathUtil.abs(currentPosition.size);
 
-        // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liqudations.
+        // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liquidations.
         uint256 _liquidationMargin = liquidationMargin(currentPosition, params.fillPrice);
         if (absSize != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
             revert PerpErrors.CanLiquidatePosition(accountId);
@@ -172,7 +172,7 @@ library Position {
         // TODO: Check that the resulting new postion's margin is above liquidationMargin + liqPremium
         //
         // Check on liqMargin + liqPremium is from PerpsV2. This may change so leaving it TODO for now. Might add
-        // this back temporarily for completelness.
+        // this back temporarily for completeness.
         //
         // ---
         //
@@ -189,7 +189,7 @@ library Position {
         //     return (newPos, 0, Status.CanLiquidate);
         // }
 
-        // Check new position hasn't hit max leverage.
+        // Check the new position hasn't hit max leverage.
         //
         // NOTE: We also consider including the paid fee as part of the margin, again due to UX. Otherwise,
         // maxLeverage would always below position leverage due to fees paid out to open trade. We'll allow
@@ -202,13 +202,13 @@ library Position {
             revert PerpErrors.MaxLeverageExceeded();
         }
 
-        // Check new position hasn't hit max oi on either side.
+        // Check the new position hasn't hit max OI on either side.
         if (validateMaxOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size)) {
             revert PerpErrors.MaxMarketSizeExceeded();
         }
     }
 
-    // --- Memebr --- //
+    // --- Member --- //
 
     /**
      * @dev Returns a position's accrued funding.
@@ -260,11 +260,11 @@ library Position {
         int256 margin = collateralUsd(self).toInt();
         int256 funding = accruedFunding(self, price);
 
-        // Calculcate this position's PnL
+        // Calculate this position's PnL
         int256 priceDelta = price.toInt() - self.entryPrice.toInt();
         int256 pnl = self.size * priceDelta;
 
-        // Ensure we also deduct the realised losses in fees to open trade.
+        // Ensure we also deduct the realized losses in fees to open trade.
         return margin + pnl + funding - self.feesIncurredUsd.toInt();
     }
 
@@ -275,12 +275,12 @@ library Position {
         PerpMarket.Data storage market = PerpMarket.load(self.marketId);
         uint256 absSize = MathUtil.abs(self.size);
 
-        // Calculcates the liquidation buffer (penalty).
+        // Calculates the liquidation buffer (penalty).
         //
         // e.g. 3 * 1800 * 0.0075 = 40.5
         uint256 liquidationBuffer = absSize * price * market.liquidationBufferRatio;
 
-        // Calculcates the liquidation fee.
+        // Calculates the liquidation fee.
         //
         // This is a fee charged against the margin on liquidation and paid to LPers. The fee is proportional to
         // the position size and bounded by `min >= liqFee <= max`. This proportion is based on each market's

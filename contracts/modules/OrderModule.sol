@@ -90,7 +90,7 @@ contract OrderModule is IOrderModule {
         if (publishTime < commitmentTime) {
             revert PerpErrors.StalePrice();
         }
-        // Stale order can only be cancelled.
+        // Stale order can only be canceled.
         if (block.timestamp - commitmentTime > market.maxOrderAge) {
             revert PerpErrors.StaleOrder();
         }
@@ -138,7 +138,7 @@ contract OrderModule is IOrderModule {
             revert PerpErrors.OrderNotFound(accountId);
         }
 
-        // TODO: This can be optimised as not all settlements may need the Pyth priceUpdateData.
+        // TODO: This can be optimized as not all settlements may need the Pyth priceUpdateData.
         //
         // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
         // such that keepers can conditionally update prices only if necessary.

@@ -107,17 +107,17 @@ library Order {
     /**
      * @dev Returns the order keeper fee; paid to keepers for order executions and liquidations (in USD).
      *
-     * This order keeper fee is calculcated as follows:
+     * This order keeper fee is calculated as follows:
      *
      * baseKeeperFeeUsd        = keeperSettlementGasUnits * block.basefee * ethOraclePrice
      * boundedBaseKeeperFeeUsd = max(min(minKeeperFeeUsd, baseKeeperFee * (1 + profitMarginPercent) + keeperFeeBufferUsd), maxKeeperFeeUsd)
      *
-     * keeperSettlementGasUnits - is a configurable number of gas units to execute a settlmeneet
+     * keeperSettlementGasUnits - is a configurable number of gas units to execute a settlement
      * ethOraclePrice           - on-chain oracle price (commitment), pyth price (settlement)
      * keeperFeeBufferUsd       - a user configurable amount in usd to add on top of the base keeper fee
      * min/maxKeeperFeeUsd      - a min/max bound to ensure fee cannot be below min or above max
      *
-     * Seee IOrderModule.orderKeeperFee for more details.
+     * See IOrderModule.orderKeeperFee for more details.
      */
     function keeperFee(uint128 marketId, uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.load(marketId);

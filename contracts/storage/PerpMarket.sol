@@ -88,7 +88,7 @@ library PerpMarket {
         uint256 minKeeperFeeUsd;
         // The maximum amount in USD a keeper should receive on settlements/liquidations.
         uint256 maxKeeperFeeUsd;
-        // A multipler on the base keeper fee derived as a profit margin on settlements/liquidations.
+        // A multiplier on the base keeper fee derived as a profit margin on settlements/liquidations.
         uint128 keeperProfitMarginRatio;
         // Number of gas units required to perform an order settlement by a keeper.
         uint256 keeperSettlementGasUnits;
@@ -131,13 +131,13 @@ library PerpMarket {
         market.id = id;
         market.name = name;
 
-        // TODO: The handful of params e.g. minOrderAge/maxOrderAge are not initialised here.
+        // TODO: The handful of params e.g. minOrderAge/maxOrderAge are not initialized here.
     }
 
     // --- Members --- //
 
     /**
-     * @dev Returns the latest oracle price from the pre-configured `oracleNodeId`.
+     * @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
      */
     function oraclePrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
         PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
@@ -153,7 +153,7 @@ library PerpMarket {
     }
 
     /**
-     * @dev Returns the 'latest' Pyth price from the oracle pre-defined `pythPriceFeedId` between min/max.
+     * @dev Returns the 'latest' Pyth price from the oracle predefined `pythPriceFeedId` between min/max.
      */
     function pythPrice(
         PerpMarket.Data storage self,
@@ -164,7 +164,7 @@ library PerpMarket {
         uint256 maxAge = (commitmentTime.toInt() + self.minOrderAge.toInt() + self.pythPublishTimeMax).toUint();
         PythStructs.Price memory latestPrice = pyth.getPriceNoOlderThan(self.pythPriceFeedId, maxAge);
 
-        // How to calculcate the Pyth price:
+        // How to calculate the Pyth price:
         //
         // latestPrice.price fixed-point representation base
         // latestPrice.expo  fixed-point representation exponent (to go from base to decimal)

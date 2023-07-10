@@ -12,7 +12,7 @@ interface IPerpCollateralModule {
     /**
      * @dev Transfers an accepted `collateral` from msg.sender to `accountId` on a specific `marketId`.
      *
-     * A negative `amountDelta` is a withdraw. A variety of errors are thrown if limits or collateral
+     * A negative `amountDelta` is a withdrawal. A variety of errors are thrown if limits or collateral
      * issues are found. A transfer, even when there is no open position will immediately deposit the
      * collateral into the Synthetix core system.
      *

@@ -35,10 +35,10 @@ library PerpErrors {
     // @dev Thrown when an account has insufficient margin to perform a trade.
     error InsufficientMargin();
 
-    // @dev Thrown when attempting to deposit a collateral that has reached max deportable amount.
+    // @dev Thrown when attempting to deposit a collateral that has reached a max deportable amount.
     error MaxCollateralExceeded(int256 value, uint256 max);
 
-    // @dev Thrown when an expected cannot be found.
+    // @dev Thrown when an expected order cannot be found.
     error OrderNotFound(uint128 accountId);
 
     // @dev Thrown when order not ready for settlement.

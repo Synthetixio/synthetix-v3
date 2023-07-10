@@ -25,8 +25,8 @@ interface IOrderModule is IBasePerpMarket {
         uint256 keeperFee
     );
 
-    // @dev Emitted when a stale odrder was cancelled.
-    event OrderCancelled(
+    // @dev Emitted when a stale order was canceled.
+    event OrderCanceled(
         uint128 indexed accountId,
         uint128 indexed marketId,
         int256 sizeDelta,
@@ -55,7 +55,7 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @dev Cancels a pending order.
      *
-     * An order can only be cancelled after a certain amount of time (i.e. when an order becomes stale). The keeperFee
+     * An order can only be canceled after a certain amount of time (i.e. when an order becomes stale). The keeperFee
      * is not charged if the caller is the same owner as the order.
      */
     function cancelOrder(uint128 accountId, uint128 marketId) external;
@@ -73,15 +73,15 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @dev Returns fee rewarded to keeper required to perform a permissionless operation.
      *
-     * Calculcation is as follows `orderSettlementGasUnits * block.basefee * ETH/USD + bufferUsd. Which, can roughly
+     * Calculation is as follows `orderSettlementGasUnits * block.basefee * ETH/USD + bufferUsd. Which, can roughly
      * be related to (units * baseFee) / 10e9 * oraclePrice.
      *
-     * The fee is then bounded between between a configurable min/max and a buffer is then provided.
+     * The fee is then bounded between a configurable min/max and a buffer is then provided.
      */
     function orderKeeperFee(uint256 keeperFeeBufferUsd) external view returns (uint256 fee);
 
     /**
-     * @dev Returns an oracle price adjusted by a premium/discount based on how the sizeDelta affects skew.
+     * @dev Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.
      *
      * 'Fill' can be attributed or when an order is 'filled'. The price is the oracle price + adjustment when
      * which an order is settled. Intuitively, the adjustment is a discount if the size reduces the skew (i.e. skew

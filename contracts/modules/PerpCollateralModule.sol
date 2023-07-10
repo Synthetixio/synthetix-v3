@@ -23,7 +23,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
      * @inheritdoc IPerpCollateralModule
      */
     function transferTo(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external {
-        // Ensure account actually exists (reverts with `AccountNotFound`).
+        // Ensures the account exists (reverts with `AccountNotFound`).
         Account.exists(accountId);
 
         PerpMarket.Data storage market = PerpMarket.load(marketId);
@@ -60,7 +60,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
         } else if (amountDelta < 0) {
             // Negative means to withdraw from the markets.
 
-            // Verify the collateral previously associated to this account is enough to cover withdraws.
+            // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (availableAmount < absAmountDelta) {
                 revert PerpErrors.InsufficientCollateral(availableAmount.toInt(), amountDelta);
             }

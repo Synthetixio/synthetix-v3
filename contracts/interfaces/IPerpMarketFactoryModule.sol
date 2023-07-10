@@ -14,12 +14,12 @@ interface IPerpMarketFactoryModule is IMarket {
     // --- Mutative --- //
 
     /**
-     * @dev Initialises references to the Synthetix core system.
+     * @dev Initializes references to the Synthetix core system.
      */
     function setSynthetix(ISynthetixSystem synthetix) external;
 
     /**
-     * @dev Registers a new PerpMarket with Synthetix and initialises storage.
+     * @dev Registers a new PerpMarket with Synthetix and initializes storage.
      */
     function create(IPerpMarketFactoryModule.CreatePerpMarket memory data) external returns (uint128 id);
 }

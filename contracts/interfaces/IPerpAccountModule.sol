@@ -16,7 +16,7 @@ interface IPerpAccountModule {
     // --- Views --- //
 
     /**
-     * @dev Returns a digest of the account including, but not limited to collteral, orders, positions etc.
+     * @dev Returns a digest of the account including, but not limited to collateral, orders, positions etc.
      */
     function accountDigest(
         uint128 accountId,

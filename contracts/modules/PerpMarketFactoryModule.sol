@@ -42,7 +42,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         emit MarketCreated(id, data.name);
     }
 
-    // --- Required functions to be IMarket compatiable --- //
+    // --- Required functions to be IMarket compatible --- //
 
     /**
      * @inheritdoc IMarket
