@@ -181,7 +181,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         asyncOrder.reset();
 
-        perpsAccount.removeOrderMarket(runtime.marketId);
+        perpsAccount.removePendingOrder();
 
         // emit event
         emit OrderSettled(
