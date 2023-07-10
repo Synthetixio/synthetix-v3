@@ -121,7 +121,7 @@ contract OrderModule is IOrderModule {
             ? oraclePrice / pythPrice - DecimalMath.UNIT
             : pythPrice / oraclePrice - DecimalMath.UNIT;
         if (priceDeviation > market.priceDeviationRatio) {
-            revert PerpErrors.PriceDiverenceTooHigh(oraclePrice, pythPrice);
+            revert PerpErrors.PriceDivergenceTooHigh(oraclePrice, pythPrice);
         }
     }
 
