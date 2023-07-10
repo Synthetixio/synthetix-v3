@@ -51,7 +51,7 @@ library PerpMarket {
         mapping(uint128 => Order.Data) orders;
         // {accountId: Position}.
         mapping(uint128 => Position.Data) positions;
-        // {collateralAddress: amount} (Amount of total collaterals deposited)
+        // {collateralAddress: amount} (Amount of total collateral deposited)
         mapping(address => uint256) collaterals;
         // TODO: Move these config params into a PerpMarketConfiguration.sol storage lib.
         // Oracle node id for price feed data.
@@ -80,8 +80,9 @@ library PerpMarket {
         uint128 minOrderAge;
         // Maximum order age (in seconds) before the order becomes stale.
         uint128 maxOrderAge;
-        // TODO: Need a better name for pythPriceAgeBounded{Min,Mage}
+        // Minimum acceptable publishTime from Pyth WH VAA price update data.
         int128 pythPublishTimeMin;
+        // Max acceptable publishTime from Pyth.
         int128 pythPublishTimeMax;
         // The minimum amount in USD a keeper should receive on any executions/liquidations.
         uint256 minKeeperFeeUsd;
@@ -93,7 +94,7 @@ library PerpMarket {
         uint256 liquidationFeeRatio;
         // Multiplier applied when calculating the liquidation premium margin.
         uint256 liquidationPremiumMultiplier;
-        // A fixed fee sent to the liquidator upon position liqudation.
+        // A fixed fee sent to the liquidator upon position liquidation.
         uint256 keeperLiquidationFeeUsd;
     }
 
@@ -168,7 +169,6 @@ library PerpMarket {
         // price = 12276250 * 10^(-5) =  122.76250
         //
         // 18 decimals => rebasedPrice = 12276250 * 10^(18-5) = 122762500000000000000
-
         uint256 baseConvertion = 10 ** uint(int(18) + latestPrice.expo);
         price = (latestPrice.price * int(baseConvertion)).toUint();
         publishTime = latestPrice.publishTime;

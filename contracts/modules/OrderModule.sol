@@ -50,11 +50,8 @@ contract OrderModule is IOrderModule {
         });
 
         // Compute next funding entry/rate
-        market.recomputeFunding(oraclePrice);
-
-        // TODO: Emit the FundingRecomputed event
-        //
-        // FundingRecomputed will be an event that's shared throughout so it may be worth defining this in a single location.
+        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.currentFundingVelocity());
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
@@ -76,27 +73,14 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @inheritdoc IOrderModule
+     * @dev Ensures the order can only be settled iff time and price is acceptable.
      */
-    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
-        Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Order.Data storage order = market.orders[accountId];
-
-        // No order available to settle.
-        if (order.sizeDelta != 0) {
-            revert PerpErrors.OrderNotFound(accountId);
-        }
-
-        uint256 commitmentTime = order.commitmentTime;
-
-        // TODO: This can be optimised as not all settlements may need the Pyth priceUpdateData.
-        //
-        // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
-        // such that keepers can conditionally update prices only if necessary.
-        market.updatePythPrice(priceUpdateData);
-        (uint256 pythPrice, uint256 publishTime) = market.pythPrice(commitmentTime);
-
+    function validateOrderPriceReadiness(
+        PerpMarket.Data storage market,
+        uint256 commitmentTime,
+        uint256 publishTime,
+        uint256 pythPrice
+    ) internal view {
         // The publishTime is _before_ the commitmentTime
         if (publishTime < commitmentTime) {
             revert PerpErrors.StalePrice();
@@ -109,6 +93,7 @@ contract OrderModule is IOrderModule {
         if (publishTime - commitmentTime < market.minOrderAge) {
             revert PerpErrors.OrderNotReady();
         }
+
         // publishTime must be within `ct + minAge + ptm <= pt <= ct + maxAge + ptm'`
         //
         // ct     = commitmentTime
@@ -125,6 +110,38 @@ contract OrderModule is IOrderModule {
             revert PerpErrors.InvalidPrice();
         }
 
+        // Ensure pythPrice does not deviate too far from oracle price.
+        uint256 oraclePrice = market.oraclePrice();
+        uint256 priceDeviation = oraclePrice > pythPrice
+            ? oraclePrice / pythPrice - DecimalMath.UNIT
+            : pythPrice / oraclePrice - DecimalMath.UNIT;
+        if (priceDeviation > market.priceDeviationRatio) {
+            revert PerpErrors.PriceDiverenceTooHigh(oraclePrice, pythPrice);
+        }
+    }
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Order.Data storage order = market.orders[accountId];
+
+        // No order available to settle.
+        if (order.sizeDelta != 0) {
+            revert PerpErrors.OrderNotFound(accountId);
+        }
+
+        // TODO: This can be optimised as not all settlements may need the Pyth priceUpdateData.
+        //
+        // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
+        // such that keepers can conditionally update prices only if necessary.
+        market.updatePythPrice(priceUpdateData);
+        (uint256 pythPrice, uint256 publishTime) = market.pythPrice(order.commitmentTime);
+
+        validateOrderPriceReadiness(market, order.commitmentTime, publishTime, pythPrice);
+
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: order.sizeDelta,
             oraclePrice: pythPrice,
@@ -135,14 +152,11 @@ contract OrderModule is IOrderModule {
         });
 
         // Compute next funding entry/rate
-        market.recomputeFunding(pythPrice);
-        emit FundingRecomputed(marketId, market.skew, market.currentFundingRate(), market.currentFundingVelocity());
-
-        Position.Data storage position = market.positions[accountId];
-
-        // TODO: Verify the deviation between pythPrice and oraclePrice.
+        (int256 fundingRate, ) = market.recomputeFunding(pythPrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.currentFundingVelocity());
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
+        Position.Data storage position = market.positions[accountId];
         (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.postTradeDetails(
             accountId,
             marketId,

@@ -17,6 +17,9 @@ library PerpErrors {
     // @dev Thrown when a price is not acceptable.
     error InvalidPrice();
 
+    // @dev Thrown when Pyth price and on-chain price deviates too far.
+    error PriceDiverenceTooHigh(uint256 p1, uint256 p2);
+
     // @dev Thrown when an order pushes past a market's max allowable open interest (OI).
     error MaxMarketSizeExceeded();
 
