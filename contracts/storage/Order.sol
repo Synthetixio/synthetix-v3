@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastU128, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {PerpMarket} from "./PerpMarket.sol";
 
 /**
  * @dev An order that has yet to be settled for position modification.
@@ -21,6 +22,7 @@ library Order {
         int128 sizeDelta;
         uint256 commitmentTime;
         uint256 limitPrice;
+        uint256 keeperFeeBufferUsd;
     }
 
     /**
@@ -105,11 +107,29 @@ library Order {
     /**
      * @dev Returns the order keeper fee; paid to keepers for order executions and liquidations (in USD).
      *
+     * This order keeper fee is calculcated as follows:
+     *
+     * baseKeeperFeeUsd        = keeperSettlementGasUnits * block.basefee * ethOraclePrice
+     * boundedBaseKeeperFeeUsd = max(min(minKeeperFeeUsd, baseKeeperFee * (1 + profitMarginPercent) + keeperFeeBufferUsd), maxKeeperFeeUsd)
+     *
+     * keeperSettlementGasUnits - is a configurable number of gas units to execute a settlmeneet
+     * ethOraclePrice           - on-chain oracle price (commitment), pyth price (settlement)
+     * keeperFeeBufferUsd       - a user configurable amount in usd to add on top of the base keeper fee
+     * min/maxKeeperFeeUsd      - a min/max bound to ensure fee cannot be below min or above max
+     *
      * Seee IOrderModule.orderKeeperFee for more details.
      */
-    function keeperFee(uint256 minKeeperFeeUsd, uint256 maxKeeperFeeUsd) internal pure returns (uint256) {
-        // TODO: Replace hardcoded $1 USD with a real fee to be incurred.
-        return MathUtil.max(MathUtil.min(DecimalMath.UNIT, minKeeperFeeUsd), maxKeeperFeeUsd);
+    function keeperFee(uint128 marketId, uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
+        PerpMarket.Data storage market = PerpMarket.load(marketId);
+        uint256 baseKeeperFeeUsd = market.keeperSettlementGasUnits * block.basefee * price;
+        uint256 boundedKeeperFeeUsd = MathUtil.max(
+            MathUtil.min(
+                market.minKeeperFeeUsd,
+                baseKeeperFeeUsd * (DecimalMath.UNIT + market.keeperProfitMarginRatio) + keeperFeeBufferUsd
+            ),
+            market.maxKeeperFeeUsd
+        );
+        return boundedKeeperFeeUsd;
     }
 
     // --- Member --- //

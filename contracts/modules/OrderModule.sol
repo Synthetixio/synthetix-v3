@@ -26,7 +26,13 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function commitOrder(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 limitPrice) external {
+    function commitOrder(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 limitPrice,
+        uint256 keeperFeeBufferUsd
+    ) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
@@ -43,7 +49,8 @@ contract OrderModule is IOrderModule {
             fillPrice: Order.fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice),
             makerFee: market.makerFee,
             takerFee: market.takerFee,
-            limitPrice: limitPrice
+            limitPrice: limitPrice,
+            keeperFeeBufferUsd: keeperFeeBufferUsd
         });
 
         // Compute next funding entry/rate
@@ -62,7 +69,8 @@ contract OrderModule is IOrderModule {
             accountId: accountId,
             sizeDelta: sizeDelta,
             commitmentTime: block.timestamp,
-            limitPrice: limitPrice
+            limitPrice: limitPrice,
+            keeperFeeBufferUsd: keeperFeeBufferUsd
         });
 
         order.update(newOrder);
@@ -145,7 +153,8 @@ contract OrderModule is IOrderModule {
             fillPrice: Order.fillPrice(market.skew, market.skewScale, order.sizeDelta, pythPrice),
             makerFee: market.makerFee,
             takerFee: market.takerFee,
-            limitPrice: order.limitPrice
+            limitPrice: order.limitPrice,
+            keeperFeeBufferUsd: order.keeperFeeBufferUsd
         });
 
         // Compute next funding entry/rate

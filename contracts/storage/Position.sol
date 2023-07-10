@@ -32,6 +32,7 @@ library Position {
         uint128 makerFee;
         uint128 takerFee;
         uint256 limitPrice;
+        uint256 keeperFeeBufferUsd;
     }
 
     // --- Storage --- //
@@ -104,7 +105,7 @@ library Position {
         uint128 accountId,
         uint128 marketId,
         Position.Data storage currentPosition,
-        TradeParams memory params
+        Position.TradeParams memory params
     ) internal view returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
         if (params.sizeDelta == 0) {
             revert PerpErrors.NilOrder();
@@ -121,7 +122,7 @@ library Position {
         // Derive fees incurred if this order were to be settled successfully.
         int256 marketSkew = market.skew;
         fee = Order.orderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
-        keeperFee = Order.keeperFee(market.minKeeperFeeUsd, market.maxKeeperFeeUsd);
+        keeperFee = Order.keeperFee(marketId, params.keeperFeeBufferUsd, params.oraclePrice);
 
         // Assuming there is an existing position (no open position will be a noop), determine if they have enough
         // margin to continue this operation. Ensuring we do not allow them to place an open position into instant

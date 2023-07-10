@@ -76,20 +76,26 @@ library PerpMarket {
         uint256 minMarginUsd;
         // The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
-        // Minimum amount of time (in seconds) required for an order to exist before settlement.
-        uint128 minOrderAge;
-        // Maximum order age (in seconds) before the order becomes stale.
-        uint128 maxOrderAge;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
         int128 pythPublishTimeMin;
         // Max acceptable publishTime from Pyth.
         int128 pythPublishTimeMax;
-        // The minimum amount in USD a keeper should receive on any executions/liquidations.
+        // Minimum amount of time (in seconds) required for an order to exist before settlement.
+        uint128 minOrderAge;
+        // Maximum order age (in seconds) before the order becomes stale.
+        uint128 maxOrderAge;
+        // The minimum amount in USD a keeper should receive on settlements/liquidations.
         uint256 minKeeperFeeUsd;
-        // The maximum amount in USD a keeper should receive on any executions/liquidations.
+        // The maximum amount in USD a keeper should receive on settlements/liquidations.
         uint256 maxKeeperFeeUsd;
+        // A multipler on the base keeper fee derived as a profit margin on settlements/liquidations.
+        uint128 keeperProfitMarginRatio;
+        // Number of gas units required to perform an order settlement by a keeper.
+        uint256 keeperSettlementGasUnits;
+        // Number of gas units required to liquidate a position by a keeper.
+        uint256 keeperLiquidationGasUnits;
         // Liquidation buffer (penality) in bps (on p.size * price) to prevent negative margin on liquidation.
-        uint256 liquidationBufferRatio;
+        uint256 liquidationBufferRatio; // TODO: Rename all references of Ratio into Percent.
         // Liquidation fee in bps (% of p.size * price) paid to LPers.
         uint256 liquidationFeeRatio;
         // Multiplier applied when calculating the liquidation premium margin.
