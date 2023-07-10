@@ -320,18 +320,23 @@ library Position {
         return (MathUtil.abs(self.size) / (market.skewScale)) * notionalUsd * market.liquidationPremiumMultiplier;
     }
 
+    /**
+     * @dev Returns whether this position can be liquidated given the current `price`.
+     */
     function canLiquidate(Position.Data storage self, uint256 price) internal view returns (bool) {
         // No liquidating empty positions.
         if (self.size == 0) {
             return false;
         }
-
         uint256 remaining = MathUtil
             .max(0, remainingMargin(self, price) - liquidationPremium(self, price).toInt())
             .toUint();
         return remaining <= liquidationMargin(self, price);
     }
 
+    /**
+     * @dev Clears the current position struct in-place of any stored data.
+     */
     function update(Position.Data storage self, Position.Data memory data) internal {
         self.accountId = data.accountId;
         self.marketId = data.marketId;
