@@ -39,7 +39,10 @@ contract PerpCollateralModule is IPerpCollateralModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 availableAmount = collaterals.available[collateral];
 
-        // TODO: Check if collateral is supported by bfp-markets (not just Synthetix Core)
+        // TODO: Check if collateral is supported by bfp-markets (not just Synthetix).
+        //
+        // Technically this is implicitly done through maxCollaterals (default maxAllowed = 0) but
+        // we should probably be more explicit.
 
         if (amountDelta > 0) {
             // Positive means to deposit into the markets.
@@ -52,6 +55,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
 
             collaterals.available[collateral] += absAmountDelta;
             IERC20(collateral).transferFrom(msg.sender, address(this), absAmountDelta);
+            config.synthetix.depositMarketCollateral(marketId, collateral, absAmountDelta);
             emit Transfer(msg.sender, address(this), amountDelta);
         } else if (amountDelta < 0) {
             // Negative means to withdraw from the markets.
@@ -73,6 +77,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
             }
 
             IERC20(collateral).transferFrom(address(this), msg.sender, absAmountDelta);
+            config.synthetix.withdrawMarketCollateral(marketId, collateral, absAmountDelta);
             emit Transfer(address(this), msg.sender, amountDelta);
         } else {
             // A zero amount is a no-op.
