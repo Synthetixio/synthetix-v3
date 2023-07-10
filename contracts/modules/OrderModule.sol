@@ -133,22 +133,6 @@ contract OrderModule is IOrderModule {
             limitPrice: order.limitPrice
         });
 
-        // TODO: Insert collateral into Synthetix Core to track
-        //
-        // When do we deposit?
-        //
-        // If we deposit during the transferCollateral call, a perp position is crediting the market without a position. What
-        // impact does this have to debt and can this mean other positions can use that credit unintentionally?
-        //
-        // If we deposit collateral when the position is opened then oder settlement needs to perform a variety of different
-        // checks depending if it's increase, decreasing and whether an existing position is already opened.
-        //
-        // Needs some thinking.
-        //
-        // I think it should be done during the transfer. What if you want to increase your collateral to prevent a liquidation. If
-        // you never open a subsequent position then it will be seen as credit within so you may be prevented from liquidation but
-        // none of that credit is available to the market.
-
         // Compute next funding entry/rate
         market.recomputeFunding(pythPrice);
 
