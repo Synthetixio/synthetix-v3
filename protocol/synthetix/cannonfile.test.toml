@@ -22,6 +22,9 @@ artifact = "contracts/generated/test/TestableCollateralConfigurationStorage.sol:
 [contract.TestableCollateralLockStorage]
 artifact = "contracts/generated/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
 
+[contract.TestableCrossChainStorage]
+artifact = "contracts/generated/test/TestableCrossChainStorage.sol:TestableCrossChainStorage"
+
 [contract.TestableDistributionStorage]
 artifact = "contracts/generated/test/TestableDistributionStorage.sol:TestableDistributionStorage"
 
@@ -66,8 +69,10 @@ contracts = [
     "AccountModule",
     "AssociateDebtModule",
     "AssociatedSystemsModule",
+    "CcipReceiverModule",
     "CollateralModule",
     "CollateralConfigurationModule",
+    "CrossChainUSDModule",
     "IssueUSDModule",
     "LiquidationModule",
     "MarketCollateralModule",
@@ -83,6 +88,7 @@ contracts = [
     "TestableCollateralStorage",
     "TestableCollateralConfigurationStorage",
     "TestableCollateralLockStorage",
+    "TestableCrossChainStorage",
     "TestableDistributionStorage",
     "TestableDistributionActorStorage",
     "TestableMarketStorage",
@@ -102,8 +108,10 @@ depends = [
   "contract.AccountModule",
   "contract.AssociateDebtModule",
   "contract.AssociatedSystemsModule",
+  "contract.CcipReceiverModule",
   "contract.CollateralModule",
   "contract.CollateralConfigurationModule",
+  "contract.CrossChainUSDModule",
   "contract.IssueUSDModule",
   "contract.LiquidationModule",
   "contract.MarketCollateralModule",
@@ -119,6 +127,7 @@ depends = [
   "contract.TestableCollateralStorage",
   "contract.TestableCollateralConfigurationStorage",
   "contract.TestableCollateralLockStorage",
+  "contract.TestableCrossChainStorage",
   "contract.TestableDistributionStorage",
   "contract.TestableDistributionActorStorage",
   "contract.TestableMarketStorage",
