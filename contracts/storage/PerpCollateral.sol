@@ -12,16 +12,12 @@ library PerpCollateral {
     // --- Storage --- //
 
     struct Data {
-        // Owner of position.
-        uint128 accountId;
-        // Market this position belongs to (e.g. wstETHPERP)
-        uint128 marketId;
-        // {CollateralAddress: amountUsed} (Tokens used to collateralise this position).
-        mapping(address => uint256) collateral;
+        // {collateralAddress: amount} (Amount of collateral deposited into this account).
+        mapping(address => uint256) available;
     }
 
-    function load(uint128 accountId, uint128 marketId) internal pure returns (PerpCollateral.Data storage collateral) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpCollateral", accountId, marketId));
+    function load(uint128 accountId) internal pure returns (PerpCollateral.Data storage collateral) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpCollateral", accountId));
 
         assembly {
             collateral.slot := s

@@ -26,9 +26,9 @@ library PerpMarketFactoryConfiguration {
         // A reference to the Synthetix oracle manager (used to fetch market prices).
         INodeModule oracleManager;
         // {collateralAddress: maxDepositAmountAllowed} (globally for all bfp markets).
-        mapping(address => uint256) maxCollateralDeposits;
+        mapping(address => uint256) maxCollaterals;
         // An array of supported collateral structs (see PerpMarketFactoryConfiguration.Collateral).
-        Collateral[] supportedCollateral;
+        Collateral[] supportedCollaterals;
     }
 
     function load() internal pure returns (Data storage market) {

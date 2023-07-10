@@ -229,15 +229,15 @@ library Position {
         PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
 
         uint256 collateralValueUsd = 0;
-        uint256 length = config.supportedCollateral.length;
-        PerpCollateral.Data storage collaterals = PerpCollateral.load(self.accountId, self.marketId);
+        uint256 length = config.supportedCollaterals.length;
+        PerpCollateral.Data storage collaterals = PerpCollateral.load(self.accountId);
 
         PerpMarketFactoryConfiguration.Collateral memory currentCollateral;
         for (uint256 i = 0; i < length; ) {
-            currentCollateral = config.supportedCollateral[i];
+            currentCollateral = config.supportedCollaterals[i];
 
             uint256 price = INodeModule(config.oracleManager).process(currentCollateral.oracleNodeId).price.toUint();
-            collateralValueUsd += collaterals.collateral[currentCollateral.collateral] * price;
+            collateralValueUsd += collaterals.available[currentCollateral.collateral] * price;
 
             unchecked {
                 i++;

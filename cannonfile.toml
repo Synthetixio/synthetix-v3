@@ -29,6 +29,10 @@ args = []
 artifact = "PerpAccountModule"
 args = []
 
+[contract.PerpCollateralModule]
+artifact = "PerpCollateralModule"
+args = []
+
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
@@ -58,6 +62,7 @@ contracts = [
   "CoreModule",
   "PerpMarketFactoryModule",
   "PerpAccountModule",
+  "PerpCollateralModule",
   "OrderModule"
 ]
 depends = [
@@ -65,6 +70,7 @@ depends = [
   "contract.CoreModule",
   "contract.PerpMarketFactoryModule",
   "contract.PerpAccountModule",
+  "contract.PerpCollateralModule",
   "contract.OrderModule"
 ]
 

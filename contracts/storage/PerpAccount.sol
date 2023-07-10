@@ -8,8 +8,6 @@ library PerpAccount {
     struct Data {
         // A unique perp account id for account reference.
         uint128 id;
-        // {collateralAddress: amountDeposited}.
-        mapping(address => uint256) depositedCollateral;
     }
 
     function load(uint128 id) internal pure returns (Data storage account) {

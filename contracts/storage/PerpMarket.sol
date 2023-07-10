@@ -51,8 +51,8 @@ library PerpMarket {
         mapping(uint128 => Order.Data) orders;
         // {accountId: Position}.
         mapping(uint128 => Position.Data) positions;
-        // {collateralAddress: totalDeposited}
-        mapping(address => uint256) totalCollateralDeposited;
+        // {collateralAddress: amount} (Amount of total collaterals deposited)
+        mapping(address => uint256) collaterals;
         // TODO: Move these config params into a PerpMarketConfiguration.sol storage lib.
         // Oracle node id for price feed data.
         bytes32 oracleNodeId;
