@@ -37,9 +37,9 @@ library PerpsAccount {
         // synth marketId => amount
         mapping(uint128 => uint256) collateralAmounts;
         uint128 id;
+        bool hasPendingOrders;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
-        SetUtil.UintSet openOrderMarketIds;
     }
 
     error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
@@ -90,18 +90,12 @@ library PerpsAccount {
         }
     }
 
-    function addOrderMarket(Data storage self, uint orderMarketId) internal {
-        if (!self.openOrderMarketIds.contains(orderMarketId)) {
-            self.openOrderMarketIds.add(orderMarketId);
-        }
+    function addPendingOrder(Data storage self) internal {
+        self.hasPendingOrders = true;
     }
 
-    function removeOrderMarket(Data storage self, uint orderMarketId) internal {
-        self.openOrderMarketIds.remove(orderMarketId);
-    }
-
-    function hasPendingOrders(Data storage self) internal view returns (bool) {
-        return self.openOrderMarketIds.length() > 0;
+    function removePendingOrder(Data storage self) internal {
+        self.hasPendingOrders = false;
     }
 
     function addCollateralAmount(

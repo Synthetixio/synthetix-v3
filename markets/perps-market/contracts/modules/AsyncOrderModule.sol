@@ -6,6 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
+import {IAccountModule} from "../interfaces/IAccountModule.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -75,7 +76,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
 
-        PerpsAccount.load(commitment.accountId).addOrderMarket(commitment.marketId);
+        // Check if there is a pending orders
+        if (PerpsAccount.load(commitment.accountId).hasPendingOrders) {
+            revert IAccountModule.PendingOrdersExist();
+        }
+
+        PerpsAccount.load(commitment.accountId).addPendingOrder();
 
         // TODO include fees in event
         emit OrderCommitted(
@@ -115,7 +121,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         order.checkCancellationEligibility(settlementStrategy);
         order.reset();
 
-        PerpsAccount.load(accountId).removeOrderMarket(marketId);
+        PerpsAccount.load(accountId).removePendingOrder();
 
         emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
     }
