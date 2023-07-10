@@ -103,7 +103,7 @@ library Order {
     }
 
     /**
-     * @dev Returns the keeper fee, a fee paid to keepers for order executions and liquidations (in usd).
+     * @dev Returns the order keeper fee; paid to keepers for order executions and liquidations (in USD).
      *
      * Seee IOrderModule.orderKeeperFee for more details.
      */
@@ -114,6 +114,9 @@ library Order {
 
     // --- Member --- //
 
+    /**
+     * @dev Updates the current order struct in-place with new data from `data`.
+     */
     function update(Order.Data storage self, Order.Data memory data) internal {
         self.accountId = data.accountId;
         self.commitmentTime = data.commitmentTime;
@@ -121,6 +124,9 @@ library Order {
         self.sizeDelta = data.sizeDelta;
     }
 
+    /**
+     * @dev Clears the current order struct in-place of any stored data.
+     */
     function clear(Order.Data storage self) internal {
         self.accountId = 0;
         self.commitmentTime = 0;

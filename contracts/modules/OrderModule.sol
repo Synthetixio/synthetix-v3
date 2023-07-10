@@ -61,7 +61,7 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        (, uint256 orderfee, uint256 keeperFee) = Position.postTradeDetails(accountId, marketId, position, params);
+        (, uint256 _orderFee, uint256 keeperFee) = Position.postTradeDetails(accountId, marketId, position, params);
 
         Order.Data memory newOrder = Order.Data({
             accountId: accountId,
@@ -72,7 +72,7 @@ contract OrderModule is IOrderModule {
 
         order.update(newOrder);
 
-        emit OrderSubmitted(accountId, marketId, sizeDelta, newOrder.commitmentTime, keeperFee, orderfee);
+        emit OrderSubmitted(accountId, marketId, sizeDelta, newOrder.commitmentTime, _orderFee, keeperFee);
     }
 
     /**
@@ -91,6 +91,9 @@ contract OrderModule is IOrderModule {
         uint256 commitmentTime = order.commitmentTime;
 
         // TODO: This can be optimised as not all settlements may need the Pyth priceUpdateData.
+        //
+        // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
+        // such that keepers can conditionally update prices only if necessary.
         market.updatePythPrice(priceUpdateData);
         (uint256 pythPrice, uint256 publishTime) = market.pythPrice(commitmentTime);
 
@@ -122,8 +125,6 @@ contract OrderModule is IOrderModule {
             revert PerpErrors.InvalidPrice();
         }
 
-        Position.Data storage position = market.positions[accountId];
-
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: order.sizeDelta,
             oraclePrice: pythPrice,
@@ -135,24 +136,24 @@ contract OrderModule is IOrderModule {
 
         // Compute next funding entry/rate
         market.recomputeFunding(pythPrice);
+        emit FundingRecomputed(marketId, market.skew, market.currentFundingRate(), market.currentFundingVelocity());
+
+        Position.Data storage position = market.positions[accountId];
 
         // TODO: Verify the deviation between pythPrice and oraclePrice.
 
-        // TODO: Emit the FundingRecomputed event
-        //
-        // FundingRecomputed will be an event that's shared throughout so it may be worth defining this in a single location.
-
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        //
-        // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
-        // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
-        // order will reach liquidation or insufficient margin for the desired leverage.
-        (Position.Data memory newPosition, , ) = Position.postTradeDetails(accountId, marketId, position, params);
+        (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.postTradeDetails(
+            accountId,
+            marketId,
+            position,
+            params
+        );
 
         position.update(newPosition);
         order.clear();
 
-        // TODO: Emit events
+        emit OrderSettled(accountId, marketId, order.sizeDelta, _orderFee, keeperFee);
     }
 
     /**

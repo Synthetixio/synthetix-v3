@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-interface IOrderModule {
+import "./IBasePerpMarket.sol";
+
+interface IOrderModule is IBasePerpMarket {
     // --- Events --- //
 
     // @dev Emitted when a new order is submitted/created.
@@ -10,8 +12,8 @@ interface IOrderModule {
         uint128 indexed marketId,
         int256 sizeDelta,
         uint256 commitmentTime,
-        uint256 estimatedKeeperFee,
-        uint256 estimatedOrderFee
+        uint256 estimatedOrderFee,
+        uint256 estimatedKeeperFee
     );
 
     // @dev Emitted when a pending order was successfully settled/executed.
@@ -19,8 +21,8 @@ interface IOrderModule {
         uint128 indexed accountId,
         uint128 indexed marketId,
         int256 sizeDelta,
-        uint256 keeperFee,
-        uint256 orderFee
+        uint256 orderFee,
+        uint256 keeperFee
     );
 
     // @dev Emitted when a stale odrder was cancelled.
@@ -28,8 +30,8 @@ interface IOrderModule {
         uint128 indexed accountId,
         uint128 indexed marketId,
         int256 sizeDelta,
-        uint256 keeperFee,
-        uint256 orderFee
+        uint256 orderFee,
+        uint256 keeperFee
     );
 
     // --- Mutative --- //
