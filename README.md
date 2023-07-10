@@ -29,3 +29,14 @@ npx cannon setup
 # Build using cannon + hardhat
 npm run build
 ```
+
+## TODO
+
+- [ ] Debt calculations
+- [ ] New liquidations (progressive liquidation over a period of time)
+- [ ] New Margin Maintenance Margin Ratio Calculation
+- [ ] Move market configuration into separate storage
+- [ ] Add position specific views (position summary like accrued funding, PnL etc.)
+- [ ] Events throughout contracts
+- [ ] `postTradeDetails` missing on check on `liquidationPremium`
+- [ ] `onlyOwner` specific configuration functions
