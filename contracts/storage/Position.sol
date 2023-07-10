@@ -64,10 +64,10 @@ library Position {
         uint256 marketSize,
         int256 currentSize,
         int256 newSize
-    ) internal pure returns (bool) {
+    ) internal pure {
         // Allow users to reduce an order no matter the market conditions.
         if (MathUtil.sameSide(currentSize, newSize) && MathUtil.abs(newSize) <= MathUtil.abs(currentSize)) {
-            return false;
+            return;
         }
 
         // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
@@ -88,12 +88,10 @@ library Position {
             newSideSize = newMarketSize - newSkew;
         }
 
-        // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
+        // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition.
         if (maxMarketSize < MathUtil.abs(newSideSize / 2)) {
-            return true;
+            revert PerpErrors.MaxMarketSizeExceeded();
         }
-
-        return false;
     }
 
     /**
@@ -203,9 +201,7 @@ library Position {
         }
 
         // Check the new position hasn't hit max OI on either side.
-        if (validateMaxOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size)) {
-            revert PerpErrors.MaxMarketSizeExceeded();
-        }
+        validateMaxOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size);
     }
 
     // --- Member --- //
