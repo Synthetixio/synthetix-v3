@@ -57,7 +57,7 @@ library Position {
      * A perp market has one configurable variable `maxMarketSize` which constraints the maximum open interest
      * a market can have on either side.
      */
-    function isSizeExceedsOi(
+    function validateMaxOi(
         uint256 maxMarketSize,
         int256 marketSkew,
         uint256 marketSize,
@@ -202,7 +202,7 @@ library Position {
         }
 
         // Check new position hasn't hit max oi on either side.
-        if (isSizeExceedsOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size)) {
+        if (validateMaxOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size)) {
             revert PerpErrors.MaxMarketSizeExceeded();
         }
     }

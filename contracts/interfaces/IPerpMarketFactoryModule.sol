@@ -5,9 +5,13 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 
 interface IPerpMarketFactoryModule is IMarket {
+    // --- Structs --- //
+
     struct CreatePerpMarket {
         bytes32 name;
     }
+
+    // --- Mutative --- //
 
     /**
      * @dev Initialises references to the Synthetix core system.

@@ -36,10 +36,7 @@ contract OrderModule is IOrderModule {
             revert PerpErrors.OrderFound(accountId);
         }
 
-        Position.Data storage position = market.positions[accountId];
-
         uint256 oraclePrice = market.oraclePrice();
-
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: sizeDelta,
             oraclePrice: oraclePrice,
@@ -58,6 +55,7 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
+        Position.Data storage position = market.positions[accountId];
         (, uint256 _orderFee, uint256 keeperFee) = Position.postTradeDetails(accountId, marketId, position, params);
 
         Order.Data memory newOrder = Order.Data({
@@ -68,7 +66,6 @@ contract OrderModule is IOrderModule {
         });
 
         order.update(newOrder);
-
         emit OrderSubmitted(accountId, marketId, sizeDelta, newOrder.commitmentTime, _orderFee, keeperFee);
     }
 
