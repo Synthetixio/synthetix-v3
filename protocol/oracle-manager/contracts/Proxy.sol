@@ -10,10 +10,9 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
  * Visit https://usecannon.com/packages/oracle-manager to interact with this protocol
  */
 contract Proxy is UUPSProxyWithOwner {
-    // solhint-disable no-empty-blocks
+    // solhint-disable-next-line no-empty-blocks
     constructor(
         address firstImplementation,
         address initialOwner
     ) UUPSProxyWithOwner(firstImplementation, initialOwner) {}
-    // solhint-enable no-empty-blocks
 }
