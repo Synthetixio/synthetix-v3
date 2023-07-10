@@ -87,6 +87,27 @@ interface IOrderModule is IBasePerpMarket {
      * which an order is settled. Intuitively, the adjustment is a discount if the size reduces the skew (i.e. skew
      * is pulled closer to zero). However a premium is applied if skew expands (i.e. skew pushed away from zero).
      *
+     * price      = $1200 USD (oracle)
+     * size       = 100
+     * skew       = 0
+     * skew_scale = 1,000,000 (1M)
+     *
+     * pd_before = 0 / 1,000,000
+     *           = 0
+     * pd_after  = (0 + 100) / 1,000,000
+     *           = 100 / 1,000,000
+     *           = 0.0001
+     * price_before = 1200 * (1 + pd_before)
+     *              = 1200 * (1 + 0)
+     *              = 1200
+     * price_after  = 1200 * (1 + pd_after)
+     *              = 1200 * (1 + 0.0001)
+     *              = 1200 * (1.0001)
+     *              = 1200.12
+     * fill_price = (price_before + price_after) / 2
+     *            = (1200 + 1200.12) / 2
+     *            = 1200.06
+     *
      * More can be read in SIP-279.
      */
     function fillPrice(uint128 marketId, int128 sizeDelta, uint256 oraclePrice) external view returns (uint256 price);
