@@ -4,7 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
