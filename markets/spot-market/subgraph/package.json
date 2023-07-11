@@ -4,6 +4,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "subgraphgen": "yarn deployments:optimism-goerli && yarn codegen",
     "deployments": "yarn deployments:optimism-mainnet && yarn deployments:optimism-goerli",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "deployments:optimism-mainnet": "cannon inspect synthetix-spot-market:latest --chain-id 10 --write-deployments ./deployments/optimism-mainnet",
@@ -23,7 +24,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.50.1",
     "@graphprotocol/graph-ts": "^0.30.0",
-    "@usecannon/cli": "^2.4.17",
+    "@usecannon/cli": "^2.4.20",
     "ethers": "^5.7.2",
     "prettier": "^2.8.8"
   }
