@@ -568,6 +568,10 @@ export class OrderSettled__Params {
   get price(): BigInt {
     return this._event.parameters[6].value.toBigInt();
   }
+
+  get orderType(): i32 {
+    return this._event.parameters[7].value.toI32();
+  }
 }
 
 export class OrderSettledFeesStruct extends ethereum.Tuple {
