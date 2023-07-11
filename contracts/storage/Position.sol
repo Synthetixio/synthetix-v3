@@ -277,7 +277,7 @@ library Position {
         // Calculates the liquidation buffer (penalty).
         //
         // e.g. 3 * 1800 * 0.0075 = 40.5
-        uint256 liquidationBuffer = absSize * price * marketConfig.liquidationBufferRatio;
+        uint256 liquidationBuffer = absSize * price * marketConfig.liquidationBufferPercent;
 
         // Calculates the liquidation fee.
         //
@@ -286,7 +286,7 @@ library Position {
         // configured liquidation fee ratio.
         //
         // e.g. 3 * 1800 * 0.0002 = 1.08
-        uint256 proportionalFee = absSize * price * marketConfig.liquidationFeeRatio;
+        uint256 proportionalFee = absSize * price * marketConfig.liquidationFeePercent;
         uint256 maxKeeperFee = globalConfig.maxKeeperFeeUsd;
         uint256 boundedProportionalFee = proportionalFee > maxKeeperFee ? maxKeeperFee : proportionalFee;
         uint256 minKeeperFee = globalConfig.minKeeperFeeUsd;

@@ -126,7 +126,7 @@ contract OrderModule is IOrderModule {
         uint256 priceDivergence = oraclePrice > pythPrice
             ? oraclePrice / pythPrice - DecimalMath.UNIT
             : pythPrice / oraclePrice - DecimalMath.UNIT;
-        if (priceDivergence > globalConfig.priceDivergenceRatio) {
+        if (priceDivergence > globalConfig.priceDivergencePercent) {
             revert PerpErrors.PriceDivergenceTooHigh(oraclePrice, pythPrice);
         }
     }

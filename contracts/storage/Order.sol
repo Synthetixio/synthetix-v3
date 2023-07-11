@@ -99,7 +99,7 @@ library Order {
         uint256 boundedKeeperFeeUsd = MathUtil.max(
             MathUtil.min(
                 globalConfig.minKeeperFeeUsd,
-                baseKeeperFeeUsd * (DecimalMath.UNIT + globalConfig.keeperProfitMarginRatio) + keeperFeeBufferUsd
+                baseKeeperFeeUsd * (DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent) + keeperFeeBufferUsd
             ),
             globalConfig.maxKeeperFeeUsd
         );

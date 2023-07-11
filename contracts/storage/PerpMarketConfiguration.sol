@@ -33,7 +33,7 @@ library PerpMarketConfiguration {
         // The minimum required margin in USD a position must hold.
         uint256 minMarginUsd;
         // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
-        uint128 priceDivergenceRatio;
+        uint128 priceDivergencePercent;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
         int128 pythPublishTimeMin;
         // Max acceptable publishTime from Pyth.
@@ -47,7 +47,7 @@ library PerpMarketConfiguration {
         // The maximum amount in USD a keeper should receive on settlements/liquidations.
         uint256 maxKeeperFeeUsd;
         // A multiplier on the base keeper fee derived as a profit margin on settlements/liquidations.
-        uint128 keeperProfitMarginRatio;
+        uint128 keeperProfitMarginPercent;
         // Number of gas units required to perform an order settlement by a keeper.
         uint256 keeperSettlementGasUnits;
         // Number of gas units required to liquidate a position by a keeper.
@@ -75,9 +75,9 @@ library PerpMarketConfiguration {
         // The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
         // Liquidation buffer (penality) in bps (on p.size * price) to prevent negative margin on liquidation.
-        uint256 liquidationBufferRatio; // TODO: Rename all references of Ratio into Percent.
+        uint256 liquidationBufferPercent;
         // Liquidation fee in bps (% of p.size * price) paid to LPers.
-        uint256 liquidationFeeRatio;
+        uint256 liquidationFeePercent;
         // Multiplier applied when calculating the liquidation premium margin.
         uint256 liquidationPremiumMultiplier;
     }
