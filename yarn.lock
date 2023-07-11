@@ -2632,7 +2632,7 @@ __metadata:
     "@synthetixio/hardhat-storage": "workspace:*"
     "@typechain/ethers-v5": 10.1.0
     "@typechain/hardhat": 6.1.3
-    "@usecannon/builder": ^2.4.19
+    "@usecannon/builder": ^2.4.16
     cannon-plugin-router: ^1.0.12
     dotenv: 16.0.1
     hardhat: 2.15.0
@@ -2677,7 +2677,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.4.19
+    "@usecannon/cli": ^2.4.17
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^2.8.8
@@ -2706,7 +2706,7 @@ __metadata:
     solidity-ast: 0.4.46
     typescript: 4.9.3
   peerDependencies:
-    "@usecannon/builder": ^2.4.19
+    "@usecannon/builder": 2.4.7
     ethers: ^5.7.2
     solidity-ast: ^0.4.0
   peerDependenciesMeta:
@@ -2737,7 +2737,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
-    "@usecannon/cli": ^2.4.19
+    "@usecannon/cli": ^2.4.17
     handlebars: 4.7.7
     prettier: ^2.8.8
     solidity-ast: 0.4.46
@@ -2803,7 +2803,7 @@ __metadata:
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
-    "@usecannon/builder": ^2.4.19
+    "@usecannon/builder": ^2.4.16
     ethers: ^5.7.2
     hardhat: 2.15.0
     solidity-ast: 0.4.46
@@ -2856,7 +2856,7 @@ __metadata:
     "@synthetixio/router": ^3.1.3
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": 2.74.4
-    "@usecannon/cli": ^2.4.19
+    "@usecannon/cli": ^2.4.17
     ethers: ^5.7.2
     hardhat: 2.15.0
     solidity-docgen: 0.6.0-beta.35
@@ -2898,7 +2898,7 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/hardhat-storage": "workspace:*"
     "@synthetixio/router": ^3.1.3
-    "@usecannon/builder": ^2.4.19
+    "@usecannon/builder": ^2.4.16
     cannon-plugin-router: ^1.0.12
     ethers: ^5.7.2
     hardhat: 2.15.0
@@ -2913,7 +2913,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.4.19
+    "@usecannon/cli": ^2.4.17
     ethers: ^5.7.2
     prettier: ^2.8.8
   languageName: unknown
@@ -2933,7 +2933,7 @@ __metadata:
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
     "@types/node-fetch": 2.6.4
-    "@usecannon/cli": ^2.4.19
+    "@usecannon/cli": ^2.4.17
     ethers: ^5.7.2
     hardhat: 2.15.0
     node-fetch: 2.6.9
@@ -3545,7 +3545,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.4.16, @usecannon/builder@npm:^2.4.19":
+"@usecannon/builder@npm:^2.4.16":
+  version: 2.4.16
+  resolution: "@usecannon/builder@npm:2.4.16"
+  dependencies:
+    ajv: ^8.11.0
+    axios: ^1.2.2
+    buffer: ^6.0.3
+    debug: ^4.3.4
+    form-data: ^4.0.0
+    lodash: ^4.17.21
+    pako: ^2.1.0
+    promise-events: ^0.2.4
+  peerDependencies:
+    ethers: ">=5.6.0"
+  checksum: c9c7049a84f6b843e1a8c4a7714d03c544b28a9f8c89572e986c441ec1fdc5dc4df95ff8329b79d149b3f190b860e5f94215b1812d8ec050c51426e89e373bb4
+  languageName: node
+  linkType: hard
+
+"@usecannon/builder@npm:^2.4.19":
   version: 2.4.19
   resolution: "@usecannon/builder@npm:2.4.19"
   dependencies:
@@ -3563,7 +3581,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:^2.4.17, @usecannon/cli@npm:^2.4.19":
+"@usecannon/cli@npm:^2.4.17":
+  version: 2.4.17
+  resolution: "@usecannon/cli@npm:2.4.17"
+  dependencies:
+    "@iarna/toml": ^3.0.0
+    "@synthetixio/wei": ^2.74.1
+    "@usecannon/builder": ^2.4.16
+    chalk: ^4.1.2
+    commander: ^9.3.0
+    debug: ^4.3.4
+    eth-provider: ^0.13.6
+    ethers: ^5.7.1
+    fastq: ^1.15.0
+    fs-extra: ^10.1.0
+    lodash: ^4.17.21
+    prompts: ^2.4.2
+    semver: ^7.3.7
+    table: ^6.8.0
+    tildify: 2.0.0
+    untildify: ^4.0.0
+  bin:
+    cannon: dist/bin/cannon.js
+  checksum: c658e149e6fc527bda0ce9d032a6341a4cde5adfd318098f58bb52c4936c1c4e46568b7c18a91b1b37ccbd4840d0977776efdc39ec32abb12d1f8e8e3a656871
+  languageName: node
+  linkType: hard
+
+"@usecannon/cli@npm:^2.4.19":
   version: 2.4.19
   resolution: "@usecannon/cli@npm:2.4.19"
   dependencies:
