@@ -4,5 +4,38 @@ include = [
   "cannonfile.toml"
 ]
 
+# Contract for mocking debt shares on L2
 [contract.DebtShareMock]
 artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
+
+# Testable storage contracts
+[contract.TestableCouncilStorage]
+artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
+
+[contract.TestableDebtShareStorage]
+artifact = "contracts/generated/test/TestableDebtShareStorage.sol:TestableDebtShareStorage"
+
+[contract.TestableElectionStorage]
+artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
+
+[router.CoreRouter]
+contracts = [
+  "AssociatedSystemsModule",
+  "ElectionModule",
+  "ElectionInspectorModule",
+  "InitialModuleBundle",
+  # Testable storage contracts
+  "TestableCouncilStorage",
+  "TestableDebtShareStorage",
+  "TestableElectionStorage",
+]
+depends = [
+  "contract.AssociatedSystemsModule",
+  "contract.ElectionModule",
+  "contract.ElectionInspectorModule",
+  "contract.InitialModuleBundle",
+  # Testable storage contracts
+  "contract.TestableCouncilStorage",
+  "contract.TestableDebtShareStorage",
+  "contract.TestableElectionStorage",
+]
