@@ -157,6 +157,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             .updatePositionData(runtime.accountId, newPosition);
         emit MarketUpdated(
             updateData.marketId,
+            price,
             updateData.skew,
             updateData.size,
             runtime.sizeDelta,
