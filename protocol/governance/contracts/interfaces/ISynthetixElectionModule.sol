@@ -5,12 +5,18 @@ import {IElectionModule as IBaseElectionModule} from "./IElectionModule.sol";
 
 interface ISynthetixElectionModule is IBaseElectionModule {
     /// @notice Initializes the module and immediately starts the first epoch
+    /// @param firstCouncil council members for the council on the first epoch
+    /// @param minimumActiveMembers Minimum active council members. If too many are dismissed an emergency election is triggered
+    /// @param nominationPeriodStartDate Date timestamp when the first epoch is going to start
+    /// @param votingPeriodDuration Duration in days of voting period
+    /// @param epochDuration Duration in days of the entire epoch
+    /// @param debtShareContract Synthetix v2 DebtShare contract that determines vote power
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
+        uint16 votingPeriodDuration,
+        uint16 epochDuration,
         address debtShareContract
     ) external;
 

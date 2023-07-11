@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ElectionBase.sol";
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "./ElectionBase.sol";
 
 /// @dev Provides core schedule functionality. I.e. dates, periods, etc
 contract ElectionSchedule is ElectionBase {

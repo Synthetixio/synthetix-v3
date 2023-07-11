@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../interfaces/ISynthetixElectionModule.sol";
 import "../../submodules/election/DebtShareManager.sol";
 import "../../submodules/election/CrossChainDebtShareManager.sol";
-
 import "./BaseElectionModule.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
@@ -17,6 +17,8 @@ contract ElectionModule is
     CrossChainDebtShareManager,
     BaseElectionModule
 {
+    using SafeCastU256 for uint256;
+
     error TooManyCandidates();
     error WrongInitializer();
 
@@ -37,15 +39,24 @@ contract ElectionModule is
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
+        uint16 votingPeriodDuration,
+        uint16 epochDuration,
         address debtShareContract
     ) external override {
         OwnableStorage.onlyOwner();
+
         if (Council.load().initialized) {
             return;
         }
+
         _setDebtShareContract(debtShareContract);
+
+        if (nominationPeriodStartDate == 0) {
+            nominationPeriodStartDate = block.timestamp.to64() + (86400 * votingPeriodDuration);
+        }
+
+        uint64 votingPeriodStartDate = nominationPeriodStartDate + (86400 * votingPeriodDuration);
+        uint64 epochEndDate = nominationPeriodStartDate + (86400 * epochDuration);
 
         _initOrUpgradeElectionModule(
             firstCouncil,

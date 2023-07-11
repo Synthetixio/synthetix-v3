@@ -18,7 +18,11 @@ interface Contracts {
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Contracts>({
   cannonfile: 'cannonfile.test.toml',
-  settings: [`epoch_start=${Math.ceil(Date.now() / 1000 + 604800)}`],
+  // Use always the same year to allow to cache the cannon build. If we leave the default
+  // value it will use block.timestamp and generate a new build each time.
+  settings: [
+    `initial_epoch_start=${Math.floor(new Date(new Date().getFullYear() + 2, 0).valueOf() / 1000)}`,
+  ],
 } as { cannonfile: string });
 
 const restoreSnapshot = createSnapshot();
