@@ -2,8 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {PerpMarketFactoryConfiguration} from "./PerpMarketFactoryConfiguration.sol";
+import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PythStructs} from "../external/pyth/PythStructs.sol";
@@ -28,6 +27,8 @@ library PerpMarket {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastU128 for uint128;
+    using Position for Position.Data;
+    using Order for Order.Data;
 
     // --- Storage --- //
 
@@ -53,55 +54,6 @@ library PerpMarket {
         mapping(uint128 => Position.Data) positions;
         // {collateralAddress: amount} (Amount of total collateral deposited)
         mapping(address => uint256) collaterals;
-        // TODO: Move these config params into a PerpMarketConfiguration.sol storage lib.
-        // Oracle node id for price feed data.
-        bytes32 oracleNodeId;
-        // The Pyth price feedId for this market.
-        bytes32 pythPriceFeedId;
-        // The Pyth EVM contract address (this never changes).
-        address pythContract;
-        // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
-        uint128 priceDeviationRatio;
-        // Skew scaling denominator constant.
-        uint128 skewScale;
-        // Fee paid (in bps) when the order _decreases_ skew.
-        uint128 makerFee;
-        // Fee paid (in bps) when the order _increases_ skew.
-        uint128 takerFee;
-        // Maximum amount of leverage a position can take on in this market (e.g. 25x)
-        uint128 maxLeverage;
-        // Maximum amount of size in native units for either side of the market (OI would be maxMarketSize * 2).
-        uint128 maxMarketSize;
-        // The minimum required margin in USD a position must hold.
-        uint256 minMarginUsd;
-        // The maximum velocity funding rate can change by.
-        uint128 maxFundingVelocity;
-        // Minimum acceptable publishTime from Pyth WH VAA price update data.
-        int128 pythPublishTimeMin;
-        // Max acceptable publishTime from Pyth.
-        int128 pythPublishTimeMax;
-        // Minimum amount of time (in seconds) required for an order to exist before settlement.
-        uint128 minOrderAge;
-        // Maximum order age (in seconds) before the order becomes stale.
-        uint128 maxOrderAge;
-        // The minimum amount in USD a keeper should receive on settlements/liquidations.
-        uint256 minKeeperFeeUsd;
-        // The maximum amount in USD a keeper should receive on settlements/liquidations.
-        uint256 maxKeeperFeeUsd;
-        // A multiplier on the base keeper fee derived as a profit margin on settlements/liquidations.
-        uint128 keeperProfitMarginRatio;
-        // Number of gas units required to perform an order settlement by a keeper.
-        uint256 keeperSettlementGasUnits;
-        // Number of gas units required to liquidate a position by a keeper.
-        uint256 keeperLiquidationGasUnits;
-        // Liquidation buffer (penality) in bps (on p.size * price) to prevent negative margin on liquidation.
-        uint256 liquidationBufferRatio; // TODO: Rename all references of Ratio into Percent.
-        // Liquidation fee in bps (% of p.size * price) paid to LPers.
-        uint256 liquidationFeeRatio;
-        // Multiplier applied when calculating the liquidation premium margin.
-        uint256 liquidationPremiumMultiplier;
-        // A fixed fee sent to the liquidator upon position liquidation.
-        uint256 keeperLiquidationFeeUsd;
     }
 
     function load(uint128 id) internal pure returns (Data storage market) {
@@ -140,16 +92,17 @@ library PerpMarket {
      * @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
      */
     function oraclePrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
-        PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
-        price = INodeModule(config.oracleManager).process(self.oracleNodeId).price.toUint();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+        price = globalConfig.oracleManager.process(marketConfig.oracleNodeId).price.toUint();
     }
 
     /**
      * @dev Updates the Pyth price with the supplied off-chain update data for `pythPriceFeedId`.
      */
     function updatePythPrice(PerpMarket.Data storage self, bytes[] calldata updateData) internal {
-        IPyth pyth = IPyth(self.pythContract);
-        pyth.updatePriceFeeds{value: msg.value}(updateData);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }
 
     /**
@@ -159,10 +112,16 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 commitmentTime
     ) internal view returns (uint256 price, uint256 publishTime) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+
         // @see: external/pyth/IPyth.sol for more details.
-        IPyth pyth = IPyth(self.pythContract);
-        uint256 maxAge = (commitmentTime.toInt() + self.minOrderAge.toInt() + self.pythPublishTimeMax).toUint();
-        PythStructs.Price memory latestPrice = pyth.getPriceNoOlderThan(self.pythPriceFeedId, maxAge);
+        uint256 maxAge = (commitmentTime.toInt() + globalConfig.minOrderAge.toInt() + globalConfig.pythPublishTimeMax)
+            .toUint();
+        PythStructs.Price memory latestPrice = globalConfig.pyth.getPriceNoOlderThan(
+            marketConfig.pythPriceFeedId,
+            maxAge
+        );
 
         // How to calculate the Pyth price:
         //
@@ -181,11 +140,28 @@ library PerpMarket {
     }
 
     /**
+     * @dev Updates position for `data.accountId` with `data`.
+     */
+    function updatePosition(PerpMarket.Data storage self, Position.Data memory data) internal {
+        self.positions[data.accountId].update(data);
+    }
+
+    /**
+     * @dev Updates order for `data.accountId` with `data`.
+     */
+    function updateOrder(PerpMarket.Data storage self, Order.Data memory data) internal {
+        self.orders[data.accountId].update(data);
+    }
+
+    /**
      * @dev Returns the rate of funding rate change.
      */
     function currentFundingVelocity(PerpMarket.Data storage self) internal view returns (int256) {
-        int128 maxFundingVelocity = self.maxFundingVelocity.toInt();
-        int128 skewScale = self.skewScale.toInt();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+
+        int128 maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
+        int128 skewScale = marketConfig.skewScale.toInt();
+        int128 skew = self.skew;
 
         // Avoid a panic due to div by zero. Return 0 immediately.
         if (skewScale == 0) {
@@ -193,7 +169,7 @@ library PerpMarket {
         }
 
         // Ensures the proportionalSkew is between -1 and 1.
-        int256 pSkew = self.skew.divDecimal(skewScale);
+        int256 pSkew = skew.divDecimal(skewScale);
         int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()

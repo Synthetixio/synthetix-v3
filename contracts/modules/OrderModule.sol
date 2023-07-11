@@ -8,6 +8,7 @@ import {PerpErrors} from "../storage/PerpErrors.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import "../interfaces/IOrderModule.sol";
 
 contract OrderModule is IOrderModule {
@@ -43,59 +44,64 @@ contract OrderModule is IOrderModule {
         }
 
         uint256 oraclePrice = market.oraclePrice();
+
+        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.currentFundingVelocity());
+
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: sizeDelta,
             oraclePrice: oraclePrice,
-            fillPrice: Order.fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice),
-            makerFee: market.makerFee,
-            takerFee: market.takerFee,
+            fillPrice: Order.fillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+            makerFee: marketConfig.makerFee,
+            takerFee: marketConfig.takerFee,
             limitPrice: limitPrice,
             keeperFeeBufferUsd: keeperFeeBufferUsd
         });
-
-        // Compute next funding entry/rate
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.currentFundingVelocity());
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        Position.Data storage position = market.positions[accountId];
-        (, uint256 _orderFee, uint256 keeperFee) = Position.postTradeDetails(accountId, marketId, position, params);
+        (, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(accountId, marketId, params);
 
-        Order.Data memory newOrder = Order.Data({
-            accountId: accountId,
-            sizeDelta: sizeDelta,
-            commitmentTime: block.timestamp,
-            limitPrice: limitPrice,
-            keeperFeeBufferUsd: keeperFeeBufferUsd
-        });
+        market.updateOrder(
+            Order.Data({
+                accountId: accountId,
+                sizeDelta: sizeDelta,
+                commitmentTime: block.timestamp,
+                limitPrice: limitPrice,
+                keeperFeeBufferUsd: keeperFeeBufferUsd
+            })
+        );
 
-        order.update(newOrder);
-        emit OrderSubmitted(accountId, marketId, sizeDelta, newOrder.commitmentTime, _orderFee, keeperFee);
+        emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, _orderFee, keeperFee);
     }
 
     /**
      * @dev Ensures the order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
+        PerpMarketConfiguration.GlobalData storage globalConfig,
         PerpMarket.Data storage market,
         uint256 commitmentTime,
         uint256 publishTime,
         uint256 pythPrice
     ) internal view {
+        uint128 minOrderAge = globalConfig.minOrderAge;
+        uint128 maxOrderAge = globalConfig.maxOrderAge;
+
         // The publishTime is _before_ the commitmentTime
         if (publishTime < commitmentTime) {
             revert PerpErrors.StalePrice();
         }
         // Stale order can only be canceled.
-        if (block.timestamp - commitmentTime > market.maxOrderAge) {
+        if (block.timestamp - commitmentTime > maxOrderAge) {
             revert PerpErrors.StaleOrder();
         }
         // publishTime commitmentTime delta must be at least minAge.
-        if (publishTime - commitmentTime < market.minOrderAge) {
+        if (publishTime - commitmentTime < minOrderAge) {
             revert PerpErrors.OrderNotReady();
         }
 
@@ -108,19 +114,19 @@ contract OrderModule is IOrderModule {
         // ptm    = publishTimeMin
         // ptm'   = publishTimeMax
         uint256 ctptd = publishTime - commitmentTime; // ctptd is commitmentTimePublishTimeDelta
-        if (ctptd < (commitmentTime.toInt() + market.minOrderAge.toInt() + market.pythPublishTimeMin).toUint()) {
+        if (ctptd < (commitmentTime.toInt() + minOrderAge.toInt() + globalConfig.pythPublishTimeMin).toUint()) {
             revert PerpErrors.InvalidPrice();
         }
-        if (ctptd > (commitmentTime.toInt() + market.maxOrderAge.toInt() + market.pythPublishTimeMax).toUint()) {
+        if (ctptd > (commitmentTime.toInt() + maxOrderAge.toInt() + globalConfig.pythPublishTimeMax).toUint()) {
             revert PerpErrors.InvalidPrice();
         }
 
         // Ensure pythPrice does not deviate too far from oracle price.
         uint256 oraclePrice = market.oraclePrice();
-        uint256 priceDeviation = oraclePrice > pythPrice
+        uint256 priceDivergence = oraclePrice > pythPrice
             ? oraclePrice / pythPrice - DecimalMath.UNIT
             : pythPrice / oraclePrice - DecimalMath.UNIT;
-        if (priceDeviation > market.priceDeviationRatio) {
+        if (priceDivergence > globalConfig.priceDivergenceRatio) {
             revert PerpErrors.PriceDivergenceTooHigh(oraclePrice, pythPrice);
         }
     }
@@ -138,6 +144,9 @@ contract OrderModule is IOrderModule {
             revert PerpErrors.OrderNotFound(accountId);
         }
 
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
         // TODO: This can be optimized as not all settlements may need the Pyth priceUpdateData.
         //
         // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
@@ -145,32 +154,30 @@ contract OrderModule is IOrderModule {
         market.updatePythPrice(priceUpdateData);
         (uint256 pythPrice, uint256 publishTime) = market.pythPrice(order.commitmentTime);
 
-        validateOrderPriceReadiness(market, order.commitmentTime, publishTime, pythPrice);
+        validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, pythPrice);
 
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: order.sizeDelta,
             oraclePrice: pythPrice,
-            fillPrice: Order.fillPrice(market.skew, market.skewScale, order.sizeDelta, pythPrice),
-            makerFee: market.makerFee,
-            takerFee: market.takerFee,
+            fillPrice: Order.fillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice),
+            makerFee: marketConfig.makerFee,
+            takerFee: marketConfig.takerFee,
             limitPrice: order.limitPrice,
             keeperFeeBufferUsd: order.keeperFeeBufferUsd
         });
 
-        // Compute next funding entry/rate
         (int256 fundingRate, ) = market.recomputeFunding(pythPrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.currentFundingVelocity());
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        Position.Data storage position = market.positions[accountId];
-        (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.postTradeDetails(
+        (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(
             accountId,
             marketId,
-            position,
             params
         );
 
-        position.update(newPosition);
+        // TODO: Condition to position.clear() when completely closing position?
+        market.updatePosition(newPosition);
         order.clear();
 
         emit OrderSettled(accountId, marketId, order.sizeDelta, _orderFee, keeperFee);
@@ -186,17 +193,15 @@ contract OrderModule is IOrderModule {
      */
     function orderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        uint256 oraclePrice = market.oraclePrice();
         int128 skew = market.skew;
-        uint128 skewScale = market.skewScale;
-
         fee = Order.orderFee(
             sizeDelta,
-            Order.fillPrice(skew, skewScale, sizeDelta, oraclePrice),
+            Order.fillPrice(skew, marketConfig.skewScale, sizeDelta, market.oraclePrice()),
             skew,
-            market.makerFee,
-            market.takerFee
+            marketConfig.makerFee,
+            marketConfig.takerFee
         );
     }
 
@@ -210,6 +215,7 @@ contract OrderModule is IOrderModule {
      */
     function fillPrice(uint128 marketId, int128 sizeDelta, uint256 oraclePrice) external view returns (uint256 price) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        price = Order.fillPrice(market.skew, market.skewScale, sizeDelta, oraclePrice);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        price = Order.fillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice);
     }
 }

@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
 import {Order} from "../storage/Order.sol";
@@ -35,7 +35,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
             revert PerpErrors.OrderFound(accountId);
         }
 
-        PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 availableAmount = collaterals.available[collateral];
 
@@ -46,7 +46,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
 
         if (amountDelta > 0) {
             // Positive means to deposit into the markets.
-            uint256 maxAllowed = config.maxCollaterals[collateral];
+            uint256 maxAllowed = globalConfig.maxCollaterals[collateral];
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (availableAmount + absAmountDelta > maxAllowed) {
@@ -55,7 +55,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
 
             collaterals.available[collateral] += absAmountDelta;
             IERC20(collateral).transferFrom(msg.sender, address(this), absAmountDelta);
-            config.synthetix.depositMarketCollateral(marketId, collateral, absAmountDelta);
+            globalConfig.synthetix.depositMarketCollateral(marketId, collateral, absAmountDelta);
             emit Transfer(msg.sender, address(this), amountDelta);
         } else if (amountDelta < 0) {
             // Negative means to withdraw from the markets.
@@ -77,7 +77,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
             }
 
             IERC20(collateral).transferFrom(address(this), msg.sender, absAmountDelta);
-            config.synthetix.withdrawMarketCollateral(marketId, collateral, absAmountDelta);
+            globalConfig.synthetix.withdrawMarketCollateral(marketId, collateral, absAmountDelta);
             emit Transfer(address(this), msg.sender, amountDelta);
         } else {
             // A zero amount is a no-op.

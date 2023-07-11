@@ -7,7 +7,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {PerpErrors} from "./PerpErrors.sol";
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
-import {PerpMarketFactoryConfiguration} from "./PerpMarketFactoryConfiguration.sol";
+import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
@@ -96,29 +96,28 @@ library Position {
 
     /**
      * @dev Given an open position (same account) and trade params return the subsequent position.
-     *
-     * Keeping this as postTradeDetails (same as perps v2) until I can figure out a better name.
      */
-    function postTradeDetails(
+    function validateTrade(
         uint128 accountId,
         uint128 marketId,
-        Position.Data storage currentPosition,
         Position.TradeParams memory params
     ) internal view returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
         if (params.sizeDelta == 0) {
             revert PerpErrors.NilOrder();
         }
 
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage currentPosition = market.positions[accountId];
+
         // Check if the `currentPosition` can be immediately liquidated.
         if (canLiquidate(currentPosition, params.fillPrice)) {
             revert PerpErrors.CanLiquidatePosition(accountId);
         }
 
-        // Fetch the market and verify if it actually exists.
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         // Derive fees incurred if this order were to be settled successfully.
-        int256 marketSkew = market.skew;
         fee = Order.orderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
         keeperFee = Order.keeperFee(marketId, params.keeperFeeBufferUsd, params.oraclePrice);
 
@@ -136,11 +135,9 @@ library Position {
             revert PerpErrors.InsufficientMargin();
         }
 
-        uint256 absSize = MathUtil.abs(currentPosition.size);
-
         // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liquidations.
         uint256 _liquidationMargin = liquidationMargin(currentPosition, params.fillPrice);
-        if (absSize != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
+        if (MathUtil.abs(currentPosition.size) != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
             revert PerpErrors.CanLiquidatePosition(accountId);
         }
 
@@ -162,7 +159,7 @@ library Position {
             // position may never be able to open on the first trade due to fees deducted on entry.
             //
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
-            if (_remainingMargin.toUint() < market.minMarginUsd) {
+            if (_remainingMargin.toUint() < globalConfig.minMarginUsd) {
                 revert PerpErrors.InsufficientMargin();
             }
         }
@@ -196,12 +193,12 @@ library Position {
         // NOTE: maxLeverage is stored as a uint8 but leverage is uint256
         int256 leverage = (newPosition.size * params.fillPrice.toInt()) /
             (_remainingMargin + fee.toInt() + keeperFee.toInt());
-        if (market.maxLeverage < MathUtil.abs(leverage)) {
+        if (marketConfig.maxLeverage < MathUtil.abs(leverage)) {
             revert PerpErrors.MaxLeverageExceeded();
         }
 
         // Check the new position hasn't hit max OI on either side.
-        validateMaxOi(market.maxMarketSize, marketSkew, market.size, currentPosition.size, newPosition.size);
+        validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
     }
 
     // --- Member --- //
@@ -223,17 +220,22 @@ library Position {
      * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
     function collateralUsd(Position.Data storage self) internal view returns (uint256) {
-        PerpMarketFactoryConfiguration.Data storage config = PerpMarketFactoryConfiguration.load();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
 
         uint256 collateralValueUsd = 0;
-        uint256 length = config.supportedCollaterals.length;
+        uint256 length = globalConfig.supportedCollaterals.length;
         PerpCollateral.Data storage collaterals = PerpCollateral.load(self.accountId, self.marketId);
 
-        PerpMarketFactoryConfiguration.Collateral memory currentCollateral;
+        // TODO: Consider moving this `Collateral` struct into the base contract for re-use.
+        PerpMarketConfiguration.Collateral memory currentCollateral;
         for (uint256 i = 0; i < length; ) {
-            currentCollateral = config.supportedCollaterals[i];
+            currentCollateral = globalConfig.supportedCollaterals[i];
 
-            uint256 price = INodeModule(config.oracleManager).process(currentCollateral.oracleNodeId).price.toUint();
+            uint256 price = INodeModule(globalConfig.oracleManager)
+                .process(currentCollateral.oracleNodeId)
+                .price
+                .toUint();
             collateralValueUsd += collaterals.available[currentCollateral.collateral] * price;
 
             unchecked {
@@ -268,13 +270,15 @@ library Position {
      * @dev Returns a number in USD which if a position's remaining margin is lte then position can be liquidated.
      */
     function liquidationMargin(Position.Data storage self, uint256 price) internal view returns (uint256) {
-        PerpMarket.Data storage market = PerpMarket.load(self.marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
+
         uint256 absSize = MathUtil.abs(self.size);
 
         // Calculates the liquidation buffer (penalty).
         //
         // e.g. 3 * 1800 * 0.0075 = 40.5
-        uint256 liquidationBuffer = absSize * price * market.liquidationBufferRatio;
+        uint256 liquidationBuffer = absSize * price * marketConfig.liquidationBufferRatio;
 
         // Calculates the liquidation fee.
         //
@@ -283,16 +287,16 @@ library Position {
         // configured liquidation fee ratio.
         //
         // e.g. 3 * 1800 * 0.0002 = 1.08
-        uint256 proportionalFee = absSize * price * market.liquidationFeeRatio;
-        uint256 maxKeeperFee = market.maxKeeperFeeUsd;
+        uint256 proportionalFee = absSize * price * marketConfig.liquidationFeeRatio;
+        uint256 maxKeeperFee = globalConfig.maxKeeperFeeUsd;
         uint256 boundedProportionalFee = proportionalFee > maxKeeperFee ? maxKeeperFee : proportionalFee;
-        uint256 minKeeperFee = market.minKeeperFeeUsd;
+        uint256 minKeeperFee = globalConfig.minKeeperFeeUsd;
         uint256 boundedLiquidationFee = boundedProportionalFee > minKeeperFee ? boundedProportionalFee : minKeeperFee;
 
         // If the remainingMargin is <= this number then position can be liquidated.
         //
         // e.g. 40.5 + 1.08 + 2 = 43.58
-        return liquidationBuffer + boundedLiquidationFee + market.keeperLiquidationFeeUsd;
+        return liquidationBuffer + boundedLiquidationFee + globalConfig.keeperLiquidationFeeUsd;
     }
 
     /**
@@ -315,9 +319,12 @@ library Position {
             return 0;
         }
 
-        PerpMarket.Data storage market = PerpMarket.load(self.marketId);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
         uint256 notionalUsd = MathUtil.abs(self.size) * price;
-        return (MathUtil.abs(self.size) / (market.skewScale)) * notionalUsd * market.liquidationPremiumMultiplier;
+        return
+            (MathUtil.abs(self.size) / (marketConfig.skewScale)) *
+            notionalUsd *
+            marketConfig.liquidationPremiumMultiplier;
     }
 
     /**

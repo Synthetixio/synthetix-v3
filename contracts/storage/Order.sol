@@ -5,6 +5,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastU256, SafeCastU128, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpMarket} from "./PerpMarket.sol";
+import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 
 /**
  * @dev An order that has yet to be settled for position modification.
@@ -93,14 +94,14 @@ library Order {
      * See IOrderModule.orderKeeperFee for more details.
      */
     function keeperFee(uint128 marketId, uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
-        PerpMarket.Data storage market = PerpMarket.load(marketId);
-        uint256 baseKeeperFeeUsd = market.keeperSettlementGasUnits * block.basefee * price;
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        uint256 baseKeeperFeeUsd = globalConfig.keeperSettlementGasUnits * block.basefee * price;
         uint256 boundedKeeperFeeUsd = MathUtil.max(
             MathUtil.min(
-                market.minKeeperFeeUsd,
-                baseKeeperFeeUsd * (DecimalMath.UNIT + market.keeperProfitMarginRatio) + keeperFeeBufferUsd
+                globalConfig.minKeeperFeeUsd,
+                baseKeeperFeeUsd * (DecimalMath.UNIT + globalConfig.keeperProfitMarginRatio) + keeperFeeBufferUsd
             ),
-            market.maxKeeperFeeUsd
+            globalConfig.maxKeeperFeeUsd
         );
         return boundedKeeperFeeUsd;
     }

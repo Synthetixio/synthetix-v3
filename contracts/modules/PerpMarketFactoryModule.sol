@@ -4,8 +4,9 @@ pragma solidity >=0.8.11 <0.9.0;
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
-import {PerpMarketFactoryConfiguration} from "../storage/PerpMarketFactoryConfiguration.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import "../interfaces/IPerpMarketFactoryModule.sol";
 
@@ -21,12 +22,21 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      */
     function setSynthetix(ISynthetixSystem synthetix) external {
         OwnableStorage.onlyOwner();
-        PerpMarketFactoryConfiguration.Data storage store = PerpMarketFactoryConfiguration.load();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        store.synthetix = synthetix;
+        globalConfig.synthetix = synthetix;
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
-        store.snxUsdToken = ITokenModule(usdTokenAddress);
-        store.oracleManager = synthetix.getOracleManager();
+        globalConfig.snxUsdToken = ITokenModule(usdTokenAddress);
+        globalConfig.oracleManager = synthetix.getOracleManager();
+    }
+
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
+    function setPyth(IPyth pyth) external {
+        OwnableStorage.onlyOwner();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        globalConfig.pyth = pyth;
     }
 
     /**
@@ -35,8 +45,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     function create(IPerpMarketFactoryModule.CreatePerpMarket memory data) external returns (uint128 id) {
         OwnableStorage.onlyOwner();
 
-        PerpMarketFactoryConfiguration.Data storage store = PerpMarketFactoryConfiguration.load();
-        id = store.synthetix.registerMarket(address(this));
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        id = globalConfig.synthetix.registerMarket(address(this));
 
         PerpMarket.create(id, data.name);
         emit MarketCreated(id, data.name);

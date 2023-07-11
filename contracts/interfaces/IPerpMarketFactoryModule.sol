@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {IPyth} from "../external/pyth/IPyth.sol";
 
 interface IPerpMarketFactoryModule is IMarket {
     // --- Structs --- //
@@ -17,6 +18,11 @@ interface IPerpMarketFactoryModule is IMarket {
      * @dev Initializes references to the Synthetix core system.
      */
     function setSynthetix(ISynthetixSystem synthetix) external;
+
+    /**
+     * @dev Stores a reference to the Pyth EVM contract.
+     */
+    function setPyth(IPyth pyth) external;
 
     /**
      * @dev Registers a new PerpMarket with Synthetix and initializes storage.
