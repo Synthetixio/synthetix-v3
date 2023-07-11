@@ -151,7 +151,7 @@ contract OrderModule is IOrderModule {
         //
         // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
         // such that keepers can conditionally update prices only if necessary.
-        market.updatePythPrice(priceUpdateData);
+        PerpMarket.updatePythPrice(priceUpdateData);
         (uint256 pythPrice, uint256 publishTime) = market.pythPrice(order.commitmentTime);
 
         validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, pythPrice);

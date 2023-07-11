@@ -93,7 +93,7 @@ library Order {
      *
      * See IOrderModule.orderKeeperFee for more details.
      */
-    function keeperFee(uint128 marketId, uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
+    function keeperFee(uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         uint256 baseKeeperFeeUsd = globalConfig.keeperSettlementGasUnits * block.basefee * price;
         uint256 boundedKeeperFeeUsd = MathUtil.max(

@@ -100,7 +100,7 @@ library PerpMarket {
     /**
      * @dev Updates the Pyth price with the supplied off-chain update data for `pythPriceFeedId`.
      */
-    function updatePythPrice(PerpMarket.Data storage self, bytes[] calldata updateData) internal {
+    function updatePythPrice(bytes[] calldata updateData) internal {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }

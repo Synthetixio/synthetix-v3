@@ -119,7 +119,7 @@ library Position {
 
         // Derive fees incurred if this order were to be settled successfully.
         fee = Order.orderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
-        keeperFee = Order.keeperFee(marketId, params.keeperFeeBufferUsd, params.oraclePrice);
+        keeperFee = Order.keeperFee(params.keeperFeeBufferUsd, params.oraclePrice);
 
         // Assuming there is an existing position (no open position will be a noop), determine if they have enough
         // margin to continue this operation. Ensuring we do not allow them to place an open position into instant
@@ -221,7 +221,6 @@ library Position {
      */
     function collateralUsd(Position.Data storage self) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
 
         uint256 collateralValueUsd = 0;
         uint256 length = globalConfig.supportedCollaterals.length;
