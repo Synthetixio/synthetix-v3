@@ -14,11 +14,15 @@ type Market @entity {
   owner: String
   maxFundingVelocity: BigInt
   skewScale: BigInt
-  initialMarginFraction: BigInt
-  maintenanceMarginFraction: BigInt
+
+  initialMarginRatioD18: BigInt
+  maintenanceMarginRatioD18: BigInt
   liquidationRewardRatioD18: BigInt
   maxLiquidationLimitAccumulationMultiplier: BigInt
-  lockedOiPercent: BigInt
+  maxSecondsInLiquidationWindow: BigInt
+  minimumPositionMargin: BigInt
+
+  lockedOiRatioD18: BigInt
   makerFee: BigInt
   takerFee: BigInt
 }

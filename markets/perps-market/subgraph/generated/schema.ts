@@ -248,8 +248,8 @@ export class Market extends Entity {
     }
   }
 
-  get initialMarginFraction(): BigInt | null {
-    let value = this.get('initialMarginFraction');
+  get initialMarginRatioD18(): BigInt | null {
+    let value = this.get('initialMarginRatioD18');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -257,16 +257,16 @@ export class Market extends Entity {
     }
   }
 
-  set initialMarginFraction(value: BigInt | null) {
+  set initialMarginRatioD18(value: BigInt | null) {
     if (!value) {
-      this.unset('initialMarginFraction');
+      this.unset('initialMarginRatioD18');
     } else {
-      this.set('initialMarginFraction', Value.fromBigInt(<BigInt>value));
+      this.set('initialMarginRatioD18', Value.fromBigInt(<BigInt>value));
     }
   }
 
-  get maintenanceMarginFraction(): BigInt | null {
-    let value = this.get('maintenanceMarginFraction');
+  get maintenanceMarginRatioD18(): BigInt | null {
+    let value = this.get('maintenanceMarginRatioD18');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -274,11 +274,11 @@ export class Market extends Entity {
     }
   }
 
-  set maintenanceMarginFraction(value: BigInt | null) {
+  set maintenanceMarginRatioD18(value: BigInt | null) {
     if (!value) {
-      this.unset('maintenanceMarginFraction');
+      this.unset('maintenanceMarginRatioD18');
     } else {
-      this.set('maintenanceMarginFraction', Value.fromBigInt(<BigInt>value));
+      this.set('maintenanceMarginRatioD18', Value.fromBigInt(<BigInt>value));
     }
   }
 
@@ -316,8 +316,8 @@ export class Market extends Entity {
     }
   }
 
-  get lockedOiPercent(): BigInt | null {
-    let value = this.get('lockedOiPercent');
+  get maxSecondsInLiquidationWindow(): BigInt | null {
+    let value = this.get('maxSecondsInLiquidationWindow');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -325,11 +325,45 @@ export class Market extends Entity {
     }
   }
 
-  set lockedOiPercent(value: BigInt | null) {
+  set maxSecondsInLiquidationWindow(value: BigInt | null) {
     if (!value) {
-      this.unset('lockedOiPercent');
+      this.unset('maxSecondsInLiquidationWindow');
     } else {
-      this.set('lockedOiPercent', Value.fromBigInt(<BigInt>value));
+      this.set('maxSecondsInLiquidationWindow', Value.fromBigInt(<BigInt>value));
+    }
+  }
+
+  get minimumPositionMargin(): BigInt | null {
+    let value = this.get('minimumPositionMargin');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set minimumPositionMargin(value: BigInt | null) {
+    if (!value) {
+      this.unset('minimumPositionMargin');
+    } else {
+      this.set('minimumPositionMargin', Value.fromBigInt(<BigInt>value));
+    }
+  }
+
+  get lockedOiRatioD18(): BigInt | null {
+    let value = this.get('lockedOiRatioD18');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set lockedOiRatioD18(value: BigInt | null) {
+    if (!value) {
+      this.unset('lockedOiRatioD18');
+    } else {
+      this.set('lockedOiRatioD18', Value.fromBigInt(<BigInt>value));
     }
   }
 

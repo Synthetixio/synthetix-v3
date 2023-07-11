@@ -1,5 +1,4 @@
 {
-  "address": "0x54D71285871C5a0914F5B53740b70bA3eDb51Fbb",
   "abi": [
     {
       "inputs": [
@@ -819,13 +818,13 @@
           "type": "uint128"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "address",
           "name": "oldOwner",
           "type": "address"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "address",
           "name": "newOwner",
           "type": "address"
@@ -844,7 +843,7 @@
           "type": "uint128"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "address",
           "name": "newNominatedOwner",
           "type": "address"
@@ -1281,13 +1280,13 @@
           "type": "uint128"
         },
         {
-          "indexed": true,
+          "indexed": false,
           "internalType": "int256",
           "name": "amountDelta",
           "type": "int256"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "address",
           "name": "sender",
           "type": "address"
@@ -1295,67 +1294,6 @@
       ],
       "name": "CollateralModified",
       "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint128",
-          "name": "accountId",
-          "type": "uint128"
-        },
-        {
-          "internalType": "uint128",
-          "name": "marketId",
-          "type": "uint128"
-        }
-      ],
-      "name": "getAsyncOrderClaim",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint128",
-              "name": "accountId",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint128",
-              "name": "marketId",
-              "type": "uint128"
-            },
-            {
-              "internalType": "int128",
-              "name": "sizeDelta",
-              "type": "int128"
-            },
-            {
-              "internalType": "uint128",
-              "name": "settlementStrategyId",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint256",
-              "name": "settlementTime",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "acceptablePrice",
-              "type": "uint256"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "trackingCode",
-              "type": "bytes32"
-            }
-          ],
-          "internalType": "struct AsyncOrder.Data",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
     },
     {
       "inputs": [
@@ -1371,6 +1309,30 @@
           "internalType": "int256",
           "name": "",
           "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "synthMarketId",
+          "type": "uint128"
+        }
+      ],
+      "name": "getCollateralAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -1700,17 +1662,6 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "leftover",
-          "type": "uint256"
-        }
-      ],
-      "name": "InsufficientMarginError",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint128",
           "name": "settlementStrategyId",
           "type": "uint128"
@@ -1722,32 +1673,22 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "sender",
-          "type": "address"
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
         },
         {
-          "internalType": "string[]",
-          "name": "urls",
-          "type": "string[]"
+          "internalType": "uint256",
+          "name": "maxMarketSize",
+          "type": "uint256"
         },
         {
-          "internalType": "bytes",
-          "name": "callData",
-          "type": "bytes"
-        },
-        {
-          "internalType": "bytes4",
-          "name": "callbackFunction",
-          "type": "bytes4"
-        },
-        {
-          "internalType": "bytes",
-          "name": "extraData",
-          "type": "bytes"
+          "internalType": "int256",
+          "name": "newSideSize",
+          "type": "int256"
         }
       ],
-      "name": "OffchainLookup",
+      "name": "MaxOpenInterestReached",
       "type": "error"
     },
     {
@@ -1774,59 +1715,6 @@
     {
       "inputs": [],
       "name": "OverflowInt256ToInt128",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "OverflowUint256ToUint64",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "deviation",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tolerance",
-          "type": "uint256"
-        }
-      ],
-      "name": "PriceDeviationToleranceExceeded",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "enum SettlementStrategy.Type",
-          "name": "strategyType",
-          "type": "uint8"
-        }
-      ],
-      "name": "SettlementStrategyNotFound",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "timestamp",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "settlementTime",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "settlementExpiration",
-          "type": "uint256"
-        }
-      ],
-      "name": "SettlementWindowExpired",
       "type": "error"
     },
     {
@@ -1902,7 +1790,7 @@
           "type": "uint128"
         },
         {
-          "indexed": true,
+          "indexed": false,
           "internalType": "enum SettlementStrategy.Type",
           "name": "orderType",
           "type": "uint8"
@@ -1932,7 +1820,7 @@
           "type": "uint256"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "bytes32",
           "name": "trackingCode",
           "type": "bytes32"
@@ -1946,80 +1834,6 @@
       ],
       "name": "OrderCommitted",
       "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint128",
-          "name": "marketId",
-          "type": "uint128"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint128",
-          "name": "accountId",
-          "type": "uint128"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "fillPrice",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "int256",
-          "name": "accountPnlRealized",
-          "type": "int256"
-        },
-        {
-          "indexed": false,
-          "internalType": "int128",
-          "name": "newSize",
-          "type": "int128"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "collectedFees",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "settelementReward",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "trackingCode",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "settler",
-          "type": "address"
-        }
-      ],
-      "name": "OrderSettled",
-      "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "PRECISION",
-      "outputs": [
-        {
-          "internalType": "int256",
-          "name": "",
-          "type": "int256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
     },
     {
       "inputs": [
@@ -2188,6 +2002,218 @@
           "internalType": "struct AsyncOrder.Data",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "leftover",
+          "type": "uint256"
+        }
+      ],
+      "name": "InsufficientMarginError",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "internalType": "string[]",
+          "name": "urls",
+          "type": "string[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callData",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes4",
+          "name": "callbackFunction",
+          "type": "bytes4"
+        },
+        {
+          "internalType": "bytes",
+          "name": "extraData",
+          "type": "bytes"
+        }
+      ],
+      "name": "OffchainLookup",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OverflowUint256ToUint64",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "deviation",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tolerance",
+          "type": "uint256"
+        }
+      ],
+      "name": "PriceDeviationToleranceExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum SettlementStrategy.Type",
+          "name": "strategyType",
+          "type": "uint8"
+        }
+      ],
+      "name": "SettlementStrategyNotFound",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "settlementTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "settlementExpiration",
+          "type": "uint256"
+        }
+      ],
+      "name": "SettlementWindowExpired",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "skew",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "size",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "sizeDelta",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "currentFundingRate",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "currentFundingVelocity",
+          "type": "int256"
+        }
+      ],
+      "name": "MarketUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "marketId",
+          "type": "uint128"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint128",
+          "name": "accountId",
+          "type": "uint128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "fillPrice",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int128",
+          "name": "sizeDelta",
+          "type": "int128"
+        },
+        {
+          "indexed": false,
+          "internalType": "int128",
+          "name": "newSize",
+          "type": "int128"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "collectedFees",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "settlementReward",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "trackingCode",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "settler",
+          "type": "address"
+        }
+      ],
+      "name": "OrderSettled",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "PRECISION",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
         }
       ],
       "stateMutability": "view",
@@ -2565,7 +2591,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
@@ -2590,7 +2616,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
@@ -2598,13 +2624,13 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "initialMarginFraction",
+          "name": "initialMarginRatioD18",
           "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "maintenanceMarginFraction",
+          "name": "maintenanceMarginRatioD18",
           "type": "uint256"
         },
         {
@@ -2624,6 +2650,12 @@
           "internalType": "uint256",
           "name": "maxSecondsInLiquidationWindow",
           "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "minimumPositionMargin",
+          "type": "uint256"
         }
       ],
       "name": "LiquidationParametersSet",
@@ -2633,7 +2665,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
@@ -2641,18 +2673,18 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "lockedOiPercent",
+          "name": "lockedOiRatioD18",
           "type": "uint256"
         }
       ],
-      "name": "LockedOiPercentSet",
+      "name": "LockedOiRatioD18Set",
       "type": "event"
     },
     {
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
@@ -2660,18 +2692,18 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "maxMarketValue",
+          "name": "maxMarketSize",
           "type": "uint256"
         }
       ],
-      "name": "MaxMarketValueSet",
+      "name": "MaxMarketSizeSet",
       "type": "event"
     },
     {
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
@@ -2773,7 +2805,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint128",
           "name": "marketId",
           "type": "uint128"
@@ -2906,12 +2938,12 @@
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "initialMarginFraction",
+          "name": "initialMarginRatioD18",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "maintenanceMarginFraction",
+          "name": "maintenanceMarginRatioD18",
           "type": "uint256"
         },
         {
@@ -2941,7 +2973,7 @@
           "type": "uint128"
         }
       ],
-      "name": "getLockedOiPercent",
+      "name": "getLockedOiRatioD18",
       "outputs": [
         {
           "internalType": "uint256",
@@ -2960,11 +2992,11 @@
           "type": "uint128"
         }
       ],
-      "name": "getMaxMarketValue",
+      "name": "getMaxMarketSize",
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "maxMarketValue",
+          "name": "maxMarketSize",
           "type": "uint256"
         }
       ],
@@ -3103,12 +3135,12 @@
         },
         {
           "internalType": "uint256",
-          "name": "initialMarginFraction",
+          "name": "initialMarginRatioD18",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "maintenanceMarginFraction",
+          "name": "maintenanceMarginRatioD18",
           "type": "uint256"
         },
         {
@@ -3124,6 +3156,11 @@
         {
           "internalType": "uint256",
           "name": "maxSecondsInLiquidationWindow",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minimumPositionMargin",
           "type": "uint256"
         }
       ],
@@ -3141,11 +3178,11 @@
         },
         {
           "internalType": "uint256",
-          "name": "lockedOiPercent",
+          "name": "lockedOiRatioD18",
           "type": "uint256"
         }
       ],
-      "name": "setLockedOiPercent",
+      "name": "setLockedOiRatio",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -3159,11 +3196,11 @@
         },
         {
           "internalType": "uint256",
-          "name": "maxMarketValue",
+          "name": "maxMarketSize",
           "type": "uint256"
         }
       ],
-      "name": "setMaxMarketValue",
+      "name": "setMaxMarketSize",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -3364,9 +3401,5 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ],
-  "deployTxnHash": "",
-  "sourceName": "",
-  "contractName": "",
-  "deployedOn": "invoke.upgrade_proxy"
+  ]
 }
