@@ -42,10 +42,9 @@ library PerpMarket {
         // sum(positions.map(p => abs(p.size))).
         uint256 size;
         // The value of the funding rate last time this was computed.
-        // TODO: Rename this as it reads like this is a time rather than a value (append Value).
-        int256 fundingRateLastComputed;
+        int256 currentFundingRateComputed;
         // The value (in native units) of total market funding accumulated.
-        int256 fundingAccruedLastComputed;
+        int256 currentFundingAccruedComputed;
         // block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
         // {accountId: Order}.
@@ -210,7 +209,7 @@ library PerpMarket {
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
-        return self.fundingRateLastComputed + (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
+        return self.currentFundingRateComputed + (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
     /**
@@ -219,14 +218,14 @@ library PerpMarket {
     function nextFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
         int256 fundingRate = currentFundingRate(self);
         // The minus sign is needed as funding flows in the opposite direction to skew.
-        int256 avgFundingRate = -(self.fundingRateLastComputed + fundingRate).divDecimal(
+        int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
         int256 unrecordedFunding = avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(
             _oraclePrice.toInt()
         );
-        return self.fundingAccruedLastComputed + unrecordedFunding;
+        return self.currentFundingAccruedComputed + unrecordedFunding;
     }
 
     /**
@@ -239,8 +238,8 @@ library PerpMarket {
         fundingRate = currentFundingRate(self);
         fundingAccrued = nextFunding(self, _oraclePrice);
 
-        self.fundingRateLastComputed = fundingRate;
-        self.fundingAccruedLastComputed = fundingAccrued;
+        self.currentFundingRateComputed = fundingRate;
+        self.currentFundingAccruedComputed = fundingAccrued;
         self.lastFundingTime = block.timestamp;
     }
 }

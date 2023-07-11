@@ -44,8 +44,8 @@ library Position {
         uint128 marketId;
         // Size (in native units e.g. wstETH)
         int128 size;
-        // The market's accumulated accrued funding at position open. TODO: Rename to consider suffix Usd.
-        int256 entryFundingValue;
+        // The market's accumulated accrued funding at position open.
+        int256 entryFundingAccrued;
         // The fill price at which this position was opened with.
         uint256 entryPrice;
         // Cost in USD to open this positions (e.g. keeper + order fees).
@@ -145,7 +145,7 @@ library Position {
             accountId: accountId,
             marketId: marketId,
             size: currentPosition.size + params.sizeDelta,
-            entryFundingValue: market.fundingAccruedLastComputed,
+            entryFundingAccrued: market.currentFundingAccruedComputed,
             entryPrice: params.fillPrice,
             feesIncurredUsd: fee + keeperFee
         });
@@ -212,7 +212,7 @@ library Position {
         }
 
         PerpMarket.Data storage market = PerpMarket.load(self.marketId);
-        int256 netFundingPerUnit = market.nextFunding(price) - self.entryFundingValue;
+        int256 netFundingPerUnit = market.nextFunding(price) - self.entryFundingAccrued;
         return self.size * netFundingPerUnit;
     }
 
@@ -347,7 +347,7 @@ library Position {
         self.accountId = data.accountId;
         self.marketId = data.marketId;
         self.size = data.size;
-        self.entryFundingValue = data.entryFundingValue;
+        self.entryFundingAccrued = data.entryFundingAccrued;
         self.entryPrice = data.entryPrice;
         self.feesIncurredUsd = data.feesIncurredUsd;
     }
