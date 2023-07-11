@@ -391,14 +391,26 @@ describe('Settle Offchain Async Order test', () => {
             const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
             const trackingCode = `"${ethers.constants.HashZero}"`;
             const msgSender = `"${await keeper().getAddress()}"`;
+
+            const order = [
+              ethMarketId,
+              accountId,
+              newPositionSize,
+              sizeDelta,
+              0,
+              0,
+              0,
+              0,
+              settlementReward
+            ]
+
+            const orderParams = `[${order.join(', ')}]`;
             const params = [
               ethMarketId,
               accountId,
+              orderParams,
               fillPrice,
-              sizeDelta,
-              newPositionSize,
               totalFees,
-              settlementReward,
               trackingCode,
               msgSender,
             ];
