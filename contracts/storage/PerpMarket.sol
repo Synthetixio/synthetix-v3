@@ -82,8 +82,14 @@ library PerpMarket {
         PerpMarket.Data storage market = load(id);
         market.id = id;
         market.name = name;
+    }
 
-        // TODO: The handful of params e.g. minOrderAge/maxOrderAge are not initialized here.
+    /**
+     * @dev Updates the Pyth price with the supplied off-chain update data for `pythPriceFeedId`.
+     */
+    function updatePythPrice(bytes[] calldata updateData) internal {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }
 
     // --- Members --- //
@@ -95,14 +101,6 @@ library PerpMarket {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         price = globalConfig.oracleManager.process(marketConfig.oracleNodeId).price.toUint();
-    }
-
-    /**
-     * @dev Updates the Pyth price with the supplied off-chain update data for `pythPriceFeedId`.
-     */
-    function updatePythPrice(bytes[] calldata updateData) internal {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }
 
     /**
@@ -215,26 +213,31 @@ library PerpMarket {
         return self.fundingRateLastComputed + (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
     }
 
-    function unrecordedFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
+    /**
+     * @dev Returns the next market funding accrued value.
+     */
+    function nextFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
         int256 fundingRate = currentFundingRate(self);
-
-        // NOTE: The minus sign - funding flows in the opposite direction to skew.
+        // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.fundingRateLastComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
-        return avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(_oraclePrice.toInt());
+        // Calculate the additive accrued funding delta for the next funding accrued value.
+        int256 unrecordedFunding = avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(
+            _oraclePrice.toInt()
+        );
+        return self.fundingAccruedLastComputed + unrecordedFunding;
     }
 
-    function nextFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
-        return self.fundingAccruedLastComputed + unrecordedFunding(self, _oraclePrice);
-    }
-
+    /**
+     * @dev Recompute and store funding related values given the current market conditions.
+     */
     function recomputeFunding(
         PerpMarket.Data storage self,
         uint256 _oraclePrice
     ) internal returns (int256 fundingRate, int256 fundingAccrued) {
         fundingRate = currentFundingRate(self);
-        fundingAccrued = self.fundingAccruedLastComputed + unrecordedFunding(self, _oraclePrice);
+        fundingAccrued = nextFunding(self, _oraclePrice);
 
         self.fundingRateLastComputed = fundingRate;
         self.fundingAccruedLastComputed = fundingAccrued;
