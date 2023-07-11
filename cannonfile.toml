@@ -7,6 +7,13 @@ description = "bfp market for Synthetix v3"
 description = "bfp market owner"
 defaultValue = "0x0000000000000000000000000000000000000000"
 
+# TODO: Configurable to depending on chain.
+#
+# @see: https://docs.pyth.network/documentation/pythnet-price-feeds/evm
+[setting.pyth]
+description = "pyth evm contract address"
+defaultValue = "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C"
+
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
@@ -101,5 +108,14 @@ fromCall.func = "owner"
 func = "setSynthetix"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
+]
+depends = ["invoke.upgrade_proxy"]
+
+[invoke.set_pyth]
+target = ["MarketProxy"]
+fromCall.func = "owner"
+func = "setPyth"
+args = [
+  "<%= settings.pyth %>",
 ]
 depends = ["invoke.upgrade_proxy"]
