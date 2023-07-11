@@ -401,8 +401,8 @@ describe('Settle Offchain Async Order test', () => {
               0,
               0,
               0,
-              settlementReward
-            ]
+              settlementReward,
+            ];
 
             const orderParams = `[${order.join(', ')}]`;
             const params = [
