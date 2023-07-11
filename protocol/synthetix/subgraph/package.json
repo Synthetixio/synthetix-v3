@@ -4,6 +4,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "subgraphgen": "yarn deployments:optimism-goerli && yarn codegen",
     "deployments": "yarn deployments:mainnet && yarn deployments:optimism-mainnet && yarn deployments:goerli && yarn deployments:optimism-goerli",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "deployments:mainnet": "cannon inspect synthetix:latest --chain-id 1 --write-deployments ./deployments/mainnet",
