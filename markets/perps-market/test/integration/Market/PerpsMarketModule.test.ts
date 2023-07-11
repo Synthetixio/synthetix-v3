@@ -2,7 +2,8 @@ import { ethers } from 'ethers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, openPosition } from '../helpers';
-import { formatEther } from 'ethers/lib/utils';
+import { wei } from '@synthetixio/wei';
+import { calculateFillPrice } from '../helpers/fillPrice';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('PerpsMarketModule', () => {
@@ -96,29 +97,29 @@ describe('PerpsMarketModule', () => {
     const tests = [
       {
         marketSkew: 0,
-        sizeAndExpectedPrice: [
-          { size: 1, price: bn(1010), expectedPrice: bn(1010.0505) },
-          { size: -1, price: bn(1010), expectedPrice: bn(1009.9495) },
+        sizeAndPrice: [
+          { size: 1, price: 1010 },
+          { size: -1, price: 1010 },
         ],
       },
       {
         marketSkew: 10,
-        sizeAndExpectedPrice: [
-          { size: 1, price: bn(1010), expectedPrice: bn(1011.0605) },
-          { size: -1, price: bn(1010), expectedPrice: bn(1010.9595) },
-          { size: -11, price: bn(1010), expectedPrice: bn(1010.4545) },
+        sizeAndPrice: [
+          { size: 1, price: 1010 },
+          { size: -1, price: 1010 },
+          { size: -11, price: 1010 },
         ],
       },
       {
         marketSkew: -10,
-        sizeAndExpectedPrice: [
-          { size: 1, price: bn(1010), expectedPrice: bn(1009.0405) },
-          { size: -1, price: bn(1010), expectedPrice: bn(1008.9395) },
-          { size: 11, price: bn(1010), expectedPrice: bn(1009.5455) },
+        sizeAndPrice: [
+          { size: 1, price: 1010 },
+          { size: -1, price: 1010 },
+          { size: 11, price: 1010 },
         ],
       },
     ];
-    tests.forEach(({ marketSkew, sizeAndExpectedPrice }) => {
+    tests.forEach(({ marketSkew, sizeAndPrice }) => {
       describe(`marketSkew ${marketSkew}`, () => {
         const restoreMarketSkew = snapshotCheckpoint(provider);
         before('create market skew', async () => {
@@ -129,10 +130,17 @@ describe('PerpsMarketModule', () => {
             price: fixture.marketTokenPrice,
           });
         });
-        sizeAndExpectedPrice.forEach(({ size, price, expectedPrice }) => {
-          it(`fillPrice for size ${size} and price ${formatEther(price)}`, async () => {
-            const fillPrice = await systems().PerpsMarket.fillPrice(marketId, bn(size), price);
-            assertBn.equal(fillPrice, expectedPrice);
+        sizeAndPrice.forEach(({ size, price }) => {
+          it(`fillPrice for size ${size} and price ${price}`, async () => {
+            const fillPrice = await systems().PerpsMarket.fillPrice(marketId, bn(size), bn(price));
+            const expectedFillPrice = calculateFillPrice(
+              wei(marketSkew),
+              wei(fixture.skewScale),
+              wei(size),
+              wei(price)
+            ).toBN();
+
+            assertBn.equal(fillPrice, expectedFillPrice);
           });
         });
         after('restore market skew', restoreMarketSkew);

@@ -35,7 +35,7 @@ describe('CollateralModule', function () {
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
+        await verifyCollateral(1, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       it('shows in the collateral list', async function () {
@@ -57,7 +57,7 @@ describe('CollateralModule', function () {
 
         it('is well configured', async () => {
           await verifyCollateral(
-            1,
+            2,
             AnotherCollateral,
             oracleNodeId2,
             400,
@@ -105,7 +105,7 @@ describe('CollateralModule', function () {
 
           it('is well configured', async () => {
             await verifyCollateral(
-              1,
+              2,
               AnotherCollateral,
               oracleNodeId2,
               300,
@@ -136,7 +136,7 @@ describe('CollateralModule', function () {
 
           it('is well configured', async () => {
             await verifyCollateral(
-              1,
+              2,
               AnotherCollateral,
               oracleNodeId2,
               300,

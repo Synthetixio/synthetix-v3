@@ -13,11 +13,18 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.version %>"
 
+[setting.synthetixPreset]
+defaultValue = "main"
+
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>"
 
+[setting.salt]
+defaultValue = 'snax'
+
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
@@ -28,17 +35,14 @@ artifact = "PerpsMarketFactoryModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
 
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
 [contract.PerpsMarketModule]
 artifact = "PerpsMarketModule"
-
-[contract.LimitOrderModule]
-artifact = "LimitOrderModule"
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
@@ -71,10 +75,9 @@ contracts = [
   "PerpsMarketFactoryModule",
   "PerpsAccountModule",
   "PerpsMarketModule",
-  "AtomicOrderModule",
   "AsyncOrderModule",
+  "AsyncOrderSettlementModule",
   "FeatureFlagModule",
-  "LimitOrderModule",
   "LiquidationModule",
   "MarketConfigurationModule",
   "GlobalPerpsMarketModule"
@@ -83,12 +86,11 @@ depends = [
   "import.synthetix",
   "contract.CoreModule",
   "contract.PerpsMarketFactoryModule",
-  "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
   "contract.PerpsAccountModule",
   "contract.PerpsMarketModule",
   "contract.FeatureFlagModule",
-  "contract.LimitOrderModule",
   "contract.LiquidationModule",
   "contract.MarketConfigurationModule",
   "contract.GlobalPerpsMarketModule"

@@ -8,6 +8,9 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
+import { calculateFillPrice } from '../helpers/fillPrice';
+import { wei } from '@synthetixio/wei';
+import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -24,7 +27,7 @@ describe('Settle Offchain Async Order test', () => {
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
-        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
       },
     ],
     traderAccountIds: [2, 3],
@@ -379,16 +382,54 @@ describe('Settle Offchain Async Order test', () => {
               .settlePythOrder(pythPriceData, extraData, { value: updateFee });
           });
 
-          it('emits event', async () => {
-            // TODO Calculate the correct fill price instead of hardcoding
-            const fillPrice = bn(1000.005);
+          it('emits event settle event', async () => {
+            const accountId = 2;
+            const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
+            const sizeDelta = bn(1);
+            const newPositionSize = bn(1);
+            const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const trackingCode = `"${ethers.constants.HashZero}"`;
+            const msgSender = `"${await keeper().getAddress()}"`;
+            const params = [
+              ethMarketId,
+              accountId,
+              fillPrice,
+              sizeDelta,
+              newPositionSize,
+              totalFees,
+              settlementReward,
+              trackingCode,
+              msgSender,
+            ];
             await assertEvent(
               settleTx,
-              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, 0, ${bn(1)}, ${
-                DEFAULT_SETTLEMENT_STRATEGY.settlementReward
-              }, ${DEFAULT_SETTLEMENT_STRATEGY.settlementReward}, "${
-                ethers.constants.HashZero
-              }", "${await keeper().getAddress()}")`,
+              `OrderSettled(${params.join(', ')})`,
+              systems().PerpsMarket
+            );
+          });
+
+          it('emits market updated event', async () => {
+            const marketSize = bn(1);
+            const marketSkew = bn(1);
+            const sizeDelta = bn(1);
+            const currentFundingRate = bn(0);
+            const currentFundingVelocity = calcCurrentFundingVelocity({
+              skew: wei(1),
+              skewScale: wei(100_000),
+              maxFundingVelocity: wei(10),
+            });
+            const params = [
+              ethMarketId,
+              marketSkew,
+              marketSize,
+              sizeDelta,
+              currentFundingRate,
+              currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
+            ];
+            await assertEvent(
+              settleTx,
+              `MarketUpdated(${params.join(', ')})`,
               systems().PerpsMarket
             );
           });
