@@ -139,7 +139,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
         // use fill price to calculate realized pnl
-        (runtime.pnl, , , ) = oldPosition.getPnl(fillPrice);
+        (runtime.pnl, runtime.accruedFunding, , ) = oldPosition.getPnl(fillPrice);
 
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
         if (runtime.pnl > 0) {
@@ -186,11 +186,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         emit OrderSettled(
             runtime.marketId,
             runtime.accountId,
+            runtime,
             fillPrice,
-            runtime.sizeDelta,
-            runtime.newPositionSize,
             totalFees,
-            runtime.settlementReward,
             asyncOrder.trackingCode,
             msg.sender
         );

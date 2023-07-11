@@ -22,22 +22,18 @@ interface IAsyncOrderSettlementModule {
      * @notice Gets fired when a new order is settled.
      * @param marketId Id of the market used for the trade.
      * @param accountId Id of the account used for the trade.
+     * @param order Order data used during settlement.
      * @param fillPrice Price at which the order was settled.
-     * @param sizeDelta Size delta from order.
-     * @param newSize New size of the position after settlement.
      * @param collectedFees Amount of fees collected by the protocol.
-     * @param settlementReward Amount of fees collected by the settler.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param settler address of the settler of the order.
      */
     event OrderSettled(
         uint128 indexed marketId,
         uint128 indexed accountId,
+        SettleOrderRuntime order,
         uint256 fillPrice,
-        int128 sizeDelta,
-        int128 newSize,
         uint256 collectedFees,
-        uint256 settlementReward,
         bytes32 indexed trackingCode,
         address settler
     );
@@ -50,6 +46,7 @@ interface IAsyncOrderSettlementModule {
         int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
+        int256 accruedFunding;
         uint256 amountToDeposit;
         uint256 settlementReward;
     }
