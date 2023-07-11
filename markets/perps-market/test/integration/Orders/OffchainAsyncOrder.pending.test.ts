@@ -2,7 +2,6 @@ import { ethers } from 'ethers';
 import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { depositCollateral, settleOrder } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
