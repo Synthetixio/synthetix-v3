@@ -1,3 +1,5 @@
+import '@typechain/hardhat';
+import '@nomiclabs/hardhat-ethers';
 import 'hardhat-cannon';
 
 // Router generation cannon plugin
