@@ -39,15 +39,23 @@ interface IPerpConfigurationModule {
         uint256 liquidationPremiumMultiplier;
     }
 
-    // --- Mutative --- //
+    // --- Events --- //
 
-    /**
-     * @dev Configures a specific market by the `marketId`.
-     */
-    function configure(uint128 marketId, IPerpConfigurationModule.ConfigureByMarketParameters memory data) external;
+    // @dev Emitted when the global market config is updated.
+    event ConfigurationUpdated();
+
+    // @dev Emitted when parameters for a specific market is updated.
+    event MarketConfigurationUpdated(uint128 marketId);
+
+    // --- Mutative --- //
 
     /**
      * @dev Configures parameters applied globally.
      */
     function configure(IPerpConfigurationModule.ConfigureParameters memory data) external;
+
+    /**
+     * @dev Configures a specific market by the `marketId`.
+     */
+    function configure(uint128 marketId, IPerpConfigurationModule.ConfigureByMarketParameters memory data) external;
 }
