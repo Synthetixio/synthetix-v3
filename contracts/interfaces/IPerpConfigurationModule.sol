@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 
 interface IPerpConfigurationModule {
     // --- Structs --- //
@@ -58,4 +59,16 @@ interface IPerpConfigurationModule {
      * @dev Configures a specific market by the `marketId`.
      */
     function configure(uint128 marketId, IPerpConfigurationModule.ConfigureByMarketParameters memory data) external;
+
+    // --- Views --- //
+
+    /**
+     * @dev Returns global market parameters.
+     */
+    function parameters() external pure returns (PerpMarketConfiguration.GlobalData memory);
+
+    /**
+     * @dev Returns market specific parameters.
+     */
+    function parameters(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
 }

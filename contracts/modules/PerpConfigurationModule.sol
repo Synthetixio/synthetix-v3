@@ -52,4 +52,20 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
 
         emit MarketConfigurationUpdated(marketId);
     }
+
+    // --- Views --- //
+
+    /**
+     * @inheritdoc IPerpConfigurationModule
+     */
+    function parameters() external pure returns (PerpMarketConfiguration.GlobalData memory) {
+        return PerpMarketConfiguration.load();
+    }
+
+    /**
+     * @inheritdoc IPerpConfigurationModule
+     */
+    function parameters(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory) {
+        return PerpMarketConfiguration.load(marketId);
+    }
 }
