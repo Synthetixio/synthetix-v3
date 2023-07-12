@@ -231,6 +231,66 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
+    function enablePoolCollateralDelegation(uint128 poolId, address collateral) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        pool.disabledCollaterals[collateral] = false;
+
+        emit PoolCollateralEnabled(poolId, collateral, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function disablePoolCollateralDelegation(uint128 poolId, address collateral) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        pool.disabledCollaterals[collateral] = true;
+
+        emit PoolCollateralDisabled(poolId, collateral, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function isDelegationEnabledByPool(
+        uint128 poolId,
+        address collateral
+    ) external view override returns (bool) {
+        return !Pool.load(poolId).disabledCollaterals[collateral];
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function setPoolCollateralIssuanceRatioD18(
+        uint128 poolId,
+        address collateral,
+        uint256 issuanceRatioD18
+    ) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        pool.issuanceRatioD18[collateral] = issuanceRatioD18;
+
+        emit PoolCollateralDisabled(poolId, collateral, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function getPoolCollateralIssuanceRatioD18(
+        uint128 poolId,
+        address collateral
+    ) external view override returns (uint256) {
+        return Pool.loadExisting(poolId).issuanceRatioD18[collateral];
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
     function getPoolName(uint128 poolId) external view override returns (string memory poolName) {
         return Pool.load(poolId).name;
     }

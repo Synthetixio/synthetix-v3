@@ -4,7 +4,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrapWithStakedPool } from '../../bootstrap';
+import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../verifications';
 
@@ -441,6 +441,30 @@ describe('IssueUSDModule', function () {
       });
 
       it('try to create debt beyond system max c ratio', exploit(2));
+    });
+  });
+
+  describe('establish a more stringent collateralization ratio for the pool', async () => {
+    before(restore);
+
+    it('set the pool min collateal issuance ratio to 600%', async () => {
+      await systems()
+        .Core.connect(owner)
+        .setPoolCollateralIssuanceRatioD18(poolId, collateralAddress(), bn(6));
+    });
+
+    it('verifies sufficient c-ratio', async () => {
+      const price = await systems().Core.getCollateralPrice(collateralAddress());
+
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount),
+        `InsufficientCollateralRatio("${depositAmount}", "${depositAmount}", "${price}", "${bn(
+          6
+        ).toString()}")`,
+        systems().Core
+      );
     });
   });
 });

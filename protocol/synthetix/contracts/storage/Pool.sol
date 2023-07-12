@@ -48,6 +48,11 @@ library Pool {
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
 
+    /**
+     * @notice Thrown when attempting delegate a pool disabled collateral
+     */
+    error PoolCollateralIsDisabled(address collateral, uint128 poolId);
+
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
     struct Data {
@@ -113,6 +118,8 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => bool) disabledCollaterals;
+        mapping(address => uint256) issuanceRatioD18;
     }
 
     /**
@@ -505,6 +512,16 @@ library Pool {
                 // solhint-disable-next-line numcast/safe-cast
                 uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
             );
+        }
+    }
+
+    /**
+     * @notice Shows if a given collateral type is enabled for deposits and delegation in given pool.
+     * @param collateral The address of the collateral.
+     */
+    function checkDelegationEnabled(Data storage self, address collateral) internal view {
+        if (self.disabledCollaterals[collateral]) {
+            revert PoolCollateralIsDisabled(collateral, self.id);
         }
     }
 }

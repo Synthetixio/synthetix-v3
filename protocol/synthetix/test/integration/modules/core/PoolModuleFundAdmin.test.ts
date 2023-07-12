@@ -5,7 +5,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { bn, bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('PoolModule Admin', function () {
@@ -25,6 +25,7 @@ describe('PoolModule Admin', function () {
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   const secondPoolId = 3384692;
+  const thirdPoolId = 3384633;
 
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
@@ -681,6 +682,106 @@ describe('PoolModule Admin', function () {
           ethers.utils.parseEther('2')
         );
       });
+    });
+  });
+
+  describe('disable/enable collateral for a pool ', async () => {
+    before(restore);
+
+    before('give user1 permission to create pool', async () => {
+      await systems()
+        .Core.connect(owner)
+        .addToFeatureFlagAllowlist(
+          ethers.utils.formatBytes32String('createPool'),
+          user1.getAddress()
+        );
+    });
+
+    before('create a pool', async () => {
+      await (
+        await systems()
+          .Core.connect(user1)
+          .createPool(thirdPoolId, await user1.getAddress())
+      ).wait();
+    });
+
+    it('only works for owner', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .enablePoolCollateralDelegation(thirdPoolId, collateralAddress()),
+        `Unauthorized("${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+
+    it('collateral is enabled by default for the pool', async () => {
+      await assert.equal(
+        await systems().Core.isDelegationEnabledByPool(thirdPoolId, collateralAddress()),
+        true
+      );
+    });
+
+    it('disable the collateral by pool owner', async () => {
+      await systems()
+        .Core.connect(user1)
+        .disablePoolCollateralDelegation(thirdPoolId, collateralAddress());
+    });
+
+    it('collateral is disabled for the pool', async () => {
+      await assert.equal(
+        await systems().Core.isDelegationEnabledByPool(thirdPoolId, collateralAddress()),
+        false
+      );
+    });
+  });
+
+  describe('setPoolCollateralIssuanceRatioD18()', async () => {
+    before(restore);
+
+    before('give user1 permission to create pool', async () => {
+      await systems()
+        .Core.connect(owner)
+        .addToFeatureFlagAllowlist(
+          ethers.utils.formatBytes32String('createPool'),
+          user1.getAddress()
+        );
+    });
+
+    before('create a pool', async () => {
+      await (
+        await systems()
+          .Core.connect(user1)
+          .createPool(thirdPoolId, await user1.getAddress())
+      ).wait();
+    });
+
+    it('only works for owner', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .setPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress(), bn(2)),
+        `Unauthorized("${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+
+    it('min collateral ratio is set to zero for the pool by default', async () => {
+      await assert.equal(
+        await systems().Core.getPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress()),
+        0
+      );
+    });
+
+    it('set the pool collateal issuance ratio to 200%', async () => {
+      await systems()
+        .Core.connect(user1)
+        .setPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress(), bn(2));
+
+      await assertBn.equal(
+        await systems().Core.getPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress()),
+        bn(2)
+      );
     });
   });
 });

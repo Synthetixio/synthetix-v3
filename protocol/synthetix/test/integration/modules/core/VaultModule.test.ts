@@ -277,7 +277,7 @@ describe('VaultModule', function () {
           )
     );
 
-    describe('when collateral is disabled', async () => {
+    describe('when collateral is disabled by system', async () => {
       const restore = snapshotCheckpoint(provider);
       after(restore);
 
@@ -311,6 +311,65 @@ describe('VaultModule', function () {
           `CollateralDepositDisabled("${collateralAddress()}")`,
           systems().Core
         );
+      });
+    });
+
+    describe('when collateral is disabled by pool owner', async () => {
+      const restore = snapshotCheckpoint(provider);
+      after(restore);
+
+      const fakeVaultId = 93729021;
+
+      before('create empty vault', async () => {
+        await systems().Core.createPool(fakeVaultId, await user1.getAddress());
+      });
+
+      before('enable collateral for the system', async () => {
+        const beforeConfiguration = await systems().Core.getCollateralConfiguration(
+          collateralAddress()
+        );
+
+        await systems()
+          .Core.connect(owner)
+          .configureCollateral({ ...beforeConfiguration, depositingEnabled: true });
+      });
+
+      // fails when collateral is disabled for the pool by pool owner
+      before('disable collateral for the pool by the pool owner', async () => {
+        await systems().Core.connect(user1).disablePoolCollateralDelegation(fakeVaultId, collateralAddress());
+      });
+
+      // fails when collateral is disabled for the pool by pool owner
+      it('fails when trying to open delegation position with disabled collateral', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .delegateCollateral(
+              accountId,
+              fakeVaultId,
+              collateralAddress(),
+              depositAmount.div(50),
+              ethers.utils.parseEther('1')
+            ),
+          `PoolCollateralIsDisabled("${collateralAddress()}", "${fakeVaultId}")`,
+          systems().Core
+        );
+      });
+
+      it('collateral is enabled by the pool owner', async () => {
+        await systems().Core.connect(user1).enablePoolCollateralDelegation(fakeVaultId, collateralAddress());
+      });
+
+      it('the delegation works as expected with the enabled collateral', async () => {
+        await systems()
+          .Core.connect(user1)
+          .delegateCollateral(
+            accountId,
+            fakeVaultId,
+            collateralAddress(),
+            depositAmount.div(50),
+            ethers.utils.parseEther('1')
+          );
       });
     });
 

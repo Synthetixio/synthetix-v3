@@ -79,6 +79,9 @@ contract VaultModule is IVaultModule {
             // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
             CollateralConfiguration.collateralEnabled(collateralType);
 
+            // Check if delegation is enabled for the pool
+            Pool.load(poolId).checkDelegationEnabled(collateralType);
+
             Account.requireSufficientCollateral(
                 accountId,
                 collateralType,
@@ -116,11 +119,16 @@ contract VaultModule is IVaultModule {
         if (newCollateralAmountD18 < currentCollateralAmount) {
             int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
 
+            uint256 minIssuanceRatioD18 = Pool.loadExisting(poolId).issuanceRatioD18[
+                collateralType
+            ];
+
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 debt < 0 ? 0 : debt.toUint(),
-                newCollateralAmountD18.mulDecimal(collateralPrice)
+                newCollateralAmountD18.mulDecimal(collateralPrice),
+                minIssuanceRatioD18
             );
 
             // Accounts cannot reduce collateral if any of the pool's
