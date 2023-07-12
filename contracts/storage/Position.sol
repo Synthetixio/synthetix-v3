@@ -221,22 +221,22 @@ library Position {
      */
     function collateralUsd(Position.Data storage self) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
 
         uint256 collateralValueUsd = 0;
-        uint256 length = globalConfig.supportedCollaterals.length;
-        PerpCollateral.Data storage collaterals = PerpCollateral.load(self.accountId, self.marketId);
+        uint256 length = globalCollateralConfig.availableAddresses.length;
+        PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(self.accountId, self.marketId);
 
-        // TODO: Consider moving this `Collateral` struct into the base contract for re-use.
-        PerpMarketConfiguration.Collateral memory currentCollateral;
+        PerpCollateral.CollateralType memory currentCollateral;
+        address currentCollateralType;
         for (uint256 i = 0; i < length; ) {
-            currentCollateral = globalConfig.supportedCollaterals[i];
-
+            currentCollateralType = globalCollateralConfig.availableAddresses[i];
+            currentCollateral = globalCollateralConfig.available[currentCollateralType];
             uint256 price = INodeModule(globalConfig.oracleManager)
                 .process(currentCollateral.oracleNodeId)
                 .price
                 .toUint();
-            collateralValueUsd += collaterals.available[currentCollateral.collateral] * price;
-
+            collateralValueUsd += accountCollaterals.available[currentCollateralType] * price;
             unchecked {
                 i++;
             }

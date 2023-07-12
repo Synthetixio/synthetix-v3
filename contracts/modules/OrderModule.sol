@@ -178,7 +178,7 @@ contract OrderModule is IOrderModule {
 
         // TODO: Condition to position.clear() when completely closing position?
         market.updatePosition(newPosition);
-        order.clear();
+        market.removeOrder(accountId);
 
         emit OrderSettled(accountId, marketId, order.sizeDelta, _orderFee, keeperFee);
     }

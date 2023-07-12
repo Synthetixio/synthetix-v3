@@ -55,11 +55,11 @@ library PerpMarket {
         mapping(address => uint256) collaterals;
     }
 
-    function load(uint128 id) internal pure returns (Data storage market) {
+    function load(uint128 id) internal pure returns (Data storage d) {
         bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarket", id));
 
         assembly {
-            market.slot := s
+            d.slot := s
         }
     }
 
@@ -148,6 +148,13 @@ library PerpMarket {
      */
     function updateOrder(PerpMarket.Data storage self, Order.Data memory data) internal {
         self.orders[data.accountId].update(data);
+    }
+
+    /**
+     * @dev Removes the order from the market at `accountId`.
+     */
+    function removeOrder(PerpMarket.Data storage self, uint128 accountId) internal {
+        delete self.orders[accountId];
     }
 
     /**

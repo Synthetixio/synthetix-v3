@@ -117,14 +117,4 @@ library Order {
         self.limitPrice = data.limitPrice;
         self.sizeDelta = data.sizeDelta;
     }
-
-    /**
-     * @dev Clears the current order struct in-place of any stored data.
-     */
-    function clear(Order.Data storage self) internal {
-        self.accountId = 0;
-        self.commitmentTime = 0;
-        self.limitPrice = 0;
-        self.sizeDelta = 0;
-    }
 }

@@ -7,14 +7,11 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 
 library PerpMarketConfiguration {
-    // --- Structs --- //
+    // --- Constants --- //
 
-    struct Collateral {
-        // Address of collateral.
-        address collateral;
-        // Oracle price feed node id.
-        bytes32 oracleNodeId;
-    }
+    bytes32 private constant _SLOT_NAMESPACE = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
+
+    // --- Storage --- //
 
     // @dev Perp market configuration shared across all markets
     struct GlobalData {
@@ -24,10 +21,6 @@ library PerpMarketConfiguration {
         ITokenModule snxUsdToken;
         // A reference to the Synthetix oracle manager (used to fetch market prices).
         INodeModule oracleManager;
-        // {collateralAddress: maxDepositAmountAllowed} (globally for all bfp markets).
-        mapping(address => uint256) maxCollaterals;
-        // An array of supported collateral structs.
-        Collateral[] supportedCollaterals;
         // A reference to the Pyth EVM contract.
         IPyth pyth;
         // The minimum required margin in USD a position must hold.
@@ -82,19 +75,19 @@ library PerpMarketConfiguration {
         uint256 liquidationPremiumMultiplier;
     }
 
-    function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage config) {
+    function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {
         bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration", marketId));
 
         assembly {
-            config.slot := s
+            d.slot := s
         }
     }
 
-    function load() internal pure returns (PerpMarketConfiguration.GlobalData storage config) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
+    function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
+        bytes32 s = _SLOT_NAMESPACE;
 
         assembly {
-            config.slot := s
+            d.slot := s
         }
     }
 }
