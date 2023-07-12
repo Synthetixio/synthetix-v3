@@ -336,7 +336,9 @@ describe('VaultModule', function () {
 
       // fails when collateral is disabled for the pool by pool owner
       before('disable collateral for the pool by the pool owner', async () => {
-        await systems().Core.connect(user1).disablePoolCollateralDelegation(fakeVaultId, collateralAddress());
+        await systems()
+          .Core.connect(user1)
+          .disablePoolCollateralDelegation(fakeVaultId, collateralAddress());
       });
 
       // fails when collateral is disabled for the pool by pool owner
@@ -357,7 +359,9 @@ describe('VaultModule', function () {
       });
 
       it('collateral is enabled by the pool owner', async () => {
-        await systems().Core.connect(user1).enablePoolCollateralDelegation(fakeVaultId, collateralAddress());
+        await systems()
+          .Core.connect(user1)
+          .enablePoolCollateralDelegation(fakeVaultId, collateralAddress());
       });
 
       it('the delegation works as expected with the enabled collateral', async () => {
