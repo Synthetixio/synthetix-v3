@@ -8,7 +8,7 @@ import {IPyth} from "../external/pyth/IPyth.sol";
 interface IPerpMarketFactoryModule is IMarket {
     // --- Structs --- //
 
-    struct CreatePerpMarket {
+    struct CreatePerpMarketParameters {
         bytes32 name;
     }
 
@@ -27,5 +27,5 @@ interface IPerpMarketFactoryModule is IMarket {
     /**
      * @dev Registers a new PerpMarket with Synthetix and initializes storage.
      */
-    function create(IPerpMarketFactoryModule.CreatePerpMarket memory data) external returns (uint128 id);
+    function create(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128 id);
 }

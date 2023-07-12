@@ -36,6 +36,10 @@ args = []
 artifact = "PerpMarketFactoryModule"
 args = []
 
+[contract.PerpConfigurationModule]
+artifact = "PerpConfigurationModule"
+args = []
+
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"
 args = []
@@ -72,6 +76,7 @@ contracts = [
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
   "PerpMarketFactoryModule",
+  "PerpConfigurationModule",
   "PerpAccountModule",
   "PerpCollateralModule",
   "OrderModule",
@@ -81,6 +86,7 @@ depends = [
   "import.synthetix",
   "contract.CoreModule",
   "contract.PerpMarketFactoryModule",
+  "contract.PerpConfigurationModule",
   "contract.PerpAccountModule",
   "contract.PerpCollateralModule",
   "contract.OrderModule",
@@ -89,7 +95,7 @@ depends = [
 
 # --- Post Deployment --- #
 
-[invoke.upgrade_proxy]
+[invoke.upgradeProxy]
 target = ["InitialPerpMarketProxy"]
 fromCall.func = "owner"
 func = "upgradeTo"
@@ -102,20 +108,20 @@ factory.MarketProxy.event = "Upgraded"
 factory.MarketProxy.arg = 0
 depends = ["contract.InitialPerpMarketProxy", "router.Router"]
 
-[invoke.set_synthetix]
+[invoke.setSynthetix]
 target = ["MarketProxy"]
 fromCall.func = "owner"
 func = "setSynthetix"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
 ]
-depends = ["invoke.upgrade_proxy"]
+depends = ["invoke.upgradeProxy"]
 
-[invoke.set_pyth]
+[invoke.setPyth]
 target = ["MarketProxy"]
 fromCall.func = "owner"
 func = "setPyth"
 args = [
   "<%= settings.pyth %>",
 ]
-depends = ["invoke.upgrade_proxy"]
+depends = ["invoke.upgradeProxy"]
