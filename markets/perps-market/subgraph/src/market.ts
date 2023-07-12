@@ -4,9 +4,9 @@ import {
   MarketRegistered,
   FundingParametersSet,
   LiquidationParametersSet,
-  LockedOiPercentSet,
+  LockedOiRatioD18Set,
   OrderFeesSet,
-} from '../generated/PerpsMarket/PerpsMarketProxy';
+} from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
 import { Market } from '../generated/schema';
 
@@ -52,12 +52,12 @@ export function handleFundingParametersSet(event: FundingParametersSet): void {
   }
 }
 
-export function handleLockedOiPercentSet(event: LockedOiPercentSet): void {
+export function handleLockedOiRatioD18Set(event: LockedOiRatioD18Set): void {
   const id = event.params.marketId.toString();
   const market = Market.load(id);
 
   if (market) {
-    market.lockedOiPercent = event.params.lockedOiPercent;
+    market.lockedOiPercent = event.params.lockedOiRatioD18;
     market.save();
   }
 }
@@ -67,9 +67,9 @@ export function handleLiquidationParametersSet(event: LiquidationParametersSet):
   const market = Market.load(id);
 
   if (market) {
-    market.initialMarginFraction = event.params.initialMarginFraction;
+    market.initialMarginFraction = event.params.initialMarginRatioD18;
     market.liquidationRewardRatioD18 = event.params.liquidationRewardRatioD18;
-    market.maintenanceMarginFraction = event.params.maintenanceMarginFraction;
+    market.maintenanceMarginFraction = event.params.maintenanceMarginRatioD18;
     market.maxLiquidationLimitAccumulationMultiplier =
       event.params.maxLiquidationLimitAccumulationMultiplier;
     market.save();
