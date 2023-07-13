@@ -1,4 +1,4 @@
-import { AccountCreated } from '../generated/PerpsMarket/PerpsMarketProxy';
+import { AccountCreated } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
 import { Account } from '../generated/schema';
 
