@@ -37,8 +37,6 @@ library AsyncOrder {
         uint256 settlementExpiration
     );
 
-    error OrderNotValid();
-
     error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
 
     struct Data {
@@ -107,12 +105,6 @@ library AsyncOrder {
                 self.settlementTime,
                 settlementExpiration
             );
-        }
-    }
-
-    function checkValidity(Data storage self) internal view {
-        if (self.sizeDelta == 0) {
-            revert OrderNotValid();
         }
     }
 

@@ -38,6 +38,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using Position for Position.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
+    using PerpsAccount for PerpsAccount.Data;
 
     /**
      * @inheritdoc IAsyncOrderModule
@@ -45,7 +46,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
-        PerpsMarket.Data storage market = PerpsMarket.loadValid(commitment.marketId);
+        PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid
         Account.exists(commitment.accountId);
@@ -58,10 +59,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
-        AsyncOrder.Data storage order = market.asyncOrders[commitment.accountId];
+        AsyncOrder.Data storage order = PerpsAccount.load(commitment.accountId).asyncOrder[0];
+
+        if (order.sizeDelta != 0 && order.marketId == commitment.marketId) {
+            revert OrderAlreadyCommitted(commitment.marketId, commitment.accountId);
+        }
 
         if (order.sizeDelta != 0) {
-            revert OrderAlreadyCommitted(commitment.marketId, commitment.accountId);
+            revert IAccountModule.PendingOrdersExist();
         }
 
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
@@ -75,11 +80,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
-
-        // Check if there is a pending orders
-        if (PerpsAccount.load(commitment.accountId).hasPendingOrders) {
-            revert IAccountModule.PendingOrdersExist();
-        }
 
         PerpsAccount.load(commitment.accountId).addPendingOrder();
 
@@ -105,16 +105,21 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getOrder(
         uint128 marketId,
         uint128 accountId
-    ) public view override returns (AsyncOrder.Data memory) {
-        return PerpsMarket.loadValid(marketId).asyncOrders[accountId];
+    ) external view override returns (AsyncOrder.Data memory) {
+        AsyncOrder.Data memory order = PerpsAccount.load(accountId).asyncOrder[0];
+        if (order.marketId != marketId) {
+            // return emtpy order if marketId does not match
+            return AsyncOrder.Data(0, 0, 0, 0, 0, 0, 0);
+        }
+        return order;
     }
 
     /**
      * @inheritdoc IAsyncOrderModule
      */
     function cancelOrder(uint128 marketId, uint128 accountId) external override {
-        AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
-        order.checkValidity();
+        AsyncOrder.Data storage order = PerpsAccount.load(accountId).getValidOrder(marketId);
+
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];
