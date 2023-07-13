@@ -1,4 +1,4 @@
-import { OrderCommitted } from '../generated/PerpsMarket/PerpsMarketProxy';
+import { OrderCommitted } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 import { BigInt } from '@graphprotocol/graph-ts';
 import { ZERO_BI } from './helpers';
 import { Order } from '../generated/schema';
