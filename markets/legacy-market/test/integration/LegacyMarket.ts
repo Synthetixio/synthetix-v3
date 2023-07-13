@@ -109,6 +109,8 @@ describe('LegacyMarket', () => {
       provider
     );
 
+    await rewardEscrow.connect(owner).setPermittedEscrowCreator(await owner.getAddress(), true);
+
     cannonProvider = provider;
   });
 

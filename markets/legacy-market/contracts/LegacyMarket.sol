@@ -292,7 +292,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
 
         // any remaining escrow should be revoked and sent to the legacy market address
         if (unlockedSnx < totalCollateralAmount) {
-            ISynthetix(v2xResolver.getAddress("Synthetix")).revokeAllEscrow(staker);
+            ISynthetix(v2xResolver.getAddress("Synthetix")).migrateAccountBalances(staker);
         }
     }
 
