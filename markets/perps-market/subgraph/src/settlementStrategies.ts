@@ -1,7 +1,7 @@
 import {
   SettlementStrategyAdded,
   SettlementStrategyEnabled,
-} from '../generated/PerpsMarket/PerpsMarketProxy';
+} from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
 import { SettlementStrategy } from '../generated/schema';
 

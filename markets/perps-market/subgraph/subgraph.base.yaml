@@ -3,7 +3,7 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: PerpsMarket
+    name: PerpsMarketProxy
     source:
       abi: PerpsMarketProxy
     mapping:
@@ -12,7 +12,7 @@ dataSources:
       language: wasm/assemblyscript
       abis:
         - name: PerpsMarketProxy
-          file: ./abis/PerpsMarketProxy.json
+          file: ./deployments/optimism-goerli/PerpsMarketProxy.json
       entities:
         - Account
         - Market
@@ -25,19 +25,19 @@ dataSources:
           handler: handleMarketRegistered
         - event: MarketPriceDataUpdated(indexed uint128,bytes32)
           handler: handleMarketPriceDataUpdated
-        - event: FundingParametersSet(uint128,uint256,uint256)
+        - event: FundingParametersSet(indexed uint128,uint256,uint256)
           handler: handleFundingParametersSet
-        - event: LiquidationParametersSet(uint128,uint256,uint256,uint256,uint256,uint256)
+        - event: LiquidationParametersSet(indexed uint128,uint256,uint256,uint256,uint256,uint256,uint256)
           handler: handleLiquidationParametersSet
-        - event: LockedOiPercentSet(uint128,uint256)
-          handler: handleLockedOiPercentSet
-        - event: OrderFeesSet(uint128,uint256,uint256)
+        - event: LockedOiRatioD18Set(indexed uint128,uint256)
+          handler: handleLockedOiRatioD18Set
+        - event: OrderFeesSet(indexed uint128,uint256,uint256)
           handler: handleOrderFeesSet
         - event: SettlementStrategyAdded(indexed uint128,(uint8,uint256,uint256,uint256,address,bytes32,string,uint256,uint256,bool),indexed uint256)
           handler: handleSettlementStrategyAdded
-        - event: SettlementStrategyEnabled(uint128,uint256,bool)
+        - event: SettlementStrategyEnabled(indexed uint128,uint256,bool)
           handler: handleSettlementStrategyEnabled
-        - event: OrderCommitted(indexed uint128,indexed uint128,indexed uint8,int128,uint256,uint256,uint256,bytes32,address)
+        - event: OrderCommitted(indexed uint128,indexed uint128,uint8,int128,uint256,uint256,uint256,indexed bytes32,address)
           handler: handleOrderCommitted
 
       file: ./src/core.ts
