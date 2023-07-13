@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-contracts",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -33,7 +33,7 @@
     "ethers": "^5.7.2",
     "hardhat": "2.15.0"
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27",
+  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862",
   "depcheck": {
     "ignoreMatches": [
       "@synthetixio/router",

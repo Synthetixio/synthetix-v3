@@ -421,11 +421,11 @@ interface IAsyncOrderSettlementModule {
         uint128 marketId;
         uint128 accountId;
         int128 newPositionSize;
+        int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
         uint256 amountToDeposit;
         uint256 settlementReward;
-        bytes32 trackingCode;
     }
 }
 
@@ -593,7 +593,6 @@ library PerpsMarket {
         uint128 marketId;
         int256 skew;
         uint256 size;
-        int256 sizeDelta;
         int256 currentFundingRate;
         int256 currentFundingVelocity;
     }
@@ -610,7 +609,7 @@ library PerpsMarketConfiguration {
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketValue;
+        uint256 maxMarketSize;
         uint256 maxFundingVelocity;
         uint256 skewScale;
         uint256 initialMarginRatioD18;

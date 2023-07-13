@@ -38,6 +38,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
     int256 public constant PRECISION = 18;
 
+    /**
+     * @inheritdoc IAsyncOrderSettlementModule
+     */
     function settle(uint128 marketId, uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
@@ -48,6 +51,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         _settleOffchain(order, settlementStrategy);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderSettlementModule
+     */
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
@@ -78,6 +84,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
 
+    /**
+     * @dev used for settleing offchain orders. This will revert with OffchainLookup.
+     */
     function _settleOffchain(
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
@@ -102,6 +111,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         );
     }
 
+    /**
+     * @dev used for settleing an order.
+     */
     function _settleOrder(
         uint256 price,
         AsyncOrder.Data storage asyncOrder,
@@ -122,6 +134,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         ) = asyncOrder.validateOrder(settlementStrategy, price);
 
         runtime.newPositionSize = newPosition.size;
+        runtime.sizeDelta = asyncOrder.sizeDelta;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
@@ -144,9 +157,10 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             .updatePositionData(runtime.accountId, newPosition);
         emit MarketUpdated(
             updateData.marketId,
+            price,
             updateData.skew,
             updateData.size,
-            updateData.sizeDelta,
+            runtime.sizeDelta,
             updateData.currentFundingRate,
             updateData.currentFundingVelocity
         );
@@ -166,9 +180,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             factory.depositToMarketManager(runtime.marketId, runtime.amountToDeposit);
         }
 
-        // exctracted from asyncOrder before order is reset
-        runtime.trackingCode = asyncOrder.trackingCode;
-
         asyncOrder.reset();
 
         // emit event
@@ -176,15 +187,18 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.marketId,
             runtime.accountId,
             fillPrice,
-            runtime.pnl,
+            runtime.sizeDelta,
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            runtime.trackingCode,
+            asyncOrder.trackingCode,
             msg.sender
         );
     }
 
+    /**
+     * @dev performs the order validity checks (existance and timing).
+     */
     function _performOrderValidityChecks(
         uint128 marketId,
         uint128 accountId
@@ -200,6 +214,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         return (order, settlementStrategy);
     }
 
+    /**
+     * @dev converts the settlement time into bytes8.
+     */
     function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
         bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
 
@@ -207,7 +224,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         return bytes8(settlementTimeBytes << 192);
     }
 
-    // borrowed from PythNode.sol
+    /**
+     * @dev gets scaled price. Borrowed from PythNode.sol.
+     */
     function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
         int256 factor = PRECISION + expo;
         return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());

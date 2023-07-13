@@ -12,14 +12,14 @@ library PerpsMarketConfiguration {
     using DecimalMath for uint256;
     using SafeCastI128 for int128;
 
-    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketValue, int newSideSize);
+    error MaxOpenInterestReached(uint128 marketId, uint256 maxMarketSize, int newSideSize);
 
     error InvalidSettlementStrategy(uint128 settlementStrategyId);
 
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketValue; // oi cap
+        uint256 maxMarketSize; // oi cap
         uint256 maxFundingVelocity;
         uint256 skewScale;
         /**

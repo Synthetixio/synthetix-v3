@@ -202,7 +202,7 @@ library AsyncOrder {
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
-            marketConfig.maxMarketValue,
+            marketConfig.maxMarketSize,
             oldPosition.size,
             order.sizeDelta
         );

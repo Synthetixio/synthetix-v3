@@ -201,7 +201,7 @@ To determine the fee, the client should first call getUpdateFee() from Pyth's ve
 ### OrderSettled
 
   ```solidity
-  event OrderSettled(uint128 marketId, uint128 asyncOrderId, uint256 finalOrderAmount, struct OrderFees.Data fees, uint256 collectedFees, address settler, uint256 price)
+  event OrderSettled(uint128 marketId, uint128 asyncOrderId, uint256 finalOrderAmount, struct OrderFees.Data fees, uint256 collectedFees, address settler, uint256 price, enum Transaction.Type orderType)
   ```
 
   Gets fired when an order is settled.
@@ -214,6 +214,7 @@ To determine the fee, the client should first call getUpdateFee() from Pyth's ve
 * `collectedFees` (*uint256*) - fees collected by the configured fee collector.
 * `settler` (*address*) - address that settled the order.
 * `price` (*uint256*) - 
+* `orderType` (*enum Transaction.Type*) - 
 
 ## Atomic Order Module
 
