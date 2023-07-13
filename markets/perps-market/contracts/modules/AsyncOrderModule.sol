@@ -81,8 +81,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
 
-        PerpsAccount.load(commitment.accountId).addPendingOrder();
-
         // TODO include fees in event
         emit OrderCommitted(
             commitment.marketId,
@@ -125,8 +123,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .settlementStrategies[order.settlementStrategyId];
         order.checkCancellationEligibility(settlementStrategy);
         order.reset();
-
-        PerpsAccount.load(accountId).removePendingOrder();
 
         emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
     }

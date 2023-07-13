@@ -55,7 +55,7 @@ contract PerpsAccountModule is IAccountModule {
         }
 
         // Check if there are pending orders
-        if (account.hasPendingOrders) {
+        if (account.asyncOrder[0].sizeDelta != 0) {
             revert PendingOrdersExist();
         }
 

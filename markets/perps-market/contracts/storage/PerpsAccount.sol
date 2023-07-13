@@ -35,13 +35,15 @@ library PerpsAccount {
     using DecimalMath for uint256;
 
     struct Data {
-        // synth marketId => amount
+        // @dev synth marketId => amount
         mapping(uint128 => uint256) collateralAmounts;
+        // @dev account Id
         uint128 id;
-        bool hasPendingOrders;
+        // @dev set of active collateral types. By active we mean collateral types that have a non-zero amount
         SetUtil.UintSet activeCollateralTypes;
+        // @dev set of open position market ids
         SetUtil.UintSet openPositionMarketIds;
-        // @dev using a mapping to isolate storage layout from the rest of the struct. Id is 0 always
+        // @dev a single order per account is allowed we always use index 0 `asyncOrder[0]`. The mapping is used to isolate storage layout from the rest of the struct.
         mapping(uint128 => AsyncOrder.Data) asyncOrder;
     }
 
@@ -104,14 +106,6 @@ library PerpsAccount {
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.add(positionMarketId);
         }
-    }
-
-    function addPendingOrder(Data storage self) internal {
-        self.hasPendingOrders = true;
-    }
-
-    function removePendingOrder(Data storage self) internal {
-        self.hasPendingOrders = false;
     }
 
     function addCollateralAmount(
