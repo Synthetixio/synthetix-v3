@@ -24,4 +24,14 @@ library DebtShare {
             debtShare.slot := s
         }
     }
+
+    function initialize(Data storage self) internal {
+        if (self.debtShareIds.length == 0) {
+            self.debtShareIds.push();
+        }
+
+        if (self.crossChainDebtShareData.length == 0) {
+            self.crossChainDebtShareData.push();
+        }
+    }
 }

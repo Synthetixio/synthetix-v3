@@ -65,8 +65,7 @@ contract BaseElectionModule is
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
-        // solhint-disable-next-line numcast/safe-cast
-        settings.nextEpochSeatCount = uint8(firstCouncil.length);
+        settings.nextEpochSeatCount = seatCount;
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
@@ -159,13 +158,7 @@ contract BaseElectionModule is
 
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override {
         OwnableStorage.onlyOwner();
-        if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
-
-        Council
-            .load()
-            .nextElectionSettings
-            .maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
-
+        _setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
         emit MaxDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
     }
 

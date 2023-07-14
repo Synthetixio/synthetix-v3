@@ -175,6 +175,15 @@ contract ElectionSchedule is ElectionBase {
         settings.minEpochDuration = newMinEpochDuration;
     }
 
+    function _setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) internal {
+        if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
+
+        Council
+            .load()
+            .nextElectionSettings
+            .maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
+    }
+
     function _uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
         return valueA > valueB ? valueA - valueB : valueB - valueA;
     }

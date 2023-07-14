@@ -49,6 +49,7 @@ contract ElectionModule is
             return;
         }
 
+        DebtShare.initialize(DebtShare.load());
         _setDebtShareContract(debtShareContract);
 
         if (nominationPeriodStartDate == 0) {
@@ -97,7 +98,7 @@ contract ElectionModule is
     }
 
     function getDebtShareContract() external view override returns (address) {
-        return address(DebtShare.load().debtShareContract);
+        return _getDebtShareContract();
     }
 
     function setDebtShareSnapshotId(
@@ -183,12 +184,5 @@ contract ElectionModule is
         uint votePower = _getDebtShare(user) + _getDeclaredCrossChainDebtShare(user);
 
         return _sqrt(votePower);
-    }
-
-    function _createNewEpoch() internal virtual {
-        DebtShare.Data storage store = DebtShare.load();
-
-        store.debtShareIds.push();
-        store.crossChainDebtShareData.push();
     }
 }

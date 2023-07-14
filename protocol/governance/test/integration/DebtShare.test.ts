@@ -26,12 +26,6 @@ describe('SynthetixElectionModule - DebtShare', function () {
       CoreProxy = c.CoreProxy.attach(Proxy.address);
     });
 
-    describe('when trying to retrieve the current debt share snapshot id', function () {
-      it('reverts', async function () {
-        await assertRevert(CoreProxy.getDebtShareSnapshotId(), 'DebtShareSnapshotIdNotSet');
-      });
-    });
-
     describe('when trying to retrieve the current debt share of a user', function () {
       it('returns zero', async function () {
         assertBn.equal(await CoreProxy.getDebtShare(await owner.getAddress()), 0);
@@ -42,6 +36,12 @@ describe('SynthetixElectionModule - DebtShare', function () {
   describe('when the election module is initialized', function () {
     it('shows that the DebtShare contract is connected', async function () {
       assert.equal(await c.CoreProxy.getDebtShareContract(), c.DebtShareMock.address);
+    });
+
+    describe('when trying to retrieve the current debt share snapshot id', function () {
+      it('reverts', async function () {
+        await assertRevert(c.CoreProxy.getDebtShareSnapshotId(), 'DebtShareSnapshotIdNotSet');
+      });
     });
 
     describe('when trying to retrieve the current debt share of a user', function () {

@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../storage/DebtShare.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-
+import "../../storage/DebtShare.sol";
 import "./ElectionBase.sol";
 
 /// @dev Tracks user Synthetix v2 debt chains on the local chain at a particular block number
@@ -30,10 +29,6 @@ contract DebtShareManager is ElectionBase {
 
     function _getDebtShareSnapshotId() internal view returns (uint) {
         DebtShare.Data storage store = DebtShare.load();
-
-        if (store.debtShareIds.length == 0) {
-            revert DebtShareSnapshotIdNotSet();
-        }
 
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
         if (debtShareId == 0) {
@@ -59,6 +54,10 @@ contract DebtShareManager is ElectionBase {
         }
 
         store.debtShareContract = IDebtShare(newDebtShareContractAddress);
+    }
+
+    function _getDebtShareContract() internal view returns (address) {
+        return address(DebtShare.load().debtShareContract);
     }
 
     function _getDebtShare(address user) internal view returns (uint) {
