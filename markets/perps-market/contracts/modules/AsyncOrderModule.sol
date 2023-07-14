@@ -103,13 +103,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getOrder(
         uint128 marketId,
         uint128 accountId
-    ) external view override returns (AsyncOrder.Data memory) {
-        AsyncOrder.Data memory order = AsyncOrder.load(accountId);
+    ) external view override returns (AsyncOrder.Data memory order) {
+        order = AsyncOrder.load(accountId);
         if (order.marketId != marketId) {
             // return emtpy order if marketId does not match
-            return AsyncOrder.Data(0, 0, 0, 0, 0, 0, 0);
+            order = AsyncOrder.Data(0, 0, 0, 0, 0, 0, 0);
         }
-        return order;
     }
 
     /**
