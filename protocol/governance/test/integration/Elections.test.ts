@@ -270,7 +270,7 @@ describe('SynthetixElectionModule - Elections', function () {
               it('emitted a CrossChainDebtShareMerkleRootSet event', async function () {
                 await assertEvent(
                   receipt,
-                  `CrossChainDebtShareMerkleRootSet("${merkleTree.merkleRoot}", ${epoch.blockNumber})`,
+                  `CrossChainDebtShareMerkleRootSet("${merkleTree.merkleRoot}", ${epoch.blockNumber}, ${epochIndex})`,
                   c.CoreProxy
                 );
               });
@@ -403,7 +403,7 @@ describe('SynthetixElectionModule - Elections', function () {
 
                     await assertEvent(
                       receipt,
-                      `CrossChainDebtShareDeclared(${addresses[1]!}, ${debtShare})`,
+                      `CrossChainDebtShareDeclared("${addresses[1]!}", ${debtShare})`,
                       c.CoreProxy
                     );
                   });
@@ -515,8 +515,14 @@ describe('SynthetixElectionModule - Elections', function () {
                       });
 
                       describe('when the election is evaluated', function () {
+                        let rx: ethers.ContractReceipt;
+
                         before('evaluate', async function () {
-                          await (await c.CoreProxy.evaluate(0)).wait();
+                          rx = await (await c.CoreProxy.evaluate(0)).wait();
+                        });
+
+                        it('emits the event ElectionEvaluated', async function () {
+                          await assertEvent(rx, `ElectionEvaluated(${epochIndex}, 3)`, c.CoreProxy);
                         });
 
                         it('shows that the election is evaluated', async function () {
