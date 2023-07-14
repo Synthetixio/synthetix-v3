@@ -516,7 +516,7 @@ describe('SynthetixElectionModule - Elections', function () {
 
                       describe('when the election is evaluated', function () {
                         before('evaluate', async function () {
-                          (await c.CoreProxy.evaluate(0)).wait();
+                          await (await c.CoreProxy.evaluate(0)).wait();
                         });
 
                         it('shows that the election is evaluated', async function () {
