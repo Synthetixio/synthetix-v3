@@ -49,6 +49,11 @@ contract BaseElectionModule is
         uint64 epochEndDate
     ) internal {
         Council.Data storage store = Council.load();
+
+        if (store.initialized) {
+            return;
+        }
+
         // solhint-disable-next-line numcast/safe-cast
         uint8 seatCount = uint8(firstCouncil.length);
         if (minimumActiveMembers == 0 || minimumActiveMembers > seatCount) {
@@ -64,8 +69,6 @@ contract BaseElectionModule is
         settings.nextEpochSeatCount = uint8(firstCouncil.length);
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
-
-        store.newElection();
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
         uint64 epochStartDate = block.timestamp.to64();

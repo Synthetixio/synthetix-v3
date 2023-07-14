@@ -1,5 +1,6 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
@@ -78,6 +79,8 @@ describe('SynthetixElectionModule - Initialization', () => {
       });
 
       describe('with valid parameters', function () {
+        let rx: ethers.ContractReceipt;
+
         before('initialize', async function () {
           const tx1 = await CoreProxy.initOrUpgradeNft(
             hre.ethers.utils.formatBytes32String('councilToken'),
@@ -100,7 +103,7 @@ describe('SynthetixElectionModule - Initialization', () => {
             c.DebtShareMock.address
           );
 
-          await tx2.wait();
+          rx = await tx2.wait();
         });
 
         it('set the debt share contract address', async function () {
@@ -109,6 +112,19 @@ describe('SynthetixElectionModule - Initialization', () => {
 
         it('shows that the current period is Administration', async function () {
           assertBn.equal(await CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
+        });
+
+        it('shows that the current epoch index is 0', async function () {
+          assertBn.equal(await CoreProxy.getEpochIndex(), 0);
+        });
+
+        it('emitted a ElectionModuleInitialized event', async function () {
+          findSingleEvent({ receipt: rx, eventName: 'ElectionModuleInitialized' });
+        });
+
+        it('emitted a EpochStarted event', async function () {
+          const evt = findSingleEvent({ receipt: rx, eventName: 'EpochStarted' });
+          assertBn.equal(evt.args.epochIndex, 0);
         });
       });
     });
