@@ -6,7 +6,6 @@ import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contra
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {Position} from "./Position.sol";
-import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
@@ -31,7 +30,6 @@ library PerpsAccount {
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
-    using AsyncOrder for AsyncOrder.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
 
