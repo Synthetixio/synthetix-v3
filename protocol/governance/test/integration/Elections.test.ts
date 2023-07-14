@@ -83,22 +83,19 @@ describe('SynthetixElectionModule - Elections', function () {
           assertBn.equal(await c.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
         });
 
-        // describe('before a debt share snapshot is set', function () {
-        //   describe('when trying to retrieve the current debt share snapshot id', function () {
-        //     it('reverts', async function () {
-        //       await assertRevert(
-        //         c.CoreProxy.getDebtShareSnapshotId(),
-        //         'DebtShareSnapshotIdNotSet'
-        //       );
-        //     });
-        //   });
+        describe('before a debt share snapshot is set', function () {
+          describe('when trying to retrieve the current debt share snapshot id', function () {
+            it('reverts', async function () {
+              await assertRevert(c.CoreProxy.getDebtShareSnapshotId(), 'DebtShareSnapshotIdNotSet');
+            });
+          });
 
-        //   describe('when trying to retrieve the current debt share of a user', function () {
-        //     it('returns zero', async function () {
-        //       assertBn.equal(await c.CoreProxy.getDebtShare(addresses[0]!), 0);
-        //     });
-        //   });
-        // });
+          describe('when trying to retrieve the current debt share of a user', function () {
+            it('returns zero', async function () {
+              assertBn.equal(await c.CoreProxy.getDebtShare(addresses[0]!), 0);
+            });
+          });
+        });
 
         // describe('before a merkle root is set', function () {
         //   describe('when trying to retrieve the current cross chain merkle root', function () {

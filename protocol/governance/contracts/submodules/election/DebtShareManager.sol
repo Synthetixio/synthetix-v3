@@ -31,6 +31,10 @@ contract DebtShareManager is ElectionBase {
     function _getDebtShareSnapshotId() internal view returns (uint) {
         DebtShare.Data storage store = DebtShare.load();
 
+        if (store.debtShareIds.length == 0) {
+            revert DebtShareSnapshotIdNotSet();
+        }
+
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
         if (debtShareId == 0) {
             revert DebtShareSnapshotIdNotSet();
@@ -59,6 +63,10 @@ contract DebtShareManager is ElectionBase {
 
     function _getDebtShare(address user) internal view returns (uint) {
         DebtShare.Data storage store = DebtShare.load();
+
+        if (store.debtShareIds.length == 0) {
+            return 0;
+        }
 
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
 
