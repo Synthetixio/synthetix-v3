@@ -1,11 +1,9 @@
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+// import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-
-const SECONDS_IN_DAY = 24 * 60 * 60;
 
 describe('Position - pnl', () => {
   const orderFees = {
