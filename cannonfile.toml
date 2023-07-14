@@ -103,13 +103,13 @@ args = ["<%= contracts.Router.address %>"]
 # Referencing Factory-deployed Contracts
 #
 # @see: https://usecannon.com/docs/technical-reference/
-factory.MarketProxy.abiOf = ["Router"]
-factory.MarketProxy.event = "Upgraded"
-factory.MarketProxy.arg = 0
+factory.PerpMarketProxy.abiOf = ["Router"]
+factory.PerpMarketProxy.event = "Upgraded"
+factory.PerpMarketProxy.arg = 0
 depends = ["contract.InitialPerpMarketProxy", "router.Router"]
 
 [invoke.setSynthetix]
-target = ["MarketProxy"]
+target = ["PerpMarketProxy"]
 fromCall.func = "owner"
 func = "setSynthetix"
 args = [
@@ -118,7 +118,7 @@ args = [
 depends = ["invoke.upgradeProxy"]
 
 [invoke.setPyth]
-target = ["MarketProxy"]
+target = ["PerpMarketProxy"]
 fromCall.func = "owner"
 func = "setPyth"
 args = [
