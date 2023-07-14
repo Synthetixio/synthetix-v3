@@ -1,13 +1,13 @@
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
+import { ElectionPeriod } from '../constants';
 import { CoreProxy } from '../generated/typechain';
 
-describe('SynthetixElectionModule (initialization)', () => {
+describe('SynthetixElectionModule - Initialization', () => {
   const { c, getSigners } = bootstrap();
 
   let owner: ethers.Signer;
@@ -105,6 +105,10 @@ describe('SynthetixElectionModule (initialization)', () => {
 
         it('set the debt share contract address', async function () {
           assert.equal(await CoreProxy.getDebtShareContract(), c.DebtShareMock.address);
+        });
+
+        it('shows that the current period is Administration', async function () {
+          assertBn.equal(await CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
         });
       });
     });
