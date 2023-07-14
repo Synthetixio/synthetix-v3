@@ -1,6 +1,6 @@
-import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
+import { PerpsMarket, bn, bootstrapMarkets, decimalMul } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
-// import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
@@ -43,6 +43,8 @@ describe('Position - pnl', () => {
     ethMarketId = perpsMarket.marketId();
     btcSynth = synthMarkets()[0];
   });
+
+  // TODO Need to add some snxUSD to the market in order to pay the gains to the trader
 
   const collateralTestCases = [
     {
@@ -92,8 +94,10 @@ describe('Position - pnl', () => {
   ];
 
   const pnlTestCases = [
-    { name: 'long', sizeDelta: bn(10), newPrice: bn(1000) },
-    { name: 'short', sizeDelta: bn(-10), newPrice: bn(1000) },
+    { name: 'long - price decrease 1%', sizeDelta: bn(10), newPrice: bn(990) },
+    { name: 'long - price increase 1%', sizeDelta: bn(10), newPrice: bn(1010) },
+    { name: 'short - price decrease 1%', sizeDelta: bn(-10), newPrice: bn(990) },
+    { name: 'short - price increase 1%', sizeDelta: bn(-10), newPrice: bn(1010) },
   ];
 
   collateralTestCases.forEach((testCase) => {
@@ -172,11 +176,21 @@ describe('Position - pnl', () => {
           });
 
           it('should have correct market PnL', async () => {
+            const notionalDelta = decimalMul(
+              pnlTestCase.newPrice.sub(ethPrice).abs(),
+              pnlTestCase.sizeDelta
+            );
+
+            // TODO: calculate the right values and assert them
             console.log('balancesBefore', balancesBefore);
             console.log('balancesAfter', balancesAfter);
+            console.log('notionalDelta', notionalDelta.div('1000000000000000000').toString());
           });
 
-          it('should have correct account PnL', async () => {});
+          it('should have correct account PnL', async () => {
+            // TODO: calculate the right values and assert them
+            assertBn.equal(0, 0);
+          });
 
           after(restorePnl);
         });
@@ -185,6 +199,7 @@ describe('Position - pnl', () => {
       after(restoreCollateralCase);
     });
   });
+
   const getBalances = async () => {
     const traderBalance = await systems().PerpsMarket.totalCollateralValue(2);
     const perpMarketWithdrawable = await systems().Core.getWithdrawableMarketUsd(ethMarketId);
