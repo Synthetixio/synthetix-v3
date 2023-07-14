@@ -1,6 +1,5 @@
-import { DEFAULT_SETTLEMENT_STRATEGY, PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
-import { depositCollateral, openPosition } from '../helpers';
-import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
+import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
@@ -39,9 +38,11 @@ describe('Position - pnl', () => {
 
   let ethMarketId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
+  let perpsMarket: PerpsMarket;
 
   before('identify actors', async () => {
-    ethMarketId = perpsMarkets()[0].marketId();
+    perpsMarket = perpsMarkets()[0];
+    ethMarketId = perpsMarket.marketId();
     btcSynth = synthMarkets()[0];
   });
 
@@ -93,7 +94,8 @@ describe('Position - pnl', () => {
   ];
 
   const pnlTestCases = [
-    { name: 'long', sice: bn(10), newPrice: bn(1000), marketPnL: bn(0), accountPnL: bn(0) },
+    { name: 'long', sizeDelta: bn(10), newPrice: bn(1000) },
+    { name: 'short', sizeDelta: bn(-10), newPrice: bn(1000) },
   ];
 
   collateralTestCases.forEach((testCase) => {
@@ -108,13 +110,73 @@ describe('Position - pnl', () => {
         describe(`PnL for ${pnlTestCase.name} position`, () => {
           const restorePnl = snapshotCheckpoint(provider);
 
-          before('open position', async () => {});
+          let commonOpenPositionProps: Pick<
+            OpenPositionData,
+            | 'systems'
+            | 'provider'
+            | 'trader'
+            | 'accountId'
+            | 'keeper'
+            | 'marketId'
+            | 'settlementStrategyId'
+          >;
 
-          before('change price', async () => {});
+          let balancesBefore: {
+            traderBalance: ethers.BigNumber;
+            perpMarketWithdrawable: ethers.BigNumber;
+            keeperBalance: ethers.BigNumber;
+          };
 
-          before('close position', async () => {});
+          let balancesAfter: {
+            traderBalance: ethers.BigNumber;
+            perpMarketWithdrawable: ethers.BigNumber;
+            keeperBalance: ethers.BigNumber;
+          };
 
-          it('should have correct market PnL', async () => {});
+          before('identify common props', async () => {
+            commonOpenPositionProps = {
+              systems,
+              provider,
+              trader: testCase.collateralData.trader(),
+              accountId: 2,
+              marketId: ethMarketId,
+              settlementStrategyId: perpsMarket.strategyId(),
+              keeper: keeper(),
+            };
+          });
+
+          before('collect initial stats', async () => {
+            balancesBefore = await getBalances();
+          });
+
+          before('open position', async () => {
+            await openPosition({
+              ...commonOpenPositionProps,
+              sizeDelta: pnlTestCase.sizeDelta,
+              price: ethPrice,
+            });
+          });
+
+          before('change price', async () => {
+            await perpsMarket.aggregator().mockSetCurrentPrice(pnlTestCase.newPrice);
+          });
+
+          before('close position', async () => {
+            await openPosition({
+              ...commonOpenPositionProps,
+              sizeDelta: pnlTestCase.sizeDelta.mul(-1),
+              price: pnlTestCase.newPrice,
+            });
+          });
+
+          before('collect final stats', async () => {
+            balancesAfter = await getBalances();
+          });
+
+          it('should have correct market PnL', async () => {
+            console.log('balancesBefore', balancesBefore);
+            console.log('balancesAfter', balancesAfter);
+          });
 
           it('should have correct account PnL', async () => {});
 
@@ -125,4 +187,16 @@ describe('Position - pnl', () => {
       after(restoreCollateralCase);
     });
   });
+  const getBalances = async () => {
+    const traderBalance = await systems().PerpsMarket.totalCollateralValue(2);
+    const perpMarketWithdrawable = await systems().Core.getWithdrawableMarketUsd(ethMarketId);
+    const keeperBalance = await systems().USD.balanceOf(keeper().getAddress());
+    const accountPnl = (await systems().PerpsMarket.getOpenPosition(2, ethMarketId))[0];
+    return {
+      traderBalance,
+      perpMarketWithdrawable,
+      keeperBalance,
+      accountPnl,
+    };
+  };
 });
