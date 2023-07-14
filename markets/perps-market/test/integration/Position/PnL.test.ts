@@ -12,27 +12,28 @@ describe('Position - pnl', () => {
   };
   const ethPrice = bn(1000);
 
-  const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: bn(10_000),
-        sellPrice: bn(10_000),
-      },
-    ],
-    perpsMarkets: [
-      {
-        name: 'Ether',
-        token: 'snxETH',
-        price: ethPrice,
-        // setting to 0 to avoid funding and p/d price change affecting pnl
-        fundingParams: { skewScale: bn(0), maxFundingVelocity: bn(0) },
-        orderFees,
-      },
-    ],
-    traderAccountIds: [2, 3],
-  });
+  const { systems, perpsMarkets, synthMarkets, provider, trader1, trader2, keeper } =
+    bootstrapMarkets({
+      synthMarkets: [
+        {
+          name: 'Bitcoin',
+          token: 'snxBTC',
+          buyPrice: bn(10_000),
+          sellPrice: bn(10_000),
+        },
+      ],
+      perpsMarkets: [
+        {
+          name: 'Ether',
+          token: 'snxETH',
+          price: ethPrice,
+          // setting to 0 to avoid funding and p/d price change affecting pnl
+          fundingParams: { skewScale: bn(0), maxFundingVelocity: bn(0) },
+          orderFees,
+        },
+      ],
+      traderAccountIds: [2, 3],
+    });
 
   let ethMarketId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
@@ -44,7 +45,32 @@ describe('Position - pnl', () => {
     btcSynth = synthMarkets()[0];
   });
 
-  // TODO Need to add some snxUSD to the market in order to pay the gains to the trader
+  // TODO Need to add some liquidity in order to pay the gains to the trader
+  before('add liquidity that will be used to pay for trader gains', async () => {
+    // **NOTE** it didn't work that way
+    //
+    // await depositCollateral({
+    //   systems,
+    //   trader: trader2,
+    //   accountId: () => 3,
+    //   collaterals: [
+    //     {
+    //       snxUSDAmount: () => bn(100_000),
+    //     },
+    //   ],
+    // });
+    // await openPosition({
+    //   systems,
+    //   provider,
+    //   trader: trader2(),
+    //   accountId: 3,
+    //   marketId: ethMarketId,
+    //   settlementStrategyId: perpsMarket.strategyId(),
+    //   keeper: keeper(),
+    //   sizeDelta: bn(10),
+    //   price: ethPrice,
+    // });
+  });
 
   const collateralTestCases = [
     {
