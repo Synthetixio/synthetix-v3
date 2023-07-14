@@ -103,9 +103,9 @@ depends = [
   "invoke.upgrade_core_proxy",
   "router.CouncilTokenRouter"
 ]
-factory.AccountProxy.abiOf = ["CouncilTokenRouter"]
-factory.AccountProxy.event = "AssociatedSystemSet"
-factory.AccountProxy.arg = 2
+factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
+factory.CouncilToken.event = "AssociatedSystemSet"
+factory.CouncilToken.arg = 2
 
 [invoke.init_election_module]
 target = ["CoreProxy"]

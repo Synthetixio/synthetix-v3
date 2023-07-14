@@ -2,7 +2,7 @@ import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 
 import type {
   CoreProxy,
-  AccountProxy,
+  CouncilToken,
   CoreRouter,
   DebtShareMock,
   CouncilTokenRouter,
@@ -11,7 +11,7 @@ import type {
 interface Contracts {
   CoreRouter: CoreRouter;
   CoreProxy: CoreProxy;
-  AccountProxy: AccountProxy;
+  CouncilToken: CouncilToken;
   CouncilTokenRouter: CouncilTokenRouter;
   DebtShareMock: DebtShareMock;
 }
@@ -36,7 +36,7 @@ export function bootstrap() {
     Object.assign(contracts, {
       CoreRouter: getContract('CoreRouter'),
       CoreProxy: getContract('CoreProxy'),
-      AccountProxy: getContract('AccountProxy'),
+      CouncilToken: getContract('CouncilToken'),
       DebtShareMock: getContract('DebtShareMock'),
       CouncilTokenRouter: getContract('CouncilTokenRouter'),
     } satisfies Contracts);
