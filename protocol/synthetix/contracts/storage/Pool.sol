@@ -118,7 +118,7 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        mapping(address => bool) disabledCollaterals;
+        mapping(address => bool) collateralTypeDisabled;
         mapping(address => uint256) issuanceRatioD18;
     }
 
@@ -520,7 +520,7 @@ library Pool {
      * @param collateral The address of the collateral.
      */
     function checkDelegationEnabled(Data storage self, address collateral) internal view {
-        if (self.disabledCollaterals[collateral]) {
+        if (self.collateralTypeDisabled[collateral]) {
             revert PoolCollateralIsDisabled(collateral, self.id);
         }
     }

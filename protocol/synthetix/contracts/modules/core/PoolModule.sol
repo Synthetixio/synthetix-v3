@@ -235,7 +235,7 @@ contract PoolModule is IPoolModule {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
-        pool.disabledCollaterals[collateral] = false;
+        pool.collateralTypeDisabled[collateral] = false;
 
         emit PoolCollateralEnabled(poolId, collateral, msg.sender);
     }
@@ -247,7 +247,7 @@ contract PoolModule is IPoolModule {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
-        pool.disabledCollaterals[collateral] = true;
+        pool.collateralTypeDisabled[collateral] = true;
 
         emit PoolCollateralDisabled(poolId, collateral, msg.sender);
     }
@@ -259,13 +259,13 @@ contract PoolModule is IPoolModule {
         uint128 poolId,
         address collateral
     ) external view override returns (bool) {
-        return !Pool.load(poolId).disabledCollaterals[collateral];
+        return !Pool.load(poolId).collateralTypeDisabled[collateral];
     }
 
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolCollateralIssuanceRatioD18(
+    function setPoolCollateralIssuanceRatio(
         uint128 poolId,
         address collateral,
         uint256 issuanceRatioD18
@@ -281,7 +281,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function getPoolCollateralIssuanceRatioD18(
+    function getPoolCollateralIssuanceRatio(
         uint128 poolId,
         address collateral
     ) external view override returns (uint256) {

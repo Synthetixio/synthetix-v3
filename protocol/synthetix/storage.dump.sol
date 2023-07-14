@@ -544,8 +544,8 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        mapping(address => bool) disabledCollaterals;
-        mapping(address => uint256) IssuanceRatio;
+        mapping(address => bool) collateralTypeDisabled;
+        mapping(address => uint256) issuanceRatioD18;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));

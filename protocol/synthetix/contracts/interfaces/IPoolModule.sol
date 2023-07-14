@@ -217,7 +217,7 @@ interface IPoolModule {
      * @param collateral The address of the collateral.
      * @param issuanceRatioD18 The minimum issuance ratio denominated with 18 decimal places
      */
-    function setPoolCollateralIssuanceRatioD18(
+    function setPoolCollateralIssuanceRatio(
         uint128 poolId,
         address collateral,
         uint256 issuanceRatioD18
@@ -228,7 +228,7 @@ interface IPoolModule {
      * @param poolId The id of the pool for to check the collateral for.
      * @param collateral The address of the collateral.
      */
-    function getPoolCollateralIssuanceRatioD18(
+    function getPoolCollateralIssuanceRatio(
         uint128 poolId,
         address collateral
     ) external returns (uint256 issuanceRatioD18);

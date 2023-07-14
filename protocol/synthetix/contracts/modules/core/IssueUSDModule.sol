@@ -84,11 +84,10 @@ contract IssueUSDModule is IIssueUSDModule {
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         if (newDebt > 0) {
-            uint256 minIssuanceRatioD18 = pool.issuanceRatioD18[collateralType];
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 newDebt.toUint(),
                 collateralValue,
-                minIssuanceRatioD18
+                pool.issuanceRatioD18[collateralType]
             );
         }
 

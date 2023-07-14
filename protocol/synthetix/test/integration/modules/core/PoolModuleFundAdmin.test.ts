@@ -736,7 +736,7 @@ describe('PoolModule Admin', function () {
     });
   });
 
-  describe('setPoolCollateralIssuanceRatioD18()', async () => {
+  describe('setPoolCollateralIssuanceRatio()', async () => {
     before(restore);
 
     before('give user1 permission to create pool', async () => {
@@ -760,7 +760,7 @@ describe('PoolModule Admin', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .setPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress(), bn(2)),
+          .setPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress(), bn(2)),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
       );
@@ -768,7 +768,7 @@ describe('PoolModule Admin', function () {
 
     it('min collateral ratio is set to zero for the pool by default', async () => {
       await assert.equal(
-        await systems().Core.getPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress()),
+        await systems().Core.getPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress()),
         0
       );
     });
@@ -776,10 +776,10 @@ describe('PoolModule Admin', function () {
     it('set the pool collateal issuance ratio to 200%', async () => {
       await systems()
         .Core.connect(user1)
-        .setPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress(), bn(2));
+        .setPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress(), bn(2));
 
       await assertBn.equal(
-        await systems().Core.getPoolCollateralIssuanceRatioD18(thirdPoolId, collateralAddress()),
+        await systems().Core.getPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress()),
         bn(2)
       );
     });
