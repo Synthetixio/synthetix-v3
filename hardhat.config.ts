@@ -2,7 +2,7 @@ import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
 import 'hardhat-cannon';
 
-// Router generation cannon plugin
+// Router generation cannon plugin.
 import { registerAction } from '@usecannon/builder';
 import pluginRouter from 'cannon-plugin-router';
 
