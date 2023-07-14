@@ -1,6 +1,6 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
@@ -119,12 +119,11 @@ describe('SynthetixElectionModule - Initialization', () => {
         });
 
         it('emitted a ElectionModuleInitialized event', async function () {
-          findSingleEvent({ receipt: rx, eventName: 'ElectionModuleInitialized' });
+          assertEvent(rx, 'ElectionModuleInitialized', c.CoreProxy);
         });
 
         it('emitted a EpochStarted event', async function () {
-          const evt = findSingleEvent({ receipt: rx, eventName: 'EpochStarted' });
-          assertBn.equal(evt.args.epochIndex, 0);
+          assertEvent(rx, 'EpochStarted(0)', c.CoreProxy);
         });
       });
     });

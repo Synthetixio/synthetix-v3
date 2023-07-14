@@ -1,11 +1,12 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
-import { CoreProxy, DebtShareMock } from '../generated/typechain';
+
+import type { CoreProxy, DebtShareMock } from '../generated/typechain';
 
 describe('SynthetixElectionModule - DebtShare', function () {
   const { c, getSigners } = bootstrap();
@@ -27,13 +28,13 @@ describe('SynthetixElectionModule - DebtShare', function () {
 
     describe('when trying to retrieve the current debt share snapshot id', function () {
       it('reverts', async function () {
-        await assertRevert(c.CoreProxy.getDebtShareSnapshotId(), 'DebtShareSnapshotIdNotSet');
+        await assertRevert(CoreProxy.getDebtShareSnapshotId(), 'DebtShareSnapshotIdNotSet');
       });
     });
 
     describe('when trying to retrieve the current debt share of a user', function () {
       it('returns zero', async function () {
-        assertBn.equal(await c.CoreProxy.getDebtShare(await owner.getAddress()), 0);
+        assertBn.equal(await CoreProxy.getDebtShare(await owner.getAddress()), 0);
       });
     });
   });
@@ -76,7 +77,7 @@ describe('SynthetixElectionModule - DebtShare', function () {
 
       describe('with a different address', function () {
         let DebtShare: DebtShareMock;
-        let receipt: ethers.ContractReceipt;
+        let rx: ethers.ContractReceipt;
 
         before('deploy debt shares mock', async function () {
           const factory = await hre.ethers.getContractFactory('DebtShareMock');
@@ -85,13 +86,11 @@ describe('SynthetixElectionModule - DebtShare', function () {
 
         before('set the new debt share contract', async function () {
           const tx = await c.CoreProxy.setDebtShareContract(DebtShare.address);
-          receipt = await tx.wait();
+          rx = await tx.wait();
         });
 
         it('emitted a DebtShareContractSet event', async function () {
-          const event = findSingleEvent({ receipt, eventName: 'DebtShareContractSet' });
-          assert.ok(event);
-          assertBn.equal(event.args.contractAddress, DebtShare.address);
+          await assertEvent(rx, `DebtShareContractSet("${DebtShare.address}")`, c.CoreProxy);
         });
 
         it('shows that the DebtShare contract is connected', async function () {
