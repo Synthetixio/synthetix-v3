@@ -53,22 +53,25 @@ interface IPerpConfigurationModule {
     /**
      * @dev Configures parameters applied globally.
      */
-    function configure(IPerpConfigurationModule.ConfigureParameters memory data) external;
+    function configureMarket(IPerpConfigurationModule.ConfigureParameters memory data) external;
 
     /**
      * @dev Configures a specific market by the `marketId`.
      */
-    function configure(uint128 marketId, IPerpConfigurationModule.ConfigureByMarketParameters memory data) external;
+    function configureMarketById(
+        uint128 marketId,
+        IPerpConfigurationModule.ConfigureByMarketParameters memory data
+    ) external;
 
     // --- Views --- //
 
     /**
      * @dev Returns global market parameters.
      */
-    function parameters() external pure returns (PerpMarketConfiguration.GlobalData memory);
+    function marketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory);
 
     /**
      * @dev Returns market specific parameters.
      */
-    function parameters(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
+    function marketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
 }
