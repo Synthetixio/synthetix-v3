@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ElectionBase.sol";
-
 import "../../storage/Council.sol";
+import "./ElectionBase.sol";
 
 /// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
 contract ElectionTally is ElectionBase {

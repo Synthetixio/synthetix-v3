@@ -60,7 +60,9 @@ contract BaseElectionModule is
             revert InvalidMinimumActiveMembers();
         }
 
-        ElectionSettings.Data storage settings = store.nextElectionSettings;
+        Election.Data storage election = store.getCurrentElection();
+
+        ElectionSettings.Data storage settings = election.settings;
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
@@ -69,7 +71,7 @@ contract BaseElectionModule is
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
-        Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
+        Epoch.Data storage firstEpoch = election.epoch;
         uint64 epochStartDate = block.timestamp.to64();
         _configureEpochSchedule(
             firstEpoch,
@@ -308,7 +310,6 @@ contract BaseElectionModule is
             );
         } else {
             election.evaluated = true;
-
             emit ElectionEvaluated(currentEpochIndex, totalBallots);
         }
     }
