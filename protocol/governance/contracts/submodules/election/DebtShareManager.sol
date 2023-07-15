@@ -63,10 +63,6 @@ contract DebtShareManager is ElectionBase {
     function _getDebtShare(address user) internal view returns (uint) {
         DebtShare.Data storage store = DebtShare.load();
 
-        if (store.debtShareIds.length == 0) {
-            return 0;
-        }
-
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
 
         return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
