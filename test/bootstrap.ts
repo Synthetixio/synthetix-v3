@@ -1,9 +1,26 @@
 import { wei } from '@synthetixio/wei';
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { createStakedPool } from '@synthetixio/main/test/common';
-import { PerpMarketProxy } from './generated/typechain/PerpMarketProxy';
+import {
+  PerpMarketProxy,
+  AccountProxy,
+  SynthetixUsdCollteralMock,
+  WrappedStakedEthCollateralMock,
+  PythMock,
+} from './generated/typechain';
+import type { IPerpConfigurationModule } from './generated/typechain/PerpConfigurationModule';
+import { BigNumber, utils } from 'ethers';
+import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
+import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 
-type Systems = ReturnType<Parameters<typeof createStakedPool>[0]['systems']>;
+interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
+  PerpMarketProxy: PerpMarketProxy;
+  SynthetixUsdCollteralMock: SynthetixUsdCollteralMock;
+  WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
+  PythMock: PythMock;
+  CollateralMock: SynthetixUsdCollteralMock;
+  Collateral2Mock: WrappedStakedEthCollateralMock;
+}
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
 //
@@ -14,11 +31,16 @@ interface Contracts {
   ['synthetix.CoreProxy']: Systems['Core'];
   ['synthetix.USDProxy']: Systems['USD'];
   ['synthetix.oracle_manager.Proxy']: Systems['OracleManager'];
-  PerpsMarketProxy: PerpMarketProxy;
-  AccountProxy: Systems['Account'];
-  CollateralMock: Systems['CollateralMock'];
-  Collateral2Mock: Systems['Collateral2Mock'];
-  // ['MockPyth']: MockPyth;
+
+  // These mocks are super questionable. I could probably mock everything out within this repo
+  // rather than relying on internal Synthetix test code...
+  ['synthetix.CollateralMock']: SynthetixUsdCollteralMock;
+  ['synthetix.Collateral2Mock']: WrappedStakedEthCollateralMock;
+  SynthetixUsdCollteralMock: SynthetixUsdCollteralMock;
+  WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
+  PerpMarketProxy: PerpMarketProxy;
+  AccountProxy: AccountProxy;
+  PythMock: PythMock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -34,28 +56,108 @@ interface Contracts {
 //
 // Since this invocation is performed at the module root, this will _only_ be executed once no matter
 // how many times this bootstrap file is imported.
-export const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Contracts>({
-  cannonfile: 'cannonfile.toml',
-});
+//
+// TODO: These bootstrap methods may have to be reimplemented to not use `before` blocks. However, it might
+// be okay for core Synthetix related contracts.
+const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' });
+const restoreSnapshot = _bootstraped.createSnapshot();
 
-export const bootstrap = () => {
-  let contracts: Systems;
+export interface BootstrapArgs {
+  markets: Array<
+    {
+      global: IPerpConfigurationModule.ConfigureParametersStruct;
+      create: {
+        name: string;
+        initialPrice: BigNumber;
+      };
+    } & IPerpConfigurationModule.ConfigureByMarketParametersStruct
+  >;
+}
+
+// TODO: Refactor all of these implicit before blocks into explicit function calls defined within each test file.
+//
+// Less magic, more explicit, clearer, slightly more verbose but it allows for properly isolated and less likely
+// flakey tests when other devs contribute. Also gives way for better flexibility.
+
+// Added benefit is we can minimise the amount of `let` statements at each `describe` block. Gives way to even less
+// opportunity for devs to accidentally use a variable that _may_ be mutative/stateful between tests.
+//
+// Also use beforeEach more often:
+//  - Deploy contracts
+//  - Snapshot 1
+//  - Provision with reasonable defaults/markets/collateral etc.
+//  - Snapshot 2
+//  - Run test
+//  - Restore to snapshot 2
+//  - Restore to snapshot 1 (for perhaps configuration/setup tests)
+//
+// Doing this for now because no wifi on plane. Everything is probably broken and riddled with compile/type errors.
+export const bootstrap = (args: BootstrapArgs) => {
+  let systems: Systems;
+  const { getContract, getSigners, getProvider } = _bootstraped;
+
+  const getOwner = () => getSigners()[0];
+  const { poolId } = createStakedPool({
+    provider: () => getProvider(),
+    signers: () => getSigners(),
+    owner: () => getOwner(),
+    systems: () => systems,
+  });
+
+  before(restoreSnapshot);
+
   before('load contracts', () => {
-    contracts = {
+    systems = {
       Account: getContract('AccountProxy'),
+      PerpMarketProxy: getContract('PerpMarketProxy'),
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
-      CollateralMock: getContract('CollateralMock'),
-      Collateral2Mock: getContract('Collateral2Mock'),
+      SynthetixUsdCollteralMock: getContract('SynthetixUsdCollteralMock'),
+      WrappedStakedEthCollateralMock: getContract('WrappedStakedEthCollateralMock'),
+      PythMock: getContract('PythMock'),
+
+      // Questionable...
+      CollateralMock: getContract('synthetix.CollateralMock'),
+      Collateral2Mock: getContract('synthetix.Collateral2Mock'),
     };
   });
 
-  return createStakedPool({
-    provider: () => getProvider(),
-    signers: () => getSigners(),
-    owner: () => getSigners()[0],
-    systems: () => contracts,
+  // before(fn) spam :)
+
+  args.markets.map(({ global, create, ...marketConfiguration }) => {
+    const { name, initialPrice } = create;
+    let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
+
+    before(`provision price oracles - ${name}`, async () => {
+      const { oracleNodeId: nodeId, aggregator: agg } = await createOracleNode(
+        getOwner(),
+        initialPrice,
+        systems.OracleManager
+      );
+      oracleNodeId = nodeId;
+      aggregator = agg;
+    });
+
+    before(`provision market - ${name}`, async () => {
+      marketId = await systems.PerpMarketProxy.callStatic.create({ name });
+      await systems.PerpMarketProxy.create({ name });
+    });
+
+    before(`delegate collateral to market - ${name}`, async () => {
+      await systems.Core.connect(getOwner()).setPoolConfiguration(poolId, [
+        {
+          marketId,
+          weightD18: utils.parseEther('1'),
+          maxDebtShareValueD18: utils.parseEther('1'),
+        },
+      ]);
+    });
+
+    before(`configure market - ${name}`, async () => {
+      await systems.PerpMarketProxy.connect(getOwner()).configureMarket(global);
+      await systems.PerpMarketProxy.connect(getOwner()).configureMarketById(marketId, global);
+    });
   });
 };
 
