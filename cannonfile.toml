@@ -64,7 +64,6 @@ abiOf = ["CoreModule"]
 # @see: https://usecannon.com/docs/technical-reference
 salt = "<%= settings.salt %>"
 depends = [
-  "import.synthetix",
   "contract.CoreModule"
 ]
 
@@ -125,3 +124,48 @@ args = [
   "<%= settings.pyth %>",
 ]
 depends = ["invoke.upgradeProxy"]
+
+# @see: https://github.com/Synthetixio/synthetix-v3/blob/main/utils/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol#L63
+[invoke.initOrUpgradeNft]
+target = ["PerpMarketProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeNft"
+args = [
+  "<%= formatBytes32String('bfPerpAccountNft') %>",
+  "Synthetix V3: BF Perp Account NFT",
+  "SNX-V3-BFP-ACC",
+  "",
+  "<%= imports.synthetix.contracts.AccountRouter.address %>"
+]
+depends = ["invoke.upgradeProxy"]
+factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.AccountProxy.event = "AssociatedSystemSet"
+factory.AccountProxy.arg = 2
+
+# --- Mocks --- #
+#
+# TODO: Move this into a separate `cannonfile.test.toml` file.
+
+[contract.SynthetixUsdCollateralMock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+
+[contract.WrappedStakedEthCollateralMock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+
+[invoke.initializeSynthetixUsdCollateralMock]
+target = ["SynthetixUsdCollateralMock"]
+func = "initialize"
+args = ["Synthetix Stablecoin","snxUSD","18"]
+depends = ["contract.SynthetixUsdCollateralMock"]
+
+[invoke.initializeWrappedStakedEthCollateralMock]
+target = ["WrappedStakedEthCollateralMock"]
+func = "initialize"
+args = ["Wrapped Lido Staked ETH","wstETH","18"]
+depends = ["contract.WrappedStakedEthCollateralMock"]
+
+[contract.PythMock]
+artifact = "contracts/mocks/PythMock.sol:PythMock"
+args = [120, 1] # 120s, 1wei
