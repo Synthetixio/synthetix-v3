@@ -24,10 +24,10 @@
     "@usecannon/builder": "^2.4.21",
     "@usecannon/cli": "^2.4.21",
     "abi-to-sol": "^0.8.0",
-    "cannon-plugin-router": "^1.0.11",
+    "cannon-plugin-router": "^1.0.15",
     "ethers": "^5.7.2",
-    "hardhat": "^2.15.0",
-    "hardhat-cannon": "^2.4.15",
+    "hardhat": "^2.17.0",
+    "hardhat-cannon": "^2.4.21",
     "prettier": "^2.8.8",
     "prettier-plugin-solidity": "^1.1.3",
     "solhint": "^3.4.1",
@@ -38,7 +38,6 @@
   "dependencies": {
     "@synthetixio/core-contracts": "^3.2.0",
     "@synthetixio/core-modules": "^3.2.0",
-    "@synthetixio/core-utils": "^3.2.0",
     "@synthetixio/main": "^3.2.0",
     "@synthetixio/oracle-manager": "^3.2.0"
   }
