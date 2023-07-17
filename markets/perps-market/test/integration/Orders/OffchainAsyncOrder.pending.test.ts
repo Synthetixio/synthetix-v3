@@ -71,7 +71,7 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
       it('reverts if attempt to update collateral', async () => {
         await assertRevert(
           systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10)),
-          'PendingOrdersExist()',
+          'PendingOrderExist()',
           systems().PerpsMarket
         );
       });
@@ -88,7 +88,7 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
               acceptablePrice: bn(10050), // 5% slippage
               trackingCode: ethers.constants.HashZero,
             }),
-          'PendingOrdersExist()',
+          'PendingOrderExist()',
           systems().PerpsMarket
         );
       });

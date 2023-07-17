@@ -59,15 +59,10 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
-        AsyncOrder.Data storage order = AsyncOrder.load(commitment.accountId);
-
-        if (order.sizeDelta != 0 && order.marketId == commitment.marketId) {
-            revert OrderAlreadyCommitted(commitment.marketId, commitment.accountId);
-        }
-
-        if (order.sizeDelta != 0) {
-            revert IAccountModule.PendingOrdersExist();
-        }
+        AsyncOrder.Data storage order = AsyncOrder.createValid(
+            commitment.accountId,
+            commitment.marketId
+        );
 
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .load(commitment.marketId)

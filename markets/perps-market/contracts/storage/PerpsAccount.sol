@@ -9,6 +9,7 @@ import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
@@ -89,6 +90,14 @@ library PerpsAccount {
             self.openPositionMarketIds.remove(positionMarketId);
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.add(positionMarketId);
+        }
+    }
+
+    function checkPendingOrder(Data storage self) internal {
+        // Check if there are pending orders
+        AsyncOrder.Data memory asyncOrder = AsyncOrder.load(self.id);
+        if (asyncOrder.sizeDelta != 0) {
+            revert AsyncOrder.PendingOrderExist();
         }
     }
 

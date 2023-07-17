@@ -27,11 +27,6 @@ interface IAccountModule {
     error InvalidAmountDelta(int amountDelta);
 
     /**
-     * @notice Gets thrown when pending orders exist and attempts to modify collateral.
-     */
-    error PendingOrdersExist();
-
-    /**
      * @notice Modify the collateral delegated to the account.
      * @param accountId Id of the account.
      * @param synthMarketId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.

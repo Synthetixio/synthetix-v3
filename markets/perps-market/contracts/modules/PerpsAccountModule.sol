@@ -54,10 +54,7 @@ contract PerpsAccountModule is IAccountModule {
             account.id = accountId;
         }
 
-        // Check if there are pending orders
-        if (AsyncOrder.load(accountId).sizeDelta != 0) {
-            revert PendingOrdersExist();
-        }
+        account.checkPendingOrder();
 
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
