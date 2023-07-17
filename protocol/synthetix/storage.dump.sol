@@ -216,56 +216,6 @@ library NodeOutput {
     }
 }
 
-// @custom:artifact contracts/external/Buffer.sol:Buffer
-library Buffer {
-    struct buffer {
-        bytes buf;
-        uint256 capacity;
-    }
-}
-
-// @custom:artifact contracts/external/CBOR.sol:CBOR
-library CBOR {
-    uint8 private constant MAJOR_TYPE_INT = 0;
-    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
-    uint8 private constant MAJOR_TYPE_BYTES = 2;
-    uint8 private constant MAJOR_TYPE_STRING = 3;
-    uint8 private constant MAJOR_TYPE_ARRAY = 4;
-    uint8 private constant MAJOR_TYPE_MAP = 5;
-    uint8 private constant MAJOR_TYPE_TAG = 6;
-    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
-    uint8 private constant TAG_TYPE_BIGNUM = 2;
-    uint8 private constant TAG_TYPE_NEGATIVE_BIGNUM = 3;
-    uint8 private constant CBOR_FALSE = 20;
-    uint8 private constant CBOR_TRUE = 21;
-    uint8 private constant CBOR_NULL = 22;
-    uint8 private constant CBOR_UNDEFINED = 23;
-    struct CBORBuffer {
-        Buffer.buffer buf;
-        uint256 depth;
-    }
-}
-
-// @custom:artifact contracts/external/Functions.sol:Functions
-library Functions {
-    uint256 internal constant DEFAULT_BUFFER_SIZE = 256;
-    enum Location {
-        Inline,
-        Remote
-    }
-    enum CodeLanguage {
-        JavaScript
-    }
-    struct Request {
-        Location codeLocation;
-        Location secretsLocation;
-        CodeLanguage language;
-        string source;
-        bytes secrets;
-        string[] args;
-    }
-}
-
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
 interface IAccountModule {
     struct AccountPermissions {
@@ -454,8 +404,6 @@ library CollateralLock {
     struct Data {
         uint128 amountD18;
         uint64 lockExpirationTime;
-        uint128 lockExpirationPoolSync;
-        address lockExpirationPoolSyncVault;
     }
 }
 
@@ -596,48 +544,12 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        uint128 totalCapacityD18;
-        int128 cumulativeDebtD18;
-        mapping(uint256 => uint256) heldMarketConfigurationWeights;
-        mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
-    }
-    struct AnalyzePoolConfigRuntime {
-        uint256 oldIdx;
-        uint256 potentiallyLockedMarketsIdx;
-        uint256 potentiallyDelayedMarketsIdx;
-        uint256 removedMarketsIdx;
-        uint128 lastMarketId;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
-    }
-}
-
-// @custom:artifact contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
-library PoolCrossChainInfo {
-    struct Data {
-        PoolCrossChainSync.Data latestSync;
-        uint128 latestTotalWeights;
-        uint64[] pairedChains;
-        mapping(uint64 => uint128) pairedPoolIds;
-        uint64 chainlinkSubscriptionId;
-        uint32 chainlinkSubscriptionInterval;
-        bytes32 latestRequestId;
-    }
-}
-
-// @custom:artifact contracts/storage/PoolCrossChainSync.sol:PoolCrossChainSync
-library PoolCrossChainSync {
-    struct Data {
-        uint128 liquidity;
-        int128 cumulativeMarketDebt;
-        int128 totalDebt;
-        uint64 dataTimestamp;
-        uint64 oldestDataTimestamp;
-        uint64 oldestPoolConfigTimestamp;
     }
 }
 
@@ -694,7 +606,6 @@ library SystemPoolConfiguration {
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
         SetUtil.UintSet approvedPools;
-        uint128 lastPoolId;
     }
     function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
@@ -725,9 +636,6 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
-        uint128 totalExitingCollateralD18;
-        uint128 _reserved;
-        mapping(bytes32 => CollateralLock.Data) exitingCollateral;
     }
 }
 

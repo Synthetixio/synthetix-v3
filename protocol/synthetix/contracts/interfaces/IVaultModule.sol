@@ -22,10 +22,6 @@ interface IVaultModule {
      */
     error InvalidCollateralAmount();
 
-    error NoExitingPoolCollateral(uint128 accountId);
-
-    error PoolExitTemporaryLock(uint128 accountId, uint64 currentSyncTime, uint64 requiredSyncTime);
-
     /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
@@ -67,12 +63,6 @@ interface IVaultModule {
         uint256 amount,
         uint256 leverage
     ) external;
-
-    function releaseExitedCollateral(
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType
-    ) external returns (uint256 amountReleased);
 
     /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.

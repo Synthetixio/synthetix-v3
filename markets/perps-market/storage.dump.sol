@@ -106,21 +106,6 @@ library FeatureFlag {
     }
 }
 
-// @custom:artifact @synthetixio/main/contracts/interfaces/external/FunctionsBillingRegistryInterface.sol:FunctionsBillingRegistryInterface
-interface FunctionsBillingRegistryInterface {
-    enum FulfillResult {
-        USER_SUCCESS,
-        USER_ERROR,
-        INVALID_REQUEST_ID
-    }
-    struct RequestBilling {
-        uint64 subscriptionId;
-        address client;
-        uint32 gasLimit;
-        uint256 gasPrice;
-    }
-}
-
 // @custom:artifact @synthetixio/main/contracts/storage/Account.sol:Account
 library Account {
     struct Data {
@@ -195,8 +180,6 @@ library CollateralLock {
     struct Data {
         uint128 amountD18;
         uint64 lockExpirationTime;
-        uint128 lockExpirationPoolSync;
-        address lockExpirationPoolSyncVault;
     }
 }
 
@@ -204,25 +187,6 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
-    }
-}
-
-// @custom:artifact @synthetixio/main/contracts/storage/CrossChain.sol:CrossChain
-library CrossChain {
-    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
-    struct Data {
-        address ccipRouter;
-        address chainlinkFunctionsOracle;
-        SetUtil.UintSet supportedNetworks;
-        mapping(uint64 => uint64) ccipChainIdToSelector;
-        mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
-    }
-    function load() internal pure returns (Data storage crossChain) {
-        bytes32 s = _SLOT_CROSS_CHAIN;
-        assembly {
-            crossChain.slot := s
-        }
     }
 }
 
@@ -324,48 +288,12 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        uint128 totalCapacityD18;
-        int128 cumulativeDebtD18;
-        mapping(uint256 => uint256) heldMarketConfigurationWeights;
-        mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
-    }
-    struct AnalyzePoolConfigRuntime {
-        uint256 oldIdx;
-        uint256 potentiallyLockedMarketsIdx;
-        uint256 potentiallyDelayedMarketsIdx;
-        uint256 removedMarketsIdx;
-        uint128 lastMarketId;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
-    }
-}
-
-// @custom:artifact @synthetixio/main/contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
-library PoolCrossChainInfo {
-    struct Data {
-        PoolCrossChainSync.Data latestSync;
-        uint128 latestTotalWeights;
-        uint64[] pairedChains;
-        mapping(uint64 => uint128) pairedPoolIds;
-        uint64 chainlinkSubscriptionId;
-        uint32 chainlinkSubscriptionInterval;
-        bytes32 latestRequestId;
-    }
-}
-
-// @custom:artifact @synthetixio/main/contracts/storage/PoolCrossChainSync.sol:PoolCrossChainSync
-library PoolCrossChainSync {
-    struct Data {
-        uint128 liquidity;
-        int128 cumulativeMarketDebt;
-        int128 totalDebt;
-        uint64 dataTimestamp;
-        uint64 oldestDataTimestamp;
-        uint64 oldestPoolConfigTimestamp;
     }
 }
 
@@ -408,7 +336,6 @@ library SystemPoolConfiguration {
         uint128 __reservedForFutureUse;
         uint128 preferredPool;
         SetUtil.UintSet approvedPools;
-        uint128 lastPoolId;
     }
     function load() internal pure returns (Data storage systemPoolConfiguration) {
         bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
@@ -439,36 +366,6 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
-        uint128 totalExitingCollateralD18;
-        uint128 _reserved;
-        mapping(bytes32 => CollateralLock.Data) exitingCollateral;
-    }
-}
-
-// @custom:artifact @synthetixio/main/contracts/utils/CcipClient.sol:CcipClient
-library CcipClient {
-    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
-    struct EVMTokenAmount {
-        address token;
-        uint256 amount;
-    }
-    struct Any2EVMMessage {
-        bytes32 messageId;
-        uint64 sourceChainId;
-        bytes sender;
-        bytes data;
-        EVMTokenAmount[] tokenAmounts;
-    }
-    struct EVM2AnyMessage {
-        bytes receiver;
-        bytes data;
-        EVMTokenAmount[] tokenAmounts;
-        address feeToken;
-        bytes extraArgs;
-    }
-    struct EVMExtraArgsV1 {
-        uint256 gasLimit;
-        bool strict;
     }
 }
 

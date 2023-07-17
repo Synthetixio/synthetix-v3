@@ -9,9 +9,9 @@ import "../storage/MarketConfiguration.sol";
  */
 interface IPoolModule {
     /**
-     * @notice Thrown when the requested pool ID is greater or equal to type(uint128).max / 2
+     * @notice Thrown when attempting to disconnect a market whose capacity is locked, and whose removal would cause a decrease in its associated pool's credit delegation proportion.
      */
-    error InvalidPoolId(uint128 poolId);
+    error CapacityLocked(uint256 marketId);
 
     /**
      * @notice Gets fired when pool will be created.
@@ -107,13 +107,6 @@ interface IPoolModule {
     function getPoolConfiguration(
         uint128 poolId
     ) external view returns (MarketConfiguration.Data[] memory markets);
-
-    /**
-     * @notice Retrieves the unix timestamp of the last time this pool configuration was updated.
-     * @dev If the pool is cross chain, this value will be the timestamp reported by the primary chain
-     * @return the configuration timestamp
-     */
-    function getPoolLastConfigurationTime(uint128 poolId) external view returns (uint64);
 
     /**
      * @notice Allows the owner of the pool to set the pool's name.

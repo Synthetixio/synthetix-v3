@@ -91,10 +91,8 @@ contract LiquidationModule is ILiquidationModule {
             revert MustBeVaultLiquidated();
         }
 
-        // This will clear the user's account *without* going through the normal release process normally required for cross chain stuff.
-        //
-        epoch.decreaseAccountPosition(accountId, liquidationData.collateralLiquidated);
-        epoch.increaseAccountPosition(accountId, 0, 0);
+        // This will clear the user's account the same way as if they had withdrawn normally
+        epoch.updateAccountPosition(accountId, 0, 0);
 
         // Distribute the liquidated collateral among other positions in the vault, minus the reward amount
         epoch.collateralAmounts.scale(
