@@ -15,6 +15,9 @@ artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilS
 [contract.TestableDebtShareStorage]
 artifact = "contracts/generated/test/TestableDebtShareStorage.sol:TestableDebtShareStorage"
 
+[contract.TestableElectionSettingsStorage]
+artifact = "contracts/generated/test/TestableElectionSettingsStorage.sol:TestableElectionSettingsStorage"
+
 [contract.TestableElectionStorage]
 artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
 
@@ -27,6 +30,7 @@ contracts = [
   # Testable storage contracts
   "TestableCouncilStorage",
   "TestableDebtShareStorage",
+  "TestableElectionSettingsStorage",
   "TestableElectionStorage",
 ]
 depends = [
@@ -37,5 +41,6 @@ depends = [
   # Testable storage contracts
   "contract.TestableCouncilStorage",
   "contract.TestableDebtShareStorage",
+  "contract.TestableElectionSettingsStorage",
   "contract.TestableElectionStorage",
 ]

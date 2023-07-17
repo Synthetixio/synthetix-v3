@@ -36,16 +36,19 @@ describe('SynthetixElectionModule - Elections', function () {
 
   const epochs = [
     {
+      index: 0,
       debtShareSnapshotId: 42,
       blockNumber: 21000000,
       winners: () => [addresses[3]!, addresses[4]!],
     },
     {
+      index: 1,
       debtShareSnapshotId: 1337,
       blockNumber: 23100007,
       winners: () => [addresses[3]!, addresses[5]!],
     },
     {
+      index: 2,
       debtShareSnapshotId: 2192,
       blockNumber: 30043001,
       winners: () => [addresses[5]!, addresses[4]!],
@@ -61,10 +64,10 @@ describe('SynthetixElectionModule - Elections', function () {
   });
 
   describe('when the election module is initialized', function () {
-    before('set next epoch seat count to 2', async function () {
-      const tx = await c.CoreProxy.setNextEpochSeatCount(2);
-      await tx.wait();
-    });
+    // before('set next epoch seat count to 2', async function () {
+    //   const tx = await c.CoreProxy.setNextEpochSeatCount(2);
+    //   await tx.wait();
+    // });
 
     it('shows the expected NFT owners', async function () {
       assertBn.equal(await c.CouncilToken.balanceOf(await owner.getAddress()), 1);
@@ -73,10 +76,10 @@ describe('SynthetixElectionModule - Elections', function () {
       assertBn.equal(await c.CouncilToken.balanceOf(addresses[2]!), 0);
     });
 
-    epochs.forEach(function (epoch, epochIndex) {
-      describe(`epoch ${epochIndex} with debt share snapshot ${epoch.debtShareSnapshotId}`, function () {
-        it(`shows that the current epoch index is ${epochIndex}`, async function () {
-          assertBn.equal(await c.CoreProxy.getEpochIndex(), epochIndex);
+    epochs.forEach(function (epoch) {
+      describe(`epoch ${epoch.index} with debt share snapshot ${epoch.debtShareSnapshotId}`, function () {
+        it(`shows that the current epoch index is ${epoch.index}`, async function () {
+          assertBn.equal(await c.CoreProxy.getEpochIndex(), epoch.index);
         });
 
         it('shows that the current period is Administration', async function () {
@@ -270,7 +273,7 @@ describe('SynthetixElectionModule - Elections', function () {
               it('emitted a CrossChainDebtShareMerkleRootSet event', async function () {
                 await assertEvent(
                   receipt,
-                  `CrossChainDebtShareMerkleRootSet("${merkleTree.merkleRoot}", ${epoch.blockNumber}, ${epochIndex})`,
+                  `CrossChainDebtShareMerkleRootSet("${merkleTree.merkleRoot}", ${epoch.blockNumber}, ${epoch.index})`,
                   c.CoreProxy
                 );
               });
@@ -522,7 +525,11 @@ describe('SynthetixElectionModule - Elections', function () {
                         });
 
                         it('emits the event ElectionEvaluated', async function () {
-                          await assertEvent(rx, `ElectionEvaluated(${epochIndex}, 3)`, c.CoreProxy);
+                          await assertEvent(
+                            rx,
+                            `ElectionEvaluated(${epoch.index}, 3)`,
+                            c.CoreProxy
+                          );
                         });
 
                         it('shows that the election is evaluated', async function () {

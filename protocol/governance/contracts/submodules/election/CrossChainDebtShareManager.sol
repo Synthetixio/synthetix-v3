@@ -15,8 +15,11 @@ contract CrossChainDebtShareManager is ElectionBase {
     event CrossChainDebtShareDeclared(address user, uint debtShare);
 
     function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
-        CrossChainDebtShare.Data storage debtShareData = DebtShare.load().crossChainDebtShareData[
-            Council.load().lastElectionId
+        DebtShare.Data storage store = DebtShare.load();
+        uint lastElectionId = Council.load().lastElectionId;
+
+        CrossChainDebtShare.Data storage debtShareData = store.crossChainDebtShareData[
+            lastElectionId
         ];
 
         debtShareData.merkleRoot = merkleRoot;
@@ -28,16 +31,18 @@ contract CrossChainDebtShareManager is ElectionBase {
         uint256 debtShare,
         bytes32[] calldata merkleProof
     ) internal {
-        CrossChainDebtShare.Data storage debtShareData = DebtShare.load().crossChainDebtShareData[
+        DebtShare.Data storage store = DebtShare.load();
+
+        CrossChainDebtShare.Data storage debtShareData = store.crossChainDebtShareData[
             Council.load().lastElectionId
         ];
 
-        if (debtShareData.debtShares[user] != 0) {
-            revert CrossChainDebtShareAlreadyDeclared();
-        }
-
         if (debtShareData.merkleRoot == 0) {
             revert MerkleRootNotSet();
+        }
+
+        if (debtShareData.debtShares[user] != 0) {
+            revert CrossChainDebtShareAlreadyDeclared();
         }
 
         bytes32 leaf = keccak256(abi.encodePacked(user, debtShare));
@@ -64,7 +69,9 @@ contract CrossChainDebtShareManager is ElectionBase {
     }
 
     function _getCrossChainDebtShareMerkleRootBlockNumber() internal view returns (uint) {
-        CrossChainDebtShare.Data storage debtShareData = DebtShare.load().crossChainDebtShareData[
+        DebtShare.Data storage store = DebtShare.load();
+
+        CrossChainDebtShare.Data storage debtShareData = store.crossChainDebtShareData[
             Council.load().lastElectionId
         ];
 
@@ -76,7 +83,9 @@ contract CrossChainDebtShareManager is ElectionBase {
     }
 
     function _getDeclaredCrossChainDebtShare(address user) internal view returns (uint) {
-        CrossChainDebtShare.Data storage debtShareData = DebtShare.load().crossChainDebtShareData[
+        DebtShare.Data storage store = DebtShare.load();
+
+        CrossChainDebtShare.Data storage debtShareData = store.crossChainDebtShareData[
             Council.load().lastElectionId
         ];
 

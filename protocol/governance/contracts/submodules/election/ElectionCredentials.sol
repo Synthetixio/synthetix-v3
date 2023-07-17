@@ -32,8 +32,10 @@ contract ElectionCredentials is ElectionBase {
         uint numMembers = membersToAdd.length;
         if (numMembers == 0) revert ArrayError.EmptyArray();
 
+        Council.Data storage council = Council.load();
+
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
-            _addCouncilMember(membersToAdd[memberIndex], epochIndex);
+            _addCouncilMember(council, membersToAdd[memberIndex], epochIndex);
         }
     }
 
@@ -46,9 +48,12 @@ contract ElectionCredentials is ElectionBase {
         }
     }
 
-    function _addCouncilMember(address newMember, uint epochIndex) internal {
-        Council.Data storage store = Council.load();
-        SetUtil.AddressSet storage members = store.councilMembers;
+    function _addCouncilMember(
+        Council.Data storage council,
+        address newMember,
+        uint epochIndex
+    ) internal {
+        SetUtil.AddressSet storage members = council.councilMembers;
 
         if (members.contains(newMember)) {
             revert AlreadyACouncilMember();
@@ -60,7 +65,7 @@ contract ElectionCredentials is ElectionBase {
         uint tokenId = members.length();
         AssociatedSystem.load(_COUNCIL_NFT_SYSTEM).asNft().mint(newMember, tokenId);
 
-        store.councilTokenIds[newMember] = tokenId;
+        council.councilTokenIds[newMember] = tokenId;
 
         emit CouncilMemberAdded(newMember, epochIndex);
     }

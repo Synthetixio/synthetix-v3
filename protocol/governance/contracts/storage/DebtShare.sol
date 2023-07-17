@@ -12,26 +12,16 @@ library DebtShare {
     struct Data {
         // Synthetix c2 DebtShare contract used to determine vote power in the local chain
         IDebtShare debtShareContract;
-        // Array of debt share snapshot id's for each epoch
-        uint128[] debtShareIds;
-        // Array of CrossChainDebtShareData's for each epoch
-        CrossChainDebtShare.Data[] crossChainDebtShareData;
+        // debt share snapshot id's for each epoch
+        mapping(uint => uint128) debtShareIds;
+        // CrossChainDebtShareData's for each epoch
+        mapping(uint => CrossChainDebtShare.Data) crossChainDebtShareData;
     }
 
     function load() internal pure returns (Data storage debtShare) {
         bytes32 s = _SLOT_DEBT_SHARE_STORAGE;
         assembly {
             debtShare.slot := s
-        }
-    }
-
-    function initialize(Data storage self) internal {
-        if (self.debtShareIds.length == 0) {
-            self.debtShareIds.push();
-        }
-
-        if (self.crossChainDebtShareData.length == 0) {
-            self.crossChainDebtShareData.push();
         }
     }
 }

@@ -8,6 +8,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../../storage/DebtShare.sol";
 import "./ElectionBase.sol";
 
+import "hardhat/console.sol";
+
 /// @dev Tracks user Synthetix v2 debt chains on the local chain at a particular block number
 contract DebtShareManager is ElectionBase {
     using SafeCastU256 for uint256;
@@ -20,8 +22,8 @@ contract DebtShareManager is ElectionBase {
 
     function _setDebtShareSnapshotId(uint snapshotId) internal {
         DebtShare.Data storage store = DebtShare.load();
-
         uint currentEpochIndex = Council.load().lastElectionId;
+
         store.debtShareIds[currentEpochIndex] = snapshotId.to128();
 
         emit DebtShareSnapshotIdSet(snapshotId);

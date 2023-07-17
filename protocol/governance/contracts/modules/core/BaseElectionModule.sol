@@ -26,6 +26,7 @@ contract BaseElectionModule is
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
+        uint8 epochSeatCount,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -35,6 +36,7 @@ contract BaseElectionModule is
         _initOrUpgradeElectionModule(
             firstCouncil,
             minimumActiveMembers,
+            epochSeatCount,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
@@ -44,6 +46,7 @@ contract BaseElectionModule is
     function _initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
+        uint8 epochSeatCount,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -55,14 +58,14 @@ contract BaseElectionModule is
         }
 
         // solhint-disable-next-line numcast/safe-cast
-        uint8 seatCount = uint8(firstCouncil.length);
+        uint8 seatCount = epochSeatCount == 0 ? uint8(firstCouncil.length) : epochSeatCount;
         if (minimumActiveMembers == 0 || minimumActiveMembers > seatCount) {
             revert InvalidMinimumActiveMembers();
         }
 
         Election.Data storage election = store.getCurrentElection();
-
         ElectionSettings.Data storage settings = election.settings;
+        // ElectionSettings.Data storage settings = store.nextElectionSettings;
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
@@ -71,6 +74,7 @@ contract BaseElectionModule is
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
+        // Election.Data storage election = store.getCurrentElection();
         Epoch.Data storage firstEpoch = election.epoch;
         uint64 epochStartDate = block.timestamp.to64();
         _configureEpochSchedule(
@@ -315,7 +319,7 @@ contract BaseElectionModule is
     }
 
     /// @dev Burns previous NFTs and mints new ones
-    function resolve() external override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
+    function resolve() public virtual override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
         Election.Data storage election = Council.load().getCurrentElection();
 
         if (!election.evaluated) revert ElectionNotEvaluated();

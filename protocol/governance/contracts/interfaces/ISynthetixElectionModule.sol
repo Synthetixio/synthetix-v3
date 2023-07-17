@@ -7,6 +7,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     /// @notice Initializes the module and immediately starts the first epoch
     /// @param firstCouncil council members for the council on the first epoch
     /// @param minimumActiveMembers Minimum active council members. If too many are dismissed an emergency election is triggered
+    /// @param epochSeatCount Amount of council members to be elected on the first epoch
     /// @param nominationPeriodStartDate Date timestamp when the first epoch is going to start
     /// @param votingPeriodDuration Duration in days of voting period
     /// @param epochDuration Duration in days of the entire epoch
@@ -14,6 +15,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
+        uint8 epochSeatCount,
         uint64 nominationPeriodStartDate,
         uint16 votingPeriodDuration,
         uint16 epochDuration,
