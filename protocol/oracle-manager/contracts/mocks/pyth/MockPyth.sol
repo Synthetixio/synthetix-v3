@@ -6,11 +6,11 @@ import "./PythStructs.sol";
 import "./PythErrors.sol";
 
 contract MockPyth is AbstractPyth {
-    mapping(bytes32 => PythStructs.PriceFeed) priceFeeds;
-    uint64 sequenceNumber;
+    mapping(bytes32 => PythStructs.PriceFeed) internal priceFeeds;
+    uint64 internal sequenceNumber;
 
-    uint singleUpdateFeeInWei;
-    uint validTimePeriod;
+    uint internal singleUpdateFeeInWei;
+    uint internal validTimePeriod;
 
     constructor(uint _validTimePeriod, uint _singleUpdateFeeInWei) {
         singleUpdateFeeInWei = _singleUpdateFeeInWei;
