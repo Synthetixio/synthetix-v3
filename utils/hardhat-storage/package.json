@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/hardhat-storage",
-  "version": "3.2.0-xchain.0",
+  "version": "3.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -22,7 +22,8 @@
   "author": "Synthetix",
   "license": "MIT",
   "scripts": {
-    "build": "tsc --project src/tsconfig.json",
+    "build": "yarn build:ts",
+    "build:ts": "tsc --project src/tsconfig.json",
     "watch": "yarn build --watch",
     "test": "jest",
     "coverage": "yarn test --coverage",
@@ -42,5 +43,5 @@
     "ts-jest": "29.0.5",
     "typescript": "4.9.3"
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
+  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862"
 }

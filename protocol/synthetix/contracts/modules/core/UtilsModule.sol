@@ -5,6 +5,7 @@ import "@synthetixio/core-modules/contracts/interfaces/IAssociatedSystemsModule.
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../../interfaces/IUtilsModule.sol";
 
@@ -21,6 +22,7 @@ import "../../interfaces/external/IAny2EVMMessageReceiver.sol";
 contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using SetUtil for SetUtil.UintSet;
+    using SafeCastU256 for uint256;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
@@ -32,15 +34,13 @@ contract UtilsModule is IUtilsModule {
      */
     function configureChainlinkCrossChain(
         address ccipRouter,
-        address ccipTokenPool,
-        address chainlinkFunctions
+        address ccipTokenPool
     ) external override {
         OwnableStorage.onlyOwner();
 
         CrossChain.Data storage cc = CrossChain.load();
 
         cc.ccipRouter = ICcipRouterClient(ccipRouter);
-        cc.chainlinkFunctionsOracle = FunctionsOracleInterface(chainlinkFunctions);
 
         IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
             AssociatedSystem.load(_USD_TOKEN).proxy
@@ -60,7 +60,7 @@ contract UtilsModule is IUtilsModule {
     ) external returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
-        uint64 myChainId = uint64(block.chainid);
+        uint64 myChainId = block.chainid.to64();
 
         if (ccipSelectors.length != supportedNetworks.length) {
             revert ParameterError.InvalidParameter("ccipSelectors", "must match length");
@@ -68,6 +68,7 @@ contract UtilsModule is IUtilsModule {
 
         CrossChain.Data storage cc = CrossChain.load();
         for (uint i = 0; i < supportedNetworks.length; i++) {
+            if (supportedNetworks[i] == myChainId) continue;
             if (
                 supportedNetworks[i] != myChainId &&
                 !cc.supportedNetworks.contains(supportedNetworks[i])

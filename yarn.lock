@@ -1507,6 +1507,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lerna-lite/exec@npm:1.17.0":
+  version: 1.17.0
+  resolution: "@lerna-lite/exec@npm:1.17.0"
+  dependencies:
+    "@lerna-lite/core": 1.17.0
+    "@lerna-lite/filter-packages": 1.17.0
+    "@lerna-lite/profiler": 1.17.0
+    chalk: ^4.1.2
+    dotenv: ^16.0.3
+    npmlog: ^7.0.1
+    p-map: ^4.0.0
+  checksum: 28f39983c982dfd52385e093403219484abe9a6bf158c1eef36fc31f13e9f38d7f6577fcec0088ea6259b0f989ad863de360b68352ff046ac5c2ce79f0fe3fcb
+  languageName: node
+  linkType: hard
+
+"@lerna-lite/filter-packages@npm:1.17.0":
+  version: 1.17.0
+  resolution: "@lerna-lite/filter-packages@npm:1.17.0"
+  dependencies:
+    "@lerna-lite/core": 1.17.0
+    multimatch: ^5.0.0
+    npmlog: ^7.0.1
+  checksum: 90c2e4f77bc51ae8b4462ef6b13aca11d9ebaee788af4fa265d30544dc83958723043dc54ef98eddd677d8a27d09a052c01535290f3730555236cb84c289bd90
+  languageName: node
+  linkType: hard
+
 "@lerna-lite/init@npm:1.17.0":
   version: 1.17.0
   resolution: "@lerna-lite/init@npm:1.17.0"
@@ -1528,6 +1554,18 @@ __metadata:
     chalk: ^4.1.2
     columnify: ^1.6.0
   checksum: 682a2cbfc2a298a0fb0e42e131c0b05fb3f282ff8a3f895fed5e8aa48cee5a7037cea9f3ecd5ec2cb219a9aaecff19f732ede557a6b318fc008ab36fd42caf8e
+  languageName: node
+  linkType: hard
+
+"@lerna-lite/profiler@npm:1.17.0":
+  version: 1.17.0
+  resolution: "@lerna-lite/profiler@npm:1.17.0"
+  dependencies:
+    "@lerna-lite/core": 1.17.0
+    fs-extra: ^11.1.0
+    npmlog: ^7.0.1
+    upath: ^2.0.1
+  checksum: 499de0f370d8aef09a413c62488e29c716bf9778f962b3a02a6dea4e811e5cfd831db01014de6043d2c981e4187c68976c34a248e56a3f1ae7b1a831515cc2ef
   languageName: node
   linkType: hard
 
@@ -2307,27 +2345,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openzeppelin/contracts-upgradeable@npm:^4.7.3":
-  version: 4.9.2
-  resolution: "@openzeppelin/contracts-upgradeable@npm:4.9.2"
-  checksum: 88df083e886006b9fac61848edf224a725b99e1b8a302173165a857e3bbc1d00d61cb9c71590b37d955b179fe23652fc157347a086dbaad8f66ce8470603f151
-  languageName: node
-  linkType: hard
-
-"@openzeppelin/contracts-v0.7@npm:@openzeppelin/contracts@v3.4.2":
-  version: 3.4.2
-  resolution: "@openzeppelin/contracts@npm:3.4.2"
-  checksum: 0c90f029fe50a49643588e4c8670dae3bbf31795133a6ddce9bdcbc258486332700bb732287baabf7bf807f39182fe8ea2ffa19aa5caf359b1b9c0f083280748
-  languageName: node
-  linkType: hard
-
-"@openzeppelin/contracts@npm:~4.3.3":
-  version: 4.3.3
-  resolution: "@openzeppelin/contracts@npm:4.3.3"
-  checksum: 73eb23e7acc8531931076d11251629bdc8579c99ef921a3facbd8abf7b860bc214c97a4bd56cd67db7c9d1db837765132640f24987aac8097a13960bb41ca6d1
-  languageName: node
-  linkType: hard
-
 "@peculiar/asn1-schema@npm:^2.3.6":
   version: 2.3.6
   resolution: "@peculiar/asn1-schema@npm:2.3.6"
@@ -2664,8 +2681,8 @@ __metadata:
     "@synthetixio/hardhat-storage": "workspace:*"
     "@typechain/ethers-v5": 10.1.0
     "@typechain/hardhat": 6.1.3
-    "@usecannon/builder": ^2.4.16
-    cannon-plugin-router: ^1.0.12
+    "@usecannon/builder": ^2.4.20
+    cannon-plugin-router: ^1.0.15
     dotenv: 16.0.1
     hardhat: 2.15.0
     hardhat-cannon: 2.4.17
@@ -2709,7 +2726,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.4.17
+    "@usecannon/cli": ^2.4.20
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^2.8.8
@@ -2769,13 +2786,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
-    "@usecannon/cli": ^2.4.17
+    "@usecannon/cli": ^2.4.20
     handlebars: 4.7.7
+    prettier: ^2.8.8
     solidity-ast: 0.4.46
     solidity-docgen: 0.6.0-beta.35
-  bin:
-    abis: ./abis.js
-    natspec: ./natspec.js
   languageName: unknown
   linkType: soft
 
@@ -2838,7 +2853,7 @@ __metadata:
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
-    "@usecannon/builder": ^2.4.16
+    "@usecannon/builder": ^2.4.20
     ethers: ^5.7.2
     hardhat: 2.15.0
     solidity-ast: 0.4.46
@@ -2867,6 +2882,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/perps-market-subgraph@workspace:markets/perps-market/subgraph":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/perps-market-subgraph@workspace:markets/perps-market/subgraph"
+  dependencies:
+    "@graphprotocol/graph-cli": ^0.50.1
+    "@graphprotocol/graph-ts": ^0.30.0
+    "@usecannon/cli": ^2.4.20
+    ethers: ^5.7.2
+    prettier: ^2.8.8
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/perps-market@workspace:markets/perps-market":
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market@workspace:markets/perps-market"
@@ -2881,7 +2908,7 @@ __metadata:
     "@synthetixio/router": ^3.1.3
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": 2.74.4
-    "@usecannon/cli": ^2.4.17
+    "@usecannon/cli": ^2.4.20
     ethers: ^5.7.2
     hardhat: 2.15.0
     solidity-docgen: 0.6.0-beta.35
@@ -2890,9 +2917,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/router@npm:3.1.3, @synthetixio/router@npm:^3.1.3":
-  version: 3.1.3
-  resolution: "@synthetixio/router@npm:3.1.3"
+"@synthetixio/router@npm:^3.1.3, @synthetixio/router@npm:^3.1.4":
+  version: 3.1.4
+  resolution: "@synthetixio/router@npm:3.1.4"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     ajv: ^8.11.0
@@ -2909,7 +2936,7 @@ __metadata:
       optional: true
     hardhat:
       optional: true
-  checksum: bf2d8db9f8cb49fe68a2084def37e43f57455937a9675ee302b7990067a2e3f29d2f880bb345d334f3a2e784b27151d9fade3f77f8e588d555e054f66a3a3f02
+  checksum: da369169a1f25d67f395e569fbdd17dd8d776463c8f1c0b122f61617e4501da2f882590a0ee93043162d5850d9fa97ec3b619b0650c371e602bd2394c1c0224f
   languageName: node
   linkType: hard
 
@@ -2923,10 +2950,24 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/hardhat-storage": "workspace:*"
     "@synthetixio/router": ^3.1.3
-    "@usecannon/builder": ^2.4.16
-    cannon-plugin-router: ^1.0.12
+    "@usecannon/builder": ^2.4.20
+    cannon-plugin-router: ^1.0.15
+    ethers: ^5.7.2
     hardhat: 2.15.0
     hardhat-cannon: 2.4.17
+    solidity-coverage: 0.8.2
+  languageName: unknown
+  linkType: soft
+
+"@synthetixio/spot-market-subgraph@workspace:markets/spot-market/subgraph":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/spot-market-subgraph@workspace:markets/spot-market/subgraph"
+  dependencies:
+    "@graphprotocol/graph-cli": ^0.50.1
+    "@graphprotocol/graph-ts": ^0.30.0
+    "@usecannon/cli": ^2.4.20
+    ethers: ^5.7.2
+    prettier: ^2.8.8
   languageName: unknown
   linkType: soft
 
@@ -2944,7 +2985,7 @@ __metadata:
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
     "@types/node-fetch": 2.6.4
-    "@usecannon/cli": ^2.4.17
+    "@usecannon/cli": ^2.4.20
     ethers: ^5.7.2
     hardhat: 2.15.0
     node-fetch: 2.6.9
@@ -3556,9 +3597,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.4.16":
-  version: 2.4.16
-  resolution: "@usecannon/builder@npm:2.4.16"
+"@usecannon/builder@npm:^2.4.16, @usecannon/builder@npm:^2.4.20":
+  version: 2.4.20
+  resolution: "@usecannon/builder@npm:2.4.20"
   dependencies:
     ajv: ^8.11.0
     axios: ^1.2.2
@@ -3570,17 +3611,17 @@ __metadata:
     promise-events: ^0.2.4
   peerDependencies:
     ethers: ">=5.6.0"
-  checksum: c9c7049a84f6b843e1a8c4a7714d03c544b28a9f8c89572e986c441ec1fdc5dc4df95ff8329b79d149b3f190b860e5f94215b1812d8ec050c51426e89e373bb4
+  checksum: 342818635e88b0b1fd74be5d96f46078fab65faef86d258267f10a2dd8920856123168f17cc91c737e9b91a91ac8d7d8dcb5c6151cd3d2ab3f3a75f46e7a45f3
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:^2.4.17":
-  version: 2.4.17
-  resolution: "@usecannon/cli@npm:2.4.17"
+"@usecannon/cli@npm:^2.4.17, @usecannon/cli@npm:^2.4.20":
+  version: 2.4.20
+  resolution: "@usecannon/cli@npm:2.4.20"
   dependencies:
     "@iarna/toml": ^3.0.0
     "@synthetixio/wei": ^2.74.1
-    "@usecannon/builder": ^2.4.16
+    "@usecannon/builder": ^2.4.20
     chalk: ^4.1.2
     commander: ^9.3.0
     debug: ^4.3.4
@@ -3596,7 +3637,7 @@ __metadata:
     untildify: ^4.0.0
   bin:
     cannon: dist/bin/cannon.js
-  checksum: c658e149e6fc527bda0ce9d032a6341a4cde5adfd318098f58bb52c4936c1c4e46568b7c18a91b1b37ccbd4840d0977776efdc39ec32abb12d1f8e8e3a656871
+  checksum: 39fa135e5dbdee25e05735b7e273ea1670ba6c1a4ff9edabf4ae59c3c6383a2c8fcb8bb0bd5d6d72d9285b848480a0efa544206a96913076b3412b8e288b5046
   languageName: node
   linkType: hard
 
@@ -4980,12 +5021,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cannon-plugin-router@npm:^1.0.12":
-  version: 1.0.12
-  resolution: "cannon-plugin-router@npm:1.0.12"
+"cannon-plugin-router@npm:^1.0.15":
+  version: 1.0.15
+  resolution: "cannon-plugin-router@npm:1.0.15"
   dependencies:
-    "@synthetixio/router": 3.1.3
-  checksum: 83eb3d5638df1ef471fcea5a7fbc6b91d01c81071dde8361234c38f9b9851f953fa62fbcd70499e2314dd1d88dd40ff84614bd2d8d07ed142ddf60819b4cef80
+    "@synthetixio/router": ^3.1.4
+  checksum: 4b4678f8b090ea6d161ceddb9dd7b02100bd4dd3d28431f485d8f2f281cc07566ff25fffdb18eb711b5b45796c0a6379c1ac5026bef1c6996074de0159c877d6
   languageName: node
   linkType: hard
 
@@ -5037,21 +5078,6 @@ __metadata:
   bin:
     cborg: cli.js
   checksum: 7743a8f125046ac27fb371c4ea18af54fbe853f7210f1ffacc6504a79566480c39d52ac4fbc1a5b5155e27b13c3b58955dc29db1bf20c4d651549d55fec2fa7f
-  languageName: node
-  linkType: hard
-
-"chai@npm:^4.3.4":
-  version: 4.3.7
-  resolution: "chai@npm:4.3.7"
-  dependencies:
-    assertion-error: ^1.1.0
-    check-error: ^1.0.2
-    deep-eql: ^4.1.2
-    get-func-name: ^2.0.0
-    loupe: ^2.3.1
-    pathval: ^1.1.1
-    type-detect: ^4.0.5
-  checksum: 0bba7d267848015246a66995f044ce3f0ebc35e530da3cbdf171db744e14cbe301ab913a8d07caf7952b430257ccbb1a4a983c570a7c5748dc537897e5131f7c
   languageName: node
   linkType: hard
 
@@ -15160,13 +15186,14 @@ __metadata:
     "@ethersproject/abi": ^5.7.0
     "@ethersproject/providers": ^5.0.0
     "@lerna-lite/cli": 1.17.0
+    "@lerna-lite/exec": 1.17.0
     "@nomiclabs/hardhat-ethers": ^2.2.3
     "@synthetixio/deps": "workspace:*"
     "@types/mocha": 10.0.1
     "@types/node": 18.11.10
     "@typescript-eslint/eslint-plugin": 5.45.0
     "@typescript-eslint/parser": 5.45.0
-    "@usecannon/cli": ^2.4.17
+    "@usecannon/cli": ^2.4.20
     eslint: 8.29.0
     eslint-config-prettier: 8.5.0
     eslint-plugin-no-only-tests: 3.1.0
@@ -15877,6 +15904,13 @@ __metadata:
   version: 4.0.0
   resolution: "untildify@npm:4.0.0"
   checksum: 39ced9c418a74f73f0a56e1ba4634b4d959422dff61f4c72a8e39f60b99380c1b45ed776fbaa0a4101b157e4310d873ad7d114e8534ca02609b4916bb4187fb9
+  languageName: node
+  linkType: hard
+
+"upath@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "upath@npm:2.0.1"
+  checksum: 2db04f24a03ef72204c7b969d6991abec9e2cb06fb4c13a1fd1c59bc33b46526b16c3325e55930a11ff86a77a8cbbcda8f6399bf914087028c5beae21ecdb33c
   languageName: node
   linkType: hard
 

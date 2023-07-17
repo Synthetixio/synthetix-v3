@@ -30,16 +30,12 @@ contract CrossChainUSDModule is ICrossChainUSDModule {
     ) external payable returns (uint256 gasTokenUsed) {
         FeatureFlag.ensureAccessToFeature(_TRANSFER_CROSS_CHAIN_FEATURE_FLAG);
 
+        CrossChain.Data storage cc = CrossChain.load();
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
         usdToken.transferFrom(msg.sender, address(this), amount);
-        usdToken.approve(address(CrossChain.load().ccipRouter), amount);
+        usdToken.approve(address(cc.ccipRouter), amount);
 
-        gasTokenUsed = CrossChain.load().teleport(
-            destChainId,
-            address(usdToken),
-            amount,
-            _TRANSFER_GAS_LIMIT
-        );
+        gasTokenUsed = cc.teleport(destChainId, address(usdToken), amount, _TRANSFER_GAS_LIMIT);
         CrossChain.refundLeftoverGas(gasTokenUsed);
 
         emit TransferCrossChainInitiated(destChainId, amount, msg.sender);

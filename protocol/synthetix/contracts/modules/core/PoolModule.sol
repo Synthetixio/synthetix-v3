@@ -116,8 +116,15 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function rebalancePool(uint128 poolId) external override {
-        Pool.load(poolId).distributeDebtToVaults(0);
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        pool.distributeDebtToVaults(optionalCollateralType);
+
+        if (optionalCollateralType != address(0)) {
+            pool.recalculateVaultCollateral(optionalCollateralType);
+        } else {
+            pool.rebalanceMarketsInPool();
+        }
     }
 
     /**
@@ -128,16 +135,54 @@ contract PoolModule is IPoolModule {
         MarketConfiguration.Data[] memory newMarketConfigurations
     ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+        pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
+
+        // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
+        // Note: This follows the same pattern as Pool.recalculateVaultCollateral(),
+        // where we need to distribute the debt, adjust the market configurations and distribute again.
+        pool.distributeDebtToVaults(address(0));
+
+        // Identify markets that need to be removed or verified later for being locked.
+        (
+            uint128[] memory potentiallyLockedMarkets,
+            uint128[] memory removedMarkets
+        ) = _analyzePoolConfigurationChange(pool, newMarketConfigurations);
+
+        // Replace existing market configurations with the new ones.
+        // (May leave old configurations at the end of the array if the new array is shorter).
+        uint256 i = 0;
+        uint256 totalWeight = 0;
+        // Iterate up to the shorter length.
+        uint256 len = newMarketConfigurations.length < pool.marketConfigurations.length
+            ? newMarketConfigurations.length
+            : pool.marketConfigurations.length;
+        for (; i < len; i++) {
+            pool.marketConfigurations[i] = newMarketConfigurations[i];
+            totalWeight += newMarketConfigurations[i].weightD18;
+        }
+
+        // If the old array was shorter, push the new elements in.
+        for (; i < newMarketConfigurations.length; i++) {
+            pool.marketConfigurations.push(newMarketConfigurations[i]);
+            totalWeight += newMarketConfigurations[i].weightD18;
+        }
 
         if (msg.sender != address(this)) {
             Pool.onlyPoolOwner(poolId, msg.sender);
         }
 
-        pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
+        // Rebalance all markets that need to be removed.
+        for (i = 0; i < removedMarkets.length && removedMarkets[i] != 0; i++) {
+            // Iter avoids griefing - MarketManager can call this with user specified iters and thus clean up a grieved market.
+            Market.distributeDebtToPools(Market.load(removedMarkets[i]), 9999999999);
+            Market.rebalancePools(removedMarkets[i], poolId, 0, 0);
+        }
 
-        // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
-        (int256 cumulativeDebtChange, ) = pool.rebalanceMarketsInPool();
-        pool.distributeDebtToVaults(cumulativeDebtChange);
+        pool.totalWeightsD18 = totalWeight.to128();
+
+        // Distribute debt again because the unused credit capacity has been updated, and this information needs to be propagated immediately.
+        pool.rebalanceMarketsInPool();
 
         pool.setMarketConfiguration(newMarketConfigurations);
 

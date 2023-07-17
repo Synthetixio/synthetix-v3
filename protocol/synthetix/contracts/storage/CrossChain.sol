@@ -6,8 +6,6 @@ import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessEr
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
-import "../interfaces/external/FunctionsOracleInterface.sol";
-import "../interfaces/external/FunctionsBillingRegistryInterface.sol";
 
 /**
  * @title System wide configuration for anything
@@ -20,17 +18,16 @@ library CrossChain {
     error NotCcipRouter(address);
     error UnsupportedNetwork(uint64);
     error InsufficientCcipFee(uint256 requiredAmount, uint256 availableAmount);
+    error InvalidMessage();
 
     bytes32 private constant _SLOT_CROSS_CHAIN =
         keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
 
     struct Data {
         ICcipRouterClient ccipRouter;
-        FunctionsOracleInterface chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -40,20 +37,12 @@ library CrossChain {
         }
     }
 
-    function createChainlinkSubscription(Data storage self) internal returns (uint64 id) {
-        FunctionsBillingRegistryInterface billingRegistry = FunctionsBillingRegistryInterface(
-            self.chainlinkFunctionsOracle.getRegistry()
-        );
-        id = billingRegistry.createSubscription();
-        billingRegistry.addConsumer(id, address(this));
-    }
-
     function processCcipReceive(Data storage self, CcipClient.Any2EVMMessage memory data) internal {
         if (address(self.ccipRouter) == address(0) || msg.sender != address(self.ccipRouter)) {
             revert NotCcipRouter(msg.sender);
         }
 
-        uint64 sourceChainId = self.ccipSelectorToChainId[data.sourceChainId];
+        uint64 sourceChainId = self.ccipSelectorToChainId[data.sourceChainSelector];
 
         if (!self.supportedNetworks.contains(sourceChainId)) {
             revert UnsupportedNetwork(sourceChainId);
@@ -66,7 +55,8 @@ library CrossChain {
 
         address caller;
         bytes memory payload;
-        if (data.tokenAmounts.length > 0) {
+
+        if (data.tokenAmounts.length == 1) {
             address to = abi.decode(data.data, (address));
 
             caller = data.tokenAmounts[0].token;
@@ -76,8 +66,7 @@ library CrossChain {
                 data.tokenAmounts[0].amount
             );
         } else {
-            caller = address(this);
-            payload = data.data;
+            revert InvalidMessage();
         }
 
         // at this point, everything should be good to send the message to ourselves.
@@ -97,62 +86,6 @@ library CrossChain {
     function onlyCrossChain() internal view {
         if (msg.sender != address(this)) {
             revert AccessError.Unauthorized(msg.sender);
-        }
-    }
-
-    function transmit(
-        Data storage self,
-        uint64 chainId,
-        bytes memory data,
-        uint256 gasLimit
-    ) internal returns (uint256 gasTokenUsed) {
-        uint64[] memory chains = new uint64[](1);
-        chains[0] = chainId;
-        return broadcast(self, chains, data, gasLimit);
-    }
-
-    /**
-     * @dev Sends a message to one or more chains
-     */
-    function broadcast(
-        Data storage self,
-        uint64[] memory chains,
-        bytes memory data,
-        uint256 gasLimit
-    ) internal returns (uint256 gasTokenUsed) {
-        ICcipRouterClient router = self.ccipRouter;
-
-        CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
-            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
-            data, // Data payload
-            new CcipClient.EVMTokenAmount[](0), // Token transfers
-            address(0), // Address of feeToken. address(0) means you will send msg.value.
-            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
-        );
-
-        for (uint i = 0; i < chains.length; i++) {
-            if (chains[i] == block.chainid) {
-                (bool success, bytes memory result) = address(this).call(data);
-
-                if (!success) {
-                    uint256 len = result.length;
-                    assembly {
-                        revert(result, len)
-                    }
-                }
-            } else {
-                uint64 chainSelector = self.ccipChainIdToSelector[chains[i]];
-                uint256 fee = router.getFee(chainSelector, sentMsg);
-
-                // need to check sufficient fee here or else the error is very confusing
-                if (address(this).balance < fee) {
-                    revert InsufficientCcipFee(fee, address(this).balance);
-                }
-
-                router.ccipSend{value: fee}(chainSelector, sentMsg);
-
-                gasTokenUsed += fee;
-            }
         }
     }
 

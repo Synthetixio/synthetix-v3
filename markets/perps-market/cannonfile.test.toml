@@ -25,23 +25,17 @@ source = "<%= settings.spotMarketPackage %>"
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
-[contract.CollateralModule]
-artifact = "CollateralModule"
-
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
 
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
 [contract.PerpsMarketModule]
 artifact = "PerpsMarketModule"
-
-[contract.LimitOrderModule]
-artifact = "LimitOrderModule"
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
@@ -74,11 +68,9 @@ contracts = [
   "PerpsMarketFactoryModule",
   "PerpsAccountModule",
   "PerpsMarketModule",
-  "AtomicOrderModule",
   "AsyncOrderModule",
-  "CollateralModule",
+  "AsyncOrderSettlementModule",
   "FeatureFlagModule",
-  "LimitOrderModule",
   "LiquidationModule",
   "MarketConfigurationModule",
   "GlobalPerpsMarketModule"
@@ -87,13 +79,11 @@ depends = [
   "import.synthetix",
   "contract.CoreModule",
   "contract.PerpsMarketFactoryModule",
-  "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
   "contract.PerpsAccountModule",
   "contract.PerpsMarketModule",
-  "contract.CollateralModule",
   "contract.FeatureFlagModule",
-  "contract.LimitOrderModule",
   "contract.LiquidationModule",
   "contract.MarketConfigurationModule",
   "contract.GlobalPerpsMarketModule"

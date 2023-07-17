@@ -5,10 +5,17 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
+/**
+ * @title Module for global Perps Market settings.
+ * @dev See IGlobalPerpsMarketModule.
+ */
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
 
-    function setMaxCollateralForSynthMarketId(
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function setMaxCollateralAmount(
         uint128 synthMarketId,
         uint collateralAmount
     ) external override {
@@ -16,15 +23,19 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.maxCollateralAmounts[synthMarketId] = collateralAmount;
 
-        emit MaxCollateralForSynthSet(synthMarketId, collateralAmount);
+        emit MaxCollateralAmountSet(synthMarketId, collateralAmount);
     }
 
-    function getMaxCollateralAmountsForSynthMarket(
-        uint128 synthMarketId
-    ) external view override returns (uint) {
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getMaxCollateralAmount(uint128 synthMarketId) external view override returns (uint) {
         return GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[synthMarketId];
     }
 
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
     function setSynthDeductionPriority(
         uint128[] memory newSynthDeductionPriority
     ) external override {
@@ -35,10 +46,16 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         emit SynthDeductionPrioritySet(newSynthDeductionPriority);
     }
 
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
     function getSynthDeductionPriority() external view override returns (uint128[] memory) {
         return GlobalPerpsMarketConfiguration.load().synthDeductionPriority;
     }
 
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
     function setLiquidationRewardGuards(
         uint256 minLiquidationRewardUsd,
         uint256 maxLiquidationRewardUsd
@@ -51,6 +68,9 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         emit LiquidationRewardGuardsSet(minLiquidationRewardUsd, maxLiquidationRewardUsd);
     }
 
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
     function getLiquidationRewardGuards()
         external
         view

@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-modules",
-  "version": "3.2.0-xchain.0",
+  "version": "3.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -13,7 +13,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "test": "hardhat test",
-    "coverage": "hardhat --network hardhat coverage",
+    "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts"
   },
@@ -27,5 +27,5 @@
     "ethers": "^5.7.2",
     "hardhat": "2.15.0"
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
+  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862"
 }

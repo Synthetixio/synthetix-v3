@@ -12,8 +12,12 @@ interface IPerpsMarketFactoryModule is IMarket {
         string marketName,
         string marketSymbol
     );
-    event MarketOwnerNominated(uint128 indexed perpsMarketId, address newNominatedOwner);
-    event MarketOwnerChanged(uint128 indexed perpsMarketId, address oldOwner, address newOwner);
+    event MarketOwnerNominated(uint128 indexed perpsMarketId, address indexed newNominatedOwner);
+    event MarketOwnerChanged(
+        uint128 indexed perpsMarketId,
+        address indexed oldOwner,
+        address indexed newOwner
+    );
     event MarketPriceDataUpdated(uint128 indexed perpsMarketId, bytes32 feedId);
 
     error NotNominated(address notNominatedAddress);

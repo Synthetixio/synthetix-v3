@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -283,21 +283,6 @@ interface ILiquidationModule {
     }
 }
 
-// @custom:artifact contracts/interfaces/external/FunctionsBillingRegistryInterface.sol:FunctionsBillingRegistryInterface
-interface FunctionsBillingRegistryInterface {
-    enum FulfillResult {
-        USER_SUCCESS,
-        USER_ERROR,
-        INVALID_REQUEST_ID
-    }
-    struct RequestBilling {
-        uint64 subscriptionId;
-        address client;
-        uint32 gasLimit;
-        uint256 gasPrice;
-    }
-}
-
 // @custom:artifact contracts/modules/core/AccountModule.sol:AccountModule
 contract AccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
@@ -317,26 +302,11 @@ contract CollateralModule {
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
 }
 
-// @custom:artifact contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule
-contract CrossChainPoolModule {
-    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
-    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
-    string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
-}
-
 // @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
 contract CrossChainUSDModule {
     uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
-}
-
-// @custom:artifact contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule
-contract CrossChainUpkeepModule {
-    bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
-    bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG = "setCrossChainPoolConfiguration";
-    bytes32 internal constant _CONFIG_SYNC_POOL_CODE_ADDRESS = "performUpkeep_syncPool";
-    bytes32 internal constant _CONFIG_SYNC_POOL_SECRETS_ADDRESS = "performUpkeep_syncPoolSecrets";
 }
 
 // @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
@@ -436,6 +406,7 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
+    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -500,11 +471,9 @@ library CrossChain {
     bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
     struct Data {
         address ccipRouter;
-        address chainlinkFunctionsOracle;
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
     }
     function load() internal pure returns (Data storage crossChain) {
         bytes32 s = _SLOT_CROSS_CHAIN;
@@ -740,8 +709,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
-        uint128 prevCapacityD18;
-        int128 prevTotalDebtD18;
+        int128 _unused_prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
@@ -772,7 +740,7 @@ library CcipClient {
     }
     struct Any2EVMMessage {
         bytes32 messageId;
-        uint64 sourceChainId;
+        uint64 sourceChainSelector;
         bytes sender;
         bytes data;
         EVMTokenAmount[] tokenAmounts;
@@ -788,9 +756,4 @@ library CcipClient {
         uint256 gasLimit;
         bool strict;
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

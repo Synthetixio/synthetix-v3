@@ -208,7 +208,7 @@ describe('PoolModule Create / Ownership', function () {
       before('increase market debt and rebalances the markets inside of pool', async () => {
         await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
 
-        await systems().Core.connect(owner).rebalancePool(poolId);
+        await systems().Core.connect(owner).Market_distributeDebtToPools(poolId, 999999999);
       });
 
       it('the ultimate capacity of the market ends up to be the same', async () => {

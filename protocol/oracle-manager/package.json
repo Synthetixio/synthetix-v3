@@ -1,15 +1,17 @@
 {
   "name": "@synthetixio/oracle-manager",
-  "version": "3.2.0-xchain.0",
+  "version": "3.2.0",
   "description": "Core Synthetix Protocol Oracle Manager",
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "test": "hardhat test",
-    "coverage": "yarn build && hardhat --network hardhat coverage",
+    "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
-    "build": "hardhat storage:verify && hardhat cannon:build",
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat storage:verify && hardhat cannon:build",
+    "build-testable": "hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
@@ -35,5 +37,5 @@
     "ts-node": "10.9.1",
     "typescript": "4.9.3"
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
+  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862"
 }

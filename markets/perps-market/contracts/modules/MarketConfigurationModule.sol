@@ -7,9 +7,16 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {OrderFee} from "../storage/OrderFee.sol";
 
+/**
+ * @title Module for updating configuration in relation to async order modules.
+ * @dev See IMarketConfigurationModule.
+ */
 contract MarketConfigurationModule is IMarketConfigurationModule {
     using PerpsMarket for PerpsMarket.Data;
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
@@ -25,6 +32,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit SettlementStrategyAdded(marketId, strategy, strategyId);
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setSettlementStrategyEnabled(
         uint128 marketId,
         uint256 strategyId,
@@ -38,6 +48,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit SettlementStrategyEnabled(marketId, strategyId, enabled);
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setOrderFees(
         uint128 marketId,
         uint256 makerFeeRatio,
@@ -50,13 +63,19 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit OrderFeesSet(marketId, makerFeeRatio, takerFeeRatio);
     }
 
-    function setMaxMarketValue(uint128 marketId, uint256 maxMarketValue) external override {
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config.maxMarketValue = maxMarketValue;
-        emit MaxMarketValueSet(marketId, maxMarketValue);
+        config.maxMarketSize = maxMarketSize;
+        emit MaxMarketSizeSet(marketId, maxMarketSize);
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setFundingParameters(
         uint128 marketId,
         uint256 skewScale,
@@ -70,37 +89,53 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit FundingParametersSet(marketId, skewScale, maxFundingVelocity);
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function setLiquidationParameters(
         uint128 marketId,
-        uint256 initialMarginFraction,
-        uint256 maintenanceMarginFraction,
+        uint256 initialMarginRatioD18,
+        uint256 maintenanceMarginRatioD18,
         uint256 liquidationRewardRatioD18,
-        uint256 maxLiquidationLimitAccumulationMultiplier
+        uint256 maxLiquidationLimitAccumulationMultiplier,
+        uint256 maxSecondsInLiquidationWindow,
+        uint256 minimumPositionMargin
     ) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
-        config.initialMarginFraction = initialMarginFraction;
-        config.maintenanceMarginFraction = maintenanceMarginFraction;
+        config.initialMarginRatioD18 = initialMarginRatioD18;
+        config.maintenanceMarginRatioD18 = maintenanceMarginRatioD18;
         config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
         config
             .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
+        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
+        config.minimumPositionMargin = minimumPositionMargin;
+
         emit LiquidationParametersSet(
             marketId,
-            initialMarginFraction,
-            maintenanceMarginFraction,
+            initialMarginRatioD18,
+            maintenanceMarginRatioD18,
             liquidationRewardRatioD18,
-            maxLiquidationLimitAccumulationMultiplier
+            maxLiquidationLimitAccumulationMultiplier,
+            maxSecondsInLiquidationWindow,
+            minimumPositionMargin
         );
     }
 
-    function setLockedOiPercent(uint128 marketId, uint256 lockedOiPercent) external override {
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external override {
         PerpsMarket.load(marketId).onlyMarketOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
-        config.lockedOiPercent = lockedOiPercent;
-        emit LockedOiPercentSet(marketId, lockedOiPercent);
+        config.lockedOiRatioD18 = lockedOiRatioD18;
+        emit LockedOiRatioD18Set(marketId, lockedOiRatioD18);
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function getSettlementStrategy(
         uint128 marketId,
         uint256 strategyId
@@ -108,6 +143,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         return PerpsMarketConfiguration.load(marketId).settlementStrategies[strategyId];
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function getLiquidationParameters(
         uint128 marketId
     )
@@ -115,21 +153,26 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         view
         override
         returns (
-            uint256 initialMarginFraction,
-            uint256 maintenanceMarginFraction,
+            uint256 initialMarginRatioD18,
+            uint256 maintenanceMarginRatioD18,
             uint256 liquidationRewardRatioD18,
-            uint256 maxLiquidationLimitAccumulationMultiplier
+            uint256 maxLiquidationLimitAccumulationMultiplier,
+            uint256 maxSecondsInLiquidationWindow
         )
     {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
-        initialMarginFraction = config.initialMarginFraction;
-        maintenanceMarginFraction = config.maintenanceMarginFraction;
+        initialMarginRatioD18 = config.initialMarginRatioD18;
+        maintenanceMarginRatioD18 = config.maintenanceMarginRatioD18;
         liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
         maxLiquidationLimitAccumulationMultiplier = config
             .maxLiquidationLimitAccumulationMultiplier;
+        maxSecondsInLiquidationWindow = config.maxSecondsInLiquidationWindow;
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function getFundingParameters(
         uint128 marketId
     ) external view override returns (uint256 skewScale, uint256 maxFundingVelocity) {
@@ -139,14 +182,20 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         maxFundingVelocity = config.maxFundingVelocity;
     }
 
-    function getMaxMarketValue(
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getMaxMarketSize(
         uint128 marketId
-    ) external view override returns (uint256 maxMarketValue) {
+    ) external view override returns (uint256 maxMarketSize) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
-        maxMarketValue = config.maxMarketValue;
+        maxMarketSize = config.maxMarketSize;
     }
 
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
     function getOrderFees(
         uint128 marketId
     ) external view override returns (uint256 makerFee, uint256 takerFee) {
@@ -156,9 +205,12 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         takerFee = config.orderFees.takerFee;
     }
 
-    function getLockedOiPercent(uint128 marketId) external view override returns (uint256) {
+    /**
+     * @inheritdoc IMarketConfigurationModule
+     */
+    function getLockedOiRatioD18(uint128 marketId) external view override returns (uint256) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
-        return config.lockedOiPercent;
+        return config.lockedOiRatioD18;
     }
 }
