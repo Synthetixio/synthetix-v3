@@ -7,10 +7,11 @@ import {MockPyth as BaseMockPyth} from "@synthetixio/oracle-manager/contracts/mo
  * @title Module for connecting to other systems.
  * See oracle-manager/../MockPyth
  */
-// solhint-disable-next-line no-empty-blocks
 contract MockPyth is BaseMockPyth {
+    // solhint-disable no-empty-blocks
     constructor(
         uint _validTimePeriod,
         uint _singleUpdateFeeInWei
     ) BaseMockPyth(_validTimePeriod, _singleUpdateFeeInWei) {}
+    // solhint-enable no-empty-blocks
 }
