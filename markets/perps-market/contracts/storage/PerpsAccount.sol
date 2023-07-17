@@ -6,7 +6,6 @@ import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contra
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {Position} from "./Position.sol";
-import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
@@ -43,8 +42,6 @@ library PerpsAccount {
         SetUtil.UintSet activeCollateralTypes;
         // @dev set of open position market ids
         SetUtil.UintSet openPositionMarketIds;
-        // @dev a single order per account is allowed we always use index 0 `asyncOrder[0]`. The mapping is used to isolate storage layout from the rest of the struct.
-        mapping(uint128 => AsyncOrder.Data) asyncOrder;
     }
 
     error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
@@ -53,25 +50,12 @@ library PerpsAccount {
 
     error AccountLiquidatable(uint128 accountId);
 
-    error OrderNotValid();
-
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
 
         assembly {
             account.slot := s
         }
-    }
-
-    function getValidOrder(
-        Data storage self,
-        uint marketId
-    ) internal view returns (AsyncOrder.Data storage) {
-        AsyncOrder.Data storage order = self.asyncOrder[0];
-        if (order.marketId != marketId || order.sizeDelta == 0) {
-            revert OrderNotValid();
-        }
-        return order;
     }
 
     function isEligibleForLiquidation(

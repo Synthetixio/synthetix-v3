@@ -59,7 +59,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
-        AsyncOrder.Data storage order = PerpsAccount.load(commitment.accountId).asyncOrder[0];
+        AsyncOrder.Data storage order = AsyncOrder.load(commitment.accountId);
 
         if (order.sizeDelta != 0 && order.marketId == commitment.marketId) {
             revert OrderAlreadyCommitted(commitment.marketId, commitment.accountId);
@@ -103,20 +103,19 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getOrder(
         uint128 marketId,
         uint128 accountId
-    ) external view override returns (AsyncOrder.Data memory) {
-        AsyncOrder.Data memory order = PerpsAccount.load(accountId).asyncOrder[0];
+    ) external view override returns (AsyncOrder.Data memory order) {
+        order = AsyncOrder.load(accountId);
         if (order.marketId != marketId) {
             // return emtpy order if marketId does not match
-            return AsyncOrder.Data(0, 0, 0, 0, 0, 0, 0);
+            order = AsyncOrder.Data(0, 0, 0, 0, 0, 0, 0);
         }
-        return order;
     }
 
     /**
      * @inheritdoc IAsyncOrderModule
      */
     function cancelOrder(uint128 marketId, uint128 accountId) external override {
-        AsyncOrder.Data storage order = PerpsAccount.load(accountId).getValidOrder(marketId);
+        AsyncOrder.Data storage order = AsyncOrder.loadValid(accountId, marketId);
 
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)

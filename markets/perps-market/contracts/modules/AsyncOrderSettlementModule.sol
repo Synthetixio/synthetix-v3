@@ -203,7 +203,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         uint128 marketId,
         uint128 accountId
     ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
-        AsyncOrder.Data storage order = PerpsAccount.load(accountId).getValidOrder(marketId);
+        AsyncOrder.Data storage order = AsyncOrder.loadValid(accountId, marketId);
 
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
