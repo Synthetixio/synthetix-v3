@@ -64,10 +64,10 @@ describe('SynthetixElectionModule - Elections', function () {
   });
 
   describe('when the election module is initialized', function () {
-    // before('set next epoch seat count to 2', async function () {
-    //   const tx = await c.CoreProxy.setNextEpochSeatCount(2);
-    //   await tx.wait();
-    // });
+    before('set next epoch seat count to 2', async function () {
+      const tx = await c.CoreProxy.setNextEpochSeatCount(2);
+      await tx.wait();
+    });
 
     it('shows the expected NFT owners', async function () {
       assertBn.equal(await c.CouncilToken.balanceOf(await owner.getAddress()), 1);

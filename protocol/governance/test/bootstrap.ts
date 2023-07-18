@@ -22,7 +22,6 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<C
     // Use always the same date to allow to cache the cannon build. If we leave the default
     // value it will use block.timestamp and generate a new build on each run.
     `initial_epoch_start=${Math.floor(new Date(new Date().getFullYear() + 2, 0).valueOf() / 1000)}`,
-    `initial_epoch_seat_count=2`,
   ],
 } as { cannonfile: string });
 
