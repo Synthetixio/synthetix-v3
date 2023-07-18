@@ -100,6 +100,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     provider: () => getProvider(),
     signers: () => getSigners(),
     owner: () => getOwner(),
+    traders: () => getSigners().slice(1),
     systems: () => systems,
   };
 

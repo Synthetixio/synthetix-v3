@@ -1,11 +1,11 @@
 import { bn, bootstrap } from '../../bootstrap';
 import { wei } from '@synthetixio/wei';
 import { utils } from 'ethers';
-import assert from 'assert';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('PerpCollateralModule', async () => {
   // Hardcoding args here but this will eventually be moved into generators.
-  const { signers, owner, systems, restore, markets } = bootstrap({
+  const { traders, owner, systems, restore, markets } = bootstrap({
     pool: {
       initialCollateralPrice: bn(10_000),
     },
@@ -64,7 +64,16 @@ describe('PerpCollateralModule', async () => {
   });
 
   describe('setCollateralConfiguration()', () => {
-    it('should not allow non-owners from configuring collateral');
+    it('should not allow non-owners from configuring collateral', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = await traders()[0].getAddress();
+      await assertRevert(
+        PerpMarketProxy.connect(trader).setCollateralConfiguration([], [], []),
+        `Unauthorized("${trader}")`
+      );
+    });
+
     it('should successfully configure many collaterals');
     it('should clear previous collaterals when configuring with new');
     it('should revert when type is address(0)');
