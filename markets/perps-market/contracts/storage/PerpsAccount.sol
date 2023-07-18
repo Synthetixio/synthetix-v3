@@ -247,19 +247,7 @@ library PerpsAccount {
         for (uint i = 1; i < activeCollateralTypesLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
             if (synthMarketId != SNX_USD_MARKET_ID) {
-                uint amount = self.collateralAmounts[synthMarketId];
-                address synth = factory.spotMarket.getSynth(synthMarketId);
-                factory.synthetix.withdrawMarketCollateral(factory.perpsMarketId, synth, amount);
-
-                // TODO what do we use for referer here/ min amount?
-                (uint amountUsd, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
-                    synthMarketId,
-                    amount,
-                    0,
-                    address(0)
-                );
-                factory.synthetix.depositMarketUsd(factory.perpsMarketId, address(this), amountUsd);
-                updateCollateralAmount(self, synthMarketId, -(amount.toInt()));
+                _deductAllSynth(self, factory, synthMarketId);
             }
         }
     }
@@ -273,6 +261,7 @@ library PerpsAccount {
             .load()
             .synthDeductionPriority;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         for (uint i = 0; i < synthDeductionPriority.length; i++) {
             uint128 marketId = synthDeductionPriority[i];
             uint availableAmount = self.collateralAmounts[marketId];
@@ -291,14 +280,20 @@ library PerpsAccount {
                     leftoverAmount -= availableAmount;
                 }
             } else {
-                // TODO: check if market is paused; if not, continue
-                (uint availableAmountUsd, ) = spotMarket.quoteSellExactIn(
+                (uint synthAmountRequired, ) = spotMarket.quoteSellExactOut(
                     marketId,
-                    availableAmount
+                    leftoverAmount
                 );
 
-                if (availableAmountUsd >= leftoverAmount) {
-                    // TODO referer/max amt
+                address synthToken = factory.spotMarket.getSynth(marketId);
+
+                if (availableAmount >= synthAmountRequired) {
+                    factory.synthetix.withdrawMarketCollateral(
+                        factory.perpsMarketId,
+                        synthToken,
+                        synthAmountRequired
+                    );
+
                     (uint amountToDeduct, ) = spotMarket.sellExactOut(
                         marketId,
                         leftoverAmount,
@@ -309,15 +304,20 @@ library PerpsAccount {
                     leftoverAmount = 0;
                     break;
                 } else {
-                    // TODO referer
-                    (uint amountToDeduct, ) = spotMarket.sellExactIn(
+                    factory.synthetix.withdrawMarketCollateral(
+                        factory.perpsMarketId,
+                        synthToken,
+                        availableAmount
+                    );
+
+                    (uint amountToDeductUsd, ) = spotMarket.sellExactIn(
                         marketId,
                         availableAmount,
                         0,
                         address(0)
                     );
                     updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
-                    leftoverAmount -= amountToDeduct;
+                    leftoverAmount -= amountToDeductUsd;
                 }
             }
         }
@@ -325,20 +325,6 @@ library PerpsAccount {
         if (leftoverAmount > 0) {
             revert InsufficientMarginError(leftoverAmount);
         }
-    }
-
-    struct RuntimeLiquidationData {
-        uint totalLosingPnl;
-        uint accumulatedLiquidationRewards;
-        uint liquidationReward;
-        uint losingMarketsLength;
-        uint profitableMarketsLength;
-        uint128[] profitableMarkets;
-        uint128[] losingMarkets;
-        uint amountToDeposit;
-        uint amountToLiquidateRatioD18;
-        uint totalLosingPnlRatioD18;
-        uint totalAvailableForDeposit;
     }
 
     function liquidateAccount(Data storage self) internal returns (uint256 reward) {
@@ -398,7 +384,6 @@ library PerpsAccount {
         // update position markets
         updateOpenPositions(self, marketId, position.size);
 
-        // TODO: check with afif if we want to continue accruing funding after partial liquidation; only relevant if accounts are recoverable...
         // update market data
         perpsMarket.updateMarketSizes(oldPositionSize, position.size);
 
@@ -406,5 +391,31 @@ library PerpsAccount {
         (, , , , liquidationReward) = PerpsMarketConfiguration
             .load(marketId)
             .calculateRequiredMargins(amtToLiquidationInt, price);
+    }
+
+    function _deductAllSynth(
+        Data storage self,
+        PerpsMarketFactory.Data storage factory,
+        uint128 synthMarketId
+    ) private {
+        uint amount = self.collateralAmounts[synthMarketId];
+        address synth = factory.spotMarket.getSynth(synthMarketId);
+
+        // 1. withdraw collateral from market manager
+        factory.synthetix.withdrawMarketCollateral(factory.perpsMarketId, synth, amount);
+
+        // 2. sell collateral for snxUSD
+        (uint amountUsd, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
+            synthMarketId,
+            amount,
+            0,
+            address(0)
+        );
+
+        // 3. deposit snxUSD into market manager
+        factory.synthetix.depositMarketUsd(factory.perpsMarketId, address(this), amountUsd);
+
+        // 4. update account collateral amount
+        updateCollateralAmount(self, synthMarketId, -(amount.toInt()));
     }
 }

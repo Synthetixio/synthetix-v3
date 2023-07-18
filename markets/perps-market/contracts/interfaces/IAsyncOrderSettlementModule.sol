@@ -34,6 +34,7 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed marketId,
         uint128 indexed accountId,
         uint256 fillPrice,
+        int256 pnl,
         int128 sizeDelta,
         int128 newSize,
         uint256 collectedFees,
@@ -47,10 +48,9 @@ interface IAsyncOrderSettlementModule {
         uint128 marketId;
         uint128 accountId;
         int128 newPositionSize;
-        int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
-        uint256 amountToDeposit;
+        uint256 amountToDeduct;
         uint256 settlementReward;
     }
 

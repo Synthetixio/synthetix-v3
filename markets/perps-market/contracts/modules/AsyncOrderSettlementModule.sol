@@ -120,10 +120,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         SettlementStrategy.Data storage settlementStrategy
     ) private {
         SettleOrderRuntime memory runtime;
-
         runtime.accountId = asyncOrder.accountId;
         runtime.marketId = asyncOrder.marketId;
-
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
         (
@@ -132,54 +130,43 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             uint fillPrice,
             Position.Data storage oldPosition
         ) = asyncOrder.validateOrder(settlementStrategy, price);
-
         runtime.newPositionSize = newPosition.size;
-        runtime.sizeDelta = asyncOrder.sizeDelta;
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
+
         // use fill price to calculate realized pnl
         (runtime.pnl, , , ) = oldPosition.getPnl(fillPrice);
-
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
+
         if (runtime.pnl > 0) {
-            factory.synthetix.withdrawMarketUsd(runtime.marketId, address(this), runtime.pnlUint);
-            perpsAccount.addCollateralAmount(SNX_USD_MARKET_ID, runtime.pnlUint);
+            perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
         } else if (runtime.pnl < 0) {
-            perpsAccount.deductFromAccount(runtime.pnlUint);
-            runtime.amountToDeposit = runtime.pnlUint;
-            // all gets deposited below with fees
+            runtime.amountToDeduct = runtime.pnlUint;
         }
 
-        // after pnl is realized, update position on the perps market, this will also update the position.
-        PerpsMarket.MarketUpdateData memory updateData = PerpsMarket
-            .loadValid(runtime.marketId)
-            .updatePositionData(runtime.accountId, newPosition);
-        emit MarketUpdated(
-            updateData.marketId,
-            price,
-            updateData.skew,
-            updateData.size,
-            runtime.sizeDelta,
-            updateData.currentFundingRate,
-            updateData.currentFundingVelocity
-        );
+        // after pnl is realized, update position
+        PerpsMarket.loadValid(runtime.marketId).updatePositionData(runtime.accountId, newPosition);
+        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
 
-        perpsAccount.updatePositionMarkets(runtime.marketId, runtime.newPositionSize);
-        perpsAccount.deductFromAccount(totalFees);
-
+        // since margin is deposited, as long as the owed collateral is deducted
+        // fees are realized by the stakers
+        perpsAccount.deductFromAccount(runtime.amountToDeduct + totalFees);
         runtime.settlementReward = settlementStrategy.settlementReward;
-        runtime.amountToDeposit += totalFees - runtime.settlementReward;
+
         if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.usdToken.transfer(msg.sender, runtime.settlementReward);
+            factory.synthetix.withdrawMarketUsd(
+                factory.perpsMarketId,
+                msg.sender,
+                runtime.settlementReward
+            );
         }
 
-        if (runtime.amountToDeposit > 0) {
-            // deposit into market manager
-            factory.depositToMarketManager(runtime.marketId, runtime.amountToDeposit);
-        }
+        // exctracted from asyncOrder before order is reset
+        bytes32 trackingCode = asyncOrder.trackingCode;
 
+        // trader can now commit a new order
         asyncOrder.reset();
 
         // emit event
@@ -187,11 +174,12 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.marketId,
             runtime.accountId,
             fillPrice,
-            runtime.sizeDelta,
+            runtime.pnl,
+            asyncOrder.sizeDelta,
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            asyncOrder.trackingCode,
+            trackingCode,
             msg.sender
         );
     }
