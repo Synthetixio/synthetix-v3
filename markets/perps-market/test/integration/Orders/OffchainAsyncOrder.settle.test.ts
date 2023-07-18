@@ -45,7 +45,7 @@ describe('Settle Offchain Async Order test', () => {
       it('reverts if market id is incorrect', async () => {
         await assertRevert(
           systems().PerpsMarket.connect(trader1()).settle(1337, 2),
-          'InvalidMarket("1337")'
+          'OrderNotValid()'
         );
       });
 
@@ -88,7 +88,7 @@ describe('Settle Offchain Async Order test', () => {
           systems()
             .PerpsMarket.connect(keeper())
             .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
-          'InvalidMarket("1337")'
+          'OrderNotValid()'
         );
       });
 

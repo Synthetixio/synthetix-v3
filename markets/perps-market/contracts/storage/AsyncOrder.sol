@@ -37,9 +37,19 @@ library AsyncOrder {
         uint256 settlementExpiration
     );
 
+    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
+
     error OrderNotValid();
 
-    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
+    /**
+     * @notice Gets thrown when commit order is called when a pending order already exists.
+     */
+    error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
+
+    /**
+     * @notice Gets thrown when pending orders exist and attempts to modify collateral.
+     */
+    error PendingOrderExist();
 
     struct Data {
         uint128 accountId;
@@ -58,6 +68,46 @@ library AsyncOrder {
         uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
+    }
+
+    function load(uint128 accountId) internal pure returns (Data storage order) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.AsyncOrder", accountId));
+
+        assembly {
+            order.slot := s
+        }
+    }
+
+    /**
+     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
+     * @dev non-existent order is considered an order with sizeDelta == 0.
+     */
+    function loadValid(
+        uint128 accountId,
+        uint128 marketId
+    ) internal view returns (Data storage order) {
+        order = load(accountId);
+        if (order.marketId != marketId || order.sizeDelta == 0) {
+            revert OrderNotValid();
+        }
+    }
+
+    /**
+     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
+     * @dev non-existent order is considered an order with sizeDelta == 0.
+     */
+    function createValid(
+        uint128 accountId,
+        uint128 marketId
+    ) internal view returns (Data storage order) {
+        order = load(accountId);
+        if (order.sizeDelta != 0 && order.marketId == marketId) {
+            revert OrderAlreadyCommitted(marketId, accountId);
+        }
+
+        if (order.sizeDelta != 0) {
+            revert PendingOrderExist();
+        }
     }
 
     function update(
@@ -107,12 +157,6 @@ library AsyncOrder {
                 self.settlementTime,
                 settlementExpiration
             );
-        }
-    }
-
-    function checkValidity(Data storage self) internal view {
-        if (self.sizeDelta == 0) {
-            revert OrderNotValid();
         }
     }
 
