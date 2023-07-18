@@ -88,7 +88,7 @@ library AsyncOrder {
          */
         uint128 marketId;
         /**
-         * @dev Order size delta (of asset units expresed in decimal 18 digits). It can be positive or negative.
+         * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
          */
         int128 sizeDelta;
         /**
