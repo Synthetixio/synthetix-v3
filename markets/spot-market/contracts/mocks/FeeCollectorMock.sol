@@ -17,6 +17,11 @@ contract FeeCollectorMock is IFeeCollector {
         address sender,
         uint8 tradeType
     ) external override returns (uint256) {
+        // mention the variables in the block to prevent unused local variable warning
+        marketId;
+        sender;
+        tradeType;
+
         uint256 feeToCollect = feeAmount / 2;
         return feeToCollect;
     }

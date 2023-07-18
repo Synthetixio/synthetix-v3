@@ -4,6 +4,7 @@ pragma solidity >=0.8.4;
 import "../interfaces/external/ICcipRouterClient.sol";
 
 contract CcipRouterMock {
+    // solhint-disable no-empty-blocks
     function ccipSend(
         uint64 destinationChainId,
         CcipClient.EVM2AnyMessage calldata message
@@ -13,4 +14,5 @@ contract CcipRouterMock {
         uint64 destinationChainId,
         CcipClient.EVM2AnyMessage memory message
     ) external view virtual returns (uint256 fee) {}
+    // solhint-enable no-empty-blocks
 }

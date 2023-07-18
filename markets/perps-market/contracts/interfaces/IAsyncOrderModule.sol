@@ -48,11 +48,6 @@ interface IAsyncOrderModule {
     );
 
     /**
-     * @notice Gets thrown when commit order is called when a pending order already exists.
-     */
-    error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
-
-    /**
      * @notice Commit an async order via this function
      * @param commitment Order commitment data (see AsyncOrder.OrderCommitmentRequest struct).
      * @return retOrder order details (see AsyncOrder.Data struct).
