@@ -9,7 +9,7 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
     /**
      * @inheritdoc IPerpConfigurationModule
      */
-    function configureMarket(IPerpConfigurationModule.ConfigureParameters memory data) external {
+    function setMarketConfiguration(IPerpConfigurationModule.ConfigureParameters memory data) external {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage config = PerpMarketConfiguration.load();
@@ -33,7 +33,7 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
     /**
      * @inheritdoc IPerpConfigurationModule
      */
-    function configureMarketById(
+    function setMarketConfigurationById(
         uint128 marketId,
         IPerpConfigurationModule.ConfigureByMarketParameters memory data
     ) external {
@@ -61,14 +61,14 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
     /**
      * @inheritdoc IPerpConfigurationModule
      */
-    function marketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory) {
+    function getMarketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory) {
         return PerpMarketConfiguration.load();
     }
 
     /**
      * @inheritdoc IPerpConfigurationModule
      */
-    function marketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory) {
+    function getMarketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory) {
         return PerpMarketConfiguration.load(marketId);
     }
 }

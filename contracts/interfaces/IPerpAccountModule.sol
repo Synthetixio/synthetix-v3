@@ -18,7 +18,7 @@ interface IPerpAccountModule {
     /**
      * @dev Returns a digest of the account including, but not limited to collateral, orders, positions etc.
      */
-    function accountDigest(
+    function getAccountDigest(
         uint128 accountId,
         uint128 marketId
     ) external view returns (IPerpAccountModule.AccountDigest memory digest);

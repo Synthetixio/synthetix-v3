@@ -118,8 +118,8 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         // Derive fees incurred if this order were to be settled successfully.
-        fee = Order.orderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
-        keeperFee = Order.keeperFee(params.keeperFeeBufferUsd, params.oraclePrice);
+        fee = Order.getOrderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
+        keeperFee = Order.getKeeperFee(params.keeperFeeBufferUsd, params.oraclePrice);
 
         // Assuming there is an existing position (no open position will be a noop), determine if they have enough
         // margin to continue this operation. Ensuring we do not allow them to place an open position into instant
@@ -130,13 +130,13 @@ library Position {
         //
         // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
         // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
-        int256 _remainingMargin = remainingMargin(currentPosition, params.fillPrice);
+        int256 _remainingMargin = getRemainingMargin(currentPosition, params.fillPrice);
         if (_remainingMargin < 0) {
             revert PerpErrors.InsufficientMargin();
         }
 
         // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liquidations.
-        uint256 _liquidationMargin = liquidationMargin(currentPosition, params.fillPrice);
+        uint256 _liquidationMargin = getLiquidationMargin(currentPosition, params.fillPrice);
         if (MathUtil.abs(currentPosition.size) != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
             revert PerpErrors.CanLiquidatePosition(accountId);
         }
@@ -206,20 +206,20 @@ library Position {
     /**
      * @dev Returns a position's accrued funding.
      */
-    function accruedFunding(Position.Data storage self, uint256 price) internal view returns (int256) {
+    function getAccruedFunding(Position.Data storage self, uint256 price) internal view returns (int256) {
         if (self.size == 0) {
             return 0;
         }
 
         PerpMarket.Data storage market = PerpMarket.load(self.marketId);
-        int256 netFundingPerUnit = market.nextFunding(price) - self.entryFundingAccrued;
+        int256 netFundingPerUnit = market.getNextFunding(price) - self.entryFundingAccrued;
         return self.size * netFundingPerUnit;
     }
 
     /**
      * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
-    function collateralUsd(Position.Data storage self) internal view returns (uint256) {
+    function getCollateralUsd(Position.Data storage self) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
 
@@ -253,9 +253,9 @@ library Position {
      * We return an `int` here as after all fees and PnL, this can be negative. The caller should verify that this
      * is positive before proceeding with further operations.
      */
-    function remainingMargin(Position.Data storage self, uint256 price) internal view returns (int256) {
-        int256 margin = collateralUsd(self).toInt();
-        int256 funding = accruedFunding(self, price);
+    function getRemainingMargin(Position.Data storage self, uint256 price) internal view returns (int256) {
+        int256 margin = getCollateralUsd(self).toInt();
+        int256 funding = getAccruedFunding(self, price);
 
         // Calculate this position's PnL
         int256 priceDelta = price.toInt() - self.entryPrice.toInt();
@@ -268,7 +268,7 @@ library Position {
     /**
      * @dev Returns a number in USD which if a position's remaining margin is lte then position can be liquidated.
      */
-    function liquidationMargin(Position.Data storage self, uint256 price) internal view returns (uint256) {
+    function getLiquidationMargin(Position.Data storage self, uint256 price) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
 
@@ -313,7 +313,7 @@ library Position {
      *  premium = 100 / 1,000,000 * (100 * 1200) * multiplier
      *          = 12 * multiplier
      */
-    function liquidationPremium(Position.Data storage self, uint256 price) internal view returns (uint256) {
+    function getLiquidationPremium(Position.Data storage self, uint256 price) internal view returns (uint256) {
         if (self.size == 0) {
             return 0;
         }
@@ -335,9 +335,9 @@ library Position {
             return false;
         }
         uint256 remaining = MathUtil
-            .max(0, remainingMargin(self, price) - liquidationPremium(self, price).toInt())
+            .max(0, getRemainingMargin(self, price) - getLiquidationPremium(self, price).toInt())
             .toUint();
-        return remaining <= liquidationMargin(self, price);
+        return remaining <= getLiquidationMargin(self, price);
     }
 
     /**

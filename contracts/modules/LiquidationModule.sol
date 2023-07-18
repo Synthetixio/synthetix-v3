@@ -9,17 +9,17 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function flag(uint128 accountId, uint128 marketId) external {}
+    function flagPosition(uint128 accountId, uint128 marketId) external {}
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidate(uint128 accountId, uint128 marketId) external {}
+    function liquidatePosition(uint128 accountId, uint128 marketId) external {}
 
     // --- Views --- //
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function canLiquidate(uint128 accountId, uint128 marketId) external view returns (bool) {}
+    function canLiquidatePosition(uint128 accountId, uint128 marketId) external view returns (bool) {}
 }

@@ -43,16 +43,16 @@ contract OrderModule is IOrderModule {
             revert PerpErrors.OrderFound(accountId);
         }
 
-        uint256 oraclePrice = market.oraclePrice();
+        uint256 oraclePrice = market.getOraclePrice();
 
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.currentFundingVelocity());
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: sizeDelta,
             oraclePrice: oraclePrice,
-            fillPrice: Order.fillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+            fillPrice: Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
             makerFee: marketConfig.makerFee,
             takerFee: marketConfig.takerFee,
             limitPrice: limitPrice,
@@ -122,7 +122,7 @@ contract OrderModule is IOrderModule {
         }
 
         // Ensure pythPrice does not deviate too far from oracle price.
-        uint256 oraclePrice = market.oraclePrice();
+        uint256 oraclePrice = market.getOraclePrice();
         uint256 priceDivergence = oraclePrice > pythPrice
             ? oraclePrice / pythPrice - DecimalMath.UNIT
             : pythPrice / oraclePrice - DecimalMath.UNIT;
@@ -152,14 +152,14 @@ contract OrderModule is IOrderModule {
         // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
         // such that keepers can conditionally update prices only if necessary.
         PerpMarket.updatePythPrice(priceUpdateData);
-        (uint256 pythPrice, uint256 publishTime) = market.pythPrice(order.commitmentTime);
+        (uint256 pythPrice, uint256 publishTime) = market.getPythPrice(order.commitmentTime);
 
         validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, pythPrice);
 
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: order.sizeDelta,
             oraclePrice: pythPrice,
-            fillPrice: Order.fillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice),
+            fillPrice: Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice),
             makerFee: marketConfig.makerFee,
             takerFee: marketConfig.takerFee,
             limitPrice: order.limitPrice,
@@ -167,7 +167,7 @@ contract OrderModule is IOrderModule {
         });
 
         (int256 fundingRate, ) = market.recomputeFunding(pythPrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.currentFundingVelocity());
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(
@@ -191,14 +191,14 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function orderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee) {
+    function getOrderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         int128 skew = market.skew;
-        fee = Order.orderFee(
+        fee = Order.getOrderFee(
             sizeDelta,
-            Order.fillPrice(skew, marketConfig.skewScale, sizeDelta, market.oraclePrice()),
+            Order.getFillPrice(skew, marketConfig.skewScale, sizeDelta, market.getOraclePrice()),
             skew,
             marketConfig.makerFee,
             marketConfig.takerFee
@@ -208,14 +208,18 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function orderKeeperFee(uint256 keeperFeeBufferUsd) external view returns (uint256 fee) {}
+    function getOrderKeeperFee(uint256 keeperFeeBufferUsd) external view returns (uint256 fee) {}
 
     /**
      * @inheritdoc IOrderModule
      */
-    function fillPrice(uint128 marketId, int128 sizeDelta, uint256 oraclePrice) external view returns (uint256 price) {
+    function getFillPrice(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 oraclePrice
+    ) external view returns (uint256 price) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        price = Order.fillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice);
+        price = Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice);
     }
 }

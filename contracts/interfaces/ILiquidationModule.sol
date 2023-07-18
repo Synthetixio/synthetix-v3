@@ -7,17 +7,17 @@ interface ILiquidationModule {
     /**
      * @dev Flags position belonging to `accountId` for liquidation. A flagged position is frozen from all operations.
      */
-    function flag(uint128 accountId, uint128 marketId) external;
+    function flagPosition(uint128 accountId, uint128 marketId) external;
 
     /**
      * @dev Liquidates a flagged position.
      */
-    function liquidate(uint128 accountId, uint128 marketId) external;
+    function liquidatePosition(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 
     /**
      * @dev Returns whether a position owned by `accountId` can be flagged for liquidated.
      */
-    function canLiquidate(uint128 accountId, uint128 marketId) external view returns (bool);
+    function canLiquidatePosition(uint128 accountId, uint128 marketId) external view returns (bool);
 }

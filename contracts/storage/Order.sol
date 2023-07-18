@@ -29,7 +29,7 @@ library Order {
     /**
      * @dev See IOrderModule.fillPrice
      */
-    function fillPrice(
+    function getFillPrice(
         int128 skew,
         uint128 skewScale,
         int128 sizeDelta,
@@ -45,14 +45,14 @@ library Order {
     /**
      * @dev See IOrderModule.orderFee
      */
-    function orderFee(
+    function getOrderFee(
         int128 sizeDelta,
-        uint256 _fillPrice,
+        uint256 fillPrice,
         int128 skew,
         uint128 makerFee,
         uint128 takerFee
     ) internal pure returns (uint256) {
-        int256 notionalDiff = sizeDelta.mulDecimal(_fillPrice.toInt());
+        int256 notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // Does this trade keep the skew on one side?
         if (MathUtil.sameSide(skew + sizeDelta, skew)) {
@@ -93,7 +93,7 @@ library Order {
      *
      * See IOrderModule.orderKeeperFee for more details.
      */
-    function keeperFee(uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
+    function getKeeperFee(uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         uint256 baseKeeperFeeUsd = globalConfig.keeperSettlementGasUnits * block.basefee * price;
         uint256 boundedKeeperFeeUsd = MathUtil.max(

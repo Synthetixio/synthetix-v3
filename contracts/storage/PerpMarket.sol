@@ -96,7 +96,7 @@ library PerpMarket {
     /**
      * @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
      */
-    function oraclePrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
+    function getOraclePrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
         price = globalConfig.oracleManager.process(marketConfig.oracleNodeId).price.toUint();
@@ -105,7 +105,7 @@ library PerpMarket {
     /**
      * @dev Returns the 'latest' Pyth price from the oracle predefined `pythPriceFeedId` between min/max.
      */
-    function pythPrice(
+    function getPythPrice(
         PerpMarket.Data storage self,
         uint256 commitmentTime
     ) internal view returns (uint256 price, uint256 publishTime) {
@@ -160,7 +160,7 @@ library PerpMarket {
     /**
      * @dev Returns the rate of funding rate change.
      */
-    function currentFundingVelocity(PerpMarket.Data storage self) internal view returns (int256) {
+    function getCurrentFundingVelocity(PerpMarket.Data storage self) internal view returns (int256) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
 
         int128 maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
@@ -184,7 +184,7 @@ library PerpMarket {
     /**
      * @dev Returns the proportional time elapsed since last funding (proportional by 1 day).
      */
-    function proportionalElapsed(PerpMarket.Data storage self) internal view returns (int256) {
+    function getProportionalElapsed(PerpMarket.Data storage self) internal view returns (int256) {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
@@ -199,7 +199,7 @@ library PerpMarket {
      * There is no variance in computation but will be affected based on outside modifications to
      * the market skew, max funding velocity, price, and time delta.
      */
-    function currentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
+    function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
         // calculations:
         //  - velocity          = proportional_skew * max_funding_velocity
         //  - proportional_skew = skew / skew_scale
@@ -216,20 +216,22 @@ library PerpMarket {
         // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
         //              = 0 + 0.0025 * 0.33564815
         //              = 0.00083912
-        return self.currentFundingRateComputed + (currentFundingVelocity(self).mulDecimal(proportionalElapsed(self)));
+        return
+            self.currentFundingRateComputed +
+            (getCurrentFundingVelocity(self).mulDecimal(getProportionalElapsed(self)));
     }
 
     /**
      * @dev Returns the next market funding accrued value.
      */
-    function nextFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
-        int256 fundingRate = currentFundingRate(self);
+    function getNextFunding(PerpMarket.Data storage self, uint256 _oraclePrice) internal view returns (int256) {
+        int256 fundingRate = getCurrentFundingRate(self);
         // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(
             (DecimalMath.UNIT * 2).toInt()
         );
         // Calculate the additive accrued funding delta for the next funding accrued value.
-        int256 unrecordedFunding = avgFundingRate.mulDecimal(proportionalElapsed(self)).mulDecimal(
+        int256 unrecordedFunding = avgFundingRate.mulDecimal(getProportionalElapsed(self)).mulDecimal(
             _oraclePrice.toInt()
         );
         return self.currentFundingAccruedComputed + unrecordedFunding;
@@ -242,8 +244,8 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint256 _oraclePrice
     ) internal returns (int256 fundingRate, int256 fundingAccrued) {
-        fundingRate = currentFundingRate(self);
-        fundingAccrued = nextFunding(self, _oraclePrice);
+        fundingRate = getCurrentFundingRate(self);
+        fundingAccrued = getNextFunding(self, _oraclePrice);
 
         self.currentFundingRateComputed = fundingRate;
         self.currentFundingAccruedComputed = fundingAccrued;

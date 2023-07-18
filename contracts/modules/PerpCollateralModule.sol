@@ -66,8 +66,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
             // If an open position exists, verify this does _not_ place them into instant liquidation.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0) {
-                uint256 oraclePrice = market.oraclePrice();
-                if (position.canLiquidate(oraclePrice)) {
+                if (position.canLiquidate(market.getOraclePrice())) {
                     revert PerpErrors.CanLiquidatePosition(accountId);
                 }
             }

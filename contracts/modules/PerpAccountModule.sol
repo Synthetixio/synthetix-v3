@@ -7,7 +7,7 @@ contract PerpAccountModule is IPerpAccountModule {
     /**
      * @inheritdoc IPerpAccountModule
      */
-    function accountDigest(
+    function getAccountDigest(
         uint128 accountId,
         uint128 marketId
     ) external view returns (IPerpAccountModule.AccountDigest memory digest) {}

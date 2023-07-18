@@ -53,12 +53,12 @@ interface IPerpConfigurationModule {
     /**
      * @dev Configures parameters applied globally.
      */
-    function configureMarket(IPerpConfigurationModule.ConfigureParameters memory data) external;
+    function setMarketConfiguration(IPerpConfigurationModule.ConfigureParameters memory data) external;
 
     /**
      * @dev Configures a specific market by the `marketId`.
      */
-    function configureMarketById(
+    function setMarketConfigurationById(
         uint128 marketId,
         IPerpConfigurationModule.ConfigureByMarketParameters memory data
     ) external;
@@ -68,10 +68,10 @@ interface IPerpConfigurationModule {
     /**
      * @dev Returns global market parameters.
      */
-    function marketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory);
+    function getMarketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory);
 
     /**
      * @dev Returns market specific parameters.
      */
-    function marketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
+    function getMarketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
 }

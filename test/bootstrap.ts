@@ -18,6 +18,7 @@ import { CollateralMock } from '../typechain-types';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
+  AggregatorV3Mock: AggregatorV3Mock;
   PythMock: PythMock;
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
@@ -77,6 +78,7 @@ export const bootstrap = (args: BootstrapArgs) => {
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
+      AggregatorV3Mock: getContract('AggregatorV3Mock'),
       PythMock: getContract('PythMock'),
       // Difference between this and `Collateral{2}Mock`?
       //
@@ -132,12 +134,12 @@ export const bootstrap = (args: BootstrapArgs) => {
 
     before('configure global market', async () => {
       if (!hasConfiguredGlobally) {
-        await systems.PerpMarketProxy.connect(getOwner()).configureMarket(args.global);
+        await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
       }
     });
 
     before(`configure market - ${readableName}`, async () => {
-      await systems.PerpMarketProxy.connect(getOwner()).configureMarketById(marketId, specific);
+      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, specific);
     });
 
     return {
