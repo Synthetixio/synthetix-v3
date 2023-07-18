@@ -19,7 +19,6 @@ library Council {
         mapping(address => uint) councilTokenIds;
         // id of the last election
         uint lastElectionId;
-        ElectionSettings.Data nextElectionSettings;
     }
 
     enum ElectionPeriod {

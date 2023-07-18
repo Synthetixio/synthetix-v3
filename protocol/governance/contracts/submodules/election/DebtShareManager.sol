@@ -8,8 +8,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../../storage/DebtShare.sol";
 import "./ElectionBase.sol";
 
-import "hardhat/console.sol";
-
 /// @dev Tracks user Synthetix v2 debt chains on the local chain at a particular block number
 contract DebtShareManager is ElectionBase {
     using SafeCastU256 for uint256;
