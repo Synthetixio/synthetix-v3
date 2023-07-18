@@ -18,6 +18,11 @@ interface IPerpCollateralModule {
     // @dev Emitted when collateral is transferred between user <-> Account.
     event Transfer(address indexed from, address indexed to, int256 value);
 
+    // --- Errors --- //
+
+    // @dev Emitted when supplied configuration is incorrect.
+    error InvalidConfiguration();
+
     // --- Mutative --- //
 
     /**

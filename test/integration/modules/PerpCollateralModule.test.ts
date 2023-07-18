@@ -5,7 +5,7 @@ import assert from 'assert';
 
 describe('PerpCollateralModule', async () => {
   // Hardcoding args here but this will eventually be moved into generators.
-  const { systems, restore, markets } = bootstrap({
+  const { signers, owner, systems, restore, markets } = bootstrap({
     pool: {
       initialCollateralPrice: bn(10_000),
     },
@@ -46,11 +46,27 @@ describe('PerpCollateralModule', async () => {
 
   beforeEach(restore);
 
-  it('should do the thing', async () => {
-    const { PerpMarketProxy } = systems();
-    console.log(await PerpMarketProxy.getConfiguredCollaterals());
-    // console.log(await PerpMarketProxy.getMarketParameters());
-    // console.log(await PerpMarketProxy.getMarketParametersById(markets()[0].marketId()));
-    assert.equal(1, 1);
+  describe('transferTo()', () => {
+    it('should allow deposit of collateral to my account');
+    it('should affect an existing position when depositing');
+    it('should not allow deposit to an account that does not exist');
+    it('should not allow deposit of unsupported collateral');
+    it('should not allow a deposit that exceeds max cap');
+
+    it('should allow withdraw of collateral to my account');
+    it('should affect an existing position when withdrawing');
+    it('should not allow withdraw to an account that does not exist');
+    it('should not allow withdraw of non-existent collateral');
+    it('should not allow withdraw of more than what is available');
+    it('should not allow position to be liquidatable when withdrawing');
+
+    it('should not allow transfers at all when an order is pending');
+  });
+
+  describe('setCollateralConfiguration()', () => {
+    it('should not allow non-owners from configuring collateral');
+    it('should successfully configure many collaterals');
+    it('should clear previous collaterals when configuring with new');
+    it('should revert when type is address(0)');
   });
 });

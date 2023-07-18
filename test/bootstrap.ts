@@ -185,7 +185,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   const restore = snapshotCheckpoint(core.provider);
 
   return {
-    systems: () => systems,
+    ...core,
     restore,
     markets: () => markets,
     marketCollaterals: () => marketCollaterals,
