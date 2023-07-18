@@ -65,6 +65,10 @@ contract DebtShareManager is ElectionBase {
 
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
 
+        if (debtShareId == 0) {
+            return 0;
+        }
+
         return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
     }
 }
