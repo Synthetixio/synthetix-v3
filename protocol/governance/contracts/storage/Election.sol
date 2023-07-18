@@ -29,7 +29,7 @@ library Election {
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
         mapping(address => uint) candidateVotes;
-        // Pointer to current election settings
+        // Current election settings, should only be changed during Administration period
         ElectionSettings.Data settings;
     }
 
