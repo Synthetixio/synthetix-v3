@@ -5,6 +5,7 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import {
   PerpMarketProxy,
   AccountProxy,
+  SnxCollateralMock,
   SynthetixUsdCollateralMock,
   WrappedStakedEthCollateralMock,
   PythMock,
@@ -13,14 +14,14 @@ import {
 import type { IPerpConfigurationModule } from './generated/typechain/PerpConfigurationModule';
 import { BigNumber, utils } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
+import { CollateralMock } from '../typechain-types';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
-  SynthetixUsdCollateralMock: SynthetixUsdCollateralMock;
-  WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
   PythMock: PythMock;
-  CollateralMock: SynthetixUsdCollateralMock;
-  Collateral2Mock: WrappedStakedEthCollateralMock;
+  CollateralMock: CollateralMock;
+  Collateral2Mock: CollateralMock;
+  Collateral3Mock: CollateralMock;
 }
 
 // Hardcoded definition relative to provisioned contracts defined in the toml.
@@ -32,16 +33,13 @@ interface Contracts {
   ['synthetix.CoreProxy']: Systems['Core'];
   ['synthetix.USDProxy']: Systems['USD'];
   ['synthetix.oracle_manager.Proxy']: Systems['OracleManager'];
-
-  // These mocks are super questionable. I could probably mock everything out within this repo
-  // rather than relying on internal Synthetix test code...
-  ['synthetix.CollateralMock']: SynthetixUsdCollateralMock;
-  ['synthetix.Collateral2Mock']: WrappedStakedEthCollateralMock;
+  SnxCollateralMock: SnxCollateralMock;
   SynthetixUsdCollateralMock: SynthetixUsdCollateralMock;
   WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   AccountProxy: AccountProxy;
   PythMock: PythMock;
+  AggregatorV3Mock: AggregatorV3Mock;
 }
 
 // A set of intertwined operations occur on `coreBootstrap` invocation. Generally speaking, it:
@@ -54,12 +52,6 @@ interface Contracts {
 // @see: https://github.com/Synthetixio/synthetix-router/blob/master/src/utils/tests.ts#L23
 // @see: https://github.com/usecannon/cannon/blob/main/packages/hardhat-cannon/src/tasks/build.ts
 // @see: https://github.com/foundry-rs/foundry/commit/b02dcd26ff2aabc305cee61cd2fa3f7c3a85aad2
-//
-// Since this invocation is performed at the module root, this will _only_ be executed once no matter
-// how many times this bootstrap file is imported.
-//
-// TODO: These bootstrap methods may have to be reimplemented to not use `before` blocks. However, it might
-// be okay for core Synthetix related contracts.
 const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' });
 const restoreSnapshot = _bootstraped.createSnapshot();
 
@@ -72,31 +64,12 @@ export interface BootstrapArgs {
   }[];
 }
 
-// TODO: Refactor all of these implicit before blocks into explicit function calls defined within each test file.
-//
-// Less magic, more explicit, clearer, slightly more verbose but it allows for properly isolated and less likely
-// flakey tests when other devs contribute. Also gives way for better flexibility.
-
-// Added benefit is we can minimise the amount of `let` statements at each `describe` block. Gives way to even less
-// opportunity for devs to accidentally use a variable that _may_ be mutative/stateful between tests.
-//
-// Also use beforeEach more often:
-//  - Deploy contracts
-//  - Snapshot 1
-//  - Provision with reasonable defaults/markets/collateral etc.
-//  - Snapshot 2
-//  - Run test
-//  - Restore to snapshot 2
-//  - Restore to snapshot 1 (for perhaps configuration/setup tests)
-//
-// Doing this for now because no wifi on plane. Everything is probably broken and riddled with compile/type errors.
 export const bootstrap = (args: BootstrapArgs) => {
-  let systems: Systems;
-
   const { getContract, getSigners, getProvider } = _bootstraped;
 
   before(restoreSnapshot);
 
+  let systems: Systems;
   before('load contracts', () => {
     systems = {
       Account: getContract('AccountProxy'),
@@ -104,18 +77,20 @@ export const bootstrap = (args: BootstrapArgs) => {
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
-      SynthetixUsdCollateralMock: getContract('SynthetixUsdCollateralMock'),
-      WrappedStakedEthCollateralMock: getContract('WrappedStakedEthCollateralMock'),
       PythMock: getContract('PythMock'),
-
-      // Questionable...
-      CollateralMock: getContract('SynthetixUsdCollateralMock'),
+      // Difference between this and `Collateral{2}Mock`?
+      //
+      // `Collateral{2}Mock` is defined by a `cannon.test.toml` which isn't available here. Both mocks below
+      // follow the same ERC20 standard, simply named differently.
+      //
+      // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
+      CollateralMock: getContract('SnxCollateralMock'),
       Collateral2Mock: getContract('WrappedStakedEthCollateralMock'),
+      Collateral3Mock: getContract('SynthetixUsdCollateralMock'),
     };
   });
 
   const getOwner = () => getSigners()[0];
-
   const stakePool = createStakedPool({
     provider: () => getProvider(),
     signers: () => getSigners(),
@@ -125,14 +100,12 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   const { poolId } = stakePool;
 
-  // before(fn) spam :)
-
   let hasConfiguredGlobally = false;
   const markets = args.markets.map(({ name, initialPrice, specific }) => {
     const readableName = utils.parseBytes32String(name);
     let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
 
-    before(`provision price oracles - ${readableName}`, async () => {
+    before(`provision price oracle nodes - ${readableName}`, async () => {
       const { oracleNodeId: nodeId, aggregator: agg } = await createOracleNode(
         getOwner(),
         initialPrice,
@@ -167,7 +140,6 @@ export const bootstrap = (args: BootstrapArgs) => {
       await systems.PerpMarketProxy.connect(getOwner()).configureMarketById(marketId, specific);
     });
 
-    // lolwtf because everything async within before blocks, we have to do this.
     return {
       oracleNodeId: () => oracleNodeId,
       aggregator: () => aggregator,
@@ -179,7 +151,5 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   return { ...stakePool, systems: () => systems, restore, markets, poolId };
 };
-
-// --- Utility --- //
 
 export const bn = (n: number) => wei(n).toBN();

@@ -42,7 +42,8 @@ describe('PerpCollateralModule', async () => {
   });
 
   it('should do the thing', async () => {
-    console.log(await systems().PerpMarketProxy.marketParametersById(markets[0].marketId()));
+    const { PerpMarketProxy } = systems();
+    console.log(await PerpMarketProxy.marketParametersById(markets[0].marketId()));
     assert.equal(1, 1);
   });
 });

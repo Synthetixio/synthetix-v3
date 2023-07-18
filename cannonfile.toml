@@ -150,6 +150,10 @@ factory.AccountProxy.arg = 2
 #
 # TODO: Move this into a separate `cannonfile.test.toml` file.
 
+[contract.SnxCollateralMock]
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
+args = []
+
 [contract.SynthetixUsdCollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
@@ -157,6 +161,13 @@ args = []
 [contract.WrappedStakedEthCollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
+
+
+[invoke.initialize_snxCollateral]
+target = ["SnxCollateralMock"]
+func = "initialize"
+args = ["SNX V3","SNXV3","18"]
+depends = ["contract.SnxCollateralMock"]
 
 [invoke.initialize_snxUsdCollateral]
 target = ["SynthetixUsdCollateralMock"]
