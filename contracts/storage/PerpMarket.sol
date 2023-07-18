@@ -8,7 +8,6 @@ import {IPyth} from "../external/pyth/IPyth.sol";
 import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
-import {PerpErrors} from "./PerpErrors.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
 /**
@@ -29,6 +28,11 @@ library PerpMarket {
     using SafeCastU128 for uint128;
     using Position for Position.Data;
     using Order for Order.Data;
+
+    // --- Errors --- //
+
+    // @dev Thrown when the operating market does not exist.
+    error MarketNotFound(uint128 marketId);
 
     // --- Storage --- //
 
@@ -69,7 +73,7 @@ library PerpMarket {
     function exists(uint128 id) internal view returns (Data storage market) {
         Data storage self = load(id);
         if (self.id == 0) {
-            revert PerpErrors.MarketNotFound(id);
+            revert MarketNotFound(id);
         }
         return self;
     }

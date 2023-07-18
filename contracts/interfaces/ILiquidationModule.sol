@@ -2,6 +2,20 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface ILiquidationModule {
+    // --- Errors --- //
+
+    // @dev Thrown when an expected position cannot be found.
+    error PositionNotFound();
+
+    // @dev Thrown when attempting to mutate a position flagged for liquidation.
+    error PositionFlagged();
+
+    // @dev Thrown when attempting to liquidate but position has yet to be flagged.
+    error PositionNotFlagged();
+
+    // @dev Thrown when a position cannot be liquidated.
+    error CannotLiquidatePosition();
+
     // --- Mutative --- //
 
     /**

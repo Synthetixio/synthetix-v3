@@ -10,8 +10,8 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
-import {PerpErrors} from "../storage/PerpErrors.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import "../interfaces/IPerpCollateralModule.sol";
 
 contract PerpCollateralModule is IPerpCollateralModule {
@@ -33,7 +33,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
         // Prevent collateral transfers when there's a pending order.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
-            revert PerpErrors.OrderFound(accountId);
+            revert ErrorUtil.OrderFound(accountId);
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -47,7 +47,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (availableAmount + absAmountDelta > maxAllowable) {
-                revert PerpErrors.MaxCollateralExceeded(amountDelta, maxAllowable);
+                revert MaxCollateralExceeded(amountDelta, maxAllowable);
             }
 
             accountCollaterals.available[collateralType] += absAmountDelta;
@@ -59,7 +59,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
 
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (availableAmount < absAmountDelta) {
-                revert PerpErrors.InsufficientCollateral(availableAmount.toInt(), amountDelta);
+                revert InsufficientCollateral(availableAmount.toInt(), amountDelta);
             }
 
             accountCollaterals.available[collateralType] -= absAmountDelta;
@@ -68,7 +68,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0) {
                 if (position.canLiquidate(market.getOraclePrice())) {
-                    revert PerpErrors.CanLiquidatePosition(accountId);
+                    revert ErrorUtil.CanLiquidatePosition(accountId);
                 }
             }
 

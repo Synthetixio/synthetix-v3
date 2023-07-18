@@ -4,12 +4,12 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {PerpErrors} from "./PerpErrors.sol";
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
@@ -52,6 +52,20 @@ library Position {
         uint256 feesIncurredUsd;
     }
 
+    // --- Errors --- //
+
+    // @dev Thrown when attempting to operate with an order with 0 size delta.
+    error NilOrder();
+
+    // @dev Thrown when an order pushes past a market's max allowable open interest (OI).
+    error MaxMarketSizeExceeded();
+
+    // @dev Thrown when an order pushes a position (new or current) past max market leverage.
+    error MaxLeverageExceeded();
+
+    // @dev Thrown when an account has insufficient margin to perform a trade.
+    error InsufficientMargin();
+
     /**
      * @dev Return whether a change in a position's size would violate the max market value constraint.
      *
@@ -90,7 +104,7 @@ library Position {
 
         // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition.
         if (maxMarketSize < MathUtil.abs(newSideSize / 2)) {
-            revert PerpErrors.MaxMarketSizeExceeded();
+            revert MaxMarketSizeExceeded();
         }
     }
 
@@ -103,7 +117,7 @@ library Position {
         Position.TradeParams memory params
     ) internal view returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
         if (params.sizeDelta == 0) {
-            revert PerpErrors.NilOrder();
+            revert NilOrder();
         }
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -111,7 +125,7 @@ library Position {
 
         // Check if the `currentPosition` can be immediately liquidated.
         if (canLiquidate(currentPosition, params.fillPrice)) {
-            revert PerpErrors.CanLiquidatePosition(accountId);
+            revert ErrorUtil.CanLiquidatePosition(accountId);
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -132,13 +146,13 @@ library Position {
         // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
         int256 _remainingMargin = getRemainingMargin(currentPosition, params.fillPrice);
         if (_remainingMargin < 0) {
-            revert PerpErrors.InsufficientMargin();
+            revert InsufficientMargin();
         }
 
         // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liquidations.
         uint256 _liquidationMargin = getLiquidationMargin(currentPosition, params.fillPrice);
         if (MathUtil.abs(currentPosition.size) != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
-            revert PerpErrors.CanLiquidatePosition(accountId);
+            revert ErrorUtil.CanLiquidatePosition(accountId);
         }
 
         newPosition = Position.Data({
@@ -160,7 +174,7 @@ library Position {
             //
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
             if (_remainingMargin.toUint() < globalConfig.minMarginUsd) {
-                revert PerpErrors.InsufficientMargin();
+                revert InsufficientMargin();
             }
         }
 
@@ -194,7 +208,7 @@ library Position {
         int256 leverage = (newPosition.size * params.fillPrice.toInt()) /
             (_remainingMargin + fee.toInt() + keeperFee.toInt());
         if (marketConfig.maxLeverage < MathUtil.abs(leverage)) {
-            revert PerpErrors.MaxLeverageExceeded();
+            revert MaxLeverageExceeded();
         }
 
         // Check the new position hasn't hit max OI on either side.

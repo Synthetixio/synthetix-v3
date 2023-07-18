@@ -34,6 +34,29 @@ interface IOrderModule is IBasePerpMarket {
         uint256 keeperFee
     );
 
+    // --- Errors --- //
+
+    // @dev Thrown when an order is too old (stale) and can no longer be executed.
+    error StaleOrder();
+
+    // @dev Thrown when using an off-chain oracle price is too old.
+    error StalePrice();
+
+    // @dev Thrown when a price is not acceptable.
+    error InvalidPrice();
+
+    // @dev Thrown when Pyth price and on-chain price deviates too far.
+    error PriceDivergenceTooHigh(uint256 p1, uint256 p2);
+
+    // @dev Thrown when an expected order cannot be found.
+    error OrderNotFound(uint128 accountId);
+
+    // @dev Thrown when order not ready for settlement.
+    error OrderNotReady();
+
+    // @dev Thrown when an order cannot settle due to limitPrice tolerance not met.
+    error PriceToleranceExceeded(uint128 accountId);
+
     // --- Mutative --- //
 
     /**

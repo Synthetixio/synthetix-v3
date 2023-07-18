@@ -4,11 +4,11 @@ pragma solidity >=0.8.11 <0.9.0;
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {PerpErrors} from "../storage/PerpErrors.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import "../interfaces/IOrderModule.sol";
 
 contract OrderModule is IOrderModule {
@@ -40,7 +40,7 @@ contract OrderModule is IOrderModule {
 
         // A new order cannot be submitted if one is already pending.
         if (order.sizeDelta != 0) {
-            revert PerpErrors.OrderFound(accountId);
+            revert ErrorUtil.OrderFound(accountId);
         }
 
         uint256 oraclePrice = market.getOraclePrice();
@@ -94,15 +94,15 @@ contract OrderModule is IOrderModule {
 
         // The publishTime is _before_ the commitmentTime
         if (publishTime < commitmentTime) {
-            revert PerpErrors.StalePrice();
+            revert StalePrice();
         }
         // Stale order can only be canceled.
         if (block.timestamp - commitmentTime > maxOrderAge) {
-            revert PerpErrors.StaleOrder();
+            revert StaleOrder();
         }
         // publishTime commitmentTime delta must be at least minAge.
         if (publishTime - commitmentTime < minOrderAge) {
-            revert PerpErrors.OrderNotReady();
+            revert OrderNotReady();
         }
 
         // publishTime must be within `ct + minAge + ptm <= pt <= ct + maxAge + ptm'`
@@ -115,10 +115,10 @@ contract OrderModule is IOrderModule {
         // ptm'   = publishTimeMax
         uint256 ctptd = publishTime - commitmentTime; // ctptd is commitmentTimePublishTimeDelta
         if (ctptd < (commitmentTime.toInt() + minOrderAge.toInt() + globalConfig.pythPublishTimeMin).toUint()) {
-            revert PerpErrors.InvalidPrice();
+            revert InvalidPrice();
         }
         if (ctptd > (commitmentTime.toInt() + maxOrderAge.toInt() + globalConfig.pythPublishTimeMax).toUint()) {
-            revert PerpErrors.InvalidPrice();
+            revert InvalidPrice();
         }
 
         // Ensure pythPrice does not deviate too far from oracle price.
@@ -127,7 +127,7 @@ contract OrderModule is IOrderModule {
             ? oraclePrice / pythPrice - DecimalMath.UNIT
             : pythPrice / oraclePrice - DecimalMath.UNIT;
         if (priceDivergence > globalConfig.priceDivergencePercent) {
-            revert PerpErrors.PriceDivergenceTooHigh(oraclePrice, pythPrice);
+            revert PriceDivergenceTooHigh(oraclePrice, pythPrice);
         }
     }
 
@@ -141,7 +141,7 @@ contract OrderModule is IOrderModule {
 
         // No order available to settle.
         if (order.sizeDelta != 0) {
-            revert PerpErrors.OrderNotFound(accountId);
+            revert OrderNotFound(accountId);
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -168,6 +168,8 @@ contract OrderModule is IOrderModule {
 
         (int256 fundingRate, ) = market.recomputeFunding(pythPrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+
+        // TODO: Throw `PriceToleranceExceeded` when limitPrice does not meet pythPrice
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(

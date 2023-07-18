@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-interface IPerpCollateralModule {
+import "./IBasePerpMarket.sol";
+
+interface IPerpCollateralModule is IBasePerpMarket {
     // --- Structs --- //
 
     struct AvailableCollateral {
@@ -22,6 +24,12 @@ interface IPerpCollateralModule {
 
     // @dev Emitted when supplied configuration is incorrect.
     error InvalidConfiguration();
+
+    // @dev Thrown when an account has insufficient collateral to transfer.
+    error InsufficientCollateral(int256 collateral, int256 value);
+
+    // @dev Thrown when attempting to deposit a collateral that has reached a max deportable amount.
+    error MaxCollateralExceeded(int256 value, uint256 max);
 
     // --- Mutative --- //
 
