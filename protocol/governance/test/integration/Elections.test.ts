@@ -3,18 +3,14 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import {
   fastForwardTo,
-  getTime,
   restoreSnapshot,
   takeSnapshot,
 } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { parseBalanceMap } from '@synthetixio/core-utils/utils/merkle-tree/parse-balance-tree';
-import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
-import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
-import { DebtShareMock } from '../generated/typechain';
 import {
   expectedCrossChainDebtShare,
   expectedDebtShare,
