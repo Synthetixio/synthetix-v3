@@ -2,6 +2,7 @@
   "name": "bfp-market",
   "version": "0.0.1",
   "scripts": {
+    "test": "TS_NODE_SKIP_IGNORE=true hardhat test",
     "build": "hardhat cannon:build",
     "build:clean": "hardhat cannon:build --wipe"
   },
@@ -15,12 +16,14 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@synthetixio/wei": "^2.74.4",
     "@synthetixio/v3-contracts": "^3.1.0",
     "@usecannon/builder": "^2.4.15",
     "@usecannon/cli": "^2.4.15",
     "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.2",
-    "abi-to-sol": "^0.8.0",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
     "cannon-plugin-router": "^1.0.11",
     "ethers": "^5.7.2",
     "hardhat": "^2.15.0",
