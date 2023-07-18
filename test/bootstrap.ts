@@ -63,15 +63,12 @@ const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' })
 const restoreSnapshot = _bootstraped.createSnapshot();
 
 export interface BootstrapArgs {
-  markets: Array<
-    {
-      global: IPerpConfigurationModule.ConfigureParametersStruct;
-      create: {
-        name: string;
-        initialPrice: BigNumber;
-      };
-    } & IPerpConfigurationModule.ConfigureByMarketParametersStruct
-  >;
+  global: IPerpConfigurationModule.ConfigureParametersStruct;
+  markets: {
+    name: string;
+    initialPrice: BigNumber;
+    specific: IPerpConfigurationModule.ConfigureByMarketParametersStruct;
+  }[];
 }
 
 // TODO: Refactor all of these implicit before blocks into explicit function calls defined within each test file.
@@ -126,11 +123,12 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   // before(fn) spam :)
 
-  args.markets.map(({ global, create, ...marketConfiguration }) => {
-    const { name, initialPrice } = create;
+  let hasConfiguredGlobally = false;
+  args.markets.map(({ name, initialPrice, specific }) => {
+    const readableName = utils.parseBytes32String(name);
     let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
 
-    before(`provision price oracles - ${name}`, async () => {
+    before(`provision price oracles - ${readableName}`, async () => {
       const { oracleNodeId: nodeId, aggregator: agg } = await createOracleNode(
         getOwner(),
         initialPrice,
@@ -140,7 +138,7 @@ export const bootstrap = (args: BootstrapArgs) => {
       aggregator = agg as AggregatorV3Mock;
     });
 
-    before(`provision market - ${name}`, async () => {
+    before(`provision market - ${readableName}`, async () => {
       marketId = await systems.PerpMarketProxy.callStatic.createMarket({ name });
       await systems.PerpMarketProxy.createMarket({ name });
     });
@@ -155,9 +153,14 @@ export const bootstrap = (args: BootstrapArgs) => {
       ]);
     });
 
-    before(`configure market - ${name}`, async () => {
-      await systems.PerpMarketProxy.connect(getOwner()).configureMarket(global);
-      await systems.PerpMarketProxy.connect(getOwner()).configureMarketById(marketId, marketConfiguration);
+    before('configure global market', async () => {
+      if (!hasConfiguredGlobally) {
+        await systems.PerpMarketProxy.connect(getOwner()).configureMarket(args.global);
+      }
+    });
+
+    before(`configure market - ${readableName}`, async () => {
+      await systems.PerpMarketProxy.connect(getOwner()).configureMarketById(marketId, specific);
     });
 
     // lolwtf because everything async within before blocks, we have to do this.

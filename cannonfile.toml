@@ -158,13 +158,13 @@ args = []
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 
-[invoke.initializeSynthetixUsdCollateralMock]
+[invoke.initialize_snxUsdCollateral]
 target = ["SynthetixUsdCollateralMock"]
 func = "initialize"
 args = ["Synthetix Stablecoin","snxUSD","18"]
 depends = ["contract.SynthetixUsdCollateralMock"]
 
-[invoke.initializeWrappedStakedEthCollateralMock]
+[invoke.initialize_wstETHCollateral]
 target = ["WrappedStakedEthCollateralMock"]
 func = "initialize"
 args = ["Wrapped Lido Staked ETH","wstETH","18"]
@@ -177,3 +177,15 @@ args = [120, 1] # 120s, 1wei
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
+
+# --- Feature Flags --- #
+
+[invoke.addToFeatureFlagAllowlist_registerMarket]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.owner %>"
+args = [
+  "<%= formatBytes32String('registerMarket') %>",
+  "<%= contracts.PerpMarketProxy.address %>"
+]
+depends = ['invoke.upgradeProxy']
