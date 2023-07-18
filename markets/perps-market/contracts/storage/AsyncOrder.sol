@@ -100,7 +100,7 @@ library AsyncOrder {
          */
         uint256 settlementTime;
         /**
-         * @dev Acceptable price set at submission.
+         * @dev Acceptable price set at submission. Longs will not be filled above this price, and shorts will not be filled below it.
          */
         uint256 acceptablePrice;
         /**
