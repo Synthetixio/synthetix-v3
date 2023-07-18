@@ -276,7 +276,7 @@ library AsyncOrder {
      * @dev and with that data it checks that:
      * @dev - the account is eligible for liquidation
      * @dev - the fill price is within the acceptable price range
-     * @dev - the position size don't exced market configured limits
+     * @dev - the position size doesn't exceed market configured limits
      * @dev - the account has enough margin to cover for the fees
      * @dev - the account has enough margin to not be liquidable immediately after the order is settled
      * @dev if the order can be executed, it returns (newPosition, orderFees, fillPrice, oldPosition)
