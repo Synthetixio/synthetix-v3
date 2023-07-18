@@ -154,7 +154,6 @@ library Council {
         SetUtil.AddressSet councilMembers;
         mapping(address => uint) councilTokenIds;
         uint lastElectionId;
-        ElectionSettings.Data nextElectionSettings;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_COUNCIL_STORAGE;
@@ -178,8 +177,8 @@ library DebtShare {
     bytes32 private constant _SLOT_DEBT_SHARE_STORAGE = keccak256(abi.encode("io.synthetix.governance.DebtShare"));
     struct Data {
         address debtShareContract;
-        uint128[] debtShareIds;
-        CrossChainDebtShare.Data[] crossChainDebtShareData;
+        mapping(uint => uint128) debtShareIds;
+        mapping(uint => CrossChainDebtShare.Data) crossChainDebtShareData;
     }
     function load() internal pure returns (Data storage debtShare) {
         bytes32 s = _SLOT_DEBT_SHARE_STORAGE;
@@ -202,10 +201,9 @@ library Election {
         mapping(bytes32 => Ballot.Data) ballotsById;
         mapping(address => bytes32) ballotIdsByAddress;
         mapping(address => uint) candidateVotes;
-        ElectionSettings.Data settings;
     }
-    function load(uint id) internal pure returns (Data storage election) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", id));
+    function load(uint epochIndex) internal pure returns (Data storage election) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", epochIndex));
         assembly {
             election.slot := s
         }
@@ -222,6 +220,12 @@ library ElectionSettings {
         uint64 minVotingPeriodDuration;
         uint64 maxDateAdjustmentTolerance;
         uint defaultBallotEvaluationBatchSize;
+    }
+    function load(uint epochIndex) internal pure returns (Data storage settings) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.ElectionSettings", epochIndex));
+        assembly {
+            settings.slot := s
+        }
     }
 }
 
