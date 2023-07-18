@@ -63,9 +63,7 @@ contract BaseElectionModule is
             revert InvalidMinimumActiveMembers();
         }
 
-        Election.Data storage election = store.getCurrentElection();
-
-        ElectionSettings.Data storage settings = election.settings;
+        ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
@@ -74,7 +72,7 @@ contract BaseElectionModule is
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
-        Epoch.Data storage firstEpoch = election.epoch;
+        Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
         uint64 epochStartDate = block.timestamp.to64();
         _configureEpochSchedule(
             firstEpoch,
@@ -175,8 +173,7 @@ contract BaseElectionModule is
 
         Council
             .load()
-            .getCurrentElection()
-            .settings
+            .getCurrentElectionSettings()
             .defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
 
         emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
@@ -188,7 +185,7 @@ contract BaseElectionModule is
         OwnableStorage.onlyOwner();
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
-        Council.load().getCurrentElection().settings.nextEpochSeatCount = newSeatCount;
+        Council.load().getCurrentElectionSettings().nextEpochSeatCount = newSeatCount;
 
         emit NextEpochSeatCountChanged(newSeatCount);
     }
@@ -197,7 +194,7 @@ contract BaseElectionModule is
         OwnableStorage.onlyOwner();
         if (newMinimumActiveMembers == 0) revert InvalidMinimumActiveMembers();
 
-        Council.load().getCurrentElection().settings.minimumActiveMembers = newMinimumActiveMembers;
+        Council.load().getCurrentElectionSettings().minimumActiveMembers = newMinimumActiveMembers;
 
         emit MinimumActiveMembersChanged(newMinimumActiveMembers);
     }
@@ -217,9 +214,10 @@ contract BaseElectionModule is
         if (store.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
 
         if (
-            store.councilMembers.length() >=
-            store.getCurrentElection().settings.minimumActiveMembers
-        ) return;
+            store.councilMembers.length() >= store.getCurrentElectionSettings().minimumActiveMembers
+        ) {
+            return;
+        }
 
         _jumpToNominationPeriod();
 
@@ -344,7 +342,16 @@ contract BaseElectionModule is
 
     function _copySettingsFromPreviousElection() internal {
         Council.Data storage store = Council.load();
-        store.getCurrentElection().settings = store.getPreviousElection().settings;
+        ElectionSettings.Data storage curr = store.getCurrentElectionSettings();
+        ElectionSettings.Data storage prev = store.getPreviousElectionSettings();
+
+        curr.nextEpochSeatCount = prev.nextEpochSeatCount;
+        curr.minimumActiveMembers = prev.minimumActiveMembers;
+        curr.minEpochDuration = prev.minEpochDuration;
+        curr.minNominationPeriodDuration = prev.minNominationPeriodDuration;
+        curr.minVotingPeriodDuration = prev.minVotingPeriodDuration;
+        curr.maxDateAdjustmentTolerance = prev.maxDateAdjustmentTolerance;
+        curr.defaultBallotEvaluationBatchSize = prev.defaultBallotEvaluationBatchSize;
     }
 
     function getMinEpochDurations()
@@ -357,7 +364,7 @@ contract BaseElectionModule is
             uint64 minEpochDuration
         )
     {
-        ElectionSettings.Data storage settings = Council.load().getCurrentElection().settings;
+        ElectionSettings.Data storage settings = Council.load().getCurrentElectionSettings();
 
         return (
             settings.minNominationPeriodDuration,
@@ -367,19 +374,19 @@ contract BaseElectionModule is
     }
 
     function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
-        return Council.load().getCurrentElection().settings.maxDateAdjustmentTolerance;
+        return Council.load().getCurrentElectionSettings().maxDateAdjustmentTolerance;
     }
 
     function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
-        return Council.load().getCurrentElection().settings.defaultBallotEvaluationBatchSize;
+        return Council.load().getCurrentElectionSettings().defaultBallotEvaluationBatchSize;
     }
 
     function getNextEpochSeatCount() external view override returns (uint8) {
-        return Council.load().getCurrentElection().settings.nextEpochSeatCount;
+        return Council.load().getCurrentElectionSettings().nextEpochSeatCount;
     }
 
     function getMinimumActiveMembers() external view override returns (uint8) {
-        return Council.load().getCurrentElection().settings.minimumActiveMembers;
+        return Council.load().getCurrentElectionSettings().minimumActiveMembers;
     }
 
     function getEpochIndex() external view override returns (uint) {

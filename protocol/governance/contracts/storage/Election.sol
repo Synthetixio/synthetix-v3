@@ -29,12 +29,10 @@ library Election {
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
         mapping(address => uint) candidateVotes;
-        // Current election settings, should only be changed during Administration period
-        ElectionSettings.Data settings;
     }
 
-    function load(uint id) internal pure returns (Data storage election) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", id));
+    function load(uint epochIndex) internal pure returns (Data storage election) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", epochIndex));
         assembly {
             election.slot := s
         }

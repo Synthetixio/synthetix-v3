@@ -59,7 +59,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
         uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
 
-        ElectionSettings.Data storage settings = Council.load().getCurrentElection().settings;
+        ElectionSettings.Data storage settings = Council.load().getCurrentElectionSettings();
 
         if (
             epochDuration < settings.minEpochDuration ||
@@ -80,8 +80,7 @@ contract ElectionSchedule is ElectionBase {
     ) internal {
         uint64 maxDateAdjustmentTolerance = Council
             .load()
-            .getCurrentElection()
-            .settings
+            .getCurrentElectionSettings()
             .maxDateAdjustmentTolerance;
 
         if (ensureChangesAreSmall) {
@@ -161,7 +160,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 newMinVotingPeriodDuration,
         uint64 newMinEpochDuration
     ) internal {
-        ElectionSettings.Data storage settings = Council.load().getCurrentElection().settings;
+        ElectionSettings.Data storage settings = Council.load().getCurrentElectionSettings();
 
         if (
             newMinNominationPeriodDuration == 0 ||
@@ -181,8 +180,7 @@ contract ElectionSchedule is ElectionBase {
 
         Council
             .load()
-            .getCurrentElection()
-            .settings
+            .getCurrentElectionSettings()
             .maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
     }
 
