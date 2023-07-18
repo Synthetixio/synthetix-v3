@@ -1,6 +1,6 @@
-import { PerpsMarket, bn, bootstrapMarkets, decimalMul } from '../bootstrap';
+import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+// import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { Signer, ethers } from 'ethers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
@@ -52,11 +52,12 @@ describe('Market Debt', () => {
     user?: {
       trader: () => Signer;
       accountId: number;
-      collateralDelta?: ethers.BigNumber;
-      sizeDelta?: ethers.BigNumber;
+      collateralDelta?: ethers.BigNumber; // amount of collateral to deposit or withdraw in the step
+      sizeDelta?: ethers.BigNumber; // position size change to open or close in the step
     };
-    market?: { id: ethers.BigNumber; price?: ethers.BigNumber };
+    market?: { id: ethers.BigNumber; price?: ethers.BigNumber }; // market to change the price and new price
     expected?: {
+      // expected results to check on the step
       marketDebt: ethers.BigNumber;
       ethMarketDebt: ethers.BigNumber;
       btcMarketDebt: ethers.BigNumber;
