@@ -30,6 +30,7 @@ library PerpsAccount {
     using PerpsMarket for PerpsMarket.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -257,8 +258,8 @@ library PerpsAccount {
                     0,
                     address(0)
                 );
-                factory.synthetix.depositMarketUsd(factory.perpsMarketId, amountUsd);
-                self.collateralAmounts[synthMarketId] = 0;
+                factory.synthetix.depositMarketUsd(factory.perpsMarketId, address(this), amountUsd);
+                updateCollateralAmount(self, synthMarketId, -(amount.toInt()));
             }
         }
     }
@@ -282,11 +283,11 @@ library PerpsAccount {
             if (marketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
-                    updateCollateralAmount(self, marketId, -leftoverAmount);
+                    updateCollateralAmount(self, marketId, -(leftoverAmount.toInt()));
                     leftoverAmount = 0;
                     break;
                 } else {
-                    updateCollateralAmount(self, marketId, -availableAmount);
+                    updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
                     leftoverAmount -= availableAmount;
                 }
             } else {
@@ -304,7 +305,7 @@ library PerpsAccount {
                         type(uint).max,
                         address(0)
                     );
-                    updateCollateralAmount(self, marketId, -amountToDeduct);
+                    updateCollateralAmount(self, marketId, -(amountToDeduct.toInt()));
                     leftoverAmount = 0;
                     break;
                 } else {
@@ -315,7 +316,7 @@ library PerpsAccount {
                         0,
                         address(0)
                     );
-                    updateCollateralAmount(self, marketId, -availableAmount);
+                    updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
                     leftoverAmount -= amountToDeduct;
                 }
             }
@@ -340,9 +341,7 @@ library PerpsAccount {
         uint totalAvailableForDeposit;
     }
 
-    function liquidateAccount(
-        Data storage self
-    ) internal returns (bool fullLiquidation, uint256 reward) {
+    function liquidateAccount(Data storage self) internal returns (uint256 reward) {
         SetUtil.UintSet storage openPositionMarketIds = self.openPositionMarketIds;
         uint256 openPositionsLength = openPositionMarketIds.length();
 
@@ -353,27 +352,19 @@ library PerpsAccount {
             PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
             Position.Data storage position = perpsMarket.positions[self.id];
 
-            (, , uint liquidationReward, ) = _liquidatePosition(positionMarketId, position);
+            (, , uint liquidationReward, ) = _liquidatePosition(self, positionMarketId, position);
             accumulatedLiquidationRewards += liquidationReward;
         }
 
-        reward = _processLiquidationRewards(factory, runtime.accumulatedLiquidationRewards);
+        reward = _processLiquidationRewards(accumulatedLiquidationRewards);
     }
 
-    function _processLiquidationRewards(
-        PerpsMarketFactory.Data storage factory,
-        uint256 totalRewards
-    ) private returns (uint256 reward) {
+    function _processLiquidationRewards(uint256 totalRewards) private returns (uint256 reward) {
         // pay out liquidation rewards
         reward = GlobalPerpsMarketConfiguration.load().liquidationReward(totalRewards);
-
-        // TODO: handle this scenario
-        // if (totalRewards > reward) {
-        //     // if leftover rewards, return to LPs (market manager)
-        //     // send to fee collector
-        // }
         if (reward > 0) {
-            factory.usdToken.withdrawMarketUsd(msg.sender, reward);
+            PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+            factory.synthetix.withdrawMarketUsd(factory.perpsMarketId, msg.sender, reward);
         }
     }
 
@@ -407,6 +398,7 @@ library PerpsAccount {
         // update position markets
         updateOpenPositions(self, marketId, position.size);
 
+        // TODO: check with afif if we want to continue accruing funding after partial liquidation; only relevant if accounts are recoverable...
         // update market data
         perpsMarket.updateMarketSizes(oldPositionSize, position.size);
 

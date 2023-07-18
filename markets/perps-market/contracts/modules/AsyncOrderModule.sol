@@ -174,7 +174,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
         if (runtime.pnl > 0) {
             factory.synthetix.withdrawMarketUsd(runtime.marketId, address(this), runtime.pnlUint);
-            perpsAccount.addCollateralAmount(SNX_USD_MARKET_ID, runtime.pnlUint);
+            perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
         } else if (runtime.pnl < 0) {
             perpsAccount.deductFromAccount(runtime.pnlUint);
         }

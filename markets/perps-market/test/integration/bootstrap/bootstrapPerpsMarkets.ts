@@ -15,6 +15,7 @@ export type PerpsMarket = {
 export type PerpsMarkets = Array<PerpsMarket>;
 
 export type PerpsMarketData = Array<{
+  requestedMarketId: number;
   name: string;
   token: string;
   price: ethers.BigNumber;
@@ -82,6 +83,7 @@ export const bootstrapPerpsMarkets = (
 
   const perpsMarkets: PerpsMarkets = data.map(
     ({
+      requestedMarketId,
       name,
       token,
       price,

@@ -6,7 +6,6 @@ import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IAccountModule} from "../interfaces/IAccountModule.sol";
-import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
@@ -133,7 +132,7 @@ contract PerpsAccountModule is IAccountModule {
             );
             synth.transferFrom(msg.sender, address(this), amount);
             // depositing into a synth market
-            ISynthetixSystem(perpsMarketFactory.synthetix).depositMarketCollateral(
+            perpsMarketFactory.synthetix.depositMarketCollateral(
                 perpsMarketId,
                 address(synth),
                 amount
