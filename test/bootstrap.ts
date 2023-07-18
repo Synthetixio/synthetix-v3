@@ -1,5 +1,6 @@
 import { wei } from '@synthetixio/wei';
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
 import {
   PerpMarketProxy,
@@ -114,17 +115,20 @@ export const bootstrap = (args: BootstrapArgs) => {
   });
 
   const getOwner = () => getSigners()[0];
-  const { poolId } = createStakedPool({
+
+  const stakePool = createStakedPool({
     provider: () => getProvider(),
     signers: () => getSigners(),
     owner: () => getOwner(),
     systems: () => systems,
   });
 
+  const { poolId } = stakePool;
+
   // before(fn) spam :)
 
   let hasConfiguredGlobally = false;
-  args.markets.map(({ name, initialPrice, specific }) => {
+  const markets = args.markets.map(({ name, initialPrice, specific }) => {
     const readableName = utils.parseBytes32String(name);
     let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
 
@@ -164,8 +168,16 @@ export const bootstrap = (args: BootstrapArgs) => {
     });
 
     // lolwtf because everything async within before blocks, we have to do this.
-    return { oracleNodeId: () => oracleNodeId, aggregator: () => aggregator, marketId: () => marketId };
+    return {
+      oracleNodeId: () => oracleNodeId,
+      aggregator: () => aggregator,
+      marketId: () => marketId,
+    };
   });
+
+  const restore = snapshotCheckpoint(stakePool.provider);
+
+  return { ...stakePool, systems: () => systems, restore, markets, poolId };
 };
 
 // --- Utility --- //

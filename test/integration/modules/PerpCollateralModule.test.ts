@@ -5,7 +5,7 @@ import { utils } from 'ethers';
 
 describe('PerpCollateralModule', async () => {
   // Hardcoding args here but this will eventually be moved into generators.
-  bootstrap({
+  const { systems, owner, markets } = bootstrap({
     global: {
       minMarginUsd: bn(100),
       priceDivergencePercent: wei(0.02).toBN(),
@@ -42,6 +42,7 @@ describe('PerpCollateralModule', async () => {
   });
 
   it('should do the thing', async () => {
+    console.log(await systems().PerpMarketProxy.marketParametersById(markets[0].marketId()));
     assert.equal(1, 1);
   });
 });
