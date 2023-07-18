@@ -4,7 +4,7 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import {
   PerpMarketProxy,
   AccountProxy,
-  SynthetixUsdCollteralMock,
+  SynthetixUsdCollateralMock,
   WrappedStakedEthCollateralMock,
   PythMock,
 } from './generated/typechain';
@@ -15,10 +15,10 @@ import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
-  SynthetixUsdCollteralMock: SynthetixUsdCollteralMock;
+  SynthetixUsdCollateralMock: SynthetixUsdCollateralMock;
   WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
   PythMock: PythMock;
-  CollateralMock: SynthetixUsdCollteralMock;
+  CollateralMock: SynthetixUsdCollateralMock;
   Collateral2Mock: WrappedStakedEthCollateralMock;
 }
 
@@ -34,9 +34,9 @@ interface Contracts {
 
   // These mocks are super questionable. I could probably mock everything out within this repo
   // rather than relying on internal Synthetix test code...
-  ['synthetix.CollateralMock']: SynthetixUsdCollteralMock;
+  ['synthetix.CollateralMock']: SynthetixUsdCollateralMock;
   ['synthetix.Collateral2Mock']: WrappedStakedEthCollateralMock;
-  SynthetixUsdCollteralMock: SynthetixUsdCollteralMock;
+  SynthetixUsdCollateralMock: SynthetixUsdCollateralMock;
   WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   AccountProxy: AccountProxy;
@@ -94,6 +94,7 @@ export interface BootstrapArgs {
 // Doing this for now because no wifi on plane. Everything is probably broken and riddled with compile/type errors.
 export const bootstrap = (args: BootstrapArgs) => {
   let systems: Systems;
+
   const { getContract, getSigners, getProvider } = _bootstraped;
 
   const getOwner = () => getSigners()[0];
@@ -113,7 +114,7 @@ export const bootstrap = (args: BootstrapArgs) => {
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
-      SynthetixUsdCollteralMock: getContract('SynthetixUsdCollteralMock'),
+      SynthetixUsdCollateralMock: getContract('SynthetixUsdCollateralMock'),
       WrappedStakedEthCollateralMock: getContract('WrappedStakedEthCollateralMock'),
       PythMock: getContract('PythMock'),
 
@@ -140,8 +141,8 @@ export const bootstrap = (args: BootstrapArgs) => {
     });
 
     before(`provision market - ${name}`, async () => {
-      marketId = await systems.PerpMarketProxy.callStatic.create({ name });
-      await systems.PerpMarketProxy.create({ name });
+      marketId = await systems.PerpMarketProxy.callStatic.createMarket({ name });
+      await systems.PerpMarketProxy.createMarket({ name });
     });
 
     before(`delegate collateral to market - ${name}`, async () => {
@@ -156,8 +157,11 @@ export const bootstrap = (args: BootstrapArgs) => {
 
     before(`configure market - ${name}`, async () => {
       await systems.PerpMarketProxy.connect(getOwner()).configureMarket(global);
-      await systems.PerpMarketProxy.connect(getOwner()).configureMarketById(marketId, global);
+      await systems.PerpMarketProxy.connect(getOwner()).configureMarketById(marketId, marketConfiguration);
     });
+
+    // lolwtf because everything async within before blocks, we have to do this.
+    return { oracleNodeId: () => oracleNodeId, aggregator: () => aggregator, marketId: () => marketId };
   });
 };
 
