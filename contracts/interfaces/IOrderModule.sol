@@ -78,7 +78,7 @@ interface IOrderModule is IBasePerpMarket {
      *
      * The fee is then bounded between a configurable min/max and a buffer is then provided.
      */
-    function getOrderKeeperFee(uint256 keeperFeeBufferUsd) external view returns (uint256 fee);
+    function getOrderKeeperFee(uint128 marketId, uint256 keeperFeeBufferUsd) external view returns (uint256 fee);
 
     /**
      * @dev Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.

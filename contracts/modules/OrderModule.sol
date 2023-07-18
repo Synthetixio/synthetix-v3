@@ -186,7 +186,11 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function cancelOrder(uint128 accountId, uint128 marketId) external {}
+    function cancelOrder(uint128 accountId, uint128 marketId) external {
+        // TODO: Consider removing cancellations. Do we need it?
+        //
+        // If an order is stale, on next settle, we can simply wipe the order, emit event, start new order.
+    }
 
     /**
      * @inheritdoc IOrderModule
@@ -208,7 +212,9 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function getOrderKeeperFee(uint256 keeperFeeBufferUsd) external view returns (uint256 fee) {}
+    function getOrderKeeperFee(uint128 marketId, uint256 keeperFeeBufferUsd) external view returns (uint256 fee) {
+        fee = Order.getKeeperFee(keeperFeeBufferUsd, PerpMarket.exists(marketId).getOraclePrice());
+    }
 
     /**
      * @inheritdoc IOrderModule
