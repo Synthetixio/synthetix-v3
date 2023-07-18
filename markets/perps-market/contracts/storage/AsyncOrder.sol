@@ -104,7 +104,7 @@ library AsyncOrder {
          */
         uint256 acceptablePrice;
         /**
-         * @dev Tracking code (optional).
+         * @dev An optional code provided by frontends to assist with tracking the source of volume and fees.
          */
         bytes32 trackingCode;
     }
