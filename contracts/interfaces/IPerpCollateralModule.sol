@@ -34,7 +34,7 @@ interface IPerpCollateralModule {
     /**
      * @dev Configure PerpCollateral with collateral types and their allowables.
      */
-    function configureCollaterals(
+    function setCollateralConfiguration(
         address[] calldata collateralTypes,
         bytes32[] calldata oracleNodeIds,
         uint128[] calldata maxAllowables

@@ -84,7 +84,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
     /**
      * @inheritdoc IPerpCollateralModule
      */
-    function configureCollaterals(
+    function setCollateralConfiguration(
         address[] calldata collateralTypes,
         bytes32[] calldata oracleNodeIds,
         uint128[] calldata maxAllowables

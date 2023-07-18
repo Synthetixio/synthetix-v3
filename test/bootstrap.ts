@@ -168,7 +168,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     const oracleNodeIds = collateralOracles.map(({ oracleNodeId }) => oracleNodeId);
     const maxAllowables = collaterals.map(({ max }) => max);
 
-    await systems.PerpMarketProxy.configureCollaterals(collateralTypes, oracleNodeIds, maxAllowables);
+    await systems.PerpMarketProxy.setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables);
 
     return collaterals.map((collateral, idx) => ({
       ...collateral,
