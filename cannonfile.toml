@@ -173,3 +173,7 @@ depends = ["contract.WrappedStakedEthCollateralMock"]
 [contract.PythMock]
 artifact = "contracts/mocks/PythMock.sol:PythMock"
 args = [120, 1] # 120s, 1wei
+
+[contract.AggregatorV3Mock]
+artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
+args = []

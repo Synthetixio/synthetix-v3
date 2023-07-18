@@ -7,10 +7,10 @@ import {
   SynthetixUsdCollateralMock,
   WrappedStakedEthCollateralMock,
   PythMock,
+  AggregatorV3Mock,
 } from './generated/typechain';
 import type { IPerpConfigurationModule } from './generated/typechain/PerpConfigurationModule';
 import { BigNumber, utils } from 'ethers';
-import { AggregatorV3Mock } from '@synthetixio/oracle-manager/typechain-types';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
@@ -97,14 +97,6 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   const { getContract, getSigners, getProvider } = _bootstraped;
 
-  const getOwner = () => getSigners()[0];
-  const { poolId } = createStakedPool({
-    provider: () => getProvider(),
-    signers: () => getSigners(),
-    owner: () => getOwner(),
-    systems: () => systems,
-  });
-
   before(restoreSnapshot);
 
   before('load contracts', () => {
@@ -119,9 +111,17 @@ export const bootstrap = (args: BootstrapArgs) => {
       PythMock: getContract('PythMock'),
 
       // Questionable...
-      CollateralMock: getContract('synthetix.CollateralMock'),
-      Collateral2Mock: getContract('synthetix.Collateral2Mock'),
+      CollateralMock: getContract('SynthetixUsdCollateralMock'),
+      Collateral2Mock: getContract('WrappedStakedEthCollateralMock'),
     };
+  });
+
+  const getOwner = () => getSigners()[0];
+  const { poolId } = createStakedPool({
+    provider: () => getProvider(),
+    signers: () => getSigners(),
+    owner: () => getOwner(),
+    systems: () => systems,
   });
 
   // before(fn) spam :)
@@ -137,7 +137,7 @@ export const bootstrap = (args: BootstrapArgs) => {
         systems.OracleManager
       );
       oracleNodeId = nodeId;
-      aggregator = agg;
+      aggregator = agg as AggregatorV3Mock;
     });
 
     before(`provision market - ${name}`, async () => {
