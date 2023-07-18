@@ -2,6 +2,17 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface IPerpCollateralModule {
+    // --- Structs --- //
+
+    struct AvailableCollateral {
+        // Address of the available collateral.
+        address collateralType;
+        // Oracle price feed node id.
+        bytes32 oracleNodeId;
+        // Maximum allowable deposited amount.
+        uint128 maxAllowable;
+    }
+
     // --- Events --- //
 
     // @dev Emitted when collateral is transferred between user <-> Account.
@@ -19,4 +30,17 @@ interface IPerpCollateralModule {
      * There are no fees associated with the transfer of collateral.
      */
     function transferTo(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
+
+    /**
+     * @dev Configure PerpCollateral with collateral types and their allowables.
+     */
+    function configureCollaterals(
+        address[] calldata collateralTypes,
+        bytes32[] calldata oracleNodeIds,
+        uint128[] calldata maxAllowables
+    ) external;
+
+    // --- Views --- //
+
+    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory collaterals);
 }

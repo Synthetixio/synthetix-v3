@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
@@ -77,6 +78,62 @@ contract PerpCollateralModule is IPerpCollateralModule {
         } else {
             // A zero amount is a no-op.
             return;
+        }
+    }
+
+    /**
+     * @inheritdoc IPerpCollateralModule
+     */
+    function configureCollaterals(
+        address[] calldata collateralTypes,
+        bytes32[] calldata oracleNodeIds,
+        uint128[] calldata maxAllowables
+    ) external {
+        OwnableStorage.onlyOwner();
+        PerpCollateral.GlobalData storage config = PerpCollateral.load();
+
+        // Clear existing collateral configuration to be replaced with new.
+        uint256 existingCollateralLength = config.availableAddresses.length;
+        for (uint256 i = 0; i < existingCollateralLength; ) {
+            delete config.available[config.availableAddresses[i]];
+            unchecked {
+                i++;
+            }
+        }
+        delete config.availableAddresses;
+
+        // Update with passed in configuration.
+        uint256 newCollateralLength = collateralTypes.length;
+        address[] memory newAvailableAddresses = new address[](newCollateralLength);
+        for (uint256 i = 0; i < newCollateralLength; ) {
+            address collateralType = collateralTypes[i];
+            config.available[collateralType] = PerpCollateral.CollateralType(oracleNodeIds[i], maxAllowables[i]);
+            newAvailableAddresses[i] = collateralType;
+            unchecked {
+                i++;
+            }
+        }
+        config.availableAddresses = newAvailableAddresses;
+    }
+
+    // --- Views --- //
+
+    /**
+     * @inheritdoc IPerpCollateralModule
+     */
+    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory collaterals) {
+        PerpCollateral.GlobalData storage config = PerpCollateral.load();
+
+        uint256 length = config.availableAddresses.length;
+        collaterals = new AvailableCollateral[](length);
+
+        for (uint256 i = 0; i < length; ) {
+            address _type = config.availableAddresses[i];
+            PerpCollateral.CollateralType storage c = config.available[_type];
+            collaterals[i] = AvailableCollateral(_type, c.oracleNodeId, c.maxAllowable);
+            unchecked {
+                i++;
+            }
         }
     }
 }

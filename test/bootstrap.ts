@@ -57,6 +57,9 @@ const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' })
 const restoreSnapshot = _bootstraped.createSnapshot();
 
 export interface BootstrapArgs {
+  pool: {
+    initialCollateralPrice: BigNumber;
+  };
   global: IPerpConfigurationModule.ConfigureParametersStruct;
   markets: {
     name: string;
@@ -93,14 +96,15 @@ export const bootstrap = (args: BootstrapArgs) => {
   });
 
   const getOwner = () => getSigners()[0];
-  const stakePool = createStakedPool({
+  const core = {
     provider: () => getProvider(),
     signers: () => getSigners(),
     owner: () => getOwner(),
     systems: () => systems,
-  });
+  };
 
-  const { poolId } = stakePool;
+  // Create a pool which makes `args.markets.length` with all equal weighting.
+  const stakedPool = createStakedPool(core, args.pool.initialCollateralPrice);
 
   let hasConfiguredGlobally = false;
   const markets = args.markets.map(({ name, initialPrice, specific }) => {
@@ -122,8 +126,8 @@ export const bootstrap = (args: BootstrapArgs) => {
       await systems.PerpMarketProxy.createMarket({ name });
     });
 
-    before(`delegate collateral to market - ${name}`, async () => {
-      await systems.Core.connect(getOwner()).setPoolConfiguration(poolId, [
+    before(`delegate pool collateral to market - ${name}`, async () => {
+      await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, [
         {
           marketId,
           weightD18: utils.parseEther('1'),
@@ -149,9 +153,51 @@ export const bootstrap = (args: BootstrapArgs) => {
     };
   });
 
-  const restore = snapshotCheckpoint(stakePool.provider);
+  const configureMarketCollateral = async () => {
+    const collaterals = [
+      { address: systems.Collateral2Mock.address, initialPrice: bn(1), max: bn(999_999) },
+      { address: systems.Collateral3Mock.address, initialPrice: bn(1000), max: bn(100_000) },
+    ];
+    const collateralTypes = collaterals.map(({ address }) => address);
 
-  return { ...stakePool, systems: () => systems, restore, markets, poolId };
+    let collateralOracles: Awaited<ReturnType<typeof createOracleNode>>[] = [];
+    for (const { initialPrice } of collaterals) {
+      collateralOracles.push(await createOracleNode(getOwner(), initialPrice, systems.OracleManager));
+    }
+
+    const oracleNodeIds = collateralOracles.map(({ oracleNodeId }) => oracleNodeId);
+    const maxAllowables = collaterals.map(({ max }) => max);
+
+    await systems.PerpMarketProxy.configureCollaterals(collateralTypes, oracleNodeIds, maxAllowables);
+
+    return collaterals.map((collateral, idx) => ({
+      ...collateral,
+      oracleNodeId: () => oracleNodeIds[idx],
+      aggregator: () => collateralOracles[idx].aggregator,
+    }));
+  };
+  let marketCollaterals: Awaited<ReturnType<typeof configureMarketCollateral>>;
+
+  before('configure market collaterals', async () => {
+    marketCollaterals = await configureMarketCollateral();
+  });
+
+  const restore = snapshotCheckpoint(core.provider);
+
+  return {
+    systems: () => systems,
+    restore,
+    markets: () => markets,
+    marketCollaterals: () => marketCollaterals,
+    pool: () => ({
+      id: stakedPool.poolId,
+      stakerAccountId: stakedPool.accountId,
+      stakedAmount: stakedPool.depositAmount,
+      collateral: stakedPool.collateralContract,
+      oracleNodeId: stakedPool.oracleNodeId,
+      aggregator: stakedPool.aggregator,
+    }),
+  };
 };
 
 export const bn = (n: number) => wei(n).toBN();

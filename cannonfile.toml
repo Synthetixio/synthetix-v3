@@ -157,11 +157,12 @@ args = []
 [contract.SynthetixUsdCollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
+salt = "2"
 
 [contract.WrappedStakedEthCollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
-
+salt = "3"
 
 [invoke.initialize_snxCollateral]
 target = ["SnxCollateralMock"]

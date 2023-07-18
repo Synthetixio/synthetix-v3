@@ -1,11 +1,14 @@
 import { bn, bootstrap } from '../../bootstrap';
 import { wei } from '@synthetixio/wei';
-import assert from 'assert';
 import { utils } from 'ethers';
+import assert from 'assert';
 
 describe('PerpCollateralModule', async () => {
   // Hardcoding args here but this will eventually be moved into generators.
-  const { systems, restore, owner, markets } = bootstrap({
+  const { systems, restore, markets } = bootstrap({
+    pool: {
+      initialCollateralPrice: bn(10_000),
+    },
     global: {
       minMarginUsd: bn(100),
       priceDivergencePercent: wei(0.02).toBN(),
@@ -23,7 +26,7 @@ describe('PerpCollateralModule', async () => {
     markets: [
       {
         name: utils.formatBytes32String('ETHPERP'),
-        initialPrice: bn(1900),
+        initialPrice: bn(1000),
         specific: {
           oracleNodeId: utils.formatBytes32String(''),
           pythPriceFeedId: utils.formatBytes32String(''),
@@ -45,8 +48,9 @@ describe('PerpCollateralModule', async () => {
 
   it('should do the thing', async () => {
     const { PerpMarketProxy } = systems();
-    console.log(await PerpMarketProxy.getMarketParameters());
-    console.log(await PerpMarketProxy.getMarketParametersById(markets[0].marketId()));
+    console.log(await PerpMarketProxy.getConfiguredCollaterals());
+    // console.log(await PerpMarketProxy.getMarketParameters());
+    // console.log(await PerpMarketProxy.getMarketParametersById(markets()[0].marketId()));
     assert.equal(1, 1);
   });
 });
