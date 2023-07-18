@@ -197,7 +197,7 @@ library AsyncOrder {
      * @notice Resets the order.
      * @dev This function is called after the order is settled or cancelled.
      * @dev Just setting the sizeDelta to 0 is enough, since is the value checked to identify an active order at settlement time.
-     * @dev The rest of the fields will be updated on the next commitmnet. Not doing it here is more gas efficient.
+     * @dev The rest of the fields will be updated on the next commitment. Not doing it here is more gas efficient.
      */
     function reset(Data storage self) internal {
         self.sizeDelta = 0;
