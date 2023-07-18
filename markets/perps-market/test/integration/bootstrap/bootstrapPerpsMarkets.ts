@@ -15,7 +15,7 @@ export type PerpsMarket = {
 export type PerpsMarkets = Array<PerpsMarket>;
 
 export type PerpsMarketData = Array<{
-  requestedMarketId: number;
+  requestedMarketId: ethers.BigNumber;
   name: string;
   token: string;
   price: ethers.BigNumber;
@@ -71,7 +71,7 @@ export const bootstrapPerpsMarkets = (
   chainState: IncomingChainState | undefined
 ) => {
   const r: IncomingChainState = chainState ?? createStakedPool(bootstrap(), bn(2000));
-  let contracts: Systems, marketOwner: ethers.Signer;
+  let contracts: Systems, marketOwner: ethers.Signer, superMarketId: ethers.BigNumber;
 
   before('identify contracts', () => {
     contracts = r.systems() as Systems;
@@ -81,9 +81,22 @@ export const bootstrapPerpsMarkets = (
     [, , marketOwner] = r.signers();
   });
 
+  before('create super market', async () => {
+    superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory();
+    await contracts.PerpsMarket.callStatic.initializeFactory();
+
+    await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
+      {
+        superMarketId,
+        weightD18: ethers.utils.parseEther('1'),
+        maxDebtShareValueD18: ethers.utils.parseEther('1'),
+      },
+    ]);
+  });
+
   const perpsMarkets: PerpsMarkets = data.map(
     ({
-      requestedMarketId,
+      requestedMarketId: marketId,
       name,
       token,
       price,
@@ -94,7 +107,7 @@ export const bootstrapPerpsMarkets = (
       lockedOiRatioD18,
       settlementStrategy,
     }) => {
-      let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: ethers.BigNumber;
+      let oracleNodeId: string, aggregator: AggregatorV3Mock;
       before('create price nodes', async () => {
         const results = await createOracleNode(r.owner(), price, r.systems().OracleManager);
         oracleNodeId = results.oracleNodeId;
@@ -102,23 +115,8 @@ export const bootstrapPerpsMarkets = (
       });
 
       before(`create perps market ${name}`, async () => {
-        marketId = await contracts.PerpsMarket.callStatic.createMarket(
-          name,
-          token,
-          marketOwner.getAddress()
-        );
-        await contracts.PerpsMarket.createMarket(name, token, marketOwner.getAddress());
+        await contracts.PerpsMarket.createMarket(marketId, name, token, marketOwner.getAddress());
         await contracts.PerpsMarket.connect(marketOwner).updatePriceData(marketId, oracleNodeId);
-      });
-
-      before('delegate collateral from pool to market', async () => {
-        await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
-          {
-            marketId,
-            weightD18: ethers.utils.parseEther('1'),
-            maxDebtShareValueD18: ethers.utils.parseEther('1'),
-          },
-        ]);
       });
 
       before('set funding parameters', async () => {
@@ -198,6 +196,7 @@ export const bootstrapPerpsMarkets = (
   return {
     ...r,
     restore,
+    superMarketId: () => superMarketId,
     systems: () => contracts,
     marketOwner: () => marketOwner,
     perpsMarkets: () => perpsMarkets,

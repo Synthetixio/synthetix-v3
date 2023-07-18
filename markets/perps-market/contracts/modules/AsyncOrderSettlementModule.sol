@@ -132,7 +132,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         ) = asyncOrder.validateOrder(settlementStrategy, price);
         runtime.newPositionSize = newPosition.size;
 
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        runtime.factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
         // use fill price to calculate realized pnl
@@ -156,15 +156,12 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.synthetix.withdrawMarketUsd(
-                factory.perpsMarketId,
+            runtime.factory.synthetix.withdrawMarketUsd(
+                runtime.factory.perpsMarketId,
                 msg.sender,
                 runtime.settlementReward
             );
         }
-
-        // exctracted from asyncOrder before order is reset
-        bytes32 trackingCode = asyncOrder.trackingCode;
 
         // trader can now commit a new order
         asyncOrder.reset();
@@ -179,7 +176,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            trackingCode,
+            asyncOrder.trackingCode,
             msg.sender
         );
     }
