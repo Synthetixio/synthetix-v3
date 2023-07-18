@@ -54,6 +54,8 @@ contract PerpsAccountModule is IAccountModule {
             account.id = accountId;
         }
 
+        account.checkPendingOrder();
+
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
             : ITokenModule(perpsMarketFactory.spotMarket.getSynth(synthMarketId));

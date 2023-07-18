@@ -28,7 +28,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     bool public pauseMigration;
 
     // used by _migrate to temporarily set reportedDebt to another value before
-    uint256 tmpLockedDebt;
+    uint256 internal tmpLockedDebt;
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
@@ -38,6 +38,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
 
+    // solhint-disable-next-line no-empty-blocks
     constructor() Ownable(msg.sender) {}
 
     /**

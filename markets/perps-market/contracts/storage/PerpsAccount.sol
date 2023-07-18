@@ -9,6 +9,7 @@ import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
@@ -34,10 +35,13 @@ library PerpsAccount {
     using DecimalMath for uint256;
 
     struct Data {
-        // synth marketId => amount
+        // @dev synth marketId => amount
         mapping(uint128 => uint256) collateralAmounts;
+        // @dev account Id
         uint128 id;
+        // @dev set of active collateral types. By active we mean collateral types that have a non-zero amount
         SetUtil.UintSet activeCollateralTypes;
+        // @dev set of open position market ids
         SetUtil.UintSet openPositionMarketIds;
     }
 
@@ -86,6 +90,14 @@ library PerpsAccount {
             self.openPositionMarketIds.remove(positionMarketId);
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.add(positionMarketId);
+        }
+    }
+
+    function checkPendingOrder(Data storage self) internal {
+        // Check if there are pending orders
+        AsyncOrder.Data memory asyncOrder = AsyncOrder.load(self.id);
+        if (asyncOrder.sizeDelta != 0) {
+            revert AsyncOrder.PendingOrderExist();
         }
     }
 

@@ -500,6 +500,12 @@ library AsyncOrder {
         Position.Data newPosition;
         bytes32 trackingCode;
     }
+    function load(uint128 accountId) internal pure returns (Data storage order) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.AsyncOrder", accountId));
+        assembly {
+            order.slot := s
+        }
+    }
 }
 
 // @custom:artifact contracts/storage/GlobalPerpsMarket.sol:GlobalPerpsMarket
@@ -586,7 +592,6 @@ library PerpsMarket {
         uint256 lastFundingTime;
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
-        mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
     }
     struct MarketUpdateData {
