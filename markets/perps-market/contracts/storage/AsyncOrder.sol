@@ -7,7 +7,6 @@ import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
-import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -32,15 +31,31 @@ library AsyncOrder {
         uint256 settlementExpiration
     );
 
-    error OrderNotValid();
+    error SettlementWindowNotExpired(
+        uint256 timestamp,
+        uint256 settlementTime,
+        uint256 settlementExpiration
+    );
 
     error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
+
+    error OrderNotValid();
+
+    /**
+     * @notice Gets thrown when commit order is called when a pending order already exists.
+     */
+    error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
+
+    /**
+     * @notice Gets thrown when pending orders exist and attempts to modify collateral.
+     */
+    error PendingOrderExist();
 
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -49,10 +64,50 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta; // TODO: change to int128
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
+    }
+
+    function load(uint128 accountId) internal pure returns (Data storage order) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.AsyncOrder", accountId));
+
+        assembly {
+            order.slot := s
+        }
+    }
+
+    /**
+     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
+     * @dev non-existent order is considered an order with sizeDelta == 0.
+     */
+    function loadValid(
+        uint128 accountId,
+        uint128 marketId
+    ) internal view returns (Data storage order) {
+        order = load(accountId);
+        if (order.marketId != marketId || order.sizeDelta == 0) {
+            revert OrderNotValid();
+        }
+    }
+
+    /**
+     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
+     * @dev non-existent order is considered an order with sizeDelta == 0.
+     */
+    function createValid(
+        uint128 accountId,
+        uint128 marketId
+    ) internal view returns (Data storage order) {
+        order = load(accountId);
+        if (order.sizeDelta != 0 && order.marketId == marketId) {
+            revert OrderAlreadyCommitted(marketId, accountId);
+        }
+
+        if (order.sizeDelta != 0) {
+            revert PendingOrderExist();
+        }
     }
 
     function update(
@@ -90,9 +145,18 @@ library AsyncOrder {
         }
     }
 
-    function checkValidity(Data storage self) internal view {
-        if (self.sizeDelta == 0) {
-            revert OrderNotValid();
+    function checkCancellationEligibility(
+        Data storage self,
+        SettlementStrategy.Data storage settlementStrategy
+    ) internal view {
+        uint settlementExpiration = self.settlementTime +
+            settlementStrategy.settlementWindowDuration;
+        if (block.timestamp < settlementExpiration) {
+            revert SettlementWindowNotExpired(
+                block.timestamp,
+                self.settlementTime,
+                settlementExpiration
+            );
         }
     }
 
@@ -111,6 +175,7 @@ library AsyncOrder {
         uint initialRequiredMargin;
         uint totalRequiredMargin;
         Position.Data newPosition;
+        bytes32 trackingCode;
     }
 
     function validateOrder(
@@ -130,6 +195,7 @@ library AsyncOrder {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
+
         SimulateDataRuntime memory runtime;
 
         PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
@@ -176,10 +242,16 @@ library AsyncOrder {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
-        // TODO: validate position size
         oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
 
-        runtime.newPositionSize = oldPosition.size + order.sizeDelta.to128();
+        PerpsMarket.validatePositionSize(
+            perpsMarketData,
+            marketConfig.maxMarketSize,
+            oldPosition.size,
+            order.sizeDelta
+        );
+
+        runtime.newPositionSize = oldPosition.size + order.sizeDelta;
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
             runtime.fillPrice
@@ -199,6 +271,7 @@ library AsyncOrder {
             runtime.requiredMaintenanceMargin +
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
+
         // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
@@ -214,7 +287,7 @@ library AsyncOrder {
     }
 
     function calculateOrderFee(
-        int sizeDelta,
+        int128 sizeDelta,
         uint256 fillPrice,
         int marketSkew,
         OrderFee.Data storage orderFeeData
@@ -240,31 +313,29 @@ library AsyncOrder {
         // as a maker (reducing skew) as it's now taking (increasing skew) in the opposite direction. hence,
         // a different fee is applied on the proportion increasing the skew.
 
-        // proportion of size that's on the other direction
-        uint takerSize = MathUtil.abs((marketSkew + sizeDelta).divDecimal(sizeDelta));
-        uint makerSize = DecimalMath.UNIT - takerSize;
-        uint takerFee = MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(
-            orderFeeData.takerFee
-        );
-        uint makerFee = MathUtil.abs(notionalDiff).mulDecimal(makerSize).mulDecimal(
+        // The proportions are computed as follows:
+        // makerSize = abs(marketSkew) => since we are reversing the skew, the maker size is the current skew
+        // takerSize = abs(marketSkew + sizeDelta) => since we are reversing the skew, the taker size is the new skew
+        //
+        // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
+
+        uint makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
             orderFeeData.makerFee
+        );
+
+        uint takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
+            orderFeeData.takerFee
         );
 
         return takerFee + makerFee;
     }
 
-    // TODO: refactor possibly
     function calculateFillPrice(
         int skew,
         uint skewScale,
         int size,
         uint price
     ) internal pure returns (uint) {
-        int pdBefore = skew.divDecimal(skewScale.toInt());
-        int pdAfter = (skew + size).divDecimal(skewScale.toInt());
-        int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
-
         // How is the p/d-adjusted price calculated using an example:
         //
         // price      = $1200 USD (oracle)
@@ -292,6 +363,19 @@ library AsyncOrder {
         // fill_price = (price_before + price_after) / 2
         //            = (1200 + 1200.12) / 2
         //            = 1200.06
+        if (skewScale == 0) {
+            return price;
+        }
+        // calculate pd (premium/discount) before and after trade
+        int pdBefore = skew.divDecimal(skewScale.toInt());
+        int newSkew = skew + size;
+        int pdAfter = newSkew.divDecimal(skewScale.toInt());
+
+        // calculate price before and after trade with pd applied
+        int priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
+        int priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+
+        // the fill price is the average of those prices
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 }

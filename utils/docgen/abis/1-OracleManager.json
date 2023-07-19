@@ -1,0 +1,495 @@
+{
+  "address": "0x0aaF300E148378489a8A471DD3e9E53E30cb42e3",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "ImplementationIsSterile",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NoChange",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "contr",
+          "type": "address"
+        }
+      ],
+      "name": "NotAContract",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "NotNominated",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "Unauthorized",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "UpgradeSimulationFailed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ZeroAddress",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "oldOwner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnerChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnerNominated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "self",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "Upgraded",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "acceptOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getImplementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newNominatedOwner",
+          "type": "address"
+        }
+      ],
+      "name": "nominateNewOwner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nominatedOwner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceNomination",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        }
+      ],
+      "name": "simulateUpgradeTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        }
+      ],
+      "name": "upgradeTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "deviation",
+          "type": "int256"
+        }
+      ],
+      "name": "DeviationToleranceExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidInputPrice",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum NodeDefinition.NodeType",
+              "name": "nodeType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "parameters",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32[]",
+              "name": "parents",
+              "type": "bytes32[]"
+            }
+          ],
+          "internalType": "struct NodeDefinition.Data",
+          "name": "nodeType",
+          "type": "tuple"
+        }
+      ],
+      "name": "InvalidNodeDefinition",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "price",
+          "type": "int256"
+        }
+      ],
+      "name": "InvalidPrice",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "nodeId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "NodeNotRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OverflowInt256ToUint256",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OverflowInt56ToInt24",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OverflowUint256ToInt256",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OverflowUint256ToUint160",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OverflowUint56ToInt56",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "StalenessToleranceExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "nodeId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "UnprocessableNode",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum ReducerNode.Operations",
+          "name": "operation",
+          "type": "uint8"
+        }
+      ],
+      "name": "UnsupportedOperation",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "nodeId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum NodeDefinition.NodeType",
+          "name": "nodeType",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes",
+          "name": "parameters",
+          "type": "bytes"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32[]",
+          "name": "parents",
+          "type": "bytes32[]"
+        }
+      ],
+      "name": "NodeRegistered",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "nodeId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getNode",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum NodeDefinition.NodeType",
+              "name": "nodeType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "parameters",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32[]",
+              "name": "parents",
+              "type": "bytes32[]"
+            }
+          ],
+          "internalType": "struct NodeDefinition.Data",
+          "name": "node",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum NodeDefinition.NodeType",
+          "name": "nodeType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes",
+          "name": "parameters",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "parents",
+          "type": "bytes32[]"
+        }
+      ],
+      "name": "getNodeId",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "nodeId",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "nodeId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "process",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "int256",
+              "name": "price",
+              "type": "int256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "__slotAvailableForFutureUse1",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "__slotAvailableForFutureUse2",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct NodeOutput.Data",
+          "name": "node",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum NodeDefinition.NodeType",
+          "name": "nodeType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes",
+          "name": "parameters",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "parents",
+          "type": "bytes32[]"
+        }
+      ],
+      "name": "registerNode",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "nodeId",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "deployTxnHash": "",
+  "sourceName": "",
+  "contractName": "",
+  "deployedOn": "invoke.upgrade_proxy"
+}

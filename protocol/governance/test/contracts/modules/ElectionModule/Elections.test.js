@@ -3,7 +3,7 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 
 const assertRevert = require('@synthetixio/core-utils/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/router/utils/tests');
+const { bootstrap } = require('@synthetixio/router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 const {
   getTime,

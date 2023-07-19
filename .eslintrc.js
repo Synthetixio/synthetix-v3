@@ -51,5 +51,27 @@ module.exports = {
         mocha: true,
       },
     },
+
+    {
+      files: [
+        'protocol/synthetix/subgraph/**/*',
+        'markets/spot-market/subgraph/**/*',
+        'markets/perps-market/subgraph/**/*',
+      ],
+      env: {},
+      globals: {
+        changetype: true,
+        i32: true,
+        i64: true,
+        assert: true,
+      },
+      rules: {
+        'prefer-const': 'off',
+        '@typescript-eslint/ban-ts-comment': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/ban-types': 'off',
+        '@typescript-eslint/no-array-constructor': 'off',
+      },
+    },
   ],
 };

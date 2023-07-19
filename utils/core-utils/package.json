@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-utils",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -12,7 +12,8 @@
     "utils/**/*.d.ts.map"
   ],
   "scripts": {
-    "build": "tsc --project src/tsconfig.json",
+    "build": "yarn build:ts",
+    "build:ts": "tsc --project src/tsconfig.json",
     "watch": "yarn build --watch",
     "test": "mocha --require ts-node/register",
     "coverage": "nyc yarn test",
@@ -39,22 +40,22 @@
     "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/prompts": "2.0.14",
     "ethers": "^5.7.2",
-    "hardhat": "2.13.0",
+    "hardhat": "2.15.0",
     "mocha": "9.1.1",
     "multimatch": "6.0.0",
     "nyc": "15.1.0",
     "sinon": "11.1.2",
-    "solc": "^0.8.17",
+    "solc": "0.8.17",
     "solidity-ast": "0.4.46",
     "typescript": "4.9.3"
   },
   "dependencies": {
-    "@ethersproject/abi": "5.7.0",
+    "@ethersproject/abi": "^5.7.0",
     "chalk": "4.1.2",
     "ethereumjs-util": "6.2.1",
     "fast-glob": "3.2.12",
     "prompts": "2.4.2",
     "rfdc": "1.3.0"
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
+  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862"
 }

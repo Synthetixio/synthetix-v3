@@ -15,15 +15,21 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+/**
+ * @title Module to manage accounts
+ * @dev See IAccountModule.
+ */
 contract PerpsAccountModule is IAccountModule {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
     using AsyncOrder for AsyncOrder.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
-    using PerpsAccount for PerpsAccount.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function modifyCollateral(
         uint128 accountId,
         uint128 synthMarketId,
@@ -48,6 +54,8 @@ contract PerpsAccountModule is IAccountModule {
             account.id = accountId;
         }
 
+        account.checkPendingOrder();
+
         ITokenModule synth = synthMarketId == 0
             ? perpsMarketFactory.usdToken
             : ITokenModule(perpsMarketFactory.spotMarket.getSynth(synthMarketId));
@@ -69,14 +77,23 @@ contract PerpsAccountModule is IAccountModule {
         emit CollateralModified(accountId, synthMarketId, amountDelta, msg.sender);
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalCollateralValue();
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
     }
 
+    /**
+     * @inheritdoc IAccountModule
+     */
     function getOpenPosition(
         uint128 accountId,
         uint128 marketId
@@ -91,18 +108,20 @@ contract PerpsAccountModule is IAccountModule {
         return (pnl, accruedFunding, position.size);
     }
 
-    function getAsyncOrderClaim(
-        uint128 accountId,
-        uint128 marketId
-    ) external view override returns (AsyncOrder.Data memory) {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
-
-        AsyncOrder.Data storage asyncOrder = perpsMarket.asyncOrders[accountId];
-
-        return asyncOrder;
-    }
-
+    /**
+     * @inheritdoc IAccountModule
+     */
     function getAvailableMargin(uint128 accountId) external view override returns (int) {
         return PerpsAccount.load(accountId).getAvailableMargin();
+    }
+
+    /**
+     * @inheritdoc IAccountModule
+     */
+    function getCollateralAmount(
+        uint128 accountId,
+        uint128 synthMarketId
+    ) external view override returns (uint256) {
+        return PerpsAccount.load(accountId).collateralAmounts[synthMarketId];
     }
 }

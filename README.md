@@ -7,12 +7,11 @@
 | @synthetixio/core-utils     | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=core-utils)](https://codecov.io/gh/Synthetixio/synthetix-v3)     |
 | @synthetixio/core-contracts | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=core-contracts)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
 | @synthetixio/core-modules   | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=core-modules)](https://codecov.io/gh/Synthetixio/synthetix-v3)   |
-| @synthetixio/router         | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=router)](https://codecov.io/gh/Synthetixio/synthetix-v3)         |
 | @synthetixio/main           | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=synthetix)](https://codecov.io/gh/Synthetixio/synthetix-v3)      |
 
 ## Documentation
 
-Please refer to the [Official Documentation](https://snx-v3-docs.vercel.app/) for high level concepts of the Synthetix v3 protocol, as well as auto generated docs from natspec.
+Please refer to the [Official Documentation](https://docs.synthetix.io/) for high level concepts of the Synthetix v3 protocol, as well as auto generated docs from natspec.
 
 ## Package structure
 
@@ -73,9 +72,7 @@ To prepare for system upgrades, this repository is used to release new versions 
 - After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
 - Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file.
 - Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
-- Publish the release with `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY> yarn publish:release` for the proper semver release.
-  - You don't need to pass in the `CANNON_REGISTRY_PROVIDER_URL` or `CANNON_PRIVATE_KEY` values if you're using [Frame](https://frame.sh/).
+- Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
+  - If you aren't using [Frame](https://frame.sh/), prepend `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the commands above.
   - In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately.
-- If you ran `yarn publish:dev`, remove the version changes in all of the `package.json` files.
-
-Then, follow the instructions in the [synthetix-deployments repository](https://github.com/synthetixio/synthetix-deployments).
+- In all of the package.json files, revert dependencies' version changes back to "workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.

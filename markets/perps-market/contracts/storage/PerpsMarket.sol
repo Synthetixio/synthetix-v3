@@ -9,7 +9,6 @@ import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 
@@ -23,6 +22,7 @@ library PerpsMarket {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
     using Position for Position.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     error OnlyMarketOwner(address marketOwner, address sender);
 
@@ -45,8 +45,6 @@ library PerpsMarket {
         // liquidation data
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
-        // accountId => asyncOrder
-        mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
     }
@@ -93,46 +91,77 @@ library PerpsMarket {
         }
     }
 
-    function maxLiquidatableAmount(uint128 marketId) internal returns (uint) {
-        Data storage self = load(marketId);
-        uint maxLiquidationValue = maxLiquidationPerSecond(marketId);
-        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
+    /**
+     * @dev Returns the max amount of liquidation that can occur based on the market configuration
+     * @notice Based on the configured liquidation window, a trader can only be liquidated for a certain
+     *   amount within that window.  If the amount requested is greater than the amount allowed, the
+     *   smaller amount is returned.  The function also updates its accounting to ensure the results on
+     *   subsequent liquidations work appropriately.
+     */
+    function maxLiquidatableAmount(
+        Data storage self,
+        uint256 requestedLiquidationAmount
+    ) internal returns (uint128 liquidatableAmount) {
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
-        self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
-        uint unlockedLiquidationCapacity = timeSinceLastUpdate * maxLiquidationValue;
-        if (unlockedLiquidationCapacity > self.lastUtilizedLiquidationCapacity) {
-            self.lastUtilizedLiquidationCapacity = 0;
+        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
+        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
+        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
+
+        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
+            maxLiquidationAmountPerSecond;
+        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
+            liquidatableAmount = MathUtil
+                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
+                .to128();
+            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
         } else {
-            self.lastUtilizedLiquidationCapacity =
-                self.lastUtilizedLiquidationCapacity -
-                unlockedLiquidationCapacity.to128();
+            liquidatableAmount = MathUtil
+                .min(
+                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
+                    requestedLiquidationAmount
+                )
+                .to128();
+            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
         }
 
-        return
-            (maxLiquidationValue *
-                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
-            self.lastUtilizedLiquidationCapacity;
+        // only update timestamp if there is something being liquidated
+        if (liquidatableAmount > 0) {
+            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+        }
     }
 
-    function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            marketId
-        );
-        OrderFee.Data storage orderFeeData = marketConfig.orderFees;
-        return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
+    struct MarketUpdateData {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
     }
 
+    /**
+     * @dev If you call this method, please ensure you emit an event so offchain solution can index market state history properly
+     */
     function updatePositionData(
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal {
+    ) internal returns (MarketUpdateData memory) {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
 
         self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
         self.skew += newPosition.size - oldPositionSize;
         oldPosition.updatePosition(newPosition);
+        // TODO add current market debt
+        return
+            MarketUpdateData(
+                self.id,
+                self.skew,
+                self.size,
+                self.lastFundingRate,
+                currentFundingVelocity(self)
+            );
     }
 
     function loadWithVerifiedOwner(
@@ -222,43 +251,43 @@ library PerpsMarket {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
-    // TODO: David will refactor this
     function validatePositionSize(
         Data storage self,
         uint maxSize,
         int oldSize,
         int newSize
-    ) internal view returns (bool) {
+    ) internal view {
         // Allow users to reduce an order no matter the market conditions.
-        if (MathUtil.sameSide(oldSize, newSize) && MathUtil.abs(newSize) <= MathUtil.abs(oldSize)) {
-            return false;
+        bool isNotReducingInterest = !(MathUtil.sameSide(oldSize, newSize) &&
+            MathUtil.abs(newSize) <= MathUtil.abs(oldSize));
+        if (isNotReducingInterest) {
+            int newSkew = self.skew - oldSize + newSize;
+
+            int newMarketSize = self.size.toInt() -
+                MathUtil.abs(oldSize).toInt() +
+                MathUtil.abs(newSize).toInt();
+
+            int newSideSize;
+            if (0 < newSize) {
+                // long case: marketSize + skew
+                //            = (|longSize| + |shortSize|) + (longSize + shortSize)
+                //            = 2 * longSize
+                newSideSize = newMarketSize + newSkew;
+            } else {
+                // short case: marketSize - skew
+                //            = (|longSize| + |shortSize|) - (longSize + shortSize)
+                //            = 2 * -shortSize
+                newSideSize = newMarketSize - newSkew;
+            }
+
+            // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
+            if (maxSize < MathUtil.abs(newSideSize / 2)) {
+                revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                    self.id,
+                    maxSize,
+                    newSideSize / 2
+                );
+            }
         }
-
-        // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
-        // we check that the side of the market their order is on would not break the limit.
-        int newSkew = self.skew - oldSize + newSize;
-        int newMarketSize = self.size.toInt() -
-            MathUtil.abs(oldSize).toInt() +
-            MathUtil.abs(newSize).toInt();
-
-        int newSideSize;
-        if (0 < newSize) {
-            // long case: marketSize + skew
-            //            = (|longSize| + |shortSize|) + (longSize + shortSize)
-            //            = 2 * longSize
-            newSideSize = newMarketSize + newSkew;
-        } else {
-            // short case: marketSize - skew
-            //            = (|longSize| + |shortSize|) - (longSize + shortSize)
-            //            = 2 * -shortSize
-            newSideSize = newMarketSize - newSkew;
-        }
-
-        // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
-        if (maxSize < MathUtil.abs(newSideSize / 2)) {
-            return true;
-        }
-
-        return false;
     }
 }

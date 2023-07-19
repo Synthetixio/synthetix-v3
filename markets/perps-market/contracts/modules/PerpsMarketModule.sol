@@ -20,7 +20,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
     }
 
     function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).maxMarketValue;
+        return PerpsMarketConfiguration.load(marketId).maxMarketSize;
     }
 
     function currentFundingRate(uint128 marketId) external view override returns (int) {

@@ -132,6 +132,7 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
+    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -349,7 +350,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
-        int128 prevTotalDebtD18;
+        int128 _unused_prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
@@ -414,17 +415,17 @@ library OrderFees {
     }
 }
 
-// @custom:artifact contracts/interfaces/IAsyncOrderModule.sol:IAsyncOrderModule
-interface IAsyncOrderModule {
+// @custom:artifact contracts/interfaces/IAsyncOrderSettlementModule.sol:IAsyncOrderSettlementModule
+interface IAsyncOrderSettlementModule {
     struct SettleOrderRuntime {
         uint128 marketId;
         uint128 accountId;
         int128 newPositionSize;
+        int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
         uint256 amountToDeposit;
         uint256 settlementReward;
-        bytes32 trackingCode;
     }
 }
 
@@ -455,8 +456,8 @@ interface IPythVerifier {
     }
 }
 
-// @custom:artifact contracts/modules/AsyncOrderModule.sol:AsyncOrderModule
-contract AsyncOrderModule {
+// @custom:artifact contracts/modules/AsyncOrderSettlementModule.sol:AsyncOrderSettlementModule
+contract AsyncOrderSettlementModule {
     int256 public constant PRECISION = 18;
 }
 
@@ -471,8 +472,8 @@ library AsyncOrder {
     struct Data {
         uint128 accountId;
         uint128 marketId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 settlementTime;
         uint256 acceptablePrice;
         bytes32 trackingCode;
@@ -480,8 +481,8 @@ library AsyncOrder {
     struct OrderCommitmentRequest {
         uint128 marketId;
         uint128 accountId;
-        int256 sizeDelta;
-        uint256 settlementStrategyId;
+        int128 sizeDelta;
+        uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
     }
@@ -497,6 +498,13 @@ library AsyncOrder {
         uint initialRequiredMargin;
         uint totalRequiredMargin;
         Position.Data newPosition;
+        bytes32 trackingCode;
+    }
+    function load(uint128 accountId) internal pure returns (Data storage order) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.AsyncOrder", accountId));
+        assembly {
+            order.slot := s
+        }
     }
 }
 
@@ -557,8 +565,8 @@ library PerpsAccount {
         uint128[] profitableMarkets;
         uint128[] losingMarkets;
         uint amountToDeposit;
-        uint amountToLiquidatePercentage;
-        uint percentageOfTotalLosingPnl;
+        uint amountToLiquidateRatioD18;
+        uint totalLosingPnlRatioD18;
         uint totalAvailableForDeposit;
     }
     function load(uint128 id) internal pure returns (Data storage account) {
@@ -584,8 +592,14 @@ library PerpsMarket {
         uint256 lastFundingTime;
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
-        mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
+    }
+    struct MarketUpdateData {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));
@@ -600,14 +614,16 @@ library PerpsMarketConfiguration {
     struct Data {
         OrderFee.Data orderFees;
         SettlementStrategy.Data[] settlementStrategies;
-        uint256 maxMarketValue;
+        uint256 maxMarketSize;
         uint256 maxFundingVelocity;
         uint256 skewScale;
-        uint256 initialMarginFraction;
-        uint256 maintenanceMarginFraction;
-        uint256 lockedOiPercent;
+        uint256 initialMarginRatioD18;
+        uint256 maintenanceMarginRatioD18;
+        uint256 lockedOiRatioD18;
         uint256 maxLiquidationLimitAccumulationMultiplier;
+        uint256 maxSecondsInLiquidationWindow;
         uint256 liquidationRewardRatioD18;
+        uint256 minimumPositionMargin;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
@@ -666,6 +682,7 @@ library SettlementStrategy {
         Type strategyType;
         uint256 settlementDelay;
         uint256 settlementWindowDuration;
+        uint256 priceWindowDuration;
         address priceVerificationContract;
         bytes32 feedId;
         string url;
