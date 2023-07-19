@@ -73,7 +73,7 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.
      */
-    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
+    function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
 
     /**
      * @dev Cancels a pending order.

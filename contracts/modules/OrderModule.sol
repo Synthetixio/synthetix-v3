@@ -134,7 +134,7 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function settledOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
+    function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
