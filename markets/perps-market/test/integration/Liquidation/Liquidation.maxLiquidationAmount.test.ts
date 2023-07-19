@@ -4,7 +4,7 @@ import { openPosition } from '../helpers';
 import { fastForwardTo, getTxTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 
-describe.skip('Liquidation - max liquidatable amount', async () => {
+describe('Liquidation - max liquidatable amount', async () => {
   const { systems, provider, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [

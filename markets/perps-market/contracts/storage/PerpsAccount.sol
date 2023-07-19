@@ -97,7 +97,7 @@ library PerpsAccount {
     }
 
     function updateOpenPositions(Data storage self, uint positionMarketId, int size) internal {
-        if (size == 0) {
+        if (size == 0 && self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.remove(positionMarketId);
         } else if (!self.openPositionMarketIds.contains(positionMarketId)) {
             self.openPositionMarketIds.add(positionMarketId);
@@ -337,7 +337,7 @@ library PerpsAccount {
 
         uint accumulatedLiquidationRewards;
 
-        for (uint i = 1; i < openPositionsLength; i++) {
+        for (uint i = 1; i <= openPositionsLength; i++) {
             uint128 positionMarketId = openPositionMarketIds.valueAt(i).to128();
             PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
             Position.Data storage position = perpsMarket.positions[self.id];

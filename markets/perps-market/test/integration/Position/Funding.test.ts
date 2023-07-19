@@ -11,7 +11,7 @@ const _MAX_FUNDING_VELOCITY = bn(3);
 const _TRADER_SIZE = bn(20);
 const _ETH_PRICE = bn(2000);
 
-describe.only('Position - funding', () => {
+describe('Position - funding', () => {
   const { systems, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
