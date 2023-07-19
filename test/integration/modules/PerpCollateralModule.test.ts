@@ -107,8 +107,23 @@ describe('PerpCollateralModule', async () => {
       );
     });
 
-    it('should revert when max allowable is negative');
+    it('should revert when max allowable is negative', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralConfiguration([genAddress()], [genBytes32()], [bn(-1)]),
+        'Error: value out-of-bounds'
+      );
+    });
 
-    it('should revert when type is address(0)');
+    it('should revert when type is address(0)', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
+      const zeroAddress = '0x0000000000000000000000000000000000000000';
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralConfiguration([zeroAddress], [genBytes32()], [bn(genInt())]),
+        'ZeroAddress'
+      );
+    });
   });
 });

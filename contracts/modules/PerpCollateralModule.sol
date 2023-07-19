@@ -108,7 +108,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
         for (uint256 i = 0; i < newCollateralLength; ) {
             address collateralType = collateralTypes[i];
             if (collateralType == address(0)) {
-                revert InvalidConfiguration();
+                revert ZeroAddress();
             }
 
             config.available[collateralType] = PerpCollateral.CollateralType(oracleNodeIds[i], maxAllowables[i]);

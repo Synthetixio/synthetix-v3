@@ -23,7 +23,7 @@ interface IPerpCollateralModule is IBasePerpMarket {
     // --- Errors --- //
 
     // @dev Emitted when supplied configuration is incorrect.
-    error InvalidConfiguration();
+    error ZeroAddress();
 
     // @dev Thrown when an account has insufficient collateral to transfer.
     error InsufficientCollateral(int256 collateral, int256 value);
