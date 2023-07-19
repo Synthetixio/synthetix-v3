@@ -80,8 +80,7 @@ jobs:
         run: |
           if yarn workspace ${{ matrix.workspace }} run | grep docgen; then
             yarn workspace ${{ matrix.workspace }} run docgen
-            # TODO: for some reason we have some diff in CI and not locally.
-            # git diff --exit-code
+            git diff --exit-code
           else
             echo 'SKIP. No "docgen" script'
           fi
