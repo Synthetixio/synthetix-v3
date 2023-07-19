@@ -47,7 +47,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (availableAmount + absAmountDelta > maxAllowable) {
-                revert MaxCollateralExceeded(amountDelta, maxAllowable);
+                revert MaxCollateralExceeded(absAmountDelta, maxAllowable);
             }
 
             accountCollaterals.available[collateralType] += absAmountDelta;
