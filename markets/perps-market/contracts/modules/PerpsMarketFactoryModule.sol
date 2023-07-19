@@ -10,7 +10,6 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-// import {Ownable} from "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";

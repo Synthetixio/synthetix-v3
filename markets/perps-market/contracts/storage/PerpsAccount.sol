@@ -63,7 +63,7 @@ library PerpsAccount {
     /**
         @notice allows us to update the account id in case it needs to be
      */
-    function loadUpdate(uint128 id) internal returns (Data storage account) {
+    function create(uint128 id) internal returns (Data storage account) {
         account = load(id);
         if (account.id == 0) {
             account.id = id;

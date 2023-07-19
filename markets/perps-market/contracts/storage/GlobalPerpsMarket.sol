@@ -53,11 +53,15 @@ library GlobalPerpsMarket {
         for (uint i = 1; i < activeCollateralLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
 
-            (uint collateralValue, ) = spotMarket.quoteSellExactIn(
-                synthMarketId,
-                self.collateralAmounts[synthMarketId]
-            );
-            total += collateralValue;
+            if (synthMarketId == 0) {
+                total += self.collateralAmounts[synthMarketId];
+            } else {
+                (uint collateralValue, ) = spotMarket.quoteSellExactIn(
+                    synthMarketId,
+                    self.collateralAmounts[synthMarketId]
+                );
+                total += collateralValue;
+            }
         }
     }
 

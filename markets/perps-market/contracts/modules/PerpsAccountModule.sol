@@ -50,7 +50,7 @@ contract PerpsAccountModule is IAccountModule {
         globalPerpsMarket.validateCollateralAmount(synthMarketId, amountDelta);
         globalPerpsMarket.checkLiquidation(accountId);
 
-        PerpsAccount.Data storage account = PerpsAccount.loadUpdate(accountId);
+        PerpsAccount.Data storage account = PerpsAccount.create(accountId);
         uint128 perpsMarketId = PerpsMarketFactory.load().perpsMarketId;
 
         account.checkPendingOrder();
