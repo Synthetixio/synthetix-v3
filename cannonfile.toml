@@ -49,6 +49,10 @@ args = []
 artifact = "MarketCollateralModule"
 args = []
 
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+args = []
+
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 args = []
@@ -80,7 +84,8 @@ contracts = [
   "PerpAccountModule",
   "MarketCollateralModule",
   "OrderModule",
-  "LiquidationModule"
+  "LiquidationModule",
+  "FeatureFlagModule"
 ]
 depends = [
   "import.synthetix",
@@ -90,7 +95,8 @@ depends = [
   "contract.PerpAccountModule",
   "contract.MarketCollateralModule",
   "contract.OrderModule",
-  "contract.LiquidationModule"
+  "contract.LiquidationModule",
+  "contract.FeatureFlagModule",
 ]
 
 # --- Post Deployment --- #
@@ -135,7 +141,7 @@ target = ["PerpMarketProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
-  "<%= formatBytes32String('bfPerpAccountNft') %>",
+  "<%= formatBytes32String('accountNft') %>",
   "Synthetix V3: BF Perp Account NFT",
   "SNX-V3-BFP-ACC",
   "",
