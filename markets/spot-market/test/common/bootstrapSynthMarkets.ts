@@ -11,6 +11,7 @@ export type SynthMarkets = Array<{
   buyAggregator: () => AggregatorV3Mock;
   sellAggregator: () => AggregatorV3Mock;
   synth: () => SynthRouter;
+  synthAddress: () => string;
 }>;
 
 export type SynthArguments = Array<{
@@ -36,6 +37,7 @@ export function bootstrapSynthMarkets(
       buyAggregator: AggregatorV3Mock,
       sellNodeId: string,
       sellAggregator: AggregatorV3Mock,
+      synthAddress: string,
       synth: SynthRouter;
 
     before('create price nodes', async () => {
@@ -67,7 +69,8 @@ export function bootstrapSynthMarkets(
         buyNodeId,
         sellNodeId
       );
-      synth = contracts.Synth(await contracts.SpotMarket.getSynth(marketId));
+      synthAddress = await contracts.SpotMarket.getSynth(marketId);
+      synth = contracts.Synth(synthAddress);
     });
 
     before('delegate collateral to market from pool', async () => {
@@ -81,8 +84,9 @@ export function bootstrapSynthMarkets(
     });
 
     before('allow synth as collateral in system', async () => {
+      const tokenAddress = await contracts.SpotMarket.getSynth(marketId);
       await r.systems().Core.connect(r.owner()).configureCollateral({
-        tokenAddress: r.systems().CollateralMock.address,
+        tokenAddress,
         oracleNodeId: buyNodeId,
         issuanceRatioD18: '5000000000000000000',
         liquidationRatioD18: '1500000000000000000',
@@ -97,6 +101,7 @@ export function bootstrapSynthMarkets(
       buyAggregator: () => buyAggregator,
       sellAggregator: () => sellAggregator,
       synth: () => synth,
+      synthAddress: () => synthAddress,
     };
   });
 

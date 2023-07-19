@@ -45,10 +45,4 @@ interface IPerpsMarketModule {
     function getMarketSummary(
         uint128 marketId
     ) external view returns (MarketSummary memory summary);
-
-    function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external;
-
-    function acceptMarketOwnership(uint128 perpsMarketId) external;
-
-    function getMarketOwner(uint128 perpsMarketId) external view returns (address);
 }

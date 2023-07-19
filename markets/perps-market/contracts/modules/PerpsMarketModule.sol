@@ -71,48 +71,4 @@ contract PerpsMarketModule is IPerpsMarketModule {
                 indexPrice: this.indexPrice(marketId)
             });
     }
-
-    /**
-     * @inheritdoc IPerpsMarketModule
-     */
-    function nominateMarketOwner(
-        uint128 perpsMarketId,
-        address newNominatedOwner
-    ) external override {
-        PerpsMarket.Data storage market = PerpsMarket.loadWithVerifiedOwner(
-            perpsMarketId,
-            msg.sender
-        );
-
-        if (newNominatedOwner == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
-
-        market.nominatedOwner = newNominatedOwner;
-
-        emit MarketOwnerNominated(perpsMarketId, newNominatedOwner);
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketModule
-     */
-    function acceptMarketOwnership(uint128 perpsMarketId) external override {
-        PerpsMarket.Data storage market = PerpsMarket.load(perpsMarketId);
-        address currentNominatedOwner = market.nominatedOwner;
-        if (msg.sender != currentNominatedOwner) {
-            revert NotNominated(msg.sender);
-        }
-
-        emit MarketOwnerChanged(perpsMarketId, market.owner, currentNominatedOwner);
-
-        market.owner = currentNominatedOwner;
-        market.nominatedOwner = address(0);
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketModule
-     */
-    function getMarketOwner(uint128 perpsMarketId) external view override returns (address) {
-        return PerpsMarket.load(perpsMarketId).owner;
-    }
 }

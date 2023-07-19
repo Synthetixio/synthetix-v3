@@ -15,8 +15,6 @@ library PerpsMarketFactory {
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
 
-    error OnlyMarketOwner(address marketOwner, address sender);
-
     error PerpsMarketNotInitialized();
     error PerpsMarketAlreadyInitialized();
 
@@ -48,21 +46,20 @@ library PerpsMarketFactory {
         }
     }
 
-    function loadWithVerifiedOwner(
-        address possibleOwner
-    ) internal view returns (Data storage factory) {
-        factory = load();
-
-        if (factory.owner != possibleOwner) {
-            revert AccessError.Unauthorized(possibleOwner);
-        }
-    }
-
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;
         assembly {
             perpsMarketFactory.slot := s
         }
+    }
+
+    function depositMarketCollateral(
+        Data storage self,
+        ITokenModule collateral,
+        uint256 amount
+    ) internal {
+        collateral.approve(address(self.synthetix), amount);
+        self.synthetix.depositMarketCollateral(self.perpsMarketId, address(collateral), amount);
     }
 
     function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {

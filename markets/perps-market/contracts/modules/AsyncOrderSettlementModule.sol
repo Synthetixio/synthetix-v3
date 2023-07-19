@@ -131,6 +131,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             Position.Data storage oldPosition
         ) = asyncOrder.validateOrder(settlementStrategy, price);
         runtime.newPositionSize = newPosition.size;
+        runtime.sizeDelta = asyncOrder.sizeDelta;
 
         runtime.factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
@@ -146,8 +147,20 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         }
 
         // after pnl is realized, update position
-        PerpsMarket.loadValid(runtime.marketId).updatePositionData(runtime.accountId, newPosition);
+        PerpsMarket.MarketUpdateData memory updateData = PerpsMarket
+            .loadValid(runtime.marketId)
+            .updatePositionData(runtime.accountId, newPosition);
         perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
+
+        emit MarketUpdated(
+            updateData.marketId,
+            price,
+            updateData.skew,
+            updateData.size,
+            runtime.sizeDelta,
+            updateData.currentFundingRate,
+            updateData.currentFundingVelocity
+        );
 
         // since margin is deposited, as long as the owed collateral is deducted
         // fees are realized by the stakers
@@ -172,7 +185,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.accountId,
             fillPrice,
             runtime.pnl,
-            asyncOrder.sizeDelta,
+            runtime.sizeDelta,
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,

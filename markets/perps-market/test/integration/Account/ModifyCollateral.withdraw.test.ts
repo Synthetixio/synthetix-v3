@@ -17,7 +17,7 @@ describe('ModifyCollateral Withdraw', () => {
   const withdrawAmount = wei(0.1);
   const BTC_PRICE = wei(10_000);
 
-  const { systems, owner, synthMarkets, trader1 } = bootstrapMarkets({
+  const { systems, owner, synthMarkets, superMarketId, trader1 } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
@@ -98,15 +98,23 @@ describe('ModifyCollateral Withdraw', () => {
       );
     });
 
-    it('properly reflects the perps market balance', async () => {
-      const perpsBalanceAfter = await synthMarkets()[0]
-        .synth()
-        .connect(trader1())
-        .balanceOf(systems().PerpsMarket.address);
-      assertBn.equal(
-        perpsBalanceAfter,
-        wei(perpsBalanceBefore).add(depositAmount).sub(withdrawAmount).toBN()
+    it('properly reflects core system collateral balance', async () => {
+      // const perpsBalanceAfter = await synthMarkets()[0]
+      //   .synth()
+      //   .connect(trader1())
+      //   .balanceOf(systems().PerpsMarket.address);
+
+      const btcCollateralValue = await systems().Core.getMarketCollateralAmount(
+        superMarketId(),
+        synthMarkets()[0].synthAddress()
       );
+
+      assertBn.equal(btcCollateralValue, depositAmount.sub(withdrawAmount).toBN());
+
+      // assertBn.equal(
+      //   perpsBalanceAfter,
+      //   wei(perpsBalanceBefore).add(depositAmount).sub(withdrawAmount).toBN()
+      // );
     });
 
     it('emits correct event with the expected values', async () => {
@@ -122,6 +130,7 @@ describe('ModifyCollateral Withdraw', () => {
   describe('withdraw with open positions', () => {
     const perpsMarketConfigs = [
       {
+        requestedMarketId: 25,
         name: 'Bitcoin',
         token: 'BTC',
         price: bn(30_000),
@@ -139,6 +148,7 @@ describe('ModifyCollateral Withdraw', () => {
         },
       },
       {
+        requestedMarketId: 26,
         name: 'Ether',
         token: 'ETH',
         price: bn(2000),

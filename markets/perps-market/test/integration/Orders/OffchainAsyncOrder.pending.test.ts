@@ -12,12 +12,14 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
     synthMarkets: [],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
         fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
       },
       {
+        requestedMarketId: 30,
         name: 'Bitcoin',
         token: 'snxBTC',
         price: bn(10_000),

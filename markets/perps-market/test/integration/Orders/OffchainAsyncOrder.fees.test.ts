@@ -25,6 +25,7 @@ describe('Offchain Async Order test - fees', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: ethPrice,
@@ -96,7 +97,6 @@ describe('Offchain Async Order test - fees', () => {
     describe(`Using ${testCase.name} as collateral`, () => {
       let balancesBeforeLong: {
         traderBalance: ethers.BigNumber;
-        perpMarketWithdrawable: ethers.BigNumber;
         keeperBalance: ethers.BigNumber;
       };
 
@@ -141,10 +141,9 @@ describe('Offchain Async Order test - fees', () => {
         });
 
         it('validate that not fees are paid on commit', async () => {
-          const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
+          const { traderBalance, keeperBalance } = await getBalances();
 
           assertBn.equal(traderBalance, balancesBeforeLong.traderBalance);
-          assertBn.equal(perpMarketWithdrawable, balancesBeforeLong.perpMarketWithdrawable);
           assertBn.equal(keeperBalance, balancesBeforeLong.keeperBalance);
         });
 
@@ -165,10 +164,9 @@ describe('Offchain Async Order test - fees', () => {
           });
 
           it('validate no fees are paid on cancel', async () => {
-            const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
+            const { traderBalance, keeperBalance } = await getBalances();
 
             assertBn.equal(traderBalance, balancesBeforeLong.traderBalance);
-            assertBn.equal(perpMarketWithdrawable, balancesBeforeLong.perpMarketWithdrawable);
             assertBn.equal(keeperBalance, balancesBeforeLong.keeperBalance);
           });
         });
@@ -191,16 +189,13 @@ describe('Offchain Async Order test - fees', () => {
           });
 
           it('validate fees paid on settle', async () => {
-            const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
+            const { traderBalance, keeperBalance } = await getBalances();
 
             assertBn.equal(
               traderBalance,
               balancesBeforeLong.traderBalance.sub(feesPaidOnSettle.totalFees)
             );
-            assertBn.equal(
-              perpMarketWithdrawable,
-              balancesBeforeLong.perpMarketWithdrawable.add(feesPaidOnSettle.perpsMarketFee)
-            );
+
             assertBn.equal(
               keeperBalance,
               balancesBeforeLong.keeperBalance.add(feesPaidOnSettle.keeperFee)
@@ -214,7 +209,6 @@ describe('Offchain Async Order test - fees', () => {
 
         let balancesAfterLong: {
           traderBalance: ethers.BigNumber;
-          perpMarketWithdrawable: ethers.BigNumber;
           keeperBalance: ethers.BigNumber;
           accountPnl: ethers.BigNumber;
         };
@@ -270,10 +264,6 @@ describe('Offchain Async Order test - fees', () => {
             balancesBeforeLong.traderBalance.sub(feesPaidOnLong.totalFees)
           );
           assertBn.equal(
-            balancesAfterLong.perpMarketWithdrawable,
-            balancesBeforeLong.perpMarketWithdrawable.add(feesPaidOnLong.perpsMarketFee)
-          );
-          assertBn.equal(
             balancesAfterLong.keeperBalance,
             balancesBeforeLong.keeperBalance.add(feesPaidOnLong.keeperFee)
           );
@@ -302,19 +292,13 @@ describe('Offchain Async Order test - fees', () => {
           });
 
           it('validate fees paid on short position', async () => {
-            const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
+            const { traderBalance, keeperBalance } = await getBalances();
 
             assertBn.equal(
               traderBalance,
               balancesAfterLong.traderBalance
                 .sub(feesPaidOnShort.totalFees)
                 .add(balancesAfterLong.accountPnl)
-            );
-            assertBn.equal(
-              perpMarketWithdrawable,
-              balancesAfterLong.perpMarketWithdrawable
-                .add(feesPaidOnShort.perpsMarketFee)
-                .sub(balancesAfterLong.accountPnl)
             );
             assertBn.equal(
               keeperBalance,
@@ -344,15 +328,11 @@ describe('Offchain Async Order test - fees', () => {
           });
 
           it('validate fees paid', async () => {
-            const { traderBalance, perpMarketWithdrawable, keeperBalance } = await getBalances();
+            const { traderBalance, keeperBalance } = await getBalances();
 
             assertBn.equal(
               traderBalance,
               balancesAfterLong.traderBalance.sub(feesPaidOnShort.totalFees)
-            );
-            assertBn.equal(
-              perpMarketWithdrawable,
-              balancesAfterLong.perpMarketWithdrawable.add(feesPaidOnShort.perpsMarketFee)
             );
             assertBn.equal(
               keeperBalance,
@@ -366,12 +346,10 @@ describe('Offchain Async Order test - fees', () => {
 
   const getBalances = async () => {
     const traderBalance = await systems().PerpsMarket.totalCollateralValue(2);
-    const perpMarketWithdrawable = await systems().Core.getWithdrawableMarketUsd(ethMarketId);
     const keeperBalance = await systems().USD.balanceOf(keeper().getAddress());
     const accountPnl = (await systems().PerpsMarket.getOpenPosition(2, ethMarketId))[0];
     return {
       traderBalance,
-      perpMarketWithdrawable,
       keeperBalance,
       accountPnl,
     };

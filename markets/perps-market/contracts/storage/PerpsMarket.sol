@@ -24,8 +24,6 @@ library PerpsMarket {
     using Position for Position.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
-    error OnlyMarketOwner(address marketOwner, address sender);
-
     error InvalidMarket(uint128 marketId);
 
     error PriceFeedNotSet(uint128 marketId);
@@ -33,8 +31,6 @@ library PerpsMarket {
     error MarketAlreadyExists(uint128 marketId);
 
     struct Data {
-        address owner;
-        address nominatedOwner;
         string name;
         string symbol;
         uint128 id;
@@ -60,7 +56,6 @@ library PerpsMarket {
 
     function createValid(
         uint128 id,
-        address owner,
         string memory name,
         string memory symbol
     ) internal returns (Data storage market) {
@@ -71,7 +66,6 @@ library PerpsMarket {
         market = load(id);
 
         market.id = id;
-        market.owner = owner;
         market.name = name;
         market.symbol = symbol;
     }
@@ -81,18 +75,12 @@ library PerpsMarket {
      */
     function loadValid(uint128 marketId) internal view returns (Data storage market) {
         market = load(marketId);
-        if (market.owner == address(0)) {
+        if (market.id == 0) {
             revert InvalidMarket(marketId);
         }
 
         if (PerpsPrice.load(marketId).feedId == "") {
             revert PriceFeedNotSet(marketId);
-        }
-    }
-
-    function onlyMarketOwner(Data storage self) internal view {
-        if (self.owner != msg.sender) {
-            revert OnlyMarketOwner(self.owner, msg.sender);
         }
     }
 
@@ -175,17 +163,6 @@ library PerpsMarket {
     ) internal {
         self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
         self.skew += newPositionSize - oldPositionSize;
-    }
-
-    function loadWithVerifiedOwner(
-        uint128 id,
-        address possibleOwner
-    ) internal view returns (Data storage market) {
-        market = load(id);
-
-        if (market.owner != possibleOwner) {
-            revert AccessError.Unauthorized(possibleOwner);
-        }
     }
 
     function recomputeFunding(

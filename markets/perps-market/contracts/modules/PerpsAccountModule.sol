@@ -26,6 +26,7 @@ contract PerpsAccountModule is IAccountModule {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using PerpsMarketFactory for PerpsMarketFactory.Data;
 
     /**
      * @inheritdoc IAccountModule
@@ -132,11 +133,7 @@ contract PerpsAccountModule is IAccountModule {
             );
             synth.transferFrom(msg.sender, address(this), amount);
             // depositing into a synth market
-            perpsMarketFactory.synthetix.depositMarketCollateral(
-                perpsMarketId,
-                address(synth),
-                amount
-            );
+            perpsMarketFactory.depositMarketCollateral(synth, amount);
         }
     }
 

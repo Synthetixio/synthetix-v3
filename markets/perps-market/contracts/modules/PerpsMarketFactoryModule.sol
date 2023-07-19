@@ -10,6 +10,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+// import {Ownable} from "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
@@ -80,22 +81,19 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     function createMarket(
         uint128 requestedMarketId,
         string memory marketName,
-        string memory marketSymbol,
-        address marketOwner
+        string memory marketSymbol
     ) external override returns (uint128) {
+        OwnableStorage.onlyOwner();
         PerpsMarketFactory.load().onlyIfInitialized();
-        if (marketOwner == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
 
         if (requestedMarketId == 0) {
             revert ParameterError.InvalidParameter("requestedMarketId", "cannot be 0");
         }
 
-        PerpsMarket.createValid(requestedMarketId, marketOwner, marketName, marketSymbol);
+        PerpsMarket.createValid(requestedMarketId, marketName, marketSymbol);
         GlobalPerpsMarket.load().addMarket(requestedMarketId);
 
-        emit MarketCreated(requestedMarketId, marketOwner, marketName, marketSymbol);
+        emit MarketCreated(requestedMarketId, marketName, marketSymbol);
 
         return requestedMarketId;
     }
@@ -117,49 +115,38 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             );
     }
 
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
-        PerpsMarket.loadWithVerifiedOwner(perpsMarketId, msg.sender);
+    // /**
+    //  * @inheritdoc IPerpsMarketFactoryModule
+    //  */
+    // function nominateMarketOwner(address newNominatedOwner) external override {
+    //     PerpsMarketFactory.Data storage factory = PerpsMarketFactory.loadWithVerifiedOwner(
+    //         msg.sender
+    //     );
 
-        PerpsPrice.load(perpsMarketId).update(feedId);
+    //     if (newNominatedOwner == address(0)) {
+    //         revert AddressError.ZeroAddress();
+    //     }
 
-        emit MarketPriceDataUpdated(perpsMarketId, feedId);
-    }
+    //     factory.nominatedOwner = newNominatedOwner;
 
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function nominateOwner(address newNominatedOwner) external override {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.loadWithVerifiedOwner(
-            msg.sender
-        );
+    //     emit OwnerNominated(newNominatedOwner);
+    // }
 
-        if (newNominatedOwner == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
+    // /**
+    //  * @inheritdoc IPerpsMarketFactoryModule
+    //  */
+    // function acceptMarketOwnership() external override {
+    //     PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+    //     address currentNominatedOwner = factory.nominatedOwner;
+    //     if (msg.sender != currentNominatedOwner) {
+    //         revert NotNominated(msg.sender);
+    //     }
 
-        factory.nominatedOwner = newNominatedOwner;
+    //     emit OwnerChanged(factory.owner, currentNominatedOwner);
 
-        emit OwnerNominated(newNominatedOwner);
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function acceptOwnership() external override {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        address currentNominatedOwner = factory.nominatedOwner;
-        if (msg.sender != currentNominatedOwner) {
-            revert NotNominated(msg.sender);
-        }
-
-        emit OwnerChanged(factory.owner, currentNominatedOwner);
-
-        factory.owner = currentNominatedOwner;
-        factory.nominatedOwner = address(0);
-    }
+    //     factory.owner = currentNominatedOwner;
+    //     factory.nominatedOwner = address(0);
+    // }
 
     /**
      * @dev See {IERC165-supportsInterface}.

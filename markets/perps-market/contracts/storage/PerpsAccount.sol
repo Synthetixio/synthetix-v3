@@ -300,6 +300,8 @@ library PerpsAccount {
                         type(uint).max,
                         address(0)
                     );
+                    // TODO: deposit snxUSD
+
                     updateCollateralAmount(self, marketId, -(amountToDeduct.toInt()));
                     leftoverAmount = 0;
                     break;
@@ -316,6 +318,8 @@ library PerpsAccount {
                         0,
                         address(0)
                     );
+                    // TODO: deposit snxUSD
+
                     updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
                     leftoverAmount -= amountToDeductUsd;
                 }
