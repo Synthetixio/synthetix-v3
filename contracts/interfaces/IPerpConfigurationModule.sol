@@ -43,10 +43,10 @@ interface IPerpConfigurationModule {
     // --- Events --- //
 
     // @dev Emitted when the global market config is updated.
-    event ConfigurationUpdated();
+    event ConfigurationUpdated(address from);
 
     // @dev Emitted when parameters for a specific market is updated.
-    event MarketConfigurationUpdated(uint128 marketId);
+    event MarketConfigurationUpdated(uint128 marketId, address from);
 
     // --- Mutative --- //
 

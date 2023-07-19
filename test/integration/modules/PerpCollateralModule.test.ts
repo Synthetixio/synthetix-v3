@@ -6,7 +6,7 @@ import { bootstrap } from '../../bootstrap';
 import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn } from '../../generators';
 
 describe('PerpCollateralModule', async () => {
-  const { traders, owner, systems, restore, markets } = bootstrap(genBootstrap());
+  const { traders, owner, systems, restore } = bootstrap(genBootstrap());
 
   beforeEach(restore);
 

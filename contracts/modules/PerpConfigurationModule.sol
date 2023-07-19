@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
 import "../interfaces/IPerpConfigurationModule.sol";
 
 contract PerpConfigurationModule is IPerpConfigurationModule {
@@ -27,7 +28,7 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
         config.keeperLiquidationGasUnits = data.keeperLiquidationGasUnits;
         config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;
 
-        emit ConfigurationUpdated();
+        emit ConfigurationUpdated(msg.sender);
     }
 
     /**
@@ -41,19 +42,22 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
 
         PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
 
+        // Only allow an existing per market to be configurable. Ensure it's first created then configure.
+        PerpMarket.exists(marketId);
+
         config.oracleNodeId = data.oracleNodeId;
         config.pythPriceFeedId = data.pythPriceFeedId;
         config.skewScale = data.skewScale;
         config.makerFee = data.makerFee;
         config.takerFee = data.takerFee;
         config.maxLeverage = data.maxLeverage;
-        config.maxMarketSize = data.maxLeverage;
+        config.maxMarketSize = data.maxMarketSize;
         config.maxFundingVelocity = data.maxFundingVelocity;
         config.liquidationBufferPercent = data.liquidationBufferPercent;
         config.liquidationFeePercent = data.liquidationFeePercent;
         config.liquidationPremiumMultiplier = data.liquidationPremiumMultiplier;
 
-        emit MarketConfigurationUpdated(marketId);
+        emit MarketConfigurationUpdated(marketId, msg.sender);
     }
 
     // --- Views --- //
