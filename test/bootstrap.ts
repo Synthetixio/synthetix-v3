@@ -1,4 +1,3 @@
-import { wei } from '@synthetixio/wei';
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { createStakedPool } from '@synthetixio/main/test/common';
@@ -12,7 +11,7 @@ import {
   AggregatorV3Mock,
 } from './generated/typechain';
 import type { IMarketConfigurationModule } from './generated/typechain/MarketConfigurationModule';
-import { BigNumber, utils } from 'ethers';
+import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
 import { bn } from './generators';
@@ -101,7 +100,6 @@ export const bootstrap = (args: BootstrapArgs) => {
     provider: () => getProvider(),
     signers: () => getSigners(),
     owner: () => getOwner(),
-    traders: () => getSigners().slice(1),
     systems: () => systems,
   };
 
@@ -184,10 +182,45 @@ export const bootstrap = (args: BootstrapArgs) => {
     marketCollaterals = await configureMarketCollateral();
   });
 
+  let keeper: Signer;
+  const traders: { signer: Signer; accountId: number }[] = [];
+  before('configure traders', async () => {
+    const { USD, PerpMarketProxy } = systems;
+    // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
+    // always reserved as the owner but everything else is free game.
+    //
+    // Here we reserve the [1, 2, 3, 4] as traders and the rest can be for other purposes.
+    //
+    // 1 = trader
+    // 2 = trader
+    // 3 = trader
+    // 4 = keeper (no funds)
+    const [trader1, trader2, trader3, _keeper] = getSigners().slice(1);
+    keeper = _keeper;
+
+    const owner = getOwner();
+    const createAccountFeature = utils.formatBytes32String('createAccount');
+    for (const [i, signer] of [trader1, trader2, trader3].entries()) {
+      const address = await signer.getAddress();
+
+      // The Synthetix AccountModule has a feature flag that currently prevents anyone from creating an account.
+      await PerpMarketProxy.connect(owner).addToFeatureFlagAllowlist(createAccountFeature, address);
+
+      const accountId = i + 10;
+      await PerpMarketProxy.connect(signer)['createAccount(uint128)'](accountId);
+
+      await USD.connect(signer).approve(PerpMarketProxy.address, constants.MaxInt256);
+
+      traders.push({ signer, accountId });
+    }
+  });
+
   const restore = snapshotCheckpoint(core.provider);
 
   return {
     ...core,
+    traders: () => traders,
+    keeper: () => keeper,
     restore,
     markets: () => markets,
     marketCollaterals: () => marketCollaterals,
