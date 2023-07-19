@@ -88,9 +88,15 @@ describe('PerpCollateralModule', async () => {
       });
     });
 
-    it('should successfully clear all collaterals', async () => {});
+    it('should reset existing collaterals when new config is empty', async () => {
+      const { PerpMarketProxy } = systems();
+      const from = owner();
 
-    it('should clear previous collaterals when configuring with new');
+      await PerpMarketProxy.connect(from).setCollateralConfiguration([], [], []);
+      const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
+
+      assert.equal(collaterals.length, 0);
+    });
 
     it('should revert when non-owners configuring collateral', async () => {
       const { PerpMarketProxy } = systems();
@@ -102,6 +108,7 @@ describe('PerpCollateralModule', async () => {
     });
 
     it('should revert when max allowable is negative');
+
     it('should revert when type is address(0)');
   });
 });
