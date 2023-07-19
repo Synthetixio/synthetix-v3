@@ -1,6 +1,7 @@
 import { wei } from '@synthetixio/wei';
 import { utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bn, bootstrap } from '../../bootstrap';
@@ -52,18 +53,18 @@ describe('PerpCollateralModule', async () => {
   describe('transferTo()', () => {
     it('should allow deposit of collateral to my account');
     it('should affect an existing position when depositing');
-    it('should not allow deposit to an account that does not exist');
-    it('should not allow deposit of unsupported collateral');
-    it('should not allow a deposit that exceeds max cap');
+    it('should revert deposit to an account that does not exist');
+    it('should revert deposit of unsupported collateral');
+    it('should revert deposit that exceeds max cap');
 
     it('should allow withdraw of collateral to my account');
     it('should affect an existing position when withdrawing');
-    it('should not allow withdraw to an account that does not exist');
-    it('should not allow withdraw of non-existent collateral');
-    it('should not allow withdraw of more than what is available');
-    it('should not allow position to be liquidatable when withdrawing');
+    it('should revert withdraw to an account that does not exist');
+    it('should revert withdraw of unsupported collateral');
+    it('should revert withdraw of more than what is available');
+    it('should revert withdraw when position can be liquidated');
 
-    it('should not allow transfers at all when an order is pending');
+    it('should revert transfers when an order is pending');
   });
 
   describe('setCollateralConfiguration()', () => {
@@ -76,7 +77,11 @@ describe('PerpCollateralModule', async () => {
       const oracleNodeIds = genListOf(n, () => genBytes32());
       const maxAllowables = genListOf(n, () => bn(genInt(10_000, 100_000)));
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables);
+      const tx = await PerpMarketProxy.connect(from).setCollateralConfiguration(
+        collateralTypes,
+        oracleNodeIds,
+        maxAllowables
+      );
       const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
 
       assert.equal(collaterals.length, n);
@@ -86,6 +91,8 @@ describe('PerpCollateralModule', async () => {
         assert.equal(collateralType, collateralTypes[i]);
         assert.equal(oracleNodeId, oracleNodeIds[i]);
       });
+
+      await assertEvent(tx, `CollateralConfigured("${await from.getAddress()}", ${n})`, PerpMarketProxy);
     });
 
     it('should reset existing collaterals when new config is empty', async () => {

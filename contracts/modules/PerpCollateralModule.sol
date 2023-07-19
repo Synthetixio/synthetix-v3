@@ -53,7 +53,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
             accountCollaterals.available[collateralType] += absAmountDelta;
             IERC20(collateralType).transferFrom(msg.sender, address(this), absAmountDelta);
             globalConfig.synthetix.depositMarketCollateral(marketId, collateralType, absAmountDelta);
-            emit Transfer(msg.sender, address(this), amountDelta);
+            emit Transfer(msg.sender, address(this), absAmountDelta);
         } else if (amountDelta < 0) {
             // Negative means to withdraw from the markets.
 
@@ -74,7 +74,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
 
             IERC20(collateralType).transferFrom(address(this), msg.sender, absAmountDelta);
             globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, absAmountDelta);
-            emit Transfer(address(this), msg.sender, amountDelta);
+            emit Transfer(address(this), msg.sender, absAmountDelta);
         } else {
             // A zero amount is a no-op.
             return;
@@ -118,6 +118,8 @@ contract PerpCollateralModule is IPerpCollateralModule {
             }
         }
         config.availableAddresses = newAvailableAddresses;
+
+        emit CollateralConfigured(msg.sender, newCollateralLength);
     }
 
     // --- Views --- //

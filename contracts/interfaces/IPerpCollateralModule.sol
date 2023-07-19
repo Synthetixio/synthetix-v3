@@ -18,7 +18,10 @@ interface IPerpCollateralModule is IBasePerpMarket {
     // --- Events --- //
 
     // @dev Emitted when collateral is transferred between user <-> Account.
-    event Transfer(address indexed from, address indexed to, int256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    // @dev Emitted when collateral is configured.
+    event CollateralConfigured(address indexed from, uint256 collaterals);
 
     // --- Errors --- //
 
