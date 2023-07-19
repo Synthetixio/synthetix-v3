@@ -22,16 +22,24 @@ cat $ROOT/protocol/synthetix/docs/index.md >> $OUT
 
 echo "## Spot Market" >> $OUT
 echo "" >> $OUT
+echo "- [Back to TOC](#smart-contracts)" >> $OUT
+echo "" >> $OUT
 cat $ROOT/markets/spot-market/docs/index.md >> $OUT
 
 echo "## Perps Market" >> $OUT
+echo "" >> $OUT
+echo "- [Back to TOC](#smart-contracts)" >> $OUT
 echo "" >> $OUT
 cat $ROOT/markets/perps-market/docs/index.md >> $OUT
 
 echo "## Governance" >> $OUT
 echo "" >> $OUT
+echo "- [Back to TOC](#smart-contracts)" >> $OUT
+echo "" >> $OUT
 cat $ROOT/protocol/governance/docs/index.md >> $OUT
 
 echo "## Oracle Manager" >> $OUT
+echo "" >> $OUT
+echo "- [Back to TOC](#smart-contracts)" >> $OUT
 echo "" >> $OUT
 cat $ROOT/protocol/oracle-manager/docs/index.md >> $OUT
