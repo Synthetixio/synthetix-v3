@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
 library ElectionSettings {
     struct Data {
         // Number of council members in the next epoch
@@ -19,5 +17,12 @@ library ElectionSettings {
         uint64 maxDateAdjustmentTolerance;
         // Default batch size when calling evaluate() with numBallots = 0
         uint defaultBallotEvaluationBatchSize;
+    }
+
+    function load(uint epochIndex) internal pure returns (Data storage settings) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.ElectionSettings", epochIndex));
+        assembly {
+            settings.slot := s
+        }
     }
 }

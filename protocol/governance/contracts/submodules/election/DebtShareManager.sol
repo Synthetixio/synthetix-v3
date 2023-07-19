@@ -20,8 +20,8 @@ contract DebtShareManager is ElectionBase {
 
     function _setDebtShareSnapshotId(uint snapshotId) internal {
         DebtShare.Data storage store = DebtShare.load();
-
         uint currentEpochIndex = Council.load().lastElectionId;
+
         store.debtShareIds[currentEpochIndex] = snapshotId.to128();
 
         emit DebtShareSnapshotIdSet(snapshotId);
@@ -64,6 +64,10 @@ contract DebtShareManager is ElectionBase {
         DebtShare.Data storage store = DebtShare.load();
 
         uint128 debtShareId = store.debtShareIds[Council.load().lastElectionId];
+
+        if (debtShareId == 0) {
+            return 0;
+        }
 
         return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
     }

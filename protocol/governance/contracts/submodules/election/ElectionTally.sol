@@ -11,10 +11,12 @@ contract ElectionTally is ElectionBase {
     using Council for Council.Data;
 
     function _evaluateNextBallotBatch(uint numBallots) internal {
-        Election.Data storage election = Council.load().getCurrentElection();
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        ElectionSettings.Data storage settings = council.getCurrentElectionSettings();
 
         if (numBallots == 0) {
-            numBallots = election.settings.defaultBallotEvaluationBatchSize;
+            numBallots = settings.defaultBallotEvaluationBatchSize;
         }
 
         uint totalBallots = election.ballotIds.length;
@@ -26,15 +28,16 @@ contract ElectionTally is ElectionBase {
             lastBallotIndex = totalBallots;
         }
 
-        _evaluateBallotRange(election, firstBallotIndex, lastBallotIndex);
+        _evaluateBallotRange(election, settings, firstBallotIndex, lastBallotIndex);
     }
 
     function _evaluateBallotRange(
         Election.Data storage election,
+        ElectionSettings.Data storage settings,
         uint fromIndex,
         uint toIndex
     ) private {
-        uint numSeats = election.settings.nextEpochSeatCount;
+        uint numSeats = settings.nextEpochSeatCount;
 
         for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
             bytes32 ballotId = election.ballotIds[ballotIndex];

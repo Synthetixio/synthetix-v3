@@ -37,8 +37,8 @@ describe('SynthetixElectionModule - Initialization', () => {
       it('reverts', async function () {
         await assertRevert(
           CoreProxy.connect(user)[
-            'initOrUpgradeElectionModule(address[],uint8,uint64,uint16,uint16,address)'
-          ]([await user.getAddress()], 1, 0, 0, 0, c.DebtShareMock.address),
+            'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
+          ]([await user.getAddress()], 1, 2, 0, 0, 0, c.DebtShareMock.address),
           'Unauthorized'
         );
       });
@@ -49,8 +49,8 @@ describe('SynthetixElectionModule - Initialization', () => {
         it('reverts', async function () {
           await assertRevert(
             CoreProxy.connect(owner)[
-              'initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64)'
-            ]([await user.getAddress()], 1, 0, 0, 0),
+              'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64)'
+            ]([await user.getAddress()], 1, 2, 0, 0, 0),
             'WrongInitializer'
           );
         });
@@ -61,8 +61,8 @@ describe('SynthetixElectionModule - Initialization', () => {
           it('reverts using Zero Address', async function () {
             await assertRevert(
               CoreProxy.connect(owner)[
-                'initOrUpgradeElectionModule(address[],uint8,uint64,uint16,uint16,address)'
-              ]([await owner.getAddress()], 1, 0, 0, 0, ethers.constants.AddressZero),
+                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
+              ]([await owner.getAddress()], 1, 2, 0, 0, 0, ethers.constants.AddressZero),
               'ZeroAddress'
             );
           });
@@ -70,8 +70,8 @@ describe('SynthetixElectionModule - Initialization', () => {
           it('reverts using EOD', async function () {
             await assertRevert(
               CoreProxy.connect(owner)[
-                'initOrUpgradeElectionModule(address[],uint8,uint64,uint16,uint16,address)'
-              ]([await owner.getAddress()], 1, 0, 0, 0, await user.getAddress()),
+                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
+              ]([await owner.getAddress()], 1, 2, 0, 0, 0, await user.getAddress()),
               'NotAContract'
             );
           });
@@ -93,10 +93,11 @@ describe('SynthetixElectionModule - Initialization', () => {
           await tx1.wait();
 
           const tx2 = await CoreProxy[
-            'initOrUpgradeElectionModule(address[],uint8,uint64,uint16,uint16,address)'
+            'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
           ](
             [await owner.getAddress(), await user.getAddress()],
             1,
+            2,
             0,
             7,
             90,
@@ -119,11 +120,11 @@ describe('SynthetixElectionModule - Initialization', () => {
         });
 
         it('emitted a ElectionModuleInitialized event', async function () {
-          assertEvent(rx, 'ElectionModuleInitialized', c.CoreProxy);
+          await assertEvent(rx, 'ElectionModuleInitialized', c.CoreProxy);
         });
 
         it('emitted a EpochStarted event', async function () {
-          assertEvent(rx, 'EpochStarted(0)', c.CoreProxy);
+          await assertEvent(rx, 'EpochStarted(0)', c.CoreProxy);
         });
       });
     });

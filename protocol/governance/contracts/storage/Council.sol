@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "./Election.sol";
+import "./ElectionSettings.sol";
 
 library Council {
     bytes32 private constant _SLOT_COUNCIL_STORAGE =
@@ -19,7 +20,6 @@ library Council {
         mapping(address => uint) councilTokenIds;
         // id of the last election
         uint lastElectionId;
-        ElectionSettings.Data nextElectionSettings;
     }
 
     enum ElectionPeriod {
@@ -55,6 +55,19 @@ library Council {
     ) internal view returns (Election.Data storage election) {
         // NOTE: will revert if there was no previous election
         return Election.load(self.lastElectionId - 1);
+    }
+
+    function getCurrentElectionSettings(
+        Data storage self
+    ) internal view returns (ElectionSettings.Data storage settings) {
+        return ElectionSettings.load(self.lastElectionId);
+    }
+
+    function getPreviousElectionSettings(
+        Data storage self
+    ) internal view returns (ElectionSettings.Data storage settings) {
+        // NOTE: will revert if there was no previous settings
+        return ElectionSettings.load(self.lastElectionId - 1);
     }
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
