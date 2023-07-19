@@ -37,7 +37,6 @@ describe('ModifyCollateral Withdraw', () => {
 
   describe('withdraw without open position modifyCollateral()', async () => {
     let spotBalanceBefore: ethers.BigNumber;
-    let perpsBalanceBefore: ethers.BigNumber;
     let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
 
     before('owner sets limits to max', async () => {
@@ -57,11 +56,6 @@ describe('ModifyCollateral Withdraw', () => {
         .synth()
         .connect(trader1())
         .balanceOf(await trader1().getAddress());
-
-      perpsBalanceBefore = await synthMarkets()[0]
-        .synth()
-        .connect(trader1())
-        .balanceOf(systems().PerpsMarket.address);
     });
 
     before('trader1 approves the perps market', async () => {

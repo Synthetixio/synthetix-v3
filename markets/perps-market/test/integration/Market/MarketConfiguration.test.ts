@@ -175,8 +175,6 @@ describe('MarketConfiguration', async () => {
   });
 
   it('should revert transaction when not market owner sets parameters', async () => {
-    const randomUserAddress = await randomUser.getAddress();
-
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
