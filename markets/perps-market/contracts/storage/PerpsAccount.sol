@@ -244,7 +244,7 @@ library PerpsAccount {
         // 1. withdraw all collateral from synthetix
         // 2. sell all collateral for snxUSD
         // 3. deposit snxUSD into synthetix
-        for (uint i = 1; i < activeCollateralTypesLength; i++) {
+        for (uint i = 1; i <= activeCollateralTypesLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
             if (synthMarketId != SNX_USD_MARKET_ID) {
                 _deductAllSynth(self, factory, synthMarketId);
