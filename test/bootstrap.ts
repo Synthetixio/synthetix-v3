@@ -15,6 +15,7 @@ import type { IPerpConfigurationModule } from './generated/typechain/PerpConfigu
 import { BigNumber, utils } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
+import { bn } from './generators';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
@@ -200,5 +201,3 @@ export const bootstrap = (args: BootstrapArgs) => {
     }),
   };
 };
-
-export const bn = (n: number) => wei(n).toBN();
