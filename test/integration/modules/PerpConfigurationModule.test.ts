@@ -5,7 +5,7 @@ import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap } from '../../generators';
 
-describe('PerpConfigurationModule', async () => {
+describe('MarketConfigurationModule', async () => {
   const { traders, owner, systems, restore, markets } = bootstrap(genBootstrap());
 
   beforeEach(restore);

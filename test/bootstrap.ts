@@ -11,7 +11,7 @@ import {
   PythMock,
   AggregatorV3Mock,
 } from './generated/typechain';
-import type { IPerpConfigurationModule } from './generated/typechain/PerpConfigurationModule';
+import type { IMarketConfigurationModule } from './generated/typechain/MarketConfigurationModule';
 import { BigNumber, utils } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
@@ -61,11 +61,11 @@ export interface BootstrapArgs {
   pool: {
     initialCollateralPrice: BigNumber;
   };
-  global: IPerpConfigurationModule.ConfigureParametersStruct;
+  global: IMarketConfigurationModule.ConfigureParametersStruct;
   markets: {
     name: string;
     initialPrice: BigNumber;
-    specific: IPerpConfigurationModule.ConfigureByMarketParametersStruct;
+    specific: IMarketConfigurationModule.ConfigureByMarketParametersStruct;
   }[];
 }
 

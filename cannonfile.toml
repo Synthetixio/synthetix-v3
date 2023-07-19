@@ -37,8 +37,8 @@ args = []
 artifact = "PerpMarketFactoryModule"
 args = []
 
-[contract.PerpConfigurationModule]
-artifact = "PerpConfigurationModule"
+[contract.MarketConfigurationModule]
+artifact = "MarketConfigurationModule"
 args = []
 
 [contract.PerpAccountModule]
@@ -76,7 +76,7 @@ contracts = [
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
   "PerpMarketFactoryModule",
-  "PerpConfigurationModule",
+  "MarketConfigurationModule",
   "PerpAccountModule",
   "PerpCollateralModule",
   "OrderModule",
@@ -86,7 +86,7 @@ depends = [
   "import.synthetix",
   "contract.CoreModule",
   "contract.PerpMarketFactoryModule",
-  "contract.PerpConfigurationModule",
+  "contract.MarketConfigurationModule",
   "contract.PerpAccountModule",
   "contract.PerpCollateralModule",
   "contract.OrderModule",

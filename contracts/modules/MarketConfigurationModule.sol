@@ -4,13 +4,13 @@ pragma solidity >=0.8.11 <0.9.0;
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import "../interfaces/IPerpConfigurationModule.sol";
+import "../interfaces/IMarketConfigurationModule.sol";
 
-contract PerpConfigurationModule is IPerpConfigurationModule {
+contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
-     * @inheritdoc IPerpConfigurationModule
+     * @inheritdoc IMarketConfigurationModule
      */
-    function setMarketConfiguration(IPerpConfigurationModule.ConfigureParameters memory data) external {
+    function setMarketConfiguration(IMarketConfigurationModule.ConfigureParameters memory data) external {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage config = PerpMarketConfiguration.load();
@@ -32,11 +32,11 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
     }
 
     /**
-     * @inheritdoc IPerpConfigurationModule
+     * @inheritdoc IMarketConfigurationModule
      */
     function setMarketConfigurationById(
         uint128 marketId,
-        IPerpConfigurationModule.ConfigureByMarketParameters memory data
+        IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external {
         OwnableStorage.onlyOwner();
 
@@ -63,14 +63,14 @@ contract PerpConfigurationModule is IPerpConfigurationModule {
     // --- Views --- //
 
     /**
-     * @inheritdoc IPerpConfigurationModule
+     * @inheritdoc IMarketConfigurationModule
      */
     function getMarketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory) {
         return PerpMarketConfiguration.load();
     }
 
     /**
-     * @inheritdoc IPerpConfigurationModule
+     * @inheritdoc IMarketConfigurationModule
      */
     function getMarketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory) {
         return PerpMarketConfiguration.load(marketId);

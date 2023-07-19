@@ -6,7 +6,7 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 
-interface IPerpConfigurationModule {
+interface IMarketConfigurationModule {
     // --- Structs --- //
 
     // @dev See PerpMarketConfiguration.GlobalData
@@ -53,14 +53,14 @@ interface IPerpConfigurationModule {
     /**
      * @dev Configures parameters applied globally.
      */
-    function setMarketConfiguration(IPerpConfigurationModule.ConfigureParameters memory data) external;
+    function setMarketConfiguration(IMarketConfigurationModule.ConfigureParameters memory data) external;
 
     /**
      * @dev Configures a specific market by the `marketId`.
      */
     function setMarketConfigurationById(
         uint128 marketId,
-        IPerpConfigurationModule.ConfigureByMarketParameters memory data
+        IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external;
 
     // --- Views --- //
