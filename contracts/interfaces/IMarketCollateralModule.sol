@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./IBasePerpMarket.sol";
 
-interface IPerpCollateralModule is IBasePerpMarket {
+interface IMarketCollateralModule is IBasePerpMarket {
     // --- Structs --- //
 
     struct AvailableCollateral {

@@ -12,16 +12,16 @@ import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import "../interfaces/IPerpCollateralModule.sol";
+import "../interfaces/IMarketCollateralModule.sol";
 
-contract PerpCollateralModule is IPerpCollateralModule {
+contract MarketCollateralModule is IMarketCollateralModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
     /**
-     * @inheritdoc IPerpCollateralModule
+     * @inheritdoc IMarketCollateralModule
      */
     function transferTo(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
         // Ensures the account exists (reverts with `AccountNotFound`).
@@ -82,7 +82,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
     }
 
     /**
-     * @inheritdoc IPerpCollateralModule
+     * @inheritdoc IMarketCollateralModule
      */
     function setCollateralConfiguration(
         address[] calldata collateralTypes,
@@ -125,7 +125,7 @@ contract PerpCollateralModule is IPerpCollateralModule {
     // --- Views --- //
 
     /**
-     * @inheritdoc IPerpCollateralModule
+     * @inheritdoc IMarketCollateralModule
      */
     function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory collaterals) {
         PerpCollateral.GlobalData storage config = PerpCollateral.load();

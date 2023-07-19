@@ -5,7 +5,7 @@ import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
 import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn } from '../../generators';
 
-describe('PerpCollateralModule', async () => {
+describe('MarketCollateralModule', async () => {
   const { traders, owner, systems, restore } = bootstrap(genBootstrap());
 
   beforeEach(restore);
