@@ -8,6 +8,9 @@ include = [
 [contract.DebtShareMock]
 artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
 
+[contract.BaseElectionModule]
+artifact = "contracts/modules/core/BaseElectionModule.sol:BaseElectionModule"
+
 # Testable storage contracts
 [contract.TestableCouncilStorage]
 artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
@@ -44,3 +47,42 @@ depends = [
   "contract.TestableElectionSettingsStorage",
   "contract.TestableElectionStorage",
 ]
+
+[router.BaseElectionRouter]
+contracts = [
+  "AssociatedSystemsModule",
+  "BaseElectionModule",
+  "InitialModuleBundle",
+]
+depends = [
+  "contract.AssociatedSystemsModule",
+  "contract.BaseElectionModule",
+  "contract.InitialModuleBundle",
+]
+
+[contract.BaseElectionProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.BaseElectionRouter.address %>", "<%= settings.owner %>"]
+salt = "<%= settings.salt %>"
+abiOf = ["BaseElectionRouter"]
+create2 = true
+depends = ["router.BaseElectionRouter"]
+
+[invoke.init_base_election_council_token]
+target = ["BaseElectionProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeNft"
+args = [
+  "<%= formatBytes32String('councilToken') %>",
+  "Generic Governance Token",
+  "GGOV",
+  "https://synthetix.io",
+  "<%= contracts.CouncilTokenRouter.address %>"
+]
+depends = [
+  "contract.BaseElectionProxy",
+  "router.CouncilTokenRouter"
+]
+factory.BaseElectionCouncilToken.abiOf = ["CouncilTokenRouter"]
+factory.BaseElectionCouncilToken.event = "AssociatedSystemSet"
+factory.BaseElectionCouncilToken.arg = 2

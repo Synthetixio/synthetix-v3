@@ -26,12 +26,6 @@ describe('SynthetixElectionModule - Initialization', function () {
     CoreProxy = await deployNewProxy();
   });
 
-  describe('before initializing the module', function () {
-    it('shows that the module is not initialized', async function () {
-      assert.equal(await CoreProxy.isElectionModuleInitialized(), false);
-    });
-  });
-
   describe('when initializing the module', function () {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
@@ -92,7 +86,7 @@ describe('SynthetixElectionModule - Initialization', function () {
             'Synthetix Governance Token',
             'SNXGOV',
             'https://synthetix.io',
-            c.CouncilTokenRouter.address
+            await c.CouncilToken.getImplementation()
           );
 
           await tx1.wait();

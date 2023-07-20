@@ -53,10 +53,6 @@ contract BaseElectionModule is
     ) internal {
         Council.Data storage store = Council.load();
 
-        if (store.initialized) {
-            return;
-        }
-
         if (minimumActiveMembers == 0 || minimumActiveMembers > nextEpochSeatCount) {
             revert InvalidMinimumActiveMembers();
         }

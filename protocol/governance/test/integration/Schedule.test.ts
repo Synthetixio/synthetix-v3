@@ -1,19 +1,14 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import {
-  fastForwardTo,
-  getTime,
-  restoreSnapshot,
-  takeSnapshot,
-} from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
 
 describe('ElectionModule - schedule', () => {
-  const { c, getSigners, getProvider } = bootstrap();
+  const { c, getSigners, getProvider, createSnapshot } = bootstrap();
 
   let user: ethers.Signer;
   let rx: ethers.ContractReceipt;
@@ -45,19 +40,15 @@ describe('ElectionModule - schedule', () => {
 
   const itAcceptsAdjustments = () => {
     describe('when trying to adjust the epoch schedule', function () {
-      let snapshotId: string;
+      const restoreSnapshot = createSnapshot();
 
       before('fast forward', async function () {
         const nominationPeriod = await c.CoreProxy.getNominationPeriodStartDate();
         await fastForwardTo(Number(nominationPeriod) - daysToSeconds(1), getProvider());
       });
 
-      before('take snapshot', async function () {
-        snapshotId = await takeSnapshot(getProvider());
-      });
-
       after('restore snapshot', async function () {
-        await restoreSnapshot(snapshotId, getProvider());
+        await restoreSnapshot();
       });
 
       describe('with zero dates', function () {

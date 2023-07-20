@@ -4,17 +4,15 @@ import hre from 'hardhat';
 import type {
   CoreProxy,
   CouncilToken,
-  CoreRouter,
   DebtShareMock,
-  CouncilTokenRouter,
+  BaseElectionProxy,
 } from './generated/typechain';
 
 interface Contracts {
-  CoreRouter: CoreRouter;
   CoreProxy: CoreProxy;
   CouncilToken: CouncilToken;
-  CouncilTokenRouter: CouncilTokenRouter;
   DebtShareMock: DebtShareMock;
+  BaseElectionProxy: BaseElectionProxy;
 }
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Contracts>({
@@ -36,11 +34,10 @@ export function bootstrap() {
 
   before('load contracts', function () {
     Object.assign(contracts, {
-      CoreRouter: getContract('CoreRouter'),
       CoreProxy: getContract('CoreProxy'),
       CouncilToken: getContract('CouncilToken'),
       DebtShareMock: getContract('DebtShareMock'),
-      CouncilTokenRouter: getContract('CouncilTokenRouter'),
+      BaseElectionProxy: getContract('BaseElectionProxy'),
     });
   });
 
@@ -54,8 +51,11 @@ export function bootstrap() {
     async deployNewProxy() {
       const [owner] = getSigners();
       const factory = await hre.ethers.getContractFactory('Proxy', owner);
-      const Proxy = await factory.deploy(c.CoreRouter.address, await owner.getAddress());
-      return c.CoreProxy.attach(Proxy.address);
+      const NewProxy = await factory.deploy(
+        await c.CoreProxy.getImplementation(),
+        await owner.getAddress()
+      );
+      return c.CoreProxy.attach(NewProxy.address);
     },
   };
 }

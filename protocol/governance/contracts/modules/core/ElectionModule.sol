@@ -47,7 +47,7 @@ contract ElectionModule is
     ) external override {
         OwnableStorage.onlyOwner();
 
-        if (Council.load().initialized) {
+        if (_isInitialized()) {
             return;
         }
 
