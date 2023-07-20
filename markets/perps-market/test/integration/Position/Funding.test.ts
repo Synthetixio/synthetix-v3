@@ -16,6 +16,7 @@ describe('Position - funding', () => {
     synthMarkets: [],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: _ETH_PRICE,

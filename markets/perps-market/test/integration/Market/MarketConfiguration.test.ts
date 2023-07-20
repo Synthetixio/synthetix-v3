@@ -1,12 +1,13 @@
 import { bn } from '@synthetixio/main/test/common';
 import { bootstrapMarkets } from '../bootstrap';
-import { BigNumber, Signer, utils } from 'ethers';
+import { Signer, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
 
 describe('MarketConfiguration', async () => {
+  const marketId = 25;
   const fixture = {
     token: 'snxETH',
     marketName: 'TestPerpsMarket',
@@ -36,39 +37,26 @@ describe('MarketConfiguration', async () => {
     maxSecondsInLiquidationWindow: bn(10),
   };
 
-  const { systems, signers } = bootstrapMarkets({
+  const { systems, signers, owner } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [],
     traderAccountIds: [],
   });
-
-  let marketId: BigNumber;
   let randomUser: Signer;
-  let marketOwner: Signer;
 
   before('identify actors', async () => {
-    const [, owner, randomAccount] = signers();
+    const [, , randomAccount] = signers();
     randomUser = randomAccount;
-    marketOwner = owner;
   });
 
   before('create perps market', async () => {
-    marketId = await systems().PerpsMarket.callStatic.createMarket(
-      fixture.marketName,
-      fixture.token,
-      marketOwner.getAddress()
-    );
-    await systems().PerpsMarket.createMarket(
-      fixture.marketName,
-      fixture.token,
-      await marketOwner.getAddress()
-    );
+    await systems().PerpsMarket.createMarket(marketId, fixture.marketName, fixture.token);
   });
 
   it('owner can set settlement strategy and events are emitted', async () => {
     await assertEvent(
       await systems()
-        .PerpsMarket.connect(marketOwner)
+        .PerpsMarket.connect(owner())
         .addSettlementStrategy(marketId, fixture.settlementStrategy),
       'SettlementStrategyAdded(' +
         marketId.toString() +
@@ -99,7 +87,7 @@ describe('MarketConfiguration', async () => {
   it('owner can enable settlement strategy and events are emitted', async () => {
     await assertEvent(
       await systems()
-        .PerpsMarket.connect(marketOwner)
+        .PerpsMarket.connect(owner())
         .setSettlementStrategyEnabled(marketId, 0, fixture.settlementStrategy.disabled),
       'SettlementStrategyEnabled(' +
         marketId.toString() +
@@ -115,7 +103,7 @@ describe('MarketConfiguration', async () => {
   it('owner can set order fees and events are emitted', async () => {
     await assertEvent(
       await systems()
-        .PerpsMarket.connect(marketOwner)
+        .PerpsMarket.connect(owner())
         .setOrderFees(marketId, fixture.orderFees.makerFee, fixture.orderFees.takerFee),
       'OrderFeesSet(' +
         marketId.toString() +
@@ -130,7 +118,7 @@ describe('MarketConfiguration', async () => {
   it('owner can set max market value and events are emitted', async () => {
     await assertEvent(
       await systems()
-        .PerpsMarket.connect(marketOwner)
+        .PerpsMarket.connect(owner())
         .setMaxMarketSize(marketId, fixture.maxMarketValue),
       'MaxMarketSizeSet(' + marketId.toString() + ', ' + fixture.maxMarketValue.toString() + ')',
       systems().PerpsMarket
@@ -140,7 +128,7 @@ describe('MarketConfiguration', async () => {
   it('owner can set funding parameters and events are emitted', async () => {
     await assertEvent(
       await systems()
-        .PerpsMarket.connect(marketOwner)
+        .PerpsMarket.connect(owner())
         .setFundingParameters(marketId, fixture.skewScale, fixture.maxFundingVelocity),
       'FundingParametersSet(' +
         marketId.toString() +
@@ -156,7 +144,7 @@ describe('MarketConfiguration', async () => {
   it('owner can set liquidation parameters and events are emitted', async () => {
     await assertEvent(
       await systems()
-        .PerpsMarket.connect(marketOwner)
+        .PerpsMarket.connect(owner())
         .setLiquidationParameters(
           marketId,
           fixture.initialMarginFraction,
@@ -175,7 +163,7 @@ describe('MarketConfiguration', async () => {
   it('owner can set all locked OI percentage and events are emitted', async () => {
     await assertEvent(
       await systems()
-        .PerpsMarket.connect(marketOwner)
+        .PerpsMarket.connect(owner())
         .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
       'LockedOiRatioD18Set(' +
         marketId.toString() +
@@ -187,34 +175,31 @@ describe('MarketConfiguration', async () => {
   });
 
   it('should revert transaction when not market owner sets parameters', async () => {
-    const owner = await marketOwner.getAddress();
-    const randomUserAddress = await randomUser.getAddress();
-
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .addSettlementStrategy(marketId, fixture.settlementStrategy),
-      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+      'Unauthorized'
     );
     await assertRevert(
       systems().PerpsMarket.connect(randomUser).setSettlementStrategyEnabled(marketId, 0, true),
-      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+      'Unauthorized'
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .setOrderFees(marketId, fixture.orderFees.makerFee, fixture.orderFees.takerFee),
-      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+      'Unauthorized'
     );
     await assertRevert(
       systems().PerpsMarket.connect(randomUser).setMaxMarketSize(marketId, fixture.maxMarketValue),
-      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+      'Unauthorized'
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .setFundingParameters(marketId, fixture.skewScale, fixture.maxFundingVelocity),
-      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+      'Unauthorized'
     );
     await assertRevert(
       systems()
@@ -228,13 +213,13 @@ describe('MarketConfiguration', async () => {
           fixture.maxSecondsInLiquidationWindow,
           fixture.minimumPositionMargin
         ),
-      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+      'Unauthorized'
     );
     await assertRevert(
       systems()
         .PerpsMarket.connect(randomUser)
         .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
-      `OnlyMarketOwner("${owner}", "${randomUserAddress}")`
+      'Unauthorized'
     );
   });
 
