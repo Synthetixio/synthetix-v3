@@ -116,39 +116,6 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             );
     }
 
-    // /**
-    //  * @inheritdoc IPerpsMarketFactoryModule
-    //  */
-    // function nominateMarketOwner(address newNominatedOwner) external override {
-    //     PerpsMarketFactory.Data storage factory = PerpsMarketFactory.loadWithVerifiedOwner(
-    //         msg.sender
-    //     );
-
-    //     if (newNominatedOwner == address(0)) {
-    //         revert AddressError.ZeroAddress();
-    //     }
-
-    //     factory.nominatedOwner = newNominatedOwner;
-
-    //     emit OwnerNominated(newNominatedOwner);
-    // }
-
-    // /**
-    //  * @inheritdoc IPerpsMarketFactoryModule
-    //  */
-    // function acceptMarketOwnership() external override {
-    //     PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-    //     address currentNominatedOwner = factory.nominatedOwner;
-    //     if (msg.sender != currentNominatedOwner) {
-    //         revert NotNominated(msg.sender);
-    //     }
-
-    //     emit OwnerChanged(factory.owner, currentNominatedOwner);
-
-    //     factory.owner = currentNominatedOwner;
-    //     factory.nominatedOwner = address(0);
-    // }
-
     /**
      * @dev See {IERC165-supportsInterface}.
      */
