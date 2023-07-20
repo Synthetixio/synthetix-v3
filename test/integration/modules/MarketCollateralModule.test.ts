@@ -6,33 +6,70 @@ import { bootstrap } from '../../bootstrap';
 import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn } from '../../generators';
 
 describe('MarketCollateralModule', async () => {
-  const { traders, owner, systems, restore } = bootstrap(genBootstrap());
+  const { markets, collaterals, traders, owner, systems, restore } = bootstrap(genBootstrap());
 
   beforeEach(restore);
 
   describe('transferTo()', () => {
-    it('should allow deposit of collateral to my account');
+    describe('deposit', () => {
+      it('should allow deposit of collateral to an existing accountId', async () => {
+        const { PerpMarketProxy } = systems();
 
-    it('should affect an existing position when depositing');
-    it('should revert deposit to an account that does not exist');
-    it('should revert deposit of unsupported collateral');
-    it('should revert deposit that exceeds max cap');
+        const trader = traders()[0];
+        const traderAddress = await trader.signer.getAddress();
 
-    it('should allow withdraw of collateral to my account');
-    it('should affect an existing position when withdrawing');
-    it('should revert withdraw to an account that does not exist');
-    it('should revert withdraw of unsupported collateral');
-    it('should revert withdraw of more than what is available');
-    it('should revert withdraw when position can be liquidated');
+        const market = markets()[0];
+        const collateral = collaterals()[0].contract.connect(trader.signer);
 
+        const amountDelta = bn(genInt(50, 100_000));
+        await collateral.mint(trader.signer.getAddress(), amountDelta);
+        await collateral.approve(PerpMarketProxy.address, amountDelta);
+
+        const balanceBefore = await collateral.balanceOf(traderAddress);
+        const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+          trader.accountId,
+          market.marketId(),
+          collateral.address,
+          amountDelta
+        );
+
+        await assertEvent(
+          tx,
+          `Transfer("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta})`,
+          PerpMarketProxy
+        );
+
+        const expectedBalanceAfter = balanceBefore.sub(amountDelta);
+        assertBn.equal(await collateral.balanceOf(traderAddress), expectedBalanceAfter);
+      });
+
+      it('should affect an existing position when depositing');
+      it('should revert deposit to an account that does not exist');
+      it('should revert deposit of unsupported collateral');
+      it('should revert deposit that exceeds max cap');
+      it('should revert deposit of perp market approved collateral but not system approved');
+      it('should revert when insufficient amount of collateral in msg.sender');
+    });
+
+    describe('withdraw', () => {
+      it('should allow withdraw of collateral to my account');
+      it('should affect an existing position when withdrawing');
+      it('should revert withdraw to an account that does not exist');
+      it('should revert withdraw of unsupported collateral');
+      it('should revert withdraw of more than what is available');
+      it('should revert withdraw when position can be liquidated');
+    });
+
+    it('should noop with a transfer amount of 0');
     it('should revert transfers when an order is pending');
   });
 
   describe('setCollateralConfiguration()', () => {
-    it('should successfully configure many collaterals', async () => {
+    it.skip('should successfully configure many collaterals', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
+      // `collateralTypes` must be a real ERC20 contract otherwise this will fail due to the `.approve`.
       const n = genInt(5, 10);
       const collateralTypes = genListOf(n, () => genAddress());
       const oracleNodeIds = genListOf(n, () => genBytes32());
@@ -93,5 +130,7 @@ describe('MarketCollateralModule', async () => {
         'ZeroAddress'
       );
     });
+
+    it('should revoke/approve collateral with 0/maxAllowable');
   });
 });

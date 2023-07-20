@@ -4,8 +4,8 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import {
   PerpMarketProxy,
   AccountProxy,
-  SnxCollateralMock,
-  SynthetixUsdCollateralMock,
+  SnxV3CollateralMock,
+  SynthetixUsdXCollateralMock,
   WrappedStakedEthCollateralMock,
   PythMock,
   AggregatorV3Mock,
@@ -34,8 +34,8 @@ interface Contracts {
   ['synthetix.CoreProxy']: Systems['Core'];
   ['synthetix.USDProxy']: Systems['USD'];
   ['synthetix.oracle_manager.Proxy']: Systems['OracleManager'];
-  SnxCollateralMock: SnxCollateralMock;
-  SynthetixUsdCollateralMock: SynthetixUsdCollateralMock;
+  SnxV3CollateralMock: SnxV3CollateralMock;
+  SynthetixUsdXCollateralMock: SynthetixUsdXCollateralMock;
   WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
   PerpMarketProxy: PerpMarketProxy;
   AccountProxy: AccountProxy;
@@ -89,9 +89,9 @@ export const bootstrap = (args: BootstrapArgs) => {
       // follow the same ERC20 standard, simply named differently.
       //
       // `CollateralMock` is collateral deposited/delegated configured `args.markets`.
-      CollateralMock: getContract('SnxCollateralMock'),
+      CollateralMock: getContract('SnxV3CollateralMock'),
       Collateral2Mock: getContract('WrappedStakedEthCollateralMock'),
-      Collateral3Mock: getContract('SynthetixUsdCollateralMock'),
+      Collateral3Mock: getContract('SynthetixUsdXCollateralMock'),
     };
   });
 
@@ -155,20 +155,36 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   const configureMarketCollateral = async () => {
     const collaterals = [
-      { address: systems.Collateral2Mock.address, initialPrice: bn(1), max: bn(999_999) },
-      { address: systems.Collateral3Mock.address, initialPrice: bn(1000), max: bn(100_000) },
+      { contract: systems.CollateralMock, initialPrice: bn(1), max: bn(10_000_000) },
+      { contract: systems.Collateral2Mock, initialPrice: bn(1), max: bn(999_999) },
+      { contract: systems.Collateral3Mock, initialPrice: bn(1000), max: bn(100_000) },
     ];
-    const collateralTypes = collaterals.map(({ address }) => address);
+    const collateralTypes = collaterals.map(({ contract }) => contract.address);
+    const owner = getOwner();
 
     let collateralOracles: Awaited<ReturnType<typeof createOracleNode>>[] = [];
-    for (const { initialPrice } of collaterals) {
-      collateralOracles.push(await createOracleNode(getOwner(), initialPrice, systems.OracleManager));
+    for (const { initialPrice, contract } of collaterals) {
+      // Update core system to allow this collateral to be deposited for all provisioned markets.
+      for (const market of markets) {
+        await systems.Core.connect(owner).configureMaximumMarketCollateral(
+          market.marketId(),
+          contract.address,
+          constants.MaxUint256
+        );
+      }
+
+      collateralOracles.push(await createOracleNode(owner, initialPrice, systems.OracleManager));
     }
 
     const oracleNodeIds = collateralOracles.map(({ oracleNodeId }) => oracleNodeId);
     const maxAllowables = collaterals.map(({ max }) => max);
 
-    await systems.PerpMarketProxy.setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables);
+    // Allow this collateral to be depositable into the perp market.
+    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
+      collateralTypes,
+      oracleNodeIds,
+      maxAllowables
+    );
 
     return collaterals.map((collateral, idx) => ({
       ...collateral,
@@ -185,7 +201,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   let keeper: Signer;
   const traders: { signer: Signer; accountId: number }[] = [];
   before('configure traders', async () => {
-    const { USD, PerpMarketProxy } = systems;
+    const { PerpMarketProxy } = systems;
     // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
     // always reserved as the owner but everything else is free game.
     //
@@ -209,8 +225,6 @@ export const bootstrap = (args: BootstrapArgs) => {
       const accountId = i + 10;
       await PerpMarketProxy.connect(signer)['createAccount(uint128)'](accountId);
 
-      await USD.connect(signer).approve(PerpMarketProxy.address, constants.MaxInt256);
-
       traders.push({ signer, accountId });
     }
   });
@@ -223,7 +237,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     keeper: () => keeper,
     restore,
     markets: () => markets,
-    marketCollaterals: () => marketCollaterals,
+    collaterals: () => marketCollaterals,
     pool: () => ({
       id: stakedPool.poolId,
       stakerAccountId: stakedPool.accountId,

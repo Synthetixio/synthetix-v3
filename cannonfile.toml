@@ -156,11 +156,12 @@ factory.AccountProxy.arg = 2
 #
 # TODO: Move this into a separate `cannonfile.test.toml` file.
 
-[contract.SnxCollateralMock]
+[contract.SnxV3CollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
+salt = "1"
 
-[contract.SynthetixUsdCollateralMock]
+[contract.SynthetixUsdXCollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 args = []
 salt = "2"
@@ -171,16 +172,16 @@ args = []
 salt = "3"
 
 [invoke.initialize_snxCollateral]
-target = ["SnxCollateralMock"]
+target = ["SnxV3CollateralMock"]
 func = "initialize"
 args = ["SNX V3","SNXV3","18"]
-depends = ["contract.SnxCollateralMock"]
+depends = ["contract.SnxV3CollateralMock"]
 
-[invoke.initialize_snxUsdCollateral]
-target = ["SynthetixUsdCollateralMock"]
+[invoke.initialize_snxUsdXCollateral]
+target = ["SynthetixUsdXCollateralMock"]
 func = "initialize"
 args = ["Synthetix Stablecoin","snxUSD","18"]
-depends = ["contract.SynthetixUsdCollateralMock"]
+depends = ["contract.SynthetixUsdXCollateralMock"]
 
 [invoke.initialize_wstETHCollateral]
 target = ["WrappedStakedEthCollateralMock"]

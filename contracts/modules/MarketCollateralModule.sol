@@ -95,12 +95,22 @@ contract MarketCollateralModule is IMarketCollateralModule {
         uint128[] calldata maxAllowables
     ) external {
         OwnableStorage.onlyOwner();
+
+        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         PerpCollateral.GlobalData storage config = PerpCollateral.load();
 
         // Clear existing collateral configuration to be replaced with new.
         uint256 existingCollateralLength = config.availableAddresses.length;
         for (uint256 i = 0; i < existingCollateralLength; ) {
-            delete config.available[config.availableAddresses[i]];
+            address collateralType = config.availableAddresses[i];
+            delete config.available[collateralType];
+
+            // Revoke access after wiping collateral from supported market collateral.
+            //
+            // TODO: Add this back later. Synthetix IERC20.approve contracts throw InvalidParameter when amount = 0.
+            //
+            // IERC20(collateralType).approve(address(this), 0);
+
             unchecked {
                 i++;
             }
@@ -116,8 +126,12 @@ contract MarketCollateralModule is IMarketCollateralModule {
                 revert ZeroAddress();
             }
 
-            config.available[collateralType] = PerpCollateral.CollateralType(oracleNodeIds[i], maxAllowables[i]);
+            // Perform this operation _once_ when this collateral is added as a supported collateral.
+            uint128 maxAllowable = maxAllowables[i];
+            IERC20(collateralType).approve(address(globalMarketConfig.synthetix), maxAllowable);
+            config.available[collateralType] = PerpCollateral.CollateralType(oracleNodeIds[i], maxAllowable);
             newAvailableAddresses[i] = collateralType;
+
             unchecked {
                 i++;
             }
