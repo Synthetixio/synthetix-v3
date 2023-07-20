@@ -98,6 +98,12 @@ library PerpsMarket {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
+        // this would only be 0 if fees or skew scale are configured to be 0.
+        // in that case, (very unlikely), allow full liquidation
+        if (maxLiquidationAmountPerSecond == 0) {
+            return requestedLiquidationAmount.to128();
+        }
+
         uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
         uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
 

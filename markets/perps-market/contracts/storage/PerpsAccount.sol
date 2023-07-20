@@ -15,6 +15,8 @@ import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
+import "hardhat/console.sol";
+
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**
@@ -238,22 +240,21 @@ library PerpsAccount {
 
     function convertAllCollateralToUsd(Data storage self) internal {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
-        uint256 activeCollateralTypesLength = activeCollateralTypes.length();
+        uint[] memory activeCollateralTypes = self.activeCollateralTypes.values();
 
         // 1. withdraw all collateral from synthetix
         // 2. sell all collateral for snxUSD
         // 3. deposit snxUSD into synthetix
-        for (uint i = 1; i <= activeCollateralTypesLength; i++) {
-            uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
-            if (synthMarketId != SNX_USD_MARKET_ID) {
-                _deductAllSynth(self, factory, synthMarketId);
-            } else {
+        for (uint256 i = 0; i < activeCollateralTypes.length; i++) {
+            uint128 synthMarketId = activeCollateralTypes[i].to128();
+            if (synthMarketId == SNX_USD_MARKET_ID) {
                 updateCollateralAmount(
                     self,
                     synthMarketId,
                     -(self.collateralAmounts[synthMarketId].toInt())
                 );
+            } else {
+                _deductAllSynth(self, factory, synthMarketId);
             }
         }
     }
@@ -338,13 +339,12 @@ library PerpsAccount {
     }
 
     function liquidateAccount(Data storage self) internal returns (uint256 reward) {
-        SetUtil.UintSet storage openPositionMarketIds = self.openPositionMarketIds;
-        uint256 openPositionsLength = openPositionMarketIds.length();
+        uint256[] memory openPositionMarketIds = self.openPositionMarketIds.values();
 
         uint accumulatedLiquidationRewards;
 
-        for (uint i = 1; i <= openPositionsLength; i++) {
-            uint128 positionMarketId = openPositionMarketIds.valueAt(i).to128();
+        for (uint i = 0; i < openPositionMarketIds.length; i++) {
+            uint128 positionMarketId = openPositionMarketIds[i].to128();
             PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
             Position.Data storage position = perpsMarket.positions[self.id];
 
@@ -381,6 +381,7 @@ library PerpsAccount {
 
         oldPositionSize = position.size;
         amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
+
         uint price = PerpsPrice.getCurrentPrice(marketId);
 
         (, totalPnl, , , ) = position.getPositionData(price);
@@ -423,7 +424,7 @@ library PerpsAccount {
         );
 
         // 3. deposit snxUSD into market manager
-        factory.synthetix.depositMarketUsd(factory.perpsMarketId, address(this), amountUsd);
+        factory.depositMarketUsd(amountUsd);
 
         // 4. update account collateral amount
         updateCollateralAmount(self, synthMarketId, -(amount.toInt()));

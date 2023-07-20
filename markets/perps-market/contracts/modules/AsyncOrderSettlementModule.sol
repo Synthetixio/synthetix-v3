@@ -130,6 +130,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             uint fillPrice,
             Position.Data storage oldPosition
         ) = asyncOrder.validateOrder(settlementStrategy, price);
+
+        runtime.amountToDeduct += totalFees;
+
         runtime.newPositionSize = newPosition.size;
         runtime.sizeDelta = asyncOrder.sizeDelta;
 
@@ -143,7 +146,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         if (runtime.pnl > 0) {
             perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
         } else if (runtime.pnl < 0) {
-            runtime.amountToDeduct = runtime.pnlUint;
+            runtime.amountToDeduct += runtime.pnlUint;
         }
 
         // after pnl is realized, update position
@@ -164,7 +167,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         // since margin is deposited, as long as the owed collateral is deducted
         // fees are realized by the stakers
-        perpsAccount.deductFromAccount(runtime.amountToDeduct + totalFees);
+        if (runtime.amountToDeduct > 0) {
+            perpsAccount.deductFromAccount(runtime.amountToDeduct + totalFees);
+        }
         runtime.settlementReward = settlementStrategy.settlementReward;
 
         if (runtime.settlementReward > 0) {
