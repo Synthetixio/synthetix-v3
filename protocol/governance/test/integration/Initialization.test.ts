@@ -10,7 +10,7 @@ import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
 import { CoreProxy } from '../generated/typechain';
 
-describe('SynthetixElectionModule - Initialization', () => {
+describe('SynthetixElectionModule - Initialization', function () {
   const { c, getSigners, getProvider, deployNewProxy } = bootstrap();
 
   let owner: ethers.Signer;
@@ -18,16 +18,16 @@ describe('SynthetixElectionModule - Initialization', () => {
 
   let CoreProxy: CoreProxy;
 
-  before('identify signers', async () => {
+  before('identify signers', function () {
     [owner, user] = getSigners();
   });
 
-  before('create a new uninitialized CoreProxy', async () => {
+  before('create a new uninitialized CoreProxy', async function () {
     CoreProxy = await deployNewProxy();
   });
 
   describe('before initializing the module', function () {
-    it('shows that the module is not initialized', async () => {
+    it('shows that the module is not initialized', async function () {
       assert.equal(await CoreProxy.isElectionModuleInitialized(), false);
     });
   });
