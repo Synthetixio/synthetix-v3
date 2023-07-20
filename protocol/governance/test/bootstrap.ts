@@ -1,4 +1,5 @@
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import hre from 'hardhat';
 
 import type {
   CoreProxy,
@@ -29,6 +30,7 @@ const restoreSnapshot = createSnapshot();
 
 export function bootstrap() {
   const contracts: Partial<Contracts> = {};
+  const c = contracts as Contracts;
 
   before(restoreSnapshot);
 
@@ -43,10 +45,17 @@ export function bootstrap() {
   });
 
   return {
-    c: contracts as Contracts,
+    c,
     getProvider,
     getSigners,
     getContract,
     createSnapshot,
+
+    async deployNewProxy() {
+      const [owner] = getSigners();
+      const factory = await hre.ethers.getContractFactory('Proxy', owner);
+      const Proxy = await factory.deploy(c.CoreRouter.address, await owner.getAddress());
+      return c.CoreProxy.attach(Proxy.address);
+    },
   };
 }

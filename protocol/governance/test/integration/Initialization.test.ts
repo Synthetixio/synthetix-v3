@@ -9,7 +9,7 @@ import { ElectionPeriod } from '../constants';
 import { CoreProxy } from '../generated/typechain';
 
 describe('SynthetixElectionModule - Initialization', () => {
-  const { c, getSigners } = bootstrap();
+  const { c, getSigners, deployNewProxy } = bootstrap();
 
   let owner: ethers.Signer;
   let user: ethers.Signer;
@@ -21,9 +21,7 @@ describe('SynthetixElectionModule - Initialization', () => {
   });
 
   before('create a new uninitialized CoreProxy', async () => {
-    const factory = await hre.ethers.getContractFactory('Proxy', owner);
-    const Proxy = await factory.deploy(c.CoreRouter.address, await owner.getAddress());
-    CoreProxy = c.CoreProxy.attach(Proxy.address);
+    CoreProxy = await deployNewProxy();
   });
 
   describe('before initializing the module', function () {

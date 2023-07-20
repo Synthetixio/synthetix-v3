@@ -9,7 +9,7 @@ import { bootstrap } from '../bootstrap';
 import type { CoreProxy, DebtShareMock } from '../generated/typechain';
 
 describe('SynthetixElectionModule - DebtShare', function () {
-  const { c, getSigners } = bootstrap();
+  const { c, getSigners, deployNewProxy } = bootstrap();
 
   let owner: ethers.Signer;
 
@@ -21,9 +21,7 @@ describe('SynthetixElectionModule - DebtShare', function () {
     let CoreProxy: CoreProxy;
 
     before('create a new uninitialized CoreProxy', async () => {
-      const factory = await hre.ethers.getContractFactory('Proxy', owner);
-      const Proxy = await factory.deploy(c.CoreRouter.address, await owner.getAddress());
-      CoreProxy = c.CoreProxy.attach(Proxy.address);
+      CoreProxy = await deployNewProxy();
     });
 
     describe('when trying to retrieve the current debt share of a user', function () {
