@@ -64,14 +64,16 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
-        factory.onlyIfNotInitialized();
+        if (factory.perpsMarketId == 0) {
+            uint128 perpsMarketId = factory.synthetix.registerMarket(address(this));
+            factory.perpsMarketId = perpsMarketId;
 
-        uint128 perpsMarketId = factory.synthetix.registerMarket(address(this));
-        factory.perpsMarketId = perpsMarketId;
+            emit FactoryInitialized(perpsMarketId);
 
-        emit FactoryInitialized(perpsMarketId);
-
-        return perpsMarketId;
+            return perpsMarketId;
+        } else {
+            return factory.perpsMarketId;
+        }
     }
 
     /**

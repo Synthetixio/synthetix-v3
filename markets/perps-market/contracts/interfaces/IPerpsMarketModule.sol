@@ -7,11 +7,6 @@ import {AsyncOrder} from "../storage/AsyncOrder.sol";
  * @title Perps market module
  */
 interface IPerpsMarketModule {
-    event MarketOwnerNominated(uint128 indexed perpsMarketId, address newNominatedOwner);
-    event MarketOwnerChanged(uint128 indexed perpsMarketId, address oldOwner, address newOwner);
-
-    error NotNominated(address notNominatedAddress);
-
     struct MarketSummary {
         int256 skew;
         uint256 size;
