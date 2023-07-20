@@ -248,6 +248,12 @@ library PerpsAccount {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
             if (synthMarketId != SNX_USD_MARKET_ID) {
                 _deductAllSynth(self, factory, synthMarketId);
+            } else {
+                updateCollateralAmount(
+                    self,
+                    synthMarketId,
+                    -(self.collateralAmounts[synthMarketId].toInt())
+                );
             }
         }
     }
