@@ -1,7 +1,7 @@
+import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';

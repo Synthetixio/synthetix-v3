@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -7,7 +8,6 @@ import {
   takeSnapshot,
 } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { parseBalanceMap } from '@synthetixio/core-utils/utils/merkle-tree/parse-balance-tree';
-import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
