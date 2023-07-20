@@ -2,8 +2,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { ethers } from 'ethers';
 
-describe('Liquidation - partial - multi collateral', async () => {
+describe.only('Liquidation - multi collateral', async () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -15,7 +17,7 @@ describe('Liquidation - partial - multi collateral', async () => {
         initialMarginFraction: bn(2),
         maintenanceMarginFraction: bn(1),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
-        liquidationRewardRatio: bn(0.05),
+        liquidationRewardRatio: bn(0.01),
         maxSecondsInLiquidationWindow: bn(10),
         minimumPositionMargin: bn(0),
       },
@@ -33,7 +35,7 @@ describe('Liquidation - partial - multi collateral', async () => {
         initialMarginFraction: bn(2),
         maintenanceMarginFraction: bn(1),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
-        liquidationRewardRatio: bn(0.05),
+        liquidationRewardRatio: bn(0.02),
         maxSecondsInLiquidationWindow: bn(10),
         minimumPositionMargin: bn(0),
       },
@@ -61,7 +63,11 @@ describe('Liquidation - partial - multi collateral', async () => {
     },
   ];
 
-  const { systems, provider, trader1, synthMarkets, perpsMarkets, owner } = bootstrapMarkets({
+  const { systems, provider, trader1, synthMarkets, keeper, perpsMarkets } = bootstrapMarkets({
+    liquidationGuards: {
+      minLiquidationReward: bn(10),
+      maxLiquidationReward: bn(1000),
+    },
     synthMarkets: [
       {
         name: 'Bitcoin',
@@ -174,8 +180,9 @@ describe('Liquidation - partial - multi collateral', async () => {
       await perpsMarkets()[2].aggregator().mockSetCurrentPrice(bn(3)); // link
     });
 
+    let liquidateTxn: ethers.providers.TransactionResponse;
     before('liquidate account', async () => {
-      await systems().PerpsMarket.liquidate(2);
+      liquidateTxn = await systems().PerpsMarket.connect(keeper()).liquidate(2);
     });
 
     it('empties account margin', async () => {
@@ -184,6 +191,28 @@ describe('Liquidation - partial - multi collateral', async () => {
 
     it('empties open interest', async () => {
       assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), 0);
+    });
+
+    it('emits account liquidated event', async () => {
+      await assertEvent(
+        liquidateTxn,
+        `AccountLiquidated(2, ${bn(1000)}, false)`,
+        systems().PerpsMarket
+      );
+    });
+
+    it('sent reward to keeper', async () => {
+      assertBn.equal(await systems().USD.balanceOf(await keeper().getAddress()), bn(1000));
+    });
+
+    [bn(1), bn(20), bn(2000)].forEach((liquidatedSize, i) => {
+      it(`emits position liquidated event`, async () => {
+        await assertEvent(
+          liquidateTxn,
+          `PositionLiquidated(2, ${perpsMarkets()[i].marketId()}, ${liquidatedSize}, 0)`,
+          systems().PerpsMarket
+        );
+      });
     });
   });
 });

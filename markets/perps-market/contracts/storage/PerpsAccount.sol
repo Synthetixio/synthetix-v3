@@ -15,8 +15,6 @@ import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 
-import "hardhat/console.sol";
-
 uint128 constant SNX_USD_MARKET_ID = 0;
 
 /**
@@ -338,53 +336,15 @@ library PerpsAccount {
         }
     }
 
-    function liquidateAccount(Data storage self) internal returns (uint256 reward) {
-        uint256[] memory openPositionMarketIds = self.openPositionMarketIds.values();
-
-        uint accumulatedLiquidationRewards;
-
-        for (uint i = 0; i < openPositionMarketIds.length; i++) {
-            uint128 positionMarketId = openPositionMarketIds[i].to128();
-            PerpsMarket.Data storage perpsMarket = PerpsMarket.load(positionMarketId);
-            Position.Data storage position = perpsMarket.positions[self.id];
-
-            (, , uint liquidationReward, ) = _liquidatePosition(self, positionMarketId, position);
-            accumulatedLiquidationRewards += liquidationReward;
-        }
-
-        reward = _processLiquidationRewards(accumulatedLiquidationRewards);
-    }
-
-    function _processLiquidationRewards(uint256 totalRewards) private returns (uint256 reward) {
-        // pay out liquidation rewards
-        reward = GlobalPerpsMarketConfiguration.load().liquidationReward(totalRewards);
-        if (reward > 0) {
-            PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-            factory.synthetix.withdrawMarketUsd(factory.perpsMarketId, msg.sender, reward);
-        }
-    }
-
-    function _liquidatePosition(
+    function liquidatePosition(
         Data storage self,
-        uint128 marketId,
-        Position.Data storage position
-    )
-        private
-        returns (
-            uint128 amountToLiquidate,
-            int totalPnl,
-            uint liquidationReward,
-            int128 oldPositionSize
-        )
-    {
+        uint128 marketId
+    ) internal returns (uint128 amountToLiquidate, int128 newPositionSize) {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+        Position.Data storage position = perpsMarket.positions[self.id];
 
-        oldPositionSize = position.size;
+        int128 oldPositionSize = position.size;
         amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
-
-        uint price = PerpsPrice.getCurrentPrice(marketId);
-
-        (, totalPnl, , , ) = position.getPositionData(price);
 
         int128 amtToLiquidationInt = amountToLiquidate.toInt();
         // reduce position size
@@ -398,10 +358,7 @@ library PerpsAccount {
         // update market data
         perpsMarket.updateMarketSizes(oldPositionSize, position.size);
 
-        // using amountToLiquidate to calculate liquidation reward
-        (, , , , liquidationReward) = PerpsMarketConfiguration
-            .load(marketId)
-            .calculateRequiredMargins(amtToLiquidationInt, price);
+        return (amountToLiquidate, position.size);
     }
 
     function _deductAllSynth(

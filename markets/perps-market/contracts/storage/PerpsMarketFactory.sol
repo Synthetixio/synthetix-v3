@@ -66,4 +66,8 @@ library PerpsMarketFactory {
         self.usdToken.approve(address(this), amount);
         self.synthetix.depositMarketUsd(self.perpsMarketId, address(this), amount);
     }
+
+    function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
+        self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
+    }
 }
