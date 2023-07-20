@@ -26,7 +26,7 @@ contract BaseElectionModule is
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
-        uint8 epochSeatCount,
+        uint8 nextEpochSeatCount,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -36,7 +36,7 @@ contract BaseElectionModule is
         _initOrUpgradeElectionModule(
             firstCouncil,
             minimumActiveMembers,
-            epochSeatCount,
+            nextEpochSeatCount,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
@@ -46,7 +46,7 @@ contract BaseElectionModule is
     function _initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
-        uint8 epochSeatCount,
+        uint8 nextEpochSeatCount,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -57,9 +57,7 @@ contract BaseElectionModule is
             return;
         }
 
-        // solhint-disable-next-line numcast/safe-cast
-        uint8 seatCount = epochSeatCount == 0 ? uint8(firstCouncil.length) : epochSeatCount;
-        if (minimumActiveMembers == 0 || minimumActiveMembers > seatCount) {
+        if (minimumActiveMembers == 0 || minimumActiveMembers > nextEpochSeatCount) {
             revert InvalidMinimumActiveMembers();
         }
 
@@ -68,12 +66,13 @@ contract BaseElectionModule is
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
-        settings.nextEpochSeatCount = seatCount;
+        settings.nextEpochSeatCount = nextEpochSeatCount;
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
         uint64 epochStartDate = block.timestamp.to64();
+
         _configureEpochSchedule(
             firstEpoch,
             epochStartDate,

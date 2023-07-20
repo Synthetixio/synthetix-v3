@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
@@ -9,7 +11,7 @@ import { ElectionPeriod } from '../constants';
 import { CoreProxy } from '../generated/typechain';
 
 describe('SynthetixElectionModule - Initialization', () => {
-  const { c, getSigners, deployNewProxy } = bootstrap();
+  const { c, getSigners, getProvider, deployNewProxy } = bootstrap();
 
   let owner: ethers.Signer;
   let user: ethers.Signer;
@@ -79,6 +81,11 @@ describe('SynthetixElectionModule - Initialization', () => {
       describe('with valid parameters', function () {
         let rx: ethers.ContractReceipt;
 
+        let epochStartDate: number;
+        let nominationPeriodStartDate: number;
+        let epochEndDate: number;
+        let votingPeriodStartDate: number;
+
         before('initialize', async function () {
           const tx1 = await CoreProxy.initOrUpgradeNft(
             hre.ethers.utils.formatBytes32String('councilToken'),
@@ -90,15 +97,23 @@ describe('SynthetixElectionModule - Initialization', () => {
 
           await tx1.wait();
 
+          const votingPeriodDuration = 7;
+          const epochDuration = 90;
+
+          epochStartDate = await getTime(getProvider());
+          epochEndDate = epochStartDate + daysToSeconds(epochDuration);
+          nominationPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration) * 2;
+          votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
+
           const tx2 = await CoreProxy[
             'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
           ](
             [await owner.getAddress(), await user.getAddress()],
             1,
             2,
-            0,
-            7,
-            90,
+            nominationPeriodStartDate,
+            votingPeriodDuration,
+            epochDuration,
             c.DebtShareMock.address
           );
 
@@ -117,12 +132,43 @@ describe('SynthetixElectionModule - Initialization', () => {
           assertBn.equal(await CoreProxy.getEpochIndex(), 0);
         });
 
+        it('shows that the schedule is correctly calculated', async function () {
+          assertBn.near(await CoreProxy.getEpochStartDate(), epochStartDate, 2);
+          assertBn.near(await CoreProxy.getEpochEndDate(), epochEndDate, 2);
+          assertBn.near(
+            await CoreProxy.getNominationPeriodStartDate(),
+            nominationPeriodStartDate,
+            2
+          );
+          assertBn.near(await CoreProxy.getVotingPeriodStartDate(), votingPeriodStartDate, 2);
+        });
+
         it('emitted a ElectionModuleInitialized event', async function () {
           await assertEvent(rx, 'ElectionModuleInitialized', c.CoreProxy);
         });
 
         it('emitted a EpochStarted event', async function () {
           await assertEvent(rx, 'EpochStarted(0)', c.CoreProxy);
+        });
+
+        describe('when called for a second time', function () {
+          before('initialize again', async function () {
+            await CoreProxy[
+              'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
+            ](
+              [await owner.getAddress(), await user.getAddress()],
+              1,
+              10, // Change nextEpochSeatCount
+              0,
+              7,
+              60,
+              c.DebtShareMock.address
+            );
+          });
+
+          it('should not set new values', async function () {
+            assertBn.equal(await CoreProxy.getNextEpochSeatCount(), 2);
+          });
         });
       });
     });

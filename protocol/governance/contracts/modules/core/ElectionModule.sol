@@ -39,7 +39,7 @@ contract ElectionModule is
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
-        uint8 epochSeatCount,
+        uint8 nextEpochSeatCount,
         uint64 nominationPeriodStartDate,
         uint16 votingPeriodDuration,
         uint16 epochDuration,
@@ -53,17 +53,18 @@ contract ElectionModule is
 
         _setDebtShareContract(debtShareContract);
 
-        if (nominationPeriodStartDate == 0) {
-            nominationPeriodStartDate = block.timestamp.to64() + (86400 * votingPeriodDuration);
-        }
+        uint64 epochStartDate = block.timestamp.to64();
+        uint64 epochEndDate = epochStartDate + (86400 * epochDuration);
+        uint64 votingPeriodStartDate = epochEndDate - (86400 * votingPeriodDuration);
 
-        uint64 votingPeriodStartDate = nominationPeriodStartDate + (86400 * votingPeriodDuration);
-        uint64 epochEndDate = nominationPeriodStartDate + (86400 * epochDuration);
+        if (nominationPeriodStartDate == 0) {
+            nominationPeriodStartDate = votingPeriodStartDate - (86400 * votingPeriodDuration);
+        }
 
         _initOrUpgradeElectionModule(
             firstCouncil,
             minimumActiveMembers,
-            epochSeatCount,
+            nextEpochSeatCount,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
