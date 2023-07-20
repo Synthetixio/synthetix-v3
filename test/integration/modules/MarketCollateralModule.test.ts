@@ -12,6 +12,7 @@ describe('MarketCollateralModule', async () => {
 
   describe('transferTo()', () => {
     it('should allow deposit of collateral to my account');
+
     it('should affect an existing position when depositing');
     it('should revert deposit to an account that does not exist');
     it('should revert deposit of unsupported collateral');
@@ -67,7 +68,7 @@ describe('MarketCollateralModule', async () => {
 
     it('should revert when non-owners configuring collateral', async () => {
       const { PerpMarketProxy } = systems();
-      const from = await traders()[0].getAddress();
+      const from = await traders()[0].signer.getAddress();
       await assertRevert(
         PerpMarketProxy.connect(from).setCollateralConfiguration([], [], []),
         `Unauthorized("${from}")`

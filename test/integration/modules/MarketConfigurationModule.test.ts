@@ -37,7 +37,7 @@ describe('MarketConfigurationModule', async () => {
 
     it('should revert with non-owner', async () => {
       const { PerpMarketProxy } = systems();
-      const from = traders()[0];
+      const from = traders()[0].signer;
 
       const { global } = genBootstrap();
       await assertRevert(
@@ -76,7 +76,7 @@ describe('MarketConfigurationModule', async () => {
 
     it('should revert with non-owner', async () => {
       const { PerpMarketProxy } = systems();
-      const from = traders()[0];
+      const from = traders()[0].signer;
       const marketId = markets()[0].marketId();
 
       const bs = genBootstrap();
