@@ -41,9 +41,14 @@ contract MarketCollateralModule is IMarketCollateralModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 availableAmount = accountCollaterals.available[collateralType];
 
+        PerpCollateral.CollateralType storage collateral = globalCollateralConfig.available[collateralType];
+        if (collateral.oracleNodeId == "") {
+            revert UnsupportedCollateral(collateralType);
+        }
+
         if (amountDelta > 0) {
             // Positive means to deposit into the markets.
-            uint256 maxAllowable = globalCollateralConfig.available[collateralType].maxAllowable;
+            uint256 maxAllowable = collateral.maxAllowable;
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (availableAmount + absAmountDelta > maxAllowable) {
@@ -59,7 +64,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (availableAmount < absAmountDelta) {
-                revert InsufficientCollateral(availableAmount.toInt(), amountDelta);
+                revert InsufficientCollateral(collateralType, availableAmount, amountDelta);
             }
 
             accountCollaterals.available[collateralType] -= absAmountDelta;
