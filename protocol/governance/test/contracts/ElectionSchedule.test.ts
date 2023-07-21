@@ -44,7 +44,7 @@ describe('ElectionSchedule', function () {
       nominationPeriodStartDate,
       votingPeriodStartDate,
       endDate,
-    }: Partial<ScheduleConfig>) {
+    }: Partial<ScheduleConfig> = {}) {
       const schedule = await c.CoreProxy.getEpochSchedule();
       await c.CoreProxy.tweakEpochSchedule(
         nominationPeriodStartDate || schedule.nominationPeriodStartDate,
@@ -142,9 +142,45 @@ describe('ElectionSchedule', function () {
       });
     });
 
-    // Test reverts during Nomination
-    // Test reverts during Voting
-    // Test reverts during Evaluation
+    describe('when calling it outside of Administration period', function () {
+      let schedule: ScheduleConfig;
+
+      snapshotCheckpoint();
+
+      before('load current configuration', async function () {
+        schedule = await c.CoreProxy.getEpochSchedule();
+      });
+
+      describe('when calling during Nomination period', function () {
+        before('fast forward', async function () {
+          await fastForwardTo(schedule.nominationPeriodStartDate.toNumber(), getProvider());
+        });
+
+        it('reverts', async function () {
+          await assertRevert(_tweakEpochSchedule(), 'NotCallableInCurrentPeriod');
+        });
+
+        describe('when calling during Vote period', function () {
+          before('fast forward', async function () {
+            await fastForwardTo(schedule.votingPeriodStartDate.toNumber(), getProvider());
+          });
+
+          it('reverts', async function () {
+            await assertRevert(_tweakEpochSchedule(), 'NotCallableInCurrentPeriod');
+          });
+
+          describe('when calling during Evaluation period', function () {
+            before('fast forward', async function () {
+              await fastForwardTo(schedule.endDate.toNumber(), getProvider());
+            });
+
+            it('reverts', async function () {
+              await assertRevert(_tweakEpochSchedule(), 'NotCallableInCurrentPeriod');
+            });
+          });
+        });
+      });
+    });
   });
 
   // tweakEpochSchedule
