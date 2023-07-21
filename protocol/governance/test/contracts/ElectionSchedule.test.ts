@@ -46,11 +46,13 @@ describe('ElectionSchedule', function () {
       endDate,
     }: Partial<ScheduleConfig> = {}) {
       const schedule = await c.CoreProxy.getEpochSchedule();
-      await c.CoreProxy.tweakEpochSchedule(
+      const tx = await c.CoreProxy.tweakEpochSchedule(
         nominationPeriodStartDate || schedule.nominationPeriodStartDate,
         votingPeriodStartDate || schedule.votingPeriodStartDate,
         endDate || schedule.endDate
       );
+      await tx.wait();
+      return tx;
     }
 
     it('shows that the current period is Administration', async function () {
@@ -142,6 +144,28 @@ describe('ElectionSchedule', function () {
       });
     });
 
+    describe('when trying to bypass "maxDateAdjustmentTolerance" by calling it several times', function () {
+      snapshotCheckpoint();
+
+      it('reverts', async function () {
+        const schedule = await c.CoreProxy.getEpochSchedule();
+        const settings = await c.CoreProxy.getElectionSettings();
+        const tolerance = settings.maxDateAdjustmentTolerance;
+
+        // Bring the date to the limit
+        await _tweakEpochSchedule({
+          endDate: schedule.endDate.add(tolerance),
+        });
+
+        await assertRevert(
+          _tweakEpochSchedule({
+            endDate: schedule.endDate.add(tolerance).add(tolerance),
+          }),
+          'InvalidEpochConfiguration'
+        );
+      });
+    });
+
     describe('when calling it outside of Administration period', function () {
       let schedule: ScheduleConfig;
 
@@ -183,7 +207,6 @@ describe('ElectionSchedule', function () {
     });
   });
 
-  // tweakEpochSchedule
   // modifyEpochSchedule
   // setMinEpochDurations
   // setMaxDateAdjustmentTolerance
