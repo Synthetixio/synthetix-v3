@@ -4,9 +4,9 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrap } from '../bootstrap';
+import { bootstrap } from '../../../../bootstrap';
 
-import type { CoreProxy, DebtShareMock } from '../generated/typechain';
+import type { CoreProxy, DebtShareMock } from '../../../../generated/typechain';
 
 describe('SynthetixElectionModule - DebtShare', function () {
   const { c, getSigners, deployNewProxy } = bootstrap();

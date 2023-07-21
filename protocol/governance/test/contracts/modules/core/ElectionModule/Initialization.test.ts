@@ -6,9 +6,9 @@ import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrap } from '../bootstrap';
-import { ElectionPeriod } from '../constants';
-import { CoreProxy } from '../generated/typechain';
+import { bootstrap } from '../../../../bootstrap';
+import { ElectionPeriod } from '../../../../constants';
+import { CoreProxy } from '../../../../generated/typechain';
 
 describe('SynthetixElectionModule - Initialization', function () {
   const { c, getSigners, getProvider, deployNewProxy } = bootstrap();
