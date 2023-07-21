@@ -15,11 +15,10 @@ interface ScheduleConfig {
 describe('ElectionSchedule', function () {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
 
-  let owner: ethers.Signer;
   let user: ethers.Signer;
 
   before('identify signers', function () {
-    [owner, user] = getSigners();
+    [, user] = getSigners();
   });
 
   describe('#getEpochSchedule', function () {
