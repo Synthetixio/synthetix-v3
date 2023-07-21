@@ -10,9 +10,9 @@ describe('Market Debt', () => {
     makerFee: bn(0.0), // 0bps no fees
     takerFee: bn(0.0), // 0bps no fees
   };
-  const ethPrice = bn(1000);
+  const superMarketId = bn(25);
 
-  const { systems, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
+  const { systems, perpsMarkets, provider, trader1, trader2, trader3, keeper } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
@@ -23,16 +23,16 @@ describe('Market Debt', () => {
     ],
     perpsMarkets: [
       {
-        requestedMarketId: 50,
+        requestedMarketId: superMarketId,
         name: 'Ether',
         token: 'snxETH',
-        price: ethPrice,
+        price: bn(1000),
         // setting to 0 to avoid funding and p/d price change affecting pnl
         fundingParams: { skewScale: bn(0), maxFundingVelocity: bn(0) },
         orderFees,
       },
     ],
-    traderAccountIds: [2, 3],
+    traderAccountIds: [2, 3, 4],
   });
 
   // let ethMarketId: ethers.BigNumber;
@@ -48,6 +48,7 @@ describe('Market Debt', () => {
   before('add liquidity that will be used to pay for trader gains', async () => {
     // TODO Need to add some liquidity in order to pay the gains to the trader
   });
+
   const marketActivities: Array<{
     name: string;
     user?: {
@@ -65,15 +66,18 @@ describe('Market Debt', () => {
     };
   }> = [
     {
+      name: 'initial state',
+      market: {
+        id: bn(1),
+        price: bn(1000),
+      },
+    },
+    {
       name: 'acc1 deposits 1000',
       user: {
         trader: trader1,
         accountId: 2,
         collateralDelta: bn(1000),
-      },
-      market: {
-        id: bn(1),
-        price: bn(1000),
       },
       expected: {
         marketDebt: bn(0),
@@ -86,7 +90,7 @@ describe('Market Debt', () => {
       user: {
         trader: trader1,
         accountId: 2,
-        sizeDelta: bn(0),
+        sizeDelta: bn(10),
       },
       market: {
         id: bn(1),
@@ -97,17 +101,167 @@ describe('Market Debt', () => {
         btcMarketDebt: bn(0),
       },
     },
-    { name: 'eth price change to 1200' },
-    { name: 'acc2 deposits 1000' },
-    { name: 'acc2 opens 20x short 10 eth at 1200' },
-    { name: 'eht price change to 1100' },
-    { name: 'acc3 deposits 1000' },
-    { name: 'acc3 opens 20x short 20 eth at 1100' },
-    { name: 'eth price change to 1000' },
-    { name: 'acc2 closes short' },
-    { name: 'eth price change to 1500' },
-    { name: 'acc3 closes short' },
-    { name: 'eth price change to 900' },
+    {
+      name: 'eth price change to 1200',
+      market: {
+        id: bn(1),
+        price: bn(1200),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'acc2 deposits 500',
+      user: {
+        trader: trader2,
+        accountId: 3,
+        collateralDelta: bn(500),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'acc2 opens 20x short 20 eth at 1200',
+      user: {
+        trader: trader2,
+        accountId: 3,
+        sizeDelta: bn(-10),
+      },
+      market: {
+        id: bn(1),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'eht price change to 1100',
+      market: {
+        id: bn(1),
+        price: bn(1100),
+      },
+    },
+    {
+      name: 'acc3 deposits 3000',
+      user: {
+        trader: trader3,
+        accountId: 4,
+        collateralDelta: bn(3000),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'acc3 opens 10x short 10 eth at 1100',
+      user: {
+        trader: trader3,
+        accountId: 4,
+        sizeDelta: bn(-10),
+      },
+      market: {
+        id: bn(1),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'eth price change to 1000',
+      market: {
+        id: bn(1),
+        price: bn(1000),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'acc2 closes short',
+      user: {
+        trader: trader2,
+        accountId: 3,
+        sizeDelta: bn(10),
+      },
+      market: {
+        id: bn(1),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'eth price change to 1200',
+      market: {
+        id: bn(1),
+        price: bn(1200),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'acc3 closes short',
+      user: {
+        trader: trader3,
+        accountId: 4,
+        sizeDelta: bn(10),
+      },
+      market: {
+        id: bn(1),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'eth price change to 900',
+      market: {
+        id: bn(1),
+        price: bn(900),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
+    {
+      name: 'acc1 closes long',
+      user: {
+        trader: trader1,
+        accountId: 2,
+        sizeDelta: bn(-10),
+      },
+      market: {
+        id: bn(1),
+      },
+      expected: {
+        marketDebt: bn(0),
+        ethMarketDebt: bn(0),
+        btcMarketDebt: bn(0),
+      },
+    },
   ];
 
   describe(`Using snxUSD as collateral`, () => {
@@ -172,7 +326,7 @@ describe('Market Debt', () => {
               accountId: marketActivity.user!.accountId,
               marketId: marketActivity.market!.id,
               sizeDelta: marketActivity.user!.sizeDelta!,
-              price: ethPrice,
+              price: bn(1000),
             });
           }
         });
