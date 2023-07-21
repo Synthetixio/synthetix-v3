@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Epoch} from "../storage/Epoch.sol";
+import {ElectionSettings} from "../storage/ElectionSettings.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
@@ -88,24 +89,8 @@ interface IElectionModule {
     /// @notice Shows the current epoch schedule dates
     function getEpochSchedule() external view returns (Epoch.Data memory epoch);
 
-    /// @notice Exposes minimum durations required when adjusting epoch schedules
-    function getMinEpochDurations()
-        external
-        view
-        returns (
-            uint64 minNominationPeriodDuration,
-            uint64 minVotingPeriodDuration,
-            uint64 minEpochDuration
-        );
-
-    /// @notice Exposes maximum size of adjustments when calling tweakEpochSchedule
-    function getMaxDateAdjustmenTolerance() external view returns (uint64);
-
-    /// @notice Shows the number of council members that the next epoch will have
-    function getNextEpochSeatCount() external view returns (uint8);
-
-    /// @notice Returns the minimum active members that the council needs to avoid an emergency election
-    function getMinimumActiveMembers() external view returns (uint8);
+    /// @notice Shows the settings for the current election
+    function getElectionSettings() external view returns (ElectionSettings.Data memory settings);
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
     function getEpochIndex() external view returns (uint);

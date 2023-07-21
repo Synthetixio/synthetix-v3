@@ -44,6 +44,4 @@ describe('ElectionSchedule', function () {
   // modifyEpochSchedule
   // setMinEpochDurations
   // setMaxDateAdjustmentTolerance
-  // getMinEpochDurations
-  // getMaxDateAdjustmenTolerance
 });

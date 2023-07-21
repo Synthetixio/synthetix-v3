@@ -333,39 +333,17 @@ contract BaseElectionModule is
         curr.maxDateAdjustmentTolerance = prev.maxDateAdjustmentTolerance;
     }
 
-    function getMinEpochDurations()
-        external
-        view
-        override
-        returns (
-            uint64 minNominationPeriodDuration,
-            uint64 minVotingPeriodDuration,
-            uint64 minEpochDuration
-        )
-    {
-        ElectionSettings.Data storage settings = Council.load().getCurrentElectionSettings();
-
-        return (
-            settings.minNominationPeriodDuration,
-            settings.minVotingPeriodDuration,
-            settings.minEpochDuration
-        );
-    }
-
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
         return Council.load().getCurrentElection().epoch;
     }
 
-    function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
-        return Council.load().getCurrentElectionSettings().maxDateAdjustmentTolerance;
-    }
-
-    function getNextEpochSeatCount() external view override returns (uint8) {
-        return Council.load().getCurrentElectionSettings().nextEpochSeatCount;
-    }
-
-    function getMinimumActiveMembers() external view override returns (uint8) {
-        return Council.load().getCurrentElectionSettings().minimumActiveMembers;
+    function getElectionSettings()
+        external
+        view
+        override
+        returns (ElectionSettings.Data memory settings)
+    {
+        return Council.load().getCurrentElectionSettings();
     }
 
     function getEpochIndex() external view override returns (uint) {

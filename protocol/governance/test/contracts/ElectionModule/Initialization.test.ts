@@ -158,7 +158,8 @@ describe('SynthetixElectionModule - Initialization', function () {
           });
 
           it('should not set new values', async function () {
-            assertBn.equal(await CoreProxy.getNextEpochSeatCount(), 2);
+            const settings = await CoreProxy.getElectionSettings();
+            assertBn.equal(settings.nextEpochSeatCount, 2);
           });
         });
       });
