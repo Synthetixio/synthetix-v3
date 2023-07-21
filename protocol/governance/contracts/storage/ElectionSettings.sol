@@ -9,6 +9,8 @@ library ElectionSettings {
         uint8 minimumActiveMembers;
         // Minimum epoch duration when adjusting schedules
         uint64 minEpochDuration;
+        // The expected duration of the epoch (used for validations in tweakEpochSchedule)
+        uint64 expectedEpochDuration;
         // Minimum nomination period duration when adjusting schedules
         uint64 minNominationPeriodDuration;
         // Minimum voting period duration when adjusting schedules

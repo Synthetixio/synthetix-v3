@@ -98,6 +98,30 @@ describe('ElectionSchedule', function () {
       }
     });
 
+    describe('when trying to bypass "maxDateAdjustmentTolerance" by calling it several times', function () {
+      describe('when tweaking "epochEndDate"', function () {
+        snapshotCheckpoint();
+
+        it('reverts', async function () {
+          const schedule = await c.CoreProxy.getEpochSchedule();
+          const settings = await c.CoreProxy.getElectionSettings();
+          const tolerance = settings.maxDateAdjustmentTolerance;
+
+          // Bring the date to the limit
+          await _tweakEpochSchedule({
+            endDate: schedule.endDate.add(tolerance),
+          });
+
+          await assertRevert(
+            _tweakEpochSchedule({
+              endDate: schedule.endDate.add(tolerance).add(tolerance),
+            }),
+            'InvalidEpochConfiguration'
+          );
+        });
+      });
+    });
+
     describe('when a tweak modifies the current period', function () {
       let schedule: ScheduleConfig;
 
@@ -141,28 +165,6 @@ describe('ElectionSchedule', function () {
         assertBn.equal(result.nominationPeriodStartDate, newSchedule.nominationPeriodStartDate);
         assertBn.equal(result.votingPeriodStartDate, newSchedule.votingPeriodStartDate);
         assertBn.equal(result.endDate, newSchedule.endDate);
-      });
-    });
-
-    describe('when trying to bypass "maxDateAdjustmentTolerance" by calling it several times', function () {
-      snapshotCheckpoint();
-
-      it('reverts', async function () {
-        const schedule = await c.CoreProxy.getEpochSchedule();
-        const settings = await c.CoreProxy.getElectionSettings();
-        const tolerance = settings.maxDateAdjustmentTolerance;
-
-        // Bring the date to the limit
-        await _tweakEpochSchedule({
-          endDate: schedule.endDate.add(tolerance),
-        });
-
-        await assertRevert(
-          _tweakEpochSchedule({
-            endDate: schedule.endDate.add(tolerance).add(tolerance),
-          }),
-          'InvalidEpochConfiguration'
-        );
       });
     });
 

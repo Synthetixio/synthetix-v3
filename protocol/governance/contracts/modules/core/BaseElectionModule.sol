@@ -57,16 +57,18 @@ contract BaseElectionModule is
             revert InvalidMinimumActiveMembers();
         }
 
+        uint64 epochStartDate = block.timestamp.to64();
+
         ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
+        settings.expectedEpochDuration = epochEndDate - epochStartDate;
         settings.maxDateAdjustmentTolerance = 7 days;
         settings.nextEpochSeatCount = nextEpochSeatCount;
         settings.minimumActiveMembers = minimumActiveMembers;
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
-        uint64 epochStartDate = block.timestamp.to64();
 
         _configureEpochSchedule(
             firstEpoch,
@@ -328,6 +330,7 @@ contract BaseElectionModule is
         curr.nextEpochSeatCount = prev.nextEpochSeatCount;
         curr.minimumActiveMembers = prev.minimumActiveMembers;
         curr.minEpochDuration = prev.minEpochDuration;
+        curr.expectedEpochDuration = prev.expectedEpochDuration;
         curr.minNominationPeriodDuration = prev.minNominationPeriodDuration;
         curr.minVotingPeriodDuration = prev.minVotingPeriodDuration;
         curr.maxDateAdjustmentTolerance = prev.maxDateAdjustmentTolerance;

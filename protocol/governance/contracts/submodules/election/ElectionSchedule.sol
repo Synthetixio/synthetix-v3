@@ -81,19 +81,21 @@ contract ElectionSchedule is ElectionBase {
         Council.Data storage store = Council.load();
 
         if (ensureChangesAreSmall) {
-            uint64 maxDateAdjustmentTolerance = store
-                .getCurrentElectionSettings()
-                .maxDateAdjustmentTolerance;
+            ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
 
             if (
-                _uint64AbsDifference(newEpochEndDate, epoch.endDate) > maxDateAdjustmentTolerance ||
+                _uint64AbsDifference(
+                    newEpochEndDate,
+                    epoch.startDate + settings.expectedEpochDuration
+                ) >
+                settings.maxDateAdjustmentTolerance ||
                 _uint64AbsDifference(
                     newNominationPeriodStartDate,
                     epoch.nominationPeriodStartDate
                 ) >
-                maxDateAdjustmentTolerance ||
+                settings.maxDateAdjustmentTolerance ||
                 _uint64AbsDifference(newVotingPeriodStartDate, epoch.votingPeriodStartDate) >
-                maxDateAdjustmentTolerance
+                settings.maxDateAdjustmentTolerance
             ) {
                 revert InvalidEpochConfiguration();
             }
