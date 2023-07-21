@@ -10,17 +10,20 @@ export const raise = (err: string): never => {
 
 export const bn = (n: number) => wei(n).toBN();
 export const isNil = <A>(a: A | undefined | null): boolean => a === undefined || a === null;
-export const genTimes = <A>(n: number, f: (n?: number) => A) => [...Array(n).keys()].map(f);
+
+export const shuffle = <A>(arr: A[]): A[] => {
+  const arr2 = [...arr];
+  for (var i = arr2.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = arr2[i];
+    arr2[i] = arr2[j];
+    arr2[j] = temp;
+  }
+  return arr2;
+};
+
 export const genSample = <A>(a: A[]): A => a[Math.floor(Math.random() * a.length)];
 export const genOption = <A>(f: () => A): A | undefined => (genSample([true, false]) ? f() : undefined);
-export const genString = (
-  n: number,
-  choices: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-) =>
-  [...Array(n).keys()].reduce((acc) => {
-    acc += choices[Math.floor(Math.random() * choices.length)];
-    return acc;
-  }, '');
 
 export const genOneOf = <A>(l: A[]): A => {
   const a = genSample(l);
@@ -32,6 +35,15 @@ export const genListOf = <A>(n: number, f: (n?: number) => A): A[] =>
 
 // --- Primitives --- //
 
+export const genTimes = <A>(n: number, f: (n?: number) => A) => [...Array(n).keys()].map(f);
+export const genString = (
+  n: number,
+  choices: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+) =>
+  [...Array(n).keys()].reduce((acc) => {
+    acc += choices[Math.floor(Math.random() * choices.length)];
+    return acc;
+  }, '');
 export const genAddress = () => ethers.Wallet.createRandom().address;
 export const genMarketName = () => genString(3, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') + 'PERP';
 export const genBytes32 = () => ethers.utils.formatBytes32String(crypto.randomBytes(8).toString('hex'));

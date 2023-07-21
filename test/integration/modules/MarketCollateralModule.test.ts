@@ -3,7 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
-import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn } from '../../generators';
+import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn, genOneOf, shuffle } from '../../generators';
 
 describe('MarketCollateralModule', async () => {
   const { markets, collaterals, traders, owner, systems, restore } = bootstrap(genBootstrap());
@@ -65,13 +65,13 @@ describe('MarketCollateralModule', async () => {
   });
 
   describe('setCollateralConfiguration()', () => {
-    it.skip('should successfully configure many collaterals', async () => {
-      const { PerpMarketProxy } = systems();
+    it('should successfully configure many collaterals', async () => {
+      const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
       const from = owner();
 
-      // `collateralTypes` must be a real ERC20 contract otherwise this will fail due to the `.approve`.
-      const n = genInt(5, 10);
-      const collateralTypes = genListOf(n, () => genAddress());
+      // Unfortunately `collateralTypes` must be a real ERC20 contract otherwise this will fail due to the `.approve`.
+      const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
+      const n = collateralTypes.length;
       const oracleNodeIds = genListOf(n, () => genBytes32());
       const maxAllowables = genListOf(n, () => bn(genInt(10_000, 100_000)));
 
