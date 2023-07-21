@@ -24,6 +24,7 @@ describe('Settle Offchain Async Order test', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
@@ -395,6 +396,7 @@ describe('Settle Offchain Async Order test', () => {
               ethMarketId,
               accountId,
               fillPrice,
+              0,
               sizeDelta,
               newPositionSize,
               totalFees,

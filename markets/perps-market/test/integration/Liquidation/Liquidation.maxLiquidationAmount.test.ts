@@ -9,6 +9,7 @@ describe('Liquidation - max liquidatable amount', async () => {
     synthMarkets: [],
     perpsMarkets: [
       {
+        requestedMarketId: 50,
         name: 'Optimism',
         token: 'OP',
         price: bn(10),
