@@ -10,6 +10,12 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
 
+interface ScheduleConfig {
+  nominationPeriodStartDate: ethers.BigNumber;
+  votingPeriodStartDate: ethers.BigNumber;
+  endDate: ethers.BigNumber;
+}
+
 describe('ElectionSchedule', function () {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
 
@@ -34,6 +40,19 @@ describe('ElectionSchedule', function () {
   describe('#tweakEpochSchedule', function () {
     snapshotCheckpoint();
 
+    async function _tweakEpochSchedule({
+      nominationPeriodStartDate = ethers.BigNumber.from(0),
+      votingPeriodStartDate = ethers.BigNumber.from(0),
+      endDate = ethers.BigNumber.from(0),
+    }: Partial<ScheduleConfig>) {
+      const schedule = await c.CoreProxy.getEpochSchedule();
+      await c.CoreProxy.tweakEpochSchedule(
+        nominationPeriodStartDate || schedule.nominationPeriodStartDate,
+        votingPeriodStartDate || schedule.votingPeriodStartDate,
+        endDate || schedule.endDate
+      );
+    }
+
     it('shows that the current period is Administration', async function () {
       assertBn.equal(await c.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
     });
@@ -43,6 +62,43 @@ describe('ElectionSchedule', function () {
         await assertRevert(c.CoreProxy.connect(user).tweakEpochSchedule(0, 0, 0), 'Unauthorized');
       });
     });
+
+    describe('when trying to modify outside of "maxDateAdjustmentTolerance" settings', function () {
+      let tolerance: ethers.BigNumber;
+      let schedule: ScheduleConfig;
+
+      before('load current configuration', async function () {
+        const settings = await c.CoreProxy.getElectionSettings();
+        tolerance = settings.maxDateAdjustmentTolerance;
+        schedule = await c.CoreProxy.getEpochSchedule();
+      });
+
+      const dateNames = ['nominationPeriodStartDate', 'votingPeriodStartDate', 'endDate'] as const;
+
+      for (const dateName of dateNames) {
+        it(`reverts when new "${dateName}" is less than "maxDateAdjustmentTolerance"`, async function () {
+          await assertRevert(
+            _tweakEpochSchedule({
+              [dateName]: schedule[dateName].sub(tolerance).sub(1),
+            }),
+            'InvalidEpochConfiguration'
+          );
+        });
+
+        it(`reverts when new "${dateName}" is over "maxDateAdjustmentTolerance"`, async function () {
+          await assertRevert(
+            _tweakEpochSchedule({
+              [dateName]: schedule[dateName].add(tolerance).add(1),
+            }),
+            'InvalidEpochConfiguration'
+          );
+        });
+      }
+    });
+
+    // Test reverts during Nomination
+    // Test reverts during Voting
+    // Test reverts during Evaluation
   });
 
   // tweakEpochSchedule
