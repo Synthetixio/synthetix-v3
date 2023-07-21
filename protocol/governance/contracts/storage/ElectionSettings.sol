@@ -15,8 +15,6 @@ library ElectionSettings {
         uint64 minVotingPeriodDuration;
         // Maximum size for tweaking epoch schedules (see tweakEpochSchedule)
         uint64 maxDateAdjustmentTolerance;
-        // Default batch size when calling evaluate() with numBallots = 0
-        uint defaultBallotEvaluationBatchSize;
     }
 
     function load(uint epochIndex) internal pure returns (Data storage settings) {

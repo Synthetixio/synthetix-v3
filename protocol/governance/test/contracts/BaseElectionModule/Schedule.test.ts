@@ -12,9 +12,9 @@ describe('ElectionModule - schedule', () => {
 
   let user: ethers.Signer;
   let rx: ethers.ContractReceipt;
-  let newNominationPeriodStartDate: number;
-  let newVotingPeriodStartDate: number;
-  let newEpochEndDate: number;
+  let newNominationPeriodStartDate: ethers.BigNumberish;
+  let newVotingPeriodStartDate: ethers.BigNumberish;
+  let newEpochEndDate: ethers.BigNumberish;
 
   before('identify signers', async () => {
     [, user] = getSigners();
@@ -43,8 +43,8 @@ describe('ElectionModule - schedule', () => {
       const restoreSnapshot = createSnapshot();
 
       before('fast forward', async function () {
-        const nominationPeriod = await c.CoreProxy.getNominationPeriodStartDate();
-        await fastForwardTo(Number(nominationPeriod) - daysToSeconds(1), getProvider());
+        const { nominationPeriodStartDate } = await c.CoreProxy.getEpochSchedule();
+        await fastForwardTo(Number(nominationPeriodStartDate) - daysToSeconds(1), getProvider());
       });
 
       after('restore snapshot', async function () {
@@ -60,33 +60,30 @@ describe('ElectionModule - schedule', () => {
       describe('with minor changes', function () {
         describe('with dates too far from the current dates', function () {
           it('reverts', async function () {
-            const epochEndDate = (await c.CoreProxy.getEpochEndDate()).toNumber();
-            const nominationPeriodStartDate = (
-              await c.CoreProxy.getNominationPeriodStartDate()
-            ).toNumber();
-            const votingPeriodStartDate = (await c.CoreProxy.getVotingPeriodStartDate()).toNumber();
+            const { nominationPeriodStartDate, votingPeriodStartDate, endDate } =
+              await c.CoreProxy.getEpochSchedule();
 
             await assertRevert(
               c.CoreProxy.tweakEpochSchedule(
-                nominationPeriodStartDate + daysToSeconds(2),
-                votingPeriodStartDate + daysToSeconds(2),
-                epochEndDate + daysToSeconds(8)
+                nominationPeriodStartDate.add(daysToSeconds(2)),
+                votingPeriodStartDate.add(daysToSeconds(2)),
+                endDate.add(daysToSeconds(8))
               ),
               'InvalidEpochConfiguration'
             );
             await assertRevert(
               c.CoreProxy.tweakEpochSchedule(
-                nominationPeriodStartDate - daysToSeconds(8),
-                votingPeriodStartDate + daysToSeconds(2),
-                epochEndDate + daysToSeconds(7)
+                nominationPeriodStartDate.sub(daysToSeconds(8)),
+                votingPeriodStartDate.add(daysToSeconds(2)),
+                endDate.add(daysToSeconds(7))
               ),
               'InvalidEpochConfiguration'
             );
             await assertRevert(
               c.CoreProxy.tweakEpochSchedule(
-                nominationPeriodStartDate + daysToSeconds(2),
-                votingPeriodStartDate - daysToSeconds(8),
-                epochEndDate + daysToSeconds(7)
+                nominationPeriodStartDate.add(daysToSeconds(2)),
+                votingPeriodStartDate.sub(daysToSeconds(8)),
+                endDate.add(daysToSeconds(7))
               ),
               'InvalidEpochConfiguration'
             );
@@ -96,11 +93,14 @@ describe('ElectionModule - schedule', () => {
         describe('with dates close to the current dates', function () {
           describe('which change the current period type', function () {
             it('reverts', async function () {
+              const { nominationPeriodStartDate, votingPeriodStartDate, endDate } =
+                await c.CoreProxy.getEpochSchedule();
+
               await assertRevert(
                 c.CoreProxy.tweakEpochSchedule(
-                  (await c.CoreProxy.getNominationPeriodStartDate()).toNumber() - daysToSeconds(2),
-                  (await c.CoreProxy.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5),
-                  (await c.CoreProxy.getEpochEndDate()).toNumber() + daysToSeconds(4)
+                  nominationPeriodStartDate.sub(daysToSeconds(2)),
+                  votingPeriodStartDate.add(daysToSeconds(0.5)),
+                  endDate.add(daysToSeconds(4))
                 ),
                 'ChangesCurrentPeriod'
               );
@@ -109,11 +109,12 @@ describe('ElectionModule - schedule', () => {
 
           describe('which dont change the current period type', function () {
             before('adjust', async function () {
-              newEpochEndDate = (await c.CoreProxy.getEpochEndDate()).toNumber() + daysToSeconds(4);
-              newNominationPeriodStartDate =
-                (await c.CoreProxy.getNominationPeriodStartDate()).toNumber() - daysToSeconds(0.5);
-              newVotingPeriodStartDate =
-                (await c.CoreProxy.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
+              const { nominationPeriodStartDate, votingPeriodStartDate, endDate } =
+                await c.CoreProxy.getEpochSchedule();
+
+              newNominationPeriodStartDate = nominationPeriodStartDate.sub(daysToSeconds(0.5));
+              newVotingPeriodStartDate = votingPeriodStartDate.add(daysToSeconds(0.5));
+              newEpochEndDate = endDate.add(daysToSeconds(4));
 
               const tx = await c.CoreProxy.tweakEpochSchedule(
                 newNominationPeriodStartDate,
@@ -132,17 +133,10 @@ describe('ElectionModule - schedule', () => {
             });
 
             it('properly adjusted dates', async function () {
-              assertBn.near(
-                await c.CoreProxy.getNominationPeriodStartDate(),
-                newNominationPeriodStartDate,
-                1
-              );
-              assertBn.near(
-                await c.CoreProxy.getVotingPeriodStartDate(),
-                newVotingPeriodStartDate,
-                1
-              );
-              assertBn.near(await c.CoreProxy.getEpochEndDate(), newEpochEndDate, 1);
+              const schedule = await c.CoreProxy.getEpochSchedule();
+              assertBn.near(schedule.nominationPeriodStartDate, newNominationPeriodStartDate, 1);
+              assertBn.near(schedule.votingPeriodStartDate, newVotingPeriodStartDate, 1);
+              assertBn.near(schedule.endDate, newEpochEndDate, 1);
             });
           });
         });
@@ -152,11 +146,13 @@ describe('ElectionModule - schedule', () => {
         describe('with dates far from the current dates', function () {
           describe('which change the current period type', function () {
             it('reverts', async function () {
+              const schedule = await c.CoreProxy.getEpochSchedule();
+
               await assertRevert(
                 c.CoreProxy.modifyEpochSchedule(
-                  (await c.CoreProxy.getNominationPeriodStartDate()).sub(daysToSeconds(2)),
-                  (await c.CoreProxy.getVotingPeriodStartDate()).add(daysToSeconds(100)),
-                  (await c.CoreProxy.getEpochEndDate()).add(daysToSeconds(100))
+                  schedule.nominationPeriodStartDate.sub(daysToSeconds(2)),
+                  schedule.votingPeriodStartDate.add(daysToSeconds(100)),
+                  schedule.endDate.add(daysToSeconds(100))
                 ),
                 'ChangesCurrentPeriod'
               );
@@ -165,12 +161,12 @@ describe('ElectionModule - schedule', () => {
 
           describe('which dont change the current period type', function () {
             before('adjust', async function () {
-              newEpochEndDate =
-                (await c.CoreProxy.getEpochEndDate()).toNumber() + daysToSeconds(100);
-              newNominationPeriodStartDate =
-                (await c.CoreProxy.getNominationPeriodStartDate()).toNumber() + daysToSeconds(100);
-              newVotingPeriodStartDate =
-                (await c.CoreProxy.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100);
+              const schedule = await c.CoreProxy.getEpochSchedule();
+              newNominationPeriodStartDate = schedule.nominationPeriodStartDate.add(
+                daysToSeconds(100)
+              );
+              newVotingPeriodStartDate = schedule.votingPeriodStartDate.add(daysToSeconds(100));
+              newEpochEndDate = schedule.endDate.add(daysToSeconds(100));
 
               const tx = await c.CoreProxy.modifyEpochSchedule(
                 newNominationPeriodStartDate,
@@ -189,17 +185,10 @@ describe('ElectionModule - schedule', () => {
             });
 
             it('properly adjusted dates', async function () {
-              assertBn.near(
-                await c.CoreProxy.getNominationPeriodStartDate(),
-                newNominationPeriodStartDate,
-                1
-              );
-              assertBn.near(
-                await c.CoreProxy.getVotingPeriodStartDate(),
-                newVotingPeriodStartDate,
-                1
-              );
-              assertBn.near(await c.CoreProxy.getEpochEndDate(), newEpochEndDate, 1);
+              const schedule = await c.CoreProxy.getEpochSchedule();
+              assertBn.near(schedule.nominationPeriodStartDate, newNominationPeriodStartDate, 1);
+              assertBn.near(schedule.votingPeriodStartDate, newVotingPeriodStartDate, 1);
+              assertBn.near(schedule.endDate, newEpochEndDate, 1);
             });
           });
         });
@@ -238,18 +227,13 @@ describe('ElectionModule - schedule', () => {
 
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(
-          Number(await c.CoreProxy.getNominationPeriodStartDate()),
-          getProvider()
-        );
+        const schedule = await c.CoreProxy.getEpochSchedule();
+        await fastForwardTo(Number(schedule.nominationPeriodStartDate), getProvider());
       });
 
       it('skipped to the target time', async function () {
-        assertBn.near(
-          await getTime(getProvider()),
-          await c.CoreProxy.getNominationPeriodStartDate(),
-          1
-        );
+        const schedule = await c.CoreProxy.getEpochSchedule();
+        assertBn.near(await getTime(getProvider()), schedule.nominationPeriodStartDate, 1);
       });
 
       it('shows that the current period is Nomination', async function () {
@@ -269,15 +253,13 @@ describe('ElectionModule - schedule', () => {
       });
 
       before('fast forward', async function () {
-        await fastForwardTo(Number(await c.CoreProxy.getVotingPeriodStartDate()), getProvider());
+        const schedule = await c.CoreProxy.getEpochSchedule();
+        await fastForwardTo(Number(schedule.votingPeriodStartDate), getProvider());
       });
 
       it('skipped to the target time', async function () {
-        assertBn.near(
-          await getTime(getProvider()),
-          await c.CoreProxy.getVotingPeriodStartDate(),
-          1
-        );
+        const schedule = await c.CoreProxy.getEpochSchedule();
+        assertBn.near(await getTime(getProvider()), schedule.votingPeriodStartDate, 1);
       });
 
       it('shows that the current period is Vote', async function () {
@@ -293,11 +275,13 @@ describe('ElectionModule - schedule', () => {
 
     describe('when entering the evaluation period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(Number(await c.CoreProxy.getEpochEndDate()), getProvider());
+        const schedule = await c.CoreProxy.getEpochSchedule();
+        await fastForwardTo(Number(schedule.endDate), getProvider());
       });
 
       it('skipped to the target time', async function () {
-        assertBn.near(await getTime(getProvider()), await c.CoreProxy.getEpochEndDate(), 1);
+        const schedule = await c.CoreProxy.getEpochSchedule();
+        assertBn.near(await getTime(getProvider()), schedule.endDate, 1);
       });
 
       it('shows that the current period is Evaluation', async function () {

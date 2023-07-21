@@ -64,7 +64,6 @@ contract BaseElectionModule is
         settings.maxDateAdjustmentTolerance = 7 days;
         settings.nextEpochSeatCount = nextEpochSeatCount;
         settings.minimumActiveMembers = minimumActiveMembers;
-        settings.defaultBallotEvaluationBatchSize = 500;
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
         uint64 epochStartDate = block.timestamp.to64();
@@ -158,20 +157,6 @@ contract BaseElectionModule is
         OwnableStorage.onlyOwner();
         _setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
         emit MaxDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
-    }
-
-    function setDefaultBallotEvaluationBatchSize(
-        uint newDefaultBallotEvaluationBatchSize
-    ) external override {
-        OwnableStorage.onlyOwner();
-        if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
-
-        Council
-            .load()
-            .getCurrentElectionSettings()
-            .defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
-
-        emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
     }
 
     function setNextEpochSeatCount(
@@ -346,7 +331,6 @@ contract BaseElectionModule is
         curr.minNominationPeriodDuration = prev.minNominationPeriodDuration;
         curr.minVotingPeriodDuration = prev.minVotingPeriodDuration;
         curr.maxDateAdjustmentTolerance = prev.maxDateAdjustmentTolerance;
-        curr.defaultBallotEvaluationBatchSize = prev.defaultBallotEvaluationBatchSize;
     }
 
     function getMinEpochDurations()
@@ -374,10 +358,6 @@ contract BaseElectionModule is
 
     function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
         return Council.load().getCurrentElectionSettings().maxDateAdjustmentTolerance;
-    }
-
-    function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
-        return Council.load().getCurrentElectionSettings().defaultBallotEvaluationBatchSize;
     }
 
     function getNextEpochSeatCount() external view override returns (uint8) {

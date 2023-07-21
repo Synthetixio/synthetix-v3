@@ -7,8 +7,9 @@ import "./ElectionBase.sol";
 /// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
 contract ElectionTally is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
-
     using Council for Council.Data;
+
+    uint16 private constant _DEFAULT_EVALUATION_BATCH_SIZE = 500;
 
     function _evaluateNextBallotBatch(uint numBallots) internal {
         Council.Data storage council = Council.load();
@@ -16,7 +17,7 @@ contract ElectionTally is ElectionBase {
         ElectionSettings.Data storage settings = council.getCurrentElectionSettings();
 
         if (numBallots == 0) {
-            numBallots = settings.defaultBallotEvaluationBatchSize;
+            numBallots = _DEFAULT_EVALUATION_BATCH_SIZE;
         }
 
         uint totalBallots = election.ballotIds.length;

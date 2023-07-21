@@ -50,9 +50,6 @@ interface IElectionModule {
     /// @notice Determines adjustment size for tweakEpochSchedule
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
 
-    /// @notice Determines batch size when evaluate() is called with numBallots = 0
-    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external;
-
     /// @notice Determines the number of council members in the next epoch
     function setNextEpochSeatCount(uint8 newSeatCount) external;
 
@@ -103,9 +100,6 @@ interface IElectionModule {
 
     /// @notice Exposes maximum size of adjustments when calling tweakEpochSchedule
     function getMaxDateAdjustmenTolerance() external view returns (uint64);
-
-    /// @notice Shows the default batch size when calling evaluate() with numBallots = 0
-    function getDefaultBallotEvaluationBatchSize() external view returns (uint);
 
     /// @notice Shows the number of council members that the next epoch will have
     function getNextEpochSeatCount() external view returns (uint8);

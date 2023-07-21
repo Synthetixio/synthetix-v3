@@ -149,10 +149,8 @@ describe('SynthetixElectionModule - Elections', function () {
           let rx: ethers.ContractReceipt;
 
           before('fast forward', async function () {
-            await fastForwardTo(
-              (await c.CoreProxy.getNominationPeriodStartDate()).toNumber(),
-              getProvider()
-            );
+            const schedule = await c.CoreProxy.getEpochSchedule();
+            await fastForwardTo(schedule.nominationPeriodStartDate.toNumber(), getProvider());
           });
 
           before('simulate debt share data', async function () {
@@ -226,10 +224,8 @@ describe('SynthetixElectionModule - Elections', function () {
               });
 
               before('fast forward', async function () {
-                await fastForwardTo(
-                  (await c.CoreProxy.getVotingPeriodStartDate()).toNumber(),
-                  getProvider()
-                );
+                const schedule = await c.CoreProxy.getEpochSchedule();
+                await fastForwardTo(schedule.votingPeriodStartDate.toNumber(), getProvider());
               });
 
               it('reverts', async function () {
@@ -303,10 +299,8 @@ describe('SynthetixElectionModule - Elections', function () {
 
               describe('when advancing to the voting period', function () {
                 before('fast forward', async function () {
-                  await fastForwardTo(
-                    (await c.CoreProxy.getVotingPeriodStartDate()).toNumber(),
-                    getProvider()
-                  );
+                  const schedule = await c.CoreProxy.getEpochSchedule();
+                  await fastForwardTo(schedule.votingPeriodStartDate.toNumber(), getProvider());
                 });
 
                 it('shows that the current period is Voting', async function () {
@@ -500,10 +494,8 @@ describe('SynthetixElectionModule - Elections', function () {
 
                     describe('when voting ends', function () {
                       before('fast forward', async function () {
-                        await fastForwardTo(
-                          (await c.CoreProxy.getEpochEndDate()).toNumber(),
-                          getProvider()
-                        );
+                        const schedule = await c.CoreProxy.getEpochSchedule();
+                        await fastForwardTo(schedule.endDate.toNumber(), getProvider());
                       });
 
                       it('shows that the current period is Evaluation', async function () {
