@@ -23,6 +23,7 @@ describe('Market Debt', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 50,
         name: 'Ether',
         token: 'snxETH',
         price: ethPrice,
@@ -34,14 +35,14 @@ describe('Market Debt', () => {
     traderAccountIds: [2, 3],
   });
 
-  let ethMarketId: ethers.BigNumber;
-  let btcSynth: SynthMarkets[number];
+  // let ethMarketId: ethers.BigNumber;
+  // let btcSynth: SynthMarkets[number];
   let perpsMarket: PerpsMarket;
 
   before('identify actors', async () => {
     perpsMarket = perpsMarkets()[0];
-    ethMarketId = perpsMarket.marketId();
-    btcSynth = synthMarkets()[0];
+    // ethMarketId = perpsMarket.marketId();
+    // btcSynth = synthMarkets()[0];
   });
 
   before('add liquidity that will be used to pay for trader gains', async () => {
@@ -182,7 +183,7 @@ describe('Market Debt', () => {
 
         it('should have correct market debt', async () => {
           // TODO: calculate the right values and assert them, or use the ones on the step
-          const expected = marketActivity.expected;
+          // const expected = marketActivity.expected;
         });
       });
     });
