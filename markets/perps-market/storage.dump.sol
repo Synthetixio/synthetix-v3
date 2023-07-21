@@ -424,8 +424,9 @@ interface IAsyncOrderSettlementModule {
         int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
-        uint256 amountToDeposit;
+        uint256 amountToDeduct;
         uint256 settlementReward;
+        PerpsMarketFactory.Data factory;
     }
 }
 
@@ -514,6 +515,8 @@ library GlobalPerpsMarket {
     struct Data {
         SetUtil.UintSet liquidatableAccounts;
         mapping(uint128 => uint) collateralAmounts;
+        SetUtil.UintSet activeCollateralTypes;
+        SetUtil.UintSet activeMarkets;
     }
     function load() internal pure returns (Data storage marketData) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET;
@@ -556,19 +559,6 @@ library PerpsAccount {
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet openPositionMarketIds;
     }
-    struct RuntimeLiquidationData {
-        uint totalLosingPnl;
-        uint accumulatedLiquidationRewards;
-        uint liquidationReward;
-        uint losingMarketsLength;
-        uint profitableMarketsLength;
-        uint128[] profitableMarkets;
-        uint128[] losingMarkets;
-        uint amountToDeposit;
-        uint amountToLiquidateRatioD18;
-        uint totalLosingPnlRatioD18;
-        uint totalAvailableForDeposit;
-    }
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
         assembly {
@@ -580,8 +570,6 @@ library PerpsAccount {
 // @custom:artifact contracts/storage/PerpsMarket.sol:PerpsMarket
 library PerpsMarket {
     struct Data {
-        address owner;
-        address nominatedOwner;
         string name;
         string symbol;
         uint128 id;
@@ -641,6 +629,9 @@ library PerpsMarketFactory {
         address usdToken;
         address synthetix;
         address spotMarket;
+        uint128 perpsMarketId;
+        address owner;
+        address nominatedOwner;
     }
     function load() internal pure returns (Data storage perpsMarketFactory) {
         bytes32 s = _SLOT_PERPS_MARKET_FACTORY;

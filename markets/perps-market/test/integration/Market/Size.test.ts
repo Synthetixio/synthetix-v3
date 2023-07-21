@@ -8,6 +8,7 @@ describe('Market - size test', () => {
     synthMarkets: [],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(2000),

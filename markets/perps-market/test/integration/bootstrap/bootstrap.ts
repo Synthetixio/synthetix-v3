@@ -89,7 +89,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId } =
+  const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId, superMarketId } =
     chainStateWithPerpsMarkets;
   const { trader1, trader2, keeper, restore } = bootstrapTraders({
     systems,
@@ -105,6 +105,18 @@ export function bootstrapMarkets(data: BootstrapArgs) {
       await systems()
         .PerpsMarket.connect(owner())
         .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
+    }
+  });
+
+  before('set max market collateral allowed for all synths', async () => {
+    for (const { synthAddress } of synthMarkets()) {
+      await systems()
+        .Core.connect(owner())
+        .configureMaximumMarketCollateral(
+          chainStateWithPerpsMarkets.superMarketId(),
+          synthAddress(),
+          ethers.constants.MaxUint256
+        );
     }
   });
 
@@ -138,6 +150,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     perpsMarkets,
     synthMarkets,
     marketOwner,
+    superMarketId,
     poolId,
   };
 }
