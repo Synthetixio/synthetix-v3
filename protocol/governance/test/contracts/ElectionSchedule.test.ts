@@ -8,6 +8,7 @@ import { ethers } from 'ethers';
 // import { ElectionPeriod } from '../../constants';
 // import { BaseElectionModule } from '../../generated/typechain';
 import { bootstrap } from '../bootstrap';
+import { ElectionPeriod } from '../constants';
 
 describe('ElectionSchedule', function () {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
@@ -32,6 +33,10 @@ describe('ElectionSchedule', function () {
 
   describe('#tweakEpochSchedule', function () {
     snapshotCheckpoint();
+
+    it('shows that the current period is Administration', async function () {
+      assertBn.equal(await c.CoreProxy.getCurrentPeriod(), ElectionPeriod.Administration);
+    });
 
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
