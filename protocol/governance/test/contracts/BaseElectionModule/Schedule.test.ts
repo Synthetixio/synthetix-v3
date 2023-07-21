@@ -30,12 +30,6 @@ describe('ElectionModule - schedule', () => {
         await assertRevert(c.CoreProxy.tweakEpochSchedule(0, 0, 0), 'NotCallableInCurrentPeriod');
       });
     });
-
-    describe('when trying to call the modifyEpochSchedule function', function () {
-      it('reverts', async function () {
-        await assertRevert(c.CoreProxy.modifyEpochSchedule(0, 0, 0), 'NotCallableInCurrentPeriod');
-      });
-    });
   };
 
   const itAcceptsAdjustments = () => {
@@ -141,58 +135,6 @@ describe('ElectionModule - schedule', () => {
           });
         });
       });
-
-      describe('with major changes', function () {
-        describe('with dates far from the current dates', function () {
-          describe('which change the current period type', function () {
-            it('reverts', async function () {
-              const schedule = await c.CoreProxy.getEpochSchedule();
-
-              await assertRevert(
-                c.CoreProxy.modifyEpochSchedule(
-                  schedule.nominationPeriodStartDate.sub(daysToSeconds(2)),
-                  schedule.votingPeriodStartDate.add(daysToSeconds(100)),
-                  schedule.endDate.add(daysToSeconds(100))
-                ),
-                'ChangesCurrentPeriod'
-              );
-            });
-          });
-
-          describe('which dont change the current period type', function () {
-            before('adjust', async function () {
-              const schedule = await c.CoreProxy.getEpochSchedule();
-              newNominationPeriodStartDate = schedule.nominationPeriodStartDate.add(
-                daysToSeconds(100)
-              );
-              newVotingPeriodStartDate = schedule.votingPeriodStartDate.add(daysToSeconds(100));
-              newEpochEndDate = schedule.endDate.add(daysToSeconds(100));
-
-              const tx = await c.CoreProxy.modifyEpochSchedule(
-                newNominationPeriodStartDate,
-                newVotingPeriodStartDate,
-                newEpochEndDate
-              );
-              rx = await tx.wait();
-            });
-
-            it('emitted an EpochScheduleUpdated event', async function () {
-              await assertEvent(
-                rx,
-                `EpochScheduleUpdated(${newNominationPeriodStartDate}, ${newVotingPeriodStartDate}, ${newEpochEndDate})`,
-                c.CoreProxy
-              );
-            });
-
-            it('properly adjusted dates', async function () {
-              const schedule = await c.CoreProxy.getEpochSchedule();
-              assertBn.near(schedule.nominationPeriodStartDate, newNominationPeriodStartDate, 1);
-              assertBn.near(schedule.votingPeriodStartDate, newVotingPeriodStartDate, 1);
-              assertBn.near(schedule.endDate, newEpochEndDate, 1);
-            });
-          });
-        });
-      });
     });
   };
 
@@ -208,12 +150,6 @@ describe('ElectionModule - schedule', () => {
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
       it('reverts', async function () {
         await assertRevert(c.CoreProxy.connect(user).tweakEpochSchedule(0, 0, 0), 'Unauthorized');
-      });
-    });
-
-    describe('when an account that does not own the instance attempts to unsafely adjust the epoch', function () {
-      it('reverts', async function () {
-        await assertRevert(c.CoreProxy.connect(user).modifyEpochSchedule(0, 0, 0), 'Unauthorized');
       });
     });
 

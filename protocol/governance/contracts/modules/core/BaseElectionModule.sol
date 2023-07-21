@@ -115,28 +115,6 @@ contract BaseElectionModule is
         );
     }
 
-    // TODO: Remove this function
-    function modifyEpochSchedule(
-        uint64 newNominationPeriodStartDate,
-        uint64 newVotingPeriodStartDate,
-        uint64 newEpochEndDate
-    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
-        OwnableStorage.onlyOwner();
-        _adjustEpochSchedule(
-            Council.load().getCurrentElection().epoch,
-            newNominationPeriodStartDate,
-            newVotingPeriodStartDate,
-            newEpochEndDate,
-            false /*!ensureChangesAreSmall = false*/
-        );
-
-        emit EpochScheduleUpdated(
-            newNominationPeriodStartDate,
-            newVotingPeriodStartDate,
-            newEpochEndDate
-        );
-    }
-
     function setMinEpochDurations(
         uint64 newMinNominationPeriodDuration,
         uint64 newMinVotingPeriodDuration,

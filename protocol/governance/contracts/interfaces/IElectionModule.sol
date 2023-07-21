@@ -34,13 +34,6 @@ interface IElectionModule {
         uint64 newEpochEndDate
     ) external;
 
-    /// @notice Adjusts the current epoch schedule requiring that the current period remains Administration
-    function modifyEpochSchedule(
-        uint64 newNominationPeriodStartDate,
-        uint64 newVotingPeriodStartDate,
-        uint64 newEpochEndDate
-    ) external;
-
     /// @notice Determines minimum values for epoch schedule adjustments
     function setMinEpochDurations(
         uint64 newMinNominationPeriodDuration,
@@ -51,7 +44,7 @@ interface IElectionModule {
     /// @notice Determines adjustment size for tweakEpochSchedule
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
 
-    /// @notice Determines the number of council members in the next epoch
+    /// @notice Determines the number of council members in current epoch
     function setNextEpochSeatCount(uint8 newSeatCount) external;
 
     /// @notice Determines the minimum number of council members before triggering an emergency election
