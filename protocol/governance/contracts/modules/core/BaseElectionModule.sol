@@ -368,6 +368,10 @@ contract BaseElectionModule is
         );
     }
 
+    function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
+        return Council.load().getCurrentElection().epoch;
+    }
+
     function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
         return Council.load().getCurrentElectionSettings().maxDateAdjustmentTolerance;
     }
@@ -386,22 +390,6 @@ contract BaseElectionModule is
 
     function getEpochIndex() external view override returns (uint) {
         return Council.load().lastElectionId;
-    }
-
-    function getEpochStartDate() external view override returns (uint64) {
-        return Council.load().getCurrentElection().epoch.startDate;
-    }
-
-    function getEpochEndDate() external view override returns (uint64) {
-        return Council.load().getCurrentElection().epoch.endDate;
-    }
-
-    function getNominationPeriodStartDate() external view override returns (uint64) {
-        return Council.load().getCurrentElection().epoch.nominationPeriodStartDate;
-    }
-
-    function getVotingPeriodStartDate() external view override returns (uint64) {
-        return Council.load().getCurrentElection().epoch.votingPeriodStartDate;
     }
 
     function getCurrentPeriod() external view override returns (uint) {

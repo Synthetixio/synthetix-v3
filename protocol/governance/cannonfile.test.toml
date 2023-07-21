@@ -12,41 +12,41 @@ artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
 artifact = "contracts/modules/core/BaseElectionModule.sol:BaseElectionModule"
 
 # Testable storage contracts
-[contract.TestableCouncilStorage]
-artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
+# [contract.TestableCouncilStorage]
+# artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
 
-[contract.TestableDebtShareStorage]
-artifact = "contracts/generated/test/TestableDebtShareStorage.sol:TestableDebtShareStorage"
+# [contract.TestableDebtShareStorage]
+# artifact = "contracts/generated/test/TestableDebtShareStorage.sol:TestableDebtShareStorage"
 
-[contract.TestableElectionSettingsStorage]
-artifact = "contracts/generated/test/TestableElectionSettingsStorage.sol:TestableElectionSettingsStorage"
+# [contract.TestableElectionSettingsStorage]
+# artifact = "contracts/generated/test/TestableElectionSettingsStorage.sol:TestableElectionSettingsStorage"
 
-[contract.TestableElectionStorage]
-artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
+# [contract.TestableElectionStorage]
+# artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
 
-[router.CoreRouter]
-contracts = [
-  "AssociatedSystemsModule",
-  "ElectionModule",
-  "ElectionInspectorModule",
-  "InitialModuleBundle",
-  # Testable storage contracts
-  "TestableCouncilStorage",
-  "TestableDebtShareStorage",
-  "TestableElectionSettingsStorage",
-  "TestableElectionStorage",
-]
-depends = [
-  "contract.AssociatedSystemsModule",
-  "contract.ElectionModule",
-  "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
-  # Testable storage contracts
-  "contract.TestableCouncilStorage",
-  "contract.TestableDebtShareStorage",
-  "contract.TestableElectionSettingsStorage",
-  "contract.TestableElectionStorage",
-]
+# [router.CoreRouter]
+# contracts = [
+#   "AssociatedSystemsModule",
+#   "ElectionModule",
+#   "ElectionInspectorModule",
+#   "InitialModuleBundle",
+#   # Testable storage contracts
+#   "TestableCouncilStorage",
+#   "TestableDebtShareStorage",
+#   "TestableElectionSettingsStorage",
+#   "TestableElectionStorage",
+# ]
+# depends = [
+#   "contract.AssociatedSystemsModule",
+#   "contract.ElectionModule",
+#   "contract.ElectionInspectorModule",
+#   "contract.InitialModuleBundle",
+#   # Testable storage contracts
+#   "contract.TestableCouncilStorage",
+#   "contract.TestableDebtShareStorage",
+#   "contract.TestableElectionSettingsStorage",
+#   "contract.TestableElectionStorage",
+# ]
 
 [router.BaseElectionRouter]
 contracts = [

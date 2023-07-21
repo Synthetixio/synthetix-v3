@@ -78,12 +78,13 @@ contract ElectionSchedule is ElectionBase {
         uint64 newEpochEndDate,
         bool ensureChangesAreSmall
     ) internal {
-        uint64 maxDateAdjustmentTolerance = Council
-            .load()
-            .getCurrentElectionSettings()
-            .maxDateAdjustmentTolerance;
+        Council.Data storage store = Council.load();
 
         if (ensureChangesAreSmall) {
+            uint64 maxDateAdjustmentTolerance = store
+                .getCurrentElectionSettings()
+                .maxDateAdjustmentTolerance;
+
             if (
                 _uint64AbsDifference(newEpochEndDate, epoch.endDate) > maxDateAdjustmentTolerance ||
                 _uint64AbsDifference(
@@ -106,7 +107,7 @@ contract ElectionSchedule is ElectionBase {
             newEpochEndDate
         );
 
-        if (Council.load().getCurrentPeriod() != Council.ElectionPeriod.Administration) {
+        if (store.getCurrentPeriod() != Council.ElectionPeriod.Administration) {
             revert ChangesCurrentPeriod();
         }
     }

@@ -5,9 +5,9 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
-import { bootstrap } from '../../../../bootstrap';
-import { ElectionPeriod } from '../../../../constants';
-import { BaseElectionModule } from '../../../../generated/typechain';
+import { bootstrap } from '../../bootstrap';
+import { ElectionPeriod } from '../../constants';
+import { BaseElectionModule } from '../../generated/typechain';
 
 describe('BaseElectionModule - Initialization', function () {
   const { c, getSigners, getProvider } = bootstrap();
@@ -130,19 +130,12 @@ describe('BaseElectionModule - Initialization', function () {
           assertBn.equal(await BaseElectionModule.getEpochIndex(), 0);
         });
 
-        it('shows that the schedule is correctly calculated', async function () {
-          assertBn.near(await BaseElectionModule.getEpochStartDate(), epochStartDate, 2);
-          assertBn.near(await BaseElectionModule.getEpochEndDate(), epochEndDate, 2);
-          assertBn.near(
-            await BaseElectionModule.getNominationPeriodStartDate(),
-            nominationPeriodStartDate,
-            2
-          );
-          assertBn.near(
-            await BaseElectionModule.getVotingPeriodStartDate(),
-            votingPeriodStartDate,
-            2
-          );
+        it('returns the current schedule', async function () {
+          const schedule = await BaseElectionModule.connect(user).getEpochSchedule();
+          assertBn.near(schedule.startDate, epochStartDate, 2);
+          assertBn.near(schedule.endDate, epochEndDate, 2);
+          assertBn.near(schedule.nominationPeriodStartDate, nominationPeriodStartDate, 2);
+          assertBn.near(schedule.votingPeriodStartDate, votingPeriodStartDate, 2);
         });
 
         it('emitted a ElectionModuleInitialized event', async function () {

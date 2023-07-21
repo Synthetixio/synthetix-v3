@@ -48,6 +48,11 @@ export function bootstrap() {
     getContract,
     createSnapshot,
 
+    snapshotCheckpoint() {
+      const restoreSnapshot = createSnapshot();
+      after(restoreSnapshot);
+    },
+
     async deployNewProxy() {
       const [owner] = getSigners();
       const factory = await hre.ethers.getContractFactory('Proxy', owner);

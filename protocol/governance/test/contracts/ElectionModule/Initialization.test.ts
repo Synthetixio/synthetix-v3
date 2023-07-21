@@ -6,9 +6,9 @@ import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrap } from '../../../../bootstrap';
-import { ElectionPeriod } from '../../../../constants';
-import { CoreProxy } from '../../../../generated/typechain';
+import { bootstrap } from '../../bootstrap';
+import { ElectionPeriod } from '../../constants';
+import { CoreProxy } from '../../generated/typechain';
 
 describe('SynthetixElectionModule - Initialization', function () {
   const { c, getSigners, getProvider, deployNewProxy } = bootstrap();
@@ -126,15 +126,12 @@ describe('SynthetixElectionModule - Initialization', function () {
           assertBn.equal(await CoreProxy.getEpochIndex(), 0);
         });
 
-        it('shows that the schedule is correctly calculated', async function () {
-          assertBn.near(await CoreProxy.getEpochStartDate(), epochStartDate, 2);
-          assertBn.near(await CoreProxy.getEpochEndDate(), epochEndDate, 2);
-          assertBn.near(
-            await CoreProxy.getNominationPeriodStartDate(),
-            nominationPeriodStartDate,
-            2
-          );
-          assertBn.near(await CoreProxy.getVotingPeriodStartDate(), votingPeriodStartDate, 2);
+        it('returns the current schedule', async function () {
+          const schedule = await CoreProxy.connect(user).getEpochSchedule();
+          assertBn.near(schedule.startDate, epochStartDate, 2);
+          assertBn.near(schedule.endDate, epochEndDate, 2);
+          assertBn.near(schedule.nominationPeriodStartDate, nominationPeriodStartDate, 2);
+          assertBn.near(schedule.votingPeriodStartDate, votingPeriodStartDate, 2);
         });
 
         it('emitted a ElectionModuleInitialized event', async function () {

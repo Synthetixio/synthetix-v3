@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {Epoch} from "../storage/Epoch.sol";
+
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
     // ---------------------------------------
@@ -86,6 +88,9 @@ interface IElectionModule {
     // View functions
     // ---------------------------------------
 
+    /// @notice Shows the current epoch schedule dates
+    function getEpochSchedule() external view returns (Epoch.Data memory epoch);
+
     /// @notice Exposes minimum durations required when adjusting epoch schedules
     function getMinEpochDurations()
         external
@@ -110,18 +115,6 @@ interface IElectionModule {
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
     function getEpochIndex() external view returns (uint);
-
-    /// @notice Returns the date in which the current epoch started
-    function getEpochStartDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the current epoch will end
-    function getEpochEndDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the Nomination period in the current epoch will start
-    function getNominationPeriodStartDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the Voting period in the current epoch will start
-    function getVotingPeriodStartDate() external view returns (uint64);
 
     /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
     function getCurrentPeriod() external view returns (uint);
