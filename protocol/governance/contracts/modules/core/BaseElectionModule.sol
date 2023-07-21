@@ -26,7 +26,7 @@ contract BaseElectionModule is
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
-        uint8 nextEpochSeatCount,
+        uint8 epochSeatCount,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -36,7 +36,7 @@ contract BaseElectionModule is
         _initOrUpgradeElectionModule(
             firstCouncil,
             minimumActiveMembers,
-            nextEpochSeatCount,
+            epochSeatCount,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
@@ -46,27 +46,27 @@ contract BaseElectionModule is
     function _initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
-        uint8 nextEpochSeatCount,
+        uint8 epochSeatCount,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
     ) internal {
         Council.Data storage store = Council.load();
 
-        if (minimumActiveMembers == 0 || minimumActiveMembers > nextEpochSeatCount) {
+        if (minimumActiveMembers == 0 || minimumActiveMembers > epochSeatCount) {
             revert InvalidMinimumActiveMembers();
         }
 
         uint64 epochStartDate = block.timestamp.to64();
 
         ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
+        settings.epochSeatCount = epochSeatCount;
+        settings.minimumActiveMembers = minimumActiveMembers;
+        settings.epochDuration = epochEndDate - epochStartDate;
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
-        settings.expectedEpochDuration = epochEndDate - epochStartDate;
         settings.maxDateAdjustmentTolerance = 7 days;
-        settings.nextEpochSeatCount = nextEpochSeatCount;
-        settings.minimumActiveMembers = minimumActiveMembers;
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
 
@@ -115,6 +115,7 @@ contract BaseElectionModule is
         );
     }
 
+    // TODO: Remove this function
     function modifyEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
@@ -167,7 +168,7 @@ contract BaseElectionModule is
         OwnableStorage.onlyOwner();
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
-        Council.load().getCurrentElectionSettings().nextEpochSeatCount = newSeatCount;
+        Council.load().getCurrentElectionSettings().epochSeatCount = newSeatCount;
 
         emit NextEpochSeatCountChanged(newSeatCount);
     }
@@ -327,10 +328,10 @@ contract BaseElectionModule is
         ElectionSettings.Data storage curr = store.getCurrentElectionSettings();
         ElectionSettings.Data storage prev = store.getPreviousElectionSettings();
 
-        curr.nextEpochSeatCount = prev.nextEpochSeatCount;
+        curr.epochSeatCount = prev.epochSeatCount;
         curr.minimumActiveMembers = prev.minimumActiveMembers;
         curr.minEpochDuration = prev.minEpochDuration;
-        curr.expectedEpochDuration = prev.expectedEpochDuration;
+        curr.epochDuration = prev.epochDuration;
         curr.minNominationPeriodDuration = prev.minNominationPeriodDuration;
         curr.minVotingPeriodDuration = prev.minVotingPeriodDuration;
         curr.maxDateAdjustmentTolerance = prev.maxDateAdjustmentTolerance;

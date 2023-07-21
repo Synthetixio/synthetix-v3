@@ -38,7 +38,7 @@ contract ElectionTally is ElectionBase {
         uint fromIndex,
         uint toIndex
     ) private {
-        uint numSeats = settings.nextEpochSeatCount;
+        uint numSeats = settings.epochSeatCount;
 
         for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
             bytes32 ballotId = election.ballotIds[ballotIndex];

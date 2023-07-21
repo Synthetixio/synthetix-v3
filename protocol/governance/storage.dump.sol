@@ -213,8 +213,9 @@ library Election {
 // @custom:artifact contracts/storage/ElectionSettings.sol:ElectionSettings
 library ElectionSettings {
     struct Data {
-        uint8 nextEpochSeatCount;
+        uint8 epochSeatCount;
         uint8 minimumActiveMembers;
+        uint64 epochDuration;
         uint64 minEpochDuration;
         uint64 minNominationPeriodDuration;
         uint64 minVotingPeriodDuration;

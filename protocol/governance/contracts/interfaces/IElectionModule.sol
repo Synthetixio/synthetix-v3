@@ -14,7 +14,7 @@ interface IElectionModule {
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
-        uint8 nextEpochSeatCount,
+        uint8 epochSeatCount,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate

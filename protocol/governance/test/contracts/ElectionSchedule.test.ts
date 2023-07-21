@@ -203,8 +203,4 @@ describe('ElectionSchedule', function () {
       });
     });
   });
-
-  // modifyEpochSchedule
-  // setMinEpochDurations
-  // setMaxDateAdjustmentTolerance
 });

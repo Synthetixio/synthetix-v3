@@ -23,7 +23,7 @@ describe('BaseElectionModule - Initialization', function () {
   async function _initOrUpgradeElectionModule({
     caller = owner,
     minimumActiveMembers = 1,
-    nextEpochSeatCount = 2,
+    epochSeatCount = 2,
     nominationPeriodStartDate = 0,
     votingPeriodStartDate = 0,
     epochEndDate = 0,
@@ -47,7 +47,7 @@ describe('BaseElectionModule - Initialization', function () {
     return BaseElectionModule.connect(caller).initOrUpgradeElectionModule(
       [await caller.getAddress()],
       minimumActiveMembers,
-      nextEpochSeatCount,
+      epochSeatCount,
       nominationPeriodStartDate,
       votingPeriodStartDate,
       epochEndDate
@@ -85,9 +85,9 @@ describe('BaseElectionModule - Initialization', function () {
             );
           });
 
-          it('reverts using more than nextEpochSeatCount', async function () {
+          it('reverts using more than epochSeatCount', async function () {
             await assertRevert(
-              _initOrUpgradeElectionModule({ minimumActiveMembers: 3, nextEpochSeatCount: 2 }),
+              _initOrUpgradeElectionModule({ minimumActiveMembers: 3, epochSeatCount: 2 }),
               'InvalidMinimumActiveMembers'
             );
           });
@@ -110,7 +110,7 @@ describe('BaseElectionModule - Initialization', function () {
 
           const tx = await _initOrUpgradeElectionModule({
             minimumActiveMembers: 1,
-            nextEpochSeatCount: 2,
+            epochSeatCount: 2,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate,

@@ -21,7 +21,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
 [setting.initial_epoch_minimum_active_members]
 defaultValue = "1"
 
-[setting.next_epoch_seat_count]
+[setting.epoch_seat_count]
 defaultValue = "2"
 
 [setting.nomination_period_start_date]
@@ -119,7 +119,7 @@ func = "initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,a
 args = [
   ["<%= settings.init_council_member %>"],
   "<%= settings.initial_epoch_minimum_active_members %>",
-  "<%= settings.next_epoch_seat_count %>",
+  "<%= settings.epoch_seat_count %>",
   "<%= settings.nomination_period_start_date %>",
   "<%= settings.voting_period_duration %>",
   "<%= settings.epoch_duration %>",

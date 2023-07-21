@@ -149,7 +149,7 @@ describe('SynthetixElectionModule - Initialization', function () {
             ](
               [await owner.getAddress(), await user.getAddress()],
               1,
-              10, // Change nextEpochSeatCount
+              10, // Change epochSeatCount
               0,
               7,
               60,
@@ -159,7 +159,7 @@ describe('SynthetixElectionModule - Initialization', function () {
 
           it('should not set new values', async function () {
             const settings = await CoreProxy.getElectionSettings();
-            assertBn.equal(settings.nextEpochSeatCount, 2);
+            assertBn.equal(settings.epochSeatCount, 2);
           });
         });
       });

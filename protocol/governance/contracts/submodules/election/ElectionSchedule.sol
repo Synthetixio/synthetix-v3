@@ -84,10 +84,7 @@ contract ElectionSchedule is ElectionBase {
             ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
 
             if (
-                _uint64AbsDifference(
-                    newEpochEndDate,
-                    epoch.startDate + settings.expectedEpochDuration
-                ) >
+                _uint64AbsDifference(newEpochEndDate, epoch.startDate + settings.epochDuration) >
                 settings.maxDateAdjustmentTolerance ||
                 _uint64AbsDifference(
                     newNominationPeriodStartDate,

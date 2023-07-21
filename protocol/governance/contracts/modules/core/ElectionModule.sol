@@ -39,7 +39,7 @@ contract ElectionModule is
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
-        uint8 nextEpochSeatCount,
+        uint8 epochSeatCount,
         uint64 nominationPeriodStartDate,
         uint16 votingPeriodDuration,
         uint16 epochDuration,
@@ -64,7 +64,7 @@ contract ElectionModule is
         _initOrUpgradeElectionModule(
             firstCouncil,
             minimumActiveMembers,
-            nextEpochSeatCount,
+            epochSeatCount,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
