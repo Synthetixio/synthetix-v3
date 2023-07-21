@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 // import { ElectionPeriod } from '../../constants';
@@ -41,9 +41,9 @@ describe('ElectionSchedule', function () {
     snapshotCheckpoint();
 
     async function _tweakEpochSchedule({
-      nominationPeriodStartDate = ethers.BigNumber.from(0),
-      votingPeriodStartDate = ethers.BigNumber.from(0),
-      endDate = ethers.BigNumber.from(0),
+      nominationPeriodStartDate,
+      votingPeriodStartDate,
+      endDate,
     }: Partial<ScheduleConfig>) {
       const schedule = await c.CoreProxy.getEpochSchedule();
       await c.CoreProxy.tweakEpochSchedule(
@@ -94,6 +94,52 @@ describe('ElectionSchedule', function () {
           );
         });
       }
+    });
+
+    describe('when a tweak modifies the current period', function () {
+      let schedule: ScheduleConfig;
+
+      snapshotCheckpoint();
+
+      before('load current configuration', async function () {
+        schedule = await c.CoreProxy.getEpochSchedule();
+      });
+
+      before('fast forward', async function () {
+        await fastForwardTo(
+          schedule.nominationPeriodStartDate.sub(daysToSeconds(1)).toNumber(),
+          getProvider()
+        );
+      });
+
+      it('reverts', async function () {
+        const nominationPeriodStartDate = schedule.nominationPeriodStartDate.sub(daysToSeconds(2));
+        await assertRevert(
+          _tweakEpochSchedule({ nominationPeriodStartDate }),
+          'ChangesCurrentPeriod'
+        );
+      });
+    });
+
+    describe('when correctly tweaking inside "maxDateAdjustmentTolerance"', function () {
+      snapshotCheckpoint();
+
+      it('correctly tweaks to new schedule', async function () {
+        const original = await c.CoreProxy.getEpochSchedule();
+
+        const newSchedule = {
+          nominationPeriodStartDate: original.nominationPeriodStartDate.add(daysToSeconds(3)),
+          votingPeriodStartDate: original.votingPeriodStartDate.add(daysToSeconds(3)),
+          endDate: original.endDate.add(daysToSeconds(3)),
+        };
+
+        await _tweakEpochSchedule(newSchedule);
+
+        const result = await c.CoreProxy.getEpochSchedule();
+        assertBn.equal(result.nominationPeriodStartDate, newSchedule.nominationPeriodStartDate);
+        assertBn.equal(result.votingPeriodStartDate, newSchedule.votingPeriodStartDate);
+        assertBn.equal(result.endDate, newSchedule.endDate);
+      });
     });
 
     // Test reverts during Nomination
