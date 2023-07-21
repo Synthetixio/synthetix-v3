@@ -1,12 +1,8 @@
-import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
-// import { ElectionPeriod } from '../../constants';
-// import { BaseElectionModule } from '../../generated/typechain';
 import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
 
