@@ -101,6 +101,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
     function name(uint128 perpsMarketId) external view override returns (string memory) {
         // todo: set name on initialize?
+        perpsMarketId; // silence unused variable warning
         return "Perps Market";
     }
 

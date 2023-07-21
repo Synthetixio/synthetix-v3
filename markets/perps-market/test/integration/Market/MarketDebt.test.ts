@@ -2,7 +2,7 @@ import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 // import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { Signer, ethers } from 'ethers';
-import { SynthMarkets } from '@synthetixio/spot-market/test/common';
+// import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 describe('Market Debt', () => {
@@ -12,7 +12,7 @@ describe('Market Debt', () => {
   };
   const ethPrice = bn(1000);
 
-  const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
+  const { systems, perpsMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
