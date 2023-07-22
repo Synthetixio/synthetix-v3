@@ -19,13 +19,16 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<C
   cannonfile: 'cannonfile.test.toml',
 } as { cannonfile: string });
 
-const restoreSnapshot = createSnapshot();
+function snapshotCheckpoint() {
+  const restoreSnapshot = createSnapshot();
+  after(restoreSnapshot);
+}
 
 export function bootstrap() {
   const contracts: Partial<Contracts> = {};
   const c = contracts as Contracts;
 
-  before(restoreSnapshot);
+  snapshotCheckpoint();
 
   before('load contracts', function () {
     Object.assign(contracts, {
@@ -41,12 +44,7 @@ export function bootstrap() {
     getProvider,
     getSigners,
     getContract,
-    createSnapshot,
-
-    snapshotCheckpoint() {
-      const restoreSnapshot = createSnapshot();
-      after(restoreSnapshot);
-    },
+    snapshotCheckpoint,
 
     async deployNewProxy() {
       const [owner] = getSigners();

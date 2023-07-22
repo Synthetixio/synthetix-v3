@@ -8,7 +8,7 @@ import { bootstrap } from '../../bootstrap';
 import { ElectionPeriod } from '../../constants';
 
 describe('ElectionModule - schedule', () => {
-  const { c, getSigners, getProvider, createSnapshot } = bootstrap();
+  const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
 
   let user: ethers.Signer;
   let rx: ethers.ContractReceipt;
@@ -34,15 +34,11 @@ describe('ElectionModule - schedule', () => {
 
   const itAcceptsAdjustments = () => {
     describe('when trying to adjust the epoch schedule', function () {
-      const restoreSnapshot = createSnapshot();
+      snapshotCheckpoint();
 
       before('fast forward', async function () {
         const { nominationPeriodStartDate } = await c.CoreProxy.getEpochSchedule();
         await fastForwardTo(Number(nominationPeriodStartDate) - daysToSeconds(1), getProvider());
-      });
-
-      after('restore snapshot', async function () {
-        await restoreSnapshot();
       });
 
       describe('with zero dates', function () {
