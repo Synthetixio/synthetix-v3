@@ -9,9 +9,9 @@ library ElectionSettings {
         uint8 minimumActiveMembers;
         // Expected duration of the epoch
         uint64 epochDuration;
-        // Expected nomination period duration when adjusting schedules
+        // Expected nomination period duration
         uint64 nominationPeriodDuration;
-        // Expected voting period duration when adjusting schedules
+        // Expected voting period duration
         uint64 votingPeriodDuration;
         // Maximum size for tweaking epoch schedules (see tweakEpochSchedule)
         uint64 maxDateAdjustmentTolerance;
