@@ -41,7 +41,7 @@ export function bootstrap() {
       CouncilToken: getContract('CouncilToken'),
       DebtShareMock: getContract('DebtShareMock'),
       CouncilTokenRouter: getContract('CouncilTokenRouter'),
-    } satisfies Contracts);
+    });
   });
 
   return {
