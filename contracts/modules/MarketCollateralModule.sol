@@ -24,6 +24,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
      * @inheritdoc IMarketCollateralModule
      */
     function transferTo(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
+        if (collateralType == address(0)) {
+            revert ZeroAddress();
+        }
+
         // Ensures the account exists (reverts with `AccountNotFound`).
         Account.exists(accountId);
 
@@ -77,8 +81,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
                 }
             }
 
-            IERC20(collateralType).transferFrom(address(this), msg.sender, absAmountDelta);
             globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, absAmountDelta);
+            IERC20(collateralType).transferFrom(address(this), msg.sender, absAmountDelta);
             emit Transfer(address(this), msg.sender, absAmountDelta);
         } else {
             // A zero amount is a no-op.
@@ -129,6 +133,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
             // Perform this operation _once_ when this collateral is added as a supported collateral.
             uint128 maxAllowable = maxAllowables[i];
             IERC20(collateralType).approve(address(globalMarketConfig.synthetix), maxAllowable);
+            IERC20(collateralType).approve(address(this), maxAllowable);
             config.available[collateralType] = PerpCollateral.CollateralType(oracleNodeIds[i], maxAllowable);
             newAvailableAddresses[i] = collateralType;
 
