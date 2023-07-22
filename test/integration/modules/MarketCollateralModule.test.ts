@@ -4,9 +4,11 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
 import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn, shuffle } from '../../generators';
+import { depositMargin } from '../../helpers';
 
 describe('MarketCollateralModule', async () => {
-  const { markets, collaterals, traders, owner, systems, restore } = bootstrap(genBootstrap());
+  const bs = bootstrap(genBootstrap());
+  const { markets, collaterals, traders, owner, systems, restore } = bs;
 
   beforeEach(restore);
 
@@ -193,36 +195,11 @@ describe('MarketCollateralModule', async () => {
     });
 
     describe('withdraw', () => {
-      /* A common `depositMargin` function used throughout .withdraw tests. */
-      const depositMargin = async () => {
-        const { PerpMarketProxy } = systems();
-
-        const trader = traders()[0];
-        const traderAddress = await trader.signer.getAddress();
-        const market = markets()[0];
-        const marketId = market.marketId();
-        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
-
-        const amountDelta = bn(genInt(500, 1000));
-        await collateral.mint(trader.signer.getAddress(), amountDelta);
-        await collateral.approve(PerpMarketProxy.address, amountDelta);
-
-        // Perform the deposit.
-        await PerpMarketProxy.connect(trader.signer).transferTo(
-          trader.accountId,
-          marketId,
-          collateral.address,
-          amountDelta
-        );
-
-        return { trader, traderAddress, market, marketId, amountDelta, collateral };
-      };
-
       it('should allow full withdraw of collateral to my account', async () => {
         const { PerpMarketProxy } = systems();
 
         // Perform the deposit.
-        const { trader, traderAddress, marketId, amountDelta, collateral } = await depositMargin();
+        const { trader, traderAddress, marketId, amountDelta, collateral } = await depositMargin(bs);
 
         // Perform the withdraw (full amount).
         const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
@@ -243,7 +220,7 @@ describe('MarketCollateralModule', async () => {
         const { PerpMarketProxy } = systems();
 
         // Perform the deposit.
-        const { trader, traderAddress, marketId, amountDelta, collateral } = await depositMargin();
+        const { trader, traderAddress, marketId, amountDelta, collateral } = await depositMargin(bs);
 
         // Perform the withdraw (partial amount).
         const withdrawAmount = amountDelta.div(2).mul(-1);
@@ -268,7 +245,7 @@ describe('MarketCollateralModule', async () => {
         const { PerpMarketProxy } = systems();
 
         // Perform the deposit.
-        const { trader, marketId, amountDelta } = await depositMargin();
+        const { trader, marketId, amountDelta } = await depositMargin(bs);
 
         // Perform withdraw with zero address.
         await assertRevert(
@@ -287,7 +264,7 @@ describe('MarketCollateralModule', async () => {
         const { PerpMarketProxy } = systems();
 
         // Perform the deposit.
-        const { trader, marketId, amountDelta, collateral } = await depositMargin();
+        const { trader, marketId, amountDelta, collateral } = await depositMargin(bs);
         const invalidAccountId = bn(genInt(42069, 50_000));
 
         // Perform withdraw with zero address.
@@ -307,7 +284,7 @@ describe('MarketCollateralModule', async () => {
         const { PerpMarketProxy } = systems();
 
         // Perform the deposit.
-        const { trader, marketId, amountDelta } = await depositMargin();
+        const { trader, marketId, amountDelta } = await depositMargin(bs);
         const invalidCollateralAddress = genAddress();
 
         // Perform withdraw with zero address.
@@ -327,7 +304,7 @@ describe('MarketCollateralModule', async () => {
         const { PerpMarketProxy } = systems();
 
         // Perform the deposit.
-        const { trader, marketId, amountDelta, collateral } = await depositMargin();
+        const { trader, marketId, amountDelta, collateral } = await depositMargin(bs);
 
         // Perform the withdraw with a little more than what was deposited.
         const withdrawAmount = amountDelta.add(bn(1)).mul(-1);
