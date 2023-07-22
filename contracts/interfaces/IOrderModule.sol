@@ -138,4 +138,9 @@ interface IOrderModule is IBasePerpMarket {
         int128 sizeDelta,
         uint256 oraclePrice
     ) external view returns (uint256 price);
+
+    /**
+     * @dev Returns the oracle price given the `marketId`.
+     */
+    function getOraclePrice(uint128 marketId) external view returns (uint256 price);
 }

@@ -230,4 +230,12 @@ contract OrderModule is IOrderModule {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         price = Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice);
     }
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function getOraclePrice(uint128 marketId) external view returns (uint256 price) {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        price = market.getOraclePrice();
+    }
 }

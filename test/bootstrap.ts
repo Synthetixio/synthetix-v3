@@ -143,7 +143,11 @@ export const bootstrap = (args: BootstrapArgs) => {
     });
 
     before(`configure market - ${readableName}`, async () => {
-      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, specific);
+      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
+        ...specific,
+        // Override the generic supplied oracleNodeId with the one that was just created.
+        oracleNodeId,
+      });
     });
 
     return {
