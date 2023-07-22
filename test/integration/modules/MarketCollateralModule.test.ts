@@ -109,7 +109,30 @@ describe('MarketCollateralModule', async () => {
         );
       });
 
-      it('should revert when depositing an address(0) collateral');
+      it('should revert when depositing an address(0) collateral', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = traders()[0];
+        const market = markets()[0];
+        const marketId = market.marketId();
+        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+
+        const amountDelta = bn(genInt(500, 1000));
+        await collateral.mint(trader.signer.getAddress(), amountDelta);
+        await collateral.approve(PerpMarketProxy.address, amountDelta);
+
+        // Perform withdraw with zero address.
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            trader.accountId,
+            marketId,
+            '0x0000000000000000000000000000000000000000',
+            amountDelta
+          ),
+          'ZeroAddress()',
+          PerpMarketProxy
+        );
+      });
 
       it('should revert deposit that exceeds max cap', async () => {
         const { PerpMarketProxy } = systems();
@@ -170,7 +193,8 @@ describe('MarketCollateralModule', async () => {
     });
 
     describe('withdraw', () => {
-      it('should allow full withdraw of collateral to my account', async () => {
+      /* A common `depositMargin` function used throughout .withdraw tests. */
+      const depositMargin = async () => {
         const { PerpMarketProxy } = systems();
 
         const trader = traders()[0];
@@ -191,7 +215,16 @@ describe('MarketCollateralModule', async () => {
           amountDelta
         );
 
-        // Perform the withdraw (entire amount)
+        return { trader, traderAddress, market, marketId, amountDelta, collateral };
+      };
+
+      it('should allow full withdraw of collateral to my account', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Perform the deposit.
+        const { trader, traderAddress, marketId, amountDelta, collateral } = await depositMargin();
+
+        // Perform the withdraw (full amount).
         const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
           trader.accountId,
           marketId,
@@ -206,11 +239,52 @@ describe('MarketCollateralModule', async () => {
         );
       });
 
-      it('should allow partial withdraw of collateral to my account');
+      it('should allow partial withdraw of collateral to my account', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Perform the deposit.
+        const { trader, traderAddress, marketId, amountDelta, collateral } = await depositMargin();
+
+        // Perform the withdraw (partial amount).
+        const withdrawAmount = amountDelta.div(2).mul(-1);
+        const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+          trader.accountId,
+          marketId,
+          collateral.address,
+          withdrawAmount
+        );
+
+        // Convert withdrawAmount back to positive beacuse Transfer takes in abs(amount).
+        await assertEvent(
+          tx,
+          `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount.mul(-1)})`,
+          PerpMarketProxy
+        );
+      });
 
       it('should affect an existing position when withdrawing');
-      it('should revert withdraw on address(0) collateral');
-      it('should revert withdraw to an account that does not exist');
+
+      it('should revert withdraw on address(0) collateral', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Perform the deposit.
+        const { trader, marketId, amountDelta } = await depositMargin();
+
+        // Perform withdraw with zero address.
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            trader.accountId,
+            marketId,
+            '0x0000000000000000000000000000000000000000',
+            amountDelta.mul(-1)
+          ),
+          'ZeroAddress()',
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert withdraw to an account that does not exist', async () => {});
+
       it('should revert withdraw of unsupported collateral');
       it('should revert withdraw of more than what is available');
       it('should revert withdraw when position can be liquidated');
