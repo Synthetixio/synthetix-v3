@@ -3,7 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
-import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn, genOneOf, shuffle } from '../../generators';
+import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn, shuffle } from '../../generators';
 
 describe('MarketCollateralModule', async () => {
   const { markets, collaterals, traders, owner, systems, restore } = bootstrap(genBootstrap());
@@ -11,6 +11,27 @@ describe('MarketCollateralModule', async () => {
   beforeEach(restore);
 
   describe('transferTo()', () => {
+    it('should noop with a transfer amount of 0', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader = traders()[0];
+      const market = markets()[0];
+      const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+      const amountDelta = bn(0);
+
+      const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+        trader.accountId,
+        market.marketId(),
+        collateral.address,
+        amountDelta
+      );
+      const receipt = await tx.wait();
+
+      assert.equal(receipt.events?.length, 0);
+    });
+
+    it('should revert transfers when an order is pending');
+
     describe('deposit', () => {
       it('should allow deposit of collateral to an existing accountId', async () => {
         const { PerpMarketProxy } = systems();
@@ -44,24 +65,157 @@ describe('MarketCollateralModule', async () => {
       });
 
       it('should affect an existing position when depositing');
-      it('should revert deposit to an account that does not exist');
-      it('should revert deposit of unsupported collateral');
-      it('should revert deposit that exceeds max cap');
+
+      it('should revert deposit to an account that does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = traders()[0];
+        const invalidAccountId = genInt(42069, 50000);
+
+        const market = markets()[0];
+        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+
+        const amountDelta = bn(genInt(50, 100_000));
+        await collateral.mint(trader.signer.getAddress(), amountDelta);
+        await collateral.approve(PerpMarketProxy.address, amountDelta);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            invalidAccountId,
+            market.marketId(),
+            collateral.address,
+            amountDelta
+          ),
+          `AccountNotFound("${invalidAccountId}")`
+        );
+      });
+
+      it('should revert deposit of unsupported collateral', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = traders()[0];
+        const market = markets()[0];
+        const invalidCollateralAddress = genAddress();
+        const amountDelta = bn(genInt(10, 100));
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            trader.accountId,
+            market.marketId(),
+            invalidCollateralAddress,
+            amountDelta
+          ),
+          `UnsupportedCollateral("${invalidCollateralAddress}")`
+        );
+      });
+
+      it('should revert when depositing an address(0) collateral');
+
+      it('should revert deposit that exceeds max cap', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = traders()[0];
+        const market = markets()[0];
+
+        // Shuffle the available collaterals and sample `.head`.
+        const { contract, max: maxAllowable } = shuffle(collaterals())[0];
+        const collateral = contract.connect(trader.signer);
+
+        // Add one extra to max allowable to exceed max cap.
+        const amountDelta = maxAllowable.add(bn(1));
+        await collateral.mint(trader.signer.getAddress(), amountDelta);
+        await collateral.approve(PerpMarketProxy.address, amountDelta);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            trader.accountId,
+            market.marketId(),
+            collateral.address,
+            amountDelta
+          ),
+          `MaxCollateralExceeded("${amountDelta}", "${maxAllowable}")`
+        );
+      });
+
       it('should revert deposit of perp market approved collateral but not system approved');
-      it('should revert when insufficient amount of collateral in msg.sender');
+
+      it('should revert when insufficient amount of collateral in msg.sender', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = traders()[0];
+        const market = markets()[0];
+
+        // Shuffle the available collaterals and sample `.head`.
+        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+
+        // Ensure the amount available is lower than amount to deposit (i.e. depositing more than available).
+        const amountToDeposit = bn(genInt(100, 1000));
+        const amountAvailable = amountToDeposit.sub(bn(genInt(50, 500)));
+
+        await collateral.mint(trader.signer.getAddress(), amountAvailable);
+        await collateral.approve(PerpMarketProxy.address, amountAvailable);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            trader.accountId,
+            market.marketId(),
+            collateral.address,
+            amountToDeposit
+          ),
+          `InsufficientAllowance("${amountToDeposit}", "${amountAvailable}")`
+        );
+      });
+
+      it('should revert when account is flagged for liquidation');
     });
 
     describe('withdraw', () => {
-      it('should allow withdraw of collateral to my account');
+      it('should allow full withdraw of collateral to my account', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader = traders()[0];
+        const traderAddress = await trader.signer.getAddress();
+        const market = markets()[0];
+        const marketId = market.marketId();
+        const collateral = collaterals()[0].contract.connect(trader.signer);
+
+        const amountDelta = bn(genInt(500, 1000));
+        await collateral.mint(trader.signer.getAddress(), amountDelta);
+        await collateral.approve(PerpMarketProxy.address, amountDelta);
+
+        // Perform the deposit.
+        await PerpMarketProxy.connect(trader.signer).transferTo(
+          trader.accountId,
+          marketId,
+          collateral.address,
+          amountDelta
+        );
+
+        // Perform the withdraw (entire amount)
+        const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+          trader.accountId,
+          marketId,
+          collateral.address,
+          amountDelta.mul(-1)
+        );
+
+        await assertEvent(
+          tx,
+          `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${amountDelta})`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should allow partial withdraw of collateral to my account');
+
       it('should affect an existing position when withdrawing');
+      it('should revert withdraw on address(0) collateral');
       it('should revert withdraw to an account that does not exist');
       it('should revert withdraw of unsupported collateral');
       it('should revert withdraw of more than what is available');
       it('should revert withdraw when position can be liquidated');
+      it('should revert when account is flagged for liquidation');
     });
-
-    it('should noop with a transfer amount of 0');
-    it('should revert transfers when an order is pending');
   });
 
   describe('setCollateralConfiguration()', () => {
