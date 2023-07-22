@@ -74,6 +74,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      * @inheritdoc IMarket
      */
     function minimumCredit(uint128 _marketId) external view override returns (uint256) {
+        // TODO: Get size of market then multiply by some percentage for a min amount;
         return 0;
     }
 
