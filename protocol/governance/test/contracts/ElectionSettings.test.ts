@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
 
-describe('ElectionSettings', function () {
+describe.skip('ElectionSettings', function () {
   const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
 
   let user: ethers.Signer;

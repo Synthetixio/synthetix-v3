@@ -21,7 +21,7 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<C
 
 function snapshotCheckpoint() {
   const restoreSnapshot = createSnapshot();
-  after(restoreSnapshot);
+  after('restore snapshot', restoreSnapshot);
 }
 
 export function bootstrap() {
