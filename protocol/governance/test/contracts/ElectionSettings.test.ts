@@ -1,10 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
-import { ElectionPeriod } from '../constants';
 
 interface ElectionSettings {
   epochSeatCount: ethers.BigNumberish;
@@ -17,7 +14,7 @@ interface ElectionSettings {
 }
 
 describe('ElectionSettings', function () {
-  const { c, getSigners, getProvider, snapshotCheckpoint } = bootstrap();
+  const { c, getSigners } = bootstrap();
 
   let owner: ethers.Signer;
   let user: ethers.Signer;
@@ -100,14 +97,15 @@ describe('ElectionSettings', function () {
           minNominationPeriodDuration: 7,
           minVotingPeriodDuration: 7,
           maxDateAdjustmentTolerance: 7,
-        };
+        } satisfies ElectionSettings;
 
         await _setNextElectionSettings(newSettings);
 
         const result = await c.CoreProxy.getNextElectionSettings();
 
-        for (const [k, v] of Object.entries(newSettings)) {
-          assertBn.equal(result[k], v);
+        for (const k of Object.keys(newSettings)) {
+          const key = k as keyof ElectionSettings;
+          assertBn.equal(result[key], newSettings[key]);
         }
       });
     });
