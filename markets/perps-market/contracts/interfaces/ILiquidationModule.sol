@@ -11,7 +11,7 @@ interface ILiquidationModule {
         int128 currentPositionSize
     );
 
-    event AccountLiquidated(uint128 indexed accountId, uint256 reward, bool partiallyLiquidated);
+    event AccountLiquidated(uint128 indexed accountId, uint256 reward, bool fullLiquidation);
 
     function liquidate(uint128 accountId) external;
 

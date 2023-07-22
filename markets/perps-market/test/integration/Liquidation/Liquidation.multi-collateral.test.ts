@@ -5,7 +5,7 @@ import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
 
-describe.only('Liquidation - multi collateral', async () => {
+describe('Liquidation - multi collateral', async () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,

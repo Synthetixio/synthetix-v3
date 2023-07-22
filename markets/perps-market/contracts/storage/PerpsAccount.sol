@@ -305,7 +305,8 @@ library PerpsAccount {
                         type(uint).max,
                         address(0)
                     );
-                    // TODO: deposit snxUSD
+
+                    factory.depositMarketUsd(amountToDeduct);
 
                     updateCollateralAmount(self, marketId, -(amountToDeduct.toInt()));
                     leftoverAmount = 0;
@@ -323,7 +324,8 @@ library PerpsAccount {
                         0,
                         address(0)
                     );
-                    // TODO: deposit snxUSD
+
+                    factory.depositMarketUsd(amountToDeductUsd);
 
                     updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
                     leftoverAmount -= amountToDeductUsd;
@@ -339,7 +341,15 @@ library PerpsAccount {
     function liquidatePosition(
         Data storage self,
         uint128 marketId
-    ) internal returns (uint128 amountToLiquidate, int128 newPositionSize) {
+    )
+        internal
+        returns (
+            uint128 amountToLiquidate,
+            int128 newPositionSize,
+            int128 sizeDelta,
+            PerpsMarket.MarketUpdateData memory marketUpdateData
+        )
+    {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
         Position.Data storage position = perpsMarket.positions[self.id];
 
@@ -356,9 +366,10 @@ library PerpsAccount {
         updateOpenPositions(self, marketId, position.size);
 
         // update market data
-        perpsMarket.updateMarketSizes(oldPositionSize, position.size);
+        marketUpdateData = perpsMarket.updateMarketSizes(oldPositionSize, position.size);
+        sizeDelta = position.size - oldPositionSize;
 
-        return (amountToLiquidate, position.size);
+        return (amountToLiquidate, position.size, sizeDelta, marketUpdateData);
     }
 
     function _deductAllSynth(

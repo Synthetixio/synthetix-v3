@@ -149,8 +149,24 @@ library PerpsMarket {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
 
-        updateMarketSizes(self, newPosition.size, oldPositionSize);
+        MarketUpdateData memory marketData = updateMarketSizes(
+            self,
+            newPosition.size,
+            oldPositionSize
+        );
         oldPosition.updatePosition(newPosition);
+
+        return marketData;
+    }
+
+    function updateMarketSizes(
+        Data storage self,
+        int128 newPositionSize,
+        int128 oldPositionSize
+    ) internal returns (MarketUpdateData memory) {
+        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPositionSize - oldPositionSize;
+
         // TODO add current market debt
         return
             MarketUpdateData(
@@ -160,15 +176,6 @@ library PerpsMarket {
                 self.lastFundingRate,
                 currentFundingVelocity(self)
             );
-    }
-
-    function updateMarketSizes(
-        Data storage self,
-        int128 newPositionSize,
-        int128 oldPositionSize
-    ) internal {
-        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
-        self.skew += newPositionSize - oldPositionSize;
     }
 
     function recomputeFunding(

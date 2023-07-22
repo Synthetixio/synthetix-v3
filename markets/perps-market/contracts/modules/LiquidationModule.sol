@@ -12,8 +12,9 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
-contract LiquidationModule is ILiquidationModule {
+contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
     using SetUtil for SetUtil.UintSet;
@@ -61,8 +62,23 @@ contract LiquidationModule is ILiquidationModule {
 
         for (uint i = 0; i < openPositionMarketIds.length; i++) {
             uint128 positionMarketId = openPositionMarketIds[i].to128();
-            (uint256 amountLiquidated, int128 newPositionSize) = account.liquidatePosition(
-                positionMarketId
+            uint256 price = PerpsPrice.getCurrentPrice(positionMarketId);
+
+            (
+                uint256 amountLiquidated,
+                int128 newPositionSize,
+                int128 sizeDelta,
+                PerpsMarket.MarketUpdateData memory marketUpdateData
+            ) = account.liquidatePosition(positionMarketId);
+
+            emit MarketUpdated(
+                positionMarketId,
+                price,
+                marketUpdateData.skew,
+                marketUpdateData.size,
+                sizeDelta,
+                marketUpdateData.currentFundingRate,
+                marketUpdateData.currentFundingVelocity
             );
 
             emit PositionLiquidated(accountId, positionMarketId, amountLiquidated, newPositionSize);
@@ -70,9 +86,7 @@ contract LiquidationModule is ILiquidationModule {
             // using amountToLiquidate to calculate liquidation reward
             uint256 liquidationReward = PerpsMarketConfiguration
                 .load(positionMarketId)
-                .calculateLiquidationReward(
-                    amountLiquidated.mulDecimal(PerpsPrice.getCurrentPrice(positionMarketId))
-                );
+                .calculateLiquidationReward(amountLiquidated.mulDecimal(price));
             accumulatedLiquidationRewards += liquidationReward;
         }
 
@@ -83,7 +97,7 @@ contract LiquidationModule is ILiquidationModule {
             GlobalPerpsMarket.load().liquidatableAccounts.remove(accountId);
         }
 
-        emit AccountLiquidated(accountId, keeperLiquidationReward, !accountFullyLiquidated);
+        emit AccountLiquidated(accountId, keeperLiquidationReward, accountFullyLiquidated);
     }
 
     function _processLiquidationRewards(uint256 totalRewards) private returns (uint256 reward) {
