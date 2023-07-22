@@ -166,6 +166,15 @@ export const bootstrap = (args: BootstrapArgs) => {
     for (const { initialPrice, contract } of collaterals) {
       // Update core system to allow this collateral to be deposited for all provisioned markets.
       for (const market of markets) {
+        await systems.Core.connect(owner).configureCollateral({
+          tokenAddress: contract.address,
+          oracleNodeId: market.oracleNodeId(),
+          issuanceRatioD18: bn(1),
+          liquidationRatioD18: bn(1),
+          liquidationRewardD18: bn(1),
+          minDelegationD18: bn(1),
+          depositingEnabled: true,
+        });
         await systems.Core.connect(owner).configureMaximumMarketCollateral(
           market.marketId(),
           contract.address,

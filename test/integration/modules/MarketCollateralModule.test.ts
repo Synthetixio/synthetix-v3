@@ -40,7 +40,7 @@ describe('MarketCollateralModule', async () => {
         const traderAddress = await trader.signer.getAddress();
 
         const market = markets()[0];
-        const collateral = collaterals()[0].contract.connect(trader.signer);
+        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
 
         const amountDelta = bn(genInt(50, 100_000));
         await collateral.mint(trader.signer.getAddress(), amountDelta);
@@ -177,7 +177,7 @@ describe('MarketCollateralModule', async () => {
         const traderAddress = await trader.signer.getAddress();
         const market = markets()[0];
         const marketId = market.marketId();
-        const collateral = collaterals()[0].contract.connect(trader.signer);
+        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
 
         const amountDelta = bn(genInt(500, 1000));
         await collateral.mint(trader.signer.getAddress(), amountDelta);
