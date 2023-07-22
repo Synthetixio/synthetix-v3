@@ -216,9 +216,8 @@ library ElectionSettings {
         uint8 epochSeatCount;
         uint8 minimumActiveMembers;
         uint64 epochDuration;
-        uint64 minEpochDuration;
-        uint64 minNominationPeriodDuration;
-        uint64 minVotingPeriodDuration;
+        uint64 nominationPeriodDuration;
+        uint64 votingPeriodDuration;
         uint64 maxDateAdjustmentTolerance;
     }
     function load(uint epochIndex) internal pure returns (Data storage settings) {

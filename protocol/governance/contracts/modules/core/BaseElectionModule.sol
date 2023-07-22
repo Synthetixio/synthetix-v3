@@ -63,9 +63,8 @@ contract BaseElectionModule is
             epochSeatCount,
             minimumActiveMembers,
             epochEndDate - epochStartDate, // epochDuration
-            7 days, // minEpochDuration
-            2 days, // minNominationPeriodDuration
-            2 days, // minVotingPeriodDuration
+            2 days, // nominationPeriodDuration
+            2 days, // votingPeriodDuration
             7 days // maxDateAdjustmentTolerance
         );
         _copyMissingSettings(settings, store.getNextElectionSettings());
@@ -121,9 +120,8 @@ contract BaseElectionModule is
         uint8 epochSeatCount,
         uint8 minimumActiveMembers,
         uint64 epochDuration,
-        uint64 minEpochDuration,
-        uint64 minNominationPeriodDuration,
-        uint64 minVotingPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
@@ -133,9 +131,8 @@ contract BaseElectionModule is
             epochSeatCount,
             minimumActiveMembers,
             epochDuration,
-            minEpochDuration,
-            minNominationPeriodDuration,
-            minVotingPeriodDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
             maxDateAdjustmentTolerance
         );
     }
@@ -277,7 +274,7 @@ contract BaseElectionModule is
         store.newElection();
 
         _copyMissingSettings(store.getCurrentElectionSettings(), store.getNextElectionSettings());
-        _copyScheduleFromPreviousEpoch();
+        _initScheduleFromSettings();
 
         emit EpochStarted(newEpochIndex);
     }

@@ -62,9 +62,9 @@ contract ElectionSchedule is ElectionBase {
         ElectionSettings.Data storage settings = Council.load().getCurrentElectionSettings();
 
         if (
-            epochDuration < settings.minEpochDuration ||
-            nominationPeriodDuration < settings.minNominationPeriodDuration ||
-            votingPeriodDuration < settings.minVotingPeriodDuration
+            epochDuration < settings.nominationPeriodDuration + settings.votingPeriodDuration ||
+            nominationPeriodDuration < settings.nominationPeriodDuration ||
+            votingPeriodDuration < settings.votingPeriodDuration
         ) {
             revert InvalidEpochConfiguration();
         }
@@ -113,16 +113,16 @@ contract ElectionSchedule is ElectionBase {
 
     /// @dev Moves schedule forward to immediately jump to the nomination period
     function _jumpToNominationPeriod() internal {
-        Epoch.Data storage currentEpoch = Council.load().getCurrentElection().epoch;
-
-        uint64 nominationPeriodDuration = _getNominationPeriodDuration(currentEpoch);
-        uint64 votingPeriodDuration = _getVotingPeriodDuration(currentEpoch);
+        Council.Data storage store = Council.load();
+        Epoch.Data storage currentEpoch = store.getCurrentElection().epoch;
+        ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
 
         // Keep the previous durations, but shift everything back
         // so that nominations start now
         uint64 newNominationPeriodStartDate = block.timestamp.to64();
-        uint64 newVotingPeriodStartDate = newNominationPeriodStartDate + nominationPeriodDuration;
-        uint64 newEpochEndDate = newVotingPeriodStartDate + votingPeriodDuration;
+        uint64 newVotingPeriodStartDate = newNominationPeriodStartDate +
+            settings.nominationPeriodDuration;
+        uint64 newEpochEndDate = newVotingPeriodStartDate + settings.votingPeriodDuration;
 
         _configureEpochSchedule(
             currentEpoch,
@@ -133,20 +133,18 @@ contract ElectionSchedule is ElectionBase {
         );
     }
 
-    /// @dev Copies the current epoch schedule to the next epoch, maintaining durations
-    function _copyScheduleFromPreviousEpoch() internal {
-        Epoch.Data storage previousEpoch = Council.load().getPreviousElection().epoch;
-        Epoch.Data storage currentEpoch = Council.load().getCurrentElection().epoch;
+    function _initScheduleFromSettings() internal {
+        Council.Data storage store = Council.load();
+        ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
 
         uint64 currentEpochStartDate = block.timestamp.to64();
-        uint64 currentEpochEndDate = currentEpochStartDate + _getEpochDuration(previousEpoch);
-        uint64 currentVotingPeriodStartDate = currentEpochEndDate -
-            _getVotingPeriodDuration(previousEpoch);
+        uint64 currentEpochEndDate = currentEpochStartDate + settings.epochDuration;
+        uint64 currentVotingPeriodStartDate = currentEpochEndDate - settings.votingPeriodDuration;
         uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate -
-            _getNominationPeriodDuration(previousEpoch);
+            settings.nominationPeriodDuration;
 
         _configureEpochSchedule(
-            currentEpoch,
+            store.getCurrentElection().epoch,
             currentEpochStartDate,
             currentNominationPeriodStartDate,
             currentVotingPeriodStartDate,
@@ -156,17 +154,5 @@ contract ElectionSchedule is ElectionBase {
 
     function _uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
         return valueA > valueB ? valueA - valueB : valueB - valueA;
-    }
-
-    function _getEpochDuration(Epoch.Data storage epoch) private view returns (uint64) {
-        return epoch.endDate - epoch.startDate;
-    }
-
-    function _getVotingPeriodDuration(Epoch.Data storage epoch) private view returns (uint64) {
-        return epoch.endDate - epoch.votingPeriodStartDate;
-    }
-
-    function _getNominationPeriodDuration(Epoch.Data storage epoch) private view returns (uint64) {
-        return epoch.votingPeriodStartDate - epoch.nominationPeriodStartDate;
     }
 }

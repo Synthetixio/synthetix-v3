@@ -1,5 +1,6 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 
@@ -7,9 +8,8 @@ interface ElectionSettings {
   epochSeatCount: ethers.BigNumberish;
   minimumActiveMembers: ethers.BigNumberish;
   epochDuration: ethers.BigNumberish;
-  minEpochDuration: ethers.BigNumberish;
-  minNominationPeriodDuration: ethers.BigNumberish;
-  minVotingPeriodDuration: ethers.BigNumberish;
+  nominationPeriodDuration: ethers.BigNumberish;
+  votingPeriodDuration: ethers.BigNumberish;
   maxDateAdjustmentTolerance: ethers.BigNumberish;
 }
 
@@ -29,9 +29,8 @@ describe('ElectionSettings', function () {
       assertBn.gt(settings.epochSeatCount, 0);
       assertBn.gt(settings.minimumActiveMembers, 0);
       assertBn.gt(settings.epochDuration, 0);
-      assertBn.gt(settings.minEpochDuration, 0);
-      assertBn.gt(settings.minNominationPeriodDuration, 0);
-      assertBn.gt(settings.minVotingPeriodDuration, 0);
+      assertBn.gt(settings.nominationPeriodDuration, 0);
+      assertBn.gt(settings.votingPeriodDuration, 0);
       assertBn.gt(settings.maxDateAdjustmentTolerance, 0);
     });
   });
@@ -42,9 +41,8 @@ describe('ElectionSettings', function () {
       assertBn.gt(settings.epochSeatCount, 0);
       assertBn.gt(settings.minimumActiveMembers, 0);
       assertBn.gt(settings.epochDuration, 0);
-      assertBn.gt(settings.minEpochDuration, 0);
-      assertBn.gt(settings.minNominationPeriodDuration, 0);
-      assertBn.gt(settings.minVotingPeriodDuration, 0);
+      assertBn.gt(settings.nominationPeriodDuration, 0);
+      assertBn.gt(settings.votingPeriodDuration, 0);
       assertBn.gt(settings.maxDateAdjustmentTolerance, 0);
     });
   });
@@ -57,11 +55,10 @@ describe('ElectionSettings', function () {
       const tx = await c.CoreProxy.connect(caller).setNextElectionSettings(
         settings.epochSeatCount ?? 2,
         settings.minimumActiveMembers ?? 1,
-        settings.epochDuration ?? 90,
-        settings.minEpochDuration ?? 7,
-        settings.minNominationPeriodDuration ?? 2,
-        settings.minVotingPeriodDuration ?? 2,
-        settings.maxDateAdjustmentTolerance ?? 2
+        settings.epochDuration ?? daysToSeconds(90),
+        settings.nominationPeriodDuration ?? daysToSeconds(2),
+        settings.votingPeriodDuration ?? daysToSeconds(2),
+        settings.maxDateAdjustmentTolerance ?? daysToSeconds(2)
       );
       await tx.wait();
       return tx;
@@ -75,9 +72,13 @@ describe('ElectionSettings', function () {
 
     describe('with invalid settings', function () {
       const testCases = [
+        { epochSeatCount: 0 },
+        { minimumActiveMembers: 0 },
+        { epochDuration: 0 },
+        { nominationPeriodDuration: 0 },
+        { votingPeriodDuration: 0 },
         { epochSeatCount: 1, minimumActiveMembers: 2 },
-        { epochDuration: 7, minEpochDuration: 8 },
-        { minEpochDuration: 4, minNominationPeriodDuration: 3, minVotingPeriodDuration: 3 },
+        { epochDuration: 4, nominationPeriodDuration: 3, votingPeriodDuration: 3 },
       ];
 
       for (const settings of testCases) {
@@ -92,11 +93,10 @@ describe('ElectionSettings', function () {
         const newSettings = {
           epochSeatCount: 5,
           minimumActiveMembers: 2,
-          epochDuration: 60,
-          minEpochDuration: 30,
-          minNominationPeriodDuration: 7,
-          minVotingPeriodDuration: 7,
-          maxDateAdjustmentTolerance: 7,
+          epochDuration: daysToSeconds(30),
+          nominationPeriodDuration: daysToSeconds(7),
+          votingPeriodDuration: daysToSeconds(7),
+          maxDateAdjustmentTolerance: daysToSeconds(7),
         } satisfies ElectionSettings;
 
         await _setNextElectionSettings(newSettings);

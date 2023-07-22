@@ -11,38 +11,16 @@ contract ElectionSettingsManager is ElectionBase {
         uint8 epochSeatCount,
         uint8 minimumActiveMembers,
         uint64 epochDuration,
-        uint64 minEpochDuration,
-        uint64 minNominationPeriodDuration,
-        uint64 minVotingPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     ) internal {
-        if (epochSeatCount > 0) {
-            settings.epochSeatCount = epochSeatCount;
-        }
-
-        if (minimumActiveMembers > 0) {
-            settings.minimumActiveMembers = minimumActiveMembers;
-        }
-
-        if (epochDuration > 0) {
-            settings.epochDuration = epochDuration;
-        }
-
-        if (minEpochDuration > 0) {
-            settings.minEpochDuration = minEpochDuration;
-        }
-
-        if (minNominationPeriodDuration > 0) {
-            settings.minNominationPeriodDuration = minNominationPeriodDuration;
-        }
-
-        if (minVotingPeriodDuration > 0) {
-            settings.minVotingPeriodDuration = minVotingPeriodDuration;
-        }
-
-        if (maxDateAdjustmentTolerance > 0) {
-            settings.maxDateAdjustmentTolerance = maxDateAdjustmentTolerance;
-        }
+        settings.epochSeatCount = epochSeatCount;
+        settings.minimumActiveMembers = minimumActiveMembers;
+        settings.epochDuration = epochDuration;
+        settings.nominationPeriodDuration = nominationPeriodDuration;
+        settings.votingPeriodDuration = votingPeriodDuration;
+        settings.maxDateAdjustmentTolerance = maxDateAdjustmentTolerance;
 
         _validateElectionSettings(settings);
 
@@ -50,21 +28,22 @@ contract ElectionSettingsManager is ElectionBase {
             settings.epochSeatCount,
             settings.minimumActiveMembers,
             settings.epochDuration,
-            settings.minEpochDuration,
-            settings.minNominationPeriodDuration,
-            settings.minVotingPeriodDuration,
+            settings.nominationPeriodDuration,
+            settings.votingPeriodDuration,
             settings.maxDateAdjustmentTolerance
         );
     }
 
     function _validateElectionSettings(ElectionSettings.Data storage settings) internal view {
         if (
+            settings.epochSeatCount == 0 ||
             settings.minimumActiveMembers == 0 ||
             settings.minimumActiveMembers > settings.epochSeatCount ||
             settings.epochDuration == 0 ||
-            settings.epochDuration < settings.minEpochDuration ||
-            settings.minEpochDuration <
-            settings.minNominationPeriodDuration + settings.minVotingPeriodDuration
+            settings.nominationPeriodDuration == 0 ||
+            settings.votingPeriodDuration == 0 ||
+            settings.epochDuration <
+            settings.nominationPeriodDuration + settings.votingPeriodDuration
         ) {
             revert InvalidElectionSettings();
         }
@@ -80,17 +59,14 @@ contract ElectionSettingsManager is ElectionBase {
         if (to.minimumActiveMembers == 0) {
             to.minimumActiveMembers = from.minimumActiveMembers;
         }
-        if (to.minEpochDuration == 0) {
-            to.minEpochDuration = from.minEpochDuration;
-        }
         if (to.epochDuration == 0) {
             to.epochDuration = from.epochDuration;
         }
-        if (to.minNominationPeriodDuration == 0) {
-            to.minNominationPeriodDuration = from.minNominationPeriodDuration;
+        if (to.nominationPeriodDuration == 0) {
+            to.nominationPeriodDuration = from.nominationPeriodDuration;
         }
-        if (to.minVotingPeriodDuration == 0) {
-            to.minVotingPeriodDuration = from.minVotingPeriodDuration;
+        if (to.votingPeriodDuration == 0) {
+            to.votingPeriodDuration = from.votingPeriodDuration;
         }
         if (to.maxDateAdjustmentTolerance == 0) {
             to.maxDateAdjustmentTolerance = from.maxDateAdjustmentTolerance;

@@ -7,14 +7,12 @@ library ElectionSettings {
         uint8 epochSeatCount;
         // Minimum active council members. If too many are dismissed an emergency election is triggered
         uint8 minimumActiveMembers;
-        // The expected duration of the epoch (used for validations in tweakEpochSchedule)
+        // Expected duration of the epoch
         uint64 epochDuration;
-        // Minimum epoch duration when adjusting schedules
-        uint64 minEpochDuration;
-        // Minimum nomination period duration when adjusting schedules
-        uint64 minNominationPeriodDuration;
-        // Minimum voting period duration when adjusting schedules
-        uint64 minVotingPeriodDuration;
+        // Expected nomination period duration when adjusting schedules
+        uint64 nominationPeriodDuration;
+        // Expected voting period duration when adjusting schedules
+        uint64 votingPeriodDuration;
         // Maximum size for tweaking epoch schedules (see tweakEpochSchedule)
         uint64 maxDateAdjustmentTolerance;
     }

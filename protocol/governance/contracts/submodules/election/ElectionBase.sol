@@ -45,9 +45,8 @@ contract ElectionBase {
         uint8 epochSeatCount,
         uint8 minimumActiveMembers,
         uint64 epochDuration,
-        uint64 minEpochDuration,
-        uint64 minNominationPeriodDuration,
-        uint64 minVotingPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     );
     event CandidateNominated(address indexed candidate, uint indexed epochIndex);
