@@ -6,6 +6,8 @@ import "./ElectionBase.sol";
 
 /// @dev Provides funcionality for modifying ElectionSettings
 contract ElectionSettingsManager is ElectionBase {
+    uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1 days;
+
     function _setElectionSettings(
         ElectionSettings.Data storage settings,
         uint8 epochSeatCount,
@@ -42,11 +44,19 @@ contract ElectionSettingsManager is ElectionBase {
             settings.epochDuration == 0 ||
             settings.nominationPeriodDuration == 0 ||
             settings.votingPeriodDuration == 0 ||
+            settings.nominationPeriodDuration < _minimumElectionPeriodDuration(settings) ||
+            settings.votingPeriodDuration < _minimumElectionPeriodDuration(settings) ||
             settings.epochDuration <
             settings.nominationPeriodDuration + settings.votingPeriodDuration
         ) {
             revert InvalidElectionSettings();
         }
+    }
+
+    function _minimumElectionPeriodDuration(
+        ElectionSettings.Data storage settings
+    ) internal view returns (uint) {
+        return _MIN_ELECTION_PERIOD_DURATION + settings.maxDateAdjustmentTolerance;
     }
 
     function _copyMissingSettings(

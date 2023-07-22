@@ -63,9 +63,9 @@ contract BaseElectionModule is
             epochSeatCount,
             minimumActiveMembers,
             epochEndDate - epochStartDate, // epochDuration
-            2 days, // nominationPeriodDuration
-            2 days, // votingPeriodDuration
-            7 days // maxDateAdjustmentTolerance
+            votingPeriodStartDate - nominationPeriodStartDate, // nominationPeriodDuration
+            epochEndDate - votingPeriodStartDate, // votingPeriodDuration
+            3 days // maxDateAdjustmentTolerance
         );
         _copyMissingSettings(settings, store.getNextElectionSettings());
 

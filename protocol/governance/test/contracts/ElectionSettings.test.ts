@@ -78,7 +78,21 @@ describe('ElectionSettings', function () {
         { nominationPeriodDuration: 0 },
         { votingPeriodDuration: 0 },
         { epochSeatCount: 1, minimumActiveMembers: 2 },
-        { epochDuration: 4, nominationPeriodDuration: 3, votingPeriodDuration: 3 },
+        {
+          epochDuration: daysToSeconds(4),
+          nominationPeriodDuration: daysToSeconds(3),
+          votingPeriodDuration: daysToSeconds(3),
+        },
+        { nominationPeriodDuration: daysToSeconds(1) - 1 },
+        { votingPeriodDuration: daysToSeconds(1) - 1 },
+        {
+          nominationPeriodDuration: daysToSeconds(2),
+          maxDateAdjustmentTolerance: daysToSeconds(2),
+        },
+        {
+          votingPeriodDuration: daysToSeconds(2),
+          maxDateAdjustmentTolerance: daysToSeconds(2),
+        },
       ];
 
       for (const settings of testCases) {
@@ -89,14 +103,14 @@ describe('ElectionSettings', function () {
     });
 
     describe('with valid settings', function () {
-      it('shows the current schedule', async function () {
+      it('sets new settings for next epoch', async function () {
         const newSettings = {
           epochSeatCount: 5,
           minimumActiveMembers: 2,
           epochDuration: daysToSeconds(30),
           nominationPeriodDuration: daysToSeconds(7),
           votingPeriodDuration: daysToSeconds(7),
-          maxDateAdjustmentTolerance: daysToSeconds(7),
+          maxDateAdjustmentTolerance: daysToSeconds(3),
         } satisfies ElectionSettings;
 
         await _setNextElectionSettings(newSettings);
