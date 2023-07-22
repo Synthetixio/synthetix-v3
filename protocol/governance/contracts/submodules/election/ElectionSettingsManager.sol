@@ -6,6 +6,8 @@ import "./ElectionBase.sol";
 
 /// @dev Provides funcionality for modifying ElectionSettings
 contract ElectionSettingsManager is ElectionBase {
+    /// @dev Minimum duration for Nomination and Voting periods, making sure that
+    /// they cannot be "deleted" by the current council
     uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1 days;
 
     function _setElectionSettings(
