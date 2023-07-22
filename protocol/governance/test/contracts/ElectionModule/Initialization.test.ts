@@ -32,7 +32,7 @@ describe('SynthetixElectionModule - Initialization', function () {
         await assertRevert(
           CoreProxy.connect(user)[
             'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
-          ]([await user.getAddress()], 1, 2, 0, 0, 0, c.DebtShareMock.address),
+          ]([await user.getAddress()], 2, 1, 0, 0, 0, c.DebtShareMock.address),
           'Unauthorized'
         );
       });
@@ -44,7 +44,7 @@ describe('SynthetixElectionModule - Initialization', function () {
           await assertRevert(
             CoreProxy.connect(owner)[
               'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64)'
-            ]([await user.getAddress()], 1, 2, 0, 0, 0),
+            ]([await user.getAddress()], 2, 1, 0, 0, 0),
             'WrongInitializer'
           );
         });
@@ -56,7 +56,7 @@ describe('SynthetixElectionModule - Initialization', function () {
             await assertRevert(
               CoreProxy.connect(owner)[
                 'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
-              ]([await owner.getAddress()], 1, 2, 0, 0, 0, ethers.constants.AddressZero),
+              ]([await owner.getAddress()], 2, 1, 0, 0, 0, ethers.constants.AddressZero),
               'ZeroAddress'
             );
           });
@@ -65,7 +65,7 @@ describe('SynthetixElectionModule - Initialization', function () {
             await assertRevert(
               CoreProxy.connect(owner)[
                 'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
-              ]([await owner.getAddress()], 1, 2, 0, 0, 0, await user.getAddress()),
+              ]([await owner.getAddress()], 2, 1, 0, 0, 0, await user.getAddress()),
               'NotAContract'
             );
           });
@@ -103,8 +103,8 @@ describe('SynthetixElectionModule - Initialization', function () {
             'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
           ](
             [await owner.getAddress(), await user.getAddress()],
-            1,
             2,
+            1,
             nominationPeriodStartDate,
             votingPeriodDuration,
             epochDuration,
@@ -148,8 +148,8 @@ describe('SynthetixElectionModule - Initialization', function () {
               'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
             ](
               [await owner.getAddress(), await user.getAddress()],
-              1,
               10, // Change epochSeatCount
+              1,
               0,
               7,
               60,

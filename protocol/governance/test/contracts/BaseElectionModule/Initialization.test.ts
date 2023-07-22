@@ -22,8 +22,8 @@ describe('BaseElectionModule - Initialization', function () {
 
   async function _initOrUpgradeElectionModule({
     caller = owner,
-    minimumActiveMembers = 1,
     epochSeatCount = 2,
+    minimumActiveMembers = 1,
     nominationPeriodStartDate = 0,
     votingPeriodStartDate = 0,
     epochEndDate = 0,
@@ -46,8 +46,8 @@ describe('BaseElectionModule - Initialization', function () {
 
     return BaseElectionModule.connect(caller).initOrUpgradeElectionModule(
       [await caller.getAddress()],
-      minimumActiveMembers,
       epochSeatCount,
+      minimumActiveMembers,
       nominationPeriodStartDate,
       votingPeriodStartDate,
       epochEndDate
@@ -81,14 +81,14 @@ describe('BaseElectionModule - Initialization', function () {
           it('reverts using 0', async function () {
             await assertRevert(
               _initOrUpgradeElectionModule({ minimumActiveMembers: 0 }),
-              'InvalidMinimumActiveMembers'
+              'InvalidElectionSettings'
             );
           });
 
           it('reverts using more than epochSeatCount', async function () {
             await assertRevert(
-              _initOrUpgradeElectionModule({ minimumActiveMembers: 3, epochSeatCount: 2 }),
-              'InvalidMinimumActiveMembers'
+              _initOrUpgradeElectionModule({ epochSeatCount: 2, minimumActiveMembers: 3 }),
+              'InvalidElectionSettings'
             );
           });
         });
@@ -109,8 +109,8 @@ describe('BaseElectionModule - Initialization', function () {
           votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
 
           const tx = await _initOrUpgradeElectionModule({
-            minimumActiveMembers: 1,
             epochSeatCount: 2,
+            minimumActiveMembers: 1,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate,

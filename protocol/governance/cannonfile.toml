@@ -18,11 +18,11 @@ defaultValue = "SNXGOV"
 [setting.init_council_member]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
 
-[setting.initial_epoch_minimum_active_members]
-defaultValue = "1"
-
 [setting.epoch_seat_count]
 defaultValue = "2"
+
+[setting.minimum_active_members]
+defaultValue = "1"
 
 [setting.nomination_period_start_date]
 defaultValue = "0" # defaults to "block.timestamp + epoch_duration - (voting_period_duration * 2)" when given "0"
@@ -118,8 +118,8 @@ target = ["CoreProxy"]
 func = "initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)"
 args = [
   ["<%= settings.init_council_member %>"],
-  "<%= settings.initial_epoch_minimum_active_members %>",
   "<%= settings.epoch_seat_count %>",
+  "<%= settings.minimum_active_members %>",
   "<%= settings.nomination_period_start_date %>",
   "<%= settings.voting_period_duration %>",
   "<%= settings.epoch_duration %>",

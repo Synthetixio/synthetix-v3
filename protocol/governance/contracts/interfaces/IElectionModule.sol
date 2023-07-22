@@ -13,8 +13,8 @@ interface IElectionModule {
     /// @notice Initializes the module and immediately starts the first epoch
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 minimumActiveMembers,
         uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -34,21 +34,16 @@ interface IElectionModule {
         uint64 newEpochEndDate
     ) external;
 
-    /// @notice Determines minimum values for epoch schedule adjustments
-    function setMinEpochDurations(
-        uint64 newMinNominationPeriodDuration,
-        uint64 newMinVotingPeriodDuration,
-        uint64 newMinEpochDuration
+    /// @notice Adjust settings that will be used on next epoch
+    function setNextElectionSettings(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
+        uint64 epochDuration,
+        uint64 minEpochDuration,
+        uint64 minNominationPeriodDuration,
+        uint64 minVotingPeriodDuration,
+        uint64 maxDateAdjustmentTolerance
     ) external;
-
-    /// @notice Determines adjustment size for tweakEpochSchedule
-    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
-
-    /// @notice Determines the number of council members in current epoch
-    function setNextEpochSeatCount(uint8 newSeatCount) external;
-
-    /// @notice Determines the minimum number of council members before triggering an emergency election
-    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external;
 
     /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
     function dismissMembers(address[] calldata members) external;

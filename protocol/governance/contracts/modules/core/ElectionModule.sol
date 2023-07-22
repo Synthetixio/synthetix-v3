@@ -38,8 +38,8 @@ contract ElectionModule is
     /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 minimumActiveMembers,
         uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint16 votingPeriodDuration,
         uint16 epochDuration,
@@ -63,8 +63,8 @@ contract ElectionModule is
 
         _initOrUpgradeElectionModule(
             firstCouncil,
-            minimumActiveMembers,
             epochSeatCount,
+            minimumActiveMembers,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate

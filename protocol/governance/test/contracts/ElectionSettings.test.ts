@@ -15,7 +15,7 @@ describe('ElectionSettings', function () {
     [, user] = getSigners();
   });
 
-  describe('#setMinEpochDurations', function () {
+  describe('#setNextElectionSettings', function () {
     it('shows the current schedule', async function () {
       const now = await getTime(getProvider());
       const schedule = await c.CoreProxy.connect(user).getEpochSchedule();
@@ -25,8 +25,4 @@ describe('ElectionSettings', function () {
       assertBn.gt(schedule.votingPeriodStartDate, now);
     });
   });
-
-  // setMaxDateAdjustmentTolerance
-  // setNextEpochSeatCount
-  // setMinimumActiveMembers
 });

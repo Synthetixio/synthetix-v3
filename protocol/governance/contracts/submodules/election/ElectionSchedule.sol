@@ -154,36 +154,6 @@ contract ElectionSchedule is ElectionBase {
         );
     }
 
-    /// @dev Sets the minimum epoch durations, with validations
-    function _setMinEpochDurations(
-        uint64 newMinNominationPeriodDuration,
-        uint64 newMinVotingPeriodDuration,
-        uint64 newMinEpochDuration
-    ) internal {
-        ElectionSettings.Data storage settings = Council.load().getCurrentElectionSettings();
-
-        if (
-            newMinNominationPeriodDuration == 0 ||
-            newMinVotingPeriodDuration == 0 ||
-            newMinEpochDuration == 0
-        ) {
-            revert InvalidElectionSettings();
-        }
-
-        settings.minNominationPeriodDuration = newMinNominationPeriodDuration;
-        settings.minVotingPeriodDuration = newMinVotingPeriodDuration;
-        settings.minEpochDuration = newMinEpochDuration;
-    }
-
-    function _setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) internal {
-        if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
-
-        Council
-            .load()
-            .getCurrentElectionSettings()
-            .maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
-    }
-
     function _uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
         return valueA > valueB ? valueA - valueB : valueB - valueA;
     }
