@@ -9,6 +9,7 @@ import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev Storage for a specific perp market within the bfp-market.

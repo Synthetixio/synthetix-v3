@@ -56,18 +56,19 @@ library PerpMarketConfiguration {
         bytes32 oracleNodeId;
         // The Pyth price feedId for this market.
         bytes32 pythPriceFeedId;
-        // Skew scaling denominator constant.
-        uint128 skewScale;
         // Fee paid (in bps) when the order _decreases_ skew.
         uint128 makerFee;
         // Fee paid (in bps) when the order _increases_ skew.
         uint128 takerFee;
+        // TODO: Pack maxLeverage, maxMarketSize, maxFundingVelocity and skewScale into 256bits.
         // Maximum amount of leverage a position can take on in this market (e.g. 25x)
         uint128 maxLeverage;
         // Maximum amount of size in native units for either side of the market (OI would be maxMarketSize * 2).
         uint128 maxMarketSize;
         // The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
+        // Skew scaling denominator constant.
+        uint128 skewScale;
         // Liquidation buffer (penality) in bps (on p.size * price) to prevent negative margin on liquidation.
         uint256 liquidationBufferPercent;
         // Liquidation fee in bps (% of p.size * price) paid to LPers.

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import { wei } from '@synthetixio/wei';
 
 // --- Core Utilities --- //
@@ -52,40 +52,75 @@ export const genInt = (min = 0, max = 1) => Math.floor(genFloat(min, max));
 
 // --- Composition --- //
 
-export const genBootstrap = (nMarkets: number = 1) => ({
-  pool: {
-    initialCollateralPrice: bn(genInt(100, 10_100)),
-  },
-  global: {
-    minMarginUsd: bn(genInt(50, 100)),
-    priceDivergencePercent: wei(genFloat(0.1, 0.3)).toBN(),
-    pythPublishTimeMin: 6,
-    pythPublishTimeMax: 12,
-    minOrderAge: 12,
-    maxOrderAge: 60,
-    minKeeperFeeUsd: bn(genInt(10, 15)),
-    maxKeeperFeeUsd: bn(genInt(50, 100)),
-    keeperProfitMarginPercent: wei(genFloat(0.1, 0.2)).toBN(),
-    keeperSettlementGasUnits: 1_200_000,
-    keeperLiquidationGasUnits: 1_200_000,
-    keeperLiquidationFeeUsd: bn(genInt(1, 5)),
-  },
-  // TODO: Consider not wrapping maxLeverage, maxMarketSize, maxFundingVelocity etc. with bn(...).
-  markets: genListOf(nMarkets, () => ({
-    name: ethers.utils.formatBytes32String(genMarketName()),
-    initialPrice: bn(genInt(100, 1000)),
-    specific: {
-      oracleNodeId: genBytes32(),
-      pythPriceFeedId: genBytes32(),
-      skewScale: bn(genInt(100_000, 500_000)),
-      makerFee: wei(genFloat(0.0001, 0.0005)).toBN(), // 1 - 5bps
-      takerFee: wei(genFloat(0.0006, 0.0008)).toBN(), // 1 - 8bps
-      maxLeverage: bn(genInt(10, 100)),
-      maxMarketSize: bn(genInt(10_000, 25_000)),
-      maxFundingVelocity: bn(genInt(3, 9)),
-      liquidationBufferPercent: wei(genFloat(0.005, 0.0075)).toBN(),
-      liquidationFeePercent: wei(genFloat(0.0002, 0.0003)).toBN(),
-      liquidationPremiumMultiplier: wei(genFloat(1.1, 1.3)).toBN(),
+export const genBootstrap = (nMarkets: number = 1) => {
+  const bs = {
+    pool: {
+      initialCollateralPrice: bn(genInt(100, 10_000)),
     },
-  })),
-});
+    global: {
+      minMarginUsd: bn(genInt(50, 100)),
+      priceDivergencePercent: wei(genFloat(0.1, 0.3)).toBN(),
+      pythPublishTimeMin: 6,
+      pythPublishTimeMax: 12,
+      minOrderAge: 12,
+      maxOrderAge: 60,
+      minKeeperFeeUsd: bn(genInt(10, 15)),
+      maxKeeperFeeUsd: bn(genInt(50, 100)),
+      keeperProfitMarginPercent: wei(genFloat(0.1, 0.2)).toBN(),
+      keeperSettlementGasUnits: 1_200_000,
+      keeperLiquidationGasUnits: 1_200_000,
+      keeperLiquidationFeeUsd: bn(genInt(1, 5)),
+    },
+    // TODO: Consider not wrapping maxLeverage, maxMarketSize, maxFundingVelocity etc. with bn(...).
+    markets: genListOf(nMarkets, () => {
+      const initialPrice = bn(genInt(100, 1000));
+      const market = {
+        name: ethers.utils.formatBytes32String(genMarketName()),
+        initialPrice,
+        specific: {
+          oracleNodeId: genBytes32(),
+          pythPriceFeedId: genBytes32(),
+          skewScale: bn(genInt(100_000, 500_000)),
+          makerFee: wei(genFloat(0.0001, 0.0005)).toBN(), // 1 - 5bps
+          takerFee: wei(genFloat(0.0006, 0.0008)).toBN(), // 1 - 8bps
+          maxLeverage: bn(genInt(10, 100)),
+          maxMarketSize: bn(genInt(10_000, 25_000)),
+          maxFundingVelocity: bn(genInt(3, 9)),
+          liquidationBufferPercent: wei(genFloat(0.005, 0.0075)).toBN(),
+          liquidationFeePercent: wei(genFloat(0.0002, 0.0003)).toBN(),
+          liquidationPremiumMultiplier: wei(genFloat(1.1, 1.3)).toBN(),
+        },
+      };
+      return market;
+    }),
+  };
+  return bs;
+};
+
+export const genOrder = (
+  margin: BigNumber,
+  maxLeverage: BigNumber,
+  minMarginUSd: BigNumber,
+  oraclePrice: BigNumber
+) => {
+  const keeperFeeBufferUsd = bn(genInt(1, 5));
+  const sizeDelta1xLeverage = wei(margin.sub(keeperFeeBufferUsd).sub(minMarginUSd)).div(oraclePrice);
+  const leverage = genFloat(0.5, wei(maxLeverage).toNumber());
+  const sizeDelta = genOneOf([sizeDelta1xLeverage.mul(leverage), sizeDelta1xLeverage.mul(leverage).mul(-1)]);
+
+  // Set a limit price that is between 1-5% within the oracle price.
+  //
+  // This limitPrice will depend on whether position is long or short. A long position would limit with a higher price
+  // whereas a short would limit on a lower price.
+  let limitPrice: BigNumber;
+  if (sizeDelta.lt(0)) {
+    limitPrice = wei(oraclePrice)
+      .mul(1 + genFloat(-0.01, -0.05))
+      .toBN();
+  } else {
+    limitPrice = wei(oraclePrice)
+      .mul(1 + genFloat(0.01, 0.05))
+      .toBN();
+  }
+  return { sizeDelta, limitPrice, leverage, keeperFeeBufferUsd };
+};

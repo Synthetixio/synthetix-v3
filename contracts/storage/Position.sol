@@ -10,6 +10,7 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
@@ -169,6 +170,9 @@ library Position {
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!positionDecreasing) {
+            console.log("remMargin_OOOOOO");
+            console.logInt(_remainingMargin);
+
             // Again, to deal with positions at minMarginUsd, we add back to fee (keeper and order) because
             // position may never be able to open on the first trade due to fees deducted on entry.
             //

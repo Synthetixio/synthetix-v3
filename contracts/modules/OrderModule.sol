@@ -48,6 +48,8 @@ contract OrderModule is IOrderModule {
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
+        // TODO: Should we be using the limitPrice to infer max oi etc.?
+
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: sizeDelta,

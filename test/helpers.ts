@@ -19,5 +19,5 @@ export const depositMargin = async (bs: ReturnType<typeof bootstrap>) => {
   // Perform the deposit.
   await PerpMarketProxy.connect(trader.signer).transferTo(trader.accountId, marketId, collateral.address, amountDelta);
 
-  return { trader, traderAddress, market, marketId, amountDelta, collateral };
+  return { trader, traderAddress, market, marketId, depositAmountDelta: amountDelta, collateral };
 };
