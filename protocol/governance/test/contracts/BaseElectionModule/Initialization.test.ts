@@ -27,6 +27,7 @@ describe('BaseElectionModule - Initialization', function () {
     nominationPeriodStartDate = 0,
     votingPeriodStartDate = 0,
     epochEndDate = 0,
+    maxDateAdjustmentTolerance = daysToSeconds(2),
   } = {}) {
     const now = await getTime(getProvider());
 
@@ -50,7 +51,8 @@ describe('BaseElectionModule - Initialization', function () {
       minimumActiveMembers,
       nominationPeriodStartDate,
       votingPeriodStartDate,
-      epochEndDate
+      epochEndDate,
+      maxDateAdjustmentTolerance
     );
   }
 

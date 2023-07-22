@@ -17,7 +17,8 @@ interface IElectionModule {
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
-        uint64 epochEndDate
+        uint64 epochEndDate,
+        uint64 maxDateAdjustmentTolerance
     ) external;
 
     /// @notice Shows whether the module has been initialized

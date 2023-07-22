@@ -31,7 +31,8 @@ contract BaseElectionModule is
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
-        uint64 epochEndDate
+        uint64 epochEndDate,
+        uint64 maxDateAdjustmentTolerance
     ) external virtual override onlyIfNotInitialized {
         OwnableStorage.onlyOwner();
 
@@ -41,7 +42,8 @@ contract BaseElectionModule is
             minimumActiveMembers,
             nominationPeriodStartDate,
             votingPeriodStartDate,
-            epochEndDate
+            epochEndDate,
+            maxDateAdjustmentTolerance
         );
     }
 
@@ -51,7 +53,8 @@ contract BaseElectionModule is
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
-        uint64 epochEndDate
+        uint64 epochEndDate,
+        uint64 maxDateAdjustmentTolerance
     ) internal {
         Council.Data storage store = Council.load();
 
@@ -65,7 +68,7 @@ contract BaseElectionModule is
             epochEndDate - epochStartDate, // epochDuration
             votingPeriodStartDate - nominationPeriodStartDate, // nominationPeriodDuration
             epochEndDate - votingPeriodStartDate, // votingPeriodDuration
-            3 days // maxDateAdjustmentTolerance
+            maxDateAdjustmentTolerance // maxDateAdjustmentTolerance
         );
         _copyMissingSettings(settings, store.getNextElectionSettings());
 
@@ -148,9 +151,9 @@ contract BaseElectionModule is
 
         emit CouncilMembersDismissed(membersToDismiss, epochIndex);
 
-        // Don't immediately jump to an election if the council still has enough members
         if (store.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
 
+        // Don't immediately jump to an election if the council still has enough members
         if (
             store.councilMembers.length() >= store.getCurrentElectionSettings().minimumActiveMembers
         ) {

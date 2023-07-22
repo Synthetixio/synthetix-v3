@@ -33,6 +33,9 @@ defaultValue = "7" # days
 [setting.epoch_duration]
 defaultValue = "90" # days
 
+[setting.max_date_adjustment_tolerance]
+defaultValue = "3" # days
+
 [contract.InitialModuleBundle]
 artifact = "InitialModuleBundle"
 create2 = true
@@ -115,7 +118,7 @@ factory.CouncilToken.arg = 2
 
 [invoke.init_election_module]
 target = ["CoreProxy"]
-func = "initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)"
+func = "initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,uint16,address)"
 args = [
   ["<%= settings.init_council_member %>"],
   "<%= settings.epoch_seat_count %>",
@@ -123,6 +126,7 @@ args = [
   "<%= settings.nomination_period_start_date %>",
   "<%= settings.voting_period_duration %>",
   "<%= settings.epoch_duration %>",
+  "<%= settings.max_date_adjustment_tolerance %>",
   "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"

@@ -88,9 +88,9 @@ describe('ElectionModule - schedule', () => {
 
               await assertRevert(
                 c.CoreProxy.tweakEpochSchedule(
-                  nominationPeriodStartDate.sub(daysToSeconds(2)),
+                  nominationPeriodStartDate.sub(daysToSeconds(1)),
                   votingPeriodStartDate.add(daysToSeconds(0.5)),
-                  endDate.add(daysToSeconds(3))
+                  endDate.add(daysToSeconds(2))
                 ),
                 'ChangesCurrentPeriod'
               );
@@ -104,7 +104,7 @@ describe('ElectionModule - schedule', () => {
 
               newNominationPeriodStartDate = nominationPeriodStartDate.sub(daysToSeconds(0.5));
               newVotingPeriodStartDate = votingPeriodStartDate.add(daysToSeconds(0.5));
-              newEpochEndDate = endDate.add(daysToSeconds(3));
+              newEpochEndDate = endDate.add(daysToSeconds(2));
 
               const tx = await c.CoreProxy.tweakEpochSchedule(
                 newNominationPeriodStartDate,

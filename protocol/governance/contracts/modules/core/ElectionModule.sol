@@ -29,6 +29,7 @@ contract ElectionModule is
         uint8,
         uint64,
         uint64,
+        uint64,
         uint64
     ) external view override(BaseElectionModule, IElectionModule) {
         OwnableStorage.onlyOwner();
@@ -43,6 +44,7 @@ contract ElectionModule is
         uint64 nominationPeriodStartDate,
         uint16 votingPeriodDuration,
         uint16 epochDuration,
+        uint16 maxDateAdjustmentTolerance,
         address debtShareContract
     ) external override {
         OwnableStorage.onlyOwner();
@@ -54,11 +56,11 @@ contract ElectionModule is
         _setDebtShareContract(debtShareContract);
 
         uint64 epochStartDate = block.timestamp.to64();
-        uint64 epochEndDate = epochStartDate + (86400 * epochDuration);
-        uint64 votingPeriodStartDate = epochEndDate - (86400 * votingPeriodDuration);
+        uint64 epochEndDate = epochStartDate + (1 days * epochDuration);
+        uint64 votingPeriodStartDate = epochEndDate - (1 days * votingPeriodDuration);
 
         if (nominationPeriodStartDate == 0) {
-            nominationPeriodStartDate = votingPeriodStartDate - (86400 * votingPeriodDuration);
+            nominationPeriodStartDate = votingPeriodStartDate - (1 days * votingPeriodDuration);
         }
 
         _initOrUpgradeElectionModule(
@@ -67,7 +69,8 @@ contract ElectionModule is
             minimumActiveMembers,
             nominationPeriodStartDate,
             votingPeriodStartDate,
-            epochEndDate
+            epochEndDate,
+            maxDateAdjustmentTolerance * 1 days
         );
     }
 

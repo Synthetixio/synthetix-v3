@@ -31,8 +31,8 @@ describe('SynthetixElectionModule - Initialization', function () {
       it('reverts', async function () {
         await assertRevert(
           CoreProxy.connect(user)[
-            'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
-          ]([await user.getAddress()], 2, 1, 0, 0, 0, c.DebtShareMock.address),
+            'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,uint16,address)'
+          ]([await user.getAddress()], 2, 1, 0, 0, 0, 2, c.DebtShareMock.address),
           'Unauthorized'
         );
       });
@@ -43,8 +43,8 @@ describe('SynthetixElectionModule - Initialization', function () {
         it('reverts', async function () {
           await assertRevert(
             CoreProxy.connect(owner)[
-              'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64)'
-            ]([await user.getAddress()], 2, 1, 0, 0, 0),
+              'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
+            ]([await user.getAddress()], 2, 1, 0, 0, 0, daysToSeconds(2)),
             'WrongInitializer'
           );
         });
@@ -55,8 +55,8 @@ describe('SynthetixElectionModule - Initialization', function () {
           it('reverts using Zero Address', async function () {
             await assertRevert(
               CoreProxy.connect(owner)[
-                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
-              ]([await owner.getAddress()], 2, 1, 0, 0, 0, ethers.constants.AddressZero),
+                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,uint16,address)'
+              ]([await owner.getAddress()], 2, 1, 0, 0, 0, 2, ethers.constants.AddressZero),
               'ZeroAddress'
             );
           });
@@ -64,8 +64,8 @@ describe('SynthetixElectionModule - Initialization', function () {
           it('reverts using EOD', async function () {
             await assertRevert(
               CoreProxy.connect(owner)[
-                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
-              ]([await owner.getAddress()], 2, 1, 0, 0, 0, await user.getAddress()),
+                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,uint16,address)'
+              ]([await owner.getAddress()], 2, 1, 0, 0, 0, 2, await user.getAddress()),
               'NotAContract'
             );
           });
@@ -100,7 +100,7 @@ describe('SynthetixElectionModule - Initialization', function () {
           votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
 
           const tx2 = await CoreProxy[
-            'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
+            'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,uint16,address)'
           ](
             [await owner.getAddress(), await user.getAddress()],
             2,
@@ -108,6 +108,7 @@ describe('SynthetixElectionModule - Initialization', function () {
             nominationPeriodStartDate,
             votingPeriodDuration,
             epochDuration,
+            2,
             c.DebtShareMock.address
           );
 
@@ -145,7 +146,7 @@ describe('SynthetixElectionModule - Initialization', function () {
         describe('when called for a second time', function () {
           before('initialize again', async function () {
             await CoreProxy[
-              'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,address)'
+              'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint16,uint16,uint16,address)'
             ](
               [await owner.getAddress(), await user.getAddress()],
               10, // Change epochSeatCount
@@ -153,6 +154,7 @@ describe('SynthetixElectionModule - Initialization', function () {
               0,
               7,
               60,
+              2,
               c.DebtShareMock.address
             );
           });

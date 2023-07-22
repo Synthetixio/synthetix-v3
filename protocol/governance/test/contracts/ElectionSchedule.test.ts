@@ -149,9 +149,9 @@ describe('ElectionSchedule', function () {
         const original = await c.CoreProxy.getEpochSchedule();
 
         const newSchedule = {
-          nominationPeriodStartDate: original.nominationPeriodStartDate.add(daysToSeconds(3)),
-          votingPeriodStartDate: original.votingPeriodStartDate.add(daysToSeconds(3)),
-          endDate: original.endDate.add(daysToSeconds(3)),
+          nominationPeriodStartDate: original.nominationPeriodStartDate.add(daysToSeconds(2)),
+          votingPeriodStartDate: original.votingPeriodStartDate.add(daysToSeconds(2)),
+          endDate: original.endDate.add(daysToSeconds(2)),
         };
 
         await _tweakEpochSchedule(newSchedule);
