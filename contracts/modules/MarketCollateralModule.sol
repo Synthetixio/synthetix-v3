@@ -68,7 +68,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (availableAmount < absAmountDelta) {
-                revert InsufficientCollateral(collateralType, availableAmount, amountDelta);
+                revert InsufficientCollateral(collateralType, availableAmount, absAmountDelta);
             }
 
             accountCollaterals.available[collateralType] -= absAmountDelta;

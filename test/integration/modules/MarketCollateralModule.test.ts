@@ -283,11 +283,67 @@ describe('MarketCollateralModule', async () => {
         );
       });
 
-      it('should revert withdraw to an account that does not exist', async () => {});
+      it('should revert withdraw to an account that does not exist', async () => {
+        const { PerpMarketProxy } = systems();
 
-      it('should revert withdraw of unsupported collateral');
-      it('should revert withdraw of more than what is available');
-      it('should revert withdraw when position can be liquidated');
+        // Perform the deposit.
+        const { trader, marketId, amountDelta, collateral } = await depositMargin();
+        const invalidAccountId = bn(genInt(42069, 50_000));
+
+        // Perform withdraw with zero address.
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            invalidAccountId,
+            marketId,
+            collateral.address,
+            amountDelta.mul(-1)
+          ),
+          `AccountNotFound("${invalidAccountId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert withdraw of unsupported collateral', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Perform the deposit.
+        const { trader, marketId, amountDelta } = await depositMargin();
+        const invalidCollateralAddress = genAddress();
+
+        // Perform withdraw with zero address.
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            trader.accountId,
+            marketId,
+            invalidCollateralAddress,
+            amountDelta.mul(-1)
+          ),
+          `UnsupportedCollateral("${invalidCollateralAddress}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert withdraw of more than what is available', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Perform the deposit.
+        const { trader, marketId, amountDelta, collateral } = await depositMargin();
+
+        // Perform the withdraw with a little more than what was deposited.
+        const withdrawAmount = amountDelta.add(bn(1)).mul(-1);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).transferTo(
+            trader.accountId,
+            marketId,
+            collateral.address,
+            withdrawAmount
+          ),
+          `InsufficientCollateral("${collateral.address}", "${amountDelta}", "${withdrawAmount.mul(-1)}")`,
+          PerpMarketProxy
+        );
+      });
+
       it('should revert when account is flagged for liquidation');
     });
   });

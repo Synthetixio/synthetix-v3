@@ -29,7 +29,7 @@ interface IMarketCollateralModule is IBasePerpMarket {
     error ZeroAddress();
 
     // @dev Thrown when an account has insufficient collateral to transfer.
-    error InsufficientCollateral(address collateral, uint256 available, int256 value);
+    error InsufficientCollateral(address collateral, uint256 available, uint256 value);
 
     // @dev Thrown when attempting to deposit a collateral that has reached a max deportable amount.
     error MaxCollateralExceeded(uint256 value, uint256 max);
