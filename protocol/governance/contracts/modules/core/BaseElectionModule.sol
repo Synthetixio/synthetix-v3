@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "../../interfaces/IElectionModule.sol";
+import "../../submodules/election/ElectionSettingsManager.sol";
 import "../../submodules/election/ElectionSchedule.sol";
 import "../../submodules/election/ElectionCredentials.sol";
 import "../../submodules/election/ElectionVotes.sol";
@@ -13,6 +14,7 @@ import "../../submodules/election/ElectionTally.sol";
 
 contract BaseElectionModule is
     IElectionModule,
+    ElectionSettingsManager,
     ElectionSchedule,
     ElectionCredentials,
     ElectionVotes,
@@ -134,70 +136,6 @@ contract BaseElectionModule is
             minVotingPeriodDuration,
             maxDateAdjustmentTolerance
         );
-    }
-
-    function _setElectionSettings(
-        ElectionSettings.Data storage settings,
-        uint8 epochSeatCount,
-        uint8 minimumActiveMembers,
-        uint64 epochDuration,
-        uint64 minEpochDuration,
-        uint64 minNominationPeriodDuration,
-        uint64 minVotingPeriodDuration,
-        uint64 maxDateAdjustmentTolerance
-    ) internal {
-        if (epochSeatCount > 0) {
-            settings.epochSeatCount = epochSeatCount;
-        }
-
-        if (minimumActiveMembers > 0) {
-            settings.minimumActiveMembers = minimumActiveMembers;
-        }
-
-        if (epochDuration > 0) {
-            settings.epochDuration = epochDuration;
-        }
-
-        if (minEpochDuration > 0) {
-            settings.minEpochDuration = minEpochDuration;
-        }
-
-        if (minNominationPeriodDuration > 0) {
-            settings.minNominationPeriodDuration = minNominationPeriodDuration;
-        }
-
-        if (minVotingPeriodDuration > 0) {
-            settings.minVotingPeriodDuration = minVotingPeriodDuration;
-        }
-
-        if (maxDateAdjustmentTolerance > 0) {
-            settings.maxDateAdjustmentTolerance = maxDateAdjustmentTolerance;
-        }
-
-        _validateElectionSettings(settings);
-
-        emit ElectionSettingsUpdated(
-            settings.epochSeatCount,
-            settings.minimumActiveMembers,
-            settings.epochDuration,
-            settings.minEpochDuration,
-            settings.minNominationPeriodDuration,
-            settings.minVotingPeriodDuration,
-            settings.maxDateAdjustmentTolerance
-        );
-    }
-
-    function _validateElectionSettings(ElectionSettings.Data storage settings) internal view {
-        if (
-            settings.minimumActiveMembers == 0 ||
-            settings.minimumActiveMembers > settings.epochSeatCount ||
-            settings.epochDuration == 0 ||
-            settings.epochDuration < settings.minEpochDuration ||
-            settings.minEpochDuration <
-            settings.minNominationPeriodDuration + settings.minVotingPeriodDuration
-        ) {
-            revert InvalidElectionSettings();
-        }
     }
 
     function dismissMembers(address[] calldata membersToDismiss) external override {
