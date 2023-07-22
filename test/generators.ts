@@ -13,7 +13,7 @@ export const isNil = <A>(a: A | undefined | null): boolean => a === undefined ||
 
 export const shuffle = <A>(arr: A[]): A[] => {
   const arr2 = [...arr];
-  for (var i = arr2.length - 1; i > 0; i--) {
+  for (let i = arr2.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
     var temp = arr2[i];
     arr2[i] = arr2[j];
