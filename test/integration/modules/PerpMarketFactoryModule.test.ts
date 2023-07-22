@@ -4,7 +4,8 @@ import { bootstrap } from '../../bootstrap';
 import { genAddress, genBootstrap } from '../../generators';
 
 describe('PerpMarketFactoryModule', () => {
-  const { traders, owner, systems, restore } = bootstrap(genBootstrap());
+  const bs = bootstrap(genBootstrap());
+  const { traders, owner, systems, restore } = bs;
 
   beforeEach(restore);
 

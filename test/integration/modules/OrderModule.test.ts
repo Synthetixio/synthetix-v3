@@ -2,7 +2,8 @@ import { bootstrap } from '../../bootstrap';
 import { genBootstrap } from '../../generators';
 
 describe('OrderModule', () => {
-  const { markets, collaterals, traders, owner, systems, restore } = bootstrap(genBootstrap());
+  const bs = bootstrap(genBootstrap());
+  const { markets, collaterals, traders, owner, systems, restore } = bs;
 
   beforeEach(restore);
 
@@ -24,4 +25,12 @@ describe('OrderModule', () => {
     it('should revert when accountId does not exist');
     it('should revert when marketId does not exist');
   });
+
+  describe('settleOrder', () => {});
+
+  describe('getOrderFee', () => {});
+
+  describe('getOrderKeeperFee', () => {});
+
+  describe('getFillPrice', () => {});
 });

@@ -6,7 +6,8 @@ import { bootstrap } from '../../bootstrap';
 import { bn, genBootstrap } from '../../generators';
 
 describe('MarketConfigurationModule', async () => {
-  const { traders, owner, systems, restore, markets } = bootstrap(genBootstrap());
+  const bs = bootstrap(genBootstrap());
+  const { markets, traders, owner, systems, restore } = bs;
 
   beforeEach(restore);
 
