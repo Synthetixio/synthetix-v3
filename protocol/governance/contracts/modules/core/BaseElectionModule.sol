@@ -57,8 +57,9 @@ contract BaseElectionModule is
 
         uint64 epochStartDate = block.timestamp.to64();
 
+        ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
         _setElectionSettings(
-            store.getCurrentElectionSettings(),
+            settings,
             epochSeatCount,
             minimumActiveMembers,
             epochEndDate - epochStartDate, // epochDuration
@@ -67,6 +68,7 @@ contract BaseElectionModule is
             2 days, // minVotingPeriodDuration
             7 days // maxDateAdjustmentTolerance
         );
+        _copyMissingSettings(settings, store.getNextElectionSettings());
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
 
@@ -273,27 +275,11 @@ contract BaseElectionModule is
         election.resolved = true;
 
         store.newElection();
-        _copyMissingSettingsFromPreviousElection();
+
+        _copyMissingSettings(store.getCurrentElectionSettings(), store.getNextElectionSettings());
         _copyScheduleFromPreviousEpoch();
 
         emit EpochStarted(newEpochIndex);
-    }
-
-    function _copyMissingSettingsFromPreviousElection() internal {
-        Council.Data storage store = Council.load();
-        ElectionSettings.Data storage curr = store.getCurrentElectionSettings();
-        ElectionSettings.Data storage prev = store.getPreviousElectionSettings();
-
-        if (curr.epochSeatCount == 0) curr.epochSeatCount = prev.epochSeatCount;
-        if (curr.minimumActiveMembers == 0) curr.minimumActiveMembers = prev.minimumActiveMembers;
-        if (curr.minEpochDuration == 0) curr.minEpochDuration = prev.minEpochDuration;
-        if (curr.epochDuration == 0) curr.epochDuration = prev.epochDuration;
-        if (curr.minNominationPeriodDuration == 0)
-            curr.minNominationPeriodDuration = prev.minNominationPeriodDuration;
-        if (curr.minVotingPeriodDuration == 0)
-            curr.minVotingPeriodDuration = prev.minVotingPeriodDuration;
-        if (curr.maxDateAdjustmentTolerance == 0)
-            curr.maxDateAdjustmentTolerance = prev.maxDateAdjustmentTolerance;
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
@@ -307,6 +293,15 @@ contract BaseElectionModule is
         returns (ElectionSettings.Data memory settings)
     {
         return Council.load().getCurrentElectionSettings();
+    }
+
+    function getNextElectionSettings()
+        external
+        view
+        override
+        returns (ElectionSettings.Data memory settings)
+    {
+        return Council.load().getNextElectionSettings();
     }
 
     function getEpochIndex() external view override returns (uint) {

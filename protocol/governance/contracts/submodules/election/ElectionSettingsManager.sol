@@ -69,4 +69,31 @@ contract ElectionSettingsManager is ElectionBase {
             revert InvalidElectionSettings();
         }
     }
+
+    function _copyMissingSettings(
+        ElectionSettings.Data storage from,
+        ElectionSettings.Data storage to
+    ) internal {
+        if (to.epochSeatCount == 0) {
+            to.epochSeatCount = from.epochSeatCount;
+        }
+        if (to.minimumActiveMembers == 0) {
+            to.minimumActiveMembers = from.minimumActiveMembers;
+        }
+        if (to.minEpochDuration == 0) {
+            to.minEpochDuration = from.minEpochDuration;
+        }
+        if (to.epochDuration == 0) {
+            to.epochDuration = from.epochDuration;
+        }
+        if (to.minNominationPeriodDuration == 0) {
+            to.minNominationPeriodDuration = from.minNominationPeriodDuration;
+        }
+        if (to.minVotingPeriodDuration == 0) {
+            to.minVotingPeriodDuration = from.minVotingPeriodDuration;
+        }
+        if (to.maxDateAdjustmentTolerance == 0) {
+            to.maxDateAdjustmentTolerance = from.maxDateAdjustmentTolerance;
+        }
+    }
 }

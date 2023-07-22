@@ -80,6 +80,12 @@ interface IElectionModule {
     /// @notice Shows the settings for the current election
     function getElectionSettings() external view returns (ElectionSettings.Data memory settings);
 
+    /// @notice Shows the settings for the next election
+    function getNextElectionSettings()
+        external
+        view
+        returns (ElectionSettings.Data memory settings);
+
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
     function getEpochIndex() external view returns (uint);
 
