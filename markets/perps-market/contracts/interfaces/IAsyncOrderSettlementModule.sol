@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 
 interface IAsyncOrderSettlementModule {
     /**
@@ -34,6 +35,7 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed marketId,
         uint128 indexed accountId,
         uint256 fillPrice,
+        int256 pnl,
         int128 sizeDelta,
         int128 newSize,
         uint256 collectedFees,
@@ -50,8 +52,9 @@ interface IAsyncOrderSettlementModule {
         int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
-        uint256 amountToDeposit;
+        uint256 amountToDeduct;
         uint256 settlementReward;
+        PerpsMarketFactory.Data factory;
     }
 
     /**

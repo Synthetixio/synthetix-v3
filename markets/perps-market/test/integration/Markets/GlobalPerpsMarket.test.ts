@@ -6,7 +6,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 describe('GlobalPerpsMarket', () => {
   const { systems, perpsMarkets, trader1 } = bootstrapMarkets({
     synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
-    perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    perpsMarkets: [{ requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) }],
     traderAccountIds: [],
   });
 

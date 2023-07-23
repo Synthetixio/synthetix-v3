@@ -6,10 +6,18 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
+
+    function metadata(
+        uint128 marketId
+    ) external view override returns (string memory name, string memory symbol) {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        return (market.name, market.symbol);
+    }
 
     function skew(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).skew;

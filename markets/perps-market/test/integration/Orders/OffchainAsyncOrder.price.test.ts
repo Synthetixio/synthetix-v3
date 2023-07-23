@@ -12,6 +12,7 @@ describe('Offchain Async Order - Price tests', () => {
     synthMarkets: [],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),

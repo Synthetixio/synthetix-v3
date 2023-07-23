@@ -22,6 +22,7 @@ describe('Commit Offchain Async Order test', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),

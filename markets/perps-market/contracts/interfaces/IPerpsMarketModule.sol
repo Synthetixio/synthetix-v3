@@ -16,6 +16,10 @@ interface IPerpsMarketModule {
         uint indexPrice;
     }
 
+    function metadata(
+        uint128 marketId
+    ) external view returns (string memory name, string memory symbol);
+
     function skew(uint128 marketId) external view returns (int256);
 
     function size(uint128 marketId) external view returns (uint256);

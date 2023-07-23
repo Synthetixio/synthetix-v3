@@ -46,6 +46,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
     error Paused();
 
+    // solhint-disable-next-line no-empty-blocks
     constructor() Ownable(msg.sender) {}
 
     /**

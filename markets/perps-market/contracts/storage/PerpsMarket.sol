@@ -24,44 +24,26 @@ library PerpsMarket {
     using Position for Position.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
-    error OnlyMarketOwner(address marketOwner, address sender);
-
     error InvalidMarket(uint128 marketId);
 
     error PriceFeedNotSet(uint128 marketId);
 
+    error MarketAlreadyExists(uint128 marketId);
+
     struct Data {
-        address owner;
-        address nominatedOwner;
         string name;
         string symbol;
         uint128 id;
         int256 skew;
         uint256 size;
-        // TODO: move to new data structure?
         int lastFundingRate;
         int lastFundingValue;
         uint256 lastFundingTime;
         // liquidation data
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
-        // accountId => asyncOrder
-        mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
-    }
-
-    function create(
-        uint128 id,
-        address owner,
-        string memory name,
-        string memory symbol
-    ) internal returns (Data storage market) {
-        market = load(id);
-        market.id = id;
-        market.owner = owner;
-        market.name = name;
-        market.symbol = symbol;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -72,24 +54,33 @@ library PerpsMarket {
         }
     }
 
+    function createValid(
+        uint128 id,
+        string memory name,
+        string memory symbol
+    ) internal returns (Data storage market) {
+        if (id == 0 || load(id).id == id) {
+            revert InvalidMarket(id);
+        }
+
+        market = load(id);
+
+        market.id = id;
+        market.name = name;
+        market.symbol = symbol;
+    }
+
     /**
      * @dev Reverts if the market does not exist with appropriate error. Otherwise, returns the market.
      */
     function loadValid(uint128 marketId) internal view returns (Data storage market) {
         market = load(marketId);
-        if (market.owner == address(0)) {
+        if (market.id == 0) {
             revert InvalidMarket(marketId);
         }
 
         if (PerpsPrice.load(marketId).feedId == "") {
             revert PriceFeedNotSet(marketId);
-        }
-    }
-
-    // TODO: can remove and use loadWithVerifiedOwner
-    function onlyMarketOwner(Data storage self) internal view {
-        if (self.owner != msg.sender) {
-            revert OnlyMarketOwner(self.owner, msg.sender);
         }
     }
 
@@ -152,8 +143,7 @@ library PerpsMarket {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
 
-        self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
-        self.skew += newPosition.size - oldPositionSize;
+        updateMarketSizes(self, newPosition.size, oldPositionSize);
         oldPosition.updatePosition(newPosition);
         // TODO add current market debt
         return
@@ -166,15 +156,13 @@ library PerpsMarket {
             );
     }
 
-    function loadWithVerifiedOwner(
-        uint128 id,
-        address possibleOwner
-    ) internal view returns (Data storage market) {
-        market = load(id);
-
-        if (market.owner != possibleOwner) {
-            revert AccessError.Unauthorized(possibleOwner);
-        }
+    function updateMarketSizes(
+        Data storage self,
+        int128 newPositionSize,
+        int128 oldPositionSize
+    ) internal {
+        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPositionSize - oldPositionSize;
     }
 
     function recomputeFunding(
