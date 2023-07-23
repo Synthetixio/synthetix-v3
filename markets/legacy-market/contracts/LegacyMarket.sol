@@ -10,6 +10,7 @@ import "./interfaces/external/ISynthetixDebtShare.sol";
 import {UUPSImplementation} from "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 
 import "./interfaces/ILegacyMarket.sol";
+import "./interfaces/ISNXDistributor.sol";
 
 import "./interfaces/external/ISynthetix.sol";
 import "./interfaces/external/IRewardEscrowV2.sol";
@@ -22,7 +23,13 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC721Receiver.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
-contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IERC721Receiver {
+contract LegacyMarket is
+    ILegacyMarket,
+    Ownable,
+    UUPSImplementation,
+    IMarket,
+    IERC721Receiver
+{
     using SafeCastU256 for uint256;
     using DecimalMath for uint256;
 
@@ -39,6 +46,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
+    ISNXDistributor public rewardsDistributor;
 
     error MigrationInProgress();
     error MarketAlreadyRegistered(uint256 existingMarketId);
@@ -54,10 +62,12 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
      */
     function setSystemAddresses(
         IAddressResolver v2xResolverAddress,
-        IV3CoreProxy v3SystemAddress
+        IV3CoreProxy v3SystemAddress,
+        ISNXDistributor snxDistributor
     ) external onlyOwner returns (bool didInitialize) {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
+        rewardsDistributor = snxDistributor;
 
         IERC20(v2xResolverAddress.getAddress("ProxySynthetix")).approve(
             address(v3SystemAddress),
@@ -176,7 +186,6 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
      * @dev Migrates {staker} from V2 to {accountId} in V3.
      */
     function _migrate(address staker, uint128 accountId) internal {
-
         if (staker == address(this)) {
             revert ParameterError.InvalidParameter("staker", "must not be legacy market");
         }
@@ -189,9 +198,6 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         // find out how much debt is on the v2x system
         tmpLockedDebt = reportedDebt(marketId).to128();
         migrationInProgress = true;
-
-        // start building the staker's v3 account
-        v3System.createAccount(accountId);
 
         // get the address of the synthetix v2x proxy contract so we can manipulate the debt
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
@@ -206,6 +212,25 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
 
         // transfer all collateral from the user to our account
         (uint256 collateralMigrated, uint256 debtValueMigrated) = _gatherFromV2(staker);
+
+        uint256 cratio = collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix)) / debtValueMigrated;
+
+        // if the account needs to be liquidated, liquidate it here by unlocking the debt to all accounts and moving to a 
+        if (cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18) {
+            
+            oldSynthetix.transfer(address(rewardsDistributor), collateralMigrated);
+            rewardsDistributor.notifyRewardAmount(collateralMigrated);
+
+            tmpLockedDebt = 0;
+            migrationInProgress = false;
+
+            emit AccountLiquidatedInMigration(staker, collateralMigrated, debtValueMigrated, cratio);
+
+            return;
+        }
+
+        // start building the staker's v3 account
+        v3System.createAccount(accountId);
 
         // put the collected collateral into their v3 account
         v3System.deposit(accountId, address(oldSynthetix), collateralMigrated);

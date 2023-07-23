@@ -35,8 +35,6 @@ source = "<%= settings.oracle_package %>"
 [contract.InitialModuleBundle]
 artifact = "InitialModuleBundle"
 
-args = []
-
 [contract.InitialProxy]
 artifact = "Proxy"
 
@@ -50,6 +48,13 @@ depends = ["contract.InitialModuleBundle"]
 artifact = "LegacyMarket"
 from = "<%= settings.owner %>"
 depends = ["import.v2x", "import.v3"]
+
+[contract.SNXDistributor]
+artifact = "SNXDistributor"
+
+args = ["<%= contracts.Market.address %>"]
+
+depends = ["contract.Market"]
 
 [invoke.upgradeProxy]
 target = ["InitialProxy"]
@@ -71,10 +76,11 @@ func = "setSystemAddresses"
 
 args = [
     "<%= imports.v2x.contracts.AddressResolver.address %>",
-    "<%= imports.v3.contracts.CoreProxy.address %>"
+    "<%= imports.v3.contracts.CoreProxy.address %>",
+    "<%= contracts.SNXDistributor.address %>"
 ]
 
-depends = ["invoke.upgradeProxy"]
+depends = ["invoke.upgradeProxy", "contract.SNXDistributor"]
 
 # add pool owner to pool feature flag allow list
 [invoke.setFeatureFlagPool]

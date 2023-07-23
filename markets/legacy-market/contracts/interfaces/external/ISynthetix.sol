@@ -1,8 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+
 // https://docs.synthetix.io/contracts/source/interfaces/isynthetix
-interface ISynthetix {
+interface ISynthetix is IERC20 {
     // Views
     function anySynthOrSNXRateIsInvalid() external view returns (bool anyRateInvalid);
 
