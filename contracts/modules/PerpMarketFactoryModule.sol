@@ -26,7 +26,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
 
         globalConfig.synthetix = synthetix;
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
-        globalConfig.snxUsdToken = ITokenModule(usdTokenAddress);
+        globalConfig.usdToken = ITokenModule(usdTokenAddress);
         globalConfig.oracleManager = synthetix.getOracleManager();
     }
 

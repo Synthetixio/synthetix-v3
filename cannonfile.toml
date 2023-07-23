@@ -177,10 +177,10 @@ func = "initialize"
 args = ["SNX V3","SNXV3","18"]
 depends = ["contract.SnxV3CollateralMock"]
 
-[invoke.initialize_snxUsdXCollateral]
+[invoke.initialize_usdXCollateral]
 target = ["SynthetixUsdXCollateralMock"]
 func = "initialize"
-args = ["Synthetix Stablecoin","snxUSD","18"]
+args = ["Synthetix Stablecoin","USD","18"]
 depends = ["contract.SynthetixUsdXCollateralMock"]
 
 [invoke.initialize_wstETHCollateral]
