@@ -38,36 +38,19 @@ interface IV3CoreProxy {
     event FeatureFlagDeniersReset(bytes32 indexed feature, address[] deniers);
     event FeatureFlagDenyAllSet(bytes32 indexed feature, bool denyAll);
 
-    function addToFeatureFlagAllowlist(
-        bytes32 feature,
-        address account
-    ) external;
+    function addToFeatureFlagAllowlist(bytes32 feature, address account) external;
 
-    function getDeniers(
-        bytes32 feature
-    ) external view returns (address[] memory);
+    function getDeniers(bytes32 feature) external view returns (address[] memory);
 
-    function getFeatureFlagAllowAll(
-        bytes32 feature
-    ) external view returns (bool);
+    function getFeatureFlagAllowAll(bytes32 feature) external view returns (bool);
 
-    function getFeatureFlagAllowlist(
-        bytes32 feature
-    ) external view returns (address[] memory);
+    function getFeatureFlagAllowlist(bytes32 feature) external view returns (address[] memory);
 
-    function getFeatureFlagDenyAll(
-        bytes32 feature
-    ) external view returns (bool);
+    function getFeatureFlagDenyAll(bytes32 feature) external view returns (bool);
 
-    function isFeatureAllowed(
-        bytes32 feature,
-        address account
-    ) external view returns (bool);
+    function isFeatureAllowed(bytes32 feature, address account) external view returns (bool);
 
-    function removeFromFeatureFlagAllowlist(
-        bytes32 feature,
-        address account
-    ) external;
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external;
 
     function setDeniers(bytes32 feature, address[] memory deniers) external;
 
@@ -79,16 +62,8 @@ interface IV3CoreProxy {
     error InvalidAccountId(uint128 accountId);
     error InvalidPermission(bytes32 permission);
     error OnlyAccountTokenProxy(address origin);
-    error PermissionDenied(
-        uint128 accountId,
-        bytes32 permission,
-        address target
-    );
-    error PermissionNotGranted(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    );
+    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+    error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
     error PositionOutOfBounds();
     event AccountCreated(uint128 indexed accountId, address indexed owner);
     event PermissionGranted(
@@ -108,26 +83,17 @@ interface IV3CoreProxy {
 
     function createAccount(uint128 requestedAccountId) external;
 
-    function getAccountLastInteraction(
-        uint128 accountId
-    ) external view returns (uint256);
+    function getAccountLastInteraction(uint128 accountId) external view returns (uint256);
 
     function getAccountOwner(uint128 accountId) external view returns (address);
 
     function getAccountPermissions(
         uint128 accountId
-    )
-        external
-        view
-        returns (IAccountModule.AccountPermissions[] memory accountPerms);
+    ) external view returns (IAccountModule.AccountPermissions[] memory accountPerms);
 
     function getAccountTokenAddress() external view returns (address);
 
-    function grantPermission(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) external;
+    function grantPermission(uint128 accountId, bytes32 permission, address user) external;
 
     function hasPermission(
         uint128 accountId,
@@ -145,11 +111,7 @@ interface IV3CoreProxy {
 
     function renouncePermission(uint128 accountId, bytes32 permission) external;
 
-    function revokePermission(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) external;
+    function revokePermission(uint128 accountId, bytes32 permission, address user) external;
 
     error AccountNotFound(uint128 accountId);
     error EmptyDistribution();
@@ -192,9 +154,7 @@ interface IV3CoreProxy {
         address impl
     );
 
-    function getAssociatedSystem(
-        bytes32 id
-    ) external view returns (address addr, bytes32 kind);
+    function getAssociatedSystem(bytes32 id) external view returns (address addr, bytes32 kind);
 
     function initOrUpgradeNft(
         bytes32 id,
@@ -266,11 +226,7 @@ interface IV3CoreProxy {
         uint64 expireTimestamp
     ) external;
 
-    function deposit(
-        uint128 accountId,
-        address collateralType,
-        uint256 tokenAmount
-    ) external;
+    function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external;
 
     function getAccountAvailableCollateral(
         uint128 accountId,
@@ -280,14 +236,7 @@ interface IV3CoreProxy {
     function getAccountCollateral(
         uint128 accountId,
         address collateralType
-    )
-        external
-        view
-        returns (
-            uint256 totalDeposited,
-            uint256 totalAssigned,
-            uint256 totalLocked
-        );
+    ) external view returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked);
 
     function getLocks(
         uint128 accountId,
@@ -296,20 +245,11 @@ interface IV3CoreProxy {
         uint256 count
     ) external view returns (CollateralLock.Data[] memory locks);
 
-    function withdraw(
-        uint128 accountId,
-        address collateralType,
-        uint256 tokenAmount
-    ) external;
+    function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external;
 
-    event CollateralConfigured(
-        address indexed collateralType,
-        CollateralConfiguration.Data config
-    );
+    event CollateralConfigured(address indexed collateralType, CollateralConfiguration.Data config);
 
-    function configureCollateral(
-        CollateralConfiguration.Data memory config
-    ) external;
+    function configureCollateral(CollateralConfiguration.Data memory config) external;
 
     function getCollateralConfiguration(
         address collateralType
@@ -319,9 +259,7 @@ interface IV3CoreProxy {
         bool hideDisabled
     ) external view returns (CollateralConfiguration.Data[] memory);
 
-    function getCollateralPrice(
-        address collateralType
-    ) external view returns (uint256);
+    function getCollateralPrice(address collateralType) external view returns (uint256);
 
     error InsufficientDebt(int256 currentDebt);
     error PoolNotFound(uint128 poolId);
@@ -392,28 +330,21 @@ interface IV3CoreProxy {
         address collateralType
     ) external returns (bool);
 
-    function isVaultLiquidatable(
-        uint128 poolId,
-        address collateralType
-    ) external returns (bool);
+    function isVaultLiquidatable(uint128 poolId, address collateralType) external returns (bool);
 
     function liquidate(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId
-    )
-        external
-        returns (ILiquidationModule.LiquidationData memory liquidationData);
+    ) external returns (ILiquidationModule.LiquidationData memory liquidationData);
 
     function liquidateVault(
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId,
         uint256 maxUsd
-    )
-        external
-        returns (ILiquidationModule.LiquidationData memory liquidationData);
+    ) external returns (ILiquidationModule.LiquidationData memory liquidationData);
 
     error InsufficientMarketCollateralDepositable(
         uint128 marketId,
@@ -461,9 +392,7 @@ interface IV3CoreProxy {
         address collateralType
     ) external view returns (uint256 collateralAmountD18);
 
-    function getMarketCollateralValue(
-        uint128 marketId
-    ) external view returns (uint256);
+    function getMarketCollateralValue(uint128 marketId) external view returns (uint256);
 
     function getMaximumMarketCollateral(
         uint128 marketId,
@@ -496,10 +425,7 @@ interface IV3CoreProxy {
         uint256 amount,
         address indexed market
     );
-    event SetMarketMinLiquidityRatio(
-        uint128 indexed marketId,
-        uint256 minLiquidityRatio
-    );
+    event SetMarketMinLiquidityRatio(uint128 indexed marketId, uint256 minLiquidityRatio);
     event SetMinDelegateTime(uint128 indexed marketId, uint32 minDelegateTime);
 
     function depositMarketUsd(
@@ -508,68 +434,40 @@ interface IV3CoreProxy {
         uint256 amount
     ) external returns (uint256 feeAmount);
 
-    function distributeDebtToPools(
-        uint128 marketId,
-        uint256 maxIter
-    ) external returns (bool);
+    function distributeDebtToPools(uint128 marketId, uint256 maxIter) external returns (bool);
 
-    function getMarketCollateral(
-        uint128 marketId
-    ) external view returns (uint256);
+    function getMarketCollateral(uint128 marketId) external view returns (uint256);
 
     function getMarketDebtPerShare(uint128 marketId) external returns (int256);
 
     function getMarketFees(
         uint128,
         uint256 amount
-    )
-        external
-        view
-        returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount);
+    ) external view returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount);
 
-    function getMarketMinDelegateTime(
-        uint128 marketId
-    ) external view returns (uint32);
+    function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32);
 
-    function getMarketNetIssuance(
-        uint128 marketId
-    ) external view returns (int128);
+    function getMarketNetIssuance(uint128 marketId) external view returns (int128);
 
-    function getMarketReportedDebt(
-        uint128 marketId
-    ) external view returns (uint256);
+    function getMarketReportedDebt(uint128 marketId) external view returns (uint256);
 
-    function getMarketTotalDebt(
-        uint128 marketId
-    ) external view returns (int256);
+    function getMarketTotalDebt(uint128 marketId) external view returns (int256);
 
-    function getMinLiquidityRatio(
-        uint128 marketId
-    ) external view returns (uint256);
+    function getMinLiquidityRatio(uint128 marketId) external view returns (uint256);
 
     function getOracleManager() external view returns (address);
 
     function getUsdToken() external view returns (address);
 
-    function getWithdrawableMarketUsd(
-        uint128 marketId
-    ) external view returns (uint256);
+    function getWithdrawableMarketUsd(uint128 marketId) external view returns (uint256);
 
-    function isMarketCapacityLocked(
-        uint128 marketId
-    ) external view returns (bool);
+    function isMarketCapacityLocked(uint128 marketId) external view returns (bool);
 
     function registerMarket(address market) external returns (uint128 marketId);
 
-    function setMarketMinDelegateTime(
-        uint128 marketId,
-        uint32 minDelegateTime
-    ) external;
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external;
 
-    function setMinLiquidityRatio(
-        uint128 marketId,
-        uint256 minLiquidityRatio
-    ) external;
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external;
 
     function withdrawMarketUsd(
         uint128 marketId,
@@ -577,9 +475,7 @@ interface IV3CoreProxy {
         uint256 amount
     ) external returns (uint256 feeAmount);
 
-    function multicall(
-        bytes[] memory data
-    ) external payable returns (bytes[] memory results);
+    function multicall(bytes[] memory data) external payable returns (bytes[] memory results);
 
     event PoolApprovedAdded(uint256 poolId);
     event PoolApprovedRemoved(uint256 poolId);
@@ -603,20 +499,9 @@ interface IV3CoreProxy {
         MarketConfiguration.Data[] markets,
         address indexed sender
     );
-    event PoolCreated(
-        uint128 indexed poolId,
-        address indexed owner,
-        address indexed sender
-    );
-    event PoolNameUpdated(
-        uint128 indexed poolId,
-        string name,
-        address indexed sender
-    );
-    event PoolNominationRenounced(
-        uint128 indexed poolId,
-        address indexed owner
-    );
+    event PoolCreated(uint128 indexed poolId, address indexed owner, address indexed sender);
+    event PoolNameUpdated(uint128 indexed poolId, string name, address indexed sender);
+    event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
     event PoolOwnerNominated(
         uint128 indexed poolId,
@@ -632,17 +517,13 @@ interface IV3CoreProxy {
 
     function getMinLiquidityRatio() external view returns (uint256);
 
-    function getNominatedPoolOwner(
-        uint128 poolId
-    ) external view returns (address);
+    function getNominatedPoolOwner(uint128 poolId) external view returns (address);
 
     function getPoolConfiguration(
         uint128 poolId
     ) external view returns (MarketConfiguration.Data[] memory);
 
-    function getPoolName(
-        uint128 poolId
-    ) external view returns (string memory poolName);
+    function getPoolName(uint128 poolId) external view returns (string memory poolName);
 
     function getPoolOwner(uint128 poolId) external view returns (address);
 
@@ -735,11 +616,7 @@ interface IV3CoreProxy {
 
     function getConfig(bytes32 k) external view returns (bytes32 v);
 
-    function registerCcip(
-        address ccipSend,
-        address ccipReceive,
-        address ccipTokenPool
-    ) external;
+    function registerCcip(address ccipSend, address ccipReceive, address ccipTokenPool) external;
 
     function setConfig(bytes32 k, bytes32 v) external;
 
@@ -804,10 +681,7 @@ interface IV3CoreProxy {
         address collateralType
     ) external returns (uint256);
 
-    function getVaultDebt(
-        uint128 poolId,
-        address collateralType
-    ) external returns (int256);
+    function getVaultDebt(uint128 poolId, address collateralType) external returns (int256);
 }
 
 interface IAccountModule {

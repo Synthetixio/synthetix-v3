@@ -30,7 +30,9 @@ contract SNXDistributor is IRewardDistributor, ISNXDistributor {
             revert Unauthorized(msg.sender);
         }
 
-        ISynthetix oldSynthetix = ISynthetix(legacyMarket.v2xResolver().getAddress("ProxySynthetix"));
+        ISynthetix oldSynthetix = ISynthetix(
+            legacyMarket.v2xResolver().getAddress("ProxySynthetix")
+        );
         oldSynthetix.transfer(sender, amount);
 
         return true;
@@ -48,7 +50,9 @@ contract SNXDistributor is IRewardDistributor, ISNXDistributor {
     }
 
     function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
-        return interfaceID == type(IRewardDistributor).interfaceId || interfaceID == this.supportsInterface.selector;
+        return
+            interfaceID == type(IRewardDistributor).interfaceId ||
+            interfaceID == this.supportsInterface.selector;
     }
 
     function name() external pure override returns (string memory) {
@@ -59,7 +63,10 @@ contract SNXDistributor is IRewardDistributor, ISNXDistributor {
         IV3CoreProxy v3System = legacyMarket.v3System();
         IAddressResolver v2xResolver = legacyMarket.v2xResolver();
 
-        if (msg.sender != address(legacyMarket) && msg.sender != v2xResolver.getAddress("RewardsDistributor")) {
+        if (
+            msg.sender != address(legacyMarket) &&
+            msg.sender != v2xResolver.getAddress("RewardsDistributor")
+        ) {
             revert Unauthorized(msg.sender);
         }
 

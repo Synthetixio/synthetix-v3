@@ -16,7 +16,7 @@ describe('AssociateDebtModule', function () {
     MockMarket,
     marketId,
     depositAmount,
-    provider
+    provider,
   } = bootstrapWithMockMarketAndPool();
 
   let owner: ethers.Signer;
@@ -92,8 +92,12 @@ describe('AssociateDebtModule', function () {
         await MockMarket().connect(owner).setReportedDebt(debt);
 
         // should be able to associate
-        await (await MockMarket().connect(user2).callAssociateDebt(poolId, collateralAddress(), accountId, debt)).wait();
-      })
+        await (
+          await MockMarket()
+            .connect(user2)
+            .callAssociateDebt(poolId, collateralAddress(), accountId, debt)
+        ).wait();
+      });
     });
 
     describe('with a second staker', async () => {

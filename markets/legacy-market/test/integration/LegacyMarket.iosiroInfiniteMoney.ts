@@ -1,8 +1,8 @@
-import { Signer, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { LegacyMarket__factory } from '../../typechain-types';
 import { LegacyMarket } from '../../typechain-types/contracts/LegacyMarket';
-import Wei, { wei } from '@synthetixio/wei';
+import { wei } from '@synthetixio/wei';
 import { snapshotCheckpoint } from '../utils';
 import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -38,7 +38,6 @@ describe('LegacyMarket (iosiro)', function () {
   let susdToken: ethers.Contract;
 
   let v3System: ethers.Contract;
-  let v3Account: ethers.Contract;
   let v3Usd: ethers.Contract;
 
   let cannonProvider: ethers.providers.JsonRpcProvider;
@@ -250,8 +249,6 @@ describe('LegacyMarket (iosiro)', function () {
       const marketId = await market.marketId();
       const attackerAddress = await attacker.getAddress();
 
-      const initialAttackedsUSDBal = await susdToken.balanceOf(attackerAddress);
-
       // transfer initial SNX to whale account and attacker
       await snxV2
         .connect(setupAccount)
@@ -349,7 +346,7 @@ describe('LegacyMarket (iosiro)', function () {
         market.connect(attacker).migrate(accountID),
         'NotFundedByPool("1", "1")',
         v3System
-      )
+      );
     });
   });
 });

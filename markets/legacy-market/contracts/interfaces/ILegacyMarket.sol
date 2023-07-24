@@ -10,9 +10,10 @@ import "./ISNXDistributor.sol";
  * @dev This market effectively acts as a single large "staker" in the V2 system.
  */
 interface ILegacyMarket {
-
     function v2xResolver() external view returns (IAddressResolver);
+
     function v3System() external view returns (IV3CoreProxy);
+
     function rewardsDistributor() external view returns (ISNXDistributor);
 
     /**
@@ -37,7 +38,7 @@ interface ILegacyMarket {
      * @param cratio the calculated c-ratio of the account
      */
     event AccountLiquidatedInMigration(
-        address staker, 
+        address staker,
         uint256 collateralAmount,
         uint256 debtAmount,
         uint256 cratio

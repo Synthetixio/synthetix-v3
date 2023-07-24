@@ -113,8 +113,8 @@ describe('LegacyMarket', function () {
 
     snxDistributor = new ethers.Contract(
       outputs.contracts.SNXDistributor.address,
-      outputs.contracts.SNXDistributor.abi,
-    )
+      outputs.contracts.SNXDistributor.abi
+    );
 
     await rewardEscrow.connect(owner).setPermittedEscrowCreator(await owner.getAddress(), true);
 
@@ -375,7 +375,7 @@ describe('LegacyMarket', function () {
         testMigrate(async () => {
           return market.connect(snxStaker).migrate(migratedAccountId);
         });
-  
+
         describe('post check', async () => {
           it('should have no debt', async () => {
             assertBn.equal(
@@ -396,7 +396,14 @@ describe('LegacyMarket', function () {
         before('create account with insufficient collateral', async () => {
           // bring it to a 10% effective c-ratio--below liquidation threshold, eligible for liquidation
           // we have the ratio so low just to make sure that the inverse condition is not being checked in the contract
-          await snxToken.connect(snxStaker).transfer(await owner.getAddress(), (await snxToken.connect(owner).balanceOf(snxStakerAddress)).sub(ethers.utils.parseEther('10')));
+          await snxToken
+            .connect(snxStaker)
+            .transfer(
+              await owner.getAddress(),
+              (
+                await snxToken.connect(owner).balanceOf(snxStakerAddress)
+              ).sub(ethers.utils.parseEther('10'))
+            );
         });
 
         describe('call migrate', async () => {
@@ -406,7 +413,7 @@ describe('LegacyMarket', function () {
           });
 
           it('account has not been created', async () => {
-            if (await v3System.getAccountOwner(2873826) !== ethers.constants.AddressZero) {
+            if ((await v3System.getAccountOwner(2873826)) !== ethers.constants.AddressZero) {
               throw new Error('account was created');
             }
           });
@@ -425,33 +432,40 @@ describe('LegacyMarket', function () {
 
           it('rewards available for distributed', async () => {
             assertBn.equal(
-              (await v3System.connect(owner).callStatic.claimRewards(
-                accountId,
-                await v3System.getPreferredPool(),
-                snxToken.address,
-                snxDistributor.address,
-              )),
+              await v3System
+                .connect(owner)
+                .callStatic.claimRewards(
+                  accountId,
+                  await v3System.getPreferredPool(),
+                  snxToken.address,
+                  snxDistributor.address
+                ),
               ethers.utils.parseEther('10')
             );
           });
 
           describe('claim rewards from rewards distributor', async () => {
-            let beforeBalance: ethers.BigNumberish
+            let beforeBalance: ethers.BigNumberish;
             before('claim', async () => {
-              beforeBalance = await snxToken.balanceOf(await owner.getAddress())
-              await v3System.connect(owner).claimRewards(
-                accountId,
-                await v3System.getPreferredPool(),
-                snxToken.address,
-                snxDistributor.address,
-              );
+              beforeBalance = await snxToken.balanceOf(await owner.getAddress());
+              await v3System
+                .connect(owner)
+                .claimRewards(
+                  accountId,
+                  await v3System.getPreferredPool(),
+                  snxToken.address,
+                  snxDistributor.address
+                );
             });
 
             it('should have collateral in account', async () => {
-              assertBn.equal((await snxToken.balanceOf(await owner.getAddress())).sub(beforeBalance), ethers.utils.parseEther('10'));
-            })
+              assertBn.equal(
+                (await snxToken.balanceOf(await owner.getAddress())).sub(beforeBalance),
+                ethers.utils.parseEther('10')
+              );
+            });
           });
-        })
+        });
       });
     });
 

@@ -34,9 +34,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     bool public pauseMigration;
 
     // used by _migrate to temporarily set reportedDebt to another value before
-    uint128 tmpLockedDebt;
+    uint128 private tmpLockedDebt;
 
-    bool migrationInProgress;
+    bool private migrationInProgress;
 
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
