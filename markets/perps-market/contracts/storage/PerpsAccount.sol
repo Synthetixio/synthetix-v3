@@ -306,7 +306,7 @@ library PerpsAccount {
                         address(0)
                     );
 
-                    factory.depositMarketUsd(amountToDeduct);
+                    factory.depositMarketUsd(leftoverAmount);
 
                     updateCollateralAmount(self, marketId, -(amountToDeduct.toInt()));
                     leftoverAmount = 0;

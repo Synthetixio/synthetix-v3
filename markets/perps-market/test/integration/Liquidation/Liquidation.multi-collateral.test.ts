@@ -196,7 +196,7 @@ describe('Liquidation - multi collateral', async () => {
     it('emits account liquidated event', async () => {
       await assertEvent(
         liquidateTxn,
-        `AccountLiquidated(2, ${bn(1000)}, false)`,
+        `AccountLiquidated(2, ${bn(1000)}, true)`,
         systems().PerpsMarket
       );
     });

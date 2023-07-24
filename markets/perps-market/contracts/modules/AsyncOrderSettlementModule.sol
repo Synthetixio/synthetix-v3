@@ -168,7 +168,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         // since margin is deposited, as long as the owed collateral is deducted
         // fees are realized by the stakers
         if (runtime.amountToDeduct > 0) {
-            perpsAccount.deductFromAccount(runtime.amountToDeduct + totalFees);
+            perpsAccount.deductFromAccount(runtime.amountToDeduct);
         }
         runtime.settlementReward = settlementStrategy.settlementReward;
 
