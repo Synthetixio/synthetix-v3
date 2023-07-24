@@ -1,16 +1,14 @@
-import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
+import { PerpsMarket, bn, bootstrapMarkets, toNum } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 // import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { Signer, ethers } from 'ethers';
-// import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
-describe('Market Debt', () => {
+describe('Market Debt - single market', () => {
   const orderFees = {
     makerFee: bn(0.0), // 0bps no fees
     takerFee: bn(0.0), // 0bps no fees
   };
-  const superMarketId = bn(25);
 
   const { systems, perpsMarkets, provider, trader1, trader2, trader3, keeper } = bootstrapMarkets({
     synthMarkets: [
@@ -23,13 +21,17 @@ describe('Market Debt', () => {
     ],
     perpsMarkets: [
       {
-        requestedMarketId: superMarketId,
+        requestedMarketId: bn(25),
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
         // setting to 0 to avoid funding and p/d price change affecting pnl
         fundingParams: { skewScale: bn(0), maxFundingVelocity: bn(0) },
         orderFees,
+        settlementStrategy: {
+          settlementReward: bn(0),
+          priceDeviationTolerance: bn(50),
+        },
       },
     ],
     traderAccountIds: [2, 3, 4],
@@ -57,7 +59,7 @@ describe('Market Debt', () => {
       collateralDelta?: ethers.BigNumber; // amount of collateral to deposit or withdraw in the step
       sizeDelta?: ethers.BigNumber; // position size change to open or close in the step
     };
-    market?: { id: ethers.BigNumber; price?: ethers.BigNumber }; // market to change the price and new price
+    market?: { price: ethers.BigNumber }; // market to change the price and new price
     expected?: {
       // expected results to check on the step
       marketDebt: ethers.BigNumber;
@@ -68,7 +70,6 @@ describe('Market Debt', () => {
     {
       name: 'initial state',
       market: {
-        id: bn(1),
         price: bn(1000),
       },
     },
@@ -92,9 +93,6 @@ describe('Market Debt', () => {
         accountId: 2,
         sizeDelta: bn(10),
       },
-      market: {
-        id: bn(1),
-      },
       expected: {
         marketDebt: bn(0),
         ethMarketDebt: bn(0),
@@ -104,7 +102,6 @@ describe('Market Debt', () => {
     {
       name: 'eth price change to 1200',
       market: {
-        id: bn(1),
         price: bn(1200),
       },
       expected: {
@@ -133,9 +130,6 @@ describe('Market Debt', () => {
         accountId: 3,
         sizeDelta: bn(-10),
       },
-      market: {
-        id: bn(1),
-      },
       expected: {
         marketDebt: bn(0),
         ethMarketDebt: bn(0),
@@ -145,7 +139,6 @@ describe('Market Debt', () => {
     {
       name: 'eht price change to 1100',
       market: {
-        id: bn(1),
         price: bn(1100),
       },
     },
@@ -169,9 +162,6 @@ describe('Market Debt', () => {
         accountId: 4,
         sizeDelta: bn(-10),
       },
-      market: {
-        id: bn(1),
-      },
       expected: {
         marketDebt: bn(0),
         ethMarketDebt: bn(0),
@@ -181,7 +171,6 @@ describe('Market Debt', () => {
     {
       name: 'eth price change to 1000',
       market: {
-        id: bn(1),
         price: bn(1000),
       },
       expected: {
@@ -197,9 +186,6 @@ describe('Market Debt', () => {
         accountId: 3,
         sizeDelta: bn(10),
       },
-      market: {
-        id: bn(1),
-      },
       expected: {
         marketDebt: bn(0),
         ethMarketDebt: bn(0),
@@ -209,7 +195,6 @@ describe('Market Debt', () => {
     {
       name: 'eth price change to 1200',
       market: {
-        id: bn(1),
         price: bn(1200),
       },
       expected: {
@@ -225,9 +210,6 @@ describe('Market Debt', () => {
         accountId: 4,
         sizeDelta: bn(10),
       },
-      market: {
-        id: bn(1),
-      },
       expected: {
         marketDebt: bn(0),
         ethMarketDebt: bn(0),
@@ -237,7 +219,6 @@ describe('Market Debt', () => {
     {
       name: 'eth price change to 900',
       market: {
-        id: bn(1),
         price: bn(900),
       },
       expected: {
@@ -253,9 +234,6 @@ describe('Market Debt', () => {
         accountId: 2,
         sizeDelta: bn(-10),
       },
-      market: {
-        id: bn(1),
-      },
       expected: {
         marketDebt: bn(0),
         ethMarketDebt: bn(0),
@@ -267,7 +245,7 @@ describe('Market Debt', () => {
   describe(`Using snxUSD as collateral`, () => {
     let commonOpenPositionProps: Pick<
       OpenPositionData,
-      'systems' | 'provider' | 'keeper' | 'settlementStrategyId'
+      'systems' | 'provider' | 'keeper' | 'settlementStrategyId' | 'marketId'
     >;
     const restoreActivities = snapshotCheckpoint(provider);
 
@@ -277,6 +255,7 @@ describe('Market Debt', () => {
         provider,
         settlementStrategyId: perpsMarket.strategyId(),
         keeper: keeper(),
+        marketId: perpsMarket.marketId(),
       };
     });
 
@@ -286,8 +265,7 @@ describe('Market Debt', () => {
           // Collect initial stats if needed
         });
 
-        before('set step price', async () => {
-          // TODO Need to change the price to the desired value for the market if needed
+        before('set price', async () => {
           if (
             marketActivity.market &&
             marketActivity.market.price &&
@@ -305,7 +283,7 @@ describe('Market Debt', () => {
           ) {
             await depositCollateral({
               systems,
-              trader: trader1,
+              trader: marketActivity.user!.trader,
               accountId: () => marketActivity.user!.accountId,
               collaterals: [{ snxUSDAmount: () => marketActivity.user!.collateralDelta! }],
             });
@@ -315,7 +293,6 @@ describe('Market Debt', () => {
         before('update position', async () => {
           if (
             marketActivity.user &&
-            marketActivity.market &&
             marketActivity.user.sizeDelta &&
             !marketActivity.user.sizeDelta.isZero()
           ) {
@@ -324,7 +301,6 @@ describe('Market Debt', () => {
               ...commonOpenPositionProps,
               trader: marketActivity.user!.trader(),
               accountId: marketActivity.user!.accountId,
-              marketId: marketActivity.market!.id,
               sizeDelta: marketActivity.user!.sizeDelta!,
               price: bn(1000),
             });
@@ -336,6 +312,42 @@ describe('Market Debt', () => {
         });
 
         it('should have correct market debt', async () => {
+          const t1OI = await systems().PerpsMarket.totalAccountOpenInterest(2);
+          const t2OI = await systems().PerpsMarket.totalAccountOpenInterest(3);
+          const t3OI = await systems().PerpsMarket.totalAccountOpenInterest(4);
+
+          const [t1positionPnl, , t1positionSize] = await systems().PerpsMarket.getOpenPosition(
+            2,
+            perpsMarket.marketId()
+          );
+          const [t2positionPnl, , t2positionSize] = await systems().PerpsMarket.getOpenPosition(
+            3,
+            perpsMarket.marketId()
+          );
+          const [t3positionPnl, , t3positionSize] = await systems().PerpsMarket.getOpenPosition(
+            4,
+            perpsMarket.marketId()
+          );
+
+          const t1AvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
+          const t2AvailableMargin = await systems().PerpsMarket.getAvailableMargin(3);
+          const t3AvailableMargin = await systems().PerpsMarket.getAvailableMargin(4);
+
+          console.log('==== MARKET DEBT ====');
+          console.log(' ==> t1OI', toNum(t1OI));
+          console.log(' ==> t2OI', toNum(t2OI));
+          console.log(' ==> t3OI', toNum(t3OI));
+          console.log(' ==> t1positionPnl', toNum(t1positionPnl));
+          console.log(' ==> t2positionPnl', toNum(t2positionPnl));
+          console.log(' ==> t3positionPnl', toNum(t3positionPnl));
+          console.log(' ==> t1positionSize', toNum(t1positionSize));
+          console.log(' ==> t2positionSize', toNum(t2positionSize));
+          console.log(' ==> t3positionSize', toNum(t3positionSize));
+          console.log(' ==> t1AvailableMargin', toNum(t1AvailableMargin));
+          console.log(' ==> t2AvailableMargin', toNum(t2AvailableMargin));
+          console.log(' ==> t3AvailableMargin', toNum(t3AvailableMargin));
+          console.log('==== END MARKET DEBT ====');
+
           // TODO: calculate the right values and assert them, or use the ones on the step
           // const expected = marketActivity.expected;
         });

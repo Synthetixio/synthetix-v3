@@ -38,6 +38,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
+    using SafeCastI256 for int256;
     using SetUtil for SetUtil.UintSet;
     using PerpsMarket for PerpsMarket.Data;
 
@@ -129,8 +130,12 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
                 );
             }
 
-            // TODO Should revert if totalDebt is positive and larger than totalCollateralValue???
-            return MathUtil.abs(totalCollateralValue.toInt() - totalDebt);
+            int reportedDebt = totalCollateralValue.toInt() - totalDebt;
+            if (reportedDebt < 0) {
+                return 0;
+            } else {
+                return reportedDebt.toUint();
+            }
         }
         // TODO Should revert if perpsMarketId is not correcmt???
 

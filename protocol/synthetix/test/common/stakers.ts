@@ -13,11 +13,11 @@ export function bootstrapStakers(
   signers: () => ethers.Signer[],
   delegateAmount: ethers.BigNumber = depositAmount
 ) {
-  let staker1: ethers.Signer, staker2: ethers.Signer;
+  let staker1: ethers.Signer, staker2: ethers.Signer, staker3: ethers.Signer;
   before('identify stakers', () => {
-    [, , , staker1, staker2] = signers();
+    [, , , staker1, staker2, staker3] = signers();
   });
-  // create new bool
+  // create new pool
   before('create separate pool', async () => {
     const [owner] = signers();
     await systems()
@@ -28,6 +28,7 @@ export function bootstrapStakers(
   before('create traders', async () => {
     await stake(systems(), 2, 1000, staker1, delegateAmount);
     await stake(systems(), 2, 1001, staker2, delegateAmount);
+    await stake(systems(), 2, 1002, staker3, delegateAmount);
   });
 
   before('mint usd', async () => {
@@ -38,6 +39,9 @@ export function bootstrapStakers(
     await systems()
       .Core.connect(staker2)
       .mintUsd(1001, 2, collateralAddress, delegateAmount.mul(200));
+    await systems()
+      .Core.connect(staker3)
+      .mintUsd(1002, 2, collateralAddress, delegateAmount.mul(200));
   });
 }
 
