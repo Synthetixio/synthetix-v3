@@ -23,13 +23,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC721Receiver.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
-contract LegacyMarket is
-    ILegacyMarket,
-    Ownable,
-    UUPSImplementation,
-    IMarket,
-    IERC721Receiver
-{
+contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IERC721Receiver {
     using SafeCastU256 for uint256;
     using DecimalMath for uint256;
 
@@ -213,18 +207,25 @@ contract LegacyMarket is
         // transfer all collateral from the user to our account
         (uint256 collateralMigrated, uint256 debtValueMigrated) = _gatherFromV2(staker);
 
-        uint256 cratio = collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix)) / debtValueMigrated;
+        uint256 cratio = (collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix))) /
+            debtValueMigrated;
 
-        // if the account needs to be liquidated, liquidate it here by unlocking the debt to all accounts and moving to a 
-        if (cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18) {
-            
+        // if the account needs to be liquidated, liquidate it here by unlocking the debt to all accounts and moving to a
+        if (
+            cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
+        ) {
             oldSynthetix.transfer(address(rewardsDistributor), collateralMigrated);
             rewardsDistributor.notifyRewardAmount(collateralMigrated);
 
             tmpLockedDebt = 0;
             migrationInProgress = false;
 
-            emit AccountLiquidatedInMigration(staker, collateralMigrated, debtValueMigrated, cratio);
+            emit AccountLiquidatedInMigration(
+                staker,
+                collateralMigrated,
+                debtValueMigrated,
+                cratio
+            );
 
             return;
         }
@@ -290,13 +291,11 @@ contract LegacyMarket is
         address staker
     ) internal returns (uint256 totalCollateralAmount, uint256 totalDebtAmount) {
         // get v2x addresses needed to get all the resources from staker's account
-        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
         ISynthetixDebtShare oldDebtShares = ISynthetixDebtShare(
             v2xResolver.getAddress("SynthetixDebtShare")
         );
 
         // find out how much collateral we will have to migrate when we are done
-        uint256 unlockedSnx = IERC20(address(oldSynthetix)).balanceOf(staker);
         totalCollateralAmount = ISynthetix(v2xResolver.getAddress("Synthetix")).collateral(staker);
 
         // find out how much debt we will have when we are done
@@ -313,13 +312,8 @@ contract LegacyMarket is
         // transfer debt shares first so we can remove SNX from user's account
         oldDebtShares.transferFrom(staker, address(this), debtSharesMigrated);
 
-        // now get the collateral from the user's account
-        IERC20(address(oldSynthetix)).transferFrom(staker, address(this), unlockedSnx);
-
-        // any remaining escrow should be revoked and sent to the legacy market address
-        if (unlockedSnx < totalCollateralAmount) {
-            ISynthetix(v2xResolver.getAddress("Synthetix")).migrateAccountBalances(staker);
-        }
+        // now get the collateral from the user's account (will also get escrowed SNX)
+        ISynthetix(v2xResolver.getAddress("Synthetix")).migrateAccountBalances(staker);
     }
 
     /**

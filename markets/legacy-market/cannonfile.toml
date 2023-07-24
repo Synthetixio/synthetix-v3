@@ -49,13 +49,6 @@ artifact = "LegacyMarket"
 from = "<%= settings.owner %>"
 depends = ["import.v2x", "import.v3"]
 
-[contract.SNXDistributor]
-artifact = "SNXDistributor"
-
-args = ["<%= contracts.Market.address %>"]
-
-depends = ["contract.Market"]
-
 [invoke.upgradeProxy]
 target = ["InitialProxy"]
 abi = "UpgradeModule"
@@ -69,6 +62,13 @@ factory.Proxy.arg = 0
 
 depends = ["contract.InitialProxy", "contract.Market"]
 
+[contract.SNXDistributor]
+artifact = "SNXDistributor"
+
+args = ["<%= contracts.Proxy.address %>"]
+
+depends = ["invoke.upgradeProxy"]
+
 [invoke.setSystemAddresses]
 target = ["Proxy"]
 from = "<%= settings.owner %>"
@@ -80,7 +80,7 @@ args = [
     "<%= contracts.SNXDistributor.address %>"
 ]
 
-depends = ["invoke.upgradeProxy", "contract.SNXDistributor"]
+depends = ["contract.SNXDistributor"]
 
 # add pool owner to pool feature flag allow list
 [invoke.setFeatureFlagPool]
@@ -192,3 +192,16 @@ args = ["<%= settings.sc_pool_id %>"]
 fromCall.func = "owner"
 
 depends = ["invoke.createPool"]
+
+[invoke.registerRewardsDistributor]
+target = ["v3.CoreProxy"]
+func = "registerRewardsDistributor"
+args = [
+    "<%= settings.sc_pool_id %>",
+    "<%= imports.v2x.contracts.ProxySynthetix.address %>",
+    "<%= contracts.SNXDistributor.address %>"
+]
+
+fromCall.func = "owner"
+
+depends = ["invoke.createPool", "contract.SNXDistributor"]

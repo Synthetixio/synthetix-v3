@@ -24,7 +24,8 @@ async function doForkDeploy() {
   });
 }
 
-describe('LegacyMarket (iosiro)', () => {
+describe('LegacyMarket (iosiro)', function () {
+  this.timeout(360000);
   let owner: ethers.Signer;
   let setupAccount: ethers.Signer;
   let attacker: ethers.Signer;
@@ -265,7 +266,7 @@ describe('LegacyMarket (iosiro)', () => {
       // create whale account that delegates to the other pool and mints snxUSD
       const whaleAccountId = 1111;
       const whaleDelegationAmount = wei(10000).toBN();
-      const createAccountABI = ['function createAccount(uint128) exteral returns (uint128)'];
+      const createAccountABI = ['function createAccount(uint128) external returns (uint128)'];
       const createAccountSystem = new ethers.Contract(
         v3System.address,
         createAccountABI,
