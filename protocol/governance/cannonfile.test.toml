@@ -24,12 +24,11 @@ artifact = "contracts/generated/test/TestableElectionSettingsStorage.sol:Testabl
 [contract.TestableElectionStorage]
 artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectionStorage"
 
-[router.CoreRouter]
+# Core Router + Testable modules
+[router.TestRouter]
 contracts = [
-  "AssociatedSystemsModule",
-  "ElectionModule",
-  "ElectionInspectorModule",
-  "InitialModuleBundle",
+  # Extend Core Router
+  "CoreRouter",
   # Testable storage contracts
   "TestableCouncilStorage",
   "TestableDebtShareStorage",
@@ -37,16 +36,23 @@ contracts = [
   "TestableElectionStorage",
 ]
 depends = [
-  "contract.AssociatedSystemsModule",
-  "contract.ElectionModule",
-  "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
+  "router.CoreRouter",
   # Testable storage contracts
   "contract.TestableCouncilStorage",
   "contract.TestableDebtShareStorage",
   "contract.TestableElectionSettingsStorage",
   "contract.TestableElectionStorage",
 ]
+
+[invoke.upgrade_core_proxy]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.TestRouter.address %>"]
+factory.CoreProxy.abiOf = ["TestRouter"]
+factory.CoreProxy.event = "Upgraded"
+factory.CoreProxy.arg = 0
+depends = ["contract.InitialProxy", "router.TestRouter"]
 
 [router.BaseElectionRouter]
 contracts = [
