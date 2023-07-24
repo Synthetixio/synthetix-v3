@@ -12,6 +12,9 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 
+/**
+ * @title Async order top level data storage
+ */
 library AsyncOrder {
     using DecimalMath for int256;
     using DecimalMath for int128;
@@ -25,21 +28,34 @@ library AsyncOrder {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
 
+    /**
+     * @notice Thrown when attempting to settle an expired order.
+     */
     error SettlementWindowExpired(
         uint256 timestamp,
         uint256 settlementTime,
         uint256 settlementExpiration
     );
 
+    /**
+     * @notice Thrown when attempting to cancel an order that is not yet expired.
+     */
     error SettlementWindowNotExpired(
         uint256 timestamp,
         uint256 settlementTime,
         uint256 settlementExpiration
     );
 
-    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
-
+    /**
+     * @notice Thrown when order does not exist.
+     * @dev Order does not exist if the order sizeDelta is 0.
+     */
     error OrderNotValid();
+
+    /**
+     * @notice Thrown when fill price exceeds the acceptable price set at submission.
+     */
+    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
 
     /**
      * @notice Gets thrown when commit order is called when a pending order already exists.
@@ -51,25 +67,78 @@ library AsyncOrder {
      */
     error PendingOrderExist();
 
+    /**
+     * @notice Thrown when commiting an order with sizeDelta is zero.
+     * @dev Size delta 0 is used to flag a non-valid order since it's a non-update order.
+     */
+    error ZeroSizeOrder();
+
+    /**
+     * @notice Thrown when there's not enough margin to cover the order and settlement costs associated.
+     */
+    error InsufficientMargin(int availableMargin, uint minMargin);
+
     struct Data {
+        /**
+         * @dev Order account id.
+         */
         uint128 accountId;
+        /**
+         * @dev Order market id.
+         */
         uint128 marketId;
+        /**
+         * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
+         */
         int128 sizeDelta;
+        /**
+         * @dev Settlement strategy used for the order.
+         */
         uint128 settlementStrategyId;
+        /**
+         * @dev Time at which the Settlement time is open.
+         */
         uint256 settlementTime;
+        /**
+         * @dev Acceptable price set at submission. Longs will not be filled above this price, and shorts will not be filled below it.
+         */
         uint256 acceptablePrice;
+        /**
+         * @dev An optional code provided by frontends to assist with tracking the source of volume and fees.
+         */
         bytes32 trackingCode;
     }
 
     struct OrderCommitmentRequest {
+        /**
+         * @dev Order market id.
+         */
         uint128 marketId;
+        /**
+         * @dev Order account id.
+         */
         uint128 accountId;
+        /**
+         * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
+         */
         int128 sizeDelta;
+        /**
+         * @dev Settlement strategy used for the order.
+         */
         uint128 settlementStrategyId;
+        /**
+         * @dev Acceptable price set at submission.
+         */
         uint256 acceptablePrice;
+        /**
+         * @dev An optional code provided by frontends to assist with tracking the source of volume and fees.
+         */
         bytes32 trackingCode;
     }
 
+    /**
+     * @notice Updates the order with the commitment request data and settlement time.
+     */
     function load(uint128 accountId) internal pure returns (Data storage order) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.AsyncOrder", accountId));
 
@@ -124,12 +193,21 @@ library AsyncOrder {
         self.accountId = commitment.accountId;
     }
 
+    /**
+     * @notice Resets the order.
+     * @dev This function is called after the order is settled or cancelled.
+     * @dev Just setting the sizeDelta to 0 is enough, since is the value checked to identify an active order at settlement time.
+     * @dev The rest of the fields will be updated on the next commitment. Not doing it here is more gas efficient.
+     */
     function reset(Data storage self) internal {
         self.sizeDelta = 0;
-
-        // setting the rest to 0 is not necessary, and is gas inefficient since it will be overwritten at new order claim.
     }
 
+    /**
+     * @notice Checks if the order window settlement is opened and expired.
+     * @dev Reverts if block.timestamp is < settlementTime (not <=, so even if the settlementDelay is set to zero, it will require at least 1 second waiting time)
+     * @dev Reverts if block.timestamp is > settlementTime + settlementWindowDuration
+     */
     function checkWithinSettlementWindow(
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
@@ -145,6 +223,11 @@ library AsyncOrder {
         }
     }
 
+    /**
+     * @notice Checks if the order can be cancelled.
+     * @dev Reverts if block.timestamp is < settlementTime + settlementWindowDuration
+     * @dev it means it didn't expire yet.
+     */
     function checkCancellationEligibility(
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
@@ -160,9 +243,18 @@ library AsyncOrder {
         }
     }
 
-    error ZeroSizeOrder();
-    error InsufficientMargin(int availableMargin, uint minMargin);
+    /**
+     * @notice Checks if the storage order is valid (exists), and reverts otherwise
+     */
+    function checkValidity(Data storage self) internal view {
+        if (self.sizeDelta == 0) {
+            revert OrderNotValid();
+        }
+    }
 
+    /**
+     * @dev Struct used internally in validateOrder() to prevent stack too deep error.
+     */
     struct SimulateDataRuntime {
         uint fillPrice;
         uint orderFees;
@@ -178,20 +270,22 @@ library AsyncOrder {
         bytes32 trackingCode;
     }
 
+    /**
+     * @notice Checks if the order can be settled.
+     * @dev it recomputes market funding rate, calculates fill price and fees for the order
+     * @dev and with that data it checks that:
+     * @dev - the account is eligible for liquidation
+     * @dev - the fill price is within the acceptable price range
+     * @dev - the position size doesn't exceed market configured limits
+     * @dev - the account has enough margin to cover for the fees
+     * @dev - the account has enough margin to not be liquidable immediately after the order is settled
+     * @dev if the order can be executed, it returns (newPosition, orderFees, fillPrice, oldPosition)
+     */
     function validateOrder(
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    )
-        internal
-        returns (
-            // return pnl
-            Position.Data memory,
-            uint,
-            uint,
-            Position.Data storage oldPosition
-        )
-    {
+    ) internal returns (Position.Data memory, uint, uint, Position.Data storage oldPosition) {
         if (order.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
@@ -286,6 +380,9 @@ library AsyncOrder {
         return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
     }
 
+    /**
+     * @notice Calculates the order fees.
+     */
     function calculateOrderFee(
         int128 sizeDelta,
         uint256 fillPrice,
@@ -330,6 +427,9 @@ library AsyncOrder {
         return takerFee + makerFee;
     }
 
+    /**
+     * @notice Calculates the fill price for an order.
+     */
     function calculateFillPrice(
         int skew,
         uint skewScale,
