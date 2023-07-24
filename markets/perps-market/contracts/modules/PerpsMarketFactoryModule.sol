@@ -132,7 +132,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
             int reportedDebt = totalCollateralValue.toInt() + totalDebt;
             if (reportedDebt < 0) {
-                return 222000000000000000000;
+                return 0;
             } else {
                 return reportedDebt.toUint();
             }
