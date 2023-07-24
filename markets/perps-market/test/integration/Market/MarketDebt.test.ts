@@ -1,4 +1,4 @@
-import { PerpsMarket, bn, bootstrapMarkets, toNum } from '../bootstrap';
+import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { Signer, ethers } from 'ethers';
