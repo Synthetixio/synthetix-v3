@@ -111,7 +111,7 @@ describe('ElectionSettings', function () {
           nominationPeriodDuration: daysToSeconds(7),
           votingPeriodDuration: daysToSeconds(7),
           maxDateAdjustmentTolerance: daysToSeconds(3),
-        } satisfies ElectionSettings;
+        } as ElectionSettings;
 
         await _setNextElectionSettings(newSettings);
 
