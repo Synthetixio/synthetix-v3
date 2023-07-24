@@ -27,7 +27,7 @@ artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectio
 # Core Router + Testable modules
 [router.TestRouter]
 contracts = [
-  # Extend Core Router
+  # Extend Original Core Router
   "CoreRouter",
   # Testable storage contracts
   "TestableCouncilStorage",
@@ -37,7 +37,6 @@ contracts = [
 ]
 depends = [
   "router.CoreRouter",
-  # Testable storage contracts
   "contract.TestableCouncilStorage",
   "contract.TestableDebtShareStorage",
   "contract.TestableElectionSettingsStorage",

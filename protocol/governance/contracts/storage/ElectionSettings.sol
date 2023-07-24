@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 library ElectionSettings {
     struct Data {
+        // Implementation proposed by previous Council to which can be upgraded to (see UpgradeProposalModule)
+        address proposedImplementation;
         // Number of council members in the current epoch
         uint8 epochSeatCount;
         // Minimum active council members. If too many are dismissed an emergency election is triggered

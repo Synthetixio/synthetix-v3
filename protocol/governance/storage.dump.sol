@@ -263,6 +263,7 @@ library Election {
 // @custom:artifact contracts/storage/ElectionSettings.sol:ElectionSettings
 library ElectionSettings {
     struct Data {
+        address proposedImplementation;
         uint8 epochSeatCount;
         uint8 minimumActiveMembers;
         uint64 epochDuration;

@@ -65,6 +65,9 @@ contract ElectionSettingsManager is ElectionBase {
         ElectionSettings.Data storage from,
         ElectionSettings.Data storage to
     ) internal {
+        if (to.proposedImplementation == address(0)) {
+            to.proposedImplementation = from.proposedImplementation;
+        }
         if (to.epochSeatCount == 0) {
             to.epochSeatCount = from.epochSeatCount;
         }

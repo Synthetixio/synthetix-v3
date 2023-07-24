@@ -37,7 +37,7 @@ defaultValue = "90" # days
 defaultValue = "3" # days
 
 [contract.InitialModuleBundle]
-artifact = "InitialModuleBundle"
+artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"
 create2 = true
 
 [contract.InitialProxy]
@@ -51,30 +51,38 @@ depends = ["contract.InitialModuleBundle"]
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.ElectionModule]
-artifact = "ElectionModule"
-
 [contract.ElectionInspectorModule]
-artifact = "ElectionInspectorModule"
+artifact = "contracts/modules/core/ElectionInspectorModule.sol:ElectionInspectorModule"
+
+[contract.ElectionModule]
+artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
+
+[contract.OwnerModule]
+artifact = "contracts/modules/core/OwnerModule.sol:OwnerModule"
+
+[contract.UpgradeProposalModule]
+artifact = "contracts/modules/core/UpgradeProposalModule.sol:UpgradeProposalModule"
 
 [contract.CouncilTokenModule]
-artifact = "CouncilTokenModule"
+artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenModule"
 
 [contract.DebtShareMock]
-artifact = "DebtShareMock"
+artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
 
 [router.CoreRouter]
 contracts = [
   "AssociatedSystemsModule",
-  "ElectionModule",
   "ElectionInspectorModule",
-  "InitialModuleBundle",
+  "ElectionModule",
+  "OwnerModule",
+  "UpgradeProposalModule",
 ]
 depends = [
   "contract.AssociatedSystemsModule",
-  "contract.ElectionModule",
   "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
+  "contract.ElectionModule",
+  "contract.OwnerModule",
+  "contract.UpgradeProposalModule",
 ]
 
 [invoke.upgrade_core_proxy]
