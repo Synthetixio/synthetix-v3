@@ -123,22 +123,22 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
             SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
             uint256 activeMarketsLength = activeMarkets.length();
-            for (uint i = 1; i < activeMarketsLength; i++) {
+            for (uint i = 1; i <= activeMarketsLength; i++) {
                 uint128 marketId = activeMarkets.valueAt(i).to128();
                 totalDebt += PerpsMarket.load(marketId).marketDebt(
                     PerpsPrice.getCurrentPrice(marketId)
                 );
             }
 
-            int reportedDebt = totalCollateralValue.toInt() - totalDebt;
+            int reportedDebt = totalCollateralValue.toInt() + totalDebt;
             if (reportedDebt < 0) {
-                return 0;
+                return 222000000000000000000;
             } else {
                 return reportedDebt.toUint();
             }
         }
-        // TODO Should revert if perpsMarketId is not correcmt???
 
+        // TODO Should revert if perpsMarketId is not correct???
         return 0;
     }
 

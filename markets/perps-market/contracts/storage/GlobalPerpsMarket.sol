@@ -66,7 +66,7 @@ library GlobalPerpsMarket {
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
         uint256 activeCollateralLength = activeCollateralTypes.length();
-        for (uint i = 1; i < activeCollateralLength; i++) {
+        for (uint i = 1; i <= activeCollateralLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
 
             if (synthMarketId == 0) {

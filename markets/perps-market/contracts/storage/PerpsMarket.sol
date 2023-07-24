@@ -162,8 +162,7 @@ library PerpsMarket {
         (int oldPositionPnl, , , ) = oldPosition.getPnl(currentPrice);
 
         self.debtCorrectionAccumulator +=
-            currentPrice.toInt() *
-            (newPosition.size - oldPositionSize) -
+            currentPrice.toInt().mulDecimal(newPosition.size - oldPositionSize) +
             oldPositionPnl;
 
         updateMarketSizes(self, newPosition.size, oldPositionSize);
