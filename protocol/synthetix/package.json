@@ -25,6 +25,7 @@
   "license": "MIT",
   "devDependencies": {
     "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core": "workspace:*",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",

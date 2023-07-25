@@ -20,7 +20,7 @@ import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
-contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvents {
+contract SkewTriggerOrderModule is ISkewTriggerOrderModule, IMarketEvents {
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using DecimalMath for int64;
@@ -128,7 +128,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             Position.Data memory newPosition,
             uint totalFees,
             uint fillPrice,
-            uint newSkew,
             Position.Data storage oldPosition
         ) = asyncOrder.validateOrder(settlementStrategy, price);
         runtime.newPositionSize = newPosition.size;
@@ -147,21 +146,11 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.amountToDeduct = runtime.pnlUint;
         }
 
-        // for all the skew triggred traunches we touched, apply positions as necessary
-        int256 fromTraunche = SkewTriggerTraunche.getTrauncheIndex(perpsMarketData.skew / marketConfig.skewScale);
-        int256 toTraunche = SkewTriggerTraunche.getTrauncheIndex(newScale / marketConfig.skewScale);
-        int256 trauncheDir = toTraunche - fromTraunche;
-        for (uint256 i = fromTraunche;i != toTraunche + trauncheDir;i += trauncheDir) {
-            SkewTriggerTraunche.load(i).applyPosition(runtime.marketId, 1e18); // TODO portion
-        }
-
         // after pnl is realized, update position
         PerpsMarket.MarketUpdateData memory updateData = PerpsMarket
             .loadValid(runtime.marketId)
             .updatePositionData(runtime.accountId, newPosition);
         perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
-
-        // TODO: assert updateData.skew === expected newSkew, or something went wrong
 
         emit MarketUpdated(
             updateData.marketId,

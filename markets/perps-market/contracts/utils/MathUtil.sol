@@ -27,6 +27,23 @@ library MathUtil {
         return x < y ? x : y;
     }
 
+    // calculates x ** y
+    function exp(int b, int y) internal pure returns (int) {
+        int a = 1e18;
+        int cur = 0;
+        while(y > cur) {
+            a = a * 2 / 1e18;
+            cur++;
+        }
+
+        while (y < cur) {
+            x /= a * 1e18 / x;
+            cur--;
+        }
+
+        return a;
+    }
+
     function sameSide(int a, int b) internal pure returns (bool) {
         return (a == 0) || (b == 0) || (a > 0) == (b > 0);
     }
