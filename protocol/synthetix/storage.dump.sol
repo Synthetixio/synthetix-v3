@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.11<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -233,28 +233,6 @@ interface ILiquidationModule {
     }
 }
 
-// @custom:artifact contracts/interfaces/external/IAny2EVMMessageReceiverInterface.sol:IAny2EVMMessageReceiverInterface
-interface IAny2EVMMessageReceiverInterface {
-    struct Any2EVMMessage {
-        uint256 srcChainId;
-        bytes sender;
-        bytes data;
-        address[] destTokens;
-        uint256[] amounts;
-    }
-}
-
-// @custom:artifact contracts/interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol:IEVM2AnySubscriptionOnRampRouterInterface
-interface IEVM2AnySubscriptionOnRampRouterInterface {
-    struct EVM2AnySubscriptionMessage {
-        bytes receiver;
-        bytes data;
-        address[] tokens;
-        uint256[] amounts;
-        uint256 gasLimit;
-    }
-}
-
 // @custom:artifact contracts/modules/core/AccountModule.sol:AccountModule
 contract AccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
@@ -272,6 +250,13 @@ contract CollateralModule {
     bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
     bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
+}
+
+// @custom:artifact contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule
+contract CrossChainUSDModule {
+    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _TRANSFER_CROSS_CHAIN_FEATURE_FLAG = "transferCrossChain";
 }
 
 // @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
@@ -342,9 +327,6 @@ contract VaultModule {
 
 // @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
 contract USDTokenModule {
-    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 }
 
@@ -373,6 +355,8 @@ library AccountRBAC {
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
+    bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
+    bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -427,6 +411,23 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
+    }
+}
+
+// @custom:artifact contracts/storage/CrossChain.sol:CrossChain
+library CrossChain {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
+    struct Data {
+        address ccipRouter;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
     }
 }
 
@@ -619,7 +620,7 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
-        int128 prevTotalDebtD18;
+        int128 _unused_prevTotalDebtD18;
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
@@ -635,5 +636,32 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
+    }
+}
+
+// @custom:artifact contracts/utils/CcipClient.sol:CcipClient
+library CcipClient {
+    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
+    struct EVMTokenAmount {
+        address token;
+        uint256 amount;
+    }
+    struct Any2EVMMessage {
+        bytes32 messageId;
+        uint64 sourceChainSelector;
+        bytes sender;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+    }
+    struct EVM2AnyMessage {
+        bytes receiver;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+        address feeToken;
+        bytes extraArgs;
+    }
+    struct EVMExtraArgsV1 {
+        uint256 gasLimit;
+        bool strict;
     }
 }

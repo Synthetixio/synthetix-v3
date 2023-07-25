@@ -1,16 +1,18 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
+
+const assertRevert = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+const { bootstrap } = require('@synthetixio/router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 const {
   getTime,
   fastForwardTo,
   takeSnapshot,
   restoreSnapshot,
-} = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+} = require('@synthetixio/core-utils/utils/hardhat/rpc');
+
+const { daysToSeconds } = require('@synthetixio/core-utils/utils/misc/dates');
 const {
   ElectionPeriod,
 } = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/helpers/election-helper');
@@ -22,7 +24,7 @@ const {
   expectedCrossChainDebtShare,
   getCrossChainMerkleTree,
 } = require('./helpers/debt-share-helper');
-const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
+const { findEvent } = require('@synthetixio/core-utils/utils/ethers/events');
 
 describe('SynthetixElectionModule - general elections', function () {
   const { proxyAddress } = bootstrap(initializer);

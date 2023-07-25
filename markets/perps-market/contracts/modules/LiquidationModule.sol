@@ -1,45 +1,56 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import "../interfaces/ILiquidationModule.sol";
-import "../storage/PerpsAccount.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
+import {PerpsAccount} from "../storage/PerpsAccount.sol";
+import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
     using SetUtil for SetUtil.UintSet;
     using PerpsAccount for PerpsAccount.Data;
 
     function liquidate(uint128 accountId) external override {
-        // 1. load account
-        _liquidateAccount(accountId);
+        SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
+            .load()
+            .liquidatableAccounts;
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        if (!liquidatableAccounts.contains(accountId)) {
+            (bool isEligible, , ) = account.isEligibleForLiquidation();
+
+            if (isEligible) {
+                account.flagForLiquidation();
+                _liquidateAccount(account);
+            } else {
+                revert NotEligibleForLiquidation(accountId);
+            }
+        } else {
+            _liquidateAccount(account);
+        }
     }
 
     function liquidateFlagged() external override {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        SetUtil.UintSet storage liquidatableAccounts = factory.liquidatableAccounts;
+        SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
+            .load()
+            .liquidatableAccounts;
 
-        for (uint i = 0; i < factory.liquidatableAccounts.length(); i++) {
-            _liquidateAccount(liquidatableAccounts.valueAt(i).to128());
+        for (uint i = 0; i < liquidatableAccounts.length(); i++) {
+            uint128 accountId = liquidatableAccounts.valueAt(i).to128();
+            _liquidateAccount(PerpsAccount.load(accountId));
         }
     }
 
-    function _liquidateAccount(uint128 accountId) private {
-        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        uint accountCollateralValue = PerpsAccount.markForLiquidation(accountId);
+    function _liquidateAccount(PerpsAccount.Data storage account) internal {
+        account.liquidateAccount();
 
-        if (account.flaggedForLiquidation) {
-            // 2. liquidate account
-            account.liquidateAccount(accountId, accountCollateralValue);
+        // TODO: account can be removed from liquidation if the margin reqs are met,
 
-            PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-
-            if (account.openPositionMarketIds.length() == 0) {
-                account.flaggedForLiquidation = false;
-                factory.liquidatableAccounts.remove(accountId);
-            }
+        if (account.openPositionMarketIds.length() == 0) {
+            GlobalPerpsMarket.load().liquidatableAccounts.remove(account.id);
         }
+
+        // TODO: emit event
     }
 }

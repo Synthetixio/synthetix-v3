@@ -28,7 +28,7 @@ describe('CollateralModule', function () {
       await (await systems().Core.connect(user2)['createAccount(uint128)'](2)).wait();
     });
 
-    describe('when a collateral is addded', function () {
+    describe('when a collateral is added', function () {
       before('add collateral type', async () => {
         ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
@@ -42,7 +42,7 @@ describe('CollateralModule', function () {
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
+        await verifyCollateral(1, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {
@@ -200,7 +200,7 @@ describe('CollateralModule', function () {
               describe('time passes', () => {
                 before('fast forward', async () => {
                   await fastForwardTo(
-                    parseInt(await systems().Core.getAccountLastInteraction(1)) + expireTime,
+                    (await systems().Core.getAccountLastInteraction(1)).toNumber() + expireTime,
                     provider()
                   );
                 });

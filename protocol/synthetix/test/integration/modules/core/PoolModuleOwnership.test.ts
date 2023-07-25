@@ -200,26 +200,22 @@ describe('PoolModule Create / Ownership', function () {
   });
 
   describe('rebalancePool()', () => {
-    it('rebalances the markets inside of pool', async () => {
-      let initialMarketCapacity: ethers.BigNumber;
+    let initialMarketCapacity: ethers.BigNumber;
+    before('save market capacity', async () => {
+      initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
+    });
+    describe('market debt goes up', async () => {
+      before('increase market debt and rebalances the markets inside of pool', async () => {
+        await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
 
-      before('save market capacity', async () => {
-        initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
+        await systems().Core.connect(owner).Market_distributeDebtToPools(poolId, 999999999);
       });
 
-      describe('market debt goes up', async () => {
-        before('increase market debt', async () => {
-          await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
-
-          await systems().Core.connect(owner).rebalancePool(poolId);
-        });
-
-        it('the ultimate capacity of the market ends up to be the same', async () => {
-          assertBn.equal(
-            await systems().Core.Market_get_creditCapacityD18(marketId()),
-            initialMarketCapacity
-          );
-        });
+      it('the ultimate capacity of the market ends up to be the same', async () => {
+        assertBn.equal(
+          await systems().Core.Market_get_creditCapacityD18(marketId()),
+          initialMarketCapacity
+        );
       });
     });
   });

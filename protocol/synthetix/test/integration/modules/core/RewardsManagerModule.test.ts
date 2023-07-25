@@ -4,6 +4,7 @@ import { fastForward, fastForwardTo, getTime } from '@synthetixio/core-utils/uti
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
+import { RewardDistributorMock, CollateralMock } from '../../../../typechain-types/index';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
@@ -18,7 +19,8 @@ describe('RewardsManagerModule', function () {
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
-  let Collateral, RewardDistributor;
+  let Collateral: CollateralMock;
+  let RewardDistributor: RewardDistributorMock;
 
   const rewardAmount = ethers.utils.parseEther('1000');
 

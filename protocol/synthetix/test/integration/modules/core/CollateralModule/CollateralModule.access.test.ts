@@ -1,6 +1,6 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { ethers as Ethers } from 'ethers';
+import { ethers, Contract, Signer } from 'ethers';
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import Permissions from '../../../mixins/AccountRBACMixin.permissions';
 import { bootstrap } from '../../../bootstrap';
@@ -8,9 +8,12 @@ import { bootstrap } from '../../../bootstrap';
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
-  let Collateral: Ethers.Contract, oracleNodeId: string;
+  let Collateral: Contract, oracleNodeId: string;
 
-  let owner: Ethers.Signer, user1: Ethers.Signer, user2: Ethers.Signer, user3: Ethers.Signer;
+  let owner: Signer;
+  let user1: Signer;
+  let user2: Signer;
+  let user3: Signer;
 
   describe('CollateralModule - Access control', function () {
     before('identify signers', async () => {
@@ -36,7 +39,7 @@ describe('CollateralModule', function () {
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
+        await verifyCollateral(1, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {

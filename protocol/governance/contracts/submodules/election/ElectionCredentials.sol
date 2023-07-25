@@ -14,7 +14,7 @@ contract ElectionCredentials is ElectionBase {
     using Council for Council.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
-    bytes32 constant _COUNCIL_NFT_SYSTEM = "councilToken";
+    bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
 
     function _removeAllCouncilMembers(uint epochIndex) internal {
         SetUtil.AddressSet storage members = Council.load().councilMembers;

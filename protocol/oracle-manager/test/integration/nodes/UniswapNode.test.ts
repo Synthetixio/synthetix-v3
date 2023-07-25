@@ -1,6 +1,8 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { ethers } from 'ethers';
+import { ethers, Signer } from 'ethers';
+import hre from 'hardhat';
+import { ERC20Mock__factory } from '../../../typechain-types/index';
 
 import { bootstrap } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
@@ -9,13 +11,13 @@ describe('UniswapNode', function () {
   const { getContract, getSigners } = bootstrap();
 
   const abi = ethers.utils.defaultAbiCoder;
-  let ERC20MockFactory: ethers.Contract;
+  let ERC20MockFactory: ERC20Mock__factory;
   let NodeModule: ethers.Contract;
   let MockObservable: ethers.Contract;
   let token0: ethers.Contract;
   let token1: ethers.Contract;
   let nodeId: string;
-  let owner;
+  let owner: Signer;
 
   before('prepare environment', async () => {
     NodeModule = getContract('NodeModule');

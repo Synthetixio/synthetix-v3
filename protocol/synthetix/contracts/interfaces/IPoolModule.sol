@@ -175,6 +175,8 @@ interface IPoolModule {
 
     /**
      * @notice Distributes cached debt in a pool to its vaults and updates market credit capacities.
+     * @param poolId the pool to rebalance
+     * @param optionalCollateralType in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
      */
-    function rebalancePool(uint128 poolId) external;
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external;
 }

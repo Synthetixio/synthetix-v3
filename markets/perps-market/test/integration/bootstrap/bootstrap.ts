@@ -1,36 +1,34 @@
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import {
-  SpotMarketSpotMarketProxy,
-  SynthetixCollateralMock,
-  SynthetixCoreProxy,
-  SynthetixOracle_managerProxy,
-  SynthetixUSDProxy,
-  PerpsMarketProxy,
-  AccountProxy,
-} from '../../generated/typechain';
-import { SynthRouter } from '@synthetixio/spot-market/typechain-types';
+import { PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
+import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
 import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 import { PerpsMarketData, bootstrapPerpsMarkets, bootstrapTraders } from '.';
+import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
+import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
+import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
+import { CollateralMock } from '@synthetixio/main/typechain-types';
 
 type Proxies = {
-  ['synthetix.CoreProxy']: SynthetixCoreProxy;
-  ['synthetix.USDProxy']: SynthetixUSDProxy;
-  ['synthetix.CollateralMock']: SynthetixCollateralMock;
-  ['synthetix.oracle_manager.Proxy']: SynthetixOracle_managerProxy;
-  ['spotMarket.SpotMarketProxy']: SpotMarketSpotMarketProxy;
+  ['synthetix.CoreProxy']: CoreProxy;
+  ['synthetix.USDProxy']: USDProxy;
+  ['synthetix.CollateralMock']: CollateralMock;
+  ['synthetix.oracle_manager.Proxy']: OracleManagerProxy;
+  ['spotMarket.SpotMarketProxy']: SpotMarketProxy;
   PerpsMarketProxy: PerpsMarketProxy;
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
+  ['MockPyth']: MockPyth;
 };
 
 export type Systems = {
-  SpotMarket: SpotMarketSpotMarketProxy;
-  Core: SynthetixCoreProxy;
-  USD: SynthetixUSDProxy;
-  CollateralMock: SynthetixCollateralMock;
-  OracleManager: SynthetixOracle_managerProxy;
+  SpotMarket: SpotMarketProxy;
+  Core: CoreProxy;
+  USD: USDProxy;
+  CollateralMock: CollateralMock;
+  MockPyth: MockPyth;
+  OracleManager: OracleManagerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
   Synth: (address: string) => SynthRouter;
@@ -55,6 +53,7 @@ export function bootstrap() {
       CollateralMock: getContract('synthetix.CollateralMock'),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
+      MockPyth: getContract('MockPyth'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
@@ -79,6 +78,10 @@ type BootstrapArgs = {
   synthMarkets: SynthArguments;
   perpsMarkets: PerpsMarketData;
   traderAccountIds: Array<number>;
+  liquidationGuards?: {
+    minLiquidationReward: ethers.BigNumber;
+    maxLiquidationReward: ethers.BigNumber;
+  };
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -86,14 +89,54 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const { systems, signers, provider, owner, perpsMarkets } = chainStateWithPerpsMarkets;
-  const { trader1, trader2, restore } = bootstrapTraders({
+  const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId, superMarketId } =
+    chainStateWithPerpsMarkets;
+  const { trader1, trader2, keeper, restore } = bootstrapTraders({
     systems,
     signers,
     provider,
     owner,
     accountIds: data.traderAccountIds,
   });
+
+  // auto set all synth markets collaterals to max
+  before('set collateral max', async () => {
+    for (const { marketId } of synthMarkets()) {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
+    }
+  });
+
+  before('set max market collateral allowed for all synths', async () => {
+    for (const { synthAddress } of synthMarkets()) {
+      await systems()
+        .Core.connect(owner())
+        .configureMaximumMarketCollateral(
+          chainStateWithPerpsMarkets.superMarketId(),
+          synthAddress(),
+          ethers.constants.MaxUint256
+        );
+    }
+  });
+
+  // auto add all synth markets in the row they were created for deduction priority
+  before('set synth deduction priority', async () => {
+    // first item is always snxUSD
+    const synthIds = [bn(0), ...synthMarkets().map((s) => s.marketId())];
+    await systems().PerpsMarket.connect(owner()).setSynthDeductionPriority(synthIds);
+  });
+  const { liquidationGuards } = data;
+  if (liquidationGuards) {
+    before('set liquidation guards', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setLiquidationRewardGuards(
+          liquidationGuards.minLiquidationReward,
+          liquidationGuards.maxLiquidationReward
+        );
+    });
+  }
 
   return {
     systems,
@@ -102,10 +145,17 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     restore,
     trader1,
     trader2,
+    keeper,
     owner,
     perpsMarkets,
     synthMarkets,
+    marketOwner,
+    superMarketId,
+    poolId,
   };
 }
 
 export const bn = (n: number) => wei(n).toBN();
+export const toNum = (n: ethers.BigNumber) => Number(ethers.utils.formatEther(n));
+export const decimalMul = (a: ethers.BigNumber, b: ethers.BigNumber) => a.mul(b).div(bn(1));
+export const decimalDiv = (a: ethers.BigNumber, b: ethers.BigNumber) => a.mul(bn(1)).div(b);

@@ -1,11 +1,10 @@
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { formatErrorMessage } from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-/* eslint-disable max-len */
-import { ethers } from 'ethers';
+import { BytesLike, ethers } from 'ethers';
+import hre from 'hardhat';
 import { bn, bootstrapTraders, bootstrapWithSynth } from '../test/bootstrap';
-
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 const feedId = '0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6';
 const feedAddress = '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C';
@@ -111,9 +110,11 @@ describe('AsyncOrdersModule.e2e.test', function () {
 
       const response = await fetch(parsedURL).then((res) => res.json());
 
-      await systems().SpotMarket.connect(keeper).settlePythOrder(response.data, extraData, {
-        value: fee.toString(),
-      });
+      await systems()
+        .SpotMarket.connect(keeper)
+        .settlePythOrder(response.data as BytesLike, extraData, {
+          value: fee.toString(),
+        });
     });
   });
 });

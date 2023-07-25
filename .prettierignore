@@ -14,3 +14,8 @@ markets/*/test/generated
 *Router.sol
 .yarnrc.yml
 lerna.json
+*.hbs
+**/subgraph/deployments/
+**/artifacts/
+**/cache/
+**/docs/

@@ -6,35 +6,18 @@ import {ISynthetixSystem} from "./external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "./external/ISpotMarketSystem.sol";
 
 interface IPerpsMarketFactoryModule is IMarket {
-    event MarketRegistered(
-        uint128 indexed perpsMarketId,
-        address indexed marketOwner,
-        string marketName,
-        string marketSymbol
-    );
-    event MarketOwnerNominated(uint128 indexed perpsMarketId, address newNominatedOwner);
-    event MarketOwnerChanged(uint128 indexed perpsMarketId, address oldOwner, address newOwner);
-    event MarketPriceDataUpdated(uint128 indexed perpsMarketId, bytes32 feedId);
+    event FactoryInitialized(uint128 globalPerpsMarketId);
+    event MarketCreated(uint128 indexed perpsMarketId, string marketName, string marketSymbol);
 
-    error NotNominated(address notNominatedAddress);
+    function initializeFactory() external returns (uint128);
 
     function setSynthetix(ISynthetixSystem synthetix) external;
 
     function setSpotMarket(ISpotMarketSystem spotMarket) external;
 
     function createMarket(
+        uint128 requestedMarketId,
         string memory marketName,
-        string memory marketSymbol,
-        address marketOwner
+        string memory marketSymbol
     ) external returns (uint128);
-
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
-
-    function nominateMarketOwner(uint128 perpsMarketId, address newNominatedOwner) external;
-
-    function acceptMarketOwnership(uint128 perpsMarketId) external;
-
-    function getMarketOwner(uint128 perpsMarketId) external view returns (address);
-
-    function setSynthDeductionPriority(uint128[] calldata synthDeductionPriority) external;
 }

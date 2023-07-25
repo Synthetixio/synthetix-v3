@@ -112,8 +112,15 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function rebalancePool(uint128 poolId) external override {
-        Pool.load(poolId).distributeDebtToVaults();
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        pool.distributeDebtToVaults(optionalCollateralType);
+
+        if (optionalCollateralType != address(0)) {
+            pool.recalculateVaultCollateral(optionalCollateralType);
+        } else {
+            pool.rebalanceMarketsInPool();
+        }
     }
 
     /**
@@ -130,7 +137,7 @@ contract PoolModule is IPoolModule {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         // Note: This follows the same pattern as Pool.recalculateVaultCollateral(),
         // where we need to distribute the debt, adjust the market configurations and distribute again.
-        pool.distributeDebtToVaults();
+        pool.distributeDebtToVaults(address(0));
 
         // Identify markets that need to be removed or verified later for being locked.
         (
@@ -165,13 +172,15 @@ contract PoolModule is IPoolModule {
 
         // Rebalance all markets that need to be removed.
         for (i = 0; i < removedMarkets.length && removedMarkets[i] != 0; i++) {
+            // Iter avoids griefing - MarketManager can call this with user specified iters and thus clean up a grieved market.
+            Market.distributeDebtToPools(Market.load(removedMarkets[i]), 9999999999);
             Market.rebalancePools(removedMarkets[i], poolId, 0, 0);
         }
 
         pool.totalWeightsD18 = totalWeight.to128();
 
         // Distribute debt again because the unused credit capacity has been updated, and this information needs to be propagated immediately.
-        pool.distributeDebtToVaults();
+        pool.rebalanceMarketsInPool();
 
         // The credit delegation proportion of the pool can only stay the same, or increase,
         // so prevent the removal of markets whose capacity is locked.

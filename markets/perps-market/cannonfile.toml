@@ -13,11 +13,18 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.version %>"
 
+[setting.synthetixPreset]
+defaultValue = "main"
+
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>"
 
+[setting.salt]
+defaultValue = 'snax'
+
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
@@ -25,20 +32,17 @@ source = "<%= settings.spotMarketPackage %>"
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
-[contract.CollateralModule]
-artifact = "CollateralModule"
-
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
 
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
-[contract.LimitOrderModule]
-artifact = "LimitOrderModule"
+[contract.PerpsMarketModule]
+artifact = "PerpsMarketModule"
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
@@ -59,6 +63,9 @@ abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
+[contract.GlobalPerpsMarketModule]
+artifact = "GlobalPerpsMarketModule"
+
 # Core
 [router.PerpsMarketRouter]
 contracts = [
@@ -67,31 +74,31 @@ contracts = [
   "CoreModule",
   "PerpsMarketFactoryModule",
   "PerpsAccountModule",
-  "AtomicOrderModule",
+  "PerpsMarketModule",
   "AsyncOrderModule",
-  "CollateralModule",
+  "AsyncOrderSettlementModule",
   "FeatureFlagModule",
-  "LimitOrderModule",
   "LiquidationModule",
-  "MarketConfigurationModule"
+  "MarketConfigurationModule",
+  "GlobalPerpsMarketModule"
 ]
 depends = [
   "import.synthetix",
   "contract.CoreModule",
   "contract.PerpsMarketFactoryModule",
-  "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
   "contract.PerpsAccountModule",
-  "contract.CollateralModule",
+  "contract.PerpsMarketModule",
   "contract.FeatureFlagModule",
-  "contract.LimitOrderModule",
   "contract.LiquidationModule",
-  "contract.MarketConfigurationModule"
+  "contract.MarketConfigurationModule",
+  "contract.GlobalPerpsMarketModule"
 ]
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]
-fromCall.func= "owner"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.PerpsMarketRouter.address %>"]
 factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
@@ -148,4 +155,10 @@ target = ["PerpsMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
+depends = ['invoke.setSynthetix']
+
+[invoke.initializeFactory]
+target = ["PerpsMarketProxy"]
+func = "initializeFactory"
+from = "<%= settings.owner %>"
 depends = ['invoke.setSynthetix']

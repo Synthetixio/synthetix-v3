@@ -6,9 +6,18 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
+    using AsyncOrder for AsyncOrder.Data;
+
+    function metadata(
+        uint128 marketId
+    ) external view override returns (string memory name, string memory symbol) {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        return (market.name, market.symbol);
+    }
 
     function skew(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).skew;
@@ -19,26 +28,47 @@ contract PerpsMarketModule is IPerpsMarketModule {
     }
 
     function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
-        return PerpsMarketConfiguration.load(marketId).maxMarketValue;
+        return PerpsMarketConfiguration.load(marketId).maxMarketSize;
     }
 
     function currentFundingRate(uint128 marketId) external view override returns (int) {
         return PerpsMarket.load(marketId).currentFundingRate();
     }
 
+    function currentFundingVelocity(uint128 marketId) external view override returns (int) {
+        return PerpsMarket.load(marketId).currentFundingVelocity();
+    }
+
     function indexPrice(uint128 marketId) external view override returns (uint) {
         return PerpsPrice.getCurrentPrice(marketId);
     }
 
-    function fillPrice(uint128 marketId) external override returns (uint) {
-        // To get the current fill price we pass in size 0
-        int sizeToUse = 0;
+    function fillPrice(
+        uint128 marketId,
+        int orderSize,
+        uint price
+    ) external view override returns (uint) {
         return
             AsyncOrder.calculateFillPrice(
                 PerpsMarket.load(marketId).skew,
                 PerpsMarketConfiguration.load(marketId).skewScale,
-                sizeToUse,
-                PerpsPrice.getCurrentPrice(marketId)
+                orderSize,
+                price
             );
+    }
+
+    function getMarketSummary(
+        uint128 marketId
+    ) external view override returns (MarketSummary memory summary) {
+        PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        return
+            MarketSummary({
+                skew: market.skew,
+                size: market.size,
+                maxOpenInterest: this.maxOpenInterest(marketId),
+                currentFundingRate: market.currentFundingRate(),
+                currentFundingVelocity: market.currentFundingVelocity(),
+                indexPrice: this.indexPrice(marketId)
+            });
     }
 }

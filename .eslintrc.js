@@ -12,11 +12,8 @@ module.exports = {
     Promise: 'readonly',
   },
   plugins: ['progress', 'no-only-tests'],
-  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 12,
-    tsconfigRootDir: __dirname,
-    project: ['./tsconfig.eslint.json'],
   },
   ignorePatterns: ['/*.js'],
   rules: {
@@ -33,8 +30,9 @@ module.exports = {
     {
       files: ['**/*.ts'],
       extends: ['plugin:@typescript-eslint/recommended'],
+      parser: '@typescript-eslint/parser',
       parserOptions: {
-        project: ['./tsconfig.json'],
+        project: ['./tsconfig.eslint.json'],
       },
       rules: {
         '@typescript-eslint/no-floating-promises': 'error',
@@ -51,6 +49,28 @@ module.exports = {
       ],
       env: {
         mocha: true,
+      },
+    },
+
+    {
+      files: [
+        'protocol/synthetix/subgraph/**/*',
+        'markets/spot-market/subgraph/**/*',
+        'markets/perps-market/subgraph/**/*',
+      ],
+      env: {},
+      globals: {
+        changetype: true,
+        i32: true,
+        i64: true,
+        assert: true,
+      },
+      rules: {
+        'prefer-const': 'off',
+        '@typescript-eslint/ban-ts-comment': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/ban-types': 'off',
+        '@typescript-eslint/no-array-constructor': 'off',
       },
     },
   ],

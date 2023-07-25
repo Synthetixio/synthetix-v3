@@ -51,7 +51,8 @@ library Vault {
         /**
          * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */
-        int128 prevTotalDebtD18;
+        // solhint-disable-next-line var-name-mixedcase
+        int128 _unused_prevTotalDebtD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -84,16 +85,14 @@ library Vault {
     function updateCreditCapacity(
         Data storage self,
         uint256 collateralPriceD18
-    ) internal returns (uint256 usdWeightD18, int256 totalDebtD18, int256 deltaDebtD18) {
+    ) internal view returns (uint256 usdWeightD18, int256 totalDebtD18) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         usdWeightD18 = (epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18);
 
         totalDebtD18 = epochData.totalDebt();
 
-        deltaDebtD18 = totalDebtD18 - self.prevTotalDebtD18;
-
-        self.prevTotalDebtD18 = totalDebtD18.to128();
+        //self.prevTotalDebtD18 = totalDebtD18.to128();
     }
 
     /**

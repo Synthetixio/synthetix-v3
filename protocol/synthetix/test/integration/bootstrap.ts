@@ -1,6 +1,7 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../generated/typechain';
@@ -14,6 +15,7 @@ export interface Proxies {
   CoreProxy: CoreProxy;
   USDProxy: USDProxy;
   CollateralMock: CollateralMock;
+  Collateral2Mock: CollateralMock;
   ['oracle_manager.Proxy']: OracleManagerProxy;
 }
 
@@ -22,6 +24,7 @@ export interface Systems {
   Core: CoreProxy;
   USD: USDProxy;
   CollateralMock: CollateralMock;
+  Collateral2Mock: CollateralMock;
   OracleManager: OracleManagerProxy;
 }
 
@@ -41,6 +44,7 @@ export function bootstrap() {
       USD: getContract('USDProxy'),
       OracleManager: getContract('oracle_manager.Proxy'),
       CollateralMock: getContract('CollateralMock'),
+      Collateral2Mock: getContract('Collateral2Mock'),
     } as Systems;
   });
 
@@ -114,3 +118,5 @@ export function bootstrapWithMockMarketAndPool() {
     restore,
   };
 }
+
+export const bn = (n: number) => wei(n).toBN();
