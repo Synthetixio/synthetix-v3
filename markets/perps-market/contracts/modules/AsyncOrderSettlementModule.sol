@@ -38,6 +38,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
     int256 public constant PRECISION = 18;
 
+    /**
+     * @inheritdoc IAsyncOrderSettlementModule
+     */
     function settle(uint128 marketId, uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
@@ -48,6 +51,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         _settleOffchain(order, settlementStrategy);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderSettlementModule
+     */
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
@@ -78,6 +84,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
 
+    /**
+     * @dev used for settleing offchain orders. This will revert with OffchainLookup.
+     */
     function _settleOffchain(
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
@@ -102,16 +111,17 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         );
     }
 
+    /**
+     * @dev used for settleing an order.
+     */
     function _settleOrder(
         uint256 price,
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
         SettleOrderRuntime memory runtime;
-
         runtime.accountId = asyncOrder.accountId;
         runtime.marketId = asyncOrder.marketId;
-
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
         (
@@ -120,55 +130,53 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             uint fillPrice,
             Position.Data storage oldPosition
         ) = asyncOrder.validateOrder(settlementStrategy, price);
-
         runtime.newPositionSize = newPosition.size;
+        runtime.sizeDelta = asyncOrder.sizeDelta;
 
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        runtime.factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
+
         // use fill price to calculate realized pnl
         (runtime.pnl, , , ) = oldPosition.getPnl(fillPrice);
-
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
+
         if (runtime.pnl > 0) {
-            factory.synthetix.withdrawMarketUsd(runtime.marketId, address(this), runtime.pnlUint);
-            perpsAccount.addCollateralAmount(SNX_USD_MARKET_ID, runtime.pnlUint);
+            perpsAccount.updateCollateralAmount(SNX_USD_MARKET_ID, runtime.pnl);
         } else if (runtime.pnl < 0) {
-            perpsAccount.deductFromAccount(runtime.pnlUint);
-            runtime.amountToDeposit = runtime.pnlUint;
-            // all gets deposited below with fees
+            runtime.amountToDeduct = runtime.pnlUint;
         }
 
-        // after pnl is realized, update position on the perps market, this will also update the position.
+        // after pnl is realized, update position
         PerpsMarket.MarketUpdateData memory updateData = PerpsMarket
             .loadValid(runtime.marketId)
             .updatePositionData(runtime.accountId, newPosition);
+        perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
+
         emit MarketUpdated(
             updateData.marketId,
+            price,
             updateData.skew,
             updateData.size,
-            updateData.sizeDelta,
+            runtime.sizeDelta,
             updateData.currentFundingRate,
             updateData.currentFundingVelocity
         );
 
-        perpsAccount.updatePositionMarkets(runtime.marketId, runtime.newPositionSize);
-        perpsAccount.deductFromAccount(totalFees);
-
+        // since margin is deposited, as long as the owed collateral is deducted
+        // fees are realized by the stakers
+        perpsAccount.deductFromAccount(runtime.amountToDeduct + totalFees);
         runtime.settlementReward = settlementStrategy.settlementReward;
-        runtime.amountToDeposit += totalFees - runtime.settlementReward;
+
         if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.usdToken.transfer(msg.sender, runtime.settlementReward);
+            runtime.factory.synthetix.withdrawMarketUsd(
+                runtime.factory.perpsMarketId,
+                msg.sender,
+                runtime.settlementReward
+            );
         }
 
-        if (runtime.amountToDeposit > 0) {
-            // deposit into market manager
-            factory.depositToMarketManager(runtime.marketId, runtime.amountToDeposit);
-        }
-
-        // exctracted from asyncOrder before order is reset
-        runtime.trackingCode = asyncOrder.trackingCode;
-
+        // trader can now commit a new order
         asyncOrder.reset();
 
         // emit event
@@ -177,29 +185,36 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.accountId,
             fillPrice,
             runtime.pnl,
+            runtime.sizeDelta,
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            runtime.trackingCode,
+            asyncOrder.trackingCode,
             msg.sender
         );
     }
 
+    /**
+     * @dev performs the order validity checks (existance and timing).
+     */
     function _performOrderValidityChecks(
         uint128 marketId,
         uint128 accountId
     ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
-        AsyncOrder.Data storage order = PerpsMarket.loadValid(marketId).asyncOrders[accountId];
+        AsyncOrder.Data storage order = AsyncOrder.loadValid(accountId, marketId);
+
         SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
             .load(marketId)
             .settlementStrategies[order.settlementStrategyId];
 
-        order.checkValidity();
         order.checkWithinSettlementWindow(settlementStrategy);
 
         return (order, settlementStrategy);
     }
 
+    /**
+     * @dev converts the settlement time into bytes8.
+     */
     function _getTimeInBytes(uint256 settlementTime) private pure returns (bytes8) {
         bytes32 settlementTimeBytes = bytes32(abi.encode(settlementTime));
 
@@ -207,7 +222,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         return bytes8(settlementTimeBytes << 192);
     }
 
-    // borrowed from PythNode.sol
+    /**
+     * @dev gets scaled price. Borrowed from PythNode.sol.
+     */
     function _getScaledPrice(int64 price, int32 expo) private pure returns (int256) {
         int256 factor = PRECISION + expo;
         return factor > 0 ? price.upscale(factor.toUint()) : price.downscale((-factor).toUint());

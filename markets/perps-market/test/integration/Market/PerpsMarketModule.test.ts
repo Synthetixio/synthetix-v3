@@ -14,7 +14,7 @@ describe('PerpsMarketModule', () => {
     marketTokenPrice: bn(1000),
   };
 
-  const { systems, perpsMarkets, marketOwner, provider, trader2, keeper } = bootstrapMarkets({
+  const { systems, perpsMarkets, owner, provider, trader2, keeper } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Ether',
@@ -25,6 +25,7 @@ describe('PerpsMarketModule', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 50,
         name: 'Ether',
         token: 'snxETH',
         price: fixture.marketTokenPrice,
@@ -85,7 +86,7 @@ describe('PerpsMarketModule', () => {
     describe('skewScale 0', () => {
       const restoreSkewScale = snapshotCheckpoint(provider);
       before('set skewScale to 0', async () => {
-        await systems().PerpsMarket.connect(marketOwner()).setFundingParameters(marketId, 0, 0);
+        await systems().PerpsMarket.connect(owner()).setFundingParameters(marketId, 0, 0);
       });
       it('should return the index price', async () => {
         const price = await systems().PerpsMarket.fillPrice(marketId, bn(1), bn(1000));

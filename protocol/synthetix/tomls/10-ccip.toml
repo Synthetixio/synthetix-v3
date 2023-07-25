@@ -23,7 +23,7 @@ source = "<%= settings.snx_package %>"
 [invoke.register_ccip]
 target = ["system.CoreProxy"]
 from = "<%= settings.owner %>"
-func = "registerCcip"
+func = "configureChainlinkCrossChain"
 args = [
   "<%= settings.ccip_send_address %>",
   "<%= settings.ccip_recv_address %>",

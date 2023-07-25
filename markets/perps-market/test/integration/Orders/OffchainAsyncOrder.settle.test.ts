@@ -24,6 +24,7 @@ describe('Settle Offchain Async Order test', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
@@ -45,7 +46,7 @@ describe('Settle Offchain Async Order test', () => {
       it('reverts if market id is incorrect', async () => {
         await assertRevert(
           systems().PerpsMarket.connect(trader1()).settle(1337, 2),
-          'InvalidMarket("1337")'
+          'OrderNotValid()'
         );
       });
 
@@ -88,7 +89,7 @@ describe('Settle Offchain Async Order test', () => {
           systems()
             .PerpsMarket.connect(keeper())
             .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
-          'InvalidMarket("1337")'
+          'OrderNotValid()'
         );
       });
 
@@ -385,7 +386,7 @@ describe('Settle Offchain Async Order test', () => {
           it('emits event settle event', async () => {
             const accountId = 2;
             const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
-            const pnl = 0;
+            const sizeDelta = bn(1);
             const newPositionSize = bn(1);
             const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
             const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
@@ -395,7 +396,8 @@ describe('Settle Offchain Async Order test', () => {
               ethMarketId,
               accountId,
               fillPrice,
-              pnl,
+              0,
+              sizeDelta,
               newPositionSize,
               totalFees,
               settlementReward,
@@ -410,6 +412,7 @@ describe('Settle Offchain Async Order test', () => {
           });
 
           it('emits market updated event', async () => {
+            const price = bn(1000);
             const marketSize = bn(1);
             const marketSkew = bn(1);
             const sizeDelta = bn(1);
@@ -421,6 +424,7 @@ describe('Settle Offchain Async Order test', () => {
             });
             const params = [
               ethMarketId,
+              price,
               marketSkew,
               marketSize,
               sizeDelta,

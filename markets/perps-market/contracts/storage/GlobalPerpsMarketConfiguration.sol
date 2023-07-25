@@ -3,9 +3,9 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {MathUtil} from "../utils/MathUtil.sol";
 
-/*
-    Note: This library contains all global perps market configuration data
-*/
+/**
+ * @title This library contains all global perps market configuration data
+ */
 library GlobalPerpsMarketConfiguration {
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarketConfiguration"));

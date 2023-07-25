@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
@@ -32,12 +32,12 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "^3.1.3",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/builder": "^2.4.16",
+    "@usecannon/builder": "^2.4.20",
     "ethers": "^5.7.2",
     "hardhat": "2.15.0",
     "solidity-ast": "0.4.46",
     "solidity-docgen": "0.6.0-beta.35",
     "ts-node": "10.9.1"
   },
-  "gitHead": "6ad3588038432a2015409633fe7d0dc641f54a27"
+  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862"
 }

@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity ^0.8.7;
 
 import "../../interfaces/IUSDTokenModule.sol";
-import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol";
+import "../../storage/CrossChain.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
@@ -16,10 +17,6 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
-    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
-
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 
     /**
@@ -79,6 +76,20 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @inheritdoc IUSDTokenModule
      */
+    function burn(uint256 amount) external {
+        if (
+            msg.sender != OwnableStorage.getOwner() &&
+            msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
+        ) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
+        _burn(msg.sender, amount);
+    }
+
+    /**
+     * @inheritdoc IUSDTokenModule
+     */
     function burnWithAllowance(address from, address spender, uint256 amount) external {
         OwnableStorage.onlyOwner();
 
@@ -91,37 +102,6 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         erc20.allowance[from][spender] -= amount;
 
         _burn(from, amount);
-    }
-
-    /**
-     * @inheritdoc IUSDTokenModule
-     */
-    function transferCrossChain(
-        uint256 destChainId,
-        address to,
-        uint256 amount
-    ) external returns (uint256 feesPaid) {
-        AssociatedSystem.load(_CCIP_CHAINLINK_SEND).expectKind(AssociatedSystem.KIND_UNMANAGED);
-
-        IERC20[] memory tokens = new IERC20[](1);
-        tokens[0] = IERC20(address(this));
-
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = amount;
-
-        IEVM2AnySubscriptionOnRampRouterInterface(AssociatedSystem.load(_CCIP_CHAINLINK_SEND).proxy)
-            .ccipSend(
-                destChainId,
-                IEVM2AnySubscriptionOnRampRouterInterface.EVM2AnySubscriptionMessage(
-                    abi.encode(to), // Address of the receiver on the destination chain for EVM chains use abi.encode(destAddress).
-                    "", // Bytes that we wish to send to the receiver
-                    tokens, // The ERC20 tokens we wish to send for EVM source chains
-                    amounts, // The amount of ERC20 tokens we wish to send for EVM source chains
-                    _TRANSFER_GAS_LIMIT // the gas limit for the call to the receiver for destination chains
-                )
-            );
-
-        return (0);
     }
 
     /**

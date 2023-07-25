@@ -51,6 +51,7 @@ library Vault {
         /**
          * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */
+        // solhint-disable-next-line var-name-mixedcase
         int128 _unused_prevTotalDebtD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
