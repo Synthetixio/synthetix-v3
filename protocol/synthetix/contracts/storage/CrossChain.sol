@@ -28,6 +28,7 @@ library CrossChain {
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
+        uint64 mothershipChainId;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -86,6 +87,62 @@ library CrossChain {
     function onlyCrossChain() internal view {
         if (msg.sender != address(this)) {
             revert AccessError.Unauthorized(msg.sender);
+        }
+    }
+
+    function transmit(
+        Data storage self,
+        uint64 chainId,
+        bytes memory data,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
+        uint64[] memory chains = new uint64[](1);
+        chains[0] = chainId;
+        return broadcast(self, chains, data, gasLimit);
+    }
+
+    /**
+     * @dev Sends a message to one or more chains
+     */
+    function broadcast(
+        Data storage self,
+        uint64[] memory chains,
+        bytes memory data,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
+        ICcipRouterClient router = self.ccipRouter;
+
+        CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
+            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
+            data, // Data payload
+            new CcipClient.EVMTokenAmount[](0), // Token transfers
+            address(0), // Address of feeToken. address(0) means you will send msg.value.
+            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
+        );
+
+        for (uint i = 0; i < chains.length; i++) {
+            if (chains[i] == block.chainid) {
+                (bool success, bytes memory result) = address(this).call(data);
+
+                if (!success) {
+                    uint256 len = result.length;
+                    assembly {
+                        revert(result, len)
+                    }
+                }
+            } else {
+                uint64 chainSelector = self.ccipChainIdToSelector[chains[i]];
+                uint256 fee = router.getFee(chainSelector, sentMsg);
+
+                // need to check sufficient fee here or else the error is very confusing
+                if (address(this).balance < fee) {
+                    revert InsufficientCcipFee(fee, address(this).balance);
+                }
+
+                router.ccipSend{value: fee}(chainSelector, sentMsg);
+
+                gasTokenUsed += fee;
+            }
         }
     }
 

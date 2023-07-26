@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/main/contracts/storage/CrossChain.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../submodules/election/ElectionSchedule.sol";
 import "../../submodules/election/ElectionCredentials.sol";
@@ -22,6 +24,17 @@ contract BaseElectionModule is
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
     using SafeCastU256 for uint256;
+
+    uint256 private constant _BROADCAST_GAS_LIMIT = 100000;
+
+    /// @dev Used to allow certain functions to only be configured on the "mothership" chain.
+    modifier onlyMothership() {
+        if (CrossChain.load().mothershipChainId != block.chainid.to64()) {
+            revert NotMothership();
+        }
+
+        _;
+    }
 
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
@@ -96,6 +109,29 @@ contract BaseElectionModule is
 
     function _isInitialized() internal view override returns (bool) {
         return Council.load().initialized;
+    }
+
+    function configureMothership(uint64 mothershipChainId) external returns (uint256 gasTokenUsed) {
+        OwnableStorage.onlyOwner();
+
+        if (mothershipChainId == 0) {
+            revert ParameterError.InvalidParameter("mothershipChainId", "must be nonzero");
+        }
+
+        CrossChain.Data storage cc = CrossChain.load();
+        gasTokenUsed = cc.broadcast(
+            cc.supportedNetworks,
+            abi.encodeWithSelector(this._recvConfigureMothership.selector, mothershipChainId),
+            _BROADCAST_GAS_LIMIT
+        );
+    }
+
+    function _recvConfigureMothership(uint64 mothershipChainId) external {
+        CrossChain.onlyCrossChain();
+
+        CrossChain.load().mothershipChainId = mothershipChainId;
+
+        emit MothershipChainIdUpdated(mothershipChainId);
     }
 
     function tweakEpochSchedule(
@@ -250,23 +286,31 @@ contract BaseElectionModule is
         emit NominationWithdrawn(msg.sender, Council.load().lastElectionId);
     }
 
-    /// TODO: Cross-chain voting;
-    /// i.e. you vote on the chain you're LPing on, it sends a message to a mothership deployment to tabulate,
-    /// and then it sends a message back at the end of the period to all the chains to transfer NFTs.
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
-    ///
-    // * if im the mothership -> call recv on self; dop same thig but ccipSend call
-    /// * _recvCast func is a majority of  the actual code that was in cast before; is would take user and voting power and tally up based on that info
-    // * configure mothership func
-    /// * on tally, if not mothership, revert; else do the final tally and distribute NFTs ( in seprate recvEvaluation func and check if mothership self/broadcast msg via CCIP)
-
-    /// * election module provisioned with CREATE2
-
-    //// for next voting period, we'll support v2x voting power through merkle tree; reuse existing code and then disable merkle tree later on when were moved over to v3
-
     function cast(
         address[] calldata candidates
     ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
+        uint64 myChainId = block.chainid.to64();
+
+        CrossChain.Data storage cc = CrossChain.load();
+
+        if (cc.mothershipChainId != myChainId) {
+            cc.broadcast(
+                cc.supportedNetworks,
+                abi.encodeWithSelector(
+                    this._recvConfigureMothership.selector,
+                    cc.mothershipChainId
+                ),
+                _BROADCAST_GAS_LIMIT
+            );
+        } else {
+            this._recvCast(candidates);
+        }
+    }
+
+    function _recvCast(
+        address[] calldata candidates
+    ) external onlyInPeriod(Council.ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
 
         if (votePower == 0) revert NoVotePower();
@@ -318,6 +362,9 @@ contract BaseElectionModule is
             emit ElectionEvaluated(currentEpochIndex, totalBallots);
         }
     }
+
+    // TODO: _recvEvaluation func and check if mothership self or broadcast msg via CCIP
+    // if not mothership, revert; else do the final tally and distribute NFTs
 
     /// @dev Burns previous NFTs and mints new ones
     function resolve() public virtual override onlyInPeriod(Council.ElectionPeriod.Evaluation) {

@@ -25,6 +25,7 @@ contract ElectionBase {
     error AlreadyACouncilMember();
     error NotACouncilMember();
     error InvalidMinimumActiveMembers();
+    error NotMothership();
 
     // ---------------------------------------
     // Events
@@ -68,4 +69,5 @@ contract ElectionBase {
     event ElectionEvaluated(uint indexed epochIndex, uint totalBallots);
     event ElectionBatchEvaluated(uint indexed epochIndex, uint evaluatedBallots, uint totalBallots);
     event EmergencyElectionStarted(uint indexed epochIndex);
+    event MothershipChainIdUpdated(uint indexed mothershipChainId);
 }
