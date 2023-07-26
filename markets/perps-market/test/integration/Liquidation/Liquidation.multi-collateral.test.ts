@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import { calculatePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 
-describe('Liquidation - multi collateral', async () => {
+describe.only('Liquidation - multi collateral', async () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -65,34 +65,38 @@ describe('Liquidation - multi collateral', async () => {
     },
   ];
 
-  const { systems, provider, trader1, synthMarkets, keeper, perpsMarkets } = bootstrapMarkets({
-    liquidationGuards: {
-      minLiquidationReward: bn(10),
-      maxLiquidationReward: bn(1000),
-    },
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: bn(30_000),
-        sellPrice: bn(30_000),
+  const { systems, provider, trader1, synthMarkets, keeper, superMarketId, perpsMarkets } =
+    bootstrapMarkets({
+      liquidationGuards: {
+        minLiquidationReward: bn(10),
+        maxLiquidationReward: bn(1000),
       },
-      {
-        name: 'Ethereum',
-        token: 'snxETH',
-        buyPrice: bn(2000),
-        sellPrice: bn(2000),
-      },
-    ],
-    perpsMarkets: perpsMarketConfigs,
-    traderAccountIds: [2, 3],
-  });
+      synthMarkets: [
+        {
+          name: 'Bitcoin',
+          token: 'snxBTC',
+          buyPrice: bn(30_000),
+          sellPrice: bn(30_000),
+        },
+        {
+          name: 'Ethereum',
+          token: 'snxETH',
+          buyPrice: bn(2000),
+          sellPrice: bn(2000),
+        },
+      ],
+      perpsMarkets: perpsMarketConfigs,
+      traderAccountIds: [2, 3],
+    });
 
-  let btcSynth: SynthMarkets[number], ethSynth: SynthMarkets[number];
+  let btcSynth: SynthMarkets[number],
+    ethSynth: SynthMarkets[number],
+    startingWithdrawableUsd: ethers.BigNumber;
 
   before('identify actors', async () => {
     btcSynth = synthMarkets()[0];
     ethSynth = synthMarkets()[1];
+    startingWithdrawableUsd = await systems().Core.getWithdrawableMarketUsd(superMarketId());
   });
 
   before('add collateral to margin', async () => {
@@ -221,6 +225,68 @@ describe('Liquidation - multi collateral', async () => {
           systems().PerpsMarket
         );
       });
+    });
+
+    it('sold all market collateral for usd', async () => {
+      assertBn.equal(
+        await systems().Core.getMarketCollateralAmount(superMarketId(), btcSynth.synthAddress()),
+        bn(0)
+      );
+
+      assertBn.equal(
+        await systems().Core.getMarketCollateralAmount(superMarketId(), ethSynth.synthAddress()),
+        bn(0)
+      );
+    });
+
+    // all collateral is still in the core system
+    it('has correct market usd', async () => {
+      // $14_000 total collateral value
+      // $1000 paid to liquidation reward
+      assertBn.near(
+        await systems().Core.getWithdrawableMarketUsd(superMarketId()),
+        startingWithdrawableUsd.add(bn(13_000)),
+        bn(0.00001)
+      );
+    });
+  });
+
+  // sanity check to ensure trader can add margin and open new positions after full account liquidation
+  describe('account can open new position', () => {
+    before('set btc price back to 30000', async () => {
+      await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(30000));
+    });
+
+    before('add margin', async () => {
+      await depositCollateral({
+        systems,
+        trader: trader1,
+        accountId: () => 2,
+        collaterals: [
+          {
+            synthMarket: () => ethSynth,
+            snxUSDAmount: () => bn(4000),
+          },
+        ],
+      });
+    });
+
+    before('open new position', async () => {
+      await openPosition({
+        systems,
+        provider,
+        trader: trader1(),
+        accountId: 2,
+        keeper: trader1(),
+        marketId: perpsMarkets()[0].marketId(),
+        sizeDelta: bn(-1),
+        settlementStrategyId: perpsMarkets()[0].strategyId(),
+        price: perpsMarketConfigs[0].price,
+      });
+    });
+
+    it('has correct open interest', async () => {
+      assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), bn(30_000));
     });
   });
 });
