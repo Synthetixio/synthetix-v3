@@ -24,7 +24,6 @@ contract ElectionBase {
     error ChangesCurrentPeriod();
     error AlreadyACouncilMember();
     error NotACouncilMember();
-    error InvalidMinimumActiveMembers();
 
     // ---------------------------------------
     // Events
@@ -42,15 +41,14 @@ contract ElectionBase {
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
     );
-    event MinimumEpochDurationsChanged(
-        uint64 minNominationPeriodDuration,
-        uint64 minVotingPeriodDuration,
-        uint64 minEpochDuration
+    event ElectionSettingsUpdated(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
+        uint64 maxDateAdjustmentTolerance
     );
-    event MaxDateAdjustmentToleranceChanged(uint64 tolerance);
-    event DefaultBallotEvaluationBatchSizeChanged(uint size);
-    event NextEpochSeatCountChanged(uint8 seatCount);
-    event MinimumActiveMembersChanged(uint8 minimumActiveMembers);
     event CandidateNominated(address indexed candidate, uint indexed epochIndex);
     event NominationWithdrawn(address indexed candidate, uint indexed epochIndex);
     event VoteRecorded(

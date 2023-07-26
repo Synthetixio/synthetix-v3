@@ -70,6 +70,12 @@ library Council {
         return ElectionSettings.load(self.lastElectionId - 1);
     }
 
+    function getNextElectionSettings(
+        Data storage self
+    ) internal view returns (ElectionSettings.Data storage settings) {
+        return ElectionSettings.load(self.lastElectionId + 1);
+    }
+
     /// @dev Determines the current period type according to the current time and the epoch's dates
     function getCurrentPeriod(Data storage self) internal view returns (Council.ElectionPeriod) {
         Epoch.Data storage epoch = getCurrentElection(self).epoch;

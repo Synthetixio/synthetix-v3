@@ -213,13 +213,12 @@ library Election {
 // @custom:artifact contracts/storage/ElectionSettings.sol:ElectionSettings
 library ElectionSettings {
     struct Data {
-        uint8 nextEpochSeatCount;
+        uint8 epochSeatCount;
         uint8 minimumActiveMembers;
-        uint64 minEpochDuration;
-        uint64 minNominationPeriodDuration;
-        uint64 minVotingPeriodDuration;
+        uint64 epochDuration;
+        uint64 nominationPeriodDuration;
+        uint64 votingPeriodDuration;
         uint64 maxDateAdjustmentTolerance;
-        uint defaultBallotEvaluationBatchSize;
     }
     function load(uint epochIndex) internal pure returns (Data storage settings) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.ElectionSettings", epochIndex));
@@ -242,4 +241,14 @@ library Epoch {
 // @custom:artifact contracts/submodules/election/ElectionCredentials.sol:ElectionCredentials
 contract ElectionCredentials {
     bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
+}
+
+// @custom:artifact contracts/submodules/election/ElectionSettingsManager.sol:ElectionSettingsManager
+contract ElectionSettingsManager {
+    uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1;
+}
+
+// @custom:artifact contracts/submodules/election/ElectionTally.sol:ElectionTally
+contract ElectionTally {
+    uint16 private constant _DEFAULT_EVALUATION_BATCH_SIZE = 500;
 }

@@ -1,6 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {Epoch} from "../storage/Epoch.sol";
+import {ElectionSettings} from "../storage/ElectionSettings.sol";
+
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
     // ---------------------------------------
@@ -10,11 +13,12 @@ interface IElectionModule {
     /// @notice Initializes the module and immediately starts the first epoch
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 minimumActiveMembers,
         uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
-        uint64 epochEndDate
+        uint64 epochEndDate,
+        uint64 maxDateAdjustmentTolerance
     ) external;
 
     /// @notice Shows whether the module has been initialized
@@ -31,31 +35,15 @@ interface IElectionModule {
         uint64 newEpochEndDate
     ) external;
 
-    /// @notice Adjusts the current epoch schedule requiring that the current period remains Administration
-    function modifyEpochSchedule(
-        uint64 newNominationPeriodStartDate,
-        uint64 newVotingPeriodStartDate,
-        uint64 newEpochEndDate
+    /// @notice Adjust settings that will be used on next epoch
+    function setNextElectionSettings(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
+        uint64 maxDateAdjustmentTolerance
     ) external;
-
-    /// @notice Determines minimum values for epoch schedule adjustments
-    function setMinEpochDurations(
-        uint64 newMinNominationPeriodDuration,
-        uint64 newMinVotingPeriodDuration,
-        uint64 newMinEpochDuration
-    ) external;
-
-    /// @notice Determines adjustment size for tweakEpochSchedule
-    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
-
-    /// @notice Determines batch size when evaluate() is called with numBallots = 0
-    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external;
-
-    /// @notice Determines the number of council members in the next epoch
-    function setNextEpochSeatCount(uint8 newSeatCount) external;
-
-    /// @notice Determines the minimum number of council members before triggering an emergency election
-    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external;
 
     /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
     function dismissMembers(address[] calldata members) external;
@@ -86,42 +74,20 @@ interface IElectionModule {
     // View functions
     // ---------------------------------------
 
-    /// @notice Exposes minimum durations required when adjusting epoch schedules
-    function getMinEpochDurations()
+    /// @notice Shows the current epoch schedule dates
+    function getEpochSchedule() external view returns (Epoch.Data memory epoch);
+
+    /// @notice Shows the settings for the current election
+    function getElectionSettings() external view returns (ElectionSettings.Data memory settings);
+
+    /// @notice Shows the settings for the next election
+    function getNextElectionSettings()
         external
         view
-        returns (
-            uint64 minNominationPeriodDuration,
-            uint64 minVotingPeriodDuration,
-            uint64 minEpochDuration
-        );
-
-    /// @notice Exposes maximum size of adjustments when calling tweakEpochSchedule
-    function getMaxDateAdjustmenTolerance() external view returns (uint64);
-
-    /// @notice Shows the default batch size when calling evaluate() with numBallots = 0
-    function getDefaultBallotEvaluationBatchSize() external view returns (uint);
-
-    /// @notice Shows the number of council members that the next epoch will have
-    function getNextEpochSeatCount() external view returns (uint8);
-
-    /// @notice Returns the minimum active members that the council needs to avoid an emergency election
-    function getMinimumActiveMembers() external view returns (uint8);
+        returns (ElectionSettings.Data memory settings);
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
     function getEpochIndex() external view returns (uint);
-
-    /// @notice Returns the date in which the current epoch started
-    function getEpochStartDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the current epoch will end
-    function getEpochEndDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the Nomination period in the current epoch will start
-    function getNominationPeriodStartDate() external view returns (uint64);
-
-    /// @notice Returns the date in which the Voting period in the current epoch will start
-    function getVotingPeriodStartDate() external view returns (uint64);
 
     /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
     function getCurrentPeriod() external view returns (uint);
