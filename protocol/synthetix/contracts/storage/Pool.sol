@@ -6,6 +6,7 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
+import "./PoolCollateralConfiguration.sol";
 import "./SystemPoolConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
@@ -47,6 +48,11 @@ library Pool {
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
+
+    /**
+     * @dev Thrown when pool has surpassed max collateral deposit
+     */
+    error SurpassedPoolMaxCollateralDeposit(uint128 poolId, address collateralType, uint256 currentCollateral, uint256 maxCollateral);
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
@@ -113,6 +119,8 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
     }
 
     /**
@@ -505,6 +513,21 @@ library Pool {
                 // solhint-disable-next-line numcast/safe-cast
                 uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
             );
+        }
+    }
+
+    function requireSufficientCollateralCapacity(
+        Data storage self,
+        address collateralType,
+        uint256 collateralAmountD18
+    ) internal view {
+        uint256 maxDeposit = self.collateralConfigurations[collateralType].maxDepositD18;
+
+        if (
+            maxDeposit > 0 &&
+            self.vaults[collateralType].currentCollateral() + collateralAmountD18 > maxDeposit
+        ) {
+            revert SurpassedPoolMaxCollateralDeposit(self.id, collateralType, self.vaults[collateralType].currentCollateral() + collateralAmountD18, self.collateralConfigurations[collateralType].maxDepositD18);
         }
     }
 }

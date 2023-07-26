@@ -197,6 +197,13 @@ contract PoolModule is IPoolModule {
         emit PoolConfigurationSet(poolId, newMarketConfigurations, msg.sender);
     }
 
+    function setPoolCollateralConfiguration(uint128 poolId, address collateralType, PoolCollateralConfiguration.Data memory newConfig) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        pool.collateralConfigurations[collateralType] = newConfig;
+    }
+
     /**
      * @inheritdoc IPoolModule
      */

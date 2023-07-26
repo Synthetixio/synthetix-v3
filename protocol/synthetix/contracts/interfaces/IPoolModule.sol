@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../storage/MarketConfiguration.sol";
+import "../storage/PoolCollateralConfiguration.sol";
 
 /**
  * @title Module for the creation and management of pools.
@@ -98,6 +99,14 @@ interface IPoolModule {
         uint128 poolId,
         MarketConfiguration.Data[] memory marketDistribution
     ) external;
+
+    /**
+     * @notice Allows the pool owner to set the configuration of a specific collateral type for their pool.
+     * @param poolId The id of the pool whose configuration is being set.
+     * @param collateralType The collate
+     * @param newConfig The config to set
+     */
+    function setPoolCollateralConfiguration(uint128 poolId, address collateralType, PoolCollateralConfiguration.Data memory newConfig) external;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.

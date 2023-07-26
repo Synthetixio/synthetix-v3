@@ -85,6 +85,11 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18 - currentCollateralAmount
             );
 
+            Pool.loadExisting(poolId).requireSufficientCollateralCapacity(
+                collateralType,
+                newCollateralAmountD18 - currentCollateralAmount
+            );
+
             // if decreasing delegation amount, ensure min time has elapsed
         } else {
             Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
