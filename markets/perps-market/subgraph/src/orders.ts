@@ -45,6 +45,7 @@ export function handleOrderCommitted(event: OrderCommittedEvent): void {
   // create OrderCommitted entity
   let orderCommitted = new OrderCommitted(orderCommittedId);
 
+  orderCommitted.timestamp = event.block.timestamp;
   orderCommitted.marketId = event.params.marketId;
   orderCommitted.accountId = event.params.accountId;
   orderCommitted.orderType = event.params.orderType;
@@ -91,6 +92,7 @@ export function handleOrderSettled(event: OrderSettledEvent): void {
 
   // create OrderSettled entity
   let orderSettled = new OrderSettled(orderSettledId);
+  orderSettled.timestamp = event.block.timestamp;
   orderSettled.marketId = event.params.marketId;
   orderSettled.accountId = event.params.accountId;
   orderSettled.fillPrice = event.params.fillPrice;
@@ -114,6 +116,7 @@ export function handleMarketUpdated(event: MarketUpdatedEvent): void {
 
   let marketUpdated = new MarketUpdated(id);
 
+  marketUpdated.timestamp = event.block.timestamp;
   marketUpdated.marketId = event.params.marketId;
   marketUpdated.skew = event.params.skew;
   marketUpdated.size = event.params.size;

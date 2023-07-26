@@ -68,6 +68,7 @@ type SettlementStrategy @entity {
 # raw events
 type OrderCommitted @entity {
   id: ID!
+  timestamp: BigInt!
   marketId: BigInt!
   accountId: BigInt!
   orderType: Int!
@@ -81,6 +82,7 @@ type OrderCommitted @entity {
 
 type OrderSettled @entity {
   id: ID!
+  timestamp: BigInt!
   marketId: BigInt!
   accountId: BigInt!
   fillPrice: BigInt!
@@ -94,6 +96,7 @@ type OrderSettled @entity {
 
 type MarketUpdated @entity {
   id: ID!
+  timestamp: BigInt!
   marketId: BigInt!
   skew: BigInt!
   size: BigInt!
