@@ -13,9 +13,18 @@ contract MockExternalNode is IExternalNode {
 
     function process(
         NodeOutput.Data[] memory,
-        bytes memory
+        bytes memory,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
     ) external view override returns (NodeOutput.Data memory) {
-        return output;
+        NodeOutput.Data memory theOutput = output;
+
+        for (uint256 i = 0; i < runtimeKeys.length; i++) {
+            if (runtimeKeys[i] == "overridePrice") {
+                theOutput.price = int256(uint256(runtimeValues[i]));
+            }
+        }
+        return theOutput;
     }
 
     function isValid(
