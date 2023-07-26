@@ -340,7 +340,8 @@ library PerpsAccount {
 
     function liquidatePosition(
         Data storage self,
-        uint128 marketId
+        uint128 marketId,
+        uint256 price
     )
         internal
         returns (
@@ -353,20 +354,33 @@ library PerpsAccount {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
         Position.Data storage position = perpsMarket.positions[self.id];
 
+        perpsMarket.recomputeFunding(price);
+
         int128 oldPositionSize = position.size;
         amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
 
         int128 amtToLiquidationInt = amountToLiquidate.toInt();
         // reduce position size
-        position.size = oldPositionSize > 0
+        newPositionSize = oldPositionSize > 0
             ? oldPositionSize - amtToLiquidationInt
             : oldPositionSize + amtToLiquidationInt;
 
+        // create new position in case of partial liquidation
+        Position.Data memory newPosition;
+        if (newPositionSize != 0) {
+            newPosition = Position.Data({
+                marketId: marketId,
+                latestInteractionPrice: price.to128(),
+                latestInteractionFunding: perpsMarket.lastFundingValue.to128(),
+                size: newPositionSize
+            });
+        }
+
         // update position markets
-        updateOpenPositions(self, marketId, position.size);
+        updateOpenPositions(self, marketId, newPositionSize);
 
         // update market data
-        marketUpdateData = perpsMarket.updateMarketSizes(oldPositionSize, position.size);
+        marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
         sizeDelta = position.size - oldPositionSize;
 
         return (amountToLiquidate, position.size, sizeDelta, marketUpdateData);

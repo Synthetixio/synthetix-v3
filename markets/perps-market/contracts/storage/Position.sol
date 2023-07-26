@@ -26,7 +26,7 @@ library Position {
         int128 latestInteractionFunding;
     }
 
-    function updatePosition(Data storage self, Data memory newPosition) internal {
+    function update(Data storage self, Data memory newPosition) internal {
         self.size = newPosition.size;
         self.marketId = newPosition.marketId;
         self.latestInteractionPrice = newPosition.latestInteractionPrice;

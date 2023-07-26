@@ -70,7 +70,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 int128 newPositionSize,
                 int128 sizeDelta,
                 PerpsMarket.MarketUpdateData memory marketUpdateData
-            ) = account.liquidatePosition(positionMarketId);
+            ) = account.liquidatePosition(positionMarketId, price);
 
             emit MarketUpdated(
                 positionMarketId,
