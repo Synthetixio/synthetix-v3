@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import { calculatePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 
-describe.only('Liquidation - multi collateral', async () => {
+describe('Liquidation - multi collateral', async () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
