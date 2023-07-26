@@ -17,3 +17,8 @@ export function calculateFillPrice(skew: Wei, skewScale: Wei, size: Wei, price: 
 
   return priceBefore.add(priceAfter).div(2);
 }
+
+export function calculatePnl(startingSkew: Wei, skewScale: Wei, size: Wei, startingPrice: Wei) {
+  const fillPrice = calculateFillPrice(startingSkew, skewScale, size, startingPrice);
+  return startingPrice.sub(fillPrice).mul(size);
+}

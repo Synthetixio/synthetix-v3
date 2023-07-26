@@ -4,8 +4,10 @@ import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
+import { calculateFillPrice, calculatePnl } from '../helpers/fillPrice';
+import { wei } from '@synthetixio/wei';
 
-describe('Liquidation - multi collateral', async () => {
+describe.only('Liquidation - multi collateral', async () => {
   const perpsMarketConfigs = [
     {
       requestedMarketId: 50,
@@ -112,7 +114,7 @@ describe('Liquidation - multi collateral', async () => {
   });
 
   // sanity check
-  it('has correct total collaterl value', async () => {
+  it('has correct total collateral value', async () => {
     assertBn.near(
       await systems().PerpsMarket.totalCollateralValue(2),
       bn(10_000 + 4000),
@@ -158,15 +160,21 @@ describe('Liquidation - multi collateral', async () => {
     });
 
     [
-      { size: bn(-1), pnl: bn(-150) }, // btc
-      { size: bn(20), pnl: bn(-400) }, // eth
-      { size: bn(2000), pnl: bn(-100) }, // link
-    ].forEach(({ size, pnl }, i) => {
+      { size: bn(-1) }, // btc
+      { size: bn(20) }, // eth
+      { size: bn(2000) }, // link
+    ].forEach(({ size }, i) => {
       it(`should have correct position for ${perpsMarketConfigs[i].token}`, async () => {
         const [positionPnl, , positionSize] = await systems().PerpsMarket.getOpenPosition(
           2,
           perpsMarkets()[i].marketId()
         );
+        const pnl = calculatePnl(
+          wei(0),
+          wei(perpsMarketConfigs[i].fundingParams.skewScale),
+          wei(size),
+          wei(perpsMarketConfigs[i].price)
+        ).toBN();
         assertBn.equal(positionPnl, pnl);
         assertBn.equal(positionSize, size);
       });
@@ -174,7 +182,7 @@ describe('Liquidation - multi collateral', async () => {
   });
 
   describe('make account liquidatable', () => {
-    before(`change eth price`, async () => {
+    before('change perps token price', async () => {
       await perpsMarkets()[0].aggregator().mockSetCurrentPrice(bn(31000)); // btc
       await perpsMarkets()[1].aggregator().mockSetCurrentPrice(bn(1625)); // eth
       await perpsMarkets()[2].aggregator().mockSetCurrentPrice(bn(3)); // link
@@ -196,7 +204,7 @@ describe('Liquidation - multi collateral', async () => {
     it('emits account liquidated event', async () => {
       await assertEvent(
         liquidateTxn,
-        `AccountLiquidated(2, ${bn(1000)}, true)`,
+        `AccountLiquidated(2, ${bn(1000)}, true)`, // max liquidation reward $1000
         systems().PerpsMarket
       );
     });

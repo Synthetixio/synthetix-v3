@@ -15,7 +15,7 @@ export type PerpsMarket = {
 export type PerpsMarkets = Array<PerpsMarket>;
 
 export type PerpsMarketData = Array<{
-  requestedMarketId: ethers.BigNumber;
+  requestedMarketId: ethers.BigNumber | number;
   name: string;
   token: string;
   price: ethers.BigNumber;
@@ -180,7 +180,7 @@ export const bootstrapPerpsMarkets = (
       });
 
       return {
-        marketId: () => marketId,
+        marketId: () => (isNumber(marketId) ? ethers.BigNumber.from(marketId) : marketId),
         aggregator: () => aggregator,
         strategyId: () => strategyId,
       };
@@ -198,3 +198,5 @@ export const bootstrapPerpsMarkets = (
     poolId: r.poolId,
   };
 };
+
+const isNumber = (n: ethers.BigNumber | number): n is number => typeof n === 'number' && !isNaN(n);
