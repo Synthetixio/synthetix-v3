@@ -131,11 +131,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             }
 
             int reportedDebt = totalCollateralValue.toInt() + totalDebt;
-            if (reportedDebt < 0) {
-                return 0;
-            } else {
-                return reportedDebt.toUint();
-            }
+            return reportedDebt < 0 ? 0 : reportedDebt.toUint();
         }
 
         // TODO Should revert if perpsMarketId is not correct???
