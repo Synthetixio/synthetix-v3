@@ -310,8 +310,11 @@ library AsyncOrder {
             order.marketId
         );
 
+        uint256 newSkew = SkewTriggerTraunche.calculateNewSkew(marketId, skew, order.sizeDelta);
+
         runtime.fillPrice = PriceUtil.calculateFillPrice(
             perpsMarketData.skew,
+            newSkew,
             marketConfig.skewScale,
             order.sizeDelta,
             orderPrice
