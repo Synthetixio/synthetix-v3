@@ -44,12 +44,13 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     }
 
     function liquidateFlagged() external override {
-        SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
+        uint256[] memory liquidatableAccounts = GlobalPerpsMarket
             .load()
-            .liquidatableAccounts;
+            .liquidatableAccounts
+            .values();
 
-        for (uint i = 0; i < liquidatableAccounts.length(); i++) {
-            uint128 accountId = liquidatableAccounts.valueAt(i).to128();
+        for (uint i = 0; i < liquidatableAccounts.length; i++) {
+            uint128 accountId = liquidatableAccounts[i].to128();
             _liquidateAccount(PerpsAccount.load(accountId));
         }
     }
