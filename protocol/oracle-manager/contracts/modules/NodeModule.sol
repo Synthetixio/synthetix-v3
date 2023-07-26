@@ -70,11 +70,11 @@ contract NodeModule is INodeModule {
     /**
      * @inheritdoc INodeModule
      */
-    function processWithRuntime(bytes32 nodeId, bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues)
-        external
-        view
-        returns (NodeOutput.Data memory node)
-    {
+    function processWithRuntime(
+        bytes32 nodeId,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) external view returns (NodeOutput.Data memory node) {
         return _process(nodeId, runtimeKeys, runtimeValues);
     }
 
@@ -146,7 +146,11 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns the output of a specified node.
      */
-    function _process(bytes32 nodeId, bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) internal view returns (NodeOutput.Data memory price) {
+    function _process(
+        bytes32 nodeId,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) internal view returns (NodeOutput.Data memory price) {
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.load(nodeId);
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {

@@ -21,6 +21,7 @@ contract MockExternalNode is IExternalNode {
 
         for (uint256 i = 0; i < runtimeKeys.length; i++) {
             if (runtimeKeys[i] == "overridePrice") {
+                // solhint-disable-next-line numcast/safe-cast
                 theOutput.price = int256(uint256(runtimeValues[i]));
             }
         }

@@ -318,10 +318,12 @@ describe('VaultModule', function () {
       before('set pool limit', async () => {
         await systems()
           .Core.connect(owner)
-          .setPoolCollateralConfiguration(poolId, collateralAddress(), { maxDepositD18: depositAmount.div(2) });
+          .setPoolCollateralConfiguration(poolId, collateralAddress(), {
+            maxDepositD18: depositAmount.div(2),
+          });
       });
 
-      it.only('fails when pool does not allow sufficient deposit amount', async () => {
+      it('fails when pool does not allow sufficient deposit amount', async () => {
         await assertRevert(
           systems()
             .Core.connect(user1)
@@ -332,7 +334,9 @@ describe('VaultModule', function () {
               depositAmount.mul(2),
               ethers.utils.parseEther('1')
             ),
-          `SurpassedPoolMaxCollateralDeposit("${poolId}", "${collateralAddress()}", "${depositAmount.mul(2).toString()}", "${depositAmount.div(2).toString()}")`,
+          `SurpassedPoolMaxCollateralDeposit("${poolId}", "${collateralAddress()}", "${depositAmount
+            .mul(2)
+            .toString()}", "${depositAmount.div(2).toString()}")`,
           systems().Core
         );
       });

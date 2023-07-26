@@ -57,11 +57,7 @@ describe('ExternalNode', function () {
 
     // Register the mock
     const NodeParameters = abi.encode(['address'], [ValidExternalNode.address]);
-    const tx = await NodeModule.registerNode(
-      NodeTypes.EXTERNAL,
-      NodeParameters,
-      []
-    );
+    const tx = await NodeModule.registerNode(NodeTypes.EXTERNAL, NodeParameters, []);
     const receipt = await tx.wait();
     const event = findSingleEvent({
       receipt,
@@ -74,7 +70,11 @@ describe('ExternalNode', function () {
     assert.equal(event.args.parameters, NodeParameters);
 
     // Verify the node processes output as expected
-    const output = await NodeModule.processWithRuntime(nodeId, [ethers.utils.formatBytes32String('overridePrice')], [ethers.utils.hexZeroPad(ethers.BigNumber.from('100').toHexString(), 32)]);
+    const output = await NodeModule.processWithRuntime(
+      nodeId,
+      [ethers.utils.formatBytes32String('overridePrice')],
+      [ethers.utils.hexZeroPad(ethers.BigNumber.from('100').toHexString(), 32)]
+    );
     assertBn.equal(output.price, ethers.BigNumber.from('100'));
     assertBn.equal(output.timestamp, timestamp);
   });

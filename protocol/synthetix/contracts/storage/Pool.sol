@@ -52,7 +52,12 @@ library Pool {
     /**
      * @dev Thrown when pool has surpassed max collateral deposit
      */
-    error SurpassedPoolMaxCollateralDeposit(uint128 poolId, address collateralType, uint256 currentCollateral, uint256 maxCollateral);
+    error SurpassedPoolMaxCollateralDeposit(
+        uint128 poolId,
+        address collateralType,
+        uint256 currentCollateral,
+        uint256 maxCollateral
+    );
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
@@ -119,7 +124,6 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-
         mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
     }
 
@@ -527,7 +531,12 @@ library Pool {
             maxDeposit > 0 &&
             self.vaults[collateralType].currentCollateral() + collateralAmountD18 > maxDeposit
         ) {
-            revert SurpassedPoolMaxCollateralDeposit(self.id, collateralType, self.vaults[collateralType].currentCollateral() + collateralAmountD18, self.collateralConfigurations[collateralType].maxDepositD18);
+            revert SurpassedPoolMaxCollateralDeposit(
+                self.id,
+                collateralType,
+                self.vaults[collateralType].currentCollateral() + collateralAmountD18,
+                self.collateralConfigurations[collateralType].maxDepositD18
+            );
         }
     }
 }

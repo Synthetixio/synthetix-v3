@@ -82,5 +82,9 @@ interface INodeModule {
      * @param runtimeValues The values used by the node graph
      * @return node The node's output data
      */
-    function processWithRuntime(bytes32 nodeId, bytes32[] memory runtimeKeys, bytes32[] memory runtimeValues) external view returns (NodeOutput.Data memory node);
+    function processWithRuntime(
+        bytes32 nodeId,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) external view returns (NodeOutput.Data memory node);
 }

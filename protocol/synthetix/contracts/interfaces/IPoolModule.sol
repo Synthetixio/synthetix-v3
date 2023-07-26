@@ -106,7 +106,11 @@ interface IPoolModule {
      * @param collateralType The collate
      * @param newConfig The config to set
      */
-    function setPoolCollateralConfiguration(uint128 poolId, address collateralType, PoolCollateralConfiguration.Data memory newConfig) external;
+    function setPoolCollateralConfiguration(
+        uint128 poolId,
+        address collateralType,
+        PoolCollateralConfiguration.Data memory newConfig
+    ) external;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
