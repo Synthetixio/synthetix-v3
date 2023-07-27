@@ -98,6 +98,12 @@ library PerpsMarket {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
+        // this would only be 0 if fees or skew scale are configured to be 0.
+        // in that case, (very unlikely), allow full liquidation
+        if (maxLiquidationAmountPerSecond == 0) {
+            return requestedLiquidationAmount.to128();
+        }
+
         uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
         uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
 
@@ -142,10 +148,13 @@ library PerpsMarket {
     ) internal returns (MarketUpdateData memory) {
         Position.Data storage oldPosition = self.positions[accountId];
         int128 oldPositionSize = oldPosition.size;
+        int128 newPositionSize = newPosition.size;
 
-        updateMarketSizes(self, newPosition.size, oldPositionSize);
-        oldPosition.updatePosition(newPosition);
-        // TODO add current market debt
+        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPositionSize - oldPositionSize;
+
+        oldPosition.update(newPosition);
+
         return
             MarketUpdateData(
                 self.id,
@@ -154,15 +163,6 @@ library PerpsMarket {
                 self.lastFundingRate,
                 currentFundingVelocity(self)
             );
-    }
-
-    function updateMarketSizes(
-        Data storage self,
-        int128 newPositionSize,
-        int128 oldPositionSize
-    ) internal {
-        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
-        self.skew += newPositionSize - oldPositionSize;
     }
 
     function recomputeFunding(
