@@ -73,10 +73,9 @@ export const genBootstrap = (nMarkets: number = 1) => {
     },
     // TODO: Consider not wrapping maxLeverage, maxMarketSize, maxFundingVelocity etc. with bn(...).
     markets: genListOf(nMarkets, () => {
-      const initialPrice = bn(genInt(100, 1000));
       const market = {
         name: ethers.utils.formatBytes32String(genMarketName()),
-        initialPrice,
+        initialPrice: bn(genInt(1, 1000)),
         specific: {
           oracleNodeId: genBytes32(),
           pythPriceFeedId: genBytes32(),
@@ -101,11 +100,20 @@ export const genOrder = (
   margin: BigNumber,
   maxLeverage: BigNumber,
   minMarginUSd: BigNumber,
-  oraclePrice: BigNumber
+  oraclePrice: BigNumber,
+  options?: Partial<{ minLeverage: number; maxLeveragePercentage: number }>
 ) => {
   const keeperFeeBufferUsd = bn(genInt(1, 5));
   const sizeDelta1xLeverage = wei(margin.sub(keeperFeeBufferUsd).sub(minMarginUSd)).div(oraclePrice);
-  const leverage = genFloat(0.5, wei(maxLeverage).toNumber());
+
+  // Use 75% of maxLeverage to avoid reaching maxLeverage due to fees such as (orderFees, keeperFees etc.)
+  const leverage = genFloat(
+    options?.minLeverage ?? 0.5,
+    wei(maxLeverage)
+      .mul(options?.maxLeveragePercentage ?? 0.75)
+      .toNumber()
+  );
+
   const sizeDelta = genOneOf([sizeDelta1xLeverage.mul(leverage), sizeDelta1xLeverage.mul(leverage).mul(-1)]);
 
   // Set a limit price that is between 1-5% within the oracle price.

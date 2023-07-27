@@ -14,7 +14,7 @@ import type { IMarketConfigurationModule } from './generated/typechain/MarketCon
 import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
-import { bn } from './generators';
+import { bn, genInt } from './generators';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
@@ -106,12 +106,17 @@ export const bootstrap = (args: BootstrapArgs) => {
   // Create a pool which makes `args.markets.length` with all equal weighting.
   const stakedPool = createStakedPool(core, args.pool.initialCollateralPrice);
 
-  let hasConfiguredGlobally = false;
+  before('configure global market', async () => {
+    const tx = await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
+    await tx.wait();
+  });
+
   const markets = args.markets.map(({ name, initialPrice, specific }) => {
     const readableName = utils.parseBytes32String(name);
     let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
 
-    before(`provision price oracle nodes - ${readableName}`, async () => {
+    before(`provision market price oracle nodes - ${readableName}`, async () => {
+      // The market has its own price e.g. ETH/USD. This oracle node is for that.
       const { oracleNodeId: nodeId, aggregator: agg } = await createOracleNode(
         getOwner(),
         initialPrice,
@@ -123,31 +128,28 @@ export const bootstrap = (args: BootstrapArgs) => {
 
     before(`provision market - ${readableName}`, async () => {
       marketId = await systems.PerpMarketProxy.callStatic.createMarket({ name });
-      await systems.PerpMarketProxy.createMarket({ name });
+      const tx = await systems.PerpMarketProxy.createMarket({ name });
+      await tx.wait();
     });
 
     before(`delegate pool collateral to market - ${name}`, async () => {
-      await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, [
+      const tx = await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, [
         {
           marketId,
           weightD18: utils.parseEther('1'),
           maxDebtShareValueD18: utils.parseEther('1'),
         },
       ]);
-    });
-
-    before('configure global market', async () => {
-      if (!hasConfiguredGlobally) {
-        await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
-      }
+      await tx.wait();
     });
 
     before(`configure market - ${readableName}`, async () => {
-      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
+      const tx = await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
         ...specific,
         // Override the generic supplied oracleNodeId with the one that was just created.
         oracleNodeId,
       });
+      await tx.wait();
     });
 
     return {
@@ -157,11 +159,12 @@ export const bootstrap = (args: BootstrapArgs) => {
     };
   });
 
-  const configureMarketCollateral = async () => {
+  // Overall market allows up to n collaterals, each having their own oracle node.
+  const configureCollateral = async () => {
     const collaterals = [
-      { contract: systems.CollateralMock, initialPrice: bn(1), max: bn(10_000_000) },
-      { contract: systems.Collateral2Mock, initialPrice: bn(1), max: bn(999_999) },
-      { contract: systems.Collateral3Mock, initialPrice: bn(1000), max: bn(100_000) },
+      { contract: systems.CollateralMock, initialPrice: bn(genInt(25, 100)), max: bn(10_000_000) },
+      { contract: systems.Collateral2Mock, initialPrice: bn(genInt(1, 10)), max: bn(999_999) },
+      { contract: systems.Collateral3Mock, initialPrice: bn(genInt(1000, 5000)), max: bn(100_000) },
     ];
     const collateralTypes = collaterals.map(({ contract }) => contract.address);
     const owner = getOwner();
@@ -170,7 +173,8 @@ export const bootstrap = (args: BootstrapArgs) => {
     for (const { initialPrice, contract } of collaterals) {
       // Update core system to allow this collateral to be deposited for all provisioned markets.
       for (const market of markets) {
-        await systems.Core.connect(owner).configureCollateral({
+        // Ensure core system recognises this collateral.
+        let tx = await systems.Core.connect(owner).configureCollateral({
           tokenAddress: contract.address,
           oracleNodeId: market.oracleNodeId(),
           issuanceRatioD18: bn(1),
@@ -179,11 +183,15 @@ export const bootstrap = (args: BootstrapArgs) => {
           minDelegationD18: bn(1),
           depositingEnabled: true,
         });
-        await systems.Core.connect(owner).configureMaximumMarketCollateral(
+        await tx.wait();
+
+        // Ensure core system has enough capacity to deposit this collateral for market x.
+        tx = await systems.Core.connect(owner).configureMaximumMarketCollateral(
           market.marketId(),
           contract.address,
           constants.MaxUint256
         );
+        await tx.wait();
       }
 
       collateralOracles.push(await createOracleNode(owner, initialPrice, systems.OracleManager));
@@ -193,11 +201,12 @@ export const bootstrap = (args: BootstrapArgs) => {
     const maxAllowables = collaterals.map(({ max }) => max);
 
     // Allow this collateral to be depositable into the perp market.
-    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
+    const tx = await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
       collateralTypes,
       oracleNodeIds,
       maxAllowables
     );
+    await tx.wait();
 
     return collaterals.map((collateral, idx) => ({
       ...collateral,
@@ -205,10 +214,10 @@ export const bootstrap = (args: BootstrapArgs) => {
       aggregator: () => collateralOracles[idx].aggregator,
     }));
   };
-  let marketCollaterals: Awaited<ReturnType<typeof configureMarketCollateral>>;
+  let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
 
-  before('configure market collaterals', async () => {
-    marketCollaterals = await configureMarketCollateral();
+  before('configure collaterals and their prices', async () => {
+    collaterals = await configureCollateral();
   });
 
   let keeper: Signer;
@@ -250,7 +259,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     keeper: () => keeper,
     restore,
     markets: () => markets,
-    collaterals: () => marketCollaterals,
+    collaterals: () => collaterals,
     pool: () => ({
       id: stakedPool.poolId,
       stakerAccountId: stakedPool.accountId,
