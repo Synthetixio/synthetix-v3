@@ -9,7 +9,7 @@ import { wei } from '@synthetixio/wei';
 import { OpenPositionData, openPosition } from '../helpers';
 
 const sUSDSynthId = 0;
-describe.only('ModifyCollateral Withdraw', () => {
+describe('ModifyCollateral Withdraw', () => {
   const accountIds = [10, 20];
   const oneBTC = wei(1);
   const marginAmount = wei(10_000);
@@ -252,22 +252,25 @@ describe.only('ModifyCollateral Withdraw', () => {
     describe('allow withdraw when its less than collateral available for withdraw', () => {
       const restore = snapshotCheckpoint(provider);
 
+      let initialMarginReq: ethers.BigNumber;
+
       before('withdraw allowed amount', async () => {
-        const [initialMarginReq] = await systems()
+        [initialMarginReq] = await systems()
           .PerpsMarket.connect(trader1())
           .getRequiredMargins(trader1AccountId);
         // available margin = collateral value + pnl = $19000
+        const withdrawAmt = bn(19_000).sub(initialMarginReq).mul(-1);
 
         await systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-17000));
+          .modifyCollateral(trader1AccountId, sUSDSynthId, withdrawAmt);
       });
       after(restore);
 
       it('has correct available margin', async () => {
         assertBn.equal(
           await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
-          bn(2000) // collateral value  + pnl =  (20000 - 17000) + -1000
+          initialMarginReq
         );
       });
     });
@@ -287,7 +290,7 @@ describe.only('ModifyCollateral Withdraw', () => {
           systems()
             .PerpsMarket.connect(trader1())
             .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18000)),
-          `InsufficientCollateralAvailableForWithdraw("${bn(17000)}", "${bn(18000)}")`
+          `InsufficientCollateralAvailableForWithdraw("${bn(15000)}", "${bn(18000)}")`
         );
       });
 
