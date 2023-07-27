@@ -10,7 +10,6 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
@@ -170,9 +169,6 @@ library Position {
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!positionDecreasing) {
-            console.log("remMargin_OOOOOO");
-            console.logInt(_remainingMargin);
-
             // Again, to deal with positions at minMarginUsd, we add back to fee (keeper and order) because
             // position may never be able to open on the first trade due to fees deducted on entry.
             //
@@ -240,20 +236,27 @@ library Position {
     function getCollateralUsd(Position.Data storage self) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
-
-        uint256 collateralValueUsd = 0;
-        uint256 length = globalCollateralConfig.availableAddresses.length;
         PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(self.accountId, self.marketId);
 
-        PerpCollateral.CollateralType memory currentCollateral;
+        // A running total to track the value of deposited collateral.
+        uint256 collateralValueUsd;
+
+        // Total available supported collaterals by market.
+        uint256 length = globalCollateralConfig.supportedAddresses.length;
+
+        // Current mutative collateral type we're iterating over (address and internal obj).
         address currentCollateralType;
+        PerpCollateral.CollateralType memory currentCollateral;
+
         for (uint256 i = 0; i < length; ) {
-            currentCollateralType = globalCollateralConfig.availableAddresses[i];
-            currentCollateral = globalCollateralConfig.available[currentCollateralType];
+            currentCollateralType = globalCollateralConfig.supportedAddresses[i];
+            currentCollateral = globalCollateralConfig.supported[currentCollateralType];
+
             uint256 price = INodeModule(globalConfig.oracleManager)
                 .process(currentCollateral.oracleNodeId)
                 .price
                 .toUint();
+
             collateralValueUsd += accountCollaterals.available[currentCollateralType] * price;
             unchecked {
                 i++;

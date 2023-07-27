@@ -4,11 +4,19 @@ pragma solidity >=0.8.11 <0.9.0;
 interface IPerpAccountModule {
     // --- Structs --- //
 
+    struct DepositedCollateral {
+        address collateralType;
+        uint256 available;
+        uint256 oraclePrice;
+    }
+
     struct AccountDigest {
         uint128 accountId;
+        uint128 marketId;
+        IPerpAccountModule.DepositedCollateral[] depositedCollateral;
+
         // TODO: Include for details
         //
-        // Deposited collateral and the price of each
         // Any open positions associated with this account
         // Any pending orders associated with this account
     }

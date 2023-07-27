@@ -45,14 +45,14 @@ contract MarketCollateralModule is IMarketCollateralModule {
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 availableAmount = accountCollaterals.available[collateralType];
 
-        PerpCollateral.CollateralType storage collateral = globalCollateralConfig.available[collateralType];
-        if (collateral.oracleNodeId == "") {
+        PerpCollateral.CollateralType storage collateral = globalCollateralConfig.supported[collateralType];
+        uint256 maxAllowable = collateral.maxAllowable;
+        if (maxAllowable == 0) {
             revert UnsupportedCollateral(collateralType);
         }
 
         if (amountDelta > 0) {
             // Positive means to deposit into the markets.
-            uint256 maxAllowable = collateral.maxAllowable;
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (availableAmount + absAmountDelta > maxAllowable) {
@@ -62,6 +62,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
             accountCollaterals.available[collateralType] += absAmountDelta;
             IERC20(collateralType).transferFrom(msg.sender, address(this), absAmountDelta);
             globalConfig.synthetix.depositMarketCollateral(marketId, collateralType, absAmountDelta);
+
             emit Transfer(msg.sender, address(this), absAmountDelta);
         } else if (amountDelta < 0) {
             // Negative means to withdraw from the markets.
@@ -75,10 +76,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
             // If an open position exists, verify this does _not_ place them into instant liquidation.
             Position.Data storage position = market.positions[accountId];
-            if (position.size != 0) {
-                if (position.canLiquidate(market.getOraclePrice())) {
-                    revert ErrorUtil.CanLiquidatePosition(accountId);
-                }
+            if (position.size != 0 && position.canLiquidate(market.getOraclePrice())) {
+                revert ErrorUtil.CanLiquidatePosition(accountId);
             }
 
             globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, absAmountDelta);
@@ -101,13 +100,13 @@ contract MarketCollateralModule is IMarketCollateralModule {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        PerpCollateral.GlobalData storage config = PerpCollateral.load();
+        PerpCollateral.GlobalData storage globalPerpConfig = PerpCollateral.load();
 
         // Clear existing collateral configuration to be replaced with new.
-        uint256 existingCollateralLength = config.availableAddresses.length;
+        uint256 existingCollateralLength = globalPerpConfig.supportedAddresses.length;
         for (uint256 i = 0; i < existingCollateralLength; ) {
-            address collateralType = config.availableAddresses[i];
-            delete config.available[collateralType];
+            address collateralType = globalPerpConfig.supportedAddresses[i];
+            delete globalPerpConfig.supported[collateralType];
 
             // Revoke access after wiping collateral from supported market collateral.
             //
@@ -119,11 +118,11 @@ contract MarketCollateralModule is IMarketCollateralModule {
                 i++;
             }
         }
-        delete config.availableAddresses;
+        delete globalPerpConfig.supportedAddresses;
 
         // Update with passed in configuration.
         uint256 newCollateralLength = collateralTypes.length;
-        address[] memory newAvailableAddresses = new address[](newCollateralLength);
+        address[] memory newSupportedAddresses = new address[](newCollateralLength);
         for (uint256 i = 0; i < newCollateralLength; ) {
             address collateralType = collateralTypes[i];
             if (collateralType == address(0)) {
@@ -134,14 +133,14 @@ contract MarketCollateralModule is IMarketCollateralModule {
             uint128 maxAllowable = maxAllowables[i];
             IERC20(collateralType).approve(address(globalMarketConfig.synthetix), maxAllowable);
             IERC20(collateralType).approve(address(this), maxAllowable);
-            config.available[collateralType] = PerpCollateral.CollateralType(oracleNodeIds[i], maxAllowable);
-            newAvailableAddresses[i] = collateralType;
+            globalPerpConfig.supported[collateralType] = PerpCollateral.CollateralType(oracleNodeIds[i], maxAllowable);
+            newSupportedAddresses[i] = collateralType;
 
             unchecked {
                 i++;
             }
         }
-        config.availableAddresses = newAvailableAddresses;
+        globalPerpConfig.supportedAddresses = newSupportedAddresses;
 
         emit CollateralConfigured(msg.sender, newCollateralLength);
     }
@@ -154,12 +153,12 @@ contract MarketCollateralModule is IMarketCollateralModule {
     function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory collaterals) {
         PerpCollateral.GlobalData storage config = PerpCollateral.load();
 
-        uint256 length = config.availableAddresses.length;
+        uint256 length = config.supportedAddresses.length;
         collaterals = new AvailableCollateral[](length);
 
         for (uint256 i = 0; i < length; ) {
-            address _type = config.availableAddresses[i];
-            PerpCollateral.CollateralType storage c = config.available[_type];
+            address _type = config.supportedAddresses[i];
+            PerpCollateral.CollateralType storage c = config.supported[_type];
             collaterals[i] = AvailableCollateral(_type, c.oracleNodeId, c.maxAllowable);
             unchecked {
                 i++;

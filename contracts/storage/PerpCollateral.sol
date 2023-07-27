@@ -1,7 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
+import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 library PerpCollateral {
+    using SafeCastI256 for int256;
+
     // --- Constants --- //
 
     bytes32 private constant _SLOT_NAMESPACE = keccak256(abi.encode("io.synthetix.bfp-market.PerpCollateral"));
@@ -19,9 +24,9 @@ library PerpCollateral {
 
     struct GlobalData {
         // {collateralAddress: CollateralType}.
-        mapping(address => CollateralType) available;
+        mapping(address => CollateralType) supported;
         // Array of addresses of supported collaterals for iteration.
-        address[] availableAddresses;
+        address[] supportedAddresses;
     }
 
     struct Data {
@@ -43,5 +48,19 @@ library PerpCollateral {
         assembly {
             d.slot := s
         }
+    }
+
+    /**
+     * @dev Returns the latest oracle price for the collateral at `collateralType`.
+     */
+    function getOraclePrice(address collateralType) internal view returns (uint256 price) {
+        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
+        PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
+
+        price = globalMarketConfig
+            .oracleManager
+            .process(globalCollateralConfig.supported[collateralType].oracleNodeId)
+            .price
+            .toUint();
     }
 }
