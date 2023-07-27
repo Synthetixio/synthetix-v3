@@ -6,9 +6,10 @@ export const depositMargin = async (bs: ReturnType<typeof bootstrap>) => {
 
   const { PerpMarketProxy } = systems();
 
+  // Preamble.
   const trader = traders()[0];
   const traderAddress = await trader.signer.getAddress();
-  const market = markets()[0];
+  const market = shuffle(markets())[0];
   const marketId = market.marketId();
   const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
 
@@ -17,7 +18,13 @@ export const depositMargin = async (bs: ReturnType<typeof bootstrap>) => {
   await collateral.approve(PerpMarketProxy.address, amountDelta);
 
   // Perform the deposit.
-  await PerpMarketProxy.connect(trader.signer).transferTo(trader.accountId, marketId, collateral.address, amountDelta);
+  const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+    trader.accountId,
+    marketId,
+    collateral.address,
+    amountDelta
+  );
+  await tx.wait();
 
   return { trader, traderAddress, market, marketId, depositAmountDelta: amountDelta, collateral };
 };
