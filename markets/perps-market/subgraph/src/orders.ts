@@ -10,11 +10,11 @@ import { Order, OrderCommitted, OrderSettled, MarketUpdated } from '../generated
 export function handleOrderCommitted(event: OrderCommittedEvent): void {
   const orderId = event.params.marketId.toString() + '-' + event.params.accountId.toString();
   const orderCommittedId =
-    event.transaction.from.toHex() +
-    '-' +
     event.params.marketId.toString() +
     '-' +
-    event.params.accountId.toString();
+    event.params.accountId.toString() +
+    '-' +
+    event.block.number.toString();
 
   // create Order entity
   let order = Order.load(orderId);
@@ -62,11 +62,11 @@ export function handleOrderCommitted(event: OrderCommittedEvent): void {
 export function handleOrderSettled(event: OrderSettledEvent): void {
   const orderId = event.params.marketId.toString() + '-' + event.params.accountId.toString();
   const orderSettledId =
-    event.transaction.from.toHex() +
-    '-' +
     event.params.marketId.toString() +
     '-' +
-    event.params.accountId.toString();
+    event.params.accountId.toString() +
+    '-' +
+    event.block.number.toString();
 
   // update Order entity
   let order = Order.load(orderId);
