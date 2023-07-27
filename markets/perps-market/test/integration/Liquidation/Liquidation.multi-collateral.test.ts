@@ -4,7 +4,7 @@ import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
-import { calculatePnl } from '../helpers/fillPrice';
+import { calculatePricePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 
 describe('Liquidation - multi collateral', async () => {
@@ -173,7 +173,7 @@ describe('Liquidation - multi collateral', async () => {
           2,
           perpsMarkets()[i].marketId()
         );
-        const pnl = calculatePnl(
+        const pnl = calculatePricePnl(
           wei(0),
           wei(perpsMarketConfigs[i].fundingParams.skewScale),
           wei(size),
