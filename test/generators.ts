@@ -130,5 +130,5 @@ export const genOrder = (
       .mul(1 + genFloat(0.01, 0.05))
       .toBN();
   }
-  return { sizeDelta, limitPrice, leverage, keeperFeeBufferUsd };
+  return { sizeDelta: sizeDelta.toBN(), limitPrice, leverage, keeperFeeBufferUsd };
 };

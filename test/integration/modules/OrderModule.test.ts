@@ -1,11 +1,11 @@
-import { wei } from '@synthetixio/wei';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genInt, genOneOf, genOrder } from '../../generators';
+import { genBootstrap, genOrder } from '../../generators';
 import { depositMargin } from '../../helpers';
 
-describe.only('OrderModule', () => {
+describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, owner, systems, restore } = bs;
+  const { systems, restore, provider } = bs;
 
   beforeEach(restore);
 
@@ -16,6 +16,7 @@ describe.only('OrderModule', () => {
       // Perform the deposit.
       const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
 
+      // Generate a valid order.
       const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
       const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
@@ -26,15 +27,23 @@ describe.only('OrderModule', () => {
         oraclePrice
       );
 
+      // Perform the commitment.
       const tx = await PerpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
         marketId,
-        sizeDelta.toBN(),
+        sizeDelta,
         limitPrice,
         keeperFeeBufferUsd
       );
+      const receipt = await tx.wait();
+      const block = await provider().getBlock(receipt.blockNumber);
 
-      console.log(tx);
+      // NOTE: Partial match, just to confirm the order was successfully emitted.
+      //
+      // The last 2 arguments are fees on the order, which is tested separately. `assertRevert`, despite calling `text.match`
+      // does not allow a regex expression... so this will have to change in the future.
+      const expectedEvent = `OrderSubmitted(${trader.accountId}, ${marketId}, ${sizeDelta}, ${block.timestamp}`;
+      await assertEvent(tx, expectedEvent, PerpMarketProxy);
     });
 
     it('should successfully commit order that completely closes existing position');
