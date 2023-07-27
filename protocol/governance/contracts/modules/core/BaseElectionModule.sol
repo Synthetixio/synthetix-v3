@@ -7,6 +7,7 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/main/contracts/storage/CrossChain.sol";
+import "@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../submodules/election/ElectionSettingsManager.sol";
 import "../../submodules/election/ElectionSchedule.sol";
@@ -21,7 +22,8 @@ contract BaseElectionModule is
     ElectionCredentials,
     ElectionVotes,
     ElectionTally,
-    InitializableMixin
+    InitializableMixin,
+    ProxyStorage
 {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
@@ -82,8 +84,12 @@ contract BaseElectionModule is
             epochEndDate - epochStartDate, // epochDuration
             votingPeriodStartDate - nominationPeriodStartDate, // nominationPeriodDuration
             epochEndDate - votingPeriodStartDate, // votingPeriodDuration
-            maxDateAdjustmentTolerance // maxDateAdjustmentTolerance
+            maxDateAdjustmentTolerance
         );
+
+        // Set current implementation (see UpgradeProposalModule)
+        settings.proposedImplementation = _proxyStore().implementation;
+
         _copyMissingSettings(settings, store.getNextElectionSettings());
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
