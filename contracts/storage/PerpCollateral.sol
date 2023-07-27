@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 
 library PerpCollateral {
     using SafeCastI256 for int256;
@@ -62,5 +63,40 @@ library PerpCollateral {
             .process(globalCollateralConfig.supported[collateralType].oracleNodeId)
             .price
             .toUint();
+    }
+
+    /**
+     * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
+     */
+    function getCollateralUsd(uint128 accountId, uint128 marketId) internal view returns (uint256 collateralValueUsd) {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
+        PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
+
+        // Total available supported collaterals by market.
+        uint256 length = globalCollateralConfig.supportedAddresses.length;
+
+        // Current mutative collateral type we're iterating over (address and internal obj).
+        address currentCollateralType;
+        PerpCollateral.CollateralType memory currentCollateral;
+
+        for (uint256 i = 0; i < length; ) {
+            currentCollateralType = globalCollateralConfig.supportedAddresses[i];
+            currentCollateral = globalCollateralConfig.supported[currentCollateralType];
+
+            // `INodeModule.process()` is an expensive op, skip if we can.
+            uint256 available = accountCollaterals.available[currentCollateralType];
+            if (available > 0) {
+                uint256 price = INodeModule(globalConfig.oracleManager)
+                    .process(currentCollateral.oracleNodeId)
+                    .price
+                    .toUint();
+                collateralValueUsd += available * price;
+            }
+
+            unchecked {
+                i++;
+            }
+        }
     }
 }

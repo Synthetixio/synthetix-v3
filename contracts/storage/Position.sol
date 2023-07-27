@@ -144,14 +144,14 @@ library Position {
         //
         // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
         // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
-        int256 _remainingMargin = getRemainingMargin(currentPosition, params.fillPrice);
-        if (_remainingMargin < 0) {
+        int256 remainingMargin = getRemainingMargin(currentPosition, params.fillPrice);
+        if (currentPosition.size != 0 && remainingMargin < 0) {
             revert InsufficientMargin();
         }
 
         // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liquidations.
-        uint256 _liquidationMargin = getLiquidationMargin(currentPosition, params.fillPrice);
-        if (MathUtil.abs(currentPosition.size) != 0 && _remainingMargin.toUint() <= _liquidationMargin) {
+        uint256 liquidationMargin = getLiquidationMargin(currentPosition, params.fillPrice);
+        if (MathUtil.abs(currentPosition.size) != 0 && remainingMargin.toUint() <= liquidationMargin) {
             revert ErrorUtil.CanLiquidatePosition(accountId);
         }
 
@@ -169,11 +169,12 @@ library Position {
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!positionDecreasing) {
+            uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
             // Again, to deal with positions at minMarginUsd, we add back to fee (keeper and order) because
             // position may never be able to open on the first trade due to fees deducted on entry.
             //
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
-            if (_remainingMargin.toUint() < globalConfig.minMarginUsd) {
+            if (collateralUsd + newPosition.feesIncurredUsd < globalConfig.minMarginUsd) {
                 revert InsufficientMargin();
             }
         }
@@ -206,7 +207,7 @@ library Position {
         //
         // NOTE: maxLeverage is stored as a uint8 but leverage is uint256
         int256 leverage = (newPosition.size * params.fillPrice.toInt()) /
-            (_remainingMargin + fee.toInt() + keeperFee.toInt());
+            (remainingMargin + fee.toInt() + keeperFee.toInt());
         if (marketConfig.maxLeverage < MathUtil.abs(leverage)) {
             revert MaxLeverageExceeded();
         }
@@ -231,42 +232,6 @@ library Position {
     }
 
     /**
-     * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
-     */
-    function getCollateralUsd(Position.Data storage self) internal view returns (uint256) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
-        PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(self.accountId, self.marketId);
-
-        // A running total to track the value of deposited collateral.
-        uint256 collateralValueUsd;
-
-        // Total available supported collaterals by market.
-        uint256 length = globalCollateralConfig.supportedAddresses.length;
-
-        // Current mutative collateral type we're iterating over (address and internal obj).
-        address currentCollateralType;
-        PerpCollateral.CollateralType memory currentCollateral;
-
-        for (uint256 i = 0; i < length; ) {
-            currentCollateralType = globalCollateralConfig.supportedAddresses[i];
-            currentCollateral = globalCollateralConfig.supported[currentCollateralType];
-
-            uint256 price = INodeModule(globalConfig.oracleManager)
-                .process(currentCollateral.oracleNodeId)
-                .price
-                .toUint();
-
-            collateralValueUsd += accountCollaterals.available[currentCollateralType] * price;
-            unchecked {
-                i++;
-            }
-        }
-
-        return collateralValueUsd;
-    }
-
-    /**
      * @dev Return a position's remaining margin.
      *
      * The remaining margin is defined as sum(collateral * price) + PnL + funding in USD.
@@ -275,7 +240,7 @@ library Position {
      * is positive before proceeding with further operations.
      */
     function getRemainingMargin(Position.Data storage self, uint256 price) internal view returns (int256) {
-        int256 margin = getCollateralUsd(self).toInt();
+        int256 margin = PerpCollateral.getCollateralUsd(self.accountId, self.marketId).toInt();
         int256 funding = getAccruedFunding(self, price);
 
         // Calculate this position's PnL
