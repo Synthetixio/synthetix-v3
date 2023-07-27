@@ -29,6 +29,7 @@ contract ElectionModule is
         uint8,
         uint64,
         uint64,
+        uint64,
         uint64
     ) external view override(BaseElectionModule, IElectionModule) {
         OwnableStorage.onlyOwner();
@@ -38,35 +39,38 @@ contract ElectionModule is
     /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 minimumActiveMembers,
         uint8 epochSeatCount,
+        uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint16 votingPeriodDuration,
         uint16 epochDuration,
+        uint16 maxDateAdjustmentTolerance,
         address debtShareContract
     ) external override {
         OwnableStorage.onlyOwner();
 
-        if (Council.load().initialized) {
+        if (_isInitialized()) {
             return;
         }
 
         _setDebtShareContract(debtShareContract);
 
-        if (nominationPeriodStartDate == 0) {
-            nominationPeriodStartDate = block.timestamp.to64() + (86400 * votingPeriodDuration);
-        }
+        uint64 epochStartDate = block.timestamp.to64();
+        uint64 epochEndDate = epochStartDate + (1 days * epochDuration);
+        uint64 votingPeriodStartDate = epochEndDate - (1 days * votingPeriodDuration);
 
-        uint64 votingPeriodStartDate = nominationPeriodStartDate + (86400 * votingPeriodDuration);
-        uint64 epochEndDate = nominationPeriodStartDate + (86400 * epochDuration);
+        if (nominationPeriodStartDate == 0) {
+            nominationPeriodStartDate = votingPeriodStartDate - (1 days * votingPeriodDuration);
+        }
 
         _initOrUpgradeElectionModule(
             firstCouncil,
-            minimumActiveMembers,
             epochSeatCount,
+            minimumActiveMembers,
             nominationPeriodStartDate,
             votingPeriodStartDate,
-            epochEndDate
+            epochEndDate,
+            maxDateAdjustmentTolerance * 1 days
         );
     }
 

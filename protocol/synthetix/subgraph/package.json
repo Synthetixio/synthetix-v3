@@ -34,5 +34,18 @@
     "ethers": "^5.7.2",
     "matchstick-as": "^0.5.2",
     "prettier": "^2.8.8"
+  },
+  "depcheck": {
+    "ignorePatterns": [
+      "build",
+      "deployments",
+      "generated",
+      "src",
+      "tests"
+    ],
+    "ignoreMatches": [
+      "@graphprotocol/graph-ts",
+      "matchstick-as"
+    ]
   }
 }

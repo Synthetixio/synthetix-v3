@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -7,7 +8,6 @@ import {
   takeSnapshot,
 } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { parseBalanceMap } from '@synthetixio/core-utils/utils/merkle-tree/parse-balance-tree';
-import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 import { ElectionPeriod } from '../constants';
@@ -60,11 +60,6 @@ describe('SynthetixElectionModule - Elections', function () {
   });
 
   describe('when the election module is initialized', function () {
-    before('set next epoch seat count to 2', async function () {
-      const tx = await c.CoreProxy.setNextEpochSeatCount(2);
-      await tx.wait();
-    });
-
     it('shows the expected NFT owners', async function () {
       assertBn.equal(await c.CouncilToken.balanceOf(await owner.getAddress()), 1);
       assertBn.equal(await c.CouncilToken.balanceOf(addresses[0]!), 0);
@@ -149,10 +144,8 @@ describe('SynthetixElectionModule - Elections', function () {
           let rx: ethers.ContractReceipt;
 
           before('fast forward', async function () {
-            await fastForwardTo(
-              (await c.CoreProxy.getNominationPeriodStartDate()).toNumber(),
-              getProvider()
-            );
+            const schedule = await c.CoreProxy.getEpochSchedule();
+            await fastForwardTo(schedule.nominationPeriodStartDate.toNumber(), getProvider());
           });
 
           before('simulate debt share data', async function () {
@@ -226,10 +219,8 @@ describe('SynthetixElectionModule - Elections', function () {
               });
 
               before('fast forward', async function () {
-                await fastForwardTo(
-                  (await c.CoreProxy.getVotingPeriodStartDate()).toNumber(),
-                  getProvider()
-                );
+                const schedule = await c.CoreProxy.getEpochSchedule();
+                await fastForwardTo(schedule.votingPeriodStartDate.toNumber(), getProvider());
               });
 
               it('reverts', async function () {
@@ -303,10 +294,8 @@ describe('SynthetixElectionModule - Elections', function () {
 
               describe('when advancing to the voting period', function () {
                 before('fast forward', async function () {
-                  await fastForwardTo(
-                    (await c.CoreProxy.getVotingPeriodStartDate()).toNumber(),
-                    getProvider()
-                  );
+                  const schedule = await c.CoreProxy.getEpochSchedule();
+                  await fastForwardTo(schedule.votingPeriodStartDate.toNumber(), getProvider());
                 });
 
                 it('shows that the current period is Voting', async function () {
@@ -500,10 +489,8 @@ describe('SynthetixElectionModule - Elections', function () {
 
                     describe('when voting ends', function () {
                       before('fast forward', async function () {
-                        await fastForwardTo(
-                          (await c.CoreProxy.getEpochEndDate()).toNumber(),
-                          getProvider()
-                        );
+                        const schedule = await c.CoreProxy.getEpochSchedule();
+                        await fastForwardTo(schedule.endDate.toNumber(), getProvider());
                       });
 
                       it('shows that the current period is Evaluation', async function () {

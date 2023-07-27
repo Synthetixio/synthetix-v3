@@ -19,6 +19,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
         uint64 nominationPeriodStartDate,
         uint16 votingPeriodDuration,
         uint16 epochDuration,
+        uint16 maxDateAdjustmentTolerance,
         address debtShareContract
     ) external;
 
