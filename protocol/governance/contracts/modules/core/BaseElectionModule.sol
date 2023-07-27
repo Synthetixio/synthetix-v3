@@ -118,7 +118,9 @@ contract BaseElectionModule is
         return Council.load().initialized;
     }
 
-    function configureMothership(uint64 mothershipChainId) external returns (uint256 gasTokenUsed) {
+    function configureMothership(
+        uint64 mothershipChainId
+    ) external onlyInPeriod(Council.ElectionPeriod.Administration) returns (uint256 gasTokenUsed) {
         OwnableStorage.onlyOwner();
 
         if (mothershipChainId == 0) {
@@ -278,7 +280,7 @@ contract BaseElectionModule is
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(
         uint numBallots
-    ) external override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Evaluation) onlyMothership {
         Election.Data storage election = Council.load().getCurrentElection();
 
         if (election.evaluated) revert ElectionAlreadyEvaluated();
@@ -300,11 +302,14 @@ contract BaseElectionModule is
         }
     }
 
-    // TODO: _recvEvaluation func and check if mothership self or broadcast msg via CCIP
-    // if not mothership, revert; else do the final tally and distribute NFTs
-
     /// @dev Burns previous NFTs and mints new ones
-    function resolve() public virtual override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
+    function resolve()
+        public
+        virtual
+        override
+        onlyInPeriod(Council.ElectionPeriod.Evaluation)
+        onlyMothership
+    {
         Council.Data storage store = Council.load();
         Election.Data storage election = store.getCurrentElection();
 
@@ -323,6 +328,8 @@ contract BaseElectionModule is
         _initScheduleFromSettings();
 
         emit EpochStarted(newEpochIndex);
+
+        // TODO: Broadcast message to distribute the new NFTs on all chains
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
