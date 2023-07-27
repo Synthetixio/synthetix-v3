@@ -75,13 +75,18 @@ library PerpsAccount {
     )
         internal
         view
-        returns (bool isEligible, int256 availableMargin, uint256 requiredMaintenanceMargin)
+        returns (
+            bool isEligible,
+            int256 availableMargin,
+            uint256 requiredInitialMargin,
+            uint256 requiredMaintenanceMargin
+        )
     {
         availableMargin = getAvailableMargin(self);
         if (self.openPositionMarketIds.length() == 0) {
-            return (false, availableMargin, 0);
+            return (false, availableMargin, 0, 0);
         }
-        requiredMaintenanceMargin = getAccountMaintenanceMargin(self);
+        (requiredInitialMargin, requiredMaintenanceMargin) = getAccountRequiredMargins(self);
         isEligible = requiredMaintenanceMargin.toInt() > availableMargin;
     }
 
@@ -133,7 +138,7 @@ library PerpsAccount {
 
     /**
      * @notice This function validates you have enough margin to withdraw without being liquidated.
-     * @dev    This is done by checking your collateral value against your margin maintenance value.
+     * @dev    This is done by checking your collateral value against your initial maintenance value.
      */
     function validateWithdrawableAmount(
         Data storage self,
@@ -142,7 +147,8 @@ library PerpsAccount {
         (
             bool isEligible,
             int256 availableMargin,
-            uint256 requiredMaintenanceMargin
+            uint256 initialMaintenanceMargin,
+
         ) = isEligibleForLiquidation(self);
 
         if (isEligible) {
@@ -150,7 +156,7 @@ library PerpsAccount {
         }
 
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMaintenanceMargin;
+        availableWithdrawableCollateralUsd = availableMargin.toUint() - initialMaintenanceMargin;
 
         if (amountToWithdraw > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
@@ -211,9 +217,9 @@ library PerpsAccount {
     /**
      * @notice  This function returns the minimum margin an account requires to stay above liquidation threshold
      */
-    function getAccountMaintenanceMargin(
+    function getAccountRequiredMargins(
         Data storage self
-    ) internal view returns (uint accountMaintenanceMargin) {
+    ) internal view returns (uint accountMaintenanceMargin, uint initialMaintenanceMargin) {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         uint256 accumulatedLiquidationRewards;
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
@@ -222,18 +228,31 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            (, , , uint256 positionMaintenanceMargin, uint256 liquidationMargin) = marketConfig
-                .calculateRequiredMargins(position.size, PerpsPrice.getCurrentPrice(marketId));
+            (
+                ,
+                ,
+                uint256 positionInitialMargin,
+                uint256 positionMaintenanceMargin,
+                uint256 liquidationMargin
+            ) = marketConfig.calculateRequiredMargins(
+                    position.size,
+                    PerpsPrice.getCurrentPrice(marketId)
+                );
 
             accumulatedLiquidationRewards += liquidationMargin;
-            accountMaintenanceMargin +=
-                positionMaintenanceMargin +
-                marketConfig.minimumPositionMargin;
+            accountMaintenanceMargin += positionMaintenanceMargin;
+            initialMaintenanceMargin += positionInitialMargin;
         }
 
-        return
-            accountMaintenanceMargin +
-            GlobalPerpsMarketConfiguration.load().liquidationReward(accumulatedLiquidationRewards);
+        // if account was liquidated, we account for liquidation reward that would be paid out to the liquidation keeper in required margin
+        uint256 possibleLiquidationReward = GlobalPerpsMarketConfiguration.load().liquidationReward(
+            accumulatedLiquidationRewards
+        );
+
+        return (
+            initialMaintenanceMargin + possibleLiquidationReward,
+            accountMaintenanceMargin + possibleLiquidationReward
+        );
     }
 
     function convertAllCollateralToUsd(Data storage self) internal {

@@ -74,4 +74,16 @@ interface IAsyncOrderModule {
         uint128 marketId,
         uint128 accountId
     ) external returns (AsyncOrder.Data memory order);
+
+    /**
+     * @notice Simulates what the order fee would be for the given market with the specified size.
+     * @dev    Note that this does not include the settlement reward fee, which is based on the strategy type used
+     * @param marketId id of the market.
+     * @param sizeDelta size of position.
+     * @return orderFees incurred fees.
+     */
+    function getAsyncOrderFees(
+        uint128 marketId,
+        int128 sizeDelta
+    ) external returns (uint256 orderFees);
 }
