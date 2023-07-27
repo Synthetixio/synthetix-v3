@@ -11,6 +11,8 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import "../interfaces/IPerpMarketFactoryModule.sol";
 
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
+    using PerpMarket for PerpMarket.Data;
+
     // --- Events --- //
 
     event MarketCreated(uint128 id, bytes32 name);
@@ -67,15 +69,20 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      * @inheritdoc IMarket
      */
     function reportedDebt(uint128) external pure override returns (uint256) {
-        return 0;
+        return 0; // TODO
     }
 
     /**
      * @inheritdoc IMarket
      */
-    function minimumCredit(uint128 _marketId) external view override returns (uint256) {
-        // TODO: Get size of market then multiply by some percentage for a min amount;
-        return 0;
+    function minimumCredit(uint128 marketId) external view override returns (uint256) {
+        // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
+        // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
+        // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
+        //
+        // TODO: The ratio param lol. It should be defined at the market level.
+        PerpMarket.Data storage market = PerpMarket.load(marketId);
+        return market.size * market.getOraclePrice();
     }
 
     /**
