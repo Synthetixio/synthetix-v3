@@ -1,52 +1,52 @@
-import { ethers } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { PerpsMarketProxy } from '../../generated/typechain';
 import { openPosition } from '../helpers';
+import Wei, { wei } from '@synthetixio/wei';
+import { calculatePricePnl } from '../helpers/fillPrice';
 
-describe.only('Account margins test', () => {
+describe('Account margins test', () => {
   const accountId = 4;
+  const perpsMarketConfig = [
+    {
+      requestedMarketId: 25,
+      name: 'Bitcoin',
+      token: 'BTC',
+      price: bn(30_000),
+      fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
+      liquidationParams: {
+        initialMarginFraction: bn(2),
+        maintenanceMarginFraction: bn(1),
+        maxLiquidationLimitAccumulationMultiplier: bn(1),
+        liquidationRewardRatio: bn(0.05),
+        maxSecondsInLiquidationWindow: bn(10),
+        minimumPositionMargin: bn(1000),
+      },
+      settlementStrategy: {
+        settlementReward: bn(0),
+      },
+    },
+    {
+      requestedMarketId: 26,
+      name: 'Ether',
+      token: 'ETH',
+      price: bn(2000),
+      fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
+      liquidationParams: {
+        initialMarginFraction: bn(2),
+        maintenanceMarginFraction: bn(1),
+        maxLiquidationLimitAccumulationMultiplier: bn(1),
+        liquidationRewardRatio: bn(0.05),
+        maxSecondsInLiquidationWindow: bn(10),
+        minimumPositionMargin: bn(500),
+      },
+      settlementStrategy: {
+        settlementReward: bn(0),
+      },
+    },
+  ];
   const { systems, provider, trader1, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
-    perpsMarkets: [
-      {
-        requestedMarketId: 25,
-        name: 'Bitcoin',
-        token: 'BTC',
-        price: bn(30_000),
-        fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
-        liquidationParams: {
-          initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
-          maxLiquidationLimitAccumulationMultiplier: bn(1),
-          liquidationRewardRatio: bn(0.05),
-          maxSecondsInLiquidationWindow: bn(10),
-          minimumPositionMargin: bn(1000),
-        },
-        settlementStrategy: {
-          settlementReward: bn(0),
-        },
-      },
-      {
-        requestedMarketId: 26,
-        name: 'Ether',
-        token: 'ETH',
-        price: bn(2000),
-        fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
-        liquidationParams: {
-          initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
-          maxLiquidationLimitAccumulationMultiplier: bn(1),
-          liquidationRewardRatio: bn(0.05),
-          maxSecondsInLiquidationWindow: bn(10),
-          minimumPositionMargin: bn(500),
-        },
-        settlementStrategy: {
-          settlementReward: bn(0),
-        },
-      },
-    ],
+    perpsMarkets: perpsMarketConfig,
     traderAccountIds: [accountId, 5],
   });
 
@@ -79,7 +79,7 @@ describe.only('Account margins test', () => {
         systems,
         provider,
         trader: trader1(),
-        accountId: 2,
+        accountId,
         keeper: trader1(),
         marketId: perpsMarkets()[0].marketId(),
         sizeDelta: bn(-2),
@@ -90,7 +90,7 @@ describe.only('Account margins test', () => {
         systems,
         provider,
         trader: trader1(),
-        accountId: 2,
+        accountId,
         keeper: trader1(),
         marketId: perpsMarkets()[1].marketId(),
         sizeDelta: bn(20),
@@ -99,6 +99,66 @@ describe.only('Account margins test', () => {
       });
     });
 
-    it('has correct available margin', async () => {});
+    let startingMargin: Wei,
+      initialPnl: Wei,
+      btcInitialMargin: Wei,
+      ethInitialMargin: Wei,
+      btcMaintenanceMargin: Wei,
+      ethMaintenanceMargin: Wei,
+      minimumPositionMargin: Wei;
+    before('identify expected values', () => {
+      startingMargin = wei(100_000);
+      const btcSkewScale = wei(perpsMarketConfig[0].fundingParams.skewScale);
+      const ethSkewScale = wei(perpsMarketConfig[1].fundingParams.skewScale);
+      const btcPnl = calculatePricePnl(wei(0), btcSkewScale, wei(-2), wei(30_000));
+      const ethPnl = calculatePricePnl(wei(0), ethSkewScale, wei(20), wei(2000));
+      initialPnl = btcPnl.add(ethPnl);
+
+      const notionalBtcValue = wei(2).mul(wei(30_000));
+      const notionalEthValue = wei(20).mul(wei(2000));
+
+      btcInitialMargin = notionalBtcValue.mul(wei(2).div(wei(btcSkewScale)).mul(wei(2)));
+      ethInitialMargin = notionalEthValue.mul(wei(20).div(wei(ethSkewScale)).mul(wei(2)));
+
+      // maintenance margin ratio == 1
+      btcMaintenanceMargin = notionalBtcValue.mul(wei(2).div(wei(btcSkewScale)));
+      ethMaintenanceMargin = notionalEthValue.mul(wei(20).div(wei(ethSkewScale)));
+
+      // in above config: 1000 + 500
+      minimumPositionMargin = wei(1500);
+    });
+
+    it('has correct available margin', async () => {
+      assertBn.equal(
+        await systems().PerpsMarket.getAvailableMargin(accountId),
+        startingMargin.add(initialPnl).toBN()
+      );
+    });
+
+    it('has correct withdrawable margin', async () => {
+      assertBn.equal(
+        await systems().PerpsMarket.getWithdrawableMargin(accountId),
+        startingMargin
+          .add(initialPnl)
+          .sub(btcInitialMargin)
+          .sub(ethInitialMargin)
+          .sub(minimumPositionMargin)
+          .toBN()
+      );
+    });
+
+    it('has correct initial and maintenance margin', async () => {
+      const [initialMargin, maintenanceMargin] = await systems().PerpsMarket.getRequiredMargins(
+        accountId
+      );
+      assertBn.equal(
+        initialMargin,
+        btcInitialMargin.add(ethInitialMargin).add(minimumPositionMargin).toBN()
+      );
+      assertBn.equal(
+        maintenanceMargin,
+        btcMaintenanceMargin.add(ethMaintenanceMargin).add(minimumPositionMargin).toBN()
+      );
+    });
   });
 });
