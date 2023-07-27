@@ -106,6 +106,7 @@ contract ElectionVotes is ElectionBase {
 
     // TODO: New vote power computation:
     // e.g. # of SNX tokens in 'SC-approved' v3 pools + merkle tree for v2x
+    // for next voting period, we'll support v2x voting power through merkle tree; reuse existing code and then disable merkle tree later on when were moved over to v3
     //
     // Bonus: with the current merkle tree implementation, we are storing the results on the contract when the user submits a vote.
     // This defeats one of the purposes of having the merkle tree (not having to store the data)

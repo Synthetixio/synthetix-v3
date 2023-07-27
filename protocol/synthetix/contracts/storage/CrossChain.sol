@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
 
@@ -12,6 +13,7 @@ import "../interfaces/external/ICcipRouterClient.sol";
  */
 library CrossChain {
     using SetUtil for SetUtil.UintSet;
+    using SafeCastU256 for uint256;
 
     event ProcessedCcipMessage(bytes payload, bytes result);
 
@@ -28,6 +30,7 @@ library CrossChain {
         SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
+        uint64 mothershipChainId;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -86,6 +89,73 @@ library CrossChain {
     function onlyCrossChain() internal view {
         if (msg.sender != address(this)) {
             revert AccessError.Unauthorized(msg.sender);
+        }
+    }
+
+    function getSupportedNetworks(Data storage self) internal view returns (uint64[] memory) {
+        SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
+        uint256 supportedNetworksLength = supportedNetworks.length();
+        uint64[] memory chains = new uint64[](supportedNetworksLength);
+        for (uint i = 0; i < supportedNetworksLength; i++) {
+            uint64 chainId = supportedNetworks.values()[i].to64();
+            chains[i] = chainId;
+        }
+        return chains;
+    }
+
+    function transmit(
+        Data storage self,
+        uint64 chainId,
+        bytes memory data,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
+        uint64[] memory chains = new uint64[](1);
+        chains[0] = chainId;
+        return broadcast(self, chains, data, gasLimit);
+    }
+
+    /**
+     * @dev Sends a message to one or more chains
+     */
+    function broadcast(
+        Data storage self,
+        uint64[] memory chains,
+        bytes memory data,
+        uint256 gasLimit
+    ) internal returns (uint256 gasTokenUsed) {
+        ICcipRouterClient router = self.ccipRouter;
+
+        CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
+            abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
+            data, // Data payload
+            new CcipClient.EVMTokenAmount[](0), // Token transfers
+            address(0), // Address of feeToken. address(0) means you will send msg.value.
+            CcipClient._argsToBytes(CcipClient.EVMExtraArgsV1(gasLimit, false))
+        );
+
+        for (uint i = 0; i < chains.length; i++) {
+            if (chains[i] == block.chainid) {
+                (bool success, bytes memory result) = address(this).call(data);
+
+                if (!success) {
+                    uint256 len = result.length;
+                    assembly {
+                        revert(result, len)
+                    }
+                }
+            } else {
+                uint64 chainSelector = self.ccipChainIdToSelector[chains[i]];
+                uint256 fee = router.getFee(chainSelector, sentMsg);
+
+                // need to check sufficient fee here or else the error is very confusing
+                if (address(this).balance < fee) {
+                    revert InsufficientCcipFee(fee, address(this).balance);
+                }
+
+                router.ccipSend{value: fee}(chainSelector, sentMsg);
+
+                gasTokenUsed += fee;
+            }
         }
     }
 
