@@ -3,6 +3,7 @@ import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genOrder } from '../../generators';
 import { depositMargin } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { BigNumber } from 'ethers';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -96,11 +97,94 @@ describe('OrderModule', () => {
     });
 
     it('should revert when this order exceeds maxMarketSize (oi)');
-    it('should revert when sizeDelta is 0');
+
+    it('should revert when sizeDelta is 0', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Perform the deposit.
+      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+
+      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
+      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+      const { limitPrice, keeperFeeBufferUsd } = genOrder(depositAmountDelta, maxLeverage, minMarginUsd, oraclePrice);
+
+      // Perform the commitment (everything valid except for sizeDelta = 0).
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          BigNumber.from(0),
+          limitPrice,
+          keeperFeeBufferUsd
+        ),
+        'NilOrder()',
+        PerpMarketProxy
+      );
+    });
+
     it('should revert when an existing position can be liquidated');
     it('should revert when maxLeverage is exceeded');
-    it('should revert when accountId does not exist');
-    it('should revert when marketId does not exist');
+
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Perform the deposit.
+      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+
+      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
+      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
+        depositAmountDelta,
+        maxLeverage,
+        minMarginUsd,
+        oraclePrice
+      );
+
+      const invalidAccountId = 69420;
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          invalidAccountId,
+          marketId,
+          sizeDelta,
+          limitPrice,
+          keeperFeeBufferUsd
+        ),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Perform the deposit.
+      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+
+      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
+      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
+        depositAmountDelta,
+        maxLeverage,
+        minMarginUsd,
+        oraclePrice
+      );
+
+      const invalidMarketId = 69420;
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          invalidMarketId,
+          sizeDelta,
+          limitPrice,
+          keeperFeeBufferUsd
+        ),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 
   describe('settleOrder', () => {

@@ -175,7 +175,7 @@ describe('MarketCollateralModule', async () => {
 
         // Ensure the amount available is lower than amount to deposit (i.e. depositing more than available).
         const amountToDeposit = bn(genInt(100, 1000));
-        const amountAvailable = amountToDeposit.sub(bn(genInt(50, 500)));
+        const amountAvailable = amountToDeposit.sub(bn(genInt(50, 99)));
 
         await collateral.mint(trader.signer.getAddress(), amountAvailable);
         await collateral.approve(PerpMarketProxy.address, amountAvailable);
