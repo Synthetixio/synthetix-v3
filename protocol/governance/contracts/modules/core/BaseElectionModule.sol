@@ -23,9 +23,10 @@ contract BaseElectionModule is
 {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
+    using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
 
-    uint256 private constant _BROADCAST_GAS_LIMIT = 100000;
+    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
     /// @dev Used to allow certain functions to only be configured on the "mothership" chain.
     modifier onlyMothership() {
@@ -120,15 +121,14 @@ contract BaseElectionModule is
 
         CrossChain.Data storage cc = CrossChain.load();
         gasTokenUsed = cc.broadcast(
-            cc.supportedNetworks,
-            abi.encodeWithSelector(this._recvConfigureMothership.selector, mothershipChainId),
-            _BROADCAST_GAS_LIMIT
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(this._recvConfigureMothership.selector, cc.mothershipChainId),
+            _CROSSCHAIN_GAS_LIMIT
         );
     }
 
     function _recvConfigureMothership(uint64 mothershipChainId) external {
         CrossChain.onlyCrossChain();
-
         CrossChain.load().mothershipChainId = mothershipChainId;
 
         emit MothershipChainIdUpdated(mothershipChainId);
@@ -290,27 +290,17 @@ contract BaseElectionModule is
     function cast(
         address[] calldata candidates
     ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        uint64 myChainId = block.chainid.to64();
-
         CrossChain.Data storage cc = CrossChain.load();
-
-        if (cc.mothershipChainId != myChainId) {
-            cc.broadcast(
-                cc.supportedNetworks,
-                abi.encodeWithSelector(
-                    this._recvConfigureMothership.selector,
-                    cc.mothershipChainId
-                ),
-                _BROADCAST_GAS_LIMIT
-            );
-        } else {
-            this._recvCast(candidates);
-        }
+        cc.transmit(
+            cc.mothershipChainId,
+            abi.encodeWithSelector(this._recvCast.selector, candidates),
+            _CROSSCHAIN_GAS_LIMIT
+        );
     }
 
     function _recvCast(
         address[] calldata candidates
-    ) external onlyInPeriod(Council.ElectionPeriod.Vote) {
+    ) external onlyInPeriod(Council.ElectionPeriod.Vote) onlyMothership {
         uint votePower = _getVotePower(msg.sender);
 
         if (votePower == 0) revert NoVotePower();

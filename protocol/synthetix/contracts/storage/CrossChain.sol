@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
 
@@ -12,6 +13,7 @@ import "../interfaces/external/ICcipRouterClient.sol";
  */
 library CrossChain {
     using SetUtil for SetUtil.UintSet;
+    using SafeCastU256 for uint256;
 
     event ProcessedCcipMessage(bytes payload, bytes result);
 
@@ -88,6 +90,17 @@ library CrossChain {
         if (msg.sender != address(this)) {
             revert AccessError.Unauthorized(msg.sender);
         }
+    }
+
+    function getSupportedNetworks(Data storage self) internal view returns (uint64[] memory) {
+        SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
+        uint256 supportedNetworksLength = supportedNetworks.length();
+        uint64[] memory chains = new uint64[](supportedNetworksLength);
+        for (uint i = 0; i < supportedNetworksLength; i++) {
+            uint64 chainId = supportedNetworks.values()[i].to64();
+            chains[i] = chainId;
+        }
+        return chains;
     }
 
     function transmit(
