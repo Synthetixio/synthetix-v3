@@ -10,7 +10,6 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
