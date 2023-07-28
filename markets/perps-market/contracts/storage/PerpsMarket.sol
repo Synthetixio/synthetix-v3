@@ -154,19 +154,23 @@ library PerpsMarket {
         Position.Data storage oldPosition = self.positions[accountId];
 
         int128 oldPositionSize = oldPosition.size;
+        int128 newPositionSize = newPosition.size;
+
+        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPositionSize - oldPositionSize;
 
         // update the market debt correction accumulator before losing oldPosition details
         // by adding the new updated notional (old - new size) plus old position pnl
         // debtCorrectionAccumulator += newPosition.size * currentPrice.toInt() - oldPosition.size * currentPrice.toInt() + oldPositionPnl ;
         uint currentPrice = newPosition.latestInteractionPrice;
-        (int oldPositionPnl, , , ) = oldPosition.getPnl(currentPrice);
+        (, int oldPositionPricePnl, , , ) = oldPosition.getPnl(currentPrice);
 
         self.debtCorrectionAccumulator +=
             currentPrice.toInt().mulDecimal(newPosition.size - oldPositionSize) +
-            oldPositionPnl;
+            oldPositionPricePnl;
 
-        updateMarketSizes(self, newPosition.size, oldPositionSize);
-        oldPosition.updatePosition(newPosition);
+        oldPosition.update(newPosition);
+
         // TODO add current market debt
         return
             MarketUpdateData(
@@ -302,6 +306,12 @@ library PerpsMarket {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the sum of all positions pnl
 
-        return self.skew.mulDecimal(price.toInt()) - self.debtCorrectionAccumulator;
+        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt()) -
+            self.debtCorrectionAccumulator;
+        int totalAccruedFunding = self.skew.mulDecimal(price.toInt()).mulDecimal(
+            currentFundingRate(self)
+        );
+
+        return traderUnrealizedPnl + totalAccruedFunding;
     }
 }

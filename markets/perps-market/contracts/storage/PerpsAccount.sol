@@ -188,7 +188,7 @@ library PerpsAccount {
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (int pnl, , , ) = position.getPnl(PerpsPrice.getCurrentPrice(marketId));
+            (int pnl, , , , ) = position.getPnl(PerpsPrice.getCurrentPrice(marketId));
             totalPnl += pnl;
         }
     }
@@ -207,7 +207,7 @@ library PerpsAccount {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (uint openInterest, , , , ) = position.getPositionData(
+            (uint openInterest, , , , , ) = position.getPositionData(
                 PerpsPrice.getCurrentPrice(marketId)
             );
             totalAccountOpenInterest += openInterest;
