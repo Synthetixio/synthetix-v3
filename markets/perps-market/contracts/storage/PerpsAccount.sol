@@ -215,11 +215,13 @@ library PerpsAccount {
     }
 
     /**
-     * @notice  This function returns the minimum margin an account requires to stay above liquidation threshold
+     * @notice  This function returns the required margins for an account
+     * @dev The initial required margin is used to determine withdrawal amount and when opening positions
+     * @dev The maintenance margin is used to determine when to liquidate a position
      */
     function getAccountRequiredMargins(
         Data storage self
-    ) internal view returns (uint accountMaintenanceMargin, uint initialMaintenanceMargin) {
+    ) internal view returns (uint initialMargin, uint maintenanceMargin) {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         uint256 accumulatedLiquidationRewards;
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
@@ -240,8 +242,8 @@ library PerpsAccount {
                 );
 
             accumulatedLiquidationRewards += liquidationMargin;
-            accountMaintenanceMargin += positionMaintenanceMargin;
-            initialMaintenanceMargin += positionInitialMargin;
+            maintenanceMargin += positionMaintenanceMargin;
+            initialMargin += positionInitialMargin;
         }
 
         // if account was liquidated, we account for liquidation reward that would be paid out to the liquidation keeper in required margin
@@ -250,8 +252,8 @@ library PerpsAccount {
         );
 
         return (
-            initialMaintenanceMargin + possibleLiquidationReward,
-            accountMaintenanceMargin + possibleLiquidationReward
+            initialMargin + possibleLiquidationReward,
+            maintenanceMargin + possibleLiquidationReward
         );
     }
 
