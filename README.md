@@ -54,3 +54,4 @@ All of these operates happen asynchronously in loosely chained `before` blocks.
 - [ ] Add position specific views (position summary like accrued funding, PnL etc.)
 - [ ] Events throughout contracts
 - [ ] `postTradeDetails` missing on check on `liquidationPremium`
+- [ ] Market pause features (Perhaps pause types: CLOSE_ONLY, PAUSED, AVAILABLE)
