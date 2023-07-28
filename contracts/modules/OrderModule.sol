@@ -89,7 +89,7 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market,
         uint256 commitmentTime,
         uint256 publishTime,
-        uint256 pythPrice
+        Position.TradeParams memory params
     ) internal view {
         uint128 minOrderAge = globalConfig.minOrderAge;
         uint128 maxOrderAge = globalConfig.maxOrderAge;
@@ -123,13 +123,25 @@ contract OrderModule is IOrderModule {
             revert InvalidPrice();
         }
 
+        // Ensure pythPrice based fillPrice is within limitPrice.
+        //
+        // NOTE: When long then revert when `fillPrice < limitPrice`, when short then fillPrice < limitPrice`.
+        if (
+            (params.sizeDelta > 0 && params.fillPrice > params.limitPrice) ||
+            (params.sizeDelta < 0 && params.fillPrice < params.limitPrice)
+        ) {
+            revert PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
+        }
+
         // Ensure pythPrice does not deviate too far from oracle price.
+        //
+        // NOTE: `params.oraclePrice` is the pythPrice on settlement.
         uint256 oraclePrice = market.getOraclePrice();
-        uint256 priceDivergence = oraclePrice > pythPrice
-            ? oraclePrice / pythPrice - DecimalMath.UNIT
-            : pythPrice / oraclePrice - DecimalMath.UNIT;
+        uint256 priceDivergence = oraclePrice > params.oraclePrice
+            ? oraclePrice / params.oraclePrice - DecimalMath.UNIT
+            : params.oraclePrice / oraclePrice - DecimalMath.UNIT;
         if (priceDivergence > globalConfig.priceDivergencePercent) {
-            revert PriceDivergenceTooHigh(oraclePrice, pythPrice);
+            revert PriceDivergenceTooHigh(oraclePrice, params.oraclePrice);
         }
     }
 
@@ -156,8 +168,6 @@ contract OrderModule is IOrderModule {
         PerpMarket.updatePythPrice(priceUpdateData);
         (uint256 pythPrice, uint256 publishTime) = market.getPythPrice(order.commitmentTime);
 
-        validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, pythPrice);
-
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: order.sizeDelta,
             oraclePrice: pythPrice,
@@ -168,10 +178,10 @@ contract OrderModule is IOrderModule {
             keeperFeeBufferUsd: order.keeperFeeBufferUsd
         });
 
+        validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, params);
+
         (int256 fundingRate, ) = market.recomputeFunding(pythPrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
-
-        // TODO: Throw `PriceToleranceExceeded` when limitPrice does not meet pythPrice
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(

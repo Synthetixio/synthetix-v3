@@ -55,7 +55,7 @@ interface IOrderModule is IBasePerpMarket {
     error OrderNotReady();
 
     // @dev Thrown when an order cannot settle due to limitPrice tolerance not met.
-    error PriceToleranceExceeded(uint128 accountId);
+    error PriceToleranceExceeded(int128 sizeDelta, uint256 price, uint256 limitPrice);
 
     // --- Mutative --- //
 
