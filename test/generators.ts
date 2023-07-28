@@ -96,6 +96,8 @@ export const genBootstrap = (nMarkets: number = 1) => {
   return bs;
 };
 
+// export const genSizeDelta = (minLeverage: number, maxLeverage: number, fees: BigNumber) => {};
+
 export const genOrder = (
   depositAmountUsd: BigNumber,
   maxLeverage: BigNumber,

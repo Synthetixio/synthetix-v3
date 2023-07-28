@@ -3,7 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
-import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn, shuffle } from '../../generators';
+import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn, shuffle, genOneOf } from '../../generators';
 import { depositMargin } from '../../helpers';
 
 describe('MarketCollateralModule', async () => {
@@ -18,8 +18,7 @@ describe('MarketCollateralModule', async () => {
 
       const trader = traders()[0];
       const market = markets()[0];
-      // TODO: Replace with genOneOf instead of shuffle(xxx)[0];
-      const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+      const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
       const amountDelta = bn(0);
 
       const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
@@ -43,7 +42,7 @@ describe('MarketCollateralModule', async () => {
         const traderAddress = await trader.signer.getAddress();
 
         const market = markets()[0];
-        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         const amountDelta = bn(genInt(50, 100_000));
         await collateral.mint(trader.signer.getAddress(), amountDelta);
@@ -76,7 +75,7 @@ describe('MarketCollateralModule', async () => {
         const invalidAccountId = genInt(42069, 50000);
 
         const market = markets()[0];
-        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         const amountDelta = bn(genInt(50, 100_000));
         await collateral.mint(trader.signer.getAddress(), amountDelta);
@@ -118,7 +117,7 @@ describe('MarketCollateralModule', async () => {
         const trader = traders()[0];
         const market = markets()[0];
         const marketId = market.marketId();
-        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         const depositAmountDelta = bn(genInt(500, 1000));
         await collateral.mint(trader.signer.getAddress(), depositAmountDelta);
@@ -143,8 +142,7 @@ describe('MarketCollateralModule', async () => {
         const trader = traders()[0];
         const market = markets()[0];
 
-        // Shuffle the available collaterals and sample `.head`.
-        const { contract, max: maxAllowable } = shuffle(collaterals())[0];
+        const { contract, max: maxAllowable } = genOneOf(collaterals());
         const collateral = contract.connect(trader.signer);
 
         // Add one extra to max allowable to exceed max cap.
@@ -170,9 +168,7 @@ describe('MarketCollateralModule', async () => {
 
         const trader = traders()[0];
         const market = markets()[0];
-
-        // Shuffle the available collaterals and sample `.head`.
-        const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
+        const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         // Ensure the amount available is lower than amount to deposit (i.e. depositing more than available).
         const amountToDeposit = bn(genInt(100, 1000));
