@@ -3,14 +3,22 @@ import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets, decimalMul } from '.
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
-import { OpenPositionData, depositCollateral, openPosition, settleOrder } from '../helpers';
+import {
+  Fees,
+  OpenPositionData,
+  computeFees,
+  depositCollateral,
+  openPosition,
+  settleOrder,
+} from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
+import Wei, { wei } from '@synthetixio/wei';
 
-describe('Offchain Async Order test - fees', () => {
+describe.only('Offchain Async Order test - fees', () => {
   const orderFees = {
-    makerFee: bn(0.0003), // 3bps
-    takerFee: bn(0.0008), // 8bps
+    makerFee: wei(0.0003), // 3bps
+    takerFee: wei(0.0008), // 8bps
   };
   const ethPrice = bn(1000);
 
@@ -31,7 +39,10 @@ describe('Offchain Async Order test - fees', () => {
         price: ethPrice,
         // setting to 0 to avoid funding and p/d price change affecting pnl
         fundingParams: { skewScale: bn(0), maxFundingVelocity: bn(0) },
-        orderFees,
+        orderFees: {
+          makerFee: orderFees.makerFee.toBN(),
+          takerFee: orderFees.takerFee.toBN(),
+        },
       },
     ],
     traderAccountIds: [2, 3],
@@ -115,12 +126,19 @@ describe('Offchain Async Order test - fees', () => {
       describe('single order - intermediate steps', () => {
         let tx: ethers.ContractTransaction;
         let startTime: number;
-        let feesPaidOnSettle: ReturnType<typeof computeFees>;
+        let feesPaidOnSettle: Fees;
 
         before(restoreToSetOrder);
 
+        let fillPrice: Wei;
+        const sizeDelta = bn(1);
+
+        before('get fill price', async () => {
+          fillPrice = wei(await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice));
+          feesPaidOnSettle = computeFees(wei(0), wei(sizeDelta), fillPrice, orderFees);
+        });
+
         before('commit the order', async () => {
-          const sizeDelta = bn(1);
           tx = await systems()
             .PerpsMarket.connect(trader1())
             .commitOrder({
@@ -133,10 +151,12 @@ describe('Offchain Async Order test - fees', () => {
             });
 
           startTime = await getTxTime(provider(), tx);
-          feesPaidOnSettle = computeFees(
-            bn(0),
-            sizeDelta,
-            await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)
+        });
+
+        it('returns proper fees on getOrderFees', async () => {
+          assertBn.equal(
+            await systems().PerpsMarket.getAsyncOrderFees(ethMarketId, sizeDelta),
+            feesPaidOnSettle.perpsMarketFee
           );
         });
 
@@ -205,7 +225,7 @@ describe('Offchain Async Order test - fees', () => {
       });
 
       describe('multiple orders ', () => {
-        let feesPaidOnLong: ReturnType<typeof computeFees>;
+        let feesPaidOnLong: Fees;
 
         let balancesAfterLong: {
           traderBalance: ethers.BigNumber;
@@ -242,9 +262,10 @@ describe('Offchain Async Order test - fees', () => {
 
         before('open a long order (taker)', async () => {
           feesPaidOnLong = computeFees(
-            bn(0),
-            initialLongSize,
-            await systems().PerpsMarket.fillPrice(ethMarketId, initialLongSize, ethPrice)
+            wei(0),
+            wei(initialLongSize),
+            wei(await systems().PerpsMarket.fillPrice(ethMarketId, initialLongSize, ethPrice)),
+            orderFees
           );
 
           await openPosition({
@@ -272,16 +293,17 @@ describe('Offchain Async Order test - fees', () => {
         const restoreToLongOrder = snapshotCheckpoint(provider);
 
         describe('reduce position size (maker)', () => {
-          let feesPaidOnShort: ReturnType<typeof computeFees>;
+          let feesPaidOnShort: Fees;
           const sizeDelta = bn(-1); // original size is 2, reduce by 1 => still long, but smaller
 
           before(restoreToLongOrder);
 
           before('open a small short order', async () => {
             feesPaidOnShort = computeFees(
-              initialLongSize,
-              sizeDelta,
-              await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)
+              wei(initialLongSize),
+              wei(sizeDelta),
+              wei(await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)),
+              orderFees
             );
 
             await openPosition({
@@ -308,16 +330,17 @@ describe('Offchain Async Order test - fees', () => {
         });
 
         describe('flip the order side (maker + taker)', () => {
-          let feesPaidOnShort: ReturnType<typeof computeFees>;
+          let feesPaidOnShort: Fees;
           const sizeDelta = bn(-3); // original size is 2, reduce by 3 => flip to short -1
 
           before(restoreToLongOrder);
 
           before('open a large short order', async () => {
             feesPaidOnShort = computeFees(
-              initialLongSize,
-              sizeDelta,
-              await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)
+              wei(initialLongSize),
+              wei(sizeDelta),
+              wei(await systems().PerpsMarket.fillPrice(ethMarketId, sizeDelta, ethPrice)),
+              orderFees
             );
 
             await openPosition({
@@ -353,39 +376,5 @@ describe('Offchain Async Order test - fees', () => {
       keeperBalance,
       accountPnl,
     };
-  };
-
-  const computeFees: (
-    sizeBefore: ethers.BigNumber,
-    sizeDelta: ethers.BigNumber,
-    price: ethers.BigNumber
-  ) => {
-    totalFees: ethers.BigNumber;
-    keeperFee: ethers.BigNumber;
-    perpsMarketFee: ethers.BigNumber;
-  } = (sizeBefore, sizeDelta, price) => {
-    let makerSize = bn(0),
-      takerSize = bn(0);
-
-    if (sizeDelta.isZero()) {
-      // no change in fees
-    } else if (sizeBefore.isZero() || sizeBefore.mul(sizeDelta).gt(0)) {
-      // same side. taker
-      takerSize = sizeDelta.abs();
-    } else {
-      makerSize = sizeBefore.abs() > sizeDelta.abs() ? sizeDelta.abs() : sizeBefore.abs();
-      takerSize =
-        sizeBefore.abs() < sizeDelta.abs() ? sizeDelta.abs().sub(sizeBefore.abs()) : bn(0);
-    }
-
-    const notionalTaker = decimalMul(takerSize, price);
-    const notionalMaker = decimalMul(makerSize, price);
-
-    const perpsMarketFee = decimalMul(notionalMaker, orderFees.makerFee).add(
-      decimalMul(notionalTaker, orderFees.takerFee)
-    );
-    const keeperFee = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
-
-    return { totalFees: perpsMarketFee.add(keeperFee), perpsMarketFee, keeperFee };
   };
 });

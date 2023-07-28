@@ -126,7 +126,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function getAsyncOrderFees(
         uint128 marketId,
         int128 sizeDelta
-    ) external override returns (uint256 orderFees) {
+    ) external view override returns (uint256 orderFees) {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
         int256 skew = perpsMarket.skew;
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
