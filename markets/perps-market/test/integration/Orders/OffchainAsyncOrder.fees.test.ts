@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets, decimalMul } from '../bootstrap';
+import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { SynthMarkets } from '@synthetixio/spot-market/test/common';
@@ -15,7 +15,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 import Wei, { wei } from '@synthetixio/wei';
 
-describe.only('Offchain Async Order test - fees', () => {
+describe('Offchain Async Order test - fees', () => {
   const orderFees = {
     makerFee: wei(0.0003), // 3bps
     takerFee: wei(0.0008), // 8bps
