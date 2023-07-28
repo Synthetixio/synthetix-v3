@@ -119,19 +119,19 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             // debt is the total debt of all markets
             // can be computed as total collateral value - sum_each_market( debt )
             uint totalCollateralValue = GlobalPerpsMarket.load().totalCollateralValue();
-            int totalDebt;
+            int totalMarketDebt;
 
             SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
             uint256 activeMarketsLength = activeMarkets.length();
             for (uint i = 1; i <= activeMarketsLength; i++) {
                 uint128 marketId = activeMarkets.valueAt(i).to128();
-                totalDebt += PerpsMarket.load(marketId).marketDebt(
+                totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
                     PerpsPrice.getCurrentPrice(marketId)
                 );
             }
 
-            int reportedDebt = totalCollateralValue.toInt() + totalDebt;
-            return reportedDebt < 0 ? 0 : reportedDebt.toUint();
+            int totalDebt = totalCollateralValue.toInt() + totalMarketDebt;
+            return totalDebt < 0 ? 0 : totalDebt.toUint();
         }
 
         // TODO Should revert if perpsMarketId is not correct???

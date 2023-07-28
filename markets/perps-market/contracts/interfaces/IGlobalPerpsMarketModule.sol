@@ -75,4 +75,10 @@ interface IGlobalPerpsMarketModule {
         external
         view
         returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd);
+
+    /**
+     * @notice Gets the total collateral value of all deposited collateral from all traders.
+     * @return totalCollateralValue value of all collateral
+     */
+    function totalGlobalCollateralValue() external view returns (uint256 totalCollateralValue);
 }
