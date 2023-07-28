@@ -1,9 +1,10 @@
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genOrder } from '../../generators';
-import { depositMargin } from '../../helpers';
+import { bn, genBootstrap, genInt, genOrder } from '../../generators';
+import { depositMargin, setMarketConfigurationById } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { BigNumber } from 'ethers';
+import { wei } from '@synthetixio/wei';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -16,17 +17,18 @@ describe('OrderModule', () => {
       const { PerpMarketProxy } = systems();
 
       // Perform the deposit.
-      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       // Generate a valid order.
       const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
       const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
       const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
-        depositAmountDelta,
+        depositAmountDeltaUsd,
         maxLeverage,
         minMarginUsd,
-        oraclePrice
+        oraclePrice,
+        { desiredLeverage: 1 }
       );
 
       // Perform the commitment.
@@ -48,11 +50,6 @@ describe('OrderModule', () => {
       await assertEvent(tx, expectedEvent, PerpMarketProxy);
     });
 
-    it('should successfully commit order that completely closes existing position');
-    it('should successfully commit order that partially closes existing');
-    it('should successfully commit order that adds to an existing order');
-    it('should successfully commit order that flips from one side to the other');
-
     it('should recompute funding on commitment');
 
     it('should revert when market is paused');
@@ -63,13 +60,13 @@ describe('OrderModule', () => {
       const { PerpMarketProxy } = systems();
 
       // Perform the deposit.
-      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       // Generate a valid order.
       const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
       const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const order1 = genOrder(depositAmountDelta, maxLeverage, minMarginUsd, oraclePrice);
+      const order1 = genOrder(depositAmountDeltaUsd, maxLeverage, minMarginUsd, oraclePrice, { desiredLeverage: 1 });
 
       // Perform the commitment (success)
       await PerpMarketProxy.connect(trader.signer).commitOrder(
@@ -80,7 +77,7 @@ describe('OrderModule', () => {
         order1.keeperFeeBufferUsd
       );
 
-      const order2 = genOrder(depositAmountDelta, maxLeverage, minMarginUsd, oraclePrice);
+      const order2 = genOrder(depositAmountDeltaUsd, maxLeverage, minMarginUsd, oraclePrice, { desiredLeverage: 0.1 });
 
       // Perform commitment but expect fail as order already exists.
       await assertRevert(
@@ -96,18 +93,53 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when this order exceeds maxMarketSize (oi)');
+    it('should revert when this order exceeds maxMarketSize (oi)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Deposit margin to perp market.
+      const depositAmountDelta = bn(genInt(100, 500));
+      const { trader, marketId } = await depositMargin(bs, depositAmountDelta);
+
+      // Update the market's maxMarketSize to be just slightly below depositAmountDelta.
+      await setMarketConfigurationById(bs, marketId, {
+        maxMarketSize: depositAmountDelta.sub(wei(1).toBN()),
+        maxLeverage: wei(50).toBN(), // Large enough maxLeverage to avoid this error.
+      });
+
+      // Generate a valid order.
+      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
+      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+      const order = genOrder(depositAmountDelta, maxLeverage, minMarginUsd, oraclePrice);
+
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          depositAmountDelta, // 1x leverage but above maxMarketSize.
+          order.limitPrice,
+          order.keeperFeeBufferUsd
+        ),
+        'MaxMarketSizeExceeded()',
+        PerpMarketProxy
+      );
+    });
 
     it('should revert when sizeDelta is 0', async () => {
       const { PerpMarketProxy } = systems();
 
       // Perform the deposit.
-      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
       const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const { limitPrice, keeperFeeBufferUsd } = genOrder(depositAmountDelta, maxLeverage, minMarginUsd, oraclePrice);
+      const { limitPrice, keeperFeeBufferUsd } = genOrder(
+        depositAmountDeltaUsd,
+        maxLeverage,
+        minMarginUsd,
+        oraclePrice
+      );
 
       // Perform the commitment (everything valid except for sizeDelta = 0).
       await assertRevert(
@@ -124,19 +156,54 @@ describe('OrderModule', () => {
     });
 
     it('should revert when an existing position can be liquidated');
-    it('should revert when maxLeverage is exceeded');
+
+    it('should revert when maxLeverage is exceeded', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Deposit margin to perp market.
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
+
+      // Generate a valid order.
+      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
+      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+
+      // Generate an order where the leverage is between maxLeverage + 1 and maxLeverage * 2.
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
+        depositAmountDeltaUsd,
+        maxLeverage.mul(2),
+        minMarginUsd,
+        oraclePrice,
+        {
+          minLeverage: wei(maxLeverage).toNumber() + 1,
+        }
+      );
+
+      // TODO: Use fillPrice, orderFees, and keeperFees to get exact leverage amount.
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          sizeDelta,
+          limitPrice,
+          keeperFeeBufferUsd
+        ),
+        `MaxLeverageExceeded`,
+        PerpMarketProxy
+      );
+    });
 
     it('should revert when accountId does not exist', async () => {
       const { PerpMarketProxy } = systems();
 
       // Perform the deposit.
-      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
       const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
       const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
-        depositAmountDelta,
+        depositAmountDeltaUsd,
         maxLeverage,
         minMarginUsd,
         oraclePrice
@@ -160,13 +227,13 @@ describe('OrderModule', () => {
       const { PerpMarketProxy } = systems();
 
       // Perform the deposit.
-      const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
       const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
       const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
-        depositAmountDelta,
+        depositAmountDeltaUsd,
         maxLeverage,
         minMarginUsd,
         oraclePrice
@@ -207,6 +274,12 @@ describe('OrderModule', () => {
     it('should revert when marketId does not exist');
     it('should revert if not enough time has passed');
     it('should revert if order is stale');
+
+    it('should revert if long exceeds limit price');
+    it('should revert if short exceeds limit price');
+
+    it('should revert if collateral price slips into insufficient margin on between commit and settle');
+    it('should revert if collateral price slips into maxMarketSize between commit and settle');
 
     // NOTE: This may not be necessary.
     it('should revert when price deviations exceed threshold');

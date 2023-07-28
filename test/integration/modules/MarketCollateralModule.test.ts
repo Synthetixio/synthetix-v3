@@ -18,6 +18,7 @@ describe('MarketCollateralModule', async () => {
 
       const trader = traders()[0];
       const market = markets()[0];
+      // TODO: Replace with genOneOf instead of shuffle(xxx)[0];
       const collateral = shuffle(collaterals())[0].contract.connect(trader.signer);
       const amountDelta = bn(0);
 
@@ -205,7 +206,7 @@ describe('MarketCollateralModule', async () => {
         const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
           trader.accountId,
           marketId,
-          collateral.address,
+          collateral.contract.address,
           depositAmountDelta.mul(-1)
         );
 
@@ -227,7 +228,7 @@ describe('MarketCollateralModule', async () => {
         const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
           trader.accountId,
           marketId,
-          collateral.address,
+          collateral.contract.address,
           withdrawAmount
         );
 
@@ -272,7 +273,7 @@ describe('MarketCollateralModule', async () => {
           PerpMarketProxy.connect(trader.signer).transferTo(
             invalidAccountId,
             marketId,
-            collateral.address,
+            collateral.contract.address,
             depositAmountDelta.mul(-1)
           ),
           `AccountNotFound("${invalidAccountId}")`,
@@ -313,10 +314,12 @@ describe('MarketCollateralModule', async () => {
           PerpMarketProxy.connect(trader.signer).transferTo(
             trader.accountId,
             marketId,
-            collateral.address,
+            collateral.contract.address,
             withdrawAmount
           ),
-          `InsufficientCollateral("${collateral.address}", "${depositAmountDelta}", "${withdrawAmount.mul(-1)}")`,
+          `InsufficientCollateral("${collateral.contract.address}", "${depositAmountDelta}", "${withdrawAmount.mul(
+            -1
+          )}")`,
           PerpMarketProxy
         );
       });

@@ -30,7 +30,7 @@ interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['sys
 // This type is used in `getContract` for mostly autocomplete. Notice there is zero guarantee runtime
 // `getContract` calls would be correct. This interface is more likely to just be a subset of provisioned
 // contracts in cannon toml.
-interface Contracts {
+export interface Contracts {
   ['synthetix.CoreProxy']: Systems['Core'];
   ['synthetix.USDProxy']: Systems['USD'];
   ['synthetix.oracle_manager.Proxy']: Systems['OracleManager'];

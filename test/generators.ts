@@ -9,6 +9,7 @@ export const raise = (err: string): never => {
 };
 
 export const bn = (n: number) => wei(n).toBN();
+
 export const isNil = <A>(a: A | undefined | null): boolean => a === undefined || a === null;
 
 export const shuffle = <A>(arr: A[]): A[] => {
@@ -22,13 +23,12 @@ export const shuffle = <A>(arr: A[]): A[] => {
   return arr2;
 };
 
-export const genSample = <A>(a: A[]): A => a[Math.floor(Math.random() * a.length)];
-export const genOption = <A>(f: () => A): A | undefined => (genSample([true, false]) ? f() : undefined);
-
 export const genOneOf = <A>(l: A[]): A => {
-  const a = genSample(l);
+  const a = shuffle(l)[0];
   return isNil(a) ? raise('oneOf found invalid sequence') : a;
 };
+
+export const genOption = <A>(f: () => A): A | undefined => (genOneOf([true, false]) ? f() : undefined);
 
 export const genListOf = <A>(n: number, f: (n?: number) => A): A[] =>
   n <= 0 ? raise('listOf found invalid n') : genTimes(n, f);
@@ -97,23 +97,22 @@ export const genBootstrap = (nMarkets: number = 1) => {
 };
 
 export const genOrder = (
-  margin: BigNumber,
+  depositAmountUsd: BigNumber,
   maxLeverage: BigNumber,
-  minMarginUSd: BigNumber,
+  minMarginUsd: BigNumber,
   oraclePrice: BigNumber,
-  options?: Partial<{ minLeverage: number; maxLeveragePercentage: number }>
+  options?: Partial<{ minLeverage: number; desiredLeverage: number }>
 ) => {
+  // TODO: Compute a local keeperFeeBufferUsd rather than randomly generating.
   const keeperFeeBufferUsd = bn(genInt(1, 5));
-  const sizeDelta1xLeverage = wei(margin.sub(keeperFeeBufferUsd).sub(minMarginUSd)).div(oraclePrice);
+  const sizeDelta1xLeverage = wei(depositAmountUsd.sub(keeperFeeBufferUsd).sub(minMarginUsd)).div(oraclePrice);
 
-  // Use 75% of maxLeverage to avoid reaching maxLeverage due to fees such as (orderFees, keeperFees etc.)
-  const leverage = genFloat(
-    options?.minLeverage ?? 0.5,
-    wei(maxLeverage)
-      .mul(options?.maxLeveragePercentage ?? 0.75)
-      .toNumber()
-  );
+  // Generate acceptable leverage (not knowing the max market size) between minLeverage and maxLeverage
+  const leverage = options?.desiredLeverage
+    ? options.desiredLeverage
+    : genFloat(options?.minLeverage ?? 0.5, wei(maxLeverage).toNumber());
 
+  // Randomly long or short.
   const sizeDelta = genOneOf([sizeDelta1xLeverage.mul(leverage), sizeDelta1xLeverage.mul(leverage).mul(-1)]);
 
   // Set a limit price that is between 1-5% within the oracle price.

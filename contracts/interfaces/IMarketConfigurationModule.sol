@@ -72,6 +72,8 @@ interface IMarketConfigurationModule {
 
     /**
      * @dev Returns market specific parameters.
+     *
+     * TODO: Rename `Parameters` to `Configuration` for consistency.
      */
     function getMarketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
 }

@@ -10,6 +10,7 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
@@ -61,7 +62,7 @@ library Position {
     error MaxMarketSizeExceeded();
 
     // @dev Thrown when an order pushes a position (new or current) past max market leverage.
-    error MaxLeverageExceeded();
+    error MaxLeverageExceeded(uint256 leverage);
 
     // @dev Thrown when an account has insufficient margin to perform a trade.
     error InsufficientMargin();
@@ -150,8 +151,10 @@ library Position {
         }
 
         // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liquidations.
-        uint256 liquidationMargin = getLiquidationMargin(currentPosition, params.fillPrice);
-        if (MathUtil.abs(currentPosition.size) != 0 && remainingMargin.toUint() <= liquidationMargin) {
+        if (
+            MathUtil.abs(currentPosition.size) != 0 &&
+            remainingMargin.toUint() <= getLiquidationMargin(currentPosition, params.fillPrice)
+        ) {
             revert ErrorUtil.CanLiquidatePosition(accountId);
         }
 
@@ -163,17 +166,18 @@ library Position {
             entryPrice: params.fillPrice,
             feesIncurredUsd: fee + keeperFee
         });
+        uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         if (!positionDecreasing) {
-            uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
-            // Again, to deal with positions at minMarginUsd, we add back to fee (keeper and order) because
+            // To deal with positions at minMarginUsd, we add back to fee (keeper and order) because
             // position may never be able to open on the first trade due to fees deducted on entry.
             //
             // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
+
             if (collateralUsd + newPosition.feesIncurredUsd < globalConfig.minMarginUsd) {
                 revert InsufficientMargin();
             }
@@ -204,13 +208,12 @@ library Position {
         // NOTE: We also consider including the paid fee as part of the margin, again due to UX. Otherwise,
         // maxLeverage would always below position leverage due to fees paid out to open trade. We'll allow
         // a little extra headroom for rounding errors.
-        //
-        // NOTE: maxLeverage is stored as a uint8 but leverage is uint256
-        int256 leverage = (newPosition.size * params.fillPrice.toInt()) /
-            (remainingMargin + fee.toInt() + keeperFee.toInt());
-        if (marketConfig.maxLeverage < MathUtil.abs(leverage)) {
-            revert MaxLeverageExceeded();
+        uint256 leverage = MathUtil.abs(newPosition.size).mulDecimal(params.fillPrice).divDecimal(collateralUsd);
+        if (leverage > marketConfig.maxLeverage) {
+            revert MaxLeverageExceeded(leverage);
         }
+
+        // TODO: Further checks to prevent instant liquidation on the resulting newPosition.
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
@@ -228,7 +231,7 @@ library Position {
 
         PerpMarket.Data storage market = PerpMarket.load(self.marketId);
         int256 netFundingPerUnit = market.getNextFunding(price) - self.entryFundingAccrued;
-        return self.size * netFundingPerUnit;
+        return self.size.mulDecimal(netFundingPerUnit);
     }
 
     /**
@@ -245,7 +248,7 @@ library Position {
 
         // Calculate this position's PnL
         int256 priceDelta = price.toInt() - self.entryPrice.toInt();
-        int256 pnl = self.size * priceDelta;
+        int256 pnl = self.size.mulDecimal(priceDelta);
 
         // Ensure we also deduct the realized losses in fees to open trade.
         return margin + pnl + funding - self.feesIncurredUsd.toInt();

@@ -1,11 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 
 library PerpCollateral {
+    using DecimalMath for uint256;
     using SafeCastI256 for int256;
 
     // --- Constants --- //
@@ -91,7 +93,7 @@ library PerpCollateral {
                     .process(currentCollateral.oracleNodeId)
                     .price
                     .toUint();
-                collateralValueUsd += available * price;
+                collateralValueUsd += available.mulDecimal(price);
             }
 
             unchecked {
