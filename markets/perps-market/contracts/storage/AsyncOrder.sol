@@ -295,7 +295,7 @@ library AsyncOrder {
         PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
 
         bool isEligible;
-        (isEligible, runtime.currentAvailableMargin, runtime.requiredMaintenanceMargin) = account
+        (isEligible, runtime.currentAvailableMargin, , runtime.requiredMaintenanceMargin) = account
             .isEligibleForLiquidation();
 
         if (isEligible) {
@@ -431,10 +431,10 @@ library AsyncOrder {
      * @notice Calculates the fill price for an order.
      */
     function calculateFillPrice(
-        int skew,
-        uint skewScale,
-        int size,
-        uint price
+        int256 skew,
+        uint256 skewScale,
+        int128 size,
+        uint256 price
     ) internal pure returns (uint) {
         // How is the p/d-adjusted price calculated using an example:
         //

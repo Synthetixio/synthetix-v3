@@ -6,7 +6,6 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
-import {IAccountModule} from "../interfaces/IAccountModule.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -119,5 +118,32 @@ contract AsyncOrderModule is IAsyncOrderModule {
         order.reset();
 
         emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
+    }
+
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
+    function computeOrderFees(
+        uint128 marketId,
+        int128 sizeDelta
+    ) external view override returns (uint256 orderFees) {
+        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
+        int256 skew = perpsMarket.skew;
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            marketId
+        );
+        uint256 fillPrice = AsyncOrder.calculateFillPrice(
+            skew,
+            marketConfig.skewScale,
+            sizeDelta,
+            PerpsPrice.getCurrentPrice(marketId)
+        );
+
+        orderFees = AsyncOrder.calculateOrderFee(
+            sizeDelta,
+            fillPrice,
+            skew,
+            marketConfig.orderFees
+        );
     }
 }
