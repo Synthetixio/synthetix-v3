@@ -12,8 +12,6 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Data for a single perps market
  */
