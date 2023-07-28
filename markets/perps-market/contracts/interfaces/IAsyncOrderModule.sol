@@ -82,7 +82,7 @@ interface IAsyncOrderModule {
      * @param sizeDelta size of position.
      * @return orderFees incurred fees.
      */
-    function getAsyncOrderFees(
+    function computeOrderFees(
         uint128 marketId,
         int128 sizeDelta
     ) external view returns (uint256 orderFees);

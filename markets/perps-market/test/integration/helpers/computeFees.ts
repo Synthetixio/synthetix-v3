@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { DEFAULT_SETTLEMENT_STRATEGY, bn } from '../bootstrap';
+import { DEFAULT_SETTLEMENT_STRATEGY } from '../bootstrap';
 import Wei, { wei } from '@synthetixio/wei';
 
 type OrderFees = {

@@ -123,7 +123,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     /**
      * @inheritdoc IAsyncOrderModule
      */
-    function getAsyncOrderFees(
+    function computeOrderFees(
         uint128 marketId,
         int128 sizeDelta
     ) external view override returns (uint256 orderFees) {

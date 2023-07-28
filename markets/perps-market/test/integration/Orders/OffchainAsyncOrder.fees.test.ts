@@ -155,7 +155,7 @@ describe('Offchain Async Order test - fees', () => {
 
         it('returns proper fees on getOrderFees', async () => {
           assertBn.equal(
-            await systems().PerpsMarket.getAsyncOrderFees(ethMarketId, sizeDelta),
+            await systems().PerpsMarket.computeOrderFees(ethMarketId, sizeDelta),
             feesPaidOnSettle.perpsMarketFee
           );
         });
