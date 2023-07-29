@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
 import { wei } from '@synthetixio/wei';
+import { PerpMarketProxy } from './generated/typechain';
 
 // --- Core Utilities --- //
 
@@ -96,40 +97,46 @@ export const genBootstrap = (nMarkets: number = 1) => {
   return bs;
 };
 
-// export const genSizeDelta = (minLeverage: number, maxLeverage: number, fees: BigNumber) => {};
-
-export const genOrder = (
+export const genOrder = async (
+  proxy: PerpMarketProxy,
+  marketId: BigNumber,
   depositAmountUsd: BigNumber,
-  maxLeverage: BigNumber,
-  minMarginUsd: BigNumber,
-  oraclePrice: BigNumber,
-  options?: Partial<{ minLeverage: number; desiredLeverage: number }>
+  leverage?: Partial<{ min: number; max: number }>
 ) => {
   // TODO: Compute a local keeperFeeBufferUsd rather than randomly generating.
   const keeperFeeBufferUsd = bn(genInt(1, 5));
+
+  // TODO: Accept accountId to generate a valid order given an existing position.
+
+  const { minMarginUsd } = await proxy.getMarketParameters();
+  const { maxLeverage } = await proxy.getMarketParametersById(marketId);
+  const oraclePrice = await proxy.getOraclePrice(marketId);
   const sizeDelta1xLeverage = wei(depositAmountUsd.sub(keeperFeeBufferUsd).sub(minMarginUsd)).div(oraclePrice);
 
-  // Generate acceptable leverage (not knowing the max market size) between minLeverage and maxLeverage
-  const leverage = options?.desiredLeverage
-    ? options.desiredLeverage
-    : genFloat(options?.minLeverage ?? 0.5, wei(maxLeverage).toNumber());
+  const desiredMinLeverage = leverage?.min ?? 0.5;
+  const desiredMaxLeverage = leverage?.max ?? wei(maxLeverage).toNumber();
 
-  // Randomly long or short.
-  const sizeDelta = genOneOf([sizeDelta1xLeverage.mul(leverage), sizeDelta1xLeverage.mul(leverage).mul(-1)]);
+  if (desiredMaxLeverage < desiredMinLeverage) {
+    raise(`minLeverage (${desiredMinLeverage}) > maxLeverage (${desiredMaxLeverage})`);
+  }
+
+  const desiredLeverage = genFloat(desiredMinLeverage, desiredMaxLeverage);
+  const sizeDelta = genOneOf([
+    sizeDelta1xLeverage.mul(desiredLeverage),
+    sizeDelta1xLeverage.mul(desiredLeverage).mul(-1),
+  ]);
 
   // Set a limit price that is between 1-5% within the oracle price.
   //
   // This limitPrice will depend on whether position is long or short. A long position would limit with a higher price
   // whereas a short would limit on a lower price.
-  let limitPrice: BigNumber;
-  if (sizeDelta.lt(0)) {
-    limitPrice = wei(oraclePrice)
-      .mul(1 + genFloat(-0.01, -0.05))
-      .toBN();
-  } else {
-    limitPrice = wei(oraclePrice)
-      .mul(1 + genFloat(0.01, 0.05))
-      .toBN();
-  }
+  const limitPrice = sizeDelta.lt(0)
+    ? wei(oraclePrice)
+        .mul(1 + genFloat(-0.01, -0.05))
+        .toBN()
+    : wei(oraclePrice)
+        .mul(1 + genFloat(0.01, 0.05))
+        .toBN();
+
   return { sizeDelta: sizeDelta.toBN(), limitPrice, leverage, keeperFeeBufferUsd };
 };

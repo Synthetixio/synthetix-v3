@@ -20,15 +20,10 @@ describe('OrderModule', () => {
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       // Generate a valid order.
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
-        depositAmountDeltaUsd,
-        maxLeverage,
-        minMarginUsd,
-        oraclePrice,
-        { desiredLeverage: 1 }
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+        PerpMarketProxy,
+        marketId,
+        depositAmountDeltaUsd
       );
 
       // Perform the commitment.
@@ -62,13 +57,8 @@ describe('OrderModule', () => {
       // Perform the deposit.
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
-      // Generate a valid order.
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const order1 = genOrder(depositAmountDeltaUsd, maxLeverage, minMarginUsd, oraclePrice, { desiredLeverage: 1 });
-
-      // Perform the commitment (success)
+      // Perform first commitment (success)
+      const order1 = await genOrder(PerpMarketProxy, marketId, depositAmountDeltaUsd, { min: 1, max: 1 });
       await PerpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
         marketId,
@@ -77,9 +67,8 @@ describe('OrderModule', () => {
         order1.keeperFeeBufferUsd
       );
 
-      const order2 = genOrder(depositAmountDeltaUsd, maxLeverage, minMarginUsd, oraclePrice, { desiredLeverage: 0.1 });
-
-      // Perform commitment but expect fail as order already exists.
+      // Perform another commitment but expect fail as order already exists.
+      const order2 = await genOrder(PerpMarketProxy, marketId, depositAmountDeltaUsd, { min: 0.1, max: 0.1 });
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).commitOrder(
           trader.accountId,
@@ -98,7 +87,7 @@ describe('OrderModule', () => {
 
       // Deposit margin to perp market.
       const depositAmountDelta = bn(genInt(100, 500));
-      const { trader, marketId } = await depositMargin(bs, depositAmountDelta);
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs, depositAmountDelta);
 
       // Update the market's maxMarketSize to be just slightly below depositAmountDelta.
       await setMarketConfigurationById(bs, marketId, {
@@ -107,18 +96,18 @@ describe('OrderModule', () => {
       });
 
       // Generate a valid order.
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const order = genOrder(depositAmountDelta, maxLeverage, minMarginUsd, oraclePrice);
+      const { limitPrice, keeperFeeBufferUsd } = await genOrder(PerpMarketProxy, marketId, depositAmountDeltaUsd, {
+        min: 1,
+        max: 1,
+      });
 
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).commitOrder(
           trader.accountId,
           marketId,
           depositAmountDelta, // 1x leverage but above maxMarketSize.
-          order.limitPrice,
-          order.keeperFeeBufferUsd
+          limitPrice,
+          keeperFeeBufferUsd
         ),
         'MaxMarketSizeExceeded()',
         PerpMarketProxy
@@ -131,15 +120,11 @@ describe('OrderModule', () => {
       // Perform the deposit.
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const { limitPrice, keeperFeeBufferUsd } = genOrder(
-        depositAmountDeltaUsd,
-        maxLeverage,
-        minMarginUsd,
-        oraclePrice
-      );
+      // Generate order.
+      const { limitPrice, keeperFeeBufferUsd } = await genOrder(PerpMarketProxy, marketId, depositAmountDeltaUsd, {
+        min: 1,
+        max: 1,
+      });
 
       // Perform the commitment (everything valid except for sizeDelta = 0).
       await assertRevert(
@@ -164,18 +149,16 @@ describe('OrderModule', () => {
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       // Generate a valid order.
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
       const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
       // Generate an order where the leverage is between maxLeverage + 1 and maxLeverage * 2.
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+        PerpMarketProxy,
+        marketId,
         depositAmountDeltaUsd,
-        maxLeverage.mul(2),
-        minMarginUsd,
-        oraclePrice,
         {
-          minLeverage: wei(maxLeverage).toNumber() + 1,
+          min: wei(maxLeverage).toNumber() + 1,
+          max: wei(maxLeverage).mul(2).toNumber(),
         }
       );
 
@@ -199,14 +182,11 @@ describe('OrderModule', () => {
       // Perform the deposit.
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
-        depositAmountDeltaUsd,
-        maxLeverage,
-        minMarginUsd,
-        oraclePrice
+      // Generate order.
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+        PerpMarketProxy,
+        marketId,
+        depositAmountDeltaUsd
       );
 
       const invalidAccountId = 69420;
@@ -229,14 +209,11 @@ describe('OrderModule', () => {
       // Perform the deposit.
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = genOrder(
-        depositAmountDeltaUsd,
-        maxLeverage,
-        minMarginUsd,
-        oraclePrice
+      // Generate order.
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+        PerpMarketProxy,
+        marketId,
+        depositAmountDeltaUsd
       );
 
       const invalidMarketId = 69420;
