@@ -1,10 +1,13 @@
 import { BigNumber } from 'ethers';
 import { bootstrap } from './bootstrap';
-import { bn, genInt, genOneOf } from './generators';
+import { bn, genInt, genOneOf, raise } from './generators';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import { wei } from '@synthetixio/wei';
 
-export const depositMargin = async (bs: ReturnType<typeof bootstrap>, depositAmount?: BigNumber) => {
+type Bs = ReturnType<typeof bootstrap>;
+type Collateral = ReturnType<Bs['collaterals']>[number];
+
+export const depositMargin = async (bs: Bs, depositAmount?: BigNumber, desiredCollateral?: Collateral) => {
   const { systems, traders, markets, collaterals } = bs;
 
   const { PerpMarketProxy } = systems();
@@ -14,12 +17,11 @@ export const depositMargin = async (bs: ReturnType<typeof bootstrap>, depositAmo
   const traderAddress = await trader.signer.getAddress();
   const market = genOneOf(markets());
   const marketId = market.marketId();
+  const collateral = desiredCollateral ?? genOneOf(collaterals());
 
-  // Collateral configuration
-  const collateral = genOneOf(collaterals());
-
+  // We use a large enough min range on depositAmountDelta to ensure we meet minMarginReq.
   const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
-  const depositAmountDelta = depositAmount ?? bn(genInt(100, 200));
+  const depositAmountDelta = depositAmount ?? bn(genInt(500, 1000));
   const depositAmountDeltaUsd = wei(depositAmountDelta.abs()).mul(wei(collateralPrice)).toBN();
 
   const collateralConnected = collateral.contract.connect(trader.signer);

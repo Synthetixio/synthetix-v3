@@ -1,6 +1,6 @@
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genInt, genOrder } from '../../generators';
+import { bn, genBootstrap, genInt, genOneOf, genOrder } from '../../generators';
 import { depositMargin, setMarketConfigurationById } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { BigNumber } from 'ethers';
@@ -8,7 +8,7 @@ import { wei } from '@synthetixio/wei';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider } = bs;
+  const { systems, restore, provider, collaterals } = bs;
 
   beforeEach(restore);
 
@@ -49,7 +49,43 @@ describe('OrderModule', () => {
 
     it('should revert when market is paused');
 
-    it('should revert when there is insufficient margin');
+    it('should revert insufficient margin when margin is less than min margin req', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Perform a deposit where margin < minMargin.
+      //
+      // - get value of collateral e.g. $1200
+      // - get minMargin e.g. $100
+      // - derive depositAmount e.g. $100 / $1200 = 0.08333334 units
+      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
+      const collateral = genOneOf(collaterals());
+      const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
+      const depositAmount = wei(minMarginUsd).div(collateralPrice).mul(0.95).toBN(); // 5% less than minMargin.
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs, depositAmount, collateral);
+
+      // Generate a valid order that uses all available margin.
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+        PerpMarketProxy,
+        marketId,
+        depositAmountDeltaUsd,
+        { min: 1, max: 1 }
+      );
+
+      // Margin does not meet minMargin req
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).commitOrder(
+          trader.accountId,
+          marketId,
+          sizeDelta,
+          limitPrice,
+          keeperFeeBufferUsd
+        ),
+        'InsufficientMargin()',
+        PerpMarketProxy
+      );
+
+      // However, should _not_ revert if margin eq minMargin.
+    });
 
     it('should revert when an order already present', async () => {
       const { PerpMarketProxy } = systems();
@@ -148,10 +184,8 @@ describe('OrderModule', () => {
       // Deposit margin to perp market.
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
-      // Generate a valid order.
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
-
       // Generate an order where the leverage is between maxLeverage + 1 and maxLeverage * 2.
+      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
       const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
         PerpMarketProxy,
         marketId,
@@ -239,6 +273,7 @@ describe('OrderModule', () => {
     it('should successfully settle an order that flips from one side to the other');
 
     it('should successfully commit order if price moves but still safe');
+    it('should allow position reduction even if insufficient unless in liquidation');
 
     it('should recompute funding on settlement');
 
@@ -263,7 +298,7 @@ describe('OrderModule', () => {
 
     it('should revert when price is zero (i.e. invalid)');
     it('should revert if off-chain pyth publishTime is not within acceptance window');
-    it('should revert if vaa merkle or vaa blob is invalid');
+    it('should revert if pyth vaa merkle/blob is invalid');
     it('should revert when not enough wei is available to pay pyth fee');
   });
 

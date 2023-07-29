@@ -97,40 +97,11 @@ export const genBootstrap = (nMarkets: number = 1) => {
   return bs;
 };
 
-export const genOrder = async (
-  proxy: PerpMarketProxy,
-  marketId: BigNumber,
-  depositAmountUsd: BigNumber,
-  leverage?: Partial<{ min: number; max: number }>
-) => {
-  // TODO: Compute a local keeperFeeBufferUsd rather than randomly generating.
-  const keeperFeeBufferUsd = bn(genInt(1, 5));
-
-  // TODO: Accept accountId to generate a valid order given an existing position.
-
-  const { minMarginUsd } = await proxy.getMarketParameters();
-  const { maxLeverage } = await proxy.getMarketParametersById(marketId);
-  const oraclePrice = await proxy.getOraclePrice(marketId);
-  const sizeDelta1xLeverage = wei(depositAmountUsd.sub(keeperFeeBufferUsd).sub(minMarginUsd)).div(oraclePrice);
-
-  const desiredMinLeverage = leverage?.min ?? 0.5;
-  const desiredMaxLeverage = leverage?.max ?? wei(maxLeverage).toNumber();
-
-  if (desiredMaxLeverage < desiredMinLeverage) {
-    raise(`minLeverage (${desiredMinLeverage}) > maxLeverage (${desiredMaxLeverage})`);
-  }
-
-  const desiredLeverage = genFloat(desiredMinLeverage, desiredMaxLeverage);
-  const sizeDelta = genOneOf([
-    sizeDelta1xLeverage.mul(desiredLeverage),
-    sizeDelta1xLeverage.mul(desiredLeverage).mul(-1),
-  ]);
-
-  // Set a limit price that is between 1-5% within the oracle price.
-  //
-  // This limitPrice will depend on whether position is long or short. A long position would limit with a higher price
-  // whereas a short would limit on a lower price.
-  const limitPrice = sizeDelta.lt(0)
+/**
+ * Generate a limit price 1 - 5% within the oracle price. The limit will be higher (long) or lower (short).
+ */
+export const genLimitPrice = (sizeDelta: BigNumber, oraclePrice: BigNumber) =>
+  sizeDelta.lt(0)
     ? wei(oraclePrice)
         .mul(1 + genFloat(-0.01, -0.05))
         .toBN()
@@ -138,5 +109,35 @@ export const genOrder = async (
         .mul(1 + genFloat(0.01, 0.05))
         .toBN();
 
-  return { sizeDelta: sizeDelta.toBN(), limitPrice, leverage, keeperFeeBufferUsd };
+export const genOrder = async (
+  proxy: PerpMarketProxy,
+  marketId: BigNumber,
+  depositAmountUsd: BigNumber,
+  desiredLeverage?: Partial<{ min: number; max: number }>
+) => {
+  // TODO: Compute a local keeperFeeBufferUsd rather than randomly generating.
+  const keeperFeeBufferUsd = bn(genInt(1, 5));
+
+  // TODO: Accept accountId to generate a valid order given an existing position.
+
+  const { maxLeverage } = await proxy.getMarketParametersById(marketId);
+  const oraclePrice = await proxy.getOraclePrice(marketId);
+  const sizeDelta1xLeverage = wei(depositAmountUsd).div(oraclePrice);
+
+  const rMinLeverage = desiredLeverage?.min ?? 0.5;
+  const rMaxLeverage = desiredLeverage?.max ?? wei(maxLeverage).toNumber();
+
+  if (rMinLeverage > rMaxLeverage) {
+    return raise(`minLeverage (${rMinLeverage}) > maxLeverage (${rMaxLeverage})`);
+  }
+
+  const leverage = genFloat(rMinLeverage, rMaxLeverage);
+  const sizeDelta = genOneOf([sizeDelta1xLeverage.mul(leverage), sizeDelta1xLeverage.mul(leverage).mul(-1)]).toBN();
+
+  return {
+    sizeDelta,
+    limitPrice: genLimitPrice(sizeDelta, oraclePrice),
+    leverage,
+    keeperFeeBufferUsd,
+  };
 };
