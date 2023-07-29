@@ -157,6 +157,8 @@ library Position {
             revert ErrorUtil.CanLiquidatePosition(accountId);
         }
 
+        // --- New position (as though the order was successfully settled)! --- //
+
         newPosition = Position.Data({
             accountId: accountId,
             marketId: marketId,
@@ -171,15 +173,8 @@ library Position {
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-        if (!positionDecreasing) {
-            // To deal with positions at minMarginUsd, we add back to fee (keeper and order) because
-            // position may never be able to open on the first trade due to fees deducted on entry.
-            //
-            // minMargin + fee <= margin is equivalent to minMargin <= margin - fee
-
-            if (collateralUsd + newPosition.feesIncurredUsd < globalConfig.minMarginUsd) {
-                revert InsufficientMargin();
-            }
+        if (!positionDecreasing && collateralUsd < globalConfig.minMarginUsd) {
+            revert InsufficientMargin();
         }
 
         // TODO: Check that the resulting new postion's margin is above liquidationMargin + liqPremium
