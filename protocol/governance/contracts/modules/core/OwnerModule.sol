@@ -55,7 +55,7 @@ contract OwnerModule is BaseOwnerModule {
     function renounceNomination() external override {
         super.renounceNomination();
 
-        Guardian.Data storage rescueStore = Guardian.load();
-        rescueStore.requestedAt = 0;
+        Guardian.Data storage store = Guardian.load();
+        store.ownershipRequestedAt = 0;
     }
 }
