@@ -80,5 +80,5 @@ interface IGlobalPerpsMarketModule {
      * @notice Gets the total collateral value of all deposited collateral from all traders.
      * @return totalCollateralValue value of all collateral
      */
-    function totalGlobalCollateralValue() external view returns (uint256 totalCollateralValue);
+    function totalFactoryCollateralValue() external view returns (uint256 totalCollateralValue);
 }

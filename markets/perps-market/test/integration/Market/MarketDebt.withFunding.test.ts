@@ -1,6 +1,6 @@
 import { fastForwardTo, getTxTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
-import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
+import { openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
@@ -8,7 +8,7 @@ const _SKEW_SCALE = bn(25_000);
 const _MAX_FUNDING_VELOCITY = bn(3);
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 
-describe.only('Market Debt - with funding', () => {
+describe('Market Debt - with funding', () => {
   const traderAccountIds = [2, 3, 4];
   const { systems, superMarketId, perpsMarkets, provider, trader1, trader2, trader3, keeper } =
     bootstrapMarkets({
@@ -266,6 +266,10 @@ describe.only('Market Debt - with funding', () => {
   describe('trader 1 gets fully liquidated', () => {
     before('move forward by a day', async () => {
       await fastForwardTo(partialLiquidationTime + _SECONDS_IN_DAY, provider());
+    });
+
+    before('price change', async () => {
+      await perpsMarket.aggregator().mockSetCurrentPrice(bn(930));
     });
 
     before('liquidate trader 1 again', async () => {

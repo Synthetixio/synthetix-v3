@@ -145,7 +145,9 @@ library PerpsMarket {
     }
 
     /**
-     * @dev If you call this method, please ensure you emit an event so offchain solution can index market state history properly
+     * @dev Use this function to update both market/position size/skew.
+     * @dev Size and skew should not be updated directly.
+     * @dev The return value is used to emit a MarketUpdated event.
      */
     function updatePositionData(
         Data storage self,
@@ -173,7 +175,6 @@ library PerpsMarket {
 
         oldPosition.update(newPosition);
 
-        // TODO add current market debt
         return
             MarketUpdateData(
                 self.id,
@@ -307,11 +308,9 @@ library PerpsMarket {
     function marketDebt(Data storage self, uint price) internal view returns (int) {
         // all positions sizes multiplied by the price is equivalent to skew times price
         // and the debt correction accumulator is the  sum of all positions pnl
-
-        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt()) -
-            self.debtCorrectionAccumulator;
+        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt());
         int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
 
-        return traderUnrealizedPnl + unrealizedFunding;
+        return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
     }
 }

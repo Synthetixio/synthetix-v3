@@ -87,7 +87,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function totalGlobalCollateralValue()
+    function totalFactoryCollateralValue()
         external
         view
         override
