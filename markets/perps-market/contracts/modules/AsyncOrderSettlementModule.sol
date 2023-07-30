@@ -18,6 +18,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
 contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvents {
@@ -31,6 +32,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
     using SettlementStrategy for SettlementStrategy.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
+    using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using Position for Position.Data;
     using SafeCastU256 for uint256;
@@ -127,23 +129,20 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         runtime.marketId = asyncOrder.request.marketId;
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
-        (
-            Position.Data memory newPosition,
-            uint totalFees,
-            uint fillPrice,
-            Position.Data storage oldPosition
-        ) = asyncOrder.validateOrder(settlementStrategy, price);
+        Position.Data storage oldPosition;
+        (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
+            .validateOrder(settlementStrategy, price);
 
-        runtime.amountToDeduct += totalFees;
+        runtime.amountToDeduct += runtime.totalFees;
 
-        runtime.newPositionSize = newPosition.size;
+        runtime.newPositionSize = runtime.newPosition.size;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
-        runtime.factory = PerpsMarketFactory.load();
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
         // use fill price to calculate realized pnl
-        (runtime.pnl, , , , ) = oldPosition.getPnl(fillPrice);
+        (runtime.pnl, , , , ) = oldPosition.getPnl(runtime.fillPrice);
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
         if (runtime.pnl > 0) {
@@ -153,19 +152,20 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         }
 
         // after pnl is realized, update position
-        PerpsMarket.MarketUpdateData memory updateData = PerpsMarket
-            .loadValid(runtime.marketId)
-            .updatePositionData(runtime.accountId, newPosition);
+        runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
+            runtime.accountId,
+            runtime.newPosition
+        );
         perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPositionSize);
 
         emit MarketUpdated(
-            updateData.marketId,
+            runtime.updateData.marketId,
             price,
-            updateData.skew,
-            updateData.size,
+            runtime.updateData.skew,
+            runtime.updateData.size,
             runtime.sizeDelta,
-            updateData.currentFundingRate,
-            updateData.currentFundingVelocity
+            runtime.updateData.currentFundingRate,
+            runtime.updateData.currentFundingVelocity
         );
 
         // since margin is deposited, as long as the owed collateral is deducted
@@ -177,12 +177,16 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         if (runtime.settlementReward > 0) {
             // pay keeper
-            runtime.factory.synthetix.withdrawMarketUsd(
-                runtime.factory.perpsMarketId,
-                msg.sender,
-                runtime.settlementReward
-            );
+            factory.withdrawMarketUsd(msg.sender, runtime.settlementReward);
         }
+
+        (runtime.referralFees, runtime.collectedFees) = GlobalPerpsMarketConfiguration
+            .load()
+            .collectFees(
+                runtime.totalFees - runtime.settlementReward, // totalFees includes settlement reward so we remove it
+                asyncOrder.request.referrer,
+                factory
+            );
 
         // trader can now commit a new order
         asyncOrder.reset();
@@ -191,11 +195,13 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         emit OrderSettled(
             runtime.marketId,
             runtime.accountId,
-            fillPrice,
+            runtime.fillPrice,
             runtime.pnl,
             runtime.sizeDelta,
             runtime.newPositionSize,
-            totalFees,
+            runtime.totalFees,
+            runtime.referralFees,
+            runtime.collectedFees,
             runtime.settlementReward,
             asyncOrder.request.trackingCode,
             msg.sender

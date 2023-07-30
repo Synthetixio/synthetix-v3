@@ -45,11 +45,6 @@ library GlobalPerpsMarket {
 
     struct Data {
         /**
-         * @dev fee collector contract
-         * @dev portion or all of the order fees are sent to fee collector contract based on quote.
-         */
-        IFeeCollector feeCollector;
-        /**
          * @dev Set of liquidatable account ids.
          */
         SetUtil.UintSet liquidatableAccounts;

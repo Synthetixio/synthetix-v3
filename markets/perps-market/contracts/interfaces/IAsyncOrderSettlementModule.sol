@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
-import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
+import {Position} from "../storage/Position.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
 
 interface IAsyncOrderSettlementModule {
     /**
@@ -26,7 +27,9 @@ interface IAsyncOrderSettlementModule {
      * @param fillPrice Price at which the order was settled.
      * @param sizeDelta Size delta from order.
      * @param newSize New size of the position after settlement.
-     * @param collectedFees Amount of fees collected by the protocol.
+     * @param totalFees Amount of fees collected by the protocol.
+     * @param referralFees Amount of fees collected by the referrer.
+     * @param collectedFees Amount of fees collected by fee collector.
      * @param settlementReward Amount of fees collected by the settler.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param settler address of the settler of the order.
@@ -38,6 +41,8 @@ interface IAsyncOrderSettlementModule {
         int256 pnl,
         int128 sizeDelta,
         int128 newSize,
+        uint256 totalFees,
+        uint256 referralFees,
         uint256 collectedFees,
         uint256 settlementReward,
         bytes32 indexed trackingCode,
@@ -54,7 +59,12 @@ interface IAsyncOrderSettlementModule {
         uint256 pnlUint;
         uint256 amountToDeduct;
         uint256 settlementReward;
-        PerpsMarketFactory.Data factory;
+        uint256 fillPrice;
+        uint256 totalFees;
+        uint256 referralFees;
+        uint256 collectedFees;
+        Position.Data newPosition;
+        PerpsMarket.MarketUpdateData updateData;
     }
 
     /**

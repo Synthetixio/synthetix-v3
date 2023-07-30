@@ -65,7 +65,7 @@ library AsyncOrder {
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
      */
-    error PendingOrderExist();
+    error PendingOrderExists();
 
     /**
      * @notice Thrown when commiting an order with sizeDelta is zero.
@@ -169,17 +169,15 @@ library AsyncOrder {
      */
     function checkPendingOrder(uint128 accountId) internal view returns (Data storage order) {
         order = load(accountId);
-        if (
-            order.request.sizeDelta != 0 ||
-            !expired(
-                order,
-                PerpsMarketConfiguration.loadValidSettlementStrategy(
-                    order.request.marketId,
-                    order.request.settlementStrategyId
-                )
-            )
-        ) {
-            revert PendingOrderExist();
+
+        if (order.request.sizeDelta != 0) {
+            SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
+                .load(order.request.marketId)
+                .settlementStrategies[order.request.settlementStrategyId];
+
+            if (!expired(order, strategy)) {
+                revert PendingOrderExists();
+            }
         }
     }
 
@@ -350,7 +348,6 @@ library AsyncOrder {
             runtime.initialRequiredMargin -
             currentMarketMaintenanceMargin;
 
-        // TODO: create new errors for different scenarios instead of reusing InsufficientMargin
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
         }

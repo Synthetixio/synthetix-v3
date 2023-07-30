@@ -45,6 +45,7 @@ export const openPosition = async (data: OpenPositionData) => {
       sizeDelta,
       settlementStrategyId,
       acceptablePrice: sizeDelta.gt(0) ? price.mul(2) : price.div(2),
+      referrer: ethers.constants.AddressZero,
       trackingCode: trackingCode ?? ethers.constants.HashZero,
     });
 
@@ -55,7 +56,6 @@ export const openPosition = async (data: OpenPositionData) => {
   const settleTx = await settleOrder({
     systems,
     keeper,
-    marketId,
     accountId,
     offChainPrice: toNum(price),
     settlementTime,
