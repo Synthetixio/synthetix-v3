@@ -128,7 +128,7 @@ describe('OrderModule', () => {
       // Update the market's maxMarketSize to be just slightly below depositAmountDelta.
       await setMarketConfigurationById(bs, marketId, {
         maxMarketSize: depositAmountDelta.sub(wei(1).toBN()),
-        maxLeverage: wei(50).toBN(), // Large enough maxLeverage to avoid this error.
+        maxLeverage: wei(100).toBN(), // Large enough maxLeverage to avoid this error.
       });
 
       // Generate a valid order.
