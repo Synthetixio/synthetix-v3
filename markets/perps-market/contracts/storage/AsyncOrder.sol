@@ -29,6 +29,11 @@ library AsyncOrder {
     using Position for Position.Data;
 
     /**
+     * @notice Thrown when settlement window is not open yet.
+     */
+    error SettlementWindowNotOpen(uint256 timestamp, uint256 settlementTime);
+
+    /**
      * @notice Thrown when attempting to settle an expired order.
      */
     error SettlementWindowExpired(
@@ -58,11 +63,6 @@ library AsyncOrder {
     error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
 
     /**
-     * @notice Gets thrown when commit order is called when a pending order already exists.
-     */
-    error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
-
-    /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
      */
     error PendingOrderExist();
@@ -80,33 +80,13 @@ library AsyncOrder {
 
     struct Data {
         /**
-         * @dev Order account id.
-         */
-        uint128 accountId;
-        /**
-         * @dev Order market id.
-         */
-        uint128 marketId;
-        /**
-         * @dev Order size delta (of asset units expressed in decimal 18 digits). It can be positive or negative.
-         */
-        int128 sizeDelta;
-        /**
-         * @dev Settlement strategy used for the order.
-         */
-        uint128 settlementStrategyId;
-        /**
          * @dev Time at which the Settlement time is open.
          */
         uint256 settlementTime;
         /**
-         * @dev Acceptable price set at submission. Longs will not be filled above this price, and shorts will not be filled below it.
+         * @dev Order request details.
          */
-        uint256 acceptablePrice;
-        /**
-         * @dev An optional code provided by frontends to assist with tracking the source of volume and fees.
-         */
-        bytes32 trackingCode;
+        OrderCommitmentRequest request;
     }
 
     struct OrderCommitmentRequest {
@@ -134,6 +114,10 @@ library AsyncOrder {
          * @dev An optional code provided by frontends to assist with tracking the source of volume and fees.
          */
         bytes32 trackingCode;
+        /**
+         * @dev Referrer address to send the referrer fees to.
+         */
+        address referrer;
     }
 
     /**
@@ -148,17 +132,21 @@ library AsyncOrder {
     }
 
     /**
-     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
-     * @dev non-existent order is considered an order with sizeDelta == 0.
+     * @dev Reverts if order was not committed by checking the sizeDelta.
+     * @dev Reverts if order is not in the settlement window.
      */
     function loadValid(
-        uint128 accountId,
-        uint128 marketId
-    ) internal view returns (Data storage order) {
+        uint128 accountId
+    ) internal view returns (Data storage order, SettlementStrategy.Data storage strategy) {
         order = load(accountId);
-        if (order.marketId != marketId || order.sizeDelta == 0) {
+        if (order.request.sizeDelta == 0) {
             revert OrderNotValid();
         }
+
+        strategy = PerpsMarketConfiguration.load(order.request.marketId).settlementStrategies[
+            order.request.settlementStrategyId
+        ];
+        checkWithinSettlementWindow(order, strategy);
     }
 
     /**
@@ -166,41 +154,43 @@ library AsyncOrder {
      * @dev non-existent order is considered an order with sizeDelta == 0.
      */
     function createValid(
-        uint128 accountId,
-        uint128 marketId
-    ) internal view returns (Data storage order) {
-        order = load(accountId);
-        if (order.sizeDelta != 0 && order.marketId == marketId) {
-            revert OrderAlreadyCommitted(marketId, accountId);
-        }
+        OrderCommitmentRequest memory newRequest,
+        SettlementStrategy.Data storage strategy
+    ) internal returns (Data storage order) {
+        order = checkPendingOrder(newRequest.accountId);
 
-        if (order.sizeDelta != 0) {
+        order.settlementTime = block.timestamp + strategy.settlementDelay;
+        order.request = newRequest;
+    }
+
+    /**
+     * @dev Reverts if there is a pending order.
+     * @dev A pending order is one that has a sizeDelta or isn't expired yet.
+     */
+    function checkPendingOrder(uint128 accountId) internal view returns (Data storage order) {
+        order = load(accountId);
+        if (
+            order.request.sizeDelta != 0 ||
+            !expired(
+                order,
+                PerpsMarketConfiguration.loadValidSettlementStrategy(
+                    order.request.marketId,
+                    order.request.settlementStrategyId
+                )
+            )
+        ) {
             revert PendingOrderExist();
         }
     }
 
-    function update(
-        Data storage self,
-        OrderCommitmentRequest memory commitment,
-        uint256 settlementTime
-    ) internal {
-        self.sizeDelta = commitment.sizeDelta;
-        self.settlementStrategyId = commitment.settlementStrategyId;
-        self.settlementTime = settlementTime;
-        self.acceptablePrice = commitment.acceptablePrice;
-        self.trackingCode = commitment.trackingCode;
-        self.marketId = commitment.marketId;
-        self.accountId = commitment.accountId;
-    }
-
     /**
      * @notice Resets the order.
-     * @dev This function is called after the order is settled or cancelled.
+     * @dev This function is called after the order is settled.
      * @dev Just setting the sizeDelta to 0 is enough, since is the value checked to identify an active order at settlement time.
      * @dev The rest of the fields will be updated on the next commitment. Not doing it here is more gas efficient.
      */
     function reset(Data storage self) internal {
-        self.sizeDelta = 0;
+        self.request.sizeDelta = 0;
     }
 
     /**
@@ -214,7 +204,12 @@ library AsyncOrder {
     ) internal view {
         uint settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
-        if (block.timestamp < self.settlementTime || block.timestamp > settlementExpiration) {
+
+        if (block.timestamp < self.settlementTime) {
+            revert SettlementWindowNotOpen(block.timestamp, self.settlementTime);
+        }
+
+        if (expired(self, settlementStrategy)) {
             revert SettlementWindowExpired(
                 block.timestamp,
                 self.settlementTime,
@@ -224,38 +219,24 @@ library AsyncOrder {
     }
 
     /**
-     * @notice Checks if the order can be cancelled.
-     * @dev Reverts if block.timestamp is < settlementTime + settlementWindowDuration
-     * @dev it means it didn't expire yet.
+     * @notice Returns if order is expired or not
      */
-    function checkCancellationEligibility(
+    function expired(
         Data storage self,
         SettlementStrategy.Data storage settlementStrategy
-    ) internal view {
+    ) internal view returns (bool) {
         uint settlementExpiration = self.settlementTime +
             settlementStrategy.settlementWindowDuration;
-        if (block.timestamp < settlementExpiration) {
-            revert SettlementWindowNotExpired(
-                block.timestamp,
-                self.settlementTime,
-                settlementExpiration
-            );
-        }
-    }
-
-    /**
-     * @notice Checks if the storage order is valid (exists), and reverts otherwise
-     */
-    function checkValidity(Data storage self) internal view {
-        if (self.sizeDelta == 0) {
-            revert OrderNotValid();
-        }
+        return block.timestamp > settlementExpiration;
     }
 
     /**
      * @dev Struct used internally in validateOrder() to prevent stack too deep error.
      */
     struct SimulateDataRuntime {
+        int128 sizeDelta;
+        uint128 accountId;
+        uint128 marketId;
         uint fillPrice;
         uint orderFees;
         uint availableMargin;
@@ -286,46 +267,49 @@ library AsyncOrder {
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
     ) internal returns (Position.Data memory, uint, uint, Position.Data storage oldPosition) {
-        if (order.sizeDelta == 0) {
+        SimulateDataRuntime memory runtime;
+        runtime.sizeDelta = order.request.sizeDelta;
+        runtime.accountId = order.request.accountId;
+        runtime.marketId = order.request.marketId;
+
+        if (runtime.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
 
-        SimulateDataRuntime memory runtime;
-
-        PerpsAccount.Data storage account = PerpsAccount.load(order.accountId);
+        PerpsAccount.Data storage account = PerpsAccount.load(runtime.accountId);
 
         bool isEligible;
         (isEligible, runtime.currentAvailableMargin, , runtime.requiredMaintenanceMargin) = account
             .isEligibleForLiquidation();
 
         if (isEligible) {
-            revert PerpsAccount.AccountLiquidatable(order.accountId);
+            revert PerpsAccount.AccountLiquidatable(runtime.accountId);
         }
 
-        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.marketId);
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
         perpsMarketData.recomputeFunding(orderPrice);
 
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            order.marketId
+            runtime.marketId
         );
 
         runtime.fillPrice = calculateFillPrice(
             perpsMarketData.skew,
             marketConfig.skewScale,
-            order.sizeDelta,
+            runtime.sizeDelta,
             orderPrice
         );
 
         if (
-            (order.sizeDelta > 0 && runtime.fillPrice > order.acceptablePrice) ||
-            (order.sizeDelta < 0 && runtime.fillPrice < order.acceptablePrice)
+            (runtime.sizeDelta > 0 && runtime.fillPrice > order.request.acceptablePrice) ||
+            (runtime.sizeDelta < 0 && runtime.fillPrice < order.request.acceptablePrice)
         ) {
-            revert AcceptablePriceExceeded(runtime.fillPrice, order.acceptablePrice);
+            revert AcceptablePriceExceeded(runtime.fillPrice, order.request.acceptablePrice);
         }
 
         runtime.orderFees =
             calculateOrderFee(
-                order.sizeDelta,
+                runtime.sizeDelta,
                 runtime.fillPrice,
                 perpsMarketData.skew,
                 marketConfig.orderFees
@@ -336,16 +320,16 @@ library AsyncOrder {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
-        oldPosition = PerpsMarket.load(order.marketId).positions[order.accountId];
+        oldPosition = PerpsMarket.load(runtime.marketId).positions[runtime.accountId];
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
             marketConfig.maxMarketSize,
             oldPosition.size,
-            order.sizeDelta
+            runtime.sizeDelta
         );
 
-        runtime.newPositionSize = oldPosition.size + order.sizeDelta;
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
         (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
             runtime.newPositionSize,
             runtime.fillPrice
@@ -372,7 +356,7 @@ library AsyncOrder {
         }
 
         runtime.newPosition = Position.Data({
-            marketId: order.marketId,
+            marketId: runtime.marketId,
             latestInteractionPrice: runtime.fillPrice.to128(),
             latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
             size: runtime.newPositionSize

@@ -53,7 +53,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         PerpsAccount.Data storage account = PerpsAccount.create(accountId);
         uint128 perpsMarketId = PerpsMarketFactory.load().perpsMarketId;
 
-        account.checkPendingOrder();
+        AsyncOrder.checkPendingOrder(account.id);
 
         if (amountDelta > 0) {
             _depositMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountDelta.toUint());

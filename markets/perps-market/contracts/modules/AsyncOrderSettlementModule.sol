@@ -41,12 +41,12 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
     /**
      * @inheritdoc IAsyncOrderSettlementModule
      */
-    function settle(uint128 marketId, uint128 accountId) external view {
+    function settle(uint128 accountId) external view {
         GlobalPerpsMarket.load().checkLiquidation(accountId);
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
-        ) = _performOrderValidityChecks(marketId, accountId);
+        ) = AsyncOrder.loadValid(accountId);
 
         _settleOffchain(order, settlementStrategy);
     }
@@ -55,11 +55,11 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
      * @inheritdoc IAsyncOrderSettlementModule
      */
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable {
-        (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
+        uint128 accountId = abi.decode(extraData, (uint128));
         (
             AsyncOrder.Data storage order,
             SettlementStrategy.Data storage settlementStrategy
-        ) = _performOrderValidityChecks(marketId, asyncOrderId);
+        ) = AsyncOrder.loadValid(accountId);
 
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = settlementStrategy.feedId;
@@ -79,7 +79,10 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
         uint offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
 
-        settlementStrategy.checkPriceDeviation(offchainPrice, PerpsPrice.getCurrentPrice(marketId));
+        settlementStrategy.checkPriceDeviation(
+            offchainPrice,
+            PerpsPrice.getCurrentPrice(order.request.marketId)
+        );
 
         _settleOrder(offchainPrice, order, settlementStrategy);
     }
@@ -107,7 +110,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             urls,
             abi.encodePacked(settlementStrategy.feedId, _getTimeInBytes(asyncOrder.settlementTime)),
             selector,
-            abi.encode(asyncOrder.marketId, asyncOrder.accountId) // extraData that gets sent to callback for validation
+            abi.encode(asyncOrder.request.accountId) // extraData that gets sent to callback for validation
         );
     }
 
@@ -120,8 +123,8 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         SettlementStrategy.Data storage settlementStrategy
     ) private {
         SettleOrderRuntime memory runtime;
-        runtime.accountId = asyncOrder.accountId;
-        runtime.marketId = asyncOrder.marketId;
+        runtime.accountId = asyncOrder.request.accountId;
+        runtime.marketId = asyncOrder.request.marketId;
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
         (
@@ -134,7 +137,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         runtime.amountToDeduct += totalFees;
 
         runtime.newPositionSize = newPosition.size;
-        runtime.sizeDelta = asyncOrder.sizeDelta;
+        runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
         runtime.factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
@@ -194,27 +197,9 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.newPositionSize,
             totalFees,
             runtime.settlementReward,
-            asyncOrder.trackingCode,
+            asyncOrder.request.trackingCode,
             msg.sender
         );
-    }
-
-    /**
-     * @dev performs the order validity checks (existance and timing).
-     */
-    function _performOrderValidityChecks(
-        uint128 marketId,
-        uint128 accountId
-    ) private view returns (AsyncOrder.Data storage, SettlementStrategy.Data storage) {
-        AsyncOrder.Data storage order = AsyncOrder.loadValid(accountId, marketId);
-
-        SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[order.settlementStrategyId];
-
-        order.checkWithinSettlementWindow(settlementStrategy);
-
-        return (order, settlementStrategy);
     }
 
     /**

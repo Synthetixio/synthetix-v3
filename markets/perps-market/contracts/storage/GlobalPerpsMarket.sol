@@ -9,6 +9,7 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
+import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 
 /**
  * @title This library contains all global perps market data
@@ -43,6 +44,11 @@ library GlobalPerpsMarket {
     error InsufficientCollateral(uint128 synthMarketId, uint collateralAmount, uint withdrawAmount);
 
     struct Data {
+        /**
+         * @dev fee collector contract
+         * @dev portion or all of the order fees are sent to fee collector contract based on quote.
+         */
+        IFeeCollector feeCollector;
         /**
          * @dev Set of liquidatable account ids.
          */

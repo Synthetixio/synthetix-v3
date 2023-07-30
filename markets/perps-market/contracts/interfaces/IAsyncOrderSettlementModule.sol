@@ -59,10 +59,9 @@ interface IAsyncOrderSettlementModule {
 
     /**
      * @notice Settles an offchain order. It's expected to revert with the OffchainLookup error with the data needed to perform the offchain lookup.
-     * @param marketId Id of the market used for the trade.
      * @param accountId Id of the account used for the trade.
      */
-    function settle(uint128 marketId, uint128 accountId) external view;
+    function settle(uint128 accountId) external view;
 
     /**
      * @notice Settles an offchain order using the offchain retrieved data from pyth.
