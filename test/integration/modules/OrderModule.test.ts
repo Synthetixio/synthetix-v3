@@ -57,7 +57,7 @@ describe('OrderModule', () => {
       // - get value of collateral e.g. $1200
       // - get minMargin e.g. $100
       // - derive depositAmount e.g. $100 / $1200 = 0.08333334 units
-      const { minMarginUsd } = await PerpMarketProxy.getMarketParameters();
+      const { minMarginUsd } = await PerpMarketProxy.getMarketConfiguration();
       const collateral = genOneOf(collaterals());
       const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
       const depositAmount = wei(minMarginUsd).div(collateralPrice).mul(0.95).toBN(); // 5% less than minMargin.
@@ -185,7 +185,7 @@ describe('OrderModule', () => {
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       // Generate an order where the leverage is between maxLeverage + 1 and maxLeverage * 2.
-      const { maxLeverage } = await PerpMarketProxy.getMarketParametersById(marketId);
+      const { maxLeverage } = await PerpMarketProxy.getMarketConfigurationById(marketId);
       const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
         PerpMarketProxy,
         marketId,

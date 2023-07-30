@@ -48,9 +48,9 @@ export const setMarketConfigurationById = async (
   const { systems, owner } = bs;
   const { PerpMarketProxy } = systems();
 
-  const data = await PerpMarketProxy.getMarketParametersById(marketId);
+  const data = await PerpMarketProxy.getMarketConfigurationById(marketId);
   const tx = await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, { ...data, ...params });
   await tx.wait();
 
-  return await PerpMarketProxy.getMarketParametersById(marketId);
+  return await PerpMarketProxy.getMarketConfigurationById(marketId);
 };

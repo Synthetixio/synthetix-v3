@@ -39,7 +39,7 @@ describe('PerpMarketFactoryModule', () => {
 
       const address = genAddress();
       await PerpMarketProxy.connect(from).setPyth(address);
-      const config = await PerpMarketProxy.getMarketParameters();
+      const config = await PerpMarketProxy.getMarketConfiguration();
 
       assert(config.pyth, address);
     });

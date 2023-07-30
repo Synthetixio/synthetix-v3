@@ -65,14 +65,14 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function getMarketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory) {
+    function getMarketConfiguration() external pure returns (PerpMarketConfiguration.GlobalData memory) {
         return PerpMarketConfiguration.load();
     }
 
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function getMarketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory) {
+    function getMarketConfigurationById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory) {
         return PerpMarketConfiguration.load(marketId);
     }
 }

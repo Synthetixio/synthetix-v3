@@ -18,7 +18,7 @@ describe('MarketConfigurationModule', async () => {
 
       const { global } = genBootstrap();
       const tx = await PerpMarketProxy.connect(from).setMarketConfiguration(global);
-      const config = await PerpMarketProxy.getMarketParameters();
+      const config = await PerpMarketProxy.getMarketConfiguration();
 
       assertBn.equal(config.minMarginUsd, global.minMarginUsd);
       assertBn.equal(config.priceDivergencePercent, global.priceDivergencePercent);
@@ -58,7 +58,7 @@ describe('MarketConfigurationModule', async () => {
       const specific = bs.markets[0].specific;
 
       const tx = await PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific);
-      const config = await PerpMarketProxy.getMarketParametersById(marketId);
+      const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
 
       assert.equal(specific.oracleNodeId, config.oracleNodeId);
       assert.equal(specific.pythPriceFeedId, config.pythPriceFeedId);

@@ -68,12 +68,10 @@ interface IMarketConfigurationModule {
     /**
      * @dev Returns global market parameters.
      */
-    function getMarketParameters() external pure returns (PerpMarketConfiguration.GlobalData memory);
+    function getMarketConfiguration() external pure returns (PerpMarketConfiguration.GlobalData memory);
 
     /**
      * @dev Returns market specific parameters.
-     *
-     * TODO: Rename `Parameters` to `Configuration` for consistency.
      */
-    function getMarketParametersById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
+    function getMarketConfigurationById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
 }

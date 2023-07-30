@@ -120,7 +120,7 @@ export const genOrder = async (
 
   // TODO: Accept accountId to generate a valid order given an existing position.
 
-  const { maxLeverage } = await proxy.getMarketParametersById(marketId);
+  const { maxLeverage } = await proxy.getMarketConfigurationById(marketId);
   const oraclePrice = await proxy.getOraclePrice(marketId);
   const sizeDelta1xLeverage = wei(depositAmountUsd).div(oraclePrice);
 
