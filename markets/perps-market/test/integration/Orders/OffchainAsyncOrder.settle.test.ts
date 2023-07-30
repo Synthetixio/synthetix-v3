@@ -12,7 +12,7 @@ import { calculateFillPrice } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
 import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
 
-describe.only('Settle Offchain Async Order test', () => {
+describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
     synthMarkets: [
       {

@@ -9,7 +9,6 @@ import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
-import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 
 /**
  * @title This library contains all global perps market data
