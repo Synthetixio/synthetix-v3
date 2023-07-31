@@ -15,6 +15,8 @@ contract ElectionVotes is ElectionBase {
     using Election for Election.Data;
     using Ballot for Ballot.Data;
 
+		error BallotDoesNotExist();
+
     function _validateCandidates(address[] calldata candidates) internal virtual {
         uint length = candidates.length;
 
@@ -43,65 +45,6 @@ contract ElectionVotes is ElectionBase {
                 }
             }
         }
-    }
-
-    function _recordVote(
-        address user,
-        uint votePower,
-        address[] calldata candidates
-    ) internal virtual returns (bytes32 ballotId) {
-        Election.Data storage election = Council.load().getCurrentElection();
-
-        ballotId = keccak256(abi.encode(candidates));
-        Ballot.Data storage ballot = election.ballotsById[ballotId];
-
-        // Initialize ballot if new.
-        if (!ballot.isInitiated()) {
-            address[] memory newCandidates = candidates;
-
-            ballot.candidates = newCandidates;
-
-            election.ballotIds.push(ballotId);
-        }
-
-        ballot.votes += votePower;
-        ballot.votesByUser[user] = votePower;
-        election.ballotIdsByAddress[user] = ballotId;
-
-        return ballotId;
-    }
-
-    function _withdrawVote(
-        address user,
-        uint votePower
-    ) internal virtual returns (bytes32 ballotId) {
-        Election.Data storage election = Council.load().getCurrentElection();
-
-        ballotId = election.ballotIdsByAddress[user];
-        Ballot.Data storage ballot = election.ballotsById[ballotId];
-
-        ballot.votes -= votePower;
-        ballot.votesByUser[user] = 0;
-        election.ballotIdsByAddress[user] = bytes32(0);
-
-        return ballotId;
-    }
-
-    function _withdrawCastedVote(address user, uint epochIndex) internal virtual {
-        uint castedVotePower = _getCastedVotePower(user);
-
-        bytes32 ballotId = _withdrawVote(user, castedVotePower);
-
-        emit VoteWithdrawn(user, ballotId, epochIndex, castedVotePower);
-    }
-
-    function _getCastedVotePower(address user) internal virtual returns (uint votePower) {
-        Election.Data storage election = Council.load().getCurrentElection();
-
-        bytes32 ballotId = election.ballotIdsByAddress[user];
-        Ballot.Data storage ballot = election.ballotsById[ballotId];
-
-        return ballot.votesByUser[user];
     }
 
     // TODO: New vote power computation:

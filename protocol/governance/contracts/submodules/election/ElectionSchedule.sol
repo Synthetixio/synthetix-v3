@@ -10,15 +10,6 @@ contract ElectionSchedule is ElectionBase {
     using Council for Council.Data;
     using SafeCastU256 for uint256;
 
-    /// @dev Used to allow certain functions to only operate within a given period
-    modifier onlyInPeriod(Council.ElectionPeriod period) {
-        if (Council.load().getCurrentPeriod() != period) {
-            revert NotCallableInCurrentPeriod();
-        }
-
-        _;
-    }
-
     /// @dev Sets dates within an epoch, with validations
     function _configureEpochSchedule(
         Epoch.Data storage epoch,

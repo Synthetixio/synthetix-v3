@@ -183,9 +183,15 @@ contract BaseElectionModule {
 // @custom:artifact contracts/storage/Ballot.sol:Ballot
 library Ballot {
     struct Data {
-        uint votes;
-        address[] candidates;
-        mapping(address => uint) votesByUser;
+        uint256 votingPower;
+        address[] votedCandidates;
+        uint256[] amounts;
+    }
+    function load(uint electionId, address voter, uint256 precinct) internal pure returns (Data storage self) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Ballot", electionId, voter, precinct));
+        assembly {
+            self.slot := s
+        }
     }
 }
 
@@ -247,10 +253,8 @@ library Election {
         uint numEvaluatedBallots;
         SetUtil.AddressSet nominees;
         SetUtil.AddressSet winners;
-        bytes32[] ballotIds;
-        mapping(bytes32 => Ballot.Data) ballotsById;
-        mapping(address => bytes32) ballotIdsByAddress;
-        mapping(address => uint) candidateVotes;
+        bytes32[] ballotPtrs;
+        mapping(address => uint256) candidateVoteTotals;
     }
     function load(uint epochIndex) internal pure returns (Data storage election) {
         bytes32 s = keccak256(abi.encode("io.synthetix.governance.Election", epochIndex));
@@ -286,6 +290,29 @@ library Epoch {
         uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
+    }
+}
+
+// @custom:artifact contracts/storage/SnapshotVotePower.sol:SnapshotVotePower
+library SnapshotVotePower {
+    struct Data {
+        uint128 validFromEpoch;
+        uint128 validToEpoch;
+        mapping(uint128 => SnapshotVotePowerEpoch.Data) epochs;
+    }
+    function load(address snapshotContract) internal pure returns (Data storage self) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.SnapshotVotePower", snapshotContract));
+        assembly {
+            self.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/SnapshotVotePowerEpoch.sol:SnapshotVotePowerEpoch
+library SnapshotVotePowerEpoch {
+    struct Data {
+        uint256 snapshotId;
+        mapping(address => uint256) recordedVotingPower;
     }
 }
 
