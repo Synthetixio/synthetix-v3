@@ -63,16 +63,17 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
+        uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
-            uint128 perpsMarketId = factory.synthetix.registerMarket(address(this));
+            perpsMarketId = factory.synthetix.registerMarket(address(this));
             factory.perpsMarketId = perpsMarketId;
-
-            emit FactoryInitialized(perpsMarketId);
-
-            return perpsMarketId;
         } else {
-            return factory.perpsMarketId;
+            perpsMarketId = factory.perpsMarketId;
         }
+
+        emit FactoryInitialized(perpsMarketId);
+
+        return perpsMarketId;
     }
 
     /**
