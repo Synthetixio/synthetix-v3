@@ -70,10 +70,7 @@ library GlobalPerpsMarketConfiguration {
         Data storage self,
         uint128[] memory newSynthDeductionPriority
     ) internal {
-        uint256 currentDeductionLength = self.synthDeductionPriority.length;
-        for (uint i = 0; i < currentDeductionLength; i++) {
-            self.synthDeductionPriority.pop();
-        }
+        delete self.synthDeductionPriority;
 
         for (uint i = 0; i < newSynthDeductionPriority.length; i++) {
             self.synthDeductionPriority.push(newSynthDeductionPriority[i]);
