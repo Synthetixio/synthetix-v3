@@ -23,6 +23,8 @@ import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/Param
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Module for registering perpetual futures markets. The factory tracks all markets in the system and consolidates implementation.
@@ -34,6 +36,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
+    using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
+    using SafeCastI256 for int256;
+    using SetUtil for SetUtil.UintSet;
+    using PerpsMarket for PerpsMarket.Data;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
 
@@ -101,11 +108,33 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
     function name(uint128 perpsMarketId) external view override returns (string memory) {
         // todo: set name on initialize?
+        perpsMarketId; // silence unused variable warning
         return "Perps Market";
     }
 
     function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
-        // TODO
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+
+        if (factory.perpsMarketId == perpsMarketId) {
+            // debt is the total debt of all markets
+            // can be computed as total collateral value - sum_each_market( debt )
+            uint totalCollateralValue = GlobalPerpsMarket.load().totalCollateralValue();
+            int totalMarketDebt;
+
+            SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
+            uint256 activeMarketsLength = activeMarkets.length();
+            for (uint i = 1; i <= activeMarketsLength; i++) {
+                uint128 marketId = activeMarkets.valueAt(i).to128();
+                totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
+                    PerpsPrice.getCurrentPrice(marketId)
+                );
+            }
+
+            int totalDebt = totalCollateralValue.toInt() + totalMarketDebt;
+            return totalDebt < 0 ? 0 : totalDebt.toUint();
+        }
+
+        // TODO Should revert if perpsMarketId is not correct???
         return 0;
     }
 

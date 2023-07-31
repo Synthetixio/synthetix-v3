@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
+import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
@@ -11,6 +12,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
  */
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
+    using GlobalPerpsMarket for GlobalPerpsMarket.Data;
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
@@ -80,5 +82,17 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         minLiquidationRewardUsd = store.minLiquidationRewardUsd;
         maxLiquidationRewardUsd = store.maxLiquidationRewardUsd;
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function totalGlobalCollateralValue()
+        external
+        view
+        override
+        returns (uint256 totalCollateralValue)
+    {
+        return GlobalPerpsMarket.load().totalCollateralValue();
     }
 }
