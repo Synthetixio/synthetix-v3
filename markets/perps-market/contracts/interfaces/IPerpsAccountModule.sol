@@ -62,17 +62,13 @@ interface IPerpsAccountModule {
      * @param accountId Id of the account.
      * @param marketId Id of the position market.
      * @return totalPnl pnl of the entire position including funding.
-     * @return pricePnl pnl of the position without funding.
      * @return accruedFunding accrued funding of the position.
      * @return positionSize size of the position.
      */
     function getOpenPosition(
         uint128 accountId,
         uint128 marketId
-    )
-        external
-        view
-        returns (int256 totalPnl, int256 pricePnl, int256 accruedFunding, int128 positionSize);
+    ) external view returns (int256 totalPnl, int256 accruedFunding, int128 positionSize);
 
     /**
      * @notice Gets the available margin of an account. It can be negative due to pnl.
