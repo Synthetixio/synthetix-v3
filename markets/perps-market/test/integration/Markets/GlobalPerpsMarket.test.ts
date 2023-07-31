@@ -3,7 +3,7 @@ import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
-describe.only('GlobalPerpsMarket', () => {
+describe('GlobalPerpsMarket', () => {
   const { systems, perpsMarkets, trader1 } = bootstrapMarkets({
     synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
     perpsMarkets: [{ requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) }],
