@@ -2,7 +2,19 @@
 
 **Welcome to bfp-market!**
 
-bfp (big ~~fucking~~ freaking perps) market is a simplified SNX perps v2 market, built on top of SNX v3. This is still in development and massively subject to change, use with caution.
+The BFP Market _(big ~~fucking~~ freaking perps)_ (or BFP-Market) is a perpetual swap market, leveraging the capabilities of Synthetix v3 as its underlying infrastructure. bfp-market inherits core features from [v2x](https://github.com/Synthetixio/synthetix/tree/develop/contracts), such as dynamic funding rates, PD (Premium/Discount) adjusted market prices, and asynchronous hybrid oracle-based order executions through Pyth.
+
+In addition to these features, it also introduces various enhancements, including multi-collateral support, improved dynamic keeper fees, user-adjustable keeper fees on order commitments, a host of quality-of-life improvements, a strong emphasis on gas optimization, and, obviously, built on Synthetix v3.
+
+The primary objective of bfp-market is to create a hyper-stable perp derivative utilizing wstETH as collateral, allowing users to open a 1x wstETH short with minimal negative funding, completely on-chain.
+
+Please caution as this project is **_still under active development, not yet released, or audited_**.
+
+<p align="center">
+  <img src="./docs/images/summary.png">
+</p>
+
+_You can find more details on the working model under `docs/`._
 
 ## Development
 
@@ -28,14 +40,11 @@ npm i --legacy-peer-deps
 # @see: https://usecannon.com/docs
 npx cannon setup
 
-# Build using cannon + hardhat
+# Build using cannon.
 npm run build
-
-# Run tests
-npm run test
 ```
 
-## Testing
+## Running tests
 
 The test environment is a composition of `bootstrap` function calls, tighly coupled with Synthetix. As such, much of the design choices follow that of Synthetix V3 for consistency. A base `bootstrap()` function is provided which does the following:
 
@@ -44,14 +53,8 @@ The test environment is a composition of `bootstrap` function calls, tighly coup
 - Generates TypeScript interfaces and aliases for test development
 - Registers and configures perp markets with the core system
 
-All of these operates happen asynchronously in loosely chained `before` blocks.
+All of these operates happen asynchronously in loosely chained `before` blocks. You can execute tests by:
 
-## TODO
-
-- [ ] Debt calculations
-- [ ] New liquidations (progressive liquidation over a period of time)
-- [ ] New Margin Maintenance Margin Ratio Calculation
-- [ ] Add position specific views (position summary like accrued funding, PnL etc.)
-- [ ] Events throughout contracts
-- [ ] `postTradeDetails` missing on check on `liquidationPremium`
-- [ ] Market pause features (Perhaps pause types: CLOSE_ONLY, PAUSED, AVAILABLE)
+```bash
+npm run test
+```

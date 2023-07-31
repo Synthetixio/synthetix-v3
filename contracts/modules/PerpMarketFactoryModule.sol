@@ -18,6 +18,10 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     event MarketCreated(uint128 id, bytes32 name);
 
     // TODO: Add more views/events based on v2x events feedback (see Notion).
+    //
+    // - add getMarketDigest but perhaps in an MarketModule rather than the factory
+
+    // TODO: Add ability to pause/close-only for markets.
 
     /**
      * @inheritdoc IPerpMarketFactoryModule
@@ -69,7 +73,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
      * @inheritdoc IMarket
      */
     function reportedDebt(uint128) external pure override returns (uint256) {
-        return 0; // TODO
+        return 0; // TODO: Debt calculations
     }
 
     /**

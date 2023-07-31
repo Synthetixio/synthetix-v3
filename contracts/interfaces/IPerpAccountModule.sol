@@ -38,4 +38,8 @@ interface IPerpAccountModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (IPerpAccountModule.AccountDigest memory digest);
+
+    // TODO: Add .getPositionDigest
+    //
+    // A richer digest with details around margin, collateral value, pnl, accrued funding etc.
 }
