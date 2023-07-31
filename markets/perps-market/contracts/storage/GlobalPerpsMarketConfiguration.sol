@@ -66,6 +66,17 @@ library GlobalPerpsMarketConfiguration {
             );
     }
 
+    function updateSynthDeductionPriority(
+        Data storage self,
+        uint128[] memory newSynthDeductionPriority
+    ) internal {
+        delete self.synthDeductionPriority;
+
+        for (uint i = 0; i < newSynthDeductionPriority.length; i++) {
+            self.synthDeductionPriority.push(newSynthDeductionPriority[i]);
+        }
+    }
+
     function collectFees(
         Data storage self,
         uint256 orderFees,
