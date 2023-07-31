@@ -278,8 +278,8 @@ library PerpsAccount {
         uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
             .load()
             .synthDeductionPriority;
-        ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        ISpotMarketSystem spotMarket = factory.spotMarket;
         for (uint i = 0; i < synthDeductionPriority.length; i++) {
             uint128 marketId = synthDeductionPriority[i];
             uint availableAmount = self.collateralAmounts[marketId];
