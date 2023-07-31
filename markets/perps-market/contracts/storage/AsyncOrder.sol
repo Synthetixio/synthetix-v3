@@ -250,7 +250,7 @@ library AsyncOrder {
     }
 
     /**
-     * @notice Checks if the order can be settled.
+     * @notice Checks if the order request can be settled.
      * @dev it recomputes market funding rate, calculates fill price and fees for the order
      * @dev and with that data it checks that:
      * @dev - the account is eligible for liquidation
@@ -260,7 +260,7 @@ library AsyncOrder {
      * @dev - the account has enough margin to not be liquidable immediately after the order is settled
      * @dev if the order can be executed, it returns (newPosition, orderFees, fillPrice, oldPosition)
      */
-    function validateOrder(
+    function validateRequest(
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice

@@ -131,7 +131,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
-            .validateOrder(settlementStrategy, price);
+            .validateRequest(settlementStrategy, price);
 
         runtime.amountToDeduct += runtime.totalFees;
 

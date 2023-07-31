@@ -62,12 +62,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .loadValidSettlementStrategy(commitment.marketId, commitment.settlementStrategyId);
 
         AsyncOrder.Data storage order = AsyncOrder.createValid(commitment, strategy);
-        (, uint feesAccrued, , ) = order.validateOrder(
+        (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
 
-        // TODO include fees in event
         emit OrderCommitted(
             commitment.marketId,
             commitment.accountId,
@@ -86,6 +85,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     /**
      * @inheritdoc IAsyncOrderModule
      */
+    // solc-ignore-next-line func-mutability
     function getOrder(
         uint128 accountId
     ) external view override returns (AsyncOrder.Data memory order) {
