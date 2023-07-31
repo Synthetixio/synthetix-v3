@@ -80,7 +80,7 @@ interface IMarketConfigurationModule {
      * @param marketId udpates funding parameters to this specific market.
      * @param lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
-    event LockedOiRatioD18Set(uint128 indexed marketId, uint256 lockedOiRatioD18);
+    event LockedOiRatioSet(uint128 indexed marketId, uint256 lockedOiRatioD18);
 
     /**
      * @notice Gets fired when a settlement strategy is enabled or disabled.
@@ -240,5 +240,5 @@ interface IMarketConfigurationModule {
      * @param marketId id of the market.
      * @return lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
-    function getLockedOiRatioD18(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
+    function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
 }
