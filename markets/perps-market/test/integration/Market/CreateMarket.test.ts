@@ -192,6 +192,7 @@ describe('Create Market test', () => {
               sizeDelta: bn(1),
               settlementStrategyId: 0,
               acceptablePrice: bn(1050), // 5% slippage
+              referrer: ethers.constants.AddressZero,
               trackingCode: ethers.constants.HashZero,
             }),
           'PriceFeedNotSet'
@@ -240,6 +241,7 @@ describe('Create Market test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           });
       });

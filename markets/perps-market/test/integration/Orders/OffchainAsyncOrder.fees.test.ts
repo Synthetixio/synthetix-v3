@@ -147,6 +147,7 @@ describe('Offchain Async Order test - fees', () => {
               sizeDelta,
               settlementStrategyId: 0,
               acceptablePrice: bn(1050), // 5% slippage
+              referrer: ethers.constants.AddressZero,
               trackingCode: ethers.constants.HashZero,
             });
 
@@ -169,28 +170,6 @@ describe('Offchain Async Order test - fees', () => {
 
         const restoreToKeeper = snapshotCheckpoint(provider);
 
-        describe('when canceling the order', () => {
-          before(restoreToKeeper);
-
-          before('cancel the order', async () => {
-            await fastForwardTo(
-              startTime +
-                DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
-                DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
-                1,
-              provider()
-            );
-            tx = await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
-          });
-
-          it('validate no fees are paid on cancel', async () => {
-            const { traderBalance, keeperBalance } = await getBalances();
-
-            assertBn.equal(traderBalance, balancesBeforeLong.traderBalance);
-            assertBn.equal(keeperBalance, balancesBeforeLong.keeperBalance);
-          });
-        });
-
         describe('when settling the order', () => {
           before(restoreToKeeper);
 
@@ -200,7 +179,6 @@ describe('Offchain Async Order test - fees', () => {
             await settleOrder({
               systems,
               keeper: keeper(),
-              marketId: ethMarketId,
               accountId: 2,
               feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
               settlementTime,

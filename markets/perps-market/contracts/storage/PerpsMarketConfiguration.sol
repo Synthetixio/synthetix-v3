@@ -111,9 +111,10 @@ library PerpsMarketConfiguration {
      * @notice given a strategy id, returns the entire settlement strategy struct
      */
     function loadValidSettlementStrategy(
-        Data storage self,
+        uint128 marketId,
         uint128 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
+        Data storage self = load(marketId);
         if (settlementStrategyId >= self.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }

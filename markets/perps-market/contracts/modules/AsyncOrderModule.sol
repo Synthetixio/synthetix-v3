@@ -58,32 +58,23 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 
-        AsyncOrder.Data storage order = AsyncOrder.createValid(
-            commitment.accountId,
-            commitment.marketId
-        );
-
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
-            .load(commitment.marketId)
-            .loadValidSettlementStrategy(commitment.settlementStrategyId);
+            .loadValidSettlementStrategy(commitment.marketId, commitment.settlementStrategyId);
 
-        uint256 settlementTime = block.timestamp + strategy.settlementDelay;
-        order.update(commitment, settlementTime);
-
-        (, uint feesAccrued, , ) = order.validateOrder(
+        AsyncOrder.Data storage order = AsyncOrder.createValid(commitment, strategy);
+        (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
             PerpsPrice.getCurrentPrice(commitment.marketId)
         );
 
-        // TODO include fees in event
         emit OrderCommitted(
             commitment.marketId,
             commitment.accountId,
             strategy.strategyType,
             commitment.sizeDelta,
             commitment.acceptablePrice,
-            settlementTime,
-            settlementTime + strategy.settlementWindowDuration,
+            order.settlementTime,
+            order.settlementTime + strategy.settlementWindowDuration,
             commitment.trackingCode,
             msg.sender
         );
@@ -94,30 +85,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
     /**
      * @inheritdoc IAsyncOrderModule
      */
+    // solc-ignore-next-line func-mutability
     function getOrder(
-        uint128 marketId,
         uint128 accountId
     ) external view override returns (AsyncOrder.Data memory order) {
         order = AsyncOrder.load(accountId);
-        if (order.marketId != marketId) {
-            // return emtpy order if marketId does not match
-            order = AsyncOrder.Data(0, 0, 0, 0, 0, 0, 0);
-        }
-    }
-
-    /**
-     * @inheritdoc IAsyncOrderModule
-     */
-    function cancelOrder(uint128 marketId, uint128 accountId) external override {
-        AsyncOrder.Data storage order = AsyncOrder.loadValid(accountId, marketId);
-
-        SettlementStrategy.Data storage settlementStrategy = PerpsMarketConfiguration
-            .load(marketId)
-            .settlementStrategies[order.settlementStrategyId];
-        order.checkCancellationEligibility(settlementStrategy);
-        order.reset();
-
-        emit OrderCanceled(marketId, accountId, order.settlementTime, order.acceptablePrice);
     }
 
     /**

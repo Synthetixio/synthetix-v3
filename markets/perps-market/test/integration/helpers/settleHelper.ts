@@ -4,7 +4,6 @@ import { Systems } from '../bootstrap';
 export type SettleOrderData = {
   systems: () => Systems;
   keeper: ethers.Signer;
-  marketId: ethers.BigNumber;
   accountId: number;
   offChainPrice: ethers.BigNumberish;
   settlementTime: number;
@@ -14,17 +13,13 @@ export type SettleOrderData = {
 export const settleOrder = async ({
   systems,
   keeper,
-  marketId,
   accountId,
   offChainPrice,
   settlementTime,
   feedId,
 }: SettleOrderData): Promise<ethers.ContractTransaction> => {
   // create extraData based on market/account id
-  const extraData = ethers.utils.defaultAbiCoder.encode(
-    ['uint128', 'uint128'],
-    [marketId, accountId]
-  );
+  const extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [accountId]);
 
   // build pyth data
   const pythPriceExpotential = 6;

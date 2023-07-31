@@ -1,16 +1,31 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
+import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 
 /**
  * @title This library contains all global perps market configuration data
  */
 library GlobalPerpsMarketConfiguration {
+    using DecimalMath for uint256;
+    using PerpsMarketFactory for PerpsMarketFactory.Data;
+
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarketConfiguration"));
 
     struct Data {
+        /**
+         * @dev fee collector contract
+         * @dev portion or all of the order fees are sent to fee collector contract based on quote.
+         */
+        IFeeCollector feeCollector;
+        /**
+         * @dev Percentage share of fees for each referrer address
+         */
+        mapping(address => uint256) referrerShare;
         /**
          * @dev mapping of configured synthMarketId to max collateral amount.
          * @dev USD token synth market id = 0
@@ -49,5 +64,54 @@ library GlobalPerpsMarketConfiguration {
                 MathUtil.max(totalLiquidationRewards, self.minLiquidationRewardUsd),
                 self.maxLiquidationRewardUsd
             );
+    }
+
+    function collectFees(
+        Data storage self,
+        uint256 orderFees,
+        address referrer,
+        PerpsMarketFactory.Data storage factory
+    ) internal returns (uint256 referralFees, uint256 feeCollectorFees) {
+        referralFees = _collectReferrerFees(self, orderFees, referrer, factory);
+        uint256 remainingFees = orderFees - referralFees;
+
+        if (remainingFees == 0 || self.feeCollector == IFeeCollector(address(0))) {
+            return (referralFees, 0);
+        }
+
+        uint256 feeCollectorQuote = self.feeCollector.quoteFees(
+            factory.perpsMarketId,
+            remainingFees,
+            msg.sender
+        );
+
+        if (feeCollectorQuote == 0) {
+            return (referralFees, 0);
+        }
+
+        if (feeCollectorQuote > remainingFees) {
+            feeCollectorQuote = remainingFees;
+        }
+
+        factory.withdrawMarketUsd(address(self.feeCollector), feeCollectorQuote);
+
+        return (referralFees, feeCollectorQuote);
+    }
+
+    function _collectReferrerFees(
+        Data storage self,
+        uint256 fees,
+        address referrer,
+        PerpsMarketFactory.Data storage factory
+    ) private returns (uint256 referralFeesSent) {
+        if (referrer == address(0)) {
+            return 0;
+        }
+
+        uint256 referrerShareRatio = self.referrerShare[referrer];
+        if (referrerShareRatio > 0) {
+            referralFeesSent = fees.mulDecimal(referrerShareRatio);
+            factory.withdrawMarketUsd(referrer, referralFeesSent);
+        }
     }
 }

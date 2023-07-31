@@ -74,7 +74,7 @@ interface IMarketConfigurationModule {
     event WrapperFeesSet(uint256 indexed synthMarketId, int256 wrapFee, int256 unwrapFee);
 
     /**
-     * @notice Emitted when the owner of the market has changed.
+     * @notice Emitted when the share percentage for a referrer address has been updated.
      * @param marketId Id of the market
      * @param referrer The address of the referrer
      * @param sharePercentage The new share percentage for the referrer

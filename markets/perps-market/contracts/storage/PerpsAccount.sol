@@ -109,14 +109,6 @@ library PerpsAccount {
         }
     }
 
-    function checkPendingOrder(Data storage self) internal view {
-        // Check if there are pending orders
-        AsyncOrder.Data memory asyncOrder = AsyncOrder.load(self.id);
-        if (asyncOrder.sizeDelta != 0) {
-            revert AsyncOrder.PendingOrderExist();
-        }
-    }
-
     function updateCollateralAmount(
         Data storage self,
         uint128 synthMarketId,
