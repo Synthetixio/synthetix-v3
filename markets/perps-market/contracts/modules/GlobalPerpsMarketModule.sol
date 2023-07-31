@@ -45,8 +45,9 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         uint128[] memory newSynthDeductionPriority
     ) external override {
         OwnableStorage.onlyOwner();
-        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
-        store.synthDeductionPriority = newSynthDeductionPriority;
+        GlobalPerpsMarketConfiguration.load().updateSynthDeductionPriority(
+            newSynthDeductionPriority
+        );
 
         emit SynthDeductionPrioritySet(newSynthDeductionPriority);
     }
