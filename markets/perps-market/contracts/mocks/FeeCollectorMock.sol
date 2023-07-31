@@ -5,7 +5,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
 
 contract FeeCollectorMock is IFeeCollector {
-    uint feeRatioD18;
+    uint internal feeRatioD18;
 
     function mockSetFeeRatio(uint _feeRatio) external {
         feeRatioD18 = _feeRatio;

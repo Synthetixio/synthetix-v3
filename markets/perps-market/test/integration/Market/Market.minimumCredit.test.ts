@@ -55,7 +55,6 @@ describe('Market Minimum Credit', () => {
     });
   });
 
-  let openPositionTime: number;
   describe('open positions', () => {
     before(async () => {
       await openPosition({
