@@ -5,7 +5,7 @@ import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap'
 import { openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 
-describe.only('OffchainAsyncOrder - feeCollector - referrer', () => {
+describe('OffchainAsyncOrder - feeCollector - referrer', () => {
   const _ETH_PRICE = bn(2000);
   const {
     systems,
