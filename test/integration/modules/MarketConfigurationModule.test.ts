@@ -70,9 +70,7 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
       assertBn.equal(specific.initialMarginRatio, config.initialMarginRatio);
       assertBn.equal(specific.maintenanceMarginRatio, config.maintenanceMarginRatio);
-      assertBn.equal(specific.liquidationBufferPercent, config.liquidationBufferPercent);
-      assertBn.equal(specific.liquidationFeePercent, config.liquidationFeePercent);
-      assertBn.equal(specific.liquidationPremiumMultiplier, config.liquidationPremiumMultiplier);
+      assertBn.equal(specific.liquidationRewardPercent, config.liquidationRewardPercent);
 
       await assertEvent(tx, `MarketConfigurationUpdated(${marketId}, "${await from.getAddress()}")`, PerpMarketProxy);
     });

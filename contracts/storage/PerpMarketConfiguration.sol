@@ -72,12 +72,8 @@ library PerpMarketConfiguration {
         uint256 initialMarginRatio;
         // MMR is used to dynamically infer the maintnenace margin.
         uint256 maintenanceMarginRatio;
-        // Liquidation buffer (penality) in bps (on p.size * price) to prevent negative margin on liquidation.
-        uint256 liquidationBufferPercent;
-        // Liquidation fee in bps (% of p.size * price) paid to LPers.
-        uint256 liquidationFeePercent;
-        // Multiplier applied when calculating the liquidation premium margin.
-        uint256 liquidationPremiumMultiplier;
+        // Used to infer a % of position notional as liquidation reward.
+        uint256 liquidationRewardPercent;
     }
 
     function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {

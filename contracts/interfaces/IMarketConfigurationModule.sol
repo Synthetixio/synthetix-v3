@@ -37,9 +37,7 @@ interface IMarketConfigurationModule {
         uint128 maxFundingVelocity;
         uint256 initialMarginRatio;
         uint256 maintenanceMarginRatio;
-        uint256 liquidationBufferPercent;
-        uint256 liquidationFeePercent;
-        uint256 liquidationPremiumMultiplier;
+        uint256 liquidationRewardPercent;
     }
 
     // --- Events --- //

@@ -241,7 +241,25 @@ library Position {
         int128 size,
         uint128 skewScale,
         uint256 oraclePrice
-    ) internal view returns (uint256 im, uint256 mm) {}
+    ) internal view returns (uint256 im, uint256 mm) {
+        // No positoin means cannot infer IM/MM.
+        if (size == 0) {
+            return (0, 0);
+        }
+
+        uint256 absSize = MathUtil.abs(size);
+        uint256 skewImpact = absSize.divDecimal(skewScale);
+        uint256 notional = absSize.mulDecimal(oraclePrice);
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        uint256 minMarginUsd = globalConfig.minMarginUsd;
+        uint256 liqReward = notional.mulDecimal(marketConfig.liquidationRewardPercent); // TODO: Pull into separate function for later use.
+
+        im = notional.mulDecimal(skewImpact + marketConfig.initialMarginRatio) + minMarginUsd;
+        mm = notional.mulDecimal(skewImpact + marketConfig.maintenanceMarginRatio) + minMarginUsd + liqReward;
+    }
 
     // --- Member --- //
 
@@ -280,6 +298,8 @@ library Position {
 
     /**
      * @dev Returns a number in USD which if a position's remaining margin is lte then position can be liquidated.
+     *
+     * TODO: Replace this entire liquidation calc.
      */
     function getLiquidationMargin(Position.Data storage self, uint256 price) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -290,7 +310,7 @@ library Position {
         // Calculates the liquidation buffer (penalty).
         //
         // e.g. 3 * 1800 * 0.0075 = 40.5
-        uint256 liquidationBuffer = absSize * price * marketConfig.liquidationBufferPercent;
+        uint256 liquidationBuffer = absSize * price * 1;
 
         // Calculates the liquidation fee.
         //
@@ -299,7 +319,7 @@ library Position {
         // configured liquidation fee ratio.
         //
         // e.g. 3 * 1800 * 0.0002 = 1.08
-        uint256 proportionalFee = absSize * price * marketConfig.liquidationFeePercent;
+        uint256 proportionalFee = absSize * price * 1;
         uint256 maxKeeperFee = globalConfig.maxKeeperFeeUsd;
         uint256 boundedProportionalFee = proportionalFee > maxKeeperFee ? maxKeeperFee : proportionalFee;
         uint256 minKeeperFee = globalConfig.minKeeperFeeUsd;
@@ -333,10 +353,7 @@ library Position {
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
         uint256 notionalUsd = MathUtil.abs(self.size) * price;
-        return
-            (MathUtil.abs(self.size) / (marketConfig.skewScale)) *
-            notionalUsd *
-            marketConfig.liquidationPremiumMultiplier;
+        return (MathUtil.abs(self.size) / (marketConfig.skewScale)) * notionalUsd * 1;
     }
 
     /**
