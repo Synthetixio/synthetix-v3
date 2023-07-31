@@ -17,7 +17,7 @@ contract PerpAccountModule is IPerpAccountModule {
         uint128 marketId
     ) external view returns (IPerpAccountModule.AccountDigest memory digest) {
         Account.exists(accountId);
-        PerpMarket.exists(marketId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         PerpCollateral.GlobalData storage collateralConfig = PerpCollateral.load();
         PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
@@ -40,7 +40,9 @@ contract PerpAccountModule is IPerpAccountModule {
         digest = IPerpAccountModule.AccountDigest({
             accountId: accountId,
             marketId: marketId,
-            depositedCollateral: depositedCollateral
+            depositedCollateral: depositedCollateral,
+            order: market.orders[accountId],
+            position: market.positions[accountId]
         });
     }
 }
