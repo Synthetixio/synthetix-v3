@@ -5,34 +5,36 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @dev A collection of math utilities for ease of calculation.
+ *
+ * Most of these math utility functions have been taken directly from PerpsV2:
+ *
+ * see: https://github.com/Synthetixio/synthetix/blob/develop/contracts/PerpsV2MarketBase.sol
  */
 library MathUtil {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
 
-    // TODO: What about support for int128/uint128?
-
-    function abs(int x) internal pure returns (uint) {
+    function abs(int256 x) internal pure returns (uint256) {
         return x >= 0 ? x.toUint() : (-x).toUint();
     }
 
-    function max(int x, int y) internal pure returns (int) {
+    function max(int256 x, int256 y) internal pure returns (int256) {
         return x < y ? y : x;
     }
 
-    function max(uint x, uint y) internal pure returns (uint) {
+    function max(uint256 x, uint256 y) internal pure returns (uint256) {
         return x < y ? y : x;
     }
 
-    function min(int x, int y) internal pure returns (int) {
+    function min(int256 x, int256 y) internal pure returns (int256) {
         return x < y ? x : y;
     }
 
-    function min(uint x, uint y) internal pure returns (uint) {
+    function min(uint256 x, uint256 y) internal pure returns (uint256) {
         return x < y ? x : y;
     }
 
-    function sameSide(int a, int b) internal pure returns (bool) {
+    function sameSide(int256 a, int256 b) internal pure returns (bool) {
         return (a == 0) || (b == 0) || (a > 0) == (b > 0);
     }
 }

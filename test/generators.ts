@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
-import { wei } from '@synthetixio/wei';
+import Wei, { wei } from '@synthetixio/wei';
 import { PerpMarketProxy } from './generated/typechain';
 
 // --- Core Utilities --- //
@@ -83,8 +83,8 @@ export const genBootstrap = (nMarkets: number = 1) => {
           skewScale: bn(genInt(100_000, 500_000)),
           makerFee: wei(genFloat(0.0001, 0.0005)).toBN(), // 1 - 5bps
           takerFee: wei(genFloat(0.0006, 0.0008)).toBN(), // 1 - 8bps
-          maxLeverage: bn(genInt(10, 100)),
-          maxMarketSize: bn(genInt(10_000, 25_000)),
+          maxLeverage: bn(genOneOf([10, 15, 20, 25, 30, 50, 100])),
+          maxMarketSize: bn(genInt(20_000, 50_000)),
           maxFundingVelocity: bn(genInt(3, 9)),
           liquidationBufferPercent: wei(genFloat(0.005, 0.0075)).toBN(),
           liquidationFeePercent: wei(genFloat(0.0002, 0.0003)).toBN(),
@@ -120,9 +120,11 @@ export const genOrder = async (
 
   // TODO: Accept accountId to generate a valid order given an existing position.
 
-  const { maxLeverage } = await proxy.getMarketConfigurationById(marketId);
+  const { maxMarketSize, maxLeverage } = await proxy.getMarketConfigurationById(marketId);
   const oraclePrice = await proxy.getOraclePrice(marketId);
-  const sizeDelta1xLeverage = wei(depositAmountUsd).div(oraclePrice);
+
+  // Assuming `depositAmountUsd` is at or below maxLeverage, this may already be at maxLeverage.
+  const depositSize = wei(depositAmountUsd).div(oraclePrice);
 
   const rMinLeverage = desiredLeverage?.min ?? 0.5;
   const rMaxLeverage = desiredLeverage?.max ?? wei(maxLeverage).toNumber();
@@ -131,12 +133,17 @@ export const genOrder = async (
     return raise(`minLeverage (${rMinLeverage}) > maxLeverage (${rMaxLeverage})`);
   }
 
+  // Ensure generated sizeDelta is below maxMarketSize to be considered valid. Do this _only_ if
+  // desiredLeverage has _not_ been specified. When specified, it means we want to cause a case to occur.
   const leverage = genFloat(rMinLeverage, rMaxLeverage);
-  const sizeDelta = genOneOf([sizeDelta1xLeverage.mul(leverage), sizeDelta1xLeverage.mul(leverage).mul(-1)]).toBN();
+  const sizeDeltaWei = desiredLeverage
+    ? depositSize.mul(leverage)
+    : Wei.min(depositSize.mul(leverage), wei(maxMarketSize));
+  const sizeDeltaBn = genOneOf([sizeDeltaWei.mul(-1), sizeDeltaWei]).toBN();
 
   return {
-    sizeDelta,
-    limitPrice: genLimitPrice(sizeDelta, oraclePrice),
+    sizeDelta: sizeDeltaBn,
+    limitPrice: genLimitPrice(sizeDeltaBn, oraclePrice),
     leverage,
     keeperFeeBufferUsd,
   };

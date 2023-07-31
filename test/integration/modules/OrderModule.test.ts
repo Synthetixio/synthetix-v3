@@ -45,6 +45,8 @@ describe('OrderModule', () => {
       await assertEvent(tx, expectedEvent, PerpMarketProxy);
     });
 
+    it('should successfully commit using max leverage');
+
     it('should recompute funding on commitment');
 
     it('should revert when market is paused');
@@ -122,20 +124,17 @@ describe('OrderModule', () => {
       const { PerpMarketProxy } = systems();
 
       // Deposit margin to perp market.
-      const depositAmountDelta = bn(genInt(100, 500));
+      const depositAmountDelta = bn(genInt(10, 50));
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs, depositAmountDelta);
 
       // Update the market's maxMarketSize to be just slightly below depositAmountDelta.
       await setMarketConfigurationById(bs, marketId, {
         maxMarketSize: depositAmountDelta.sub(wei(1).toBN()),
-        maxLeverage: wei(100).toBN(), // Large enough maxLeverage to avoid this error.
+        maxLeverage: wei(1000).toBN(), // Large enough maxLeverage to avoid this error.
       });
 
       // Generate a valid order.
-      const { limitPrice, keeperFeeBufferUsd } = await genOrder(PerpMarketProxy, marketId, depositAmountDeltaUsd, {
-        min: 1,
-        max: 1,
-      });
+      const { limitPrice, keeperFeeBufferUsd } = await genOrder(PerpMarketProxy, marketId, depositAmountDeltaUsd);
 
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).commitOrder(
