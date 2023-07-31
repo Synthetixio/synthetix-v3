@@ -1,10 +1,11 @@
 import { ethers } from 'ethers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 
-describe('OffchainAsyncOrder - feeCollector - referrer', () => {
+describe.only('OffchainAsyncOrder - feeCollector - referrer', () => {
   const _ETH_PRICE = bn(2000);
   const {
     systems,
@@ -63,7 +64,7 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
       .updateReferrerShare(await referrer.getAddress(), referrerRatio.toBN()); // 10%
   });
 
-  describe('open 1st position', () => {
+  describe('with fee collector/referrer set', () => {
     let expectedFees: Wei,
       expectedToFeeCollector: Wei,
       expectedToReferrer: Wei,
@@ -127,7 +128,7 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
     });
   });
 
-  describe('2nd position without referrer', () => {
+  describe('with only fee collector set', () => {
     let expectedToFeeCollector: Wei, previousReferrerBalance: Wei;
 
     const sizeDelta = bn(-50);
@@ -173,7 +174,113 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
     });
   });
 
-  describe('3rd position without fee collector', () => {
+  describe('with fee collector ratio set to 0%', () => {
+    before('set fee collector to 0%', async () => {
+      await systems().FeeCollectorMock.mockSetFeeRatio(0);
+    });
+
+    let expectedToReferrer: Wei, previousFeeCollectorBalance: Wei;
+    const sizeDelta = bn(20);
+    before('identify data', async () => {
+      previousFeeCollectorBalance = wei(
+        await systems().USD.balanceOf(systems().FeeCollectorMock.address)
+      );
+      // NOTE: expected fees here does not include settlement reward
+      const expectedFees = wei(
+        await systems().PerpsMarket.computeOrderFees(perpsMarkets()[0].marketId(), sizeDelta)
+      );
+      const currentReferrerBalance = wei(
+        await systems().USD.balanceOf(await referrer.getAddress())
+      );
+      expectedToReferrer = currentReferrerBalance.add(expectedFees.mul(referrerRatio));
+    });
+
+    before('open position', async () => {
+      await openPosition({
+        systems,
+        provider,
+        trader: trader1(),
+        marketId,
+        accountId: 2,
+        sizeDelta,
+        referrer: await referrer.getAddress(),
+        settlementStrategyId,
+        price: _ETH_PRICE,
+        keeper: keeper(),
+      });
+    });
+
+    it('sent fees to referrer', async () => {
+      assertBn.equal(
+        await systems().USD.balanceOf(await referrer.getAddress()),
+        expectedToReferrer.toBN()
+      );
+    });
+
+    it('sent fees to fee collector', async () => {
+      assertBn.equal(
+        await systems().USD.balanceOf(systems().FeeCollectorMock.address),
+        previousFeeCollectorBalance.toBN()
+      );
+    });
+  });
+
+  describe('fee collector set to above 100%', () => {
+    before(async () => {
+      await systems().FeeCollectorMock.mockSetFeeRatio(bn(1.25));
+    });
+
+    let expectedToReferrer: Wei, expectedToFeeCollector: Wei;
+    const sizeDelta = bn(25);
+    before('identify data', async () => {
+      // NOTE: expected fees here does not include settlement reward
+      const expectedFees = wei(
+        await systems().PerpsMarket.computeOrderFees(perpsMarkets()[0].marketId(), sizeDelta)
+      );
+      const currentFeeCollectorBalance = wei(
+        await systems().USD.balanceOf(systems().FeeCollectorMock.address)
+      );
+      const currentReferrerBalance = wei(
+        await systems().USD.balanceOf(await referrer.getAddress())
+      );
+      expectedToReferrer = currentReferrerBalance.add(expectedFees.mul(referrerRatio));
+      // rest of the fees go to fee collector
+      expectedToFeeCollector = currentFeeCollectorBalance
+        .add(expectedFees)
+        .sub(expectedFees.mul(referrerRatio));
+    });
+
+    before('open position', async () => {
+      await openPosition({
+        systems,
+        provider,
+        trader: trader1(),
+        marketId,
+        accountId: 2,
+        sizeDelta,
+        referrer: await referrer.getAddress(),
+        settlementStrategyId,
+        price: _ETH_PRICE,
+        keeper: keeper(),
+      });
+    });
+
+    it('sent fees to referrer', async () => {
+      assertBn.equal(
+        await systems().USD.balanceOf(await referrer.getAddress()),
+        expectedToReferrer.toBN()
+      );
+    });
+
+    it('sent fees to fee collector', async () => {
+      assertBn.equal(
+        await systems().USD.balanceOf(systems().FeeCollectorMock.address),
+        expectedToFeeCollector.toBN()
+      );
+    });
+  });
+
+  describe('only referrer set', () => {
     before('set fee collector to zero address', async () => {
       await systems().PerpsMarket.setFeeCollector(ethers.constants.AddressZero);
     });
@@ -220,6 +327,73 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
       assertBn.equal(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address),
         previousFeeCollectorBalance.toBN()
+      );
+    });
+  });
+
+  describe('update referrer share failures', () => {
+    it('reverts when set above 100%', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(owner())
+          .updateReferrerShare(await referrer.getAddress(), bn(1.1)),
+        'InvalidReferrerShareRatio'
+      );
+    });
+  });
+
+  describe('referrer share set to 0', () => {
+    before(async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .updateReferrerShare(await referrer.getAddress(), 0);
+    });
+
+    let previousReferrerBalance: Wei,
+      previousFeeCollectorBalance: Wei,
+      previousWithdrawableUsd: Wei;
+    const sizeDelta = bn(50);
+    before('identify data', async () => {
+      previousFeeCollectorBalance = wei(
+        await systems().USD.balanceOf(systems().FeeCollectorMock.address)
+      );
+      previousReferrerBalance = wei(await systems().USD.balanceOf(await referrer.getAddress()));
+      previousWithdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
+    });
+
+    before('open position', async () => {
+      await openPosition({
+        systems,
+        provider,
+        trader: trader2(),
+        marketId,
+        accountId: 3,
+        sizeDelta,
+        referrer: await referrer.getAddress(),
+        settlementStrategyId,
+        price: _ETH_PRICE,
+        keeper: keeper(),
+      });
+    });
+
+    it('sent fees to referrer', async () => {
+      assertBn.equal(
+        await systems().USD.balanceOf(await referrer.getAddress()),
+        previousReferrerBalance.toBN()
+      );
+    });
+
+    it('sent fees to fee collector', async () => {
+      assertBn.equal(
+        await systems().USD.balanceOf(systems().FeeCollectorMock.address),
+        previousFeeCollectorBalance.toBN()
+      );
+    });
+
+    it('kept fees in the core system', async () => {
+      assertBn.equal(
+        await systems().Core.getWithdrawableMarketUsd(superMarketId()),
+        previousWithdrawableUsd.sub(settlementReward).toBN()
       );
     });
   });

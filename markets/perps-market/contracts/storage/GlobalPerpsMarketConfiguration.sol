@@ -71,7 +71,7 @@ library GlobalPerpsMarketConfiguration {
         uint256 orderFees,
         address referrer,
         PerpsMarketFactory.Data storage factory
-    ) internal returns (uint256 referralFees, uint256 collectedFees) {
+    ) internal returns (uint256 referralFees, uint256 feeCollectorFees) {
         referralFees = _collectReferrerFees(self, orderFees, referrer, factory);
         uint256 remainingFees = orderFees - referralFees;
 
@@ -84,6 +84,10 @@ library GlobalPerpsMarketConfiguration {
             remainingFees,
             msg.sender
         );
+
+        if (feeCollectorQuote == 0) {
+            return (referralFees, 0);
+        }
 
         if (feeCollectorQuote > remainingFees) {
             feeCollectorQuote = remainingFees;

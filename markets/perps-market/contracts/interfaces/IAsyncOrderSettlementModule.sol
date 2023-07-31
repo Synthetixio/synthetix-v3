@@ -62,7 +62,7 @@ interface IAsyncOrderSettlementModule {
         uint256 fillPrice;
         uint256 totalFees;
         uint256 referralFees;
-        uint256 collectedFees;
+        uint256 feeCollectorFees;
         Position.Data newPosition;
         PerpsMarket.MarketUpdateData updateData;
     }

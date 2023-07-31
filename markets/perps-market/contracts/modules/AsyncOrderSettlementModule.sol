@@ -180,7 +180,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             factory.withdrawMarketUsd(msg.sender, runtime.settlementReward);
         }
 
-        (runtime.referralFees, runtime.collectedFees) = GlobalPerpsMarketConfiguration
+        (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
             .load()
             .collectFees(
                 runtime.totalFees - runtime.settlementReward, // totalFees includes settlement reward so we remove it
@@ -201,7 +201,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.newPositionSize,
             runtime.totalFees,
             runtime.referralFees,
-            runtime.collectedFees,
+            runtime.feeCollectorFees,
             runtime.settlementReward,
             asyncOrder.request.trackingCode,
             msg.sender
