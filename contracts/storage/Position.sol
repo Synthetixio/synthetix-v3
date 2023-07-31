@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
@@ -18,7 +18,9 @@ library Position {
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
+    using DecimalMath for uint128;
     using SafeCastU128 for uint128;
+    using SafeCastI128 for int128;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
@@ -173,6 +175,8 @@ library Position {
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
+
+        // TODO: Use getLiquidationMargins.im instead of minMarginUsd (also note the exclusion of fees in left operand).
         if (!positionDecreasing && collateralUsd < globalConfig.minMarginUsd) {
             revert InsufficientMargin();
         }
@@ -212,6 +216,32 @@ library Position {
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
     }
+
+    /**
+     * @dev Given the necessary market details return the IM and MM for a specified position size.
+     *
+     * Intuitively, IM (initial margin) can be thought of as the minimum amount of margin a trader must deposit
+     * before they can open a trade. MM (maintenance margin) refers the amount of margin a trader must have
+     * to _maintain_ their position. If the value of the collateral that make up said margin falls below this value
+     * then the position is up for liquidation.
+     *
+     * To mitigate risk, we scale these two values up and down based on the position size and impact to market
+     * skew. Large positions, hence more impactful to skew, require a larger IM/MM. Remember that the larger the
+     * impact to skew, the more risk stakers take on.
+     *
+     * In simple terms:
+     *
+     *  im = marginNotional * (abs(position.size)/skewScale + imr) + minMargin
+     *  mm = marginNotional * (abs(position.size)/skewScale + mmr) + minMargin + liqReward
+     *
+     * NOTE: Both IM and MM are in USD and important that size is _not_ sizeDelta. It is the absolute position size.
+     */
+    function getLiquidationMargins(
+        uint128 marketId,
+        int128 size,
+        uint128 skewScale,
+        uint256 oraclePrice
+    ) internal view returns (uint256 im, uint256 mm) {}
 
     // --- Member --- //
 

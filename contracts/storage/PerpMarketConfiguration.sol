@@ -68,6 +68,10 @@ library PerpMarketConfiguration {
         uint128 maxFundingVelocity;
         // Skew scaling denominator constant.
         uint128 skewScale;
+        // IMR is used to dynamically infer the initial margin.
+        uint256 initialMarginRatio;
+        // MMR is used to dynamically infer the maintnenace margin.
+        uint256 maintenanceMarginRatio;
         // Liquidation buffer (penality) in bps (on p.size * price) to prevent negative margin on liquidation.
         uint256 liquidationBufferPercent;
         // Liquidation fee in bps (% of p.size * price) paid to LPers.

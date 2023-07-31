@@ -68,6 +68,8 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.maxLeverage, config.maxLeverage);
       assertBn.equal(specific.maxMarketSize, config.maxMarketSize);
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
+      assertBn.equal(specific.initialMarginRatio, config.initialMarginRatio);
+      assertBn.equal(specific.maintenanceMarginRatio, config.maintenanceMarginRatio);
       assertBn.equal(specific.liquidationBufferPercent, config.liquidationBufferPercent);
       assertBn.equal(specific.liquidationFeePercent, config.liquidationFeePercent);
       assertBn.equal(specific.liquidationPremiumMultiplier, config.liquidationPremiumMultiplier);

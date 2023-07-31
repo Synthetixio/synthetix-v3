@@ -86,6 +86,8 @@ export const genBootstrap = (nMarkets: number = 1) => {
           maxLeverage: bn(genOneOf([10, 15, 20, 25, 30, 50, 100])),
           maxMarketSize: bn(genInt(20_000, 50_000)),
           maxFundingVelocity: bn(genInt(3, 9)),
+          initialMarginRatio: bn(genFloat(0.04, 0.06)),
+          maintenanceMarginRatio: bn(genFloat(0.01, 0.03)),
           liquidationBufferPercent: wei(genFloat(0.005, 0.0075)).toBN(),
           liquidationFeePercent: wei(genFloat(0.0002, 0.0003)).toBN(),
           liquidationPremiumMultiplier: wei(genFloat(1.1, 1.3)).toBN(),

@@ -34,4 +34,9 @@ interface ILiquidationModule {
      * @dev Returns whether a position owned by `accountId` can be flagged for liquidated.
      */
     function canLiquidatePosition(uint128 accountId, uint128 marketId) external view returns (bool);
+
+    /**
+     * @dev Returns the IM (initial maintenance) and MM (maintenance margin) for a given account and market.
+     */
+    function getLiquidationMargins(uint128 accountId, uint128 marketId) external view returns (uint256 im, uint256 mm);
 }
