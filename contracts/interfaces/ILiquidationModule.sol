@@ -2,6 +2,11 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface ILiquidationModule {
+    // --- Events --- //
+
+    // @dev Emitted when position has been liquidated.
+    event PositionLiquidated(uint128 indexed accountId, uint128 marketId, address indexed keeper, uint256 reward);
+
     // --- Errors --- //
 
     // @dev Thrown when an expected position cannot be found.
@@ -39,4 +44,9 @@ interface ILiquidationModule {
      * @dev Returns the IM (initial maintenance) and MM (maintenance margin) for a given account and market.
      */
     function getLiquidationMargins(uint128 accountId, uint128 marketId) external view returns (uint256 im, uint256 mm);
+
+    /**
+     * @dev Returns the health factor for a given account by market. A health factor of 1 means it's up for liquidation.
+     */
+    function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256 healthFactor);
 }

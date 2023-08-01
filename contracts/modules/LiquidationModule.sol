@@ -44,4 +44,9 @@ contract LiquidationModule is ILiquidationModule {
             market.getOraclePrice()
         );
     }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256 healthFactor) {}
 }

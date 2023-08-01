@@ -3,11 +3,13 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import {Position} from "../storage/Position.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
 import "../interfaces/IPerpAccountModule.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
     using PerpMarket for PerpMarket.Data;
+    using Position for Position.Data;
 
     /**
      * @inheritdoc IPerpAccountModule
@@ -37,12 +39,14 @@ contract PerpAccountModule is IPerpAccountModule {
             }
         }
 
+        Position.Data storage position = market.positions[accountId];
         digest = IPerpAccountModule.AccountDigest({
             accountId: accountId,
             marketId: marketId,
             depositedCollateral: depositedCollateral,
             order: market.orders[accountId],
-            position: market.positions[accountId]
+            position: position,
+            healthFactor: position.getHealthFactor()
         });
     }
 }

@@ -276,6 +276,12 @@ library Position {
         return self.size.mulDecimal(netFundingPerUnit);
     }
 
+    function getHealthFactor(Position.Data storage self) internal view returns (uint256) {
+        // TODO
+    }
+
+    // TODO: All liquidation related member function need to be updated.
+
     /**
      * @dev Return a position's remaining margin.
      *
