@@ -20,7 +20,6 @@ contract ElectionBase {
     error DuplicateCandidates();
     error InvalidEpochConfiguration();
     error InvalidElectionSettings();
-    error NotCallableInCurrentPeriod();
     error ChangesCurrentPeriod();
     error AlreadyACouncilMember();
     error NotACouncilMember();
@@ -54,7 +53,7 @@ contract ElectionBase {
     event NominationWithdrawn(address indexed candidate, uint indexed epochIndex);
     event VoteRecorded(
         address indexed voter,
-        bytes32 indexed ballotId,
+        uint256 indexed ballotId,
         uint indexed epochIndex,
         uint votePower
     );

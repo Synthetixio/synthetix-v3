@@ -59,10 +59,7 @@ interface IElectionModule {
     function withdrawNomination() external;
 
     /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
-    function cast(address[] calldata candidates) external;
-
-    /// @notice Allows votes to be withdraw
-    function withdrawVote() external;
+    function cast(address[] calldata candidates, uint256[] calldata amounts) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
     function evaluate(uint numBallots) external;
@@ -98,23 +95,14 @@ interface IElectionModule {
     /// @notice Returns a list of all nominated candidates in the current epoch
     function getNominees() external view returns (address[] memory);
 
-    /// @notice Hashes a list of candidates (used for identifying and storing ballots)
-    function calculateBallotId(address[] calldata candidates) external pure returns (bytes32);
-
-    /// @notice Returns the ballot id that user voted on in the current election
-    function getBallotVoted(address user) external view returns (bytes32);
-
     /// @notice Returns if user has voted in the current election
-    function hasVoted(address user) external view returns (bool);
+    function hasVoted(address user, uint256 precinct) external view returns (bool);
 
     /// @notice Returns the vote power of user in the current election
-    function getVotePower(address user) external view returns (uint);
-
-    /// @notice Returns the number of votes given to a particular ballot
-    function getBallotVotes(bytes32 ballotId) external view returns (uint);
+    function getVotePower(address user, uint256 precinct, uint256 electionId) external view returns (uint);
 
     /// @notice Returns the list of candidates that a particular ballot has
-    function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
+    function getBallotCandidates(address voter, uint256 precinct, uint256 electionId) external view returns (address[] memory);
 
     /// @notice Returns whether all ballots in the current election have been counted
     function isElectionEvaluated() external view returns (bool);

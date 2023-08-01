@@ -29,6 +29,7 @@ contract BaseElectionModule is
     using Council for Council.Data;
     using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
+		using Ballot for Ballot.Data;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
@@ -120,8 +121,9 @@ contract BaseElectionModule is
 
     function configureMothership(
         uint64 mothershipChainId
-    ) external onlyInPeriod(Council.ElectionPeriod.Administration) returns (uint256 gasTokenUsed) {
+    ) external returns (uint256 gasTokenUsed) {
         OwnableStorage.onlyOwner();
+				Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
         if (mothershipChainId == 0) {
             revert ParameterError.InvalidParameter("mothershipChainId", "must be nonzero");
@@ -146,8 +148,9 @@ contract BaseElectionModule is
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    ) external override {
         OwnableStorage.onlyOwner();
+				Council.onlyInPeriod(Council.ElectionPeriod.Administration); 
         _adjustEpochSchedule(
             Council.load().getCurrentElection().epoch,
             newNominationPeriodStartDate,
@@ -170,8 +173,9 @@ contract BaseElectionModule is
         uint64 nominationPeriodDuration,
         uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
-    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    ) external override {
         OwnableStorage.onlyOwner();
+				Council.onlyInPeriod(Council.ElectionPeriod.Administration); 
 
         _setElectionSettings(
             Council.load().getNextElectionSettings(),
@@ -209,8 +213,9 @@ contract BaseElectionModule is
         emit EmergencyElectionStarted(epochIndex);
     }
 
-    function nominate() public virtual override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    function nominate() public virtual override {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
+				Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
 
@@ -224,9 +229,9 @@ contract BaseElectionModule is
     function withdrawNomination()
         external
         override
-        onlyInPeriod(Council.ElectionPeriod.Nomination)
     {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
+        Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
         if (!nominees.contains(msg.sender)) revert NotNominated();
 
@@ -237,51 +242,56 @@ contract BaseElectionModule is
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
     function cast(
-        address[] calldata candidates
-    ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
+        address[] calldata candidates,
+				uint256[] calldata amounts
+    ) public virtual override {
+				Ballot.Data storage ballot = Ballot.load(Council.load().lastElectionId, msg.sender, block.chainid);
+				Council.onlyInPeriod(Council.ElectionPeriod.Vote); 
+
+				ballot.votedCandidates = candidates;
+				ballot.amounts = amounts;
+
         CrossChain.Data storage cc = CrossChain.load();
         cc.transmit(
             cc.mothershipChainId,
-            abi.encodeWithSelector(this._recvCast.selector, candidates),
+            abi.encodeWithSelector(this._recvCast.selector, ballot),
             _CROSSCHAIN_GAS_LIMIT
         );
     }
 
     function _recvCast(
-        address[] calldata candidates
-    ) external onlyInPeriod(Council.ElectionPeriod.Vote) onlyMothership {
-        uint votePower = _getVotePower(msg.sender);
+				address voter,
+				uint256 precinct,
+				Ballot.Data calldata ballot
+    ) external onlyMothership {
+        _validateCandidates(ballot.votedCandidates);
+				Council.onlyInPeriod(Council.ElectionPeriod.Vote); 
 
-        if (votePower == 0) revert NoVotePower();
+				Council.Data storage council = Council.load();
+				Election.Data storage election = council.getCurrentElection();
+				uint256 lastElectionId = council.lastElectionId;
 
-        _validateCandidates(candidates);
+				Ballot.Data storage storedBallot = Ballot.load(lastElectionId, voter, precinct);
 
-        bytes32 ballotId;
+				storedBallot.copy(ballot);
+				storedBallot.validate();
 
-        uint epochIndex = Council.load().lastElectionId;
+				bytes32 ballotPtr;
+				assembly {
+					ballotPtr := storedBallot.slot
+				}
+				
+				election.ballotPtrs.push(ballotPtr);
 
-        if (hasVoted(msg.sender)) {
-            _withdrawCastedVote(msg.sender, epochIndex);
-        }
-
-        ballotId = _recordVote(msg.sender, votePower, candidates);
-
-        emit VoteRecorded(msg.sender, ballotId, epochIndex, votePower);
-    }
-
-    function withdrawVote() external override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        if (!hasVoted(msg.sender)) {
-            revert VoteNotCasted();
-        }
-
-        _withdrawCastedVote(msg.sender, Council.load().lastElectionId);
+        emit VoteRecorded(msg.sender, precinct, lastElectionId, ballot.votingPower);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(
         uint numBallots
-    ) external override onlyInPeriod(Council.ElectionPeriod.Evaluation) onlyMothership {
+    ) external override onlyMothership {
         Election.Data storage election = Council.load().getCurrentElection();
+				Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         if (election.evaluated) revert ElectionAlreadyEvaluated();
 
@@ -289,7 +299,7 @@ contract BaseElectionModule is
 
         uint currentEpochIndex = Council.load().lastElectionId;
 
-        uint totalBallots = election.ballotIds.length;
+        uint totalBallots = election.ballotPtrs.length;
         if (election.numEvaluatedBallots < totalBallots) {
             emit ElectionBatchEvaluated(
                 currentEpochIndex,
@@ -307,9 +317,9 @@ contract BaseElectionModule is
         public
         virtual
         override
-        onlyInPeriod(Council.ElectionPeriod.Evaluation)
         onlyMothership
     {
+        Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
         Council.Data storage store = Council.load();
         Election.Data storage election = store.getCurrentElection();
 
@@ -371,32 +381,23 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().nominees.values();
     }
 
-    function calculateBallotId(
-        address[] calldata candidates
-    ) external pure override returns (bytes32) {
-        return keccak256(abi.encode(candidates));
+    function hasVoted(address user, uint256 precinct) public view override returns (bool) {
+				Council.Data storage council = Council.load();
+				Ballot.Data storage ballot = Ballot.load(council.lastElectionId, user, precinct);
+        return ballot.votingPower > 0 && ballot.votedCandidates.length > 0;
     }
 
-    function getBallotVoted(address user) public view override returns (bytes32) {
-        return Council.load().getCurrentElection().ballotIdsByAddress[user];
-    }
-
-    function hasVoted(address user) public view override returns (bool) {
-        return Council.load().getCurrentElection().ballotIdsByAddress[user] != bytes32(0);
-    }
-
-    function getVotePower(address user) external view override returns (uint) {
-        return _getVotePower(user);
-    }
-
-    function getBallotVotes(bytes32 ballotId) external view override returns (uint) {
-        return Council.load().getCurrentElection().ballotsById[ballotId].votes;
+    function getVotePower(address user, uint256 precinct, uint256 electionId) external view override returns (uint) {
+				Ballot.Data storage ballot = Ballot.load(electionId, user, precinct);
+        return ballot.votingPower;
     }
 
     function getBallotCandidates(
-        bytes32 ballotId
+				address voter,
+				uint256 precinct,
+				uint256 electionId
     ) external view override returns (address[] memory) {
-        return Council.load().getCurrentElection().ballotsById[ballotId].candidates;
+        return Ballot.load(electionId, voter, precinct).votedCandidates;
     }
 
     function isElectionEvaluated() public view override returns (bool) {
@@ -404,7 +405,7 @@ contract BaseElectionModule is
     }
 
     function getCandidateVotes(address candidate) external view override returns (uint) {
-        return Council.load().getCurrentElection().candidateVotes[candidate];
+        return Council.load().getCurrentElection().candidateVoteTotals[candidate];
     }
 
     function getElectionWinners() external view override returns (address[] memory) {

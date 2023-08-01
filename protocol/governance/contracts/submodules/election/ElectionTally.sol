@@ -20,7 +20,7 @@ contract ElectionTally is ElectionBase {
             numBallots = _DEFAULT_EVALUATION_BATCH_SIZE;
         }
 
-        uint totalBallots = election.ballotIds.length;
+        uint totalBallots = election.ballotPtrs.length;
 
         uint firstBallotIndex = election.numEvaluatedBallots;
 
@@ -41,8 +41,12 @@ contract ElectionTally is ElectionBase {
         uint numSeats = settings.epochSeatCount;
 
         for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
-            bytes32 ballotId = election.ballotIds[ballotIndex];
-            Ballot.Data storage ballot = election.ballotsById[ballotId];
+            bytes32 ballotPtr = election.ballotPtrs[ballotIndex];
+            Ballot.Data storage ballot;
+
+						assembly {
+							ballot.slot := ballotPtr
+						}
 
             _evaluateBallot(election, ballot, numSeats);
         }
@@ -53,15 +57,15 @@ contract ElectionTally is ElectionBase {
         Ballot.Data storage ballot,
         uint numSeats
     ) internal {
-        uint ballotVotes = ballot.votes;
+        uint ballotVotes = ballot.votingPower;
+				uint numCandidates = ballot.votedCandidates.length;
 
-        uint numCandidates = ballot.candidates.length;
         for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
-            address candidate = ballot.candidates[candidateIndex];
+            address candidate = ballot.votedCandidates[candidateIndex];
 
-            uint currentCandidateVotes = election.candidateVotes[candidate];
-            uint newCandidateVotes = currentCandidateVotes + ballotVotes;
-            election.candidateVotes[candidate] = newCandidateVotes;
+            uint currentCandidateVotes = election.candidateVoteTotals[candidate];
+            uint newCandidateVotes = currentCandidateVotes + ballot.amounts[candidateIndex];
+            election.candidateVoteTotals[candidate] = newCandidateVotes;
 
             _updateWinnerSet(election, candidate, newCandidateVotes, numSeats);
         }
@@ -109,7 +113,7 @@ contract ElectionTally is ElectionBase {
 
         for (uint8 winnerPosition = 1; winnerPosition <= numWinners; winnerPosition++) {
             address winner = winners.valueAt(winnerPosition);
-            uint winnerVotes = election.candidateVotes[winner];
+            uint winnerVotes = election.candidateVoteTotals[winner];
 
             if (winnerVotes < leastVotes) {
                 leastVotes = winnerVotes;
