@@ -6,10 +6,11 @@ import "./Election.sol";
 import "./ElectionSettings.sol";
 
 library Council {
+    error NotCallableInCurrentPeriod();
+
     bytes32 private constant _SLOT_COUNCIL_STORAGE =
         keccak256(abi.encode("io.synthetix.governance.Council"));
 
-    error NotCallableInCurrentPeriod();
     struct Data {
         // True if initializeElectionModule was called
         bool initialized;
@@ -98,12 +99,11 @@ library Council {
 
         return Council.ElectionPeriod.Administration;
     }
-		
+
     /// @dev Used to allow certain functions to only operate within a given period
     function onlyInPeriod(Council.ElectionPeriod period) internal view {
         if (getCurrentPeriod(load()) != period) {
             revert NotCallableInCurrentPeriod();
         }
     }
-
 }

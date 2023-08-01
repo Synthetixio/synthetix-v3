@@ -99,10 +99,18 @@ interface IElectionModule {
     function hasVoted(address user, uint256 precinct) external view returns (bool);
 
     /// @notice Returns the vote power of user in the current election
-    function getVotePower(address user, uint256 precinct, uint256 electionId) external view returns (uint);
+    function getVotePower(
+        address user,
+        uint256 precinct,
+        uint256 electionId
+    ) external view returns (uint);
 
     /// @notice Returns the list of candidates that a particular ballot has
-    function getBallotCandidates(address voter, uint256 precinct, uint256 electionId) external view returns (address[] memory);
+    function getBallotCandidates(
+        address voter,
+        uint256 precinct,
+        uint256 electionId
+    ) external view returns (address[] memory);
 
     /// @notice Returns whether all ballots in the current election have been counted
     function isElectionEvaluated() external view returns (bool);

@@ -1,17 +1,11 @@
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import hre from 'hardhat';
 
-import type {
-  CoreProxy,
-  CouncilToken,
-  DebtShareMock,
-  BaseElectionProxy,
-} from './generated/typechain';
+import type { CoreProxy, CouncilToken, BaseElectionProxy } from './generated/typechain';
 
 interface Contracts {
   CoreProxy: CoreProxy;
   CouncilToken: CouncilToken;
-  DebtShareMock: DebtShareMock;
   BaseElectionProxy: BaseElectionProxy;
 }
 
@@ -34,7 +28,6 @@ export function bootstrap() {
     Object.assign(contracts, {
       CoreProxy: getContract('CoreProxy'),
       CouncilToken: getContract('CouncilToken'),
-      DebtShareMock: getContract('DebtShareMock'),
       BaseElectionProxy: getContract('BaseElectionProxy'),
     });
   });

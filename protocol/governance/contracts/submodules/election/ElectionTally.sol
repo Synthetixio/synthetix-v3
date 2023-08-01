@@ -44,9 +44,9 @@ contract ElectionTally is ElectionBase {
             bytes32 ballotPtr = election.ballotPtrs[ballotIndex];
             Ballot.Data storage ballot;
 
-						assembly {
-							ballot.slot := ballotPtr
-						}
+            assembly {
+                ballot.slot := ballotPtr
+            }
 
             _evaluateBallot(election, ballot, numSeats);
         }
@@ -57,8 +57,7 @@ contract ElectionTally is ElectionBase {
         Ballot.Data storage ballot,
         uint numSeats
     ) internal {
-        uint ballotVotes = ballot.votingPower;
-				uint numCandidates = ballot.votedCandidates.length;
+        uint numCandidates = ballot.votedCandidates.length;
 
         for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
             address candidate = ballot.votedCandidates[candidateIndex];

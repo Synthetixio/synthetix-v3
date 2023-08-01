@@ -4,10 +4,6 @@ include = [
   "cannonfile.toml"
 ]
 
-# Contract for mocking debt shares on L2
-[contract.DebtShareMock]
-artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
-
 [contract.BaseElectionModule]
 artifact = "contracts/modules/core/BaseElectionModule.sol:BaseElectionModule"
 

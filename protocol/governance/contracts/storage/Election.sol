@@ -23,8 +23,7 @@ library Election {
         SetUtil.AddressSet winners;
         // List of all ballot ids in this election
         bytes32[] ballotPtrs;
-
-				mapping(address => uint256) candidateVoteTotals;
+        mapping(address => uint256) candidateVoteTotals;
     }
 
     function load(uint epochIndex) internal pure returns (Data storage election) {

@@ -6,7 +6,7 @@ import "../../submodules/election/ElectionBase.sol";
 
 contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
     using SetUtil for SetUtil.AddressSet;
-		using Ballot for Ballot.Data;
+    using Ballot for Ballot.Data;
 
     function getEpochStartDateForIndex(uint epochIndex) external view override returns (uint64) {
         return Election.load(epochIndex).epoch.startDate;
@@ -39,7 +39,11 @@ contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
         return Election.load(epochIndex).nominees.values();
     }
 
-    function hasVotedInEpoch(address user, uint precinct, uint epochIndex) external view override returns (bool) {
+    function hasVotedInEpoch(
+        address user,
+        uint precinct,
+        uint epochIndex
+    ) external view override returns (bool) {
         return Ballot.load(epochIndex, user, precinct).hasVoted();
     }
 

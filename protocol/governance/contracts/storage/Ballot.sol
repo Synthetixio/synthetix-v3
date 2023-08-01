@@ -13,51 +13,57 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
  * 3. Once the user has proven their voting power, they can allocate their power to a set of candidates.
  */
 library Ballot {
-
-		error InvalidBallot();
+    error InvalidBallot();
 
     struct Data {
-				uint256 votingPower;
-				address[] votedCandidates;
-				uint256[] amounts;
+        uint256 votingPower;
+        address[] votedCandidates;
+        uint256[] amounts;
     }
 
-		function load(uint electionId, address voter, uint256 precinct) internal pure returns (Data storage self) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Ballot", electionId, voter, precinct));
+    function load(
+        uint electionId,
+        address voter,
+        uint256 precinct
+    ) internal pure returns (Data storage self) {
+        bytes32 s = keccak256(
+            abi.encode("io.synthetix.governance.Ballot", electionId, voter, precinct)
+        );
+
         assembly {
             self.slot := s
         }
-		}
+    }
 
-		function copy(Data storage self, Data memory other) internal {
-				self.votingPower = other.votingPower;
-				self.votedCandidates = other.votedCandidates;
-				self.amounts = other.amounts;
-		}
+    function copy(Data storage self, Data memory other) internal {
+        self.votingPower = other.votingPower;
+        self.votedCandidates = other.votedCandidates;
+        self.amounts = other.amounts;
+    }
 
-		function hasVoted(Data storage self) internal view returns (bool) {
-				return self.votedCandidates.length > 0;
-		}
+    function hasVoted(Data storage self) internal view returns (bool) {
+        return self.votedCandidates.length > 0;
+    }
 
-		function isValid(Data storage self) internal view returns (bool) {
-				if (self.votedCandidates.length != self.amounts.length) {
-						return false;
-				}
+    function isValid(Data storage self) internal view returns (bool) {
+        if (self.votedCandidates.length != self.amounts.length) {
+            return false;
+        }
 
-				uint256 totalAmount = 0;
-				for (uint256 i = 0; i < self.votedCandidates.length; i++) {
-						if (self.amounts[i] == 0) {
-								return false;
-						}
-						totalAmount += self.amounts[i];
-				}
+        uint256 totalAmount = 0;
+        for (uint256 i = 0; i < self.votedCandidates.length; i++) {
+            if (self.amounts[i] == 0) {
+                return false;
+            }
+            totalAmount += self.amounts[i];
+        }
 
-				return totalAmount == 0 || totalAmount == self.votingPower;
-		}
+        return totalAmount == 0 || totalAmount == self.votingPower;
+    }
 
-		function validate(Data storage self) internal view {
-				if (!isValid(self)) {
-						revert InvalidBallot();
-				}
-		}
+    function validate(Data storage self) internal view {
+        if (!isValid(self)) {
+            revert InvalidBallot();
+        }
+    }
 }

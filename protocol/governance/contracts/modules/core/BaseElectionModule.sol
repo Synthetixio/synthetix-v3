@@ -29,7 +29,7 @@ contract BaseElectionModule is
     using Council for Council.Data;
     using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
-		using Ballot for Ballot.Data;
+    using Ballot for Ballot.Data;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
@@ -119,11 +119,9 @@ contract BaseElectionModule is
         return Council.load().initialized;
     }
 
-    function configureMothership(
-        uint64 mothershipChainId
-    ) external returns (uint256 gasTokenUsed) {
+    function configureMothership(uint64 mothershipChainId) external returns (uint256 gasTokenUsed) {
         OwnableStorage.onlyOwner();
-				Council.onlyInPeriod(Council.ElectionPeriod.Administration);
+        Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
         if (mothershipChainId == 0) {
             revert ParameterError.InvalidParameter("mothershipChainId", "must be nonzero");
@@ -150,7 +148,7 @@ contract BaseElectionModule is
         uint64 newEpochEndDate
     ) external override {
         OwnableStorage.onlyOwner();
-				Council.onlyInPeriod(Council.ElectionPeriod.Administration); 
+        Council.onlyInPeriod(Council.ElectionPeriod.Administration);
         _adjustEpochSchedule(
             Council.load().getCurrentElection().epoch,
             newNominationPeriodStartDate,
@@ -175,7 +173,7 @@ contract BaseElectionModule is
         uint64 maxDateAdjustmentTolerance
     ) external override {
         OwnableStorage.onlyOwner();
-				Council.onlyInPeriod(Council.ElectionPeriod.Administration); 
+        Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
         _setElectionSettings(
             Council.load().getNextElectionSettings(),
@@ -215,7 +213,7 @@ contract BaseElectionModule is
 
     function nominate() public virtual override {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
-				Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
+        Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
 
@@ -226,10 +224,7 @@ contract BaseElectionModule is
         // TODO: add ballot id to emitted event
     }
 
-    function withdrawNomination()
-        external
-        override
-    {
+    function withdrawNomination() external override {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
         Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
@@ -243,13 +238,18 @@ contract BaseElectionModule is
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
     function cast(
         address[] calldata candidates,
-				uint256[] calldata amounts
+        uint256[] calldata amounts
     ) public virtual override {
-				Ballot.Data storage ballot = Ballot.load(Council.load().lastElectionId, msg.sender, block.chainid);
-				Council.onlyInPeriod(Council.ElectionPeriod.Vote); 
+        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
-				ballot.votedCandidates = candidates;
-				ballot.amounts = amounts;
+        Ballot.Data storage ballot = Ballot.load(
+            Council.load().lastElectionId,
+            msg.sender,
+            block.chainid
+        );
+
+        ballot.votedCandidates = candidates;
+        ballot.amounts = amounts;
 
         CrossChain.Data storage cc = CrossChain.load();
         cc.transmit(
@@ -260,38 +260,38 @@ contract BaseElectionModule is
     }
 
     function _recvCast(
-				address voter,
-				uint256 precinct,
-				Ballot.Data calldata ballot
+        address voter,
+        uint256 precinct,
+        Ballot.Data calldata ballot
     ) external onlyMothership {
+        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
+
         _validateCandidates(ballot.votedCandidates);
-				Council.onlyInPeriod(Council.ElectionPeriod.Vote); 
 
-				Council.Data storage council = Council.load();
-				Election.Data storage election = council.getCurrentElection();
-				uint256 lastElectionId = council.lastElectionId;
+        Council.Data storage council = Council.load();
+        Election.Data storage election = council.getCurrentElection();
+        uint256 lastElectionId = council.lastElectionId;
 
-				Ballot.Data storage storedBallot = Ballot.load(lastElectionId, voter, precinct);
+        Ballot.Data storage storedBallot = Ballot.load(lastElectionId, voter, precinct);
 
-				storedBallot.copy(ballot);
-				storedBallot.validate();
+        storedBallot.copy(ballot);
+        storedBallot.validate();
 
-				bytes32 ballotPtr;
-				assembly {
-					ballotPtr := storedBallot.slot
-				}
-				
-				election.ballotPtrs.push(ballotPtr);
+        bytes32 ballotPtr;
+        assembly {
+            ballotPtr := storedBallot.slot
+        }
+
+        election.ballotPtrs.push(ballotPtr);
 
         emit VoteRecorded(msg.sender, precinct, lastElectionId, ballot.votingPower);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
-    function evaluate(
-        uint numBallots
-    ) external override onlyMothership {
+    function evaluate(uint numBallots) external override onlyMothership {
+        Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
+
         Election.Data storage election = Council.load().getCurrentElection();
-				Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         if (election.evaluated) revert ElectionAlreadyEvaluated();
 
@@ -313,13 +313,9 @@ contract BaseElectionModule is
     }
 
     /// @dev Burns previous NFTs and mints new ones
-    function resolve()
-        public
-        virtual
-        override
-        onlyMothership
-    {
+    function resolve() public virtual override onlyMothership {
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
+
         Council.Data storage store = Council.load();
         Election.Data storage election = store.getCurrentElection();
 
@@ -382,20 +378,24 @@ contract BaseElectionModule is
     }
 
     function hasVoted(address user, uint256 precinct) public view override returns (bool) {
-				Council.Data storage council = Council.load();
-				Ballot.Data storage ballot = Ballot.load(council.lastElectionId, user, precinct);
+        Council.Data storage council = Council.load();
+        Ballot.Data storage ballot = Ballot.load(council.lastElectionId, user, precinct);
         return ballot.votingPower > 0 && ballot.votedCandidates.length > 0;
     }
 
-    function getVotePower(address user, uint256 precinct, uint256 electionId) external view override returns (uint) {
-				Ballot.Data storage ballot = Ballot.load(electionId, user, precinct);
+    function getVotePower(
+        address user,
+        uint256 precinct,
+        uint256 electionId
+    ) external view override returns (uint) {
+        Ballot.Data storage ballot = Ballot.load(electionId, user, precinct);
         return ballot.votingPower;
     }
 
     function getBallotCandidates(
-				address voter,
-				uint256 precinct,
-				uint256 electionId
+        address voter,
+        uint256 precinct,
+        uint256 electionId
     ) external view override returns (address[] memory) {
         return Ballot.load(electionId, voter, precinct).votedCandidates;
     }

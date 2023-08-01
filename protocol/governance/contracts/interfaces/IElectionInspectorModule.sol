@@ -27,7 +27,11 @@ interface IElectionInspectorModule {
     function getNomineesAtEpoch(uint epochIndex) external view returns (address[] memory);
 
     /// @notice Returns if user has voted in the given election
-    function hasVotedInEpoch(address user, uint precinct, uint epochIndex) external view returns (bool);
+    function hasVotedInEpoch(
+        address user,
+        uint precinct,
+        uint epochIndex
+    ) external view returns (bool);
 
     function getCandidateVotesInEpoch(
         address candidate,

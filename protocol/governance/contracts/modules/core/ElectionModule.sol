@@ -10,10 +10,7 @@ import "./BaseElectionModule.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 /// @notice This extends the base ElectionModule by determining voting power by Synthetix v2 debt share
-contract ElectionModule is
-    IElectionModule,
-    BaseElectionModule
-{
+contract ElectionModule is IElectionModule, BaseElectionModule {
     using SafeCastU256 for uint256;
 
     error TooManyCandidates();
@@ -57,12 +54,9 @@ contract ElectionModule is
     /// @dev Overrides the BaseElectionModule nominate function to only allow 1 candidate to be nominated
     function cast(
         address[] calldata candidates,
-				uint256[] calldata amounts
-    )
-        public
-        override(BaseElectionModule, IElectionModule)
-    {
-       Council.onlyInPeriod(Council.ElectionPeriod.Vote);
+        uint256[] calldata amounts
+    ) public override(BaseElectionModule, IElectionModule) {
+        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
         if (candidates.length > 1) {
             revert TooManyCandidates();
         }

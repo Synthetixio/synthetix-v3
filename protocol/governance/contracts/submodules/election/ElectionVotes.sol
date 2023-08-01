@@ -15,7 +15,7 @@ contract ElectionVotes is ElectionBase {
     using Election for Election.Data;
     using Ballot for Ballot.Data;
 
-		error BallotDoesNotExist();
+    error BallotDoesNotExist();
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
         uint length = candidates.length;
