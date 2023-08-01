@@ -28,20 +28,22 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function canLiquidatePosition(uint128 accountId, uint128 marketId) external view returns (bool) {}
+    function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {}
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getLiquidationMargins(uint128 accountId, uint128 marketId) external view returns (uint256 im, uint256 mm) {
+    function getLiquidationMarginUsd(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256 im, uint256 mm) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (im, mm) = Position.getLiquidationMargins(
-            marketId,
+        (im, mm) = Position.getLiquidationMarginUsd(
             market.positions[accountId].size,
-            marketConfig.skewScale,
-            market.getOraclePrice()
+            market.getOraclePrice(),
+            marketConfig
         );
     }
 

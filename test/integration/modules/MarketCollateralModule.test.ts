@@ -92,6 +92,8 @@ describe('MarketCollateralModule', async () => {
         );
       });
 
+      it('should revert depositing to a market that does not exist');
+
       it('should revert deposit of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
 
@@ -236,7 +238,9 @@ describe('MarketCollateralModule', async () => {
         );
       });
 
-      it('should affect an existing position when withdrawing');
+      it('should allow partial withdraw when margin req are still met');
+
+      it('should allow affecting existing position when withdrawing');
 
       it('should revert withdraw on address(0) collateral', async () => {
         const { PerpMarketProxy } = systems();
@@ -276,6 +280,8 @@ describe('MarketCollateralModule', async () => {
           PerpMarketProxy
         );
       });
+
+      it('should revert withdraw to a market that does not exist');
 
       it('should revert withdraw of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
@@ -319,6 +325,10 @@ describe('MarketCollateralModule', async () => {
           PerpMarketProxy
         );
       });
+
+      it('should revert withdraw when margin below im');
+
+      it('should revert withdraw if places position into liquidation');
 
       it('should revert when account is flagged for liquidation');
     });

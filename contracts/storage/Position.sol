@@ -110,8 +110,29 @@ library Position {
         }
     }
 
+    function validateNextPositionIsLiquidatable(
+        Position.Data memory newPosition,
+        uint256 collateralUsd,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view {
+        (uint256 healthRating, , , ) = getHealthRating(
+            newPosition.marketId,
+            newPosition.size,
+            newPosition.entryPrice,
+            newPosition.entryFundingAccrued,
+            newPosition.feesIncurredUsd,
+            collateralUsd,
+            price,
+            marketConfig
+        );
+        if (healthRating <= DecimalMath.UNIT) {
+            revert ErrorUtil.CanLiquidatePosition(newPosition.accountId);
+        }
+    }
+
     /**
-     * @dev Given an open position (same account) and trade params return the subsequent position.
+     * @dev Given an open position and trade params for the next position return the new position after validation.
      */
     function validateTrade(
         uint128 accountId,
@@ -122,20 +143,39 @@ library Position {
             revert NilOrder();
         }
 
+        // Generic checks like
+        //
+        // - Empty order
+        // - accountId or marketId does not exist
+
+        // When there is no position open then
+        //
+        // - check if there's sufficient margin to open the trade
+        // - check if order were to settle now, would it be in liquidation
+        // - check if order exceeds max oi
+        // - check if order exceeds max leverage
+
+        // When there is an existing position then
+        //
+        // - if position can be liquidated/currently being liquidated (i.e. flagged)
+        // - if there is sufficient margin to touch this position (assuming increasing size)
+        //
+        // then, perform the same checks as above as if the order were to settle right now.
+        //
+        // The same checks are applied again on settlement (because the market could change between
+        // commitment and settlement).
+
+        // --- Existing position validation --- //
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage currentPosition = market.positions[accountId];
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
 
         // Check if the `currentPosition` can be immediately liquidated.
-        if (canLiquidate(currentPosition, params.fillPrice)) {
-            revert ErrorUtil.CanLiquidatePosition(accountId);
+        if (isLiquidatable(currentPosition, collateralUsd, params.fillPrice, marketConfig)) {
+            revert ErrorUtil.CanLiquidatePosition(accountId); // TODO: Can we pull this error from ILiquidationModule?
         }
-
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-
-        // Derive fees incurred if this order were to be settled successfully.
-        fee = Order.getOrderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
-        keeperFee = Order.getKeeperFee(params.keeperFeeBufferUsd, params.oraclePrice);
 
         // Assuming there is an existing position (no open position will be a noop), determine if they have enough
         // margin to continue this operation. Ensuring we do not allow them to place an open position into instant
@@ -146,60 +186,34 @@ library Position {
         //
         // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
         // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
-        int256 remainingMargin = getRemainingMargin(currentPosition, params.fillPrice);
-        if (currentPosition.size != 0 && remainingMargin < 0) {
-            revert InsufficientMargin();
-        }
 
-        // Checks whether the current position's margin (if above 0), doesn't fall below min margin for liquidations.
-        if (
-            MathUtil.abs(currentPosition.size) != 0 &&
-            remainingMargin.toUint() <= getLiquidationMargin(currentPosition, params.fillPrice)
-        ) {
-            revert ErrorUtil.CanLiquidatePosition(accountId);
+        (uint256 imcp, ) = getLiquidationMarginUsd(currentPosition.size, params.fillPrice, marketConfig);
+        if (currentPosition.size != 0 && collateralUsd - currentPosition.feesIncurredUsd < imcp) {
+            revert InsufficientMargin();
         }
 
         // --- New position (as though the order was successfully settled)! --- //
 
+        // Derive fees incurred if this order were to be settled successfully.
+        fee = Order.getOrderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
+        keeperFee = Order.getKeeperFee(params.keeperFeeBufferUsd, params.oraclePrice);
         newPosition = Position.Data({
             accountId: accountId,
             marketId: marketId,
             size: currentPosition.size + params.sizeDelta,
             entryFundingAccrued: market.currentFundingAccruedComputed,
             entryPrice: params.fillPrice,
-            feesIncurredUsd: fee + keeperFee
+            feesIncurredUsd: currentPosition.feesIncurredUsd + fee + keeperFee
         });
-        uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
-
-        // TODO: Use getLiquidationMargins.im instead of minMarginUsd (also note the exclusion of fees in left operand).
-        if (!positionDecreasing && collateralUsd < globalConfig.minMarginUsd) {
+        (uint256 imnp, ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
+        if (!positionDecreasing && collateralUsd - newPosition.feesIncurredUsd < imnp) {
             revert InsufficientMargin();
         }
-
-        // TODO: Check that the resulting new postion's margin is above liquidationMargin + liqPremium
-        //
-        // Check on liqMargin + liqPremium is from PerpsV2. This may change so leaving it TODO for now. Might add
-        // this back temporarily for completeness.
-        //
-        // ---
-        //
-        // check that new position margin is above liquidation margin
-        // (above, in _recomputeMarginWithDelta() we checked the old position, here we check the new one)
-        //
-        // Liquidation margin is considered without a fee (but including premium), because it wouldn't make sense to allow
-        // a trade that will make the position liquidatable.
-        //
-        // note: we use `oraclePrice` here as `liquidationPremium` calcs premium based not current skew.
-        // uint liqPremium = _liquidationPremium(newPos.size, params.oraclePrice);
-        // uint liqMargin = _liquidationMargin(newPos.size, params.oraclePrice).add(liqPremium);
-        // if (newMargin <= liqMargin) {
-        //     return (newPos, 0, Status.CanLiquidate);
-        // }
 
         // Check the new position hasn't hit max leverage.
         //
@@ -211,7 +225,8 @@ library Position {
             revert MaxLeverageExceeded(leverage);
         }
 
-        // TODO: Further checks to prevent instant liquidation on the resulting newPosition.
+        // Check new position can't just be instantly liquidated.
+        validateNextPositionIsLiquidatable(newPosition, collateralUsd, params.fillPrice, marketConfig);
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
@@ -233,147 +248,87 @@ library Position {
      *
      *  im = marginNotional * (abs(position.size)/skewScale + imr) + minMargin
      *  mm = marginNotional * (abs(position.size)/skewScale + mmr) + minMargin + liqReward
-     *
-     * NOTE: Both IM and MM are in USD and important that size is _not_ sizeDelta. It is the absolute position size.
      */
-    function getLiquidationMargins(
-        uint128 marketId,
-        int128 size,
-        uint128 skewScale,
-        uint256 oraclePrice
+    function getLiquidationMarginUsd(
+        int128 positionSize,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 im, uint256 mm) {
-        // No positoin means cannot infer IM/MM.
-        if (size == 0) {
+        // No position means cannot infer IM/MM.
+        if (positionSize == 0) {
             return (0, 0);
         }
 
-        uint256 absSize = MathUtil.abs(size);
-        uint256 skewImpact = absSize.divDecimal(skewScale);
-        uint256 notional = absSize.mulDecimal(oraclePrice);
+        uint256 absSize = MathUtil.abs(positionSize);
+        uint256 skewImpact = absSize.divDecimal(marketConfig.skewScale);
+        uint256 notional = absSize.mulDecimal(price);
+
+        // TODO: Pull into separate function for later use.
+        // TODO: Include a liqRewardKeeperFee calc to ensure keepers are incentivised to liquidate.
+        uint256 liqReward = notional.mulDecimal(marketConfig.liquidationRewardPercent);
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        im = notional.mulDecimal(skewImpact + marketConfig.initialMarginRatio) + globalConfig.minMarginUsd;
+        mm =
+            notional.mulDecimal(skewImpact + marketConfig.maintenanceMarginRatio) +
+            globalConfig.minMarginUsd +
+            liqReward;
+    }
 
-        uint256 minMarginUsd = globalConfig.minMarginUsd;
-        uint256 liqReward = notional.mulDecimal(marketConfig.liquidationRewardPercent); // TODO: Pull into separate function for later use.
+    function getHealthRating(
+        uint128 marketId,
+        int128 positionSize,
+        uint256 positionEntryPrice,
+        int256 positionEntryFundingAccrued,
+        uint256 positionFeesIncurredUsd,
+        uint256 collateralUsd,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint256 healthRating, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+        PerpMarket.Data storage market = PerpMarket.load(marketId);
+        int256 netFundingPerUnit = market.getNextFunding(price) - positionEntryFundingAccrued;
+        accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
 
-        im = notional.mulDecimal(skewImpact + marketConfig.initialMarginRatio) + minMarginUsd;
-        mm = notional.mulDecimal(skewImpact + marketConfig.maintenanceMarginRatio) + minMarginUsd + liqReward;
+        // Calculate this position's PnL
+        pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
+
+        // Ensure we also deduct the realized losses in fees to open trade.
+        //
+        // The remaining margin is defined as sum(collateral * price) + PnL + funding in USD.
+        remainingMarginUsd = MathUtil
+            .max(collateralUsd.toInt() + pnl + accruedFunding - positionFeesIncurredUsd.toInt(), 0)
+            .toUint();
+
+        // margin / mm <= 1 means liquidation.
+        (, uint256 mm) = getLiquidationMarginUsd(positionSize, price, marketConfig);
+        healthRating = remainingMarginUsd.divDecimal(mm);
     }
 
     // --- Member --- //
 
     /**
-     * @dev Returns a position's accrued funding.
+     * @dev Determines the current position with additional details can be liquidated.
      */
-    function getAccruedFunding(Position.Data storage self, uint256 price) internal view returns (int256) {
-        if (self.size == 0) {
-            return 0;
-        }
-
-        PerpMarket.Data storage market = PerpMarket.load(self.marketId);
-        int256 netFundingPerUnit = market.getNextFunding(price) - self.entryFundingAccrued;
-        return self.size.mulDecimal(netFundingPerUnit);
-    }
-
-    function getHealthFactor(Position.Data storage self) internal view returns (uint256) {
-        // TODO
-    }
-
-    // TODO: All liquidation related member function need to be updated.
-
-    /**
-     * @dev Return a position's remaining margin.
-     *
-     * The remaining margin is defined as sum(collateral * price) + PnL + funding in USD.
-     *
-     * We return an `int` here as after all fees and PnL, this can be negative. The caller should verify that this
-     * is positive before proceeding with further operations.
-     */
-    function getRemainingMargin(Position.Data storage self, uint256 price) internal view returns (int256) {
-        int256 margin = PerpCollateral.getCollateralUsd(self.accountId, self.marketId).toInt();
-        int256 funding = getAccruedFunding(self, price);
-
-        // Calculate this position's PnL
-        int256 priceDelta = price.toInt() - self.entryPrice.toInt();
-        int256 pnl = self.size.mulDecimal(priceDelta);
-
-        // Ensure we also deduct the realized losses in fees to open trade.
-        return margin + pnl + funding - self.feesIncurredUsd.toInt();
-    }
-
-    /**
-     * @dev Returns a number in USD which if a position's remaining margin is lte then position can be liquidated.
-     *
-     * TODO: Replace this entire liquidation calc.
-     */
-    function getLiquidationMargin(Position.Data storage self, uint256 price) internal view returns (uint256) {
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
-
-        uint256 absSize = MathUtil.abs(self.size);
-
-        // Calculates the liquidation buffer (penalty).
-        //
-        // e.g. 3 * 1800 * 0.0075 = 40.5
-        uint256 liquidationBuffer = absSize * price * 1;
-
-        // Calculates the liquidation fee.
-        //
-        // This is a fee charged against the margin on liquidation and paid to LPers. The fee is proportional to
-        // the position size and bounded by `min >= liqFee <= max`. This proportion is based on each market's
-        // configured liquidation fee ratio.
-        //
-        // e.g. 3 * 1800 * 0.0002 = 1.08
-        uint256 proportionalFee = absSize * price * 1;
-        uint256 maxKeeperFee = globalConfig.maxKeeperFeeUsd;
-        uint256 boundedProportionalFee = proportionalFee > maxKeeperFee ? maxKeeperFee : proportionalFee;
-        uint256 minKeeperFee = globalConfig.minKeeperFeeUsd;
-        uint256 boundedLiquidationFee = boundedProportionalFee > minKeeperFee ? boundedProportionalFee : minKeeperFee;
-
-        // If the remainingMargin is <= this number then position can be liquidated.
-        //
-        // e.g. 40.5 + 1.08 + 2 = 43.58
-        return liquidationBuffer + boundedLiquidationFee + globalConfig.keeperLiquidationFeeUsd;
-    }
-
-    /**
-     * @dev This is the additional premium we charge upon liquidation.
-     *
-     * Similar to fillPrice, but we disregard the skew (by assuming it's zero). Which is basically the calculation
-     * when we compute as if taking the position from 0 to x. In practice, the premium component of the
-     * liquidation will just be (size / skewScale) * (size * price).
-     *
-     * It adds a configurable multiplier that can be used to increase the margin that goes to feePool.
-     *
-     * For instance, if size of the liquidation position is 100, oracle price is 1200 and skewScale is 1M then,
-     *  size    = abs(-100)
-     *          = 100
-     *  premium = 100 / 1,000,000 * (100 * 1200) * multiplier
-     *          = 12 * multiplier
-     */
-    function getLiquidationPremium(Position.Data storage self, uint256 price) internal view returns (uint256) {
-        if (self.size == 0) {
-            return 0;
-        }
-
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.marketId);
-        uint256 notionalUsd = MathUtil.abs(self.size) * price;
-        return (MathUtil.abs(self.size) / (marketConfig.skewScale)) * notionalUsd * 1;
-    }
-
-    /**
-     * @dev Returns whether this position can be liquidated given the current `price`.
-     */
-    function canLiquidate(Position.Data storage self, uint256 price) internal view returns (bool) {
-        // No liquidating empty positions.
+    function isLiquidatable(
+        Position.Data storage self,
+        uint256 collateralUsd,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (bool) {
         if (self.size == 0) {
             return false;
         }
-        uint256 remaining = MathUtil
-            .max(0, getRemainingMargin(self, price) - getLiquidationPremium(self, price).toInt())
-            .toUint();
-        return remaining <= getLiquidationMargin(self, price);
+        (uint256 healthRating, , , ) = getHealthRating(
+            self.marketId,
+            self.size,
+            self.entryPrice,
+            self.entryFundingAccrued,
+            self.feesIncurredUsd,
+            collateralUsd,
+            price,
+            marketConfig
+        );
+        return healthRating <= DecimalMath.UNIT;
     }
 
     /**

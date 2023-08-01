@@ -21,6 +21,24 @@ contract MarketCollateralModule is IMarketCollateralModule {
     using SafeCastI256 for int256;
 
     /**
+     * @dev Validates whether the margin requirements are acceptable after withdrawing.
+     */
+    function validatePositionAfterWithdraw(
+        Position.Data storage position,
+        PerpMarket.Data storage market
+    ) internal view {
+        uint256 collateralUsd = PerpCollateral.getCollateralUsd(position.accountId, position.marketId);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(position.marketId);
+
+        // Ensure does not lead to instant liquidation.
+        if (position.isLiquidatable(collateralUsd, market.getOraclePrice(), marketConfig)) {
+            revert ErrorUtil.CanLiquidatePosition(position.accountId);
+        }
+
+        // TODO: Ensure margin is above IM.
+    }
+
+    /**
      * @inheritdoc IMarketCollateralModule
      */
     function transferTo(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
@@ -31,7 +49,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         // Ensures the account exists (reverts with `AccountNotFound`).
         Account.exists(accountId);
 
-        PerpMarket.Data storage market = PerpMarket.load(marketId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
 
         // Prevent collateral transfers when there's a pending order.
@@ -76,8 +94,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
             // If an open position exists, verify this does _not_ place them into instant liquidation.
             Position.Data storage position = market.positions[accountId];
-            if (position.size != 0 && position.canLiquidate(market.getOraclePrice())) {
-                revert ErrorUtil.CanLiquidatePosition(accountId);
+            if (position.size != 0) {
+                validatePositionAfterWithdraw(position, market);
             }
 
             globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, absAmountDelta);

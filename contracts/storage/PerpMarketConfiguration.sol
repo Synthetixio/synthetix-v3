@@ -23,6 +23,7 @@ library PerpMarketConfiguration {
         INodeModule oracleManager;
         // A reference to the Pyth EVM contract.
         IPyth pyth;
+        // TODO: Move this to be configurable by market.
         // The minimum required margin in USD a position must hold.
         uint256 minMarginUsd;
         // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.

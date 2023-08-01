@@ -46,7 +46,8 @@ contract PerpAccountModule is IPerpAccountModule {
             depositedCollateral: depositedCollateral,
             order: market.orders[accountId],
             position: position,
-            healthFactor: position.getHealthFactor()
+            healthRating: 1
+            // healthRating: position.getHealthRating() // TODO
         });
     }
 }
