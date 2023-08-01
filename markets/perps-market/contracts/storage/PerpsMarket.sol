@@ -36,12 +36,18 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        int lastFundingRate;
-        int lastFundingValue;
+        // TODO: move to new data structure?
+        int256 lastFundingRate;
+        int256 lastFundingValue;
         uint256 lastFundingTime;
         // liquidation data
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
+        // debt calculation
+        // accumulates total notional size of the market including accrued funding until the last time any position changed
+        int256 debtCorrectionAccumulator;
+        // accountId => asyncOrder
+        mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
     }
@@ -98,6 +104,12 @@ library PerpsMarket {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
+        // this would only be 0 if fees or skew scale are configured to be 0.
+        // in that case, (very unlikely), allow full liquidation
+        if (maxLiquidationAmountPerSecond == 0) {
+            return requestedLiquidationAmount.to128();
+        }
+
         uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
         uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
 
@@ -133,7 +145,9 @@ library PerpsMarket {
     }
 
     /**
-     * @dev If you call this method, please ensure you emit an event so offchain solution can index market state history properly
+     * @dev Use this function to update both market/position size/skew.
+     * @dev Size and skew should not be updated directly.
+     * @dev The return value is used to emit a MarketUpdated event.
      */
     function updatePositionData(
         Data storage self,
@@ -141,11 +155,26 @@ library PerpsMarket {
         Position.Data memory newPosition
     ) internal returns (MarketUpdateData memory) {
         Position.Data storage oldPosition = self.positions[accountId];
-        int128 oldPositionSize = oldPosition.size;
 
-        updateMarketSizes(self, newPosition.size, oldPositionSize);
-        oldPosition.updatePosition(newPosition);
-        // TODO add current market debt
+        int128 oldPositionSize = oldPosition.size;
+        int128 newPositionSize = newPosition.size;
+
+        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPositionSize - oldPositionSize;
+
+        uint currentPrice = newPosition.latestInteractionPrice;
+        (int totalPositionPnl, , , , ) = oldPosition.getPnl(currentPrice);
+
+        int sizeDelta = newPositionSize - oldPositionSize;
+        int fundingDelta = calculateNextFunding(self, currentPrice).mulDecimal(sizeDelta);
+        int notionalDelta = currentPrice.toInt().mulDecimal(sizeDelta);
+
+        // update the market debt correction accumulator before losing oldPosition details
+        // by adding the new updated notional (old - new size) plus old position pnl
+        self.debtCorrectionAccumulator += fundingDelta + notionalDelta + totalPositionPnl;
+
+        oldPosition.update(newPosition);
+
         return
             MarketUpdateData(
                 self.id,
@@ -154,15 +183,6 @@ library PerpsMarket {
                 self.lastFundingRate,
                 currentFundingVelocity(self)
             );
-    }
-
-    function updateMarketSizes(
-        Data storage self,
-        int128 newPositionSize,
-        int128 oldPositionSize
-    ) internal {
-        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
-        self.skew += newPositionSize - oldPositionSize;
     }
 
     function recomputeFunding(
@@ -279,5 +299,18 @@ library PerpsMarket {
                 );
             }
         }
+    }
+
+    /**
+     * @dev Returns the market debt incurred by all positions
+     * @notice  Market debt is the sum of all position sizes multiplied by the price, and old positions pnl that is included in the debt correction accumulator.
+     */
+    function marketDebt(Data storage self, uint price) internal view returns (int) {
+        // all positions sizes multiplied by the price is equivalent to skew times price
+        // and the debt correction accumulator is the  sum of all positions pnl
+        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt());
+        int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
+
+        return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
     }
 }

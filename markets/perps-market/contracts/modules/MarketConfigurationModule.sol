@@ -143,7 +143,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.lockedOiRatioD18 = lockedOiRatioD18;
-        emit LockedOiRatioD18Set(marketId, lockedOiRatioD18);
+        emit LockedOiRatioSet(marketId, lockedOiRatioD18);
     }
 
     /**
@@ -221,7 +221,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function getLockedOiRatioD18(uint128 marketId) external view override returns (uint256) {
+    function getLockedOiRatio(uint128 marketId) external view override returns (uint256) {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         return config.lockedOiRatioD18;
