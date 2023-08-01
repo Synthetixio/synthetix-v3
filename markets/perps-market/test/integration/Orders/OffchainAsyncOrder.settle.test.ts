@@ -43,25 +43,15 @@ describe('Settle Offchain Async Order test', () => {
 
   describe('failures before commiting orders', () => {
     describe('using settle', () => {
-      it('reverts if market id is incorrect', async () => {
-        await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(1337, 2),
-          'OrderNotValid()'
-        );
-      });
-
       it('reverts if account id is incorrect (not valid order)', async () => {
         await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 1337),
+          systems().PerpsMarket.connect(trader1()).settle(1337),
           'OrderNotValid()'
         );
       });
 
       it('reverts if order was not settled before (not valid order)', async () => {
-        await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
-          'OrderNotValid()'
-        );
+        await assertRevert(systems().PerpsMarket.connect(trader1()).settle(2), 'OrderNotValid()');
       });
     });
 
@@ -83,21 +73,8 @@ describe('Settle Offchain Async Order test', () => {
         updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
       });
 
-      it('reverts if market id is incorrect', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [1337, 2]);
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
-          'OrderNotValid()'
-        );
-      });
-
       it('reverts if account id is incorrect (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(
-          ['uint128', 'uint128'],
-          [ethMarketId, 1337]
-        );
+        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [1337]);
         await assertRevert(
           systems()
             .PerpsMarket.connect(keeper())
@@ -107,7 +84,7 @@ describe('Settle Offchain Async Order test', () => {
       });
 
       it('reverts if order was not settled before (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [ethMarketId, 2]);
+        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
         await assertRevert(
           systems()
             .PerpsMarket.connect(keeper())
@@ -190,13 +167,14 @@ describe('Settle Offchain Async Order test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           });
         startTime = await getTxTime(provider(), tx);
       });
 
       before('setup bytes data', () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [ethMarketId, 2]);
+        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
         pythCallData = ethers.utils.solidityPack(
           ['bytes32', 'uint64'],
           [
@@ -213,8 +191,8 @@ describe('Settle Offchain Async Order test', () => {
 
         it('with settle', async () => {
           await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
-            'SettlementWindowExpired'
+            systems().PerpsMarket.connect(trader1()).settle(2),
+            'SettlementWindowNotOpen'
           );
         });
 
@@ -233,7 +211,7 @@ describe('Settle Offchain Async Order test', () => {
             systems()
               .PerpsMarket.connect(keeper())
               .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
-            'SettlementWindowExpired'
+            'SettlementWindowNotOpen'
           );
         });
       });
@@ -254,7 +232,7 @@ describe('Settle Offchain Async Order test', () => {
 
         it('with settle', async () => {
           await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
+            systems().PerpsMarket.connect(trader1()).settle(2),
             'SettlementWindowExpired'
           );
         });
@@ -352,7 +330,7 @@ describe('Settle Offchain Async Order test', () => {
           //   : pythSettlementStrategy.url;
 
           await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settle(ethMarketId, 2),
+            systems().PerpsMarket.connect(keeper()).settle(2),
             `OffchainLookup("${systems().PerpsMarket.address}", "${
               DEFAULT_SETTLEMENT_STRATEGY.url
             }", "${pythCallData}", "${functionSig}", "${extraData}")`
@@ -400,6 +378,8 @@ describe('Settle Offchain Async Order test', () => {
               sizeDelta,
               newPositionSize,
               totalFees,
+              0, // referral fees
+              0, // collected fees
               settlementReward,
               trackingCode,
               msgSender,

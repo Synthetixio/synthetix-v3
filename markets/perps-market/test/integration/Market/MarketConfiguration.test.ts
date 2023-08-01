@@ -165,7 +165,7 @@ describe('MarketConfiguration', async () => {
       await systems()
         .PerpsMarket.connect(owner())
         .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
-      'LockedOiRatioD18Set(' +
+      'LockedOiRatioSet(' +
         marketId.toString() +
         ', ' +
         fixture.lockedOiPercentRatioD18.toString() +

@@ -1,39 +1,38 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {IMarketManagerModule} from "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import {AssociatedSystemsModule, AssociatedSystem} from "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
-import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
-import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
-import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Module for registering perpetual futures markets. The factory tracks all markets in the system and consolidates implementation.
  * @dev See IPerpsMarketFactoryModule.
  */
 contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
-    using AssociatedSystem for AssociatedSystem.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsPrice for PerpsPrice.Data;
     using DecimalMath for uint256;
+    using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
+    using SafeCastI256 for int256;
+    using SetUtil for SetUtil.UintSet;
+    using PerpsMarket for PerpsMarket.Data;
 
     bytes32 private constant _CREATE_MARKET_FEATURE_FLAG = "createMarket";
 
@@ -64,16 +63,17 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
+        uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
-            uint128 perpsMarketId = factory.synthetix.registerMarket(address(this));
+            perpsMarketId = factory.synthetix.registerMarket(address(this));
             factory.perpsMarketId = perpsMarketId;
-
-            emit FactoryInitialized(perpsMarketId);
-
-            return perpsMarketId;
         } else {
-            return factory.perpsMarketId;
+            perpsMarketId = factory.perpsMarketId;
         }
+
+        emit FactoryInitialized(perpsMarketId);
+
+        return perpsMarketId;
     }
 
     /**
@@ -99,21 +99,60 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return requestedMarketId;
     }
 
+    // solc-ignore-next-line func-mutability
     function name(uint128 perpsMarketId) external view override returns (string memory) {
         // todo: set name on initialize?
+        perpsMarketId; // silence unused variable warning
         return "Perps Market";
     }
 
     function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
-        // TODO
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+
+        if (factory.perpsMarketId == perpsMarketId) {
+            // debt is the total debt of all markets
+            // can be computed as total collateral value - sum_each_market( debt )
+            uint totalCollateralValue = GlobalPerpsMarket.load().totalCollateralValue();
+            int totalMarketDebt;
+
+            SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
+            uint256 activeMarketsLength = activeMarkets.length();
+            for (uint i = 1; i <= activeMarketsLength; i++) {
+                uint128 marketId = activeMarkets.valueAt(i).to128();
+                totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
+                    PerpsPrice.getCurrentPrice(marketId)
+                );
+            }
+
+            int totalDebt = totalCollateralValue.toInt() + totalMarketDebt;
+            return totalDebt < 0 ? 0 : totalDebt.toUint();
+        }
+
         return 0;
     }
 
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
-        return
-            PerpsMarket.load(perpsMarketId).size.mulDecimal(
-                PerpsMarketConfiguration.load(perpsMarketId).lockedOiRatioD18
-            );
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+
+        if (factory.perpsMarketId == perpsMarketId) {
+            uint accumulatedMinimumCredit;
+
+            SetUtil.UintSet storage activeMarkets = GlobalPerpsMarket.load().activeMarkets;
+            uint256 activeMarketsLength = activeMarkets.length();
+            for (uint i = 1; i <= activeMarketsLength; i++) {
+                uint128 marketId = activeMarkets.valueAt(i).to128();
+
+                accumulatedMinimumCredit += PerpsMarket
+                    .load(marketId)
+                    .size
+                    .mulDecimal(PerpsPrice.getCurrentPrice(marketId))
+                    .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
+            }
+
+            return accumulatedMinimumCredit;
+        }
+
+        return 0;
     }
 
     /**

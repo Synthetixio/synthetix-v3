@@ -45,7 +45,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
 
     function fillPrice(
         uint128 marketId,
-        int orderSize,
+        int128 orderSize,
         uint price
     ) external view override returns (uint) {
         return

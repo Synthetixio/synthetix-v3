@@ -46,7 +46,7 @@ describe('Offchain Async Order - Price tests', () => {
   });
 
   before('setup bytes data', () => {
-    extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [ethMarketId, 2]);
+    extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
   });
 
   const restoreToSetCollateralTime = snapshotCheckpoint(provider);
@@ -84,6 +84,7 @@ describe('Offchain Async Order - Price tests', () => {
             sizeDelta: iter.sizeDelta,
             settlementStrategyId: 0,
             acceptablePrice: iter.acceptablePrice,
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           });
           startTime = await getTxTime(provider(), tx);
@@ -214,6 +215,7 @@ describe('Offchain Async Order - Price tests', () => {
                 sizeDelta: iter.sizeDelta,
                 settlementStrategyId: 0,
                 acceptablePrice: iter.tightFillPrice,
+                referrer: ethers.constants.AddressZero,
                 trackingCode: ethers.constants.HashZero,
               }),
               `AcceptablePriceExceeded("${iter.limitFillPrice}", "${iter.tightFillPrice}")`
@@ -232,6 +234,7 @@ describe('Offchain Async Order - Price tests', () => {
               sizeDelta: iter.sizeDelta,
               settlementStrategyId: 0,
               acceptablePrice: iter.limitFillPrice,
+              referrer: ethers.constants.AddressZero,
               trackingCode: ethers.constants.HashZero,
             });
             const startTime = await getTxTime(provider(), tx);

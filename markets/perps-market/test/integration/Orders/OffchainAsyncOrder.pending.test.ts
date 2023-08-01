@@ -60,6 +60,7 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
           sizeDelta: bn(1),
           settlementStrategyId: 0,
           acceptablePrice: bn(1050), // 5% slippage
+          referrer: ethers.constants.AddressZero,
           trackingCode: ethers.constants.HashZero,
         });
       startTime = await getTxTime(provider(), tx);
@@ -73,7 +74,7 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
       it('reverts if attempt to update collateral', async () => {
         await assertRevert(
           systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10)),
-          'PendingOrderExist()',
+          'PendingOrderExists()',
           systems().PerpsMarket
         );
       });
@@ -88,9 +89,10 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
               sizeDelta: bn(0.01),
               settlementStrategyId: 0,
               acceptablePrice: bn(10050), // 5% slippage
+              referrer: ethers.constants.AddressZero,
               trackingCode: ethers.constants.HashZero,
             }),
-          'PendingOrderExist()',
+          'PendingOrderExists()',
           systems().PerpsMarket
         );
       });
@@ -105,7 +107,6 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
         await settleOrder({
           systems,
           keeper: keeper(),
-          marketId: ethMarketId,
           accountId: 2,
           feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
           settlementTime,
@@ -131,20 +132,21 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(10050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           });
 
-        const order = await systems().PerpsMarket.getOrder(btcMarketId, 2);
-        assertBn.equal(order.accountId, 2);
-        assertBn.equal(order.marketId, btcMarketId);
-        assertBn.equal(order.sizeDelta, bn(1));
+        const order = await systems().PerpsMarket.getOrder(2);
+        assertBn.equal(order.request.accountId, 2);
+        assertBn.equal(order.request.marketId, btcMarketId);
+        assertBn.equal(order.request.sizeDelta, bn(1));
       });
     });
 
-    describe('after cancel the pending order', () => {
+    describe('after expiration of current order', () => {
       before(restoreToCommit);
 
-      before('cancel the order', async () => {
+      before(async () => {
         await fastForwardTo(
           startTime +
             DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
@@ -152,7 +154,7 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
             1,
           provider()
         );
-        await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
+        // await systems().PerpsMarket.cancelOrder(ethMarketId, 2);
       });
 
       it('can update the collateral', async () => {
@@ -173,13 +175,14 @@ describe('Offchain Async Order - Prevent updates with pending order test', () =>
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(10050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           });
 
-        const order = await systems().PerpsMarket.getOrder(btcMarketId, 2);
-        assertBn.equal(order.accountId, 2);
-        assertBn.equal(order.marketId, btcMarketId);
-        assertBn.equal(order.sizeDelta, bn(1));
+        const order = await systems().PerpsMarket.getOrder(2);
+        assertBn.equal(order.request.accountId, 2);
+        assertBn.equal(order.request.marketId, btcMarketId);
+        assertBn.equal(order.request.sizeDelta, bn(1));
       });
     });
   });

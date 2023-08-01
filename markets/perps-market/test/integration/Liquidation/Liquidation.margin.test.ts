@@ -98,7 +98,7 @@ describe('Liquidation - margin', async () => {
     },
   ];
 
-  const { systems, provider, trader1, perpsMarkets, owner } = bootstrapMarkets({
+  const { systems, provider, trader1, perpsMarkets, owner, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: perpsMarketConfigs,
     traderAccountIds: [2, 3],
@@ -184,6 +184,13 @@ describe('Liquidation - margin', async () => {
     it('has correct available margin', async () => {
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(18_850));
     });
+
+    it('is not eligible for liquidation', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(keeper()).liquidate(2),
+        'NotEligibleForLiquidation'
+      );
+    });
   });
 
   describe('prices changes', () => {
@@ -217,6 +224,13 @@ describe('Liquidation - margin', async () => {
 
     it('has correct available margin', async () => {
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(16_550));
+    });
+
+    it('is not eligible for liquidation', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(keeper()).liquidate(2),
+        'NotEligibleForLiquidation'
+      );
     });
   });
   describe('price change - available margin 0 ', () => {

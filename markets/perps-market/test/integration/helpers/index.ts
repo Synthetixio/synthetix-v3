@@ -1,3 +1,5 @@
 export * from './settleHelper';
 export * from './collateralHelper';
 export * from './openPosition';
+export * from './fillPrice';
+export * from './computeFees';
