@@ -48,7 +48,7 @@ library PerpsMarketConfiguration {
          */
         uint256 liquidationRewardRatioD18;
         /**
-         * @dev minimum position value in USD, this is used when we calculate maintenance margin
+         * @dev minimum position value in USD, this is a constant value added to position margin requirements (initial/maintenance)
          */
         uint256 minimumPositionMargin;
     }
@@ -99,8 +99,10 @@ library PerpsMarketConfiguration {
         maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginRatioD18);
 
         uint256 notional = sizeAbs.mulDecimal(price);
-        initialMargin = notional.mulDecimal(initialMarginRatio);
-        maintenanceMargin = notional.mulDecimal(maintenanceMarginRatio);
+        initialMargin = notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
+        maintenanceMargin =
+            notional.mulDecimal(maintenanceMarginRatio) +
+            self.minimumPositionMargin;
 
         liquidationMargin = calculateLiquidationReward(self, notional);
     }
@@ -109,9 +111,10 @@ library PerpsMarketConfiguration {
      * @notice given a strategy id, returns the entire settlement strategy struct
      */
     function loadValidSettlementStrategy(
-        Data storage self,
+        uint128 marketId,
         uint128 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
+        Data storage self = load(marketId);
         if (settlementStrategyId >= self.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }

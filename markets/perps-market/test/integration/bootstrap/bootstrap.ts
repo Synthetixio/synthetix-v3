@@ -1,7 +1,7 @@
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
+import { FeeCollectorMock, PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
 import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
 import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 import { PerpsMarketData, bootstrapPerpsMarkets, bootstrapTraders } from '.';
@@ -20,6 +20,7 @@ type Proxies = {
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
   ['MockPyth']: MockPyth;
+  ['FeeCollectorMock']: FeeCollectorMock;
 };
 
 export type Systems = {
@@ -31,6 +32,7 @@ export type Systems = {
   OracleManager: OracleManagerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
+  FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
 
@@ -54,6 +56,7 @@ export function bootstrap() {
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
       MockPyth: getContract('MockPyth'),
+      FeeCollectorMock: getContract('FeeCollectorMock'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
@@ -91,7 +94,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId, superMarketId } =
     chainStateWithPerpsMarkets;
-  const { trader1, trader2, keeper, restore } = bootstrapTraders({
+  const { trader1, trader2, trader3, keeper, restore } = bootstrapTraders({
     systems,
     signers,
     provider,
@@ -145,6 +148,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     restore,
     trader1,
     trader2,
+    trader3,
     keeper,
     owner,
     perpsMarkets,
@@ -157,5 +161,3 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
 export const bn = (n: number) => wei(n).toBN();
 export const toNum = (n: ethers.BigNumber) => Number(ethers.utils.formatEther(n));
-export const decimalMul = (a: ethers.BigNumber, b: ethers.BigNumber) => a.mul(b).div(bn(1));
-export const decimalDiv = (a: ethers.BigNumber, b: ethers.BigNumber) => a.mul(bn(1)).div(b);

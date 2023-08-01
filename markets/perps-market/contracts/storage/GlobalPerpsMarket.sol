@@ -7,12 +7,11 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
-import {PerpsPrice} from "./PerpsPrice.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
-/*
-    Note: This library contains all global perps market data
-*/
+/**
+ * @title This library contains all global perps market data
+ */
 library GlobalPerpsMarket {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
@@ -22,18 +21,34 @@ library GlobalPerpsMarket {
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET =
         keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarket"));
 
+    /**
+     * @notice Thrown when attempting to deposit more than enabled collateral.
+     */
     error MaxCollateralExceeded(
         uint128 synthMarketId,
         uint maxAmount,
         uint collateralAmount,
         uint depositAmount
     );
+
+    /**
+     * @notice Thrown when attempting to use a synth that is not enabled as collateral.
+     */
     error SynthNotEnabledForCollateral(uint128 synthMarketId);
+
+    /**
+     * @notice Thrown when attempting to withdraw more collateral than is available.
+     */
     error InsufficientCollateral(uint128 synthMarketId, uint collateralAmount, uint withdrawAmount);
 
     struct Data {
+        /**
+         * @dev Set of liquidatable account ids.
+         */
         SetUtil.UintSet liquidatableAccounts;
-        // collateral amounts running total
+        /**
+         * @dev Collateral amounts running total, by collateral synth market id.
+         */
         mapping(uint128 => uint) collateralAmounts;
         SetUtil.UintSet activeCollateralTypes;
         SetUtil.UintSet activeMarkets;
@@ -50,7 +65,7 @@ library GlobalPerpsMarket {
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
         uint256 activeCollateralLength = activeCollateralTypes.length();
-        for (uint i = 1; i < activeCollateralLength; i++) {
+        for (uint i = 1; i <= activeCollateralLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
 
             if (synthMarketId == 0) {
@@ -81,16 +96,21 @@ library GlobalPerpsMarket {
         }
     }
 
+    /**
+     * @notice Check if the account is set as liquidatable.
+     */
     function checkLiquidation(Data storage self, uint128 accountId) internal view {
         if (self.liquidatableAccounts.contains(accountId)) {
             revert PerpsAccount.AccountLiquidatable(accountId);
         }
     }
 
-    /*
-        1. checks to ensure max cap isn't hit
-        2. adjusts accounting for collateral amounts
-    */
+    /**
+     * @notice Check the collateral is enabled and amount acceptable and adjusts accounting.
+     * @dev called when the account is modifying collateral.
+     * @dev 1. checks to ensure max cap isn't hit
+     * @dev 2. adjusts accounting for collateral amounts
+     */
     function validateCollateralAmount(
         Data storage self,
         uint128 synthMarketId,

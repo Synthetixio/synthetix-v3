@@ -93,22 +93,12 @@ describe('ModifyCollateral Withdraw', () => {
     });
 
     it('properly reflects core system collateral balance', async () => {
-      // const perpsBalanceAfter = await synthMarkets()[0]
-      //   .synth()
-      //   .connect(trader1())
-      //   .balanceOf(systems().PerpsMarket.address);
-
       const btcCollateralValue = await systems().Core.getMarketCollateralAmount(
         superMarketId(),
         synthMarkets()[0].synthAddress()
       );
 
       assertBn.equal(btcCollateralValue, depositAmount.sub(withdrawAmount).toBN());
-
-      // assertBn.equal(
-      //   perpsBalanceAfter,
-      //   wei(perpsBalanceBefore).add(depositAmount).sub(withdrawAmount).toBN()
-      // );
     });
 
     it('emits correct event with the expected values', async () => {
@@ -259,20 +249,28 @@ describe('ModifyCollateral Withdraw', () => {
         );
       });
     });
-    describe('allow withdraw when its less than "collateral available for withdraw', () => {
+    describe('allow withdraw when its less than collateral available for withdraw', () => {
       const restore = snapshotCheckpoint(provider);
 
+      let initialMarginReq: ethers.BigNumber;
+
       before('withdraw allowed amount', async () => {
+        [initialMarginReq] = await systems()
+          .PerpsMarket.connect(trader1())
+          .getRequiredMargins(trader1AccountId);
+        // available margin = collateral value + pnl = $19000
+        const withdrawAmt = bn(19_000).sub(initialMarginReq).mul(-1);
+
         await systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-17000));
+          .modifyCollateral(trader1AccountId, sUSDSynthId, withdrawAmt);
       });
       after(restore);
 
       it('has correct available margin', async () => {
         assertBn.equal(
           await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
-          bn(2000) // collateral value  + pnl =  (20000 - 17000) + -1000
+          initialMarginReq
         );
       });
     });
@@ -292,7 +290,7 @@ describe('ModifyCollateral Withdraw', () => {
           systems()
             .PerpsMarket.connect(trader1())
             .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18000)),
-          `InsufficientCollateralAvailableForWithdraw("${bn(17000)}", "${bn(18000)}")`
+          `InsufficientCollateralAvailableForWithdraw("${bn(15000)}", "${bn(18000)}")`
         );
       });
 
