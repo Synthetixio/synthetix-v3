@@ -139,7 +139,7 @@ library PerpsAccount {
         (
             bool isEligible,
             int256 availableMargin,
-            uint256 initialMaintenanceMargin,
+            uint256 initialRequiredMargin,
 
         ) = isEligibleForLiquidation(self);
 
@@ -148,7 +148,7 @@ library PerpsAccount {
         }
 
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - initialMaintenanceMargin;
+        availableWithdrawableCollateralUsd = availableMargin.toUint() - initialRequiredMargin;
 
         if (amountToWithdraw > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(

@@ -62,6 +62,7 @@ interface IMarketConfigurationModule {
         uint128 indexed marketId,
         uint256 initialMarginRatioD18,
         uint256 maintenanceMarginRatioD18,
+        uint256 minimumInitialMarginRatioD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
         uint256 maxSecondsInLiquidationWindow,
@@ -132,7 +133,8 @@ interface IMarketConfigurationModule {
      * @notice Set liquidation parameters for a market with this function.
      * @param marketId id of the market to set liquidation parameters.
      * @param initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
-     * @param maintenanceMarginRatioD18 the maintenance margin ratio (as decimal with 18 digits precision).
+     * @param minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
+     * @param maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
      * @param liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
      * @param maxLiquidationLimitAccumulationMultiplier the max liquidation limit accumulation multiplier.
      * @param maxSecondsInLiquidationWindow the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
@@ -141,7 +143,8 @@ interface IMarketConfigurationModule {
     function setLiquidationParameters(
         uint128 marketId,
         uint256 initialMarginRatioD18,
-        uint256 maintenanceMarginRatioD18,
+        uint256 minimumInitialMarginRatioD18,
+        uint256 maintenanceMarginScalarD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
         uint256 maxSecondsInLiquidationWindow,
@@ -190,10 +193,12 @@ interface IMarketConfigurationModule {
      * @notice Gets liquidation parameters details of a market.
      * @param marketId id of the market.
      * @return initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
-     * @return maintenanceMarginRatioD18 the maintenance margin ratio (as decimal with 18 digits precision).
+     * @return minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
+     * @return maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
      * @return liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
      * @return maxLiquidationLimitAccumulationMultiplier the max liquidation limit accumulation multiplier.
      * @return maxSecondsInLiquidationWindow the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
+     * @return minimumPositionMargin the minimum position margin.
      */
     function getLiquidationParameters(
         uint128 marketId
@@ -202,10 +207,12 @@ interface IMarketConfigurationModule {
         view
         returns (
             uint256 initialMarginRatioD18,
-            uint256 maintenanceMarginRatioD18,
+            uint256 minimumInitialMarginRatioD18,
+            uint256 maintenanceMarginScalarD18,
             uint256 liquidationRewardRatioD18,
             uint256 maxLiquidationLimitAccumulationMultiplier,
-            uint256 maxSecondsInLiquidationWindow
+            uint256 maxSecondsInLiquidationWindow,
+            uint256 minimumPositionMargin
         );
 
     /**
