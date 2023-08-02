@@ -100,7 +100,6 @@ describe('Liquidation - max liquidatable amount', async () => {
       let initialKeeperBalance: ethers.BigNumber;
       before('call liquidate', async () => {
         initialKeeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
-        console.log(initialKeeperBalance);
         await systems().PerpsMarket.connect(keeper()).liquidate(2);
       });
 
