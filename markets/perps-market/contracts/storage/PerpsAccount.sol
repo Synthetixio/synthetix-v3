@@ -372,6 +372,10 @@ library PerpsAccount {
         int128 oldPositionSize = position.size;
         amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
 
+        if (amountToLiquidate == 0) {
+            return (0, oldPositionSize, 0, marketUpdateData);
+        }
+
         int128 amtToLiquidationInt = amountToLiquidate.toInt();
         // reduce position size
         newPositionSize = oldPositionSize > 0
