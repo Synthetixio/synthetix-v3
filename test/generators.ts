@@ -59,7 +59,6 @@ export const genBootstrap = (nMarkets: number = 1) => {
       initialCollateralPrice: bn(genInt(100, 10_000)),
     },
     global: {
-      minMarginUsd: bn(genInt(50, 100)),
       priceDivergencePercent: wei(genFloat(0.1, 0.3)).toBN(),
       pythPublishTimeMin: 6,
       pythPublishTimeMax: 12,
@@ -86,6 +85,7 @@ export const genBootstrap = (nMarkets: number = 1) => {
           maxLeverage: bn(genOneOf([10, 15, 20, 25, 30, 50, 100])),
           maxMarketSize: bn(genInt(20_000, 50_000)),
           maxFundingVelocity: bn(genInt(3, 9)),
+          minMarginUsd: bn(genInt(50, 100)),
           initialMarginRatio: bn(genFloat(0.04, 0.06)),
           maintenanceMarginRatio: bn(genFloat(0.01, 0.03)),
           liquidationRewardPercent: wei(genFloat(0.005, 0.0075)).toBN(),

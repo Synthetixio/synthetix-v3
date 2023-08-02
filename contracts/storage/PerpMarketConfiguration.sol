@@ -23,9 +23,6 @@ library PerpMarketConfiguration {
         INodeModule oracleManager;
         // A reference to the Pyth EVM contract.
         IPyth pyth;
-        // TODO: Move this to be configurable by market.
-        // The minimum required margin in USD a position must hold.
-        uint256 minMarginUsd;
         // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
         uint128 priceDivergencePercent;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
@@ -69,6 +66,8 @@ library PerpMarketConfiguration {
         uint128 maxFundingVelocity;
         // Skew scaling denominator constant.
         uint128 skewScale;
+        // The minimum required margin in USD a position must hold.
+        uint256 minMarginUsd;
         // IMR is used to dynamically infer the initial margin.
         uint256 initialMarginRatio;
         // MMR is used to dynamically infer the maintnenace margin.

@@ -15,7 +15,6 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         PerpMarketConfiguration.GlobalData storage config = PerpMarketConfiguration.load();
 
-        config.minMarginUsd = data.minMarginUsd;
         config.priceDivergencePercent = data.priceDivergencePercent;
         config.pythPublishTimeMin = data.pythPublishTimeMin;
         config.pythPublishTimeMax = data.pythPublishTimeMax;
@@ -53,6 +52,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.maxLeverage = data.maxLeverage;
         config.maxMarketSize = data.maxMarketSize;
         config.maxFundingVelocity = data.maxFundingVelocity;
+        config.minMarginUsd = data.minMarginUsd;
         config.initialMarginRatio = data.initialMarginRatio;
         config.maintenanceMarginRatio = data.maintenanceMarginRatio;
         config.liquidationRewardPercent = data.liquidationRewardPercent;

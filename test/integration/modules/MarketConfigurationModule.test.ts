@@ -20,7 +20,6 @@ describe('MarketConfigurationModule', async () => {
       const tx = await PerpMarketProxy.connect(from).setMarketConfiguration(global);
       const config = await PerpMarketProxy.getMarketConfiguration();
 
-      assertBn.equal(config.minMarginUsd, global.minMarginUsd);
       assertBn.equal(config.priceDivergencePercent, global.priceDivergencePercent);
       assert.equal(config.pythPublishTimeMin, global.pythPublishTimeMin);
       assert.equal(config.pythPublishTimeMax, global.pythPublishTimeMax);
@@ -68,6 +67,7 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.maxLeverage, config.maxLeverage);
       assertBn.equal(specific.maxMarketSize, config.maxMarketSize);
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
+      assertBn.equal(specific.minMarginUsd, config.minMarginUsd);
       assertBn.equal(specific.initialMarginRatio, config.initialMarginRatio);
       assertBn.equal(specific.maintenanceMarginRatio, config.maintenanceMarginRatio);
       assertBn.equal(specific.liquidationRewardPercent, config.liquidationRewardPercent);

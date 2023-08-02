@@ -8,7 +8,7 @@ import { wei } from '@synthetixio/wei';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, collaterals } = bs;
+  const { systems, restore, provider, collaterals, markets } = bs;
 
   beforeEach(restore);
 
@@ -59,11 +59,13 @@ describe('OrderModule', () => {
       // - get value of collateral e.g. $1200
       // - get minMargin e.g. $100
       // - derive depositAmount e.g. $100 / $1200 = 0.08333334 units
-      const { minMarginUsd } = await PerpMarketProxy.getMarketConfiguration();
+      const market = genOneOf(markets());
       const collateral = genOneOf(collaterals());
+
+      const { minMarginUsd } = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
       const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
       const depositAmount = wei(minMarginUsd).div(collateralPrice).mul(0.95).toBN(); // 5% less than minMargin.
-      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs, depositAmount, collateral);
+      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs, depositAmount, collateral, market);
 
       // Generate a valid order that uses all available margin.
       const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(

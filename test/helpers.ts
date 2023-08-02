@@ -6,8 +6,14 @@ import { wei } from '@synthetixio/wei';
 
 type Bs = ReturnType<typeof bootstrap>;
 type Collateral = ReturnType<Bs['collaterals']>[number];
+type Market = ReturnType<Bs['markets']>[number];
 
-export const depositMargin = async (bs: Bs, depositAmount?: BigNumber, desiredCollateral?: Collateral) => {
+export const depositMargin = async (
+  bs: Bs,
+  depositAmount?: BigNumber,
+  desiredCollateral?: Collateral,
+  desiredMarket?: Market
+) => {
   const { systems, traders, markets, collaterals } = bs;
 
   const { PerpMarketProxy } = systems();
@@ -15,7 +21,7 @@ export const depositMargin = async (bs: Bs, depositAmount?: BigNumber, desiredCo
   // Preamble
   const trader = traders()[0];
   const traderAddress = await trader.signer.getAddress();
-  const market = genOneOf(markets());
+  const market = desiredMarket ?? genOneOf(markets());
   const marketId = market.marketId();
   const collateral = desiredCollateral ?? genOneOf(collaterals());
 

@@ -247,11 +247,10 @@ library Position {
         // TODO: Include a liqRewardKeeperFee calc to ensure keepers are incentivised to liquidate.
         uint256 liqReward = notional.mulDecimal(marketConfig.liquidationRewardPercent);
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        im = notional.mulDecimal(skewImpact + marketConfig.initialMarginRatio) + globalConfig.minMarginUsd;
+        im = notional.mulDecimal(skewImpact + marketConfig.initialMarginRatio) + marketConfig.minMarginUsd;
         mm =
             notional.mulDecimal(skewImpact + marketConfig.maintenanceMarginRatio) +
-            globalConfig.minMarginUsd +
+            marketConfig.minMarginUsd +
             liqReward;
     }
 
@@ -314,6 +313,9 @@ library Position {
         return healthRating <= DecimalMath.UNIT;
     }
 
+    /**
+     * @dev An overloaded function over `getHealthRating` using the a Position storage struct.
+     */
     function getHealthRating(
         Position.Data storage self,
         uint256 collateralUsd,
