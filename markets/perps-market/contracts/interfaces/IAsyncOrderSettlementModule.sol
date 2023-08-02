@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {Position} from "../storage/Position.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
 
 interface IAsyncOrderSettlementModule {
     /**
@@ -25,7 +27,9 @@ interface IAsyncOrderSettlementModule {
      * @param fillPrice Price at which the order was settled.
      * @param sizeDelta Size delta from order.
      * @param newSize New size of the position after settlement.
-     * @param collectedFees Amount of fees collected by the protocol.
+     * @param totalFees Amount of fees collected by the protocol.
+     * @param referralFees Amount of fees collected by the referrer.
+     * @param collectedFees Amount of fees collected by fee collector.
      * @param settlementReward Amount of fees collected by the settler.
      * @param trackingCode Optional code for integrator tracking purposes.
      * @param settler address of the settler of the order.
@@ -34,8 +38,11 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed marketId,
         uint128 indexed accountId,
         uint256 fillPrice,
+        int256 pnl,
         int128 sizeDelta,
         int128 newSize,
+        uint256 totalFees,
+        uint256 referralFees,
         uint256 collectedFees,
         uint256 settlementReward,
         bytes32 indexed trackingCode,
@@ -50,16 +57,21 @@ interface IAsyncOrderSettlementModule {
         int128 sizeDelta;
         int256 pnl;
         uint256 pnlUint;
-        uint256 amountToDeposit;
+        uint256 amountToDeduct;
         uint256 settlementReward;
+        uint256 fillPrice;
+        uint256 totalFees;
+        uint256 referralFees;
+        uint256 feeCollectorFees;
+        Position.Data newPosition;
+        PerpsMarket.MarketUpdateData updateData;
     }
 
     /**
      * @notice Settles an offchain order. It's expected to revert with the OffchainLookup error with the data needed to perform the offchain lookup.
-     * @param marketId Id of the market used for the trade.
      * @param accountId Id of the account used for the trade.
      */
-    function settle(uint128 marketId, uint128 accountId) external view;
+    function settle(uint128 accountId) external view;
 
     /**
      * @notice Settles an offchain order using the offchain retrieved data from pyth.

@@ -22,6 +22,13 @@ interface IMarketConfigurationModule {
     );
 
     /**
+     * @notice Gets fired when feed id for perps market is updated.
+     * @param marketId id of perps market
+     * @param feedId oracle node id
+     */
+    event MarketPriceDataUpdated(uint128 indexed marketId, bytes32 feedId);
+
+    /**
      * @notice Gets fired when order fees are updated.
      * @param marketId udpates fees to this specific market.
      * @param makerFeeRatio the maker fee ratio.
@@ -73,7 +80,7 @@ interface IMarketConfigurationModule {
      * @param marketId udpates funding parameters to this specific market.
      * @param lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
-    event LockedOiRatioD18Set(uint128 indexed marketId, uint256 lockedOiRatioD18);
+    event LockedOiRatioSet(uint128 indexed marketId, uint256 lockedOiRatioD18);
 
     /**
      * @notice Gets fired when a settlement strategy is enabled or disabled.
@@ -101,6 +108,13 @@ interface IMarketConfigurationModule {
      * @param takerFeeRatio the taker fee ratio.
      */
     function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external;
+
+    /**
+     * @notice Set node id for perps market
+     * @param perpsMarketId id of the market to set price feed.
+     * @param feedId the node feed id
+     */
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
 
     /**
      * @notice Set funding parameters for a market with this function.
@@ -226,5 +240,5 @@ interface IMarketConfigurationModule {
      * @param marketId id of the market.
      * @return lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
-    function getLockedOiRatioD18(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
+    function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
 }

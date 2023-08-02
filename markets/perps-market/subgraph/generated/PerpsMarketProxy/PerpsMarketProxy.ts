@@ -394,6 +394,44 @@ export class OrderCommitted__Params {
   }
 }
 
+export class MarketUpdated extends ethereum.Event {
+  get params(): MarketUpdated__Params {
+    return new MarketUpdated__Params(this);
+  }
+}
+
+export class MarketUpdated__Params {
+  _event: MarketUpdated;
+
+  constructor(event: MarketUpdated) {
+    this._event = event;
+  }
+
+  get marketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get skew(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get size(): BigInt {
+    return this._event.parameters[2].value.toBigInt();
+  }
+
+  get sizeDelta(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+
+  get currentFundingRate(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
+  }
+
+  get currentFundingVelocity(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
+  }
+}
+
 export class OrderSettled extends ethereum.Event {
   get params(): OrderSettled__Params {
     return new OrderSettled__Params(this);
@@ -419,7 +457,7 @@ export class OrderSettled__Params {
     return this._event.parameters[2].value.toBigInt();
   }
 
-  get accountPnlRealized(): BigInt {
+  get sizeDelta(): BigInt {
     return this._event.parameters[3].value.toBigInt();
   }
 
@@ -431,7 +469,7 @@ export class OrderSettled__Params {
     return this._event.parameters[5].value.toBigInt();
   }
 
-  get settelementReward(): BigInt {
+  get settlementReward(): BigInt {
     return this._event.parameters[6].value.toBigInt();
   }
 
@@ -597,11 +635,11 @@ export class LiquidationParametersSet__Params {
     return this._event.parameters[0].value.toBigInt();
   }
 
-  get initialMarginFraction(): BigInt {
+  get initialMarginRatioD18(): BigInt {
     return this._event.parameters[1].value.toBigInt();
   }
 
-  get maintenanceMarginFraction(): BigInt {
+  get maintenanceMarginRatioD18(): BigInt {
     return this._event.parameters[2].value.toBigInt();
   }
 
@@ -616,18 +654,22 @@ export class LiquidationParametersSet__Params {
   get maxSecondsInLiquidationWindow(): BigInt {
     return this._event.parameters[5].value.toBigInt();
   }
-}
 
-export class LockedOiPercentSet extends ethereum.Event {
-  get params(): LockedOiPercentSet__Params {
-    return new LockedOiPercentSet__Params(this);
+  get minimumPositionMargin(): BigInt {
+    return this._event.parameters[6].value.toBigInt();
   }
 }
 
-export class LockedOiPercentSet__Params {
-  _event: LockedOiPercentSet;
+export class LockedOiRatioD18Set extends ethereum.Event {
+  get params(): LockedOiRatioD18Set__Params {
+    return new LockedOiRatioD18Set__Params(this);
+  }
+}
 
-  constructor(event: LockedOiPercentSet) {
+export class LockedOiRatioD18Set__Params {
+  _event: LockedOiRatioD18Set;
+
+  constructor(event: LockedOiRatioD18Set) {
     this._event = event;
   }
 
@@ -635,21 +677,21 @@ export class LockedOiPercentSet__Params {
     return this._event.parameters[0].value.toBigInt();
   }
 
-  get lockedOiPercent(): BigInt {
+  get lockedOiRatioD18(): BigInt {
     return this._event.parameters[1].value.toBigInt();
   }
 }
 
-export class MaxMarketValueSet extends ethereum.Event {
-  get params(): MaxMarketValueSet__Params {
-    return new MaxMarketValueSet__Params(this);
+export class MaxMarketSizeSet extends ethereum.Event {
+  get params(): MaxMarketSizeSet__Params {
+    return new MaxMarketSizeSet__Params(this);
   }
 }
 
-export class MaxMarketValueSet__Params {
-  _event: MaxMarketValueSet;
+export class MaxMarketSizeSet__Params {
+  _event: MaxMarketSizeSet;
 
-  constructor(event: MaxMarketValueSet) {
+  constructor(event: MaxMarketSizeSet) {
     this._event = event;
   }
 
@@ -657,7 +699,7 @@ export class MaxMarketValueSet__Params {
     return this._event.parameters[0].value.toBigInt();
   }
 
-  get maxMarketValue(): BigInt {
+  get maxMarketSize(): BigInt {
     return this._event.parameters[1].value.toBigInt();
   }
 }
@@ -878,36 +920,6 @@ export class PerpsMarketProxy__getAssociatedSystemResult {
 
   getKind(): Bytes {
     return this.value1;
-  }
-}
-
-export class PerpsMarketProxy__getAsyncOrderClaimResultValue0Struct extends ethereum.Tuple {
-  get accountId(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get marketId(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get sizeDelta(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get settlementStrategyId(): BigInt {
-    return this[3].toBigInt();
-  }
-
-  get settlementTime(): BigInt {
-    return this[4].toBigInt();
-  }
-
-  get acceptablePrice(): BigInt {
-    return this[5].toBigInt();
-  }
-
-  get trackingCode(): Bytes {
-    return this[6].toBytes();
   }
 }
 
@@ -1172,11 +1184,11 @@ export class PerpsMarketProxy__getLiquidationParametersResult {
     return map;
   }
 
-  getInitialMarginFraction(): BigInt {
+  getInitialMarginRatioD18(): BigInt {
     return this.value0;
   }
 
-  getMaintenanceMarginFraction(): BigInt {
+  getMaintenanceMarginRatioD18(): BigInt {
     return this.value1;
   }
 
@@ -1661,37 +1673,6 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toString());
   }
 
-  getAsyncOrderClaim(
-    accountId: BigInt,
-    marketId: BigInt
-  ): PerpsMarketProxy__getAsyncOrderClaimResultValue0Struct {
-    let result = super.call(
-      'getAsyncOrderClaim',
-      'getAsyncOrderClaim(uint128,uint128):((uint128,uint128,int128,uint128,uint256,uint256,bytes32))',
-      [ethereum.Value.fromUnsignedBigInt(accountId), ethereum.Value.fromUnsignedBigInt(marketId)]
-    );
-
-    return changetype<PerpsMarketProxy__getAsyncOrderClaimResultValue0Struct>(result[0].toTuple());
-  }
-
-  try_getAsyncOrderClaim(
-    accountId: BigInt,
-    marketId: BigInt
-  ): ethereum.CallResult<PerpsMarketProxy__getAsyncOrderClaimResultValue0Struct> {
-    let result = super.tryCall(
-      'getAsyncOrderClaim',
-      'getAsyncOrderClaim(uint128,uint128):((uint128,uint128,int128,uint128,uint256,uint256,bytes32))',
-      [ethereum.Value.fromUnsignedBigInt(accountId), ethereum.Value.fromUnsignedBigInt(marketId)]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      changetype<PerpsMarketProxy__getAsyncOrderClaimResultValue0Struct>(value[0].toTuple())
-    );
-  }
-
   getAvailableMargin(accountId: BigInt): BigInt {
     let result = super.call('getAvailableMargin', 'getAvailableMargin(uint128):(int256)', [
       ethereum.Value.fromUnsignedBigInt(accountId),
@@ -1704,6 +1685,35 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     let result = super.tryCall('getAvailableMargin', 'getAvailableMargin(uint128):(int256)', [
       ethereum.Value.fromUnsignedBigInt(accountId),
     ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getCollateralAmount(accountId: BigInt, synthMarketId: BigInt): BigInt {
+    let result = super.call(
+      'getCollateralAmount',
+      'getCollateralAmount(uint128,uint128):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(synthMarketId),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getCollateralAmount(accountId: BigInt, synthMarketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getCollateralAmount',
+      'getCollateralAmount(uint128,uint128):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(synthMarketId),
+      ]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1955,21 +1965,6 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  PRECISION(): BigInt {
-    let result = super.call('PRECISION', 'PRECISION():(int256)', []);
-
-    return result[0].toBigInt();
-  }
-
-  try_PRECISION(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('PRECISION', 'PRECISION():(int256)', []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   commitOrder(
     commitment: PerpsMarketProxy__commitOrderInputCommitmentStruct
   ): PerpsMarketProxy__commitOrderResult {
@@ -2035,6 +2030,21 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       changetype<PerpsMarketProxy__getOrderResultValue0Struct>(value[0].toTuple())
     );
+  }
+
+  PRECISION(): BigInt {
+    let result = super.call('PRECISION', 'PRECISION():(int256)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_PRECISION(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('PRECISION', 'PRECISION():(int256)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getDeniers(feature: Bytes): Array<Address> {
@@ -2236,16 +2246,16 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  getLockedOiPercent(marketId: BigInt): BigInt {
-    let result = super.call('getLockedOiPercent', 'getLockedOiPercent(uint128):(uint256)', [
+  getLockedOiRatioD18(marketId: BigInt): BigInt {
+    let result = super.call('getLockedOiRatioD18', 'getLockedOiRatioD18(uint128):(uint256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
 
     return result[0].toBigInt();
   }
 
-  try_getLockedOiPercent(marketId: BigInt): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('getLockedOiPercent', 'getLockedOiPercent(uint128):(uint256)', [
+  try_getLockedOiRatioD18(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getLockedOiRatioD18', 'getLockedOiRatioD18(uint128):(uint256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
     if (result.reverted) {
@@ -2255,16 +2265,16 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getMaxMarketValue(marketId: BigInt): BigInt {
-    let result = super.call('getMaxMarketValue', 'getMaxMarketValue(uint128):(uint256)', [
+  getMaxMarketSize(marketId: BigInt): BigInt {
+    let result = super.call('getMaxMarketSize', 'getMaxMarketSize(uint128):(uint256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
 
     return result[0].toBigInt();
   }
 
-  try_getMaxMarketValue(marketId: BigInt): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('getMaxMarketValue', 'getMaxMarketValue(uint128):(uint256)', [
+  try_getMaxMarketSize(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getMaxMarketSize', 'getMaxMarketSize(uint128):(uint256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
     if (result.reverted) {
@@ -3645,11 +3655,11 @@ export class SetLiquidationParametersCall__Inputs {
     return this._call.inputValues[0].value.toBigInt();
   }
 
-  get initialMarginFraction(): BigInt {
+  get initialMarginRatioD18(): BigInt {
     return this._call.inputValues[1].value.toBigInt();
   }
 
-  get maintenanceMarginFraction(): BigInt {
+  get maintenanceMarginRatioD18(): BigInt {
     return this._call.inputValues[2].value.toBigInt();
   }
 
@@ -3664,6 +3674,10 @@ export class SetLiquidationParametersCall__Inputs {
   get maxSecondsInLiquidationWindow(): BigInt {
     return this._call.inputValues[5].value.toBigInt();
   }
+
+  get minimumPositionMargin(): BigInt {
+    return this._call.inputValues[6].value.toBigInt();
+  }
 }
 
 export class SetLiquidationParametersCall__Outputs {
@@ -3674,20 +3688,20 @@ export class SetLiquidationParametersCall__Outputs {
   }
 }
 
-export class SetLockedOiPercentCall extends ethereum.Call {
-  get inputs(): SetLockedOiPercentCall__Inputs {
-    return new SetLockedOiPercentCall__Inputs(this);
+export class SetLockedOiRatioCall extends ethereum.Call {
+  get inputs(): SetLockedOiRatioCall__Inputs {
+    return new SetLockedOiRatioCall__Inputs(this);
   }
 
-  get outputs(): SetLockedOiPercentCall__Outputs {
-    return new SetLockedOiPercentCall__Outputs(this);
+  get outputs(): SetLockedOiRatioCall__Outputs {
+    return new SetLockedOiRatioCall__Outputs(this);
   }
 }
 
-export class SetLockedOiPercentCall__Inputs {
-  _call: SetLockedOiPercentCall;
+export class SetLockedOiRatioCall__Inputs {
+  _call: SetLockedOiRatioCall;
 
-  constructor(call: SetLockedOiPercentCall) {
+  constructor(call: SetLockedOiRatioCall) {
     this._call = call;
   }
 
@@ -3695,33 +3709,33 @@ export class SetLockedOiPercentCall__Inputs {
     return this._call.inputValues[0].value.toBigInt();
   }
 
-  get lockedOiPercent(): BigInt {
+  get lockedOiRatioD18(): BigInt {
     return this._call.inputValues[1].value.toBigInt();
   }
 }
 
-export class SetLockedOiPercentCall__Outputs {
-  _call: SetLockedOiPercentCall;
+export class SetLockedOiRatioCall__Outputs {
+  _call: SetLockedOiRatioCall;
 
-  constructor(call: SetLockedOiPercentCall) {
+  constructor(call: SetLockedOiRatioCall) {
     this._call = call;
   }
 }
 
-export class SetMaxMarketValueCall extends ethereum.Call {
-  get inputs(): SetMaxMarketValueCall__Inputs {
-    return new SetMaxMarketValueCall__Inputs(this);
+export class SetMaxMarketSizeCall extends ethereum.Call {
+  get inputs(): SetMaxMarketSizeCall__Inputs {
+    return new SetMaxMarketSizeCall__Inputs(this);
   }
 
-  get outputs(): SetMaxMarketValueCall__Outputs {
-    return new SetMaxMarketValueCall__Outputs(this);
+  get outputs(): SetMaxMarketSizeCall__Outputs {
+    return new SetMaxMarketSizeCall__Outputs(this);
   }
 }
 
-export class SetMaxMarketValueCall__Inputs {
-  _call: SetMaxMarketValueCall;
+export class SetMaxMarketSizeCall__Inputs {
+  _call: SetMaxMarketSizeCall;
 
-  constructor(call: SetMaxMarketValueCall) {
+  constructor(call: SetMaxMarketSizeCall) {
     this._call = call;
   }
 
@@ -3729,15 +3743,15 @@ export class SetMaxMarketValueCall__Inputs {
     return this._call.inputValues[0].value.toBigInt();
   }
 
-  get maxMarketValue(): BigInt {
+  get maxMarketSize(): BigInt {
     return this._call.inputValues[1].value.toBigInt();
   }
 }
 
-export class SetMaxMarketValueCall__Outputs {
-  _call: SetMaxMarketValueCall;
+export class SetMaxMarketSizeCall__Outputs {
+  _call: SetMaxMarketSizeCall;
 
-  constructor(call: SetMaxMarketValueCall) {
+  constructor(call: SetMaxMarketSizeCall) {
     this._call = call;
   }
 }

@@ -33,26 +33,6 @@ interface IAsyncOrderModule {
     );
 
     /**
-     * @notice Gets fired when a new order is canceled.
-     * @param marketId Id of the market used for the trade.
-     * @param accountId Id of the account used for the trade.
-     * @param acceptablePrice maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
-     * @param settlementTime Time at which the order can be settled.
-     */
-
-    event OrderCanceled(
-        uint128 indexed marketId,
-        uint128 indexed accountId,
-        uint256 settlementTime,
-        uint256 acceptablePrice
-    );
-
-    /**
-     * @notice Gets thrown when commit order is called when a pending order already exists.
-     */
-    error OrderAlreadyCommitted(uint128 marketId, uint128 accountId);
-
-    /**
      * @notice Commit an async order via this function
      * @param commitment Order commitment data (see AsyncOrder.OrderCommitmentRequest struct).
      * @return retOrder order details (see AsyncOrder.Data struct).
@@ -63,20 +43,21 @@ interface IAsyncOrderModule {
     ) external returns (AsyncOrder.Data memory retOrder, uint fees);
 
     /**
-     * @notice Cancel an expired order via this function
-     * @param marketId Id of the market used for the trade.
-     * @param accountId Id of the account used for the trade.
-     */
-    function cancelOrder(uint128 marketId, uint128 accountId) external;
-
-    /**
      * @notice Get async order claim details
      * @param accountId id of the account.
-     * @param marketId Id of the market used for the trade.
      * @return order async order claim details (see AsyncOrder.Data struct).
      */
-    function getOrder(
+    function getOrder(uint128 accountId) external returns (AsyncOrder.Data memory order);
+
+    /**
+     * @notice Simulates what the order fee would be for the given market with the specified size.
+     * @dev    Note that this does not include the settlement reward fee, which is based on the strategy type used
+     * @param marketId id of the market.
+     * @param sizeDelta size of position.
+     * @return orderFees incurred fees.
+     */
+    function computeOrderFees(
         uint128 marketId,
-        uint128 accountId
-    ) external returns (AsyncOrder.Data memory order);
+        int128 sizeDelta
+    ) external view returns (uint256 orderFees);
 }

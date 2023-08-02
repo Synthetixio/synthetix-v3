@@ -22,6 +22,7 @@ describe('Commit Offchain Async Order test', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
@@ -53,6 +54,7 @@ describe('Commit Offchain Async Order test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
         'InvalidMarket("1337")'
@@ -69,6 +71,7 @@ describe('Commit Offchain Async Order test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
         'AccountNotFound("1337")'
@@ -85,6 +88,7 @@ describe('Commit Offchain Async Order test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
         'InsufficientMargin'
@@ -101,6 +105,7 @@ describe('Commit Offchain Async Order test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
         `PermissionDenied("${2}", "${PERPS_COMMIT_ASYNC_ORDER_PERMISSION_NAME}", "${await keeper().getAddress()}")`
@@ -178,6 +183,7 @@ describe('Commit Offchain Async Order test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           });
         startTime = await getTxTime(provider(), tx);
@@ -196,14 +202,14 @@ describe('Commit Offchain Async Order test', () => {
       });
 
       it('identifies the pending order', async () => {
-        const order = await systems().PerpsMarket.getOrder(ethMarketId, 2);
-        assertBn.equal(order.accountId, 2);
-        assertBn.equal(order.marketId, ethMarketId);
-        assertBn.equal(order.sizeDelta, bn(1));
-        assertBn.equal(order.settlementStrategyId, 0);
+        const order = await systems().PerpsMarket.getOrder(2);
+        assertBn.equal(order.request.accountId, 2);
+        assertBn.equal(order.request.marketId, ethMarketId);
+        assertBn.equal(order.request.sizeDelta, bn(1));
+        assertBn.equal(order.request.settlementStrategyId, 0);
         assertBn.equal(order.settlementTime, startTime + 5);
-        assertBn.equal(order.acceptablePrice, bn(1050));
-        assert.equal(order.trackingCode, ethers.constants.HashZero);
+        assertBn.equal(order.request.acceptablePrice, bn(1050));
+        assert.equal(order.request.trackingCode, ethers.constants.HashZero);
       });
 
       it('reverts if attempt to commit another order for same account and market', async () => {
@@ -216,9 +222,10 @@ describe('Commit Offchain Async Order test', () => {
               sizeDelta: bn(2),
               settlementStrategyId: 0,
               acceptablePrice: bn(1050), // 5% slippage
+              referrer: ethers.constants.AddressZero,
               trackingCode: ethers.constants.HashZero,
             }),
-          `OrderAlreadyCommitted("${ethMarketId}", "2")`
+          'PendingOrderExists()'
         );
       });
 
@@ -229,7 +236,6 @@ describe('Commit Offchain Async Order test', () => {
           await settleOrder({
             systems,
             keeper: keeper(),
-            marketId: ethMarketId,
             accountId: 2,
             feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
             settlementTime,
@@ -254,6 +260,7 @@ describe('Commit Offchain Async Order test', () => {
                 sizeDelta: bn(1),
                 settlementStrategyId: 0,
                 acceptablePrice: bn(1050), // 5% slippage
+                referrer: ethers.constants.AddressZero,
                 trackingCode: ethers.constants.HashZero,
               });
             startTime = await getTxTime(provider(), tx);
@@ -272,14 +279,14 @@ describe('Commit Offchain Async Order test', () => {
           });
 
           it('identifies the pending order', async () => {
-            const order = await systems().PerpsMarket.getOrder(ethMarketId, 2);
-            assertBn.equal(order.accountId, 2);
-            assertBn.equal(order.marketId, ethMarketId);
-            assertBn.equal(order.sizeDelta, bn(1));
-            assertBn.equal(order.settlementStrategyId, 0);
+            const order = await systems().PerpsMarket.getOrder(2);
+            assertBn.equal(order.request.accountId, 2);
+            assertBn.equal(order.request.marketId, ethMarketId);
+            assertBn.equal(order.request.sizeDelta, bn(1));
+            assertBn.equal(order.request.settlementStrategyId, 0);
             assertBn.equal(order.settlementTime, startTime + 5);
-            assertBn.equal(order.acceptablePrice, bn(1050));
-            assert.equal(order.trackingCode, ethers.constants.HashZero);
+            assertBn.equal(order.request.acceptablePrice, bn(1050));
+            assert.equal(order.request.trackingCode, ethers.constants.HashZero);
           });
         });
       });

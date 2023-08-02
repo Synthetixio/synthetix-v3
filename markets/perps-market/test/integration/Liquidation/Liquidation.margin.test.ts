@@ -7,6 +7,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 describe('Liquidation - margin', async () => {
   const perpsMarketConfigs = [
     {
+      requestedMarketId: 50,
       name: 'Bitcoin',
       token: 'BTC',
       price: bn(30_000),
@@ -24,6 +25,7 @@ describe('Liquidation - margin', async () => {
       },
     },
     {
+      requestedMarketId: 51,
       name: 'Ether',
       token: 'ETH',
       price: bn(2000),
@@ -41,6 +43,7 @@ describe('Liquidation - margin', async () => {
       },
     },
     {
+      requestedMarketId: 52,
       name: 'Link',
       token: 'LINK',
       price: bn(5),
@@ -58,6 +61,7 @@ describe('Liquidation - margin', async () => {
       },
     },
     {
+      requestedMarketId: 53,
       name: 'Arbitrum',
       token: 'ARB',
       price: bn(2),
@@ -75,6 +79,7 @@ describe('Liquidation - margin', async () => {
       },
     },
     {
+      requestedMarketId: 54,
       name: 'Optimism',
       token: 'OP',
       price: bn(2),
@@ -93,7 +98,7 @@ describe('Liquidation - margin', async () => {
     },
   ];
 
-  const { systems, provider, trader1, perpsMarkets, marketOwner } = bootstrapMarkets({
+  const { systems, provider, trader1, perpsMarkets, owner, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: perpsMarketConfigs,
     traderAccountIds: [2, 3],
@@ -179,6 +184,13 @@ describe('Liquidation - margin', async () => {
     it('has correct available margin', async () => {
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(18_850));
     });
+
+    it('is not eligible for liquidation', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(keeper()).liquidate(2),
+        'NotEligibleForLiquidation'
+      );
+    });
   });
 
   describe('prices changes', () => {
@@ -212,6 +224,13 @@ describe('Liquidation - margin', async () => {
 
     it('has correct available margin', async () => {
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(16_550));
+    });
+
+    it('is not eligible for liquidation', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(keeper()).liquidate(2),
+        'NotEligibleForLiquidation'
+      );
     });
   });
   describe('price change - available margin 0 ', () => {
@@ -258,7 +277,7 @@ describe('Liquidation - margin', async () => {
       const maxSecondsInLiquidationWindow = bn(10);
       const minimumPositionMargin = bn(50); // this is the only change from the initial values
       await systems()
-        .PerpsMarket.connect(marketOwner())
+        .PerpsMarket.connect(owner())
         .setLiquidationParameters(
           opMarketId,
           initialMarginFraction,

@@ -156,3 +156,12 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 depends = ['invoke.setSynthetix']
+
+[invoke.initializeFactory]
+target = ["PerpsMarketProxy"]
+func = "initializeFactory"
+from = "<%= settings.owner %>"
+depends = ['invoke.setSynthetix']
+
+extra.superMarketId.event = "FactoryInitialized"
+extra.superMarketId.arg = 0

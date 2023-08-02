@@ -16,7 +16,7 @@ describe('Atomic Order Module referrer', () => {
   let synth: SynthRouter;
 
   before('identify actors', async () => {
-    [, , marketOwner, trader1, trader2, referrer] = signers();
+    [, , marketOwner, trader1, trader2, , , , , referrer] = signers();
   });
 
   before('identify synth', async () => {
