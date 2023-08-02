@@ -34,7 +34,8 @@ describe('Market Debt - with funding', () => {
           fundingParams: { skewScale: _SKEW_SCALE, maxFundingVelocity: _MAX_FUNDING_VELOCITY },
           liquidationParams: {
             initialMarginFraction: bn(3),
-            maintenanceMarginFraction: bn(2),
+            minimumInitialMarginRatio: bn(0.01),
+            maintenanceMarginScalar: bn(0.5),
             maxLiquidationLimitAccumulationMultiplier: bn(1),
             liquidationRewardRatio: bn(0.05),
             maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),

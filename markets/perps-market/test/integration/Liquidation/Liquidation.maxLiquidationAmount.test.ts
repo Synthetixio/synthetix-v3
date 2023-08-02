@@ -20,7 +20,8 @@ describe('Liquidation - max liquidatable amount', async () => {
         fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(3),
-          maintenanceMarginFraction: bn(2),
+          minimumInitialMarginRatio: bn(0),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),

@@ -17,7 +17,8 @@ describe('Liquidation - multi collateral', async () => {
       fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.01),
         maxSecondsInLiquidationWindow: bn(10),
@@ -35,7 +36,8 @@ describe('Liquidation - multi collateral', async () => {
       fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.02),
         maxSecondsInLiquidationWindow: bn(10),
@@ -53,7 +55,8 @@ describe('Liquidation - multi collateral', async () => {
       fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),

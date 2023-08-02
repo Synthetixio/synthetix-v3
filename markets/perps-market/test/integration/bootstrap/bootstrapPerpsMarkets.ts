@@ -29,7 +29,8 @@ export type PerpsMarketData = Array<{
   };
   liquidationParams?: {
     initialMarginFraction: ethers.BigNumber;
-    maintenanceMarginFraction: ethers.BigNumber;
+    minimumInitialMarginRatio: ethers.BigNumber;
+    maintenanceMarginScalar: ethers.BigNumber;
     maxLiquidationLimitAccumulationMultiplier: ethers.BigNumber;
     liquidationRewardRatio: ethers.BigNumber;
     maxSecondsInLiquidationWindow: ethers.BigNumber;
@@ -145,7 +146,8 @@ export const bootstrapPerpsMarkets = (
           await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
             marketId,
             liquidationParams.initialMarginFraction,
-            liquidationParams.maintenanceMarginFraction,
+            liquidationParams.minimumInitialMarginRatio,
+            liquidationParams.maintenanceMarginScalar,
             liquidationParams.liquidationRewardRatio,
             liquidationParams.maxLiquidationLimitAccumulationMultiplier,
             liquidationParams.maxSecondsInLiquidationWindow,
