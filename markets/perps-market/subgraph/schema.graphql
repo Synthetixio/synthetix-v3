@@ -7,11 +7,9 @@ type Account @entity {
 type Market @entity {
   id: ID!
   perpsMarketId: BigInt!
-  marketOwner: String
   marketName: String
   marketSymbol: String
   feedId: Bytes
-  owner: String
   maxFundingVelocity: BigInt
   skewScale: BigInt
   initialMarginFraction: BigInt
@@ -88,6 +86,8 @@ type OrderSettled @entity {
   fillPrice: BigInt!
   sizeDelta: BigInt!
   newSize: BigInt!
+  totalFees: BigInt!
+  referralFees: BigInt!
   collectedFees: BigInt!
   settlementReward: BigInt!
   trackingCode: Bytes!
@@ -98,6 +98,7 @@ type MarketUpdated @entity {
   id: ID!
   timestamp: BigInt!
   marketId: BigInt!
+  price: BigInt!
   skew: BigInt!
   size: BigInt!
   sizeDelta: BigInt!

@@ -98,6 +98,8 @@ export function handleOrderSettled(event: OrderSettledEvent): void {
   orderSettled.fillPrice = event.params.fillPrice;
   orderSettled.sizeDelta = event.params.sizeDelta;
   orderSettled.newSize = event.params.newSize;
+  orderSettled.totalFees = event.params.totalFees;
+  orderSettled.referralFees = event.params.referralFees;
   orderSettled.collectedFees = event.params.collectedFees;
   orderSettled.settlementReward = event.params.settlementReward;
   orderSettled.trackingCode = event.params.trackingCode;
@@ -118,6 +120,7 @@ export function handleMarketUpdated(event: MarketUpdatedEvent): void {
 
   marketUpdated.timestamp = event.block.timestamp;
   marketUpdated.marketId = event.params.marketId;
+  marketUpdated.price = event.params.price;
   marketUpdated.skew = event.params.skew;
   marketUpdated.size = event.params.size;
   marketUpdated.sizeDelta = event.params.sizeDelta;

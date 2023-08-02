@@ -129,23 +129,6 @@ export class Market extends Entity {
     this.set('perpsMarketId', Value.fromBigInt(value));
   }
 
-  get marketOwner(): string | null {
-    let value = this.get('marketOwner');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toString();
-    }
-  }
-
-  set marketOwner(value: string | null) {
-    if (!value) {
-      this.unset('marketOwner');
-    } else {
-      this.set('marketOwner', Value.fromString(<string>value));
-    }
-  }
-
   get marketName(): string | null {
     let value = this.get('marketName');
     if (!value || value.kind == ValueKind.NULL) {
@@ -194,23 +177,6 @@ export class Market extends Entity {
       this.unset('feedId');
     } else {
       this.set('feedId', Value.fromBytes(<Bytes>value));
-    }
-  }
-
-  get owner(): string | null {
-    let value = this.get('owner');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toString();
-    }
-  }
-
-  set owner(value: string | null) {
-    if (!value) {
-      this.unset('owner');
-    } else {
-      this.set('owner', Value.fromString(<string>value));
     }
   }
 
@@ -1239,6 +1205,32 @@ export class OrderSettled extends Entity {
     this.set('newSize', Value.fromBigInt(value));
   }
 
+  get totalFees(): BigInt {
+    let value = this.get('totalFees');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set totalFees(value: BigInt) {
+    this.set('totalFees', Value.fromBigInt(value));
+  }
+
+  get referralFees(): BigInt {
+    let value = this.get('referralFees');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set referralFees(value: BigInt) {
+    this.set('referralFees', Value.fromBigInt(value));
+  }
+
   get collectedFees(): BigInt {
     let value = this.get('collectedFees');
     if (!value || value.kind == ValueKind.NULL) {
@@ -1355,6 +1347,19 @@ export class MarketUpdated extends Entity {
 
   set marketId(value: BigInt) {
     this.set('marketId', Value.fromBigInt(value));
+  }
+
+  get price(): BigInt {
+    let value = this.get('price');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set price(value: BigInt) {
+    this.set('price', Value.fromBigInt(value));
   }
 
   get skew(): BigInt {
