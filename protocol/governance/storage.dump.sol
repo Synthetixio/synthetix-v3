@@ -219,31 +219,6 @@ library Council {
     }
 }
 
-// @custom:artifact contracts/storage/CrossChainDebtShare.sol:CrossChainDebtShare
-library CrossChainDebtShare {
-    struct Data {
-        bytes32 merkleRoot;
-        uint merkleRootBlockNumber;
-        mapping(address => uint) debtShares;
-    }
-}
-
-// @custom:artifact contracts/storage/DebtShare.sol:DebtShare
-library DebtShare {
-    bytes32 private constant _SLOT_DEBT_SHARE_STORAGE = keccak256(abi.encode("io.synthetix.governance.DebtShare"));
-    struct Data {
-        address debtShareContract;
-        mapping(uint => uint128) debtShareIds;
-        mapping(uint => CrossChainDebtShare.Data) crossChainDebtShareData;
-    }
-    function load() internal pure returns (Data storage debtShare) {
-        bytes32 s = _SLOT_DEBT_SHARE_STORAGE;
-        assembly {
-            debtShare.slot := s
-        }
-    }
-}
-
 // @custom:artifact contracts/storage/Election.sol:Election
 library Election {
     struct Data {
@@ -311,7 +286,7 @@ library SnapshotVotePower {
 // @custom:artifact contracts/storage/SnapshotVotePowerEpoch.sol:SnapshotVotePowerEpoch
 library SnapshotVotePowerEpoch {
     struct Data {
-        uint256 snapshotId;
+        uint128 snapshotId;
         mapping(address => uint256) recordedVotingPower;
     }
 }

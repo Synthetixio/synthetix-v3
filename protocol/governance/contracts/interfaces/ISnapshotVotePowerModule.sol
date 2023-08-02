@@ -6,7 +6,7 @@ interface ISnapshotVotePowerModule {
     error SnapshotAlreadyTaken(uint128 snapshotId);
     error BallotAlreadyPrepared(address voter, uint256 electionId);
 
-    function setSnapshotContract(address snapshotContract) external;
+    function setSnapshotContract(address snapshotContract, bool enabled) external;
 
     function takeVotePowerSnapshot(address snapshotContract) external returns (uint128 snapshotId);
 
