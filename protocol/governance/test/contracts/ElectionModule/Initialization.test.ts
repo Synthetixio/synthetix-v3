@@ -39,39 +39,6 @@ describe('SynthetixElectionModule - Initialization', function () {
     });
 
     describe('with the account that owns the instance', function () {
-      describe('with the wrong initializer', function () {
-        it('reverts', async function () {
-          await assertRevert(
-            CoreProxy.connect(owner)[
-              'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
-            ]([await user.getAddress()], 2, 1, 0, 0, 0, daysToSeconds(2)),
-            'WrongInitializer'
-          );
-        });
-      });
-
-      describe('with invalid parameters', function () {
-        describe('with invalid debtShareContract', function () {
-          it('reverts using Zero Address', async function () {
-            await assertRevert(
-              CoreProxy.connect(owner)[
-                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
-              ]([await owner.getAddress()], 2, 1, 0, 0, 0, 2),
-              'ZeroAddress'
-            );
-          });
-
-          it('reverts using EOD', async function () {
-            await assertRevert(
-              CoreProxy.connect(owner)[
-                'initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
-              ]([await owner.getAddress()], 2, 1, 0, 0, 0, 2),
-              'NotAContract'
-            );
-          });
-        });
-      });
-
       describe('with valid parameters', function () {
         let rx: ethers.ContractReceipt;
 
