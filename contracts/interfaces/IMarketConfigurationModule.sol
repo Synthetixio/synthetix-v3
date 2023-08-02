@@ -35,8 +35,9 @@ interface IMarketConfigurationModule {
         uint128 maxMarketSize;
         uint128 maxFundingVelocity;
         uint256 minMarginUsd;
+        uint256 minMarginRatio;
         uint256 initialMarginRatio;
-        uint256 maintenanceMarginRatio;
+        uint256 maintenanceMarginScalar;
         uint256 liquidationRewardPercent;
     }
 

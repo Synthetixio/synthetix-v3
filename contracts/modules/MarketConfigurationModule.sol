@@ -53,8 +53,9 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.maxMarketSize = data.maxMarketSize;
         config.maxFundingVelocity = data.maxFundingVelocity;
         config.minMarginUsd = data.minMarginUsd;
+        config.minMarginRatio = data.minMarginRatio;
         config.initialMarginRatio = data.initialMarginRatio;
-        config.maintenanceMarginRatio = data.maintenanceMarginRatio;
+        config.maintenanceMarginScalar = data.maintenanceMarginScalar;
         config.liquidationRewardPercent = data.liquidationRewardPercent;
 
         emit MarketConfigurationUpdated(marketId, msg.sender);

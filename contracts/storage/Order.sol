@@ -6,6 +6,7 @@ import {SafeCastU256, SafeCastU128, SafeCastI256} from "@synthetixio/core-contra
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev An order that has yet to be settled for position modification.
@@ -51,17 +52,23 @@ library Order {
         int128 skew,
         uint128 makerFee,
         uint128 takerFee
-    ) internal pure returns (uint256) {
-        int256 notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
+    ) internal view returns (uint256) {
+        int256 notional = sizeDelta.mulDecimal(fillPrice.toInt());
 
         // Does this trade keep the skew on one side?
         if (MathUtil.sameSide(skew + sizeDelta, skew)) {
+            console.log("here???FEES!");
+            console.logUint(takerFee);
+            console.logUint(makerFee);
+            console.logInt(notional);
             // Use a flat maker/taker fee for the entire size depending on whether the skew is increased or reduced.
             //
             // If the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
             // otherwise if the order is opposite to the skew, the maker fee is charged.
-            uint256 staticRate = MathUtil.sameSide(notionalDiff, skew) ? takerFee : makerFee;
-            return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
+            uint128 staticRate = MathUtil.sameSide(notional, skew) ? takerFee : makerFee;
+            console.logUint(MathUtil.abs(notional.mulDecimal(staticRate.toInt())));
+            console.log("---");
+            return MathUtil.abs(notional.mulDecimal(staticRate.toInt()));
         }
 
         // This trade flips the skew.
@@ -73,9 +80,10 @@ library Order {
         // Proportion of size that's on the other direction
         uint256 takerSize = MathUtil.abs((skew + sizeDelta).divDecimal(sizeDelta));
         uint256 makerSize = DecimalMath.UNIT - takerSize;
+
         return
-            MathUtil.abs(notionalDiff).mulDecimal(takerSize).mulDecimal(takerFee) +
-            MathUtil.abs(notionalDiff).mulDecimal(makerSize).mulDecimal(makerFee);
+            MathUtil.abs(notional).mulDecimal(takerSize).mulDecimal(takerFee) +
+            MathUtil.abs(notional).mulDecimal(makerSize).mulDecimal(makerFee);
     }
 
     /**

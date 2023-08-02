@@ -68,8 +68,9 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.maxMarketSize, config.maxMarketSize);
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
       assertBn.equal(specific.minMarginUsd, config.minMarginUsd);
+      assertBn.equal(specific.minMarginRatio, config.minMarginRatio);
       assertBn.equal(specific.initialMarginRatio, config.initialMarginRatio);
-      assertBn.equal(specific.maintenanceMarginRatio, config.maintenanceMarginRatio);
+      assertBn.equal(specific.maintenanceMarginScalar, config.maintenanceMarginScalar);
       assertBn.equal(specific.liquidationRewardPercent, config.liquidationRewardPercent);
 
       await assertEvent(tx, `MarketConfigurationUpdated(${marketId}, "${await from.getAddress()}")`, PerpMarketProxy);

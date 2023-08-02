@@ -10,6 +10,7 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import "../interfaces/IOrderModule.sol";
+import "hardhat/console.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -43,14 +44,19 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.OrderFound(accountId);
         }
 
+        console.log("here1");
         uint256 oraclePrice = market.getOraclePrice();
-
+        console.log("here2");
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        console.log("here3");
+
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         // TODO: Should we be using the limitPrice to infer max oi etc.?
 
+        console.log("here4");
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        console.log("here5");
         Position.TradeParams memory params = Position.TradeParams({
             sizeDelta: sizeDelta,
             oraclePrice: oraclePrice,
@@ -60,6 +66,7 @@ contract OrderModule is IOrderModule {
             limitPrice: limitPrice,
             keeperFeeBufferUsd: keeperFeeBufferUsd
         });
+        console.log("here6");
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
@@ -68,6 +75,7 @@ contract OrderModule is IOrderModule {
         // order will reach liquidation or insufficient margin for the desired leverage.
         (, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(accountId, marketId, params);
 
+        console.log("here7");
         market.updateOrder(
             Order.Data({
                 accountId: accountId,

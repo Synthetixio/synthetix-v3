@@ -13,20 +13,24 @@ describe('OrderModule', () => {
   beforeEach(restore);
 
   describe('commitOrder', () => {
-    it('should successfully commit order with no existing position', async () => {
+    it.only('should successfully commit order with no existing position', async () => {
       const { PerpMarketProxy } = systems();
 
       // Perform the deposit.
       const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
 
       // Generate a valid order.
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd, oraclePrice } = await genOrder(
         PerpMarketProxy,
         marketId,
         depositAmountDeltaUsd
       );
 
       // Perform the commitment.
+      console.log('size', wei(sizeDelta).toNumber());
+      console.log('oraclePrice', wei(oraclePrice).toNumber());
+      console.log('depositAmountDeltaUsd', wei(depositAmountDeltaUsd).toNumber());
+
       const tx = await PerpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
         marketId,
@@ -62,6 +66,7 @@ describe('OrderModule', () => {
       const market = genOneOf(markets());
       const collateral = genOneOf(collaterals());
 
+      // TODO: Totally broken.
       const { minMarginUsd } = await PerpMarketProxy.getMarketConfigurationById(market.marketId());
       const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
       const depositAmount = wei(minMarginUsd).div(collateralPrice).mul(0.95).toBN(); // 5% less than minMargin.

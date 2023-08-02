@@ -66,12 +66,14 @@ library PerpMarketConfiguration {
         uint128 maxFundingVelocity;
         // Skew scaling denominator constant.
         uint128 skewScale;
-        // The minimum required margin in USD a position must hold.
+        // Minimum margin in USD added to MM and IM.
         uint256 minMarginUsd;
+        // Used in addition with IMR to determine IM and MM.
+        uint256 minMarginRatio;
         // IMR is used to dynamically infer the initial margin.
         uint256 initialMarginRatio;
-        // MMR is used to dynamically infer the maintnenace margin.
-        uint256 maintenanceMarginRatio;
+        // MMS used to dynamically infer the MMR' based on IMR'.
+        uint256 maintenanceMarginScalar;
         // Used to infer a % of position notional as liquidation reward.
         uint256 liquidationRewardPercent;
     }
