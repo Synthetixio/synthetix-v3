@@ -35,7 +35,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
             revert ErrorUtil.CanLiquidatePosition(position.accountId);
         }
 
-        // TODO: Ensure margin is above IM.
+        (uint256 imnp, ) = Position.getLiquidationMarginUsd(position.size, market.getOraclePrice(), marketConfig);
+        if (collateralUsd - position.feesIncurredUsd < imnp) {
+            revert ErrorUtil.InsufficientMargin();
+        }
     }
 
     /**
@@ -43,14 +46,11 @@ contract MarketCollateralModule is IMarketCollateralModule {
      */
     function transferTo(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
         if (collateralType == address(0)) {
-            revert ZeroAddress();
+            revert ErrorUtil.ZeroAddress();
         }
 
-        // Ensures the account exists (reverts with `AccountNotFound`).
         Account.exists(accountId);
-
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
 
         // Prevent collateral transfers when there's a pending order.
         Order.Data storage order = market.orders[accountId];
@@ -60,13 +60,15 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
+        PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
+
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
         uint256 availableAmount = accountCollaterals.available[collateralType];
 
         PerpCollateral.CollateralType storage collateral = globalCollateralConfig.supported[collateralType];
         uint256 maxAllowable = collateral.maxAllowable;
         if (maxAllowable == 0) {
-            revert UnsupportedCollateral(collateralType);
+            revert ErrorUtil.UnsupportedCollateral(collateralType);
         }
 
         if (amountDelta > 0) {
@@ -74,7 +76,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (availableAmount + absAmountDelta > maxAllowable) {
-                revert MaxCollateralExceeded(absAmountDelta, maxAllowable);
+                revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
             }
 
             accountCollaterals.available[collateralType] += absAmountDelta;
@@ -87,7 +89,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (availableAmount < absAmountDelta) {
-                revert InsufficientCollateral(collateralType, availableAmount, absAmountDelta);
+                revert ErrorUtil.InsufficientCollateral(collateralType, availableAmount, absAmountDelta);
             }
 
             accountCollaterals.available[collateralType] -= absAmountDelta;
@@ -144,7 +146,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         for (uint256 i = 0; i < newCollateralLength; ) {
             address collateralType = collateralTypes[i];
             if (collateralType == address(0)) {
-                revert ZeroAddress();
+                revert ErrorUtil.ZeroAddress();
             }
 
             // Perform this operation _once_ when this collateral is added as a supported collateral.

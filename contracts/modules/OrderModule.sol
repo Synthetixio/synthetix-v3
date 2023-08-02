@@ -96,15 +96,15 @@ contract OrderModule is IOrderModule {
 
         // The publishTime is _before_ the commitmentTime
         if (publishTime < commitmentTime) {
-            revert StalePrice();
+            revert ErrorUtil.StalePrice();
         }
         // Stale order can only be canceled.
         if (block.timestamp - commitmentTime > maxOrderAge) {
-            revert StaleOrder();
+            revert ErrorUtil.StaleOrder();
         }
         // publishTime commitmentTime delta must be at least minAge.
         if (publishTime - commitmentTime < minOrderAge) {
-            revert OrderNotReady();
+            revert ErrorUtil.OrderNotReady();
         }
 
         // publishTime must be within `ct + minAge + ptm <= pt <= ct + maxAge + ptm'`
@@ -117,10 +117,10 @@ contract OrderModule is IOrderModule {
         // ptm'   = publishTimeMax
         uint256 ctptd = publishTime - commitmentTime; // ctptd is commitmentTimePublishTimeDelta
         if (ctptd < (commitmentTime.toInt() + minOrderAge.toInt() + globalConfig.pythPublishTimeMin).toUint()) {
-            revert InvalidPrice();
+            revert ErrorUtil.InvalidPrice();
         }
         if (ctptd > (commitmentTime.toInt() + maxOrderAge.toInt() + globalConfig.pythPublishTimeMax).toUint()) {
-            revert InvalidPrice();
+            revert ErrorUtil.InvalidPrice();
         }
 
         // Ensure pythPrice based fillPrice is within limitPrice.
@@ -130,7 +130,7 @@ contract OrderModule is IOrderModule {
             (params.sizeDelta > 0 && params.fillPrice > params.limitPrice) ||
             (params.sizeDelta < 0 && params.fillPrice < params.limitPrice)
         ) {
-            revert PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
+            revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
         }
 
         // Ensure pythPrice does not deviate too far from oracle price.
@@ -141,7 +141,7 @@ contract OrderModule is IOrderModule {
             ? oraclePrice / params.oraclePrice - DecimalMath.UNIT
             : params.oraclePrice / oraclePrice - DecimalMath.UNIT;
         if (priceDivergence > globalConfig.priceDivergencePercent) {
-            revert PriceDivergenceTooHigh(oraclePrice, params.oraclePrice);
+            revert ErrorUtil.PriceDivergenceTooHigh(oraclePrice, params.oraclePrice);
         }
     }
 
@@ -155,7 +155,7 @@ contract OrderModule is IOrderModule {
 
         // No order available to settle.
         if (order.sizeDelta != 0) {
-            revert OrderNotFound(accountId);
+            revert ErrorUtil.OrderNotFound(accountId);
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();

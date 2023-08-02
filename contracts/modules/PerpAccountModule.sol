@@ -5,6 +5,7 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import "../interfaces/IPerpAccountModule.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
@@ -25,11 +26,11 @@ contract PerpAccountModule is IPerpAccountModule {
         PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
 
         uint256 length = collateralConfig.supportedAddresses.length;
-        IPerpAccountModule.DepositedCollateral[] memory depositedCollateral = new DepositedCollateral[](length);
+        IPerpAccountModule.DepositedCollateral[] memory collateral = new DepositedCollateral[](length);
 
         for (uint256 i = 0; i < length; ) {
             address collateralType = collateralConfig.supportedAddresses[i];
-            depositedCollateral[i] = IPerpAccountModule.DepositedCollateral({
+            collateral[i] = IPerpAccountModule.DepositedCollateral({
                 collateralType: collateralType,
                 available: accountCollaterals.available[collateralType],
                 oraclePrice: PerpCollateral.getOraclePrice(collateralType)
@@ -39,15 +40,21 @@ contract PerpAccountModule is IPerpAccountModule {
             }
         }
 
+        uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
         Position.Data storage position = market.positions[accountId];
+
         digest = IPerpAccountModule.AccountDigest({
             accountId: accountId,
             marketId: marketId,
-            depositedCollateral: depositedCollateral,
+            collateral: collateral,
+            collateralUsd: collateralUsd,
             order: market.orders[accountId],
             position: position,
-            healthRating: 1
-            // healthRating: position.getHealthRating() // TODO
+            healthRating: position.getHealthRating(
+                collateralUsd,
+                market.getOraclePrice(),
+                PerpMarketConfiguration.load(marketId)
+            )
         });
     }
 }

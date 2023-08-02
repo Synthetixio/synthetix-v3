@@ -22,7 +22,9 @@ interface IPerpAccountModule {
         // @dev id of the market that was queried
         uint128 marketId;
         // @dev Array of data pertaining to deposited collateral
-        IPerpAccountModule.DepositedCollateral[] depositedCollateral;
+        IPerpAccountModule.DepositedCollateral[] collateral;
+        // @dev Notional value of deposited collateral.
+        uint256 collateralUsd;
         // @dev Struct of order if one is pending, default values if none.
         Order.Data order;
         // @dev Struct of position if one is open, default values if none.

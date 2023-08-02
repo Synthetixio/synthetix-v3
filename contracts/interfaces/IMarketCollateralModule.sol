@@ -23,20 +23,6 @@ interface IMarketCollateralModule is IBasePerpMarket {
     // @dev Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);
 
-    // --- Errors --- //
-
-    // @dev Emitted when a collateral type in configuration is zero.
-    error ZeroAddress();
-
-    // @dev Thrown when an account has insufficient collateral to transfer.
-    error InsufficientCollateral(address collateral, uint256 available, uint256 value);
-
-    // @dev Thrown when attempting to deposit a collateral that has reached a max deportable amount.
-    error MaxCollateralExceeded(uint256 value, uint256 max);
-
-    // @dev Thrown when the supplied collateralType address is unsupported.
-    error UnsupportedCollateral(address collateral);
-
     // --- Mutative --- //
 
     /**

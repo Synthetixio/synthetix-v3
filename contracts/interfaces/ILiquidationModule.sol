@@ -7,20 +7,6 @@ interface ILiquidationModule {
     // @dev Emitted when position has been liquidated.
     event PositionLiquidated(uint128 indexed accountId, uint128 marketId, address indexed keeper, uint256 reward);
 
-    // --- Errors --- //
-
-    // @dev Thrown when an expected position cannot be found.
-    error PositionNotFound();
-
-    // @dev Thrown when attempting to mutate a position flagged for liquidation.
-    error PositionFlagged();
-
-    // @dev Thrown when attempting to liquidate but position has yet to be flagged.
-    error PositionNotFlagged();
-
-    // @dev Thrown when a position cannot be liquidated.
-    error CannotLiquidatePosition();
-
     // --- Mutative --- //
 
     /**
@@ -49,7 +35,7 @@ interface ILiquidationModule {
     ) external view returns (uint256 im, uint256 mm);
 
     /**
-     * @dev Returns the health factor for a given account by market. A health factor of 1 means it's up for liquidation.
+     * @dev Returns the health rating for a given account by market. A health factor of 1 means it's up for liquidation.
      */
-    function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256 healthFactor);
+    function getHealthRating(uint128 accountId, uint128 marketId) external view returns (uint256 healthRating);
 }

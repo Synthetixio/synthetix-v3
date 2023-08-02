@@ -9,6 +9,7 @@ import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 /**
  * @dev Storage for a specific perp market within the bfp-market.
@@ -28,11 +29,6 @@ library PerpMarket {
     using SafeCastU128 for uint128;
     using Position for Position.Data;
     using Order for Order.Data;
-
-    // --- Errors --- //
-
-    // @dev Thrown when the operating market does not exist.
-    error MarketNotFound(uint128 marketId);
 
     // --- Storage --- //
 
@@ -73,7 +69,7 @@ library PerpMarket {
     function exists(uint128 id) internal view returns (Data storage market) {
         Data storage self = load(id);
         if (self.id == 0) {
-            revert MarketNotFound(id);
+            revert ErrorUtil.MarketNotFound(id);
         }
         return self;
     }

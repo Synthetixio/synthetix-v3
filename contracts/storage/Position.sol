@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
@@ -54,20 +55,6 @@ library Position {
         uint256 feesIncurredUsd;
     }
 
-    // --- Errors --- //
-
-    // @dev Thrown when attempting to operate with an order with 0 size delta.
-    error NilOrder();
-
-    // @dev Thrown when an order pushes past a market's max allowable open interest (OI).
-    error MaxMarketSizeExceeded();
-
-    // @dev Thrown when an order pushes a position (new or current) past max market leverage.
-    error MaxLeverageExceeded(uint256 leverage);
-
-    // @dev Thrown when an account has insufficient margin to perform a trade.
-    error InsufficientMargin();
-
     /**
      * @dev Return whether a change in a position's size would violate the max market value constraint.
      *
@@ -106,10 +93,13 @@ library Position {
 
         // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition.
         if (maxMarketSize < MathUtil.abs(newSideSize / 2)) {
-            revert MaxMarketSizeExceeded();
+            revert ErrorUtil.MaxMarketSizeExceeded();
         }
     }
 
+    /**
+     * @dev Return whether the `newPosition` can be liquidated using their healthRating.
+     */
     function validateNextPositionIsLiquidatable(
         Position.Data memory newPosition,
         uint256 collateralUsd,
@@ -133,20 +123,24 @@ library Position {
 
     /**
      * @dev Given an open position and trade params for the next position return the new position after validation.
+     *
+     * This is the core position validation pre/post order settlement. It validates the state of the current position
+     * if one is available then the new position on market attributes like max OI, liquidation, margins, leverage etc.
+     * When a current and new position checks pass, a new in-memory position is returned for downstream processing.
      */
     function validateTrade(
         uint128 accountId,
         uint128 marketId,
         Position.TradeParams memory params
     ) internal view returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
+        // Empty order is a no.
         if (params.sizeDelta == 0) {
-            revert NilOrder();
+            revert ErrorUtil.NilOrder();
         }
 
-        // Generic checks like
-        //
-        // - Empty order
-        // - accountId or marketId does not exist
+        // Generic '.exists' checks against accountId/marketId.
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         // When there is no position open then
         //
@@ -155,46 +149,32 @@ library Position {
         // - check if order exceeds max oi
         // - check if order exceeds max leverage
 
-        // When there is an existing position then
-        //
-        // - if position can be liquidated/currently being liquidated (i.e. flagged)
-        // - if there is sufficient margin to touch this position (assuming increasing size)
-        //
-        // then, perform the same checks as above as if the order were to settle right now.
-        //
-        // The same checks are applied again on settlement (because the market could change between
-        // commitment and settlement).
-
-        // --- Existing position validation --- //
-
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
 
-        // Check if the `currentPosition` can be immediately liquidated.
-        if (isLiquidatable(currentPosition, collateralUsd, params.fillPrice, marketConfig)) {
-            revert ErrorUtil.CanLiquidatePosition(accountId); // TODO: Can we pull this error from ILiquidationModule?
-        }
+        // --- Existing position validation --- //
 
-        // Assuming there is an existing position (no open position will be a noop), determine if they have enough
-        // margin to continue this operation. Ensuring we do not allow them to place an open position into instant
-        // liquidation. This can be done by inferring their "remainingMargin".
-        //
-        // We do this by inferring the `remainingMargin = (sum(collateral * price)) + pnl + fundingAccrued - fee` such that
-        // if remainingMargin < minMarginThreshold then this must revert.
-        //
-        // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
-        // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
+        // There's an existing position. Make sure we have a valid existing position before allowing modification.
+        if (currentPosition.size != 0) {
+            // Determine if the currentPosition can immediately be liquidated.
+            if (isLiquidatable(currentPosition, collateralUsd, params.fillPrice, marketConfig)) {
+                revert ErrorUtil.CanLiquidatePosition(accountId);
+            }
 
-        (uint256 imcp, ) = getLiquidationMarginUsd(currentPosition.size, params.fillPrice, marketConfig);
-        if (currentPosition.size != 0 && collateralUsd - currentPosition.feesIncurredUsd < imcp) {
-            revert InsufficientMargin();
+            // Determine if the current position has enough margin to perform further changes.
+            //
+            // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
+            // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
+            (uint256 imcp, ) = getLiquidationMarginUsd(currentPosition.size, params.fillPrice, marketConfig);
+            if (collateralUsd - currentPosition.feesIncurredUsd < imcp) {
+                revert ErrorUtil.InsufficientMargin();
+            }
         }
 
         // --- New position (as though the order was successfully settled)! --- //
 
-        // Derive fees incurred if this order were to be settled successfully.
+        // Derive fees incurred and next position if this order were to be settled successfully.
         fee = Order.getOrderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
         keeperFee = Order.getKeeperFee(params.keeperFeeBufferUsd, params.oraclePrice);
         newPosition = Position.Data({
@@ -212,7 +192,7 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 imnp, ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
         if (!positionDecreasing && collateralUsd - newPosition.feesIncurredUsd < imnp) {
-            revert InsufficientMargin();
+            revert ErrorUtil.InsufficientMargin();
         }
 
         // Check the new position hasn't hit max leverage.
@@ -222,7 +202,7 @@ library Position {
         // a little extra headroom for rounding errors.
         uint256 leverage = MathUtil.abs(newPosition.size).mulDecimal(params.fillPrice).divDecimal(collateralUsd);
         if (leverage > marketConfig.maxLeverage) {
-            revert MaxLeverageExceeded(leverage);
+            revert ErrorUtil.MaxLeverageExceeded(leverage);
         }
 
         // Check new position can't just be instantly liquidated.
@@ -275,6 +255,9 @@ library Position {
             liqReward;
     }
 
+    /**
+     * @dev Given the marketId, config, and position{...} details, retrieve the health rating.
+     */
     function getHealthRating(
         uint128 marketId,
         int128 positionSize,
@@ -329,6 +312,25 @@ library Position {
             marketConfig
         );
         return healthRating <= DecimalMath.UNIT;
+    }
+
+    function getHealthRating(
+        Position.Data storage self,
+        uint256 collateralUsd,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint256) {
+        (uint256 healthRating, , , ) = getHealthRating(
+            self.marketId,
+            self.size,
+            self.entryPrice,
+            self.entryFundingAccrued,
+            self.feesIncurredUsd,
+            collateralUsd,
+            price,
+            marketConfig
+        );
+        return healthRating;
     }
 
     /**
