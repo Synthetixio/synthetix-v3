@@ -5,7 +5,7 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
-import {IAccountModule} from "../interfaces/IAccountModule.sol";
+import {IPerpsAccountModule} from "../interfaces/IPerpsAccountModule.sol";
 import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
@@ -17,9 +17,9 @@ import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/
 
 /**
  * @title Module to manage accounts
- * @dev See IAccountModule.
+ * @dev See IPerpsAccountModule.
  */
-contract PerpsAccountModule is IAccountModule {
+contract PerpsAccountModule is IPerpsAccountModule {
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -29,7 +29,7 @@ contract PerpsAccountModule is IAccountModule {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
 
     /**
-     * @inheritdoc IAccountModule
+     * @inheritdoc IPerpsAccountModule
      */
     function modifyCollateral(
         uint128 accountId,
@@ -51,9 +51,9 @@ contract PerpsAccountModule is IAccountModule {
         globalPerpsMarket.checkLiquidation(accountId);
 
         PerpsAccount.Data storage account = PerpsAccount.create(accountId);
-        uint128 perpsMarketId = PerpsMarketFactory.load().perpsMarketId;
+        uint128 perpsMarketId = perpsMarketFactory.perpsMarketId;
 
-        account.checkPendingOrder();
+        AsyncOrder.checkPendingOrder(account.id);
 
         if (amountDelta > 0) {
             _depositMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountDelta.toUint());
@@ -71,45 +71,76 @@ contract PerpsAccountModule is IAccountModule {
     }
 
     /**
-     * @inheritdoc IAccountModule
+     * @inheritdoc IPerpsAccountModule
      */
     function totalCollateralValue(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalCollateralValue();
     }
 
     /**
-     * @inheritdoc IAccountModule
+     * @inheritdoc IPerpsAccountModule
      */
     function totalAccountOpenInterest(uint128 accountId) external view override returns (uint) {
         return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
     }
 
     /**
-     * @inheritdoc IAccountModule
+     * @inheritdoc IPerpsAccountModule
      */
     function getOpenPosition(
         uint128 accountId,
         uint128 marketId
-    ) external view override returns (int, int, int) {
+    ) external view override returns (int256 totalPnl, int256 accruedFunding, int128 positionSize) {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.loadValid(marketId);
 
         Position.Data storage position = perpsMarket.positions[accountId];
 
-        (, int pnl, int accruedFunding, , ) = position.getPositionData(
+        (, totalPnl, , accruedFunding, , ) = position.getPositionData(
             PerpsPrice.getCurrentPrice(marketId)
         );
-        return (pnl, accruedFunding, position.size);
+        return (totalPnl, accruedFunding, position.size);
     }
 
     /**
-     * @inheritdoc IAccountModule
+     * @inheritdoc IPerpsAccountModule
      */
-    function getAvailableMargin(uint128 accountId) external view override returns (int) {
-        return PerpsAccount.load(accountId).getAvailableMargin();
+    function getAvailableMargin(
+        uint128 accountId
+    ) external view override returns (int256 availableMargin) {
+        availableMargin = PerpsAccount.load(accountId).getAvailableMargin();
     }
 
     /**
-     * @inheritdoc IAccountModule
+     * @inheritdoc IPerpsAccountModule
+     */
+    function getWithdrawableMargin(
+        uint128 accountId
+    ) external view override returns (int256 withdrawableMargin) {
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        int256 availableMargin = account.getAvailableMargin();
+        (uint256 initialMaintenanceMargin, ) = account.getAccountRequiredMargins();
+
+        withdrawableMargin = availableMargin - initialMaintenanceMargin.toInt();
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
+    function getRequiredMargins(
+        uint128 accountId
+    )
+        external
+        view
+        override
+        returns (uint256 requiredInitialMargin, uint256 requiredMaintenanceMargin)
+    {
+        (requiredInitialMargin, requiredMaintenanceMargin) = PerpsAccount
+            .load(accountId)
+            .getAccountRequiredMargins();
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
      */
     function getCollateralAmount(
         uint128 accountId,

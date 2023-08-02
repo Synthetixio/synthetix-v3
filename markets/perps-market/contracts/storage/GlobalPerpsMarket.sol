@@ -7,7 +7,6 @@ import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.s
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
-import {PerpsPrice} from "./PerpsPrice.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
 /**
@@ -66,7 +65,7 @@ library GlobalPerpsMarket {
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         SetUtil.UintSet storage activeCollateralTypes = self.activeCollateralTypes;
         uint256 activeCollateralLength = activeCollateralTypes.length();
-        for (uint i = 1; i < activeCollateralLength; i++) {
+        for (uint i = 1; i <= activeCollateralLength; i++) {
             uint128 synthMarketId = activeCollateralTypes.valueAt(i).to128();
 
             if (synthMarketId == 0) {
