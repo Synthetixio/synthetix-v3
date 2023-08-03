@@ -1,42 +1,30 @@
 import {
   MarketPriceDataUpdated,
-  MarketOwnerChanged,
-  MarketRegistered,
+  MarketCreated,
   FundingParametersSet,
   LiquidationParametersSet,
-  LockedOiRatioD18Set,
+  LockedOiRatioSet,
   OrderFeesSet,
 } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
 import { Market } from '../generated/schema';
 
-export function handleMarketRegistered(event: MarketRegistered): void {
+export function handleMarketCreated(event: MarketCreated): void {
   const id = event.params.perpsMarketId.toString();
   const market = new Market(id);
 
   market.perpsMarketId = event.params.perpsMarketId;
-  market.marketOwner = event.params.marketOwner.toHexString();
   market.marketName = event.params.marketName;
   market.marketSymbol = event.params.marketSymbol;
   market.save();
 }
 
 export function handleMarketPriceDataUpdated(event: MarketPriceDataUpdated): void {
-  const id = event.params.perpsMarketId.toString();
+  const id = event.params.marketId.toString();
   const market = Market.load(id);
 
   if (market) {
     market.feedId = event.params.feedId;
-    market.save();
-  }
-}
-
-export function handleMarketOwnerChanged(event: MarketOwnerChanged): void {
-  const id = event.params.perpsMarketId.toString();
-  const market = Market.load(id);
-
-  if (market) {
-    market.owner = event.params.newOwner.toHexString();
     market.save();
   }
 }
@@ -52,7 +40,7 @@ export function handleFundingParametersSet(event: FundingParametersSet): void {
   }
 }
 
-export function handleLockedOiRatioD18Set(event: LockedOiRatioD18Set): void {
+export function handleLockedOiRatioSet(event: LockedOiRatioSet): void {
   const id = event.params.marketId.toString();
   const market = Market.load(id);
 
