@@ -1,6 +1,6 @@
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
@@ -37,7 +37,7 @@ describe('USDTokenModule', function () {
 
   it('applied the USD parameters', async () => {
     assert.equal(await systems().USD.name(), 'Synthetic USD Token v3');
-    assert.equal(await systems().USD.symbol(), 'snxUSD');
+    assert.equal(await systems().USD.symbol(), 'sUSD');
     assert.equal(await systems().USD.decimals(), 18);
   });
 
