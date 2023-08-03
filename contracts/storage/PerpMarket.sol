@@ -51,8 +51,6 @@ library PerpMarket {
         mapping(uint128 => Order.Data) orders;
         // {accountId: Position}.
         mapping(uint128 => Position.Data) positions;
-        // {collateralAddress: amount} (Amount of total collateral deposited)
-        mapping(address => uint256) collaterals;
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
