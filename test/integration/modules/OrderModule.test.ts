@@ -1,6 +1,6 @@
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genOneOf, genOrder, genTrader } from '../../generators';
+import { genBootstrap, genOrder, genTrader } from '../../generators';
 import { depositMargin, setMarketConfigurationById } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { wei } from '@synthetixio/wei';
@@ -46,9 +46,8 @@ describe('OrderModule', () => {
     it('should revert insufficient margin when margin is less than initial margin', async () => {
       const { PerpMarketProxy } = systems();
 
-      const { trader, market, marketId, collateral, collateralDepositAmount, marginUsdDepositAmount } =
-        await depositMargin(bs, genTrader(bs));
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 100 }); // egregious amount of degenerate leverage.
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 100 }); // Egregious amount of degenerate leverage.
 
       // Margin does not meet minMargin req
       await assertRevert(
