@@ -1,53 +1,30 @@
 import { BigNumber } from 'ethers';
-import { bootstrap } from './bootstrap';
-import { bn, genInt, genOneOf } from './generators';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
-import { wei } from '@synthetixio/wei';
+import type { bootstrap } from './bootstrap';
+import type { genTrader } from './generators';
+
+// --- Mutative helpers --- //
 
 type Bs = ReturnType<typeof bootstrap>;
-type Collateral = ReturnType<Bs['collaterals']>[number];
-type Market = ReturnType<Bs['markets']>[number];
 
-export const depositMargin = async (
-  bs: Bs,
-  depositAmount?: BigNumber,
-  desiredCollateral?: Collateral,
-  desiredMarket?: Market
-) => {
-  const { systems, traders, markets, collaterals } = bs;
-
-  const { PerpMarketProxy } = systems();
-
-  // Preamble
-  const trader = traders()[0];
-  const traderAddress = await trader.signer.getAddress();
-  const market = desiredMarket ?? genOneOf(markets());
-  const marketId = market.marketId();
-  const collateral = desiredCollateral ?? genOneOf(collaterals());
-
-  // We use a large enough min range on depositAmountDelta to ensure we meet minMarginReq.
-  const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
-
-  // Don't deposit more size than the market can handle unless `depositAmount` is explicitly specified.
-  const { maxMarketSize, maxLeverage } = await PerpMarketProxy.getMarketConfigurationById(marketId);
-  const maxDepositAmountDelta = Math.floor(wei(maxMarketSize).div(maxLeverage).toNumber());
-  const depositAmountDelta = depositAmount ?? bn(Math.min(genInt(100, 500), maxDepositAmountDelta));
-  const depositAmountDeltaUsd = wei(depositAmountDelta.abs()).mul(wei(collateralPrice)).toBN();
+export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) => {
+  const { trader, market, collateral, collateralDepositAmount } = await tr;
+  const { PerpMarketProxy } = bs.systems();
 
   const collateralConnected = collateral.contract.connect(trader.signer);
-  await collateralConnected.mint(trader.signer.getAddress(), depositAmountDelta);
-  await collateralConnected.approve(PerpMarketProxy.address, depositAmountDelta);
+  await collateralConnected.mint(trader.signer.getAddress(), collateralDepositAmount);
+  await collateralConnected.approve(PerpMarketProxy.address, collateralDepositAmount);
 
   // Perform the deposit
   const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
     trader.accountId,
-    marketId,
+    market.marketId(),
     collateral.contract.address,
-    depositAmountDelta
+    collateralDepositAmount
   );
   await tx.wait();
 
-  return { trader, traderAddress, market, marketId, depositAmountDelta, depositAmountDeltaUsd, collateral };
+  return tr;
 };
 
 export const setMarketConfigurationById = async (

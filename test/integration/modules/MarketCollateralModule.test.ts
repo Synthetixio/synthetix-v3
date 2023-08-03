@@ -3,8 +3,9 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
-import { genAddress, genBootstrap, genBytes32, genInt, genListOf, bn, shuffle, genOneOf } from '../../generators';
+import { genAddress, genBootstrap, genBytes32, genInt, genListOf, genOneOf, genTrader } from '../../generators';
 import { depositMargin } from '../../helpers';
+import { bn, shuffle } from '../../utils';
 
 describe('MarketCollateralModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -16,8 +17,8 @@ describe('MarketCollateralModule', async () => {
     it('should noop with a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
-      const trader = traders()[0];
-      const market = markets()[0];
+      const trader = genOneOf(traders());
+      const market = genOneOf(markets());
       const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
       const amountDelta = bn(0);
 
@@ -38,10 +39,10 @@ describe('MarketCollateralModule', async () => {
       it('should allow deposit of collateral to an existing accountId', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader = traders()[0];
+        const trader = genOneOf(traders());
         const traderAddress = await trader.signer.getAddress();
 
-        const market = markets()[0];
+        const market = genOneOf(markets());
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         const amountDelta = bn(genInt(50, 100_000));
@@ -71,10 +72,10 @@ describe('MarketCollateralModule', async () => {
       it('should revert deposit to an account that does not exist', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader = traders()[0];
+        const trader = genOneOf(traders());
         const invalidAccountId = genInt(42069, 50000);
 
-        const market = markets()[0];
+        const market = genOneOf(markets());
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         const amountDelta = bn(genInt(50, 100_000));
@@ -97,8 +98,8 @@ describe('MarketCollateralModule', async () => {
       it('should revert deposit of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader = traders()[0];
-        const market = markets()[0];
+        const trader = genOneOf(traders());
+        const market = genOneOf(markets());
         const invalidCollateralAddress = genAddress();
         const amountDelta = bn(genInt(10, 100));
 
@@ -116,8 +117,8 @@ describe('MarketCollateralModule', async () => {
       it('should revert when depositing an address(0) collateral', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader = traders()[0];
-        const market = markets()[0];
+        const trader = genOneOf(traders());
+        const market = genOneOf(markets());
         const marketId = market.marketId();
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
@@ -141,8 +142,8 @@ describe('MarketCollateralModule', async () => {
       it('should revert deposit that exceeds max cap', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader = traders()[0];
-        const market = markets()[0];
+        const trader = genOneOf(traders());
+        const market = genOneOf(markets());
 
         const { contract, max: maxAllowable } = genOneOf(collaterals());
         const collateral = contract.connect(trader.signer);
@@ -168,8 +169,8 @@ describe('MarketCollateralModule', async () => {
       it('should revert when insufficient amount of collateral in msg.sender', async () => {
         const { PerpMarketProxy } = systems();
 
-        const trader = traders()[0];
-        const market = markets()[0];
+        const trader = genOneOf(traders());
+        const market = genOneOf(markets());
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         // Ensure the amount available is lower than amount to deposit (i.e. depositing more than available).
@@ -196,33 +197,35 @@ describe('MarketCollateralModule', async () => {
     describe('withdraw', () => {
       it('should allow full withdraw of collateral to my account', async () => {
         const { PerpMarketProxy } = systems();
-
-        // Perform the deposit.
-        const { trader, traderAddress, marketId, depositAmountDelta, collateral } = await depositMargin(bs);
+        const { trader, traderAddress, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
 
         // Perform the withdraw (full amount).
         const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
           trader.accountId,
           marketId,
           collateral.contract.address,
-          depositAmountDelta.mul(-1)
+          collateralDepositAmount.mul(-1)
         );
 
         await assertEvent(
           tx,
-          `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${depositAmountDelta})`,
+          `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount})`,
           PerpMarketProxy
         );
       });
 
       it('should allow partial withdraw of collateral to my account', async () => {
         const { PerpMarketProxy } = systems();
-
-        // Perform the deposit.
-        const { trader, traderAddress, marketId, depositAmountDelta, collateral } = await depositMargin(bs);
+        const { trader, traderAddress, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
 
         // Perform the withdraw (partial amount).
-        const withdrawAmount = depositAmountDelta.div(2).mul(-1);
+        const withdrawAmount = collateralDepositAmount.div(2).mul(-1);
         const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
           trader.accountId,
           marketId,
@@ -244,9 +247,7 @@ describe('MarketCollateralModule', async () => {
 
       it('should revert withdraw on address(0) collateral', async () => {
         const { PerpMarketProxy } = systems();
-
-        // Perform the deposit.
-        const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+        const { trader, marketId, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
         // Perform withdraw with zero address.
         await assertRevert(
@@ -254,7 +255,7 @@ describe('MarketCollateralModule', async () => {
             trader.accountId,
             marketId,
             '0x0000000000000000000000000000000000000000',
-            depositAmountDelta.mul(-1)
+            collateralDepositAmount.mul(-1)
           ),
           'ZeroAddress()',
           PerpMarketProxy
@@ -263,9 +264,7 @@ describe('MarketCollateralModule', async () => {
 
       it('should revert withdraw to an account that does not exist', async () => {
         const { PerpMarketProxy } = systems();
-
-        // Perform the deposit.
-        const { trader, marketId, depositAmountDelta, collateral } = await depositMargin(bs);
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
         const invalidAccountId = bn(genInt(42069, 50_000));
 
         // Perform withdraw with zero address.
@@ -274,7 +273,7 @@ describe('MarketCollateralModule', async () => {
             invalidAccountId,
             marketId,
             collateral.contract.address,
-            depositAmountDelta.mul(-1)
+            collateralDepositAmount.mul(-1)
           ),
           `AccountNotFound("${invalidAccountId}")`,
           PerpMarketProxy
@@ -285,9 +284,7 @@ describe('MarketCollateralModule', async () => {
 
       it('should revert withdraw of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
-
-        // Perform the deposit.
-        const { trader, marketId, depositAmountDelta } = await depositMargin(bs);
+        const { trader, marketId, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
         const invalidCollateralAddress = genAddress();
 
         // Perform withdraw with zero address.
@@ -296,7 +293,7 @@ describe('MarketCollateralModule', async () => {
             trader.accountId,
             marketId,
             invalidCollateralAddress,
-            depositAmountDelta.mul(-1)
+            collateralDepositAmount.mul(-1)
           ),
           `UnsupportedCollateral("${invalidCollateralAddress}")`,
           PerpMarketProxy
@@ -305,12 +302,10 @@ describe('MarketCollateralModule', async () => {
 
       it('should revert withdraw of more than what is available', async () => {
         const { PerpMarketProxy } = systems();
-
-        // Perform the deposit.
-        const { trader, marketId, depositAmountDelta, collateral } = await depositMargin(bs);
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
         // Perform the withdraw with a little more than what was deposited.
-        const withdrawAmount = depositAmountDelta.add(bn(1)).mul(-1);
+        const withdrawAmount = collateralDepositAmount.add(bn(1)).mul(-1);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).transferTo(
@@ -319,7 +314,7 @@ describe('MarketCollateralModule', async () => {
             collateral.contract.address,
             withdrawAmount
           ),
-          `InsufficientCollateral("${collateral.contract.address}", "${depositAmountDelta}", "${withdrawAmount.mul(
+          `InsufficientCollateral("${collateral.contract.address}", "${collateralDepositAmount}", "${withdrawAmount.mul(
             -1
           )}")`,
           PerpMarketProxy

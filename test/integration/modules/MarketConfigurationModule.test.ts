@@ -3,7 +3,8 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap } from '../../generators';
+import { genBootstrap, genMarket, genOneOf } from '../../generators';
+import { bn } from '../../utils';
 
 describe('MarketConfigurationModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -51,10 +52,10 @@ describe('MarketConfigurationModule', async () => {
     it('should successfully configure market by id', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
-      const marketId = markets()[0].marketId();
 
-      const bs = genBootstrap();
-      const specific = bs.markets[0].specific;
+      // Randomly select a market currently available and new params for said market.
+      const marketId = genOneOf(markets()).marketId();
+      const { specific } = genMarket();
 
       const tx = await PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific);
       const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
@@ -64,12 +65,11 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.skewScale, config.skewScale);
       assertBn.equal(specific.makerFee, config.makerFee);
       assertBn.equal(specific.takerFee, config.takerFee);
-      assertBn.equal(specific.maxLeverage, config.maxLeverage);
       assertBn.equal(specific.maxMarketSize, config.maxMarketSize);
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
       assertBn.equal(specific.minMarginUsd, config.minMarginUsd);
       assertBn.equal(specific.minMarginRatio, config.minMarginRatio);
-      assertBn.equal(specific.initialMarginRatio, config.initialMarginRatio);
+      assertBn.equal(specific.incrementalMarginScalar, config.incrementalMarginScalar);
       assertBn.equal(specific.maintenanceMarginScalar, config.maintenanceMarginScalar);
       assertBn.equal(specific.liquidationRewardPercent, config.liquidationRewardPercent);
 
@@ -78,11 +78,11 @@ describe('MarketConfigurationModule', async () => {
 
     it('should revert with non-owner', async () => {
       const { PerpMarketProxy } = systems();
-      const from = traders()[0].signer;
-      const marketId = markets()[0].marketId();
+      const from = traders()[0].signer; // not owner.
 
-      const bs = genBootstrap();
-      const specific = bs.markets[0].specific;
+      // Randomly select a market currently available and new params for said market.
+      const marketId = genOneOf(markets()).marketId();
+      const { specific } = genMarket();
 
       await assertRevert(
         PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
@@ -93,14 +93,12 @@ describe('MarketConfigurationModule', async () => {
     it('should revert when marketId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
-      const marketId = bn(6969);
-
-      const bs = genBootstrap();
-      const specific = bs.markets[0].specific;
+      const notFoundMarketId = bn(4206969);
+      const { specific } = genMarket();
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setMarketConfigurationById(marketId, specific),
-        `MarketNotFound("${marketId}")`
+        PerpMarketProxy.connect(from).setMarketConfigurationById(notFoundMarketId, specific),
+        `MarketNotFound("${notFoundMarketId}")`
       );
     });
   });

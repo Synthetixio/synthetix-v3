@@ -1,28 +1,11 @@
 import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
-import Wei, { wei } from '@synthetixio/wei';
-import { PerpMarketProxy } from './generated/typechain';
+import { wei } from '@synthetixio/wei';
+import { MARKETS } from './data/markets.fixture';
+import { bn, isNil, raise, shuffle } from './utils';
+import type { bootstrap } from './bootstrap';
 
-// --- Core Utilities --- //
-
-export const raise = (err: string): never => {
-  throw new Error(err);
-};
-
-export const bn = (n: number) => wei(n).toBN();
-
-export const isNil = <A>(a: A | undefined | null): boolean => a === undefined || a === null;
-
-export const shuffle = <A>(arr: A[]): A[] => {
-  const arr2 = [...arr];
-  for (let i = arr2.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var temp = arr2[i];
-    arr2[i] = arr2[j];
-    arr2[j] = temp;
-  }
-  return arr2;
-};
+// --- Primitive generators --- //
 
 export const genOneOf = <A>(l: A[]): A => {
   const a = shuffle(l)[0];
@@ -52,51 +35,52 @@ export const genFloat = (min = 0, max = 1) => Math.random() * (max - min + 1) + 
 export const genInt = (min = 0, max = 1) => Math.floor(genFloat(min, max));
 
 // --- Composition --- //
+//
+// All subsequent composition generators (post genBootstrap) will add onto the prior state from
+// `bootstrap` to generate valid inputs to be used during tests. There are exceptions such as
+// `genMarket` which doesn't necessarily depend on existing state and might be used for isolated cases.
 
-export const genBootstrap = (nMarkets: number = 1) => {
-  const bs = {
-    pool: {
-      initialCollateralPrice: bn(genInt(100, 10_000)),
-    },
-    global: {
-      priceDivergencePercent: wei(genFloat(0.1, 0.3)).toBN(),
-      pythPublishTimeMin: 6,
-      pythPublishTimeMax: 12,
-      minOrderAge: 12,
-      maxOrderAge: 60,
-      minKeeperFeeUsd: bn(genInt(10, 15)),
-      maxKeeperFeeUsd: bn(genInt(50, 100)),
-      keeperProfitMarginPercent: wei(genFloat(0.1, 0.2)).toBN(),
-      keeperSettlementGasUnits: 1_200_000,
-      keeperLiquidationGasUnits: 1_200_000,
-      keeperLiquidationFeeUsd: bn(genInt(1, 5)),
-    },
-    // TODO: Consider not wrapping maxLeverage, maxMarketSize, maxFundingVelocity etc. with bn(...).
-    markets: genListOf(nMarkets, () => {
-      const market = {
-        name: ethers.utils.formatBytes32String(genMarketName()),
-        initialPrice: bn(genInt(1, 1000)),
-        specific: {
-          oracleNodeId: genBytes32(),
-          pythPriceFeedId: genBytes32(),
-          skewScale: bn(genInt(100_000, 500_000)),
-          makerFee: wei(genFloat(0.0001, 0.0005)).toBN(), // 1 - 5bps
-          takerFee: wei(genFloat(0.0006, 0.0008)).toBN(), // 1 - 8bps
-          maxLeverage: bn(genOneOf([10, 15, 20, 25, 30, 50, 100])),
-          maxMarketSize: bn(genInt(20_000, 50_000)),
-          maxFundingVelocity: bn(genInt(3, 9)),
-          minMarginUsd: bn(genInt(50, 60)),
-          minMarginRatio: bn(genFloat(0.01, 0.02)),
-          initialMarginRatio: bn(genFloat(0.04, 0.06)),
-          maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
-          liquidationRewardPercent: wei(genFloat(0.005, 0.0075)).toBN(),
-        },
-      };
-      return market;
-    }),
-  };
-  return bs;
-};
+export const genBootstrap = () => ({
+  pool: {
+    initialCollateralPrice: bn(genInt(100, 10_000)),
+  },
+  global: {
+    priceDivergencePercent: wei(genFloat(0.1, 0.3)).toBN(),
+    pythPublishTimeMin: 6,
+    pythPublishTimeMax: 12,
+    minOrderAge: 12,
+    maxOrderAge: 60,
+    minKeeperFeeUsd: bn(genInt(10, 15)),
+    maxKeeperFeeUsd: bn(genInt(50, 100)),
+    keeperProfitMarginPercent: wei(genFloat(0.1, 0.2)).toBN(),
+    keeperSettlementGasUnits: 1_200_000,
+    keeperLiquidationGasUnits: 1_200_000,
+    keeperLiquidationFeeUsd: bn(genInt(1, 5)),
+  },
+  markets: shuffle(MARKETS),
+});
+
+/**
+ * Generates a market with possibly unrealistic parms. Use `genOneOf(MARKETS)` for realistic values.
+ */
+export const genMarket = () => ({
+  name: ethers.utils.formatBytes32String(genMarketName()),
+  initialPrice: bn(genInt(1, 10_000)),
+  specific: {
+    oracleNodeId: genBytes32(),
+    pythPriceFeedId: genBytes32(),
+    skewScale: bn(genInt(100_000, 500_000)),
+    makerFee: wei(genFloat(0.0001, 0.0005)).toBN(), // 1 - 5bps
+    takerFee: wei(genFloat(0.0006, 0.0008)).toBN(), // 1 - 8bps
+    maxMarketSize: bn(genInt(20_000, 50_000)),
+    maxFundingVelocity: bn(genInt(3, 9)),
+    minMarginUsd: bn(genInt(50, 60)),
+    minMarginRatio: bn(genFloat(0.01, 0.02)),
+    incrementalMarginScalar: bn(genFloat(0.04, 0.06)),
+    maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
+    liquidationRewardPercent: wei(genFloat(0.005, 0.0075)).toBN(),
+  },
+});
 
 /**
  * Generate a limit price 1 - 5% within the oracle price. The limit will be higher (long) or lower (short).
@@ -110,43 +94,68 @@ export const genLimitPrice = (sizeDelta: BigNumber, oraclePrice: BigNumber) =>
         .mul(1 + genFloat(0.01, 0.05))
         .toBN();
 
-export const genOrder = async (
-  proxy: PerpMarketProxy,
-  marketId: BigNumber,
-  depositAmountUsd: BigNumber,
-  desiredLeverage?: Partial<{ min: number; max: number }>
-) => {
-  // TODO: Compute a local keeperFeeBufferUsd rather than randomly generating.
-  const keeperFeeBufferUsd = bn(genInt(1, 5));
+// --- Higher level generators --- //
 
-  // TODO: Accept accountId to generate a valid order given an existing position.
+type Bs = ReturnType<typeof bootstrap>;
+type Collateral = ReturnType<Bs['collaterals']>[number];
+type Market = ReturnType<Bs['markets']>[number];
 
-  const { maxMarketSize, maxLeverage } = await proxy.getMarketConfigurationById(marketId);
-  const oraclePrice = await proxy.getOraclePrice(marketId);
+export const genTrader = async (bs: Bs) => {
+  const { traders, markets, collaterals } = bs;
 
-  // Assuming `depositAmountUsd` is at or below maxLeverage, this may already be at maxLeverage.
-  const depositSize = wei(depositAmountUsd).div(oraclePrice);
+  // Randomly select a trader to operate on.
+  const trader = genOneOf(traders());
 
-  const rMinLeverage = desiredLeverage?.min ?? 0.5;
-  const rMaxLeverage = desiredLeverage?.max ?? wei(maxLeverage).toNumber();
+  // Randomly select a market and collateral as margin to trade with.
+  const market = genOneOf(markets());
+  const collateral = genOneOf(collaterals());
 
-  if (rMinLeverage > rMaxLeverage) {
-    return raise(`minLeverage (${rMinLeverage}) > maxLeverage (${rMaxLeverage})`);
-  }
-
-  // Ensure generated sizeDelta is below maxMarketSize to be considered valid. Do this _only_ if
-  // desiredLeverage has _not_ been specified. When specified, it means we want to cause a case to occur.
-  const leverage = genFloat(rMinLeverage, rMaxLeverage);
-  const sizeDeltaWei = desiredLeverage
-    ? depositSize.mul(leverage)
-    : Wei.min(depositSize.mul(leverage), wei(maxMarketSize));
-  const sizeDeltaBn = genOneOf([sizeDeltaWei.mul(-1), sizeDeltaWei]).toBN();
+  // Randomly provide test collateral to trader.
+  const marginUsdDepositAmount = wei(genOneOf([1000, 5000, 10_000, 20_000, 40_000, 100_000]));
+  const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
+  const collateralDepositAmount = marginUsdDepositAmount.div(collateralPrice).toBN();
 
   return {
-    sizeDelta: sizeDeltaBn,
-    oraclePrice,
-    limitPrice: genLimitPrice(sizeDeltaBn, oraclePrice),
+    trader,
+    traderAddress: await trader.signer.getAddress(),
+    market,
+    marketId: market.marketId(),
+    collateral,
+    collateralDepositAmount,
+    marginUsdDepositAmount,
+  };
+};
+
+export const genKeeperOrderBufferFeeUsd = () => bn(genFloat(2, 10));
+
+export const genOrder = async (bs: Bs, market: Market, collateral: Collateral, collateralDepositAmount: BigNumber) => {
+  const { systems } = bs;
+  const { PerpMarketProxy } = systems();
+
+  const keeperOrderBufferFeeUsd = genKeeperOrderBufferFeeUsd();
+  const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
+  const marginUsd = wei(collateralDepositAmount).div(collateralPrice).sub(keeperOrderBufferFeeUsd);
+  const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
+
+  // Use a reasonble amount of leverage
+  const leverage = bn(genOneOf([0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
+
+  // Randomly use long/short.
+  let sizeDelta = marginUsd.div(oraclePrice).mul(leverage).toBN();
+  sizeDelta = genOneOf([sizeDelta, sizeDelta.mul(-1)]);
+
+  const limitPrice = genLimitPrice(sizeDelta, oraclePrice);
+  const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
+  const fees = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperOrderBufferFeeUsd);
+
+  return {
+    keeperOrderBufferFeeUsd,
     leverage,
-    keeperFeeBufferUsd,
+    sizeDelta,
+    limitPrice,
+    fillPrice,
+    oraclePrice,
+    orderFee: fees.orderFee,
+    keeperFee: fees.keeperFee,
   };
 };

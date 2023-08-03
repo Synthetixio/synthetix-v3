@@ -14,7 +14,8 @@ import type { IMarketConfigurationModule } from './generated/typechain/MarketCon
 import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
-import { bn, genInt } from './generators';
+import { genInt } from './generators';
+import { bn } from './utils';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;

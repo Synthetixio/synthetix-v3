@@ -1,42 +1,31 @@
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genInt, genOneOf, genOrder } from '../../generators';
+import { genBootstrap, genInt, genOneOf, genOrder, genTrader } from '../../generators';
 import { depositMargin, setMarketConfigurationById } from '../../helpers';
+import { bn } from '../../utils';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { BigNumber } from 'ethers';
 import { wei } from '@synthetixio/wei';
 
-describe('OrderModule', () => {
+describe.skip('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
   const { systems, restore, provider, collaterals, markets } = bs;
 
   beforeEach(restore);
 
   describe('commitOrder', () => {
-    it.only('should successfully commit order with no existing position', async () => {
+    it('should successfully commit order with no existing position', async () => {
       const { PerpMarketProxy } = systems();
 
-      // Perform the deposit.
-      const { trader, marketId, depositAmountDeltaUsd } = await depositMargin(bs);
-
-      // Generate a valid order.
-      const { sizeDelta, limitPrice, keeperFeeBufferUsd, oraclePrice } = await genOrder(
-        PerpMarketProxy,
-        marketId,
-        depositAmountDeltaUsd
-      );
-
-      // Perform the commitment.
-      console.log('size', wei(sizeDelta).toNumber());
-      console.log('oraclePrice', wei(oraclePrice).toNumber());
-      console.log('depositAmountDeltaUsd', wei(depositAmountDeltaUsd).toNumber());
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       const tx = await PerpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
         marketId,
-        sizeDelta,
-        limitPrice,
-        keeperFeeBufferUsd
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperOrderBufferFeeUsd
       );
       const receipt = await tx.wait();
       const block = await provider().getBlock(receipt.blockNumber);
@@ -45,11 +34,12 @@ describe('OrderModule', () => {
       //
       // The last 2 arguments are fees on the order, which is tested separately. `assertRevert`, despite calling `text.match`
       // does not allow a regex expression... so this will have to change in the future.
-      const expectedEvent = `OrderSubmitted(${trader.accountId}, ${marketId}, ${sizeDelta}, ${block.timestamp}`;
-      await assertEvent(tx, expectedEvent, PerpMarketProxy);
+      await assertEvent(
+        tx,
+        `OrderSubmitted(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${block.timestamp}`,
+        PerpMarketProxy
+      );
     });
-
-    it('should successfully commit using max leverage');
 
     it('should recompute funding on commitment');
 

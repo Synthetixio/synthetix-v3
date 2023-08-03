@@ -217,38 +217,34 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function getOrderFee(uint128 marketId, int128 sizeDelta) external view returns (uint256 fee) {
+    function getOrderFees(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 keeperFeeBufferUsd
+    ) external view returns (uint256 orderFee, uint256 keeperFee) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         int128 skew = market.skew;
-        fee = Order.getOrderFee(
+        uint256 oraclePrice = market.getOraclePrice();
+
+        orderFee = Order.getOrderFee(
             sizeDelta,
             Order.getFillPrice(skew, marketConfig.skewScale, sizeDelta, market.getOraclePrice()),
             skew,
             marketConfig.makerFee,
             marketConfig.takerFee
         );
+        keeperFee = Order.getKeeperFee(keeperFeeBufferUsd, oraclePrice);
     }
 
     /**
      * @inheritdoc IOrderModule
      */
-    function getOrderKeeperFee(uint128 marketId, uint256 keeperFeeBufferUsd) external view returns (uint256 fee) {
-        fee = Order.getKeeperFee(keeperFeeBufferUsd, PerpMarket.exists(marketId).getOraclePrice());
-    }
-
-    /**
-     * @inheritdoc IOrderModule
-     */
-    function getFillPrice(
-        uint128 marketId,
-        int128 sizeDelta,
-        uint256 oraclePrice
-    ) external view returns (uint256 price) {
+    function getFillPrice(uint128 marketId, int128 sizeDelta) external view returns (uint256 price) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        price = Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice);
+        price = Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, market.getOraclePrice());
     }
 
     /**
