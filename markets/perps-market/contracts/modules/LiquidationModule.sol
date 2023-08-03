@@ -72,6 +72,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 PerpsMarket.MarketUpdateData memory marketUpdateData
             ) = account.liquidatePosition(positionMarketId, price);
 
+            if (amountLiquidated == 0) {
+                continue;
+            }
+
             emit MarketUpdated(
                 positionMarketId,
                 price,
@@ -102,6 +106,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     }
 
     function _processLiquidationRewards(uint256 totalRewards) private returns (uint256 reward) {
+        if (totalRewards == 0) {
+            return 0;
+        }
         // pay out liquidation rewards
         reward = GlobalPerpsMarketConfiguration.load().liquidationReward(totalRewards);
         if (reward > 0) {
