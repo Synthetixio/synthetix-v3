@@ -56,7 +56,12 @@ contract IssueUSDModule is IIssueUSDModule {
         uint256 amount
     ) external override {
         FeatureFlag.ensureAccessToFeature(_MINT_FEATURE_FLAG);
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._MINT_PERMISSION);
+
+        Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
+            accountId,
+            AccountRBAC._MINT_PERMISSION,
+            Config.readUint(_CONFIG_TIMEOUT_MINT, 0)
+        );
 
         // disabled collateralType cannot be used for minting
         CollateralConfiguration.collateralEnabled(collateralType);
@@ -97,7 +102,13 @@ contract IssueUSDModule is IIssueUSDModule {
         pool.recalculateVaultCollateral(collateralType);
 
         // Mint stablecoins to the sender
-        AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().mint(address(this), amount);
+
+        account
+            .collaterals[AssociatedSystem.load(_USD_TOKEN).getAddress()]
+            .increaseAvailableCollateral(
+                CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
+            );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
@@ -120,6 +131,12 @@ contract IssueUSDModule is IIssueUSDModule {
         FeatureFlag.ensureAccessToFeature(_BURN_FEATURE_FLAG);
         Pool.Data storage pool = Pool.load(poolId);
 
+        Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
+            accountId,
+            AccountRBAC._WITHDRAW_PERMISSION,
+            Config.readUint(_CONFIG_TIMEOUT_BURN, 0)
+        );
+
         // Retrieve current position debt
         int256 debt = pool.updateAccountDebt(collateralType, accountId);
 
@@ -141,7 +158,13 @@ contract IssueUSDModule is IIssueUSDModule {
         }
 
         // Burn the stablecoins
-        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().burn(address(this), amount);
+
+        account
+            .collaterals[AssociatedSystem.load(_USD_TOKEN).getAddress()]
+            .decreaseAvailableCollateral(
+                CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
+            );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
