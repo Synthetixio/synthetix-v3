@@ -7,6 +7,7 @@ import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
 import "./SystemPoolConfiguration.sol";
+import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -118,8 +119,7 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        mapping(address => bool) collateralTypeDisabled;
-        mapping(address => uint256) issuanceRatioD18;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
     }
 
     /**
@@ -520,7 +520,7 @@ library Pool {
      * @param collateral The address of the collateral.
      */
     function checkDelegationEnabled(Data storage self, address collateral) internal view {
-        if (self.collateralTypeDisabled[collateral]) {
+        if (self.collateralConfigurations[collateral].collateralTypeDisabled) {
             revert PoolCollateralIsDisabled(collateral, self.id);
         }
     }

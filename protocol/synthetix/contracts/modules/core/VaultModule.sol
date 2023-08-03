@@ -119,9 +119,10 @@ contract VaultModule is IVaultModule {
         if (newCollateralAmountD18 < currentCollateralAmount) {
             int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
 
-            uint256 minIssuanceRatioD18 = Pool.loadExisting(poolId).issuanceRatioD18[
-                collateralType
-            ];
+            uint256 minIssuanceRatioD18 = Pool
+                .loadExisting(poolId)
+                .collateralConfigurations[collateralType]
+                .issuanceRatioD18;
 
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
