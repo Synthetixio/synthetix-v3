@@ -7,6 +7,9 @@ include = [
 [contract.BaseElectionModule]
 artifact = "contracts/modules/core/BaseElectionModule.sol:BaseElectionModule"
 
+[contract.UtilsModule]
+artifact = "contracts/modules/core/UtilsModule.sol:UtilsModule"
+
 # Testable storage contracts
 [contract.TestableCouncilStorage]
 artifact = "contracts/generated/test/TestableCouncilStorage.sol:TestableCouncilStorage"
@@ -25,6 +28,7 @@ artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectio
 contracts = [
   # Extend Original Core Router
   "CoreRouter",
+  "UtilsModule",
   # Testable storage contracts
   "TestableCouncilStorage",
   "TestableDebtShareStorage",
@@ -33,6 +37,7 @@ contracts = [
 ]
 depends = [
   "router.CoreRouter",
+  "contract.UtilsModule",
   "contract.TestableCouncilStorage",
   "contract.TestableDebtShareStorage",
   "contract.TestableElectionSettingsStorage",

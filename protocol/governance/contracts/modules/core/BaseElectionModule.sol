@@ -259,6 +259,12 @@ contract BaseElectionModule is
         );
     }
 
+    function _recvCouncilMembers(address[] memory membersToAdd, uint newEpochIndex) external {
+        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
+        _removeAllCouncilMembers(newEpochIndex);
+        _addCouncilMembers(membersToAdd, newEpochIndex);
+    }
+
     function _recvCast(
         address voter,
         uint256 precinct,
@@ -313,7 +319,7 @@ contract BaseElectionModule is
     }
 
     /// @dev Burns previous NFTs and mints new ones
-    function resolve() public virtual override onlyMothership {
+    function resolve() public virtual override onlyMothership returns (uint256 gasTokenUsed) {
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         Council.Data storage store = Council.load();
@@ -336,6 +342,16 @@ contract BaseElectionModule is
         emit EpochStarted(newEpochIndex);
 
         // TODO: Broadcast message to distribute the new NFTs on all chains
+        CrossChain.Data storage cc = CrossChain.load();
+        gasTokenUsed = cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvCouncilMembers.selector,
+                election.winners.values(),
+                newEpochIndex
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {

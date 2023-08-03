@@ -65,7 +65,7 @@ interface IElectionModule {
     function evaluate(uint numBallots) external;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
-    function resolve() external;
+    function resolve() external returns (uint256);
 
     // ---------------------------------------
     // View functions
