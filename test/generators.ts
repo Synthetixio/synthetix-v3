@@ -128,20 +128,26 @@ export const genTrader = async (bs: Bs) => {
 
 export const genKeeperOrderBufferFeeUsd = () => bn(genFloat(2, 10));
 
-export const genOrder = async (bs: Bs, market: Market, collateral: Collateral, collateralDepositAmount: BigNumber) => {
+export const genOrder = async (
+  bs: Bs,
+  market: Market,
+  collateral: Collateral,
+  collateralDepositAmount: BigNumber,
+  options?: { desiredLeverage: number }
+) => {
   const { systems } = bs;
   const { PerpMarketProxy } = systems();
 
   const keeperOrderBufferFeeUsd = genKeeperOrderBufferFeeUsd();
   const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
-  const marginUsd = wei(collateralDepositAmount).div(collateralPrice).sub(keeperOrderBufferFeeUsd);
+  const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperOrderBufferFeeUsd);
   const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
 
   // Use a reasonble amount of leverage
-  const leverage = bn(genOneOf([0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
+  const leverage = options?.desiredLeverage ?? genOneOf([0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
   // Randomly use long/short.
-  let sizeDelta = marginUsd.div(oraclePrice).mul(leverage).toBN();
+  let sizeDelta = marginUsd.div(oraclePrice).mul(wei(leverage)).toBN();
   sizeDelta = genOneOf([sizeDelta, sizeDelta.mul(-1)]);
 
   const limitPrice = genLimitPrice(sizeDelta, oraclePrice);
@@ -150,6 +156,7 @@ export const genOrder = async (bs: Bs, market: Market, collateral: Collateral, c
 
   return {
     keeperOrderBufferFeeUsd,
+    marginUsd: marginUsd.toBN(),
     leverage,
     sizeDelta,
     limitPrice,

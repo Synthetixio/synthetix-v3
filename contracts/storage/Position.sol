@@ -11,7 +11,6 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev An open position on a specific perp market within bfp-market.
@@ -139,26 +138,13 @@ library Position {
             revert ErrorUtil.NilOrder();
         }
 
-        console.log("aaa_1");
-
         // Generic '.exists' checks against accountId/marketId.
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
-        console.log("aaa_2");
-
-        // When there is no position open then
-        //
-        // - check if there's sufficient margin to open the trade
-        // - check if order were to settle now, would it be in liquidation
-        // - check if order exceeds max oi
-        // - check if order exceeds max leverage
-
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
-
-        console.log("aaa_3");
 
         // --- Existing position validation --- //
 
@@ -179,8 +165,6 @@ library Position {
             }
         }
 
-        console.log("aaa_4");
-
         // --- New position (as though the order was successfully settled)! --- //
 
         // Derive fees incurred and next position if this order were to be settled successfully.
@@ -195,37 +179,21 @@ library Position {
             feesIncurredUsd: currentPosition.feesIncurredUsd + fee + keeperFee
         });
 
-        console.logUint(fee);
-        console.logUint(keeperFee);
-
-        console.log("aaa_5");
-
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
         bool positionDecreasing = MathUtil.sameSide(currentPosition.size, newPosition.size) &&
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 imnp, ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
 
-        console.logUint(imnp);
-        console.logInt(collateralUsd.toInt() - newPosition.feesIncurredUsd.toInt());
-        console.logUint(collateralUsd);
-        console.logUint(newPosition.feesIncurredUsd);
-
         if (!positionDecreasing && collateralUsd.toInt() - newPosition.feesIncurredUsd.toInt() < imnp.toInt()) {
             revert ErrorUtil.InsufficientMargin();
         }
 
-        console.log("aaa_7");
-
         // Check new position can't just be instantly liquidated.
         validateNextPositionIsLiquidatable(newPosition, collateralUsd, params.fillPrice, marketConfig);
 
-        console.log("aaa_8");
-
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
-
-        console.log("aaa_9");
     }
 
     /**
