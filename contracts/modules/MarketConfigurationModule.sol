@@ -49,12 +49,11 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.skewScale = data.skewScale;
         config.makerFee = data.makerFee;
         config.takerFee = data.takerFee;
-        config.maxLeverage = data.maxLeverage;
         config.maxMarketSize = data.maxMarketSize;
         config.maxFundingVelocity = data.maxFundingVelocity;
         config.minMarginUsd = data.minMarginUsd;
         config.minMarginRatio = data.minMarginRatio;
-        config.initialMarginRatio = data.initialMarginRatio;
+        config.incrementalMarginScalar = data.incrementalMarginScalar;
         config.maintenanceMarginScalar = data.maintenanceMarginScalar;
         config.liquidationRewardPercent = data.liquidationRewardPercent;
 

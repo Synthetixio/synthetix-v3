@@ -215,18 +215,6 @@ library Position {
             revert ErrorUtil.InsufficientMargin();
         }
 
-        console.log("aaa_6");
-
-        // Check the new position hasn't hit max leverage.
-        //
-        // NOTE: We also consider including the paid fee as part of the margin, again due to UX. Otherwise,
-        // maxLeverage would always below position leverage due to fees paid out to open trade. We'll allow
-        // a little extra headroom for rounding errors.
-        uint256 leverage = MathUtil.abs(newPosition.size).mulDecimal(params.fillPrice).divDecimal(collateralUsd);
-        if (leverage > marketConfig.maxLeverage) {
-            revert ErrorUtil.MaxLeverageExceeded(leverage);
-        }
-
         console.log("aaa_7");
 
         // Check new position can't just be instantly liquidated.
@@ -257,20 +245,13 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 im, uint256 mm) {
-        // No position means cannot infer IM/MM.
-        if (positionSize == 0) {
-            return (0, 0);
-        }
-
         uint256 absSize = MathUtil.abs(positionSize);
-        uint256 skewImpact = absSize.divDecimal(marketConfig.skewScale);
         uint256 notional = absSize.mulDecimal(price);
+        uint256 liqReward = notional.mulDecimal(marketConfig.liquidationRewardPercent); // TODO: Include liqRewardKeeperFee
 
-        uint256 imr = skewImpact.mulDecimal(marketConfig.initialMarginRatio) + marketConfig.minMarginRatio;
+        uint256 imr = absSize.divDecimal(marketConfig.skewScale).mulDecimal(marketConfig.incrementalMarginScalar) +
+            marketConfig.minMarginRatio;
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
-
-        // TODO: Include a liqRewardKeeperFee calc to ensure keepers are incentivised to liquidate.
-        uint256 liqReward = notional.mulDecimal(marketConfig.liquidationRewardPercent);
 
         im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
         mm = notional.mulDecimal(mmr) + marketConfig.minMarginUsd + liqReward;

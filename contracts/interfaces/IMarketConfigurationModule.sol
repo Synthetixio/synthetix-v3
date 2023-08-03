@@ -31,12 +31,11 @@ interface IMarketConfigurationModule {
         uint128 skewScale;
         uint128 makerFee;
         uint128 takerFee;
-        uint128 maxLeverage;
         uint128 maxMarketSize;
         uint128 maxFundingVelocity;
         uint256 minMarginUsd;
         uint256 minMarginRatio;
-        uint256 initialMarginRatio;
+        uint256 incrementalMarginScalar;
         uint256 maintenanceMarginScalar;
         uint256 liquidationRewardPercent;
     }

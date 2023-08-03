@@ -57,9 +57,7 @@ library PerpMarketConfiguration {
         uint128 makerFee;
         // Fee paid (in bps) when the order _increases_ skew.
         uint128 takerFee;
-        // TODO: Pack maxLeverage, maxMarketSize, maxFundingVelocity and skewScale into 256bits.
-        // Maximum amount of leverage a position can take on in this market (e.g. 25x)
-        uint128 maxLeverage;
+        // TODO: Pack maxMarketSize, maxFundingVelocity and skewScale into 256bits.
         // Maximum amount of size in native units for either side of the market (OI would be maxMarketSize * 2).
         uint128 maxMarketSize;
         // The maximum velocity funding rate can change by.
@@ -70,8 +68,8 @@ library PerpMarketConfiguration {
         uint256 minMarginUsd;
         // Used in addition with IMR to determine IM and MM.
         uint256 minMarginRatio;
-        // IMR is used to dynamically infer the initial margin.
-        uint256 initialMarginRatio;
+        // Scalar is used to dynamically infer the initial margin.
+        uint256 incrementalMarginScalar;
         // MMS used to dynamically infer the MMR' based on IMR'.
         uint256 maintenanceMarginScalar;
         // Used to infer a % of position notional as liquidation reward.
