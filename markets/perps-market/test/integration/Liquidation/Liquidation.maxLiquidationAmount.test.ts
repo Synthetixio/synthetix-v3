@@ -6,6 +6,10 @@ import { ethers } from 'ethers';
 
 describe('Liquidation - max liquidatable amount', async () => {
   const { systems, provider, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
+    liquidationGuards: {
+      minLiquidationReward: bn(5),
+      maxLiquidationReward: bn(1000),
+    },
     synthMarkets: [],
     perpsMarkets: [
       {
@@ -20,7 +24,8 @@ describe('Liquidation - max liquidatable amount', async () => {
         fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(3),
-          maintenanceMarginFraction: bn(2),
+          minimumInitialMarginRatio: bn(0),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
@@ -89,6 +94,26 @@ describe('Liquidation - max liquidatable amount', async () => {
     it('liquidated only 100 OP', async () => {
       const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
       assertBn.equal(size, bn(50));
+    });
+
+    describe('calling liquidate again', () => {
+      let initialKeeperBalance: ethers.BigNumber;
+      before('call liquidate', async () => {
+        initialKeeperBalance = await systems().USD.balanceOf(await keeper().getAddress());
+        await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      });
+
+      it('liquidated nothing', async () => {
+        const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
+        assertBn.equal(size, bn(50));
+      });
+
+      it('did not pay liquidation keeper reward', async () => {
+        assertBn.equal(
+          initialKeeperBalance,
+          await systems().USD.balanceOf(await keeper().getAddress())
+        );
+      });
     });
   });
 

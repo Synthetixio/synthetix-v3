@@ -121,7 +121,8 @@ describe('ModifyCollateral Withdraw', () => {
         fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
+          minimumInitialMarginRatio: bn(0.01),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: bn(10),
@@ -139,7 +140,8 @@ describe('ModifyCollateral Withdraw', () => {
         fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
+          minimumInitialMarginRatio: bn(0.01),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: bn(10),
@@ -290,7 +292,7 @@ describe('ModifyCollateral Withdraw', () => {
           systems()
             .PerpsMarket.connect(trader1())
             .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18000)),
-          `InsufficientCollateralAvailableForWithdraw("${bn(15000)}", "${bn(18000)}")`
+          `InsufficientCollateralAvailableForWithdraw("${bn(14000)}", "${bn(18000)}")`
         );
       });
 
