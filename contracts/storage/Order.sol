@@ -92,7 +92,7 @@ library Order {
      * keeperFeeBufferUsd       - a user configurable amount in usd to add on top of the base keeper fee
      * min/maxKeeperFeeUsd      - a min/max bound to ensure fee cannot be below min or above max
      *
-     * See IOrderModule.orderKeeperFee for more details.
+     * See IOrderModule.getOrderFees for more details.
      */
     function getKeeperFee(uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();

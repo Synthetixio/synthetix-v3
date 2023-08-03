@@ -22,6 +22,11 @@ interface ILiquidationModule {
     // --- Views --- //
 
     /**
+     * @dev Returns fee paid to keeper for initiating liquidation (or just flagging).
+     */
+    function getKeeperFee(uint128 accountId, uint128 marketId) external;
+
+    /**
      * @dev Returns whether a position owned by `accountId` can be flagged for liquidated.
      */
     function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool);
@@ -37,5 +42,5 @@ interface ILiquidationModule {
     /**
      * @dev Returns the health rating for a given account by market. A health factor of 1 means it's up for liquidation.
      */
-    function getHealthRating(uint128 accountId, uint128 marketId) external view returns (uint256 healthRating);
+    function getHealthRating(uint128 accountId, uint128 marketId) external view returns (uint256);
 }

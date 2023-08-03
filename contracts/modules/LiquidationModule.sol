@@ -10,6 +10,7 @@ import "../interfaces/ILiquidationModule.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using PerpMarket for PerpMarket.Data;
+    using Position for Position.Data;
 
     // --- Mutative --- //
 
@@ -23,12 +24,26 @@ contract LiquidationModule is ILiquidationModule {
      */
     function liquidatePosition(uint128 accountId, uint128 marketId) external {}
 
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function getKeeperFee(uint128 accountId, uint128 marketId) external {}
+
     // --- Views --- //
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {}
+    function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return
+            market.positions[accountId].isLiquidatable(
+                PerpCollateral.getCollateralUsd(accountId, marketId),
+                market.getOraclePrice(),
+                PerpMarketConfiguration.load(marketId)
+            );
+    }
 
     /**
      * @inheritdoc ILiquidationModule
@@ -50,5 +65,14 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getHealthRating(uint128 accountId, uint128 marketId) external view returns (uint256 healthRating) {}
+    function getHealthRating(uint128 accountId, uint128 marketId) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return
+            market.positions[accountId].getHealthRating(
+                PerpCollateral.getCollateralUsd(accountId, marketId),
+                market.getOraclePrice(),
+                PerpMarketConfiguration.load(marketId)
+            );
+    }
 }
