@@ -158,7 +158,7 @@ contract ERC20 is IERC20 {
     }
 
     function _approve(address owner, address spender, uint256 amount) internal virtual {
-        _checkZeroAddressOrAmount(spender, amount);
+        _checkZeroAddress(spender);
 
         ERC20Storage.load().allowance[owner][spender] = amount;
 
@@ -172,6 +172,12 @@ contract ERC20 is IERC20 {
 
         if (amount == 0) {
             revert ParameterError.InvalidParameter("amount", "Zero amount");
+        }
+    }
+
+    function _checkZeroAddress(address target) private pure {
+        if (target == address(0)) {
+            revert ParameterError.InvalidParameter("target", "Zero address");
         }
     }
 

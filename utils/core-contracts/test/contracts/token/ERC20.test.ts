@@ -54,10 +54,6 @@ describe('ERC20', function () {
 
       // Zero amount
       await assertRevert(
-        ERC20.approve(await user1.getAddress(), 0),
-        'InvalidParameter("amount", "Zero amount")'
-      );
-      await assertRevert(
         ERC20.transfer(await user1.getAddress(), 0),
         'InvalidParameter("amount", "Zero amount")'
       );
@@ -219,6 +215,20 @@ describe('ERC20', function () {
         assert.equal(evt.args.owner, await user1.getAddress());
         assert.equal(evt.args.spender, await user2.getAddress());
         assertBn.equal(evt.args.amount, approvalAmount);
+      });
+
+      describe('approve()', async function () {
+        it('revokes token when amount zero', async function () {
+          await ERC20.connect(user1).approve(await user2.getAddress(), BigNumber.from('0'));
+          assertBn.equal(
+            await ERC20.allowance(await user1.getAddress(), await user2.getAddress()),
+            '0'
+          );
+        });
+
+        after('reset approval', async () => {
+          await ERC20.connect(user1).approve(await user2.getAddress(), approvalAmount);
+        });
       });
 
       describe('increaseAllowance()', async () => {
