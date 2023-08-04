@@ -22,7 +22,6 @@ export function handleOrderCommitted(event: OrderCommittedEvent): void {
   if (!order) {
     order = new Order(orderId);
     order.size = ZERO_BI;
-    order.newSize = ZERO_BI;
   }
 
   order.marketId = event.params.marketId;
