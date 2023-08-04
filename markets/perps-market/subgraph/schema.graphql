@@ -4,23 +4,48 @@ type Account @entity {
   owner: String!
 }
 
+type LiquidatedAccount @entity {
+  id: ID!
+  accountId: BigInt!
+  keeperLiquidationReward: BigInt
+  accountFullyLiquidated: Boolean
+}
+
+type LiquidatedPosition @entity {
+  id: ID!
+  accountId: BigInt!
+  marketId: BigInt
+  amountLiquidated: BigInt
+  currentPositionSize: BigInt
+}
+
 type Market @entity {
   id: ID!
   perpsMarketId: BigInt!
-  marketOwner: String
   marketName: String
   marketSymbol: String
+  price: BigInt
+  skew: BigInt
+  size: BigInt
+  sizeDelta: BigInt
+  currentFundingRate: BigInt
+  currentFundingVelocity: BigInt
   feedId: Bytes
-  owner: String
   maxFundingVelocity: BigInt
   skewScale: BigInt
-  initialMarginFraction: BigInt
-  maintenanceMarginFraction: BigInt
-  liquidationRewardRatioD18: BigInt
-  maxLiquidationLimitAccumulationMultiplier: BigInt
   lockedOiPercent: BigInt
+  marketOwner: String
+  owner: String
+  initialMarginRatioD18: BigInt
+  maintenanceMarginRatioD18: BigInt
+  liquidationRewardRatioD18: BigInt
+  maxSecondsInLiquidationWindow: BigInt
+  minimumPositionMargin: BigInt
+  maxLiquidationLimitAccumulationMultiplier: BigInt
   makerFee: BigInt
   takerFee: BigInt
+
+  factoryInitialized: Boolean
 }
 
 type Order @entity {
@@ -29,7 +54,7 @@ type Order @entity {
   accountId: BigInt
   amountProvided: BigInt
   orderType: Int
-  size: BigInt!
+  size: BigInt
   acceptablePrice: BigInt
   settlementTime: BigInt
   expirationTime: BigInt
@@ -38,7 +63,7 @@ type Order @entity {
 
   fillPrice: BigInt
   accountPnlRealized: BigInt
-  newSize: BigInt!
+  newSize: BigInt
   collectedFees: BigInt
   settelementReward: BigInt
   settler: String
@@ -51,8 +76,7 @@ type SettlementStrategy @entity {
   id: ID!
   strategyId: BigInt!
   marketId: BigInt!
-  settlementStrategyId: BigInt!
-  enabled: Boolean!
+  enabled: Boolean
   strategyType: Int
   settlementDelay: BigInt
   settlementWindowDuration: BigInt
@@ -63,4 +87,15 @@ type SettlementStrategy @entity {
   priceDeviationTolerance: BigInt
   minimumUsdExchangeAmount: BigInt
   maxRoundingLoss: BigInt
+}
+
+type ReferrerShare @entity {
+  id: ID!
+  referrer: String
+  shareRatioD18: BigInt
+}
+
+type GlobalConfiguration @entity {
+  id: ID!
+  feeCollector: String
 }
