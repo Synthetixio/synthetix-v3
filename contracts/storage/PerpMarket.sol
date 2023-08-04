@@ -263,7 +263,7 @@ library PerpMarket {
     function getRemainingLiquidatableCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 capacity) {
+    ) internal view returns (uint128) {
         // NOTE: This feels wrong but I'm going off v3 implementation until fifa gets back with
         // response.
         //
@@ -281,8 +281,9 @@ library PerpMarket {
             .mulDecimal(marketConfig.liquidationLimitScalar)
             .mulDecimal(marketConfig.liquidationWindowDuration)
             .to128();
-        capacity = block.timestamp - self.lastLiquidationTime > marketConfig.liquidationWindowDuration
-            ? maxLiquidatableCapacity
-            : MathUtil.max((maxLiquidatableCapacity - self.lastLiquidationUtilization).toInt(), 0).toUint().to128();
+        return
+            block.timestamp - self.lastLiquidationTime > marketConfig.liquidationWindowDuration
+                ? maxLiquidatableCapacity
+                : MathUtil.max((maxLiquidatableCapacity - self.lastLiquidationUtilization).toInt(), 0).toUint().to128();
     }
 }

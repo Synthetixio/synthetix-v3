@@ -201,7 +201,7 @@ library Position {
         PerpMarket.Data storage market,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price
-    ) internal view returns (Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) {
+    ) internal view returns (Position.Data memory newPosition, uint128 liqSize, uint256 liqReward, uint256 keeperFee) {
         uint128 remainingCapacity = market.getRemainingLiquidatableCapacity(marketConfig);
 
         // At max capacity for current liquidation window.
@@ -223,11 +223,11 @@ library Position {
         }
 
         // Determine the resulting position post liqudation
-        int256 liquidationSize = MathUtil.min(remainingCapacity, MathUtil.abs(position.size)).toInt();
+        liqSize = MathUtil.min(remainingCapacity, MathUtil.abs(position.size)).to128();
         newPosition = Position.Data({
             accountId: accountId,
             marketId: position.marketId,
-            size: (position.size > 0 ? position.size - liquidationSize : position.size + liquidationSize).to128(),
+            size: position.size > 0 ? position.size - liqSize.toInt() : position.size + liqSize.toInt(),
             entryFundingAccrued: position.entryFundingAccrued,
             entryPrice: position.entryPrice,
             feesIncurredUsd: position.feesIncurredUsd

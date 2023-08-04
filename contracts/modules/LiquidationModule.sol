@@ -55,16 +55,14 @@ contract LiquidationModule is ILiquidationModule {
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
-        (Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = Position.validateLiquidation(
-            accountId,
-            market,
-            marketConfig,
-            oraclePrice
-        );
-
-        market.updatePosition(newPosition);
+        (Position.Data memory newPosition, uint128 liqSize, uint256 liqReward, uint256 keeperFee) = Position
+            .validateLiquidation(accountId, market, marketConfig, oraclePrice);
 
         // TODO: Similar to settleOrder, we need to update market with latest skew/size etc.
+        market.updatePosition(newPosition);
+
+        market.lastLiquidationTime = block.timestamp;
+        market.lastLiquidationUtilization += liqSize;
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
