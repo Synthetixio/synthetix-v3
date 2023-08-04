@@ -6,7 +6,6 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
-import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /**
  * @title Module for getting perps market information.
