@@ -10,7 +10,6 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
   const strategy = new SettlementStrategy(id);
 
   strategy.strategyId = event.params.strategyId;
-  strategy.settlementStrategyId = event.params.strategyId;
   strategy.marketId = event.params.marketId;
 
   strategy.strategyType = event.params.strategy.strategyType;

@@ -15,6 +15,7 @@ dataSources:
           file: ./deployments/optimism-goerli/perpsFactory/PerpsMarketProxy.json
       entities:
         - Account
+        - LiquidatedAccount
         - Market
         - Order
         - SettlementStrategy
@@ -46,4 +47,8 @@ dataSources:
           handler: handleOrderSettled
         - event: MarketUpdated(uint128,uint256,int256,uint256,int256,int256,int256)
           handler: handleMarketUpdated
+        - event: PositionLiquidated(indexed uint128,indexed uint128,uint256,int128)
+          handler: handlePositionLiquidated
+        - event: AccountLiquidated(indexed uint128,uint256,bool)
+          handler: handleAccountLiquidated
       file: ./src/core.ts

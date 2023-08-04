@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {AsyncOrder} from "../storage/AsyncOrder.sol";
-
 /**
  * @title Perps market module
  */
