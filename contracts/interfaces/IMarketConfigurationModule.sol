@@ -38,7 +38,7 @@ interface IMarketConfigurationModule {
         uint256 incrementalMarginScalar;
         uint256 maintenanceMarginScalar;
         uint256 liquidationRewardPercent;
-        uint128 liquidationCapacity;
+        uint128 liquidationLimitScalar;
         uint128 liquidationWindowTime;
     }
 

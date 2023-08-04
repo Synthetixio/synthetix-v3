@@ -74,8 +74,8 @@ library PerpMarketConfiguration {
         uint256 maintenanceMarginScalar;
         // Used to infer a % of position notional as liquidation reward.
         uint256 liquidationRewardPercent;
-        // Maximum size that can be liquidated in a liquidation window.
-        uint128 liquidationCapacity;
+        // An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
+        uint128 liquidationLimitScalar;
         // Liquidation window in seconds.
         uint128 liquidationWindowTime;
     }
