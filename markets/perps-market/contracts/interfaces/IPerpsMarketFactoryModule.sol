@@ -31,7 +31,7 @@ interface IPerpsMarketFactoryModule is IMarket {
     function initializeFactory() external returns (uint128);
 
     /**
-     * @notice Sets the syntetix system.
+     * @notice Sets the synthetix system.
      * @param synthetix address of the main synthetix proxy.
      */
     function setSynthetix(ISynthetixSystem synthetix) external;
