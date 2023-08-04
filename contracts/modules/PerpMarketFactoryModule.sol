@@ -48,6 +48,15 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IPerpMarketFactoryModule
      */
+    function setEthOracleNodeId(bytes32 ethOracleNodeId) external {
+        OwnableStorage.onlyOwner();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        globalConfig.ethOracleNodeId = ethOracleNodeId;
+    }
+
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
     function createMarket(
         IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
     ) external returns (uint128 id) {

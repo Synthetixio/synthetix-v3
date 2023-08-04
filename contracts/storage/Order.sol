@@ -11,7 +11,6 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
  * @dev An order that has yet to be settled for position modification.
  */
 library Order {
-    using PerpMarketConfiguration for PerpMarketConfiguration.GlobalData;
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
@@ -98,8 +97,8 @@ library Order {
      */
     function getSettlementKeeperFee(uint256 keeperFeeBufferUsd) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        uint256 ethPrice = globalConfig.getEthPrice();
 
+        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
         uint256 baseKeeperFeeUsd = globalConfig.keeperSettlementGasUnits * block.basefee * ethPrice;
         uint256 boundedKeeperFeeUsd = MathUtil.max(
             MathUtil.min(

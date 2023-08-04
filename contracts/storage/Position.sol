@@ -25,7 +25,6 @@ library Position {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
-    using PerpMarketConfiguration for PerpMarketConfiguration.GlobalData;
 
     // --- Structs --- //
 
@@ -267,8 +266,8 @@ library Position {
 
     function getLiquidationKeeperFee() internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        uint256 ethPrice = globalConfig.getEthPrice();
 
+        uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
         uint256 baseKeeperFeeUsd = globalConfig.keeperLiquidationGasUnits * block.basefee * ethPrice;
         uint256 boundedKeeperFeeUsd = MathUtil.max(
             MathUtil.min(

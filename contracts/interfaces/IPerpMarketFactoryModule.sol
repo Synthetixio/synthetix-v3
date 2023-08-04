@@ -15,7 +15,7 @@ interface IPerpMarketFactoryModule is IMarket {
     // --- Mutative --- //
 
     /**
-     * @dev Initializes references to the Synthetix core system.
+     * @dev Stores a reference to the Synthetix core system.
      */
     function setSynthetix(ISynthetixSystem synthetix) external;
 
@@ -23,6 +23,11 @@ interface IPerpMarketFactoryModule is IMarket {
      * @dev Stores a reference to the Pyth EVM contract.
      */
     function setPyth(IPyth pyth) external;
+
+    /**
+     * @dev Stores a reference to the ETH/USD oracle node.
+     */
+    function setEthOracleNodeId(bytes32 nodeId) external;
 
     /**
      * @dev Registers a new PerpMarket with Synthetix and initializes storage.

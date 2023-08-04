@@ -101,20 +101,4 @@ library PerpMarketConfiguration {
             d.slot := s
         }
     }
-
-    /**
-     * @dev Returns the latest ETH/USD price.
-     */
-    function getEthPrice(PerpMarketConfiguration.GlobalData storage self) internal view returns (uint256) {
-        return self.oracleManager.process(self.ethOracleNodeId).price.toUint();
-    }
-
-    function withdrawMarketUsd(
-        PerpMarketConfiguration.GlobalData storage self,
-        uint128 marketId,
-        address to,
-        uint256 amount
-    ) internal {
-        self.synthetix.withdrawMarketUsd(marketId, to, amount);
-    }
 }
