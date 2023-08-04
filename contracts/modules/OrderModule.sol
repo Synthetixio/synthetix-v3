@@ -183,7 +183,7 @@ contract OrderModule is IOrderModule {
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(
+        (Position.Data memory newPosition, uint256 orderFee, uint256 keeperFee) = Position.validateTrade(
             accountId,
             market,
             params
@@ -197,10 +197,10 @@ contract OrderModule is IOrderModule {
         // Market details should be reflect as part of the updatePosition
         //
         // (skew, size, recompute funding etc.)
-        //
-        // Pay the keeper that settled this order.
 
-        emit OrderSettled(accountId, marketId, order.sizeDelta, _orderFee, keeperFee);
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+
+        emit OrderSettled(accountId, marketId, order.sizeDelta, orderFee, keeperFee);
     }
 
     /**

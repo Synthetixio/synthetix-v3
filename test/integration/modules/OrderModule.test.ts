@@ -198,6 +198,8 @@ describe('OrderModule', () => {
 
     it('should recompute funding on settlement');
 
+    it('should pay a non-zero settlement fee to keeper');
+
     it('should revert when market is paused');
     it('should revert when this order exceeds maxMarketSize (oi)');
     it('should revert when sizeDelta is 0');
