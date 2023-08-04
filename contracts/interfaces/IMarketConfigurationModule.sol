@@ -19,8 +19,8 @@ interface IMarketConfigurationModule {
         uint256 minKeeperFeeUsd;
         uint256 maxKeeperFeeUsd;
         uint128 keeperProfitMarginPercent;
-        uint256 keeperSettlementGasUnits;
-        uint256 keeperLiquidationGasUnits;
+        uint128 keeperSettlementGasUnits;
+        uint128 keeperLiquidationGasUnits;
         uint256 keeperLiquidationFeeUsd;
     }
 
@@ -38,6 +38,8 @@ interface IMarketConfigurationModule {
         uint256 incrementalMarginScalar;
         uint256 maintenanceMarginScalar;
         uint256 liquidationRewardPercent;
+        uint128 liquidationCapacity;
+        uint128 liquidationWindowTime;
     }
 
     // --- Events --- //

@@ -51,6 +51,10 @@ library PerpMarket {
         mapping(uint128 => Order.Data) orders;
         // {accountId: Position}.
         mapping(uint128 => Position.Data) positions;
+        // {accountId: flaggerAddress}.
+        mapping(uint128 => address) flaggedLiquidations;
+        // block.timestamp of when a liquidation last occurred.
+        uint256 lastLiquidationTime;
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {

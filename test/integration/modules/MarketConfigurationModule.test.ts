@@ -72,6 +72,8 @@ describe('MarketConfigurationModule', async () => {
       assertBn.equal(specific.incrementalMarginScalar, config.incrementalMarginScalar);
       assertBn.equal(specific.maintenanceMarginScalar, config.maintenanceMarginScalar);
       assertBn.equal(specific.liquidationRewardPercent, config.liquidationRewardPercent);
+      assertBn.equal(specific.liquidationCapacity, config.liquidationCapacity);
+      assertBn.equal(specific.liquidationWindowTime, config.liquidationWindowTime);
 
       await assertEvent(tx, `MarketConfigurationUpdated(${marketId}, "${await from.getAddress()}")`, PerpMarketProxy);
     });

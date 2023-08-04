@@ -40,9 +40,9 @@ library PerpMarketConfiguration {
         // A multiplier on the base keeper fee derived as a profit margin on settlements/liquidations.
         uint128 keeperProfitMarginPercent;
         // Number of gas units required to perform an order settlement by a keeper.
-        uint256 keeperSettlementGasUnits;
+        uint128 keeperSettlementGasUnits;
         // Number of gas units required to liquidate a position by a keeper.
-        uint256 keeperLiquidationGasUnits;
+        uint128 keeperLiquidationGasUnits;
         // A fixed fee sent to the liquidator upon position liquidation.
         uint256 keeperLiquidationFeeUsd;
     }
@@ -74,6 +74,10 @@ library PerpMarketConfiguration {
         uint256 maintenanceMarginScalar;
         // Used to infer a % of position notional as liquidation reward.
         uint256 liquidationRewardPercent;
+        // Maximum size that can be liquidated in a liquidation window.
+        uint128 liquidationCapacity;
+        // Liquidation window in seconds.
+        uint128 liquidationWindowTime;
     }
 
     function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {

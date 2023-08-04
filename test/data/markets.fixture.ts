@@ -18,6 +18,8 @@ export const MARKETS = [
       incrementalMarginScalar: bn(1),
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
+      liquidationCapacity: bn(1000),
+      liquidationWindowTime: bn(60),
     },
   },
   {
@@ -36,6 +38,8 @@ export const MARKETS = [
       incrementalMarginScalar: bn(1),
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
+      liquidationCapacity: bn(1000),
+      liquidationWindowTime: bn(60),
     },
   },
   {
@@ -54,6 +58,8 @@ export const MARKETS = [
       incrementalMarginScalar: bn(1),
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
+      liquidationCapacity: bn(1000),
+      liquidationWindowTime: bn(60),
     },
   },
   {
@@ -72,6 +78,8 @@ export const MARKETS = [
       incrementalMarginScalar: bn(1),
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
+      liquidationCapacity: bn(1000),
+      liquidationWindowTime: bn(60),
     },
   },
   {
@@ -90,6 +98,8 @@ export const MARKETS = [
       incrementalMarginScalar: bn(1),
       maintenanceMarginScalar: bn(0.5),
       liquidationRewardPercent: bn(0.00002),
+      liquidationCapacity: bn(1000),
+      liquidationWindowTime: bn(60),
     },
   },
 ];

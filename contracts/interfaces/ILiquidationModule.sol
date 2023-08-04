@@ -24,7 +24,7 @@ interface ILiquidationModule {
     /**
      * @dev Returns fee paid to keeper for initiating liquidation (or just flagging).
      */
-    function getKeeperFee(uint128 accountId, uint128 marketId) external;
+    function getLiquidationKeeperFee(uint128 accountId, uint128 marketId) external;
 
     /**
      * @dev Returns whether a position owned by `accountId` can be flagged for liquidated.

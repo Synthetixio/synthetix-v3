@@ -79,6 +79,8 @@ export const genMarket = () => ({
     incrementalMarginScalar: bn(genFloat(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
     liquidationRewardPercent: wei(genFloat(0.005, 0.0075)).toBN(),
+    liquidationCapacity: bn(genOneOf([100, 500, 1000, 2000, 4000])),
+    liquidationWindowTime: bn(genOneOf([36, 48, 60])),
   },
 });
 

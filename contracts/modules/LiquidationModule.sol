@@ -27,7 +27,7 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getKeeperFee(uint128 accountId, uint128 marketId) external {}
+    function getLiquidationKeeperFee(uint128 accountId, uint128 marketId) external {}
 
     // --- Views --- //
 
