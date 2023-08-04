@@ -58,6 +58,7 @@ const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' })
 const restoreSnapshot = _bootstraped.createSnapshot();
 
 export interface BootstrapArgs {
+  initialEthPrice: BigNumber;
   pool: {
     initialCollateralPrice: BigNumber;
   };
@@ -110,6 +111,21 @@ export const bootstrap = (args: BootstrapArgs) => {
   before('configure global market', async () => {
     const tx = await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
     await tx.wait();
+  });
+
+  let ethOracleNodeId: string;
+  let ethOracleAgg: AggregatorV3Mock;
+  before('configure eth/usd price oracle node', async () => {
+    const { oracleNodeId, aggregator } = await createOracleNode(
+      getOwner(),
+      args.initialEthPrice,
+      systems.OracleManager
+    );
+    const tx = await systems.PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
+    await tx.wait();
+
+    ethOracleNodeId = oracleNodeId;
+    ethOracleAgg = aggregator;
   });
 
   const markets = args.markets.map(({ name, initialPrice, specific }) => {
@@ -269,5 +285,6 @@ export const bootstrap = (args: BootstrapArgs) => {
       oracleNodeId: stakedPool.oracleNodeId,
       aggregator: stakedPool.aggregator,
     }),
+    ethOracleNode: () => ({ nodeId: ethOracleNodeId, agg: ethOracleAgg }),
   };
 };

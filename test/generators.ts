@@ -41,6 +41,7 @@ export const genInt = (min = 0, max = 1) => Math.floor(genFloat(min, max));
 // `genMarket` which doesn't necessarily depend on existing state and might be used for isolated cases.
 
 export const genBootstrap = () => ({
+  initialEthPrice: bn(genInt(1900, 2500)),
   pool: {
     initialCollateralPrice: bn(genInt(100, 10_000)),
   },
