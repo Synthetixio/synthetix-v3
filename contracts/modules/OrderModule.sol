@@ -209,6 +209,18 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
+    function simulateOrder(
+        uint128 accountId,
+        uint128 marketId,
+        uint128 sizeDelta,
+        uint256 limitPrice,
+        uint256 keeperFeeBufferUsd,
+        uint256 oraclePrice
+    ) external view {}
+
+    /**
+     * @inheritdoc IOrderModule
+     */
     function getOrderFees(
         uint128 marketId,
         int128 sizeDelta,

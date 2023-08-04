@@ -63,6 +63,18 @@ interface IOrderModule is IBasePerpMarket {
     // --- Views --- //
 
     /**
+     * @dev Given details about a trader, simulate a what would happen if the order were to be committed.
+     */
+    function simulateOrder(
+        uint128 accountId,
+        uint128 marketId,
+        uint128 sizeDelta,
+        uint256 limitPrice,
+        uint256 keeperFeeBufferUsd,
+        uint256 oraclePrice
+    ) external view;
+
+    /**
      * @dev Returns fee charged to open/close an order and keeperFee.
      *
      * This incorporates the scenario where a if a trade flips the skew, the proportion that reduces the skew
