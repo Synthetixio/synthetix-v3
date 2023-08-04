@@ -198,6 +198,8 @@ describe('OrderModule', () => {
 
     it('should recompute funding on settlement');
 
+    it('should update market size and skew upon settlement');
+
     it('should pay a non-zero settlement fee to keeper');
 
     it('should revert when market is paused');
