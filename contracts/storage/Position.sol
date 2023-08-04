@@ -194,7 +194,7 @@ library Position {
     }
 
     /**
-     * @dev Given the account and position in market return a liquidated (or partially) after validation
+     * @dev Given account and position in market return a liquidated `newPosition` (or partially) after validation.
      */
     function validateLiquidation(
         uint128 accountId,
@@ -267,6 +267,9 @@ library Position {
         mm = notional.mulDecimal(mmr) + marketConfig.minMarginUsd + liqReward;
     }
 
+    /**
+     * @dev Returns the fee in USD paid to keeper for performing the liquidation (not flagging).
+     */
     function getLiquidationKeeperFee() internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
