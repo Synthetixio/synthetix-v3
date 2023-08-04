@@ -117,6 +117,14 @@ describe('SnapshotVotePowerModule', function () {
       const settings = await c.CoreProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
       await c.CoreProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
+
+      const snapshotId = await c.CoreProxy.getVotePowerSnapshotId(
+        c.SnapshotRecordMock.address,
+        await c.CoreProxy.Council_get_lastElectionId()
+      );
+
+      console.log('GOT THE SNAPSHOT ID', snapshotId);
+      await c.SnapshotRecordMock.setBalanceOfOnPeriod(await user.getAddress(), 100, snapshotId);
     });
 
     it('cannot prepare ballot before voting starts', async function () {
@@ -130,7 +138,7 @@ describe('SnapshotVotePowerModule', function () {
       );
     });
 
-    before('advance to voting period', async function () {
+    describe('advance to voting period', function () {
       before('advance time', async function () {
         const settings = await c.CoreProxy.getEpochSchedule();
         await fastForwardTo(settings.votingPeriodStartDate.toNumber(), getProvider());
@@ -156,7 +164,7 @@ describe('SnapshotVotePowerModule', function () {
           13370 // precinct is current chain id
         );
 
-        assert.equal(ballotVotingPower, 100);
+        assertBn.equal(ballotVotingPower, 100);
       });
     });
   });

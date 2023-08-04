@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/external/ISnapshotRecord.sol";
+import "hardhat/console.sol";
 
 contract SnapshotRecordMock is ISnapshotRecord {
     struct Period {
@@ -21,9 +22,9 @@ contract SnapshotRecordMock is ISnapshotRecord {
     function balanceOfOnPeriod(
         address user,
         uint128 periodId
-    ) external view virtual override returns (uint) {
-        // solhint-disable-next-line numcast/safe-cast
-        Period storage period = _periods[uint128(periodId)];
+    ) external view override returns (uint) {
+				console.log("INSIDE THE BALANCEOFONPERIOD FUNCTION");
+        Period storage period = _periods[periodId];
 
         return period.balances[user];
     }

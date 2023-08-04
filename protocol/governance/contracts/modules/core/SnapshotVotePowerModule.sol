@@ -60,13 +60,18 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
 		}
 
     function prepareBallotWithSnapshot(
-        address voter,
-        address snapshotContract
+        address snapshotContract,
+        address voter
     ) external override returns (uint256 power) {
         Council.Data storage council = Council.load();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
         uint128 currentEpoch = council.lastElectionId.to128();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
+
+				if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
+					revert SnapshotNotTaken(snapshotContract, currentEpoch);
+				}
+
         power = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
             voter,
             snapshotVotePower.epochs[currentEpoch].snapshotId
