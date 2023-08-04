@@ -21,6 +21,7 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
  */
 library PerpMarket {
     using DecimalMath for int128;
+    using DecimalMath for uint128;
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
@@ -55,6 +56,8 @@ library PerpMarket {
         mapping(uint128 => address) flaggedLiquidations;
         // block.timestamp of when a liquidation last occurred.
         uint256 lastLiquidationTime;
+        // Size of accumulated liquidations in window relative to lastLiquidationTime.
+        uint128 lastLiquidationUtilization;
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
@@ -93,7 +96,45 @@ library PerpMarket {
         globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }
 
-    // --- Members --- //
+    // --- Members (mutative) --- //
+
+    /**
+     * @dev Updates position for `data.accountId` with `data`.
+     */
+    function updatePosition(PerpMarket.Data storage self, Position.Data memory data) internal {
+        self.positions[data.accountId].update(data);
+    }
+
+    /**
+     * @dev Updates order for `data.accountId` with `data`.
+     */
+    function updateOrder(PerpMarket.Data storage self, Order.Data memory data) internal {
+        self.orders[data.accountId].update(data);
+    }
+
+    /**
+     * @dev Removes the order from the market at `accountId`.
+     */
+    function removeOrder(PerpMarket.Data storage self, uint128 accountId) internal {
+        delete self.orders[accountId];
+    }
+
+    /**
+     * @dev Recompute and store funding related values given the current market conditions.
+     */
+    function recomputeFunding(
+        PerpMarket.Data storage self,
+        uint256 price
+    ) internal returns (int256 fundingRate, int256 fundingAccrued) {
+        fundingRate = getCurrentFundingRate(self);
+        fundingAccrued = getNextFunding(self, price);
+
+        self.currentFundingRateComputed = fundingRate;
+        self.currentFundingAccruedComputed = fundingAccrued;
+        self.lastFundingTime = block.timestamp;
+    }
+
+    // --- Members (views) --- //
 
     /**
      * @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
@@ -136,27 +177,6 @@ library PerpMarket {
         uint256 baseConvertion = 10 ** uint(int(18) + latestPrice.expo);
         price = (latestPrice.price * int(baseConvertion)).toUint();
         publishTime = latestPrice.publishTime;
-    }
-
-    /**
-     * @dev Updates position for `data.accountId` with `data`.
-     */
-    function updatePosition(PerpMarket.Data storage self, Position.Data memory data) internal {
-        self.positions[data.accountId].update(data);
-    }
-
-    /**
-     * @dev Updates order for `data.accountId` with `data`.
-     */
-    function updateOrder(PerpMarket.Data storage self, Order.Data memory data) internal {
-        self.orders[data.accountId].update(data);
-    }
-
-    /**
-     * @dev Removes the order from the market at `accountId`.
-     */
-    function removeOrder(PerpMarket.Data storage self, uint128 accountId) internal {
-        delete self.orders[accountId];
     }
 
     /**
@@ -238,17 +258,30 @@ library PerpMarket {
     }
 
     /**
-     * @dev Recompute and store funding related values given the current market conditions.
+     * @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
      */
-    function recomputeFunding(
-        PerpMarket.Data storage self,
-        uint256 price
-    ) internal returns (int256 fundingRate, int256 fundingAccrued) {
-        fundingRate = getCurrentFundingRate(self);
-        fundingAccrued = getNextFunding(self, price);
+    function getRemainingLiquidatableCapacity(PerpMarket.Data storage self) internal view returns (uint128 capacity) {
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
 
-        self.currentFundingRateComputed = fundingRate;
-        self.currentFundingAccruedComputed = fundingAccrued;
-        self.lastFundingTime = block.timestamp;
+        // NOTE: This feels wrong but I'm going off v3 implementation until fifa gets back with
+        // response.
+        //
+        // 100,000         skewScale
+        // 0.0002 / 0.0006 {maker,taker}Fee
+        // 1               scalar
+        // 2000            maxMarketSize
+        // 30s             window
+        //
+        // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000 * 30
+        //                         = 2400
+        //                         = ??? huh
+        uint128 maxLiquidatableCapacity = uint128(marketConfig.makerFee + marketConfig.takerFee)
+            .mulDecimal(marketConfig.skewScale)
+            .mulDecimal(marketConfig.liquidationLimitScalar)
+            .mulDecimal(marketConfig.liquidationWindowDuration)
+            .to128();
+        capacity = block.timestamp - self.lastLiquidationTime > marketConfig.liquidationWindowDuration
+            ? maxLiquidatableCapacity
+            : MathUtil.max((maxLiquidatableCapacity - self.lastLiquidationUtilization).toInt(), 0).toUint().to128();
     }
 }

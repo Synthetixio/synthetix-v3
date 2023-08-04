@@ -57,7 +57,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.maintenanceMarginScalar = data.maintenanceMarginScalar;
         config.liquidationRewardPercent = data.liquidationRewardPercent;
         config.liquidationLimitScalar = data.liquidationLimitScalar;
-        config.liquidationWindowTime = data.liquidationWindowTime;
+        config.liquidationWindowDuration = data.liquidationWindowDuration;
 
         emit MarketConfigurationUpdated(marketId, msg.sender);
     }

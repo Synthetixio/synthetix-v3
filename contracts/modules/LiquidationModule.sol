@@ -46,14 +46,27 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidatePosition(uint128 accountId, uint128 marketId) external {}
+    function liquidatePosition(uint128 accountId, uint128 marketId) external {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        // The position must be flagged first.
+        if (market.flaggedLiquidations[accountId] == address(0)) {
+            revert ErrorUtil.PositionNotFlagged();
+        }
+    }
+
+    // --- Views --- //
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getLiquidationKeeperFee(uint128 accountId, uint128 marketId) external {}
+    function getLiquidationKeeperFee(uint128 accountId, uint128 marketId) external view returns (uint256) {}
 
-    // --- Views --- //
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function getRemainingLiquidatableCapacity(uint128 marketId) external view returns (uint128) {}
 
     /**
      * @inheritdoc ILiquidationModule

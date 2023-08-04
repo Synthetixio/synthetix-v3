@@ -76,8 +76,8 @@ library PerpMarketConfiguration {
         uint256 liquidationRewardPercent;
         // An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
         uint128 liquidationLimitScalar;
-        // Liquidation window in seconds.
-        uint128 liquidationWindowTime;
+        // Liquidation window duration in seconds.
+        uint128 liquidationWindowDuration;
     }
 
     function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {
