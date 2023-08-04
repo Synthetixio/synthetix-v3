@@ -6,6 +6,7 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
 import {Position} from "../storage/Position.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import "../interfaces/ILiquidationModule.sol";
 
 contract LiquidationModule is ILiquidationModule {
@@ -17,7 +18,30 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function flagPosition(uint128 accountId, uint128 marketId) external {}
+    function flagPosition(uint128 accountId, uint128 marketId) external {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        bool isLiquidatable = market.positions[accountId].isLiquidatable(
+            PerpCollateral.getCollateralUsd(accountId, marketId),
+            market.getOraclePrice(),
+            PerpMarketConfiguration.load(marketId)
+        );
+
+        // Cannot flag for liquidation unless they are liquidatable.
+        if (!isLiquidatable) {
+            revert ErrorUtil.CannotLiquidatePosition();
+        }
+
+        // Cannot reflag.
+        if (market.flaggedLiquidations[accountId] != address(0)) {
+            revert ErrorUtil.PositionFlagged();
+        }
+
+        // Flag and emit event.
+        market.flaggedLiquidations[accountId] = msg.sender;
+        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender);
+    }
 
     /**
      * @inheritdoc ILiquidationModule

@@ -29,7 +29,7 @@ library ErrorUtil {
     // @dev Thrown when an expected position cannot be found.
     error PositionNotFound();
 
-    // @dev Thrown when attempting to mutate a position flagged for liquidation.
+    // @dev Thrown when attempting to mutate a position (or reflag) flagged for liquidation.
     error PositionFlagged();
 
     // @dev Thrown when attempting to liquidate but position has yet to be flagged.

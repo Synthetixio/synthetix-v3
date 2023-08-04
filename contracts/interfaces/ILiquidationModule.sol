@@ -7,6 +7,9 @@ interface ILiquidationModule {
     // @dev Emitted when position has been liquidated.
     event PositionLiquidated(uint128 indexed accountId, uint128 marketId, address indexed keeper, uint256 reward);
 
+    // @dev Emitted when position is flagged for liquidation.
+    event PositionFlaggedLiquidation(uint128 indexed accountId, uint128 marketId, address indexed flagger);
+
     // --- Mutative --- //
 
     /**
