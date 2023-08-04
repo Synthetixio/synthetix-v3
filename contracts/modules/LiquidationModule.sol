@@ -87,12 +87,28 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getLiquidationKeeperFee(uint128 accountId, uint128 marketId) external view returns (uint256) {}
+    function getLiquidationFees(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256 liqReward, uint256 keeperFee) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        (, , liqReward) = Position.getLiquidationMarginUsd(
+            market.positions[accountId].size,
+            market.getOraclePrice(),
+            PerpMarketConfiguration.load(marketId)
+        );
+        keeperFee = Position.getLiquidationKeeperFee();
+    }
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getRemainingLiquidatableCapacity(uint128 marketId) external view returns (uint128) {}
+    function getRemainingLiquidatableCapacity(uint128 marketId) external view returns (uint128) {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return market.getRemainingLiquidatableCapacity(PerpMarketConfiguration.load(marketId));
+    }
 
     /**
      * @inheritdoc ILiquidationModule

@@ -34,11 +34,12 @@ interface ILiquidationModule is IBasePerpMarket {
     // --- Views --- //
 
     /**
-     * @dev Returns fee paid to keeper for initiating liquidation (or just flagging).
-     *
-     * Combine this into getLiquidationFees (liqReward and keeperFee) - like OrderModule.
+     * @dev Returns fees paid to flagger and liquidator (in USD) if position successfully liquidated.
      */
-    function getLiquidationKeeperFee(uint128 accountId, uint128 marketId) external view returns (uint256);
+    function getLiquidationFees(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (uint256 liqReward, uint256 keeperFee);
 
     /**
      * @dev Returns the remaining liquidation capacity for a given market now.

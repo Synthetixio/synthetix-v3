@@ -193,6 +193,9 @@ library Position {
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
     }
 
+    /**
+     * @dev Given the account and position in market return a liquidated (or partially) after validation
+     */
     function validateLiquidation(
         uint128 accountId,
         PerpMarket.Data storage market,
