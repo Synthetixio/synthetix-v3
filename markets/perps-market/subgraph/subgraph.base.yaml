@@ -12,7 +12,7 @@ dataSources:
       language: wasm/assemblyscript
       abis:
         - name: PerpsMarketProxy
-          file: ./deployments/optimism-goerli/perpsFactory/PerpsMarketProxy.json
+          file: ./deployments/optimism-goerli/PerpsMarketProxy.json
       entities:
         - Account
         - LiquidatedAccount
