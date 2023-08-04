@@ -8,7 +8,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../storage/Account.sol";
-import "../../storage/CollateralConfiguration.sol";
+import "../../storage/Collateral.sol";
 import "../../storage/Config.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
@@ -23,6 +23,7 @@ contract IssueUSDModule is IIssueUSDModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
+    using Collateral for Collateral.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
@@ -45,6 +46,7 @@ contract IssueUSDModule is IIssueUSDModule {
     bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
     bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
     bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
+    bytes32 private constant _CONFIG_TIMEOUT_BURN = "burnUsd_toAccount";
 
     /**
      * @inheritdoc IIssueUSDModule
@@ -57,10 +59,9 @@ contract IssueUSDModule is IIssueUSDModule {
     ) external override {
         FeatureFlag.ensureAccessToFeature(_MINT_FEATURE_FLAG);
 
-        Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
-            AccountRBAC._MINT_PERMISSION,
-            Config.readUint(_CONFIG_TIMEOUT_MINT, 0)
+            AccountRBAC._MINT_PERMISSION
         );
 
         // disabled collateralType cannot be used for minting

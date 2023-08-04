@@ -268,6 +268,7 @@ contract IssueUSDModule {
     bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
     bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
     bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
+    bytes32 private constant _CONFIG_TIMEOUT_BURN = "burnUsd_toAccount";
 }
 
 // @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
