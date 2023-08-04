@@ -4,6 +4,9 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../interfaces/external/IFeeCollector.sol";
 
+/**
+ * @title Mock Fee Collector.
+ */
 contract FeeCollectorMock is IFeeCollector {
     uint internal feeRatioD18;
 
