@@ -5,8 +5,14 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "./Election.sol";
 import "./ElectionSettings.sol";
 
+import "hardhat/console.sol";
+
 library Council {
+		using ElectionSettings for ElectionSettings.Data;
+
     error NotCallableInCurrentPeriod();
+		error InvalidEpochConfiguration(uint256 code, uint64 v1, uint64 v2);
+		error ChangesCurrentPeriod();
 
     bytes32 private constant _SLOT_COUNCIL_STORAGE =
         keccak256(abi.encode("io.synthetix.governance.Council"));
@@ -42,8 +48,10 @@ library Council {
         }
     }
 
-    function newElection(Data storage self) internal returns (uint) {
-        return ++self.lastElectionId;
+    function newElection(Data storage self) internal returns (uint newElectionId) {
+        getNextElectionSettings(self).copyMissingFrom(getCurrentElectionSettings(self));
+        newElectionId = ++self.lastElectionId;
+        initScheduleFromSettings(self);
     }
 
     function getCurrentElection(
@@ -105,5 +113,144 @@ library Council {
         if (getCurrentPeriod(load()) != period) {
             revert NotCallableInCurrentPeriod();
         }
+    }
+
+    /// @dev Ensures epoch dates are in the correct order, durations are above minimums, etc
+    function validateEpochSchedule(
+				Data storage self,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    ) private view {
+				if (epochEndDate <= votingPeriodStartDate) {
+						revert InvalidEpochConfiguration(1, epochEndDate, votingPeriodStartDate);
+				} else if (votingPeriodStartDate <= nominationPeriodStartDate) {
+						revert InvalidEpochConfiguration(2, votingPeriodStartDate, nominationPeriodStartDate);
+				} else if (nominationPeriodStartDate <= epochStartDate) {
+						revert InvalidEpochConfiguration(3, nominationPeriodStartDate, epochStartDate);
+				}
+
+        uint64 epochDuration = epochEndDate - epochStartDate;
+        uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
+        uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
+
+        ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
+
+				if (epochDuration < settings.nominationPeriodDuration + settings.votingPeriodDuration) {
+						revert InvalidEpochConfiguration(4, epochDuration, settings.nominationPeriodDuration + settings.votingPeriodDuration);
+				}	else if (nominationPeriodDuration < settings.nominationPeriodDuration) {
+						revert InvalidEpochConfiguration(5, nominationPeriodDuration, settings.nominationPeriodDuration);
+				} else if (votingPeriodDuration < settings.votingPeriodDuration) {
+						revert InvalidEpochConfiguration(6, votingPeriodDuration, settings.votingPeriodDuration);
+				}
+    }
+
+    function configureEpochSchedule(
+				Data storage self,
+        Epoch.Data storage epoch,
+        uint64 epochStartDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    ) internal {
+        validateEpochSchedule(
+						self,
+            epochStartDate,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
+
+        epoch.startDate = epochStartDate;
+        epoch.nominationPeriodStartDate = nominationPeriodStartDate;
+        epoch.votingPeriodStartDate = votingPeriodStartDate;
+        epoch.endDate = epochEndDate;
+    }
+    /// @dev Changes epoch dates, with validations
+    function adjustEpochSchedule(
+				Data storage self,
+        Epoch.Data storage epoch,
+        uint64 newNominationPeriodStartDate,
+        uint64 newVotingPeriodStartDate,
+        uint64 newEpochEndDate,
+        bool ensureChangesAreSmall
+    ) internal {
+        if (ensureChangesAreSmall) {
+            ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
+
+            if (
+                uint64AbsDifference(newEpochEndDate, epoch.startDate + settings.epochDuration) >
+                settings.maxDateAdjustmentTolerance ||
+                uint64AbsDifference(
+                    newNominationPeriodStartDate,
+                    epoch.nominationPeriodStartDate
+                ) >
+                settings.maxDateAdjustmentTolerance ||
+                uint64AbsDifference(newVotingPeriodStartDate, epoch.votingPeriodStartDate) >
+                settings.maxDateAdjustmentTolerance
+            ) {
+                revert InvalidEpochConfiguration(7, 0, 0);
+            }
+        }
+
+        configureEpochSchedule(
+						self,
+            epoch,
+            epoch.startDate,
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate
+        );
+
+        if (getCurrentPeriod(self) != Council.ElectionPeriod.Administration) {
+            revert ChangesCurrentPeriod();
+        }
+    }
+
+    /// @dev Moves schedule forward to immediately jump to the nomination period
+    function jumpToNominationPeriod(Data storage self) internal {
+        Epoch.Data storage currentEpoch = getCurrentElection(self).epoch;
+        ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
+
+        // Keep the previous durations, but shift everything back
+        // so that nominations start now
+        uint64 newNominationPeriodStartDate = uint64(block.timestamp);
+        uint64 newVotingPeriodStartDate = newNominationPeriodStartDate +
+            settings.nominationPeriodDuration;
+        uint64 newEpochEndDate = newVotingPeriodStartDate + settings.votingPeriodDuration;
+
+        configureEpochSchedule(
+						self,
+            currentEpoch,
+            currentEpoch.startDate,
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate
+        );
+    }
+
+    function initScheduleFromSettings(Data storage self) internal {
+        ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
+
+				console.log("schedule", settings.epochDuration, settings.nominationPeriodDuration, settings.votingPeriodDuration);
+        uint64 currentEpochStartDate = uint64(block.timestamp);
+        uint64 currentEpochEndDate = currentEpochStartDate + settings.epochDuration;
+        uint64 currentVotingPeriodStartDate = currentEpochEndDate - settings.votingPeriodDuration;
+        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate -
+            settings.nominationPeriodDuration;
+
+        configureEpochSchedule(
+						self,
+            getCurrentElection(self).epoch,
+            currentEpochStartDate,
+            currentNominationPeriodStartDate,
+            currentVotingPeriodStartDate,
+            currentEpochEndDate
+        );
+    }
+
+    function uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
+        return valueA > valueB ? valueA - valueB : valueB - valueA;
     }
 }

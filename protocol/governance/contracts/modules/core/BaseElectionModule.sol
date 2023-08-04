@@ -27,6 +27,7 @@ contract BaseElectionModule is
 {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
+		using ElectionSettings for ElectionSettings.Data;
     using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
     using Ballot for Ballot.Data;
@@ -78,24 +79,18 @@ contract BaseElectionModule is
         uint64 epochStartDate = block.timestamp.to64();
 
         ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
-        _setElectionSettings(
-            settings,
+        settings.setElectionSettings(
             epochSeatCount,
             minimumActiveMembers,
             epochEndDate - epochStartDate, // epochDuration
             votingPeriodStartDate - nominationPeriodStartDate, // nominationPeriodDuration
             epochEndDate - votingPeriodStartDate, // votingPeriodDuration
             maxDateAdjustmentTolerance
-        );
-
-        // Set current implementation (see UpgradeProposalModule)
-        settings.proposedImplementation = _proxyStore().implementation;
-
-        _copyMissingSettings(settings, store.getNextElectionSettings());
+				);
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
 
-        _configureEpochSchedule(
+        store.configureEpochSchedule(
             firstEpoch,
             epochStartDate,
             nominationPeriodStartDate,
@@ -149,8 +144,9 @@ contract BaseElectionModule is
     ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
-        _adjustEpochSchedule(
-            Council.load().getCurrentElection().epoch,
+				Council.Data storage council = Council.load();
+        council.adjustEpochSchedule(
+            council.getCurrentElection().epoch,
             newNominationPeriodStartDate,
             newVotingPeriodStartDate,
             newEpochEndDate,
@@ -206,7 +202,7 @@ contract BaseElectionModule is
             return;
         }
 
-        _jumpToNominationPeriod();
+        store.jumpToNominationPeriod();
 
         emit EmergencyElectionStarted(epochIndex);
     }
@@ -329,9 +325,6 @@ contract BaseElectionModule is
         election.resolved = true;
 
         store.newElection();
-
-        _copyMissingSettings(store.getCurrentElectionSettings(), store.getNextElectionSettings());
-        _initScheduleFromSettings();
 
         emit EpochStarted(newEpochIndex);
 

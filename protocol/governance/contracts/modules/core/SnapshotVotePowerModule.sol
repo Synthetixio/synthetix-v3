@@ -8,6 +8,7 @@ import "../../storage/SnapshotVotePower.sol";
 import "../../storage/Election.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "hardhat/console.sol";
 
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
@@ -51,8 +52,12 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
         return
             snapshotVotePower.validFromEpoch <= electionId &&
-            snapshotVotePower.validToEpoch > electionId;
+            (snapshotVotePower.validToEpoch == 0 || snapshotVotePower.validToEpoch > electionId);
     }
+
+		function getVotePowerSnapshotId(address snapshotContract, uint128 electionId) external view returns (uint128) {
+				return SnapshotVotePower.load(snapshotContract).epochs[electionId].snapshotId;
+		}
 
     function prepareBallotWithSnapshot(
         address voter,
