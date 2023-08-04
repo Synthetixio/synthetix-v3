@@ -49,11 +49,37 @@ contract LiquidationModule is ILiquidationModule {
     function liquidatePosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        // The position must be flagged first.
-        if (market.flaggedLiquidations[accountId] == address(0)) {
-            revert ErrorUtil.PositionNotFlagged();
+        uint256 oraclePrice = market.getOraclePrice();
+        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+
+        (Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = Position.validateLiquidation(
+            accountId,
+            market,
+            marketConfig,
+            oraclePrice
+        );
+
+        market.updatePosition(newPosition);
+
+        // TODO: Similar to settleOrder, we need to update market with latest skew/size etc.
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        address flagger = market.flaggedLiquidations[accountId];
+        if (flagger == msg.sender) {
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
+        } else {
+            globalConfig.synthetix.withdrawMarketUsd(marketId, flagger, liqReward);
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
+
+        emit PositionLiquidated(accountId, marketId, msg.sender, flagger, liqReward, keeperFee);
+
+        // No need to interact with the Synthetix core system. Collateral has already been deposited. We just need to update
+        // internal account to reflect debt has been reduced allowing LPs to mint more pro rata.
     }
 
     // --- Views --- //
@@ -92,7 +118,7 @@ contract LiquidationModule is ILiquidationModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        (im, mm) = Position.getLiquidationMarginUsd(
+        (im, mm, ) = Position.getLiquidationMarginUsd(
             market.positions[accountId].size,
             market.getOraclePrice(),
             marketConfig

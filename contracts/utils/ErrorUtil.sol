@@ -38,6 +38,9 @@ library ErrorUtil {
     // @dev Thrown when a position cannot be liquidated.
     error CannotLiquidatePosition();
 
+    // @dev Thrown when liquidation has hit its capacity limit for current window.
+    error LiquidationZeroCapacity();
+
     // @dev Thrown when attempting to operate with an order with 0 size delta.
     error NilOrder();
 

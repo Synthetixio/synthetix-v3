@@ -1,11 +1,20 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-interface ILiquidationModule {
+import "./IBasePerpMarket.sol";
+
+interface ILiquidationModule is IBasePerpMarket {
     // --- Events --- //
 
     // @dev Emitted when position has been liquidated.
-    event PositionLiquidated(uint128 indexed accountId, uint128 marketId, address indexed keeper, uint256 reward);
+    event PositionLiquidated(
+        uint128 indexed accountId,
+        uint128 marketId,
+        address keeper,
+        address flagger,
+        uint256 liqReward,
+        uint256 keeperFee
+    );
 
     // @dev Emitted when position is flagged for liquidation.
     event PositionFlaggedLiquidation(uint128 indexed accountId, uint128 marketId, address indexed flagger);
@@ -26,6 +35,8 @@ interface ILiquidationModule {
 
     /**
      * @dev Returns fee paid to keeper for initiating liquidation (or just flagging).
+     *
+     * Combine this into getLiquidationFees (liqReward and keeperFee) - like OrderModule.
      */
     function getLiquidationKeeperFee(uint128 accountId, uint128 marketId) external view returns (uint256);
 

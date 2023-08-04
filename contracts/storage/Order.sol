@@ -11,6 +11,7 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
  * @dev An order that has yet to be settled for position modification.
  */
 library Order {
+    using PerpMarketConfiguration for PerpMarketConfiguration.GlobalData;
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
@@ -35,10 +36,11 @@ library Order {
         int128 sizeDelta,
         uint256 oraclePrice
     ) internal pure returns (uint256) {
+        int256 oraclePriceI = oraclePrice.toInt();
         int256 pdBefore = skew.divDecimal(skewScale.toInt());
         int256 pdAfter = (skew + sizeDelta).divDecimal(skewScale.toInt());
-        int256 priceBefore = oraclePrice.toInt() + (oraclePrice.toInt().mulDecimal(pdBefore));
-        int256 priceAfter = oraclePrice.toInt() + (oraclePrice.toInt().mulDecimal(pdAfter));
+        int256 priceBefore = oraclePriceI + (oraclePriceI.mulDecimal(pdBefore));
+        int256 priceAfter = oraclePriceI + (oraclePriceI.mulDecimal(pdAfter));
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
@@ -94,9 +96,11 @@ library Order {
      *
      * See IOrderModule.getOrderFees for more details.
      */
-    function getKeeperFee(uint256 keeperFeeBufferUsd, uint256 price) internal view returns (uint256) {
+    function getSettlementKeeperFee(uint256 keeperFeeBufferUsd) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        uint256 baseKeeperFeeUsd = globalConfig.keeperSettlementGasUnits * block.basefee * price;
+        uint256 ethPrice = globalConfig.getEthPrice();
+
+        uint256 baseKeeperFeeUsd = globalConfig.keeperSettlementGasUnits * block.basefee * ethPrice;
         uint256 boundedKeeperFeeUsd = MathUtil.max(
             MathUtil.min(
                 globalConfig.minKeeperFeeUsd,
@@ -107,7 +111,7 @@ library Order {
         return boundedKeeperFeeUsd;
     }
 
-    // --- Member --- //
+    // --- Member (mutative) --- //
 
     /**
      * @dev Updates the current order struct in-place with new data from `data`.

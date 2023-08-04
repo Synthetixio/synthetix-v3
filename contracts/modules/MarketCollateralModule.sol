@@ -35,7 +35,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
             revert ErrorUtil.CanLiquidatePosition(position.accountId);
         }
 
-        (uint256 imnp, ) = Position.getLiquidationMarginUsd(position.size, market.getOraclePrice(), marketConfig);
+        (uint256 imnp, , ) = Position.getLiquidationMarginUsd(position.size, market.getOraclePrice(), marketConfig);
         if (collateralUsd - position.feesIncurredUsd < imnp) {
             revert ErrorUtil.InsufficientMargin();
         }

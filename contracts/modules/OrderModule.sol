@@ -45,7 +45,6 @@ contract OrderModule is IOrderModule {
 
         uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         // TODO: Should we be using the limitPrice to infer max oi etc.?
@@ -66,7 +65,7 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        (, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(accountId, marketId, params);
+        (, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(accountId, market, params);
 
         market.updateOrder(
             Order.Data({
@@ -186,13 +185,20 @@ contract OrderModule is IOrderModule {
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         (Position.Data memory newPosition, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(
             accountId,
-            marketId,
+            market,
             params
         );
 
         // TODO: Condition to position.clear() when completely closing position?
         market.updatePosition(newPosition);
         market.removeOrder(accountId);
+
+        // TODO
+        // Market details should be reflect as part of the updatePosition
+        //
+        // (skew, size, recompute funding etc.)
+        //
+        // Pay the keeper that settled this order.
 
         emit OrderSettled(accountId, marketId, order.sizeDelta, _orderFee, keeperFee);
     }
@@ -229,17 +235,14 @@ contract OrderModule is IOrderModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
-        int128 skew = market.skew;
-        uint256 oraclePrice = market.getOraclePrice();
-
         orderFee = Order.getOrderFee(
             sizeDelta,
-            Order.getFillPrice(skew, marketConfig.skewScale, sizeDelta, market.getOraclePrice()),
-            skew,
+            Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, market.getOraclePrice()),
+            market.skew,
             marketConfig.makerFee,
             marketConfig.takerFee
         );
-        keeperFee = Order.getKeeperFee(keeperFeeBufferUsd, oraclePrice);
+        keeperFee = Order.getSettlementKeeperFee(keeperFeeBufferUsd);
     }
 
     /**

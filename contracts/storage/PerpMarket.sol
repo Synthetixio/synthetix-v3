@@ -96,7 +96,7 @@ library PerpMarket {
         globalConfig.pyth.updatePriceFeeds{value: msg.value}(updateData);
     }
 
-    // --- Members (mutative) --- //
+    // --- Member (mutative) --- //
 
     /**
      * @dev Updates position for `data.accountId` with `data`.
@@ -134,7 +134,7 @@ library PerpMarket {
         self.lastFundingTime = block.timestamp;
     }
 
-    // --- Members (views) --- //
+    // --- Member (views) --- //
 
     /**
      * @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
@@ -260,9 +260,10 @@ library PerpMarket {
     /**
      * @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
      */
-    function getRemainingLiquidatableCapacity(PerpMarket.Data storage self) internal view returns (uint128 capacity) {
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-
+    function getRemainingLiquidatableCapacity(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint128 capacity) {
         // NOTE: This feels wrong but I'm going off v3 implementation until fifa gets back with
         // response.
         //

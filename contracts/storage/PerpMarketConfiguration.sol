@@ -1,12 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 
 library PerpMarketConfiguration {
+    using SafeCastI256 for int256;
+
     // --- Constants --- //
 
     bytes32 private constant _SLOT_NAMESPACE = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
@@ -23,6 +27,8 @@ library PerpMarketConfiguration {
         INodeModule oracleManager;
         // A reference to the Pyth EVM contract.
         IPyth pyth;
+        // Oracle node id for for eth/usd.
+        bytes32 ethOracleNodeId;
         // In bps the maximum deviation between on-chain prices and Pyth prices for settlements.
         uint128 priceDivergencePercent;
         // Minimum acceptable publishTime from Pyth WH VAA price update data.
@@ -94,5 +100,21 @@ library PerpMarketConfiguration {
         assembly {
             d.slot := s
         }
+    }
+
+    /**
+     * @dev Returns the latest ETH/USD price.
+     */
+    function getEthPrice(PerpMarketConfiguration.GlobalData storage self) internal view returns (uint256) {
+        return self.oracleManager.process(self.ethOracleNodeId).price.toUint();
+    }
+
+    function withdrawMarketUsd(
+        PerpMarketConfiguration.GlobalData storage self,
+        uint128 marketId,
+        address to,
+        uint256 amount
+    ) internal {
+        self.synthetix.withdrawMarketUsd(marketId, to, amount);
     }
 }
