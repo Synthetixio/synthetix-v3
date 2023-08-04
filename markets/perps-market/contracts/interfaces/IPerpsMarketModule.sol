@@ -11,11 +11,11 @@ interface IPerpsMarketModule {
      * @notice Market Summary structured data.
      */
     struct MarketSummary {
-        // @dev Skew of the market
+        // @dev Skew of the market in units of native asse
         int256 skew;
-        // @dev Size of the market
+        // @dev Size of the market in units of native asset
         uint256 size;
-        // @dev Max open interest of the market
+        // @dev Max open interest of the market in units of native asset
         uint256 maxOpenInterest;
         // @dev Current funding rate of the market
         int currentFundingRate;
