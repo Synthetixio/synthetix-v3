@@ -260,12 +260,11 @@ library PerpMarket {
     /**
      * @dev Returns the max amount in size we can liquidate now. Zero if limit has been reached.
      */
-    function getRemainingLiquidatableCapacity(
+    function getRemainingLiquidatableSizeCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint128) {
-        // NOTE: This feels wrong but I'm going off v3 implementation until fifa gets back with
-        // response.
+        // As an example, assume the following example parameters for a ETH/USD market.
         //
         // 100,000         skewScale
         // 0.0002 / 0.0006 {maker,taker}Fee
@@ -273,13 +272,11 @@ library PerpMarket {
         // 2000            maxMarketSize
         // 30s             window
         //
-        // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000 * 30
-        //                         = 2400
-        //                         = ??? huh
+        // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000
+        //                         = 80
         uint128 maxLiquidatableCapacity = uint128(marketConfig.makerFee + marketConfig.takerFee)
             .mulDecimal(marketConfig.skewScale)
             .mulDecimal(marketConfig.liquidationLimitScalar)
-            .mulDecimal(marketConfig.liquidationWindowDuration)
             .to128();
         return
             block.timestamp - self.lastLiquidationTime > marketConfig.liquidationWindowDuration

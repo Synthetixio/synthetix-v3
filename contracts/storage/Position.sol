@@ -202,7 +202,7 @@ library Position {
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price
     ) internal view returns (Position.Data memory newPosition, uint128 liqSize, uint256 liqReward, uint256 keeperFee) {
-        uint128 remainingCapacity = market.getRemainingLiquidatableCapacity(marketConfig);
+        uint128 remainingCapacity = market.getRemainingLiquidatableSizeCapacity(marketConfig);
 
         // At max capacity for current liquidation window.
         if (remainingCapacity == 0) {

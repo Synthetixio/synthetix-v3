@@ -29,6 +29,7 @@ describe('LiquidationModule', () => {
 
     it('should recompute funding on liquidation');
 
+    it('should revert when liq cap has been met');
     it('should revert when position is not flagged');
     it('should revert when no open position or already liquidated');
     it('should revert when accountId does not exist');

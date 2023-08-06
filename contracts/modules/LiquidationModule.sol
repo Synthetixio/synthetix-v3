@@ -103,9 +103,9 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getRemainingLiquidatableCapacity(uint128 marketId) external view returns (uint128) {
+    function getRemainingLiquidatableSizeCapacity(uint128 marketId) external view returns (uint128) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return market.getRemainingLiquidatableCapacity(PerpMarketConfiguration.load(marketId));
+        return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
     }
 
     /**
