@@ -1,15 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpCollateral} from "../storage/PerpCollateral.sol";
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import "../interfaces/ILiquidationModule.sol";
 
 contract LiquidationModule is ILiquidationModule {
+    using SafeCastU256 for uint256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
@@ -55,14 +58,23 @@ contract LiquidationModule is ILiquidationModule {
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
-        (Position.Data memory newPosition, uint128 liqSize, uint256 liqReward, uint256 keeperFee) = Position
-            .validateLiquidation(accountId, market, marketConfig, oraclePrice);
-
-        // TODO: Similar to settleOrder, we need to update market with latest skew/size etc.
-        market.updatePosition(newPosition);
+        (
+            Position.Data storage oldPosition,
+            Position.Data memory newPosition,
+            uint128 liqSize,
+            uint256 liqReward,
+            uint256 keeperFee
+        ) = Position.validateLiquidation(accountId, market, marketConfig, oraclePrice);
 
         market.lastLiquidationTime = block.timestamp;
         market.lastLiquidationUtilization += liqSize;
+        market.skew -= oldPosition.size;
+        market.size -= MathUtil.abs(oldPosition.size).to128();
+
+        market.updateDebtCorrection(market.positions[accountId], newPosition);
+
+        // TODO: Consider moving this out and updating directly at the module?
+        market.updatePosition(newPosition);
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 

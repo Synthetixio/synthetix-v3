@@ -201,7 +201,17 @@ library Position {
         PerpMarket.Data storage market,
         PerpMarketConfiguration.Data storage marketConfig,
         uint256 price
-    ) internal view returns (Position.Data memory newPosition, uint128 liqSize, uint256 liqReward, uint256 keeperFee) {
+    )
+        internal
+        view
+        returns (
+            Position.Data storage oldPosition,
+            Position.Data memory newPosition,
+            uint128 liqSize,
+            uint256 liqReward,
+            uint256 keeperFee
+        )
+    {
         uint128 remainingCapacity = market.getRemainingLiquidatableSizeCapacity(marketConfig);
 
         // At max capacity for current liquidation window.
@@ -209,7 +219,7 @@ library Position {
             revert ErrorUtil.LiquidationZeroCapacity();
         }
 
-        Position.Data storage position = market.positions[accountId];
+        oldPosition = market.positions[accountId];
         address flagger = market.flaggedLiquidations[accountId];
 
         // The position must be flagged first.
@@ -218,23 +228,23 @@ library Position {
         }
 
         // Precautionary to ensure we're liquidating an open position.
-        if (position.size == 0) {
+        if (oldPosition.size == 0) {
             revert ErrorUtil.PositionNotFound();
         }
 
         // Determine the resulting position post liqudation
-        liqSize = MathUtil.min(remainingCapacity, MathUtil.abs(position.size)).to128();
+        liqSize = MathUtil.min(remainingCapacity, MathUtil.abs(oldPosition.size)).to128();
         newPosition = Position.Data({
             accountId: accountId,
-            marketId: position.marketId,
-            size: position.size > 0 ? position.size - liqSize.toInt() : position.size + liqSize.toInt(),
-            entryFundingAccrued: position.entryFundingAccrued,
-            entryPrice: position.entryPrice,
-            feesIncurredUsd: position.feesIncurredUsd
+            marketId: oldPosition.marketId,
+            size: oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
+            entryFundingAccrued: oldPosition.entryFundingAccrued,
+            entryPrice: oldPosition.entryPrice,
+            feesIncurredUsd: oldPosition.feesIncurredUsd
         });
 
         // TODO: Maybe have a separate fn for liqReward?
-        (, , liqReward) = getLiquidationMarginUsd(position.size, price, marketConfig);
+        (, , liqReward) = getLiquidationMarginUsd(oldPosition.size, price, marketConfig);
         keeperFee = getLiquidationKeeperFee();
     }
 

@@ -6,6 +6,7 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PythStructs} from "../external/pyth/PythStructs.sol";
+import {PerpCollateral} from "./PerpCollateral.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -41,13 +42,18 @@ library PerpMarket {
         // sum(positions.map(p => p.size)).
         int128 skew;
         // sum(positions.map(p => abs(p.size))).
-        uint256 size;
+        uint128 size;
         // The value of the funding rate last time this was computed.
         int256 currentFundingRateComputed;
         // The value (in native units) of total market funding accumulated.
         int256 currentFundingAccruedComputed;
         // block.timestamp of when funding was last computed.
         uint256 lastFundingTime;
+        // This is needed to perform a fast constant time op for overall market debt.
+        //
+        // debtCorrection = positions.sum(p.margin - p.size * (p.entryPrice + p.entryFunding))
+        // marketDebt     = market.skew * (price + nextFundingEntry) + debtCorrection
+        int128 debtCorrection;
         // {accountId: Order}.
         mapping(uint128 => Order.Data) orders;
         // {accountId: Position}.
@@ -97,6 +103,42 @@ library PerpMarket {
     }
 
     // --- Member (mutative) --- //
+
+    /**
+     * @dev Returns the relative debt correction for a single position.
+     */
+    function getPositionDebtCorrection(
+        uint256 collateralUsd,
+        int128 size,
+        uint256 entryPrice,
+        int256 entryFundingAccrued
+    ) internal pure returns (int256) {
+        return collateralUsd.toInt() - (size.mulDecimal(entryPrice.toInt() + entryFundingAccrued));
+    }
+
+    /**
+     * @dev Updates the debt given an oldPosition and newPosition.
+     */
+    function updateDebtCorrection(
+        PerpMarket.Data storage self,
+        Position.Data storage oldPosition,
+        Position.Data memory newPosition
+    ) internal {
+        uint256 collateralUsd = PerpCollateral.getCollateralUsd(newPosition.accountId, newPosition.marketId);
+        int256 oldCorrection = getPositionDebtCorrection(
+            collateralUsd,
+            oldPosition.size,
+            oldPosition.entryPrice,
+            oldPosition.entryFundingAccrued
+        );
+        int256 newCorrection = getPositionDebtCorrection(
+            collateralUsd,
+            newPosition.size,
+            newPosition.entryPrice,
+            newPosition.entryFundingAccrued
+        );
+        self.debtCorrection = (self.debtCorrection + newCorrection - oldCorrection).to128();
+    }
 
     /**
      * @dev Updates position for `data.accountId` with `data`.

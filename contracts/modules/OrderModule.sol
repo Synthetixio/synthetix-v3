@@ -9,6 +9,7 @@ import {Position} from "../storage/Position.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import "../interfaces/IOrderModule.sol";
 
 contract OrderModule is IOrderModule {
@@ -46,8 +47,6 @@ contract OrderModule is IOrderModule {
         uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
-
-        // TODO: Should we be using the limitPrice to infer max oi etc.?
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         Position.TradeParams memory params = Position.TradeParams({
@@ -89,7 +88,7 @@ contract OrderModule is IOrderModule {
         uint256 commitmentTime,
         uint256 publishTime,
         Position.TradeParams memory params
-    ) internal view {
+    ) private view {
         uint128 minOrderAge = globalConfig.minOrderAge;
         uint128 maxOrderAge = globalConfig.maxOrderAge;
 
@@ -145,6 +144,28 @@ contract OrderModule is IOrderModule {
     }
 
     /**
+     * @dev Upon successful settlement, update `market` for `accountId` with `newPosition` details.
+     */
+    function updateMarketPostSettlement(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        Position.Data memory newPosition
+    ) private {
+        Position.Data storage oldPosition = market.positions[accountId];
+
+        market.removeOrder(accountId);
+
+        // Update skew and market size upon successful settlement.
+        market.skew += newPosition.size - oldPosition.size;
+        market.size += (MathUtil.abs(newPosition.size).toInt() - MathUtil.abs(oldPosition.size).toInt())
+            .toUint()
+            .to128();
+
+        market.updateDebtCorrection(oldPosition, newPosition);
+        market.updatePosition(newPosition); // TODO: If the settlement is to close, need a position.clear()?
+    }
+
+    /**
      * @inheritdoc IOrderModule
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
@@ -189,14 +210,7 @@ contract OrderModule is IOrderModule {
             params
         );
 
-        // TODO: Condition to position.clear() when completely closing position?
-        market.updatePosition(newPosition);
-        market.removeOrder(accountId);
-
-        // TODO
-        // Market details should be reflect as part of the updatePosition
-        //
-        // (skew, size, recompute funding etc.)
+        updateMarketPostSettlement(accountId, market, newPosition);
 
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
 

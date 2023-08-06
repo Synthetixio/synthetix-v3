@@ -23,10 +23,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @dev Validates whether the margin requirements are acceptable after withdrawing.
      */
-    function validatePositionAfterWithdraw(
-        Position.Data storage position,
-        PerpMarket.Data storage market
-    ) internal view {
+    function validatePositionPostWithdraw(Position.Data storage position, PerpMarket.Data storage market) private view {
         uint256 collateralUsd = PerpCollateral.getCollateralUsd(position.accountId, position.marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(position.marketId);
 
@@ -97,7 +94,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
             // If an open position exists, verify this does _not_ place them into instant liquidation.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0) {
-                validatePositionAfterWithdraw(position, market);
+                validatePositionPostWithdraw(position, market);
             }
 
             globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, absAmountDelta);

@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
@@ -8,9 +10,12 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import "../interfaces/IPerpMarketFactoryModule.sol";
 
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
+    using DecimalMath for int128;
+    using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
 
     // --- Events --- //
@@ -74,15 +79,22 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IMarket
      */
-    function name(uint128 id) external view override returns (string memory) {
-        return string(abi.encodePacked("Market ", PerpMarket.load(id).name)); // e.g. "Market wstETHPERP"
+    function name(uint128 marketId) external view override returns (string memory) {
+        return string(abi.encodePacked("Market ", PerpMarket.exists(marketId).name)); // e.g. "Market wstETHPERP"
     }
 
     /**
      * @inheritdoc IMarket
      */
-    function reportedDebt(uint128) external pure override returns (uint256) {
-        return 0; // TODO: Debt calculations
+    function reportedDebt(uint128 marketId) external view override returns (uint256) {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        if (market.skew == 0 && market.debtCorrection == 0) {
+            return 0;
+        }
+        uint256 oraclePrice = market.getOraclePrice();
+        int256 priceWithFunding = int(oraclePrice) + market.getNextFunding(oraclePrice);
+        int256 totalDebt = market.skew.mulDecimal(priceWithFunding) + market.debtCorrection;
+        return MathUtil.max(totalDebt, 0).toUint();
     }
 
     /**
@@ -94,7 +106,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
         //
         // TODO: The ratio param lol. It should be defined at the market level.
-        PerpMarket.Data storage market = PerpMarket.load(marketId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.size * market.getOraclePrice();
     }
 
