@@ -50,7 +50,7 @@ contract PerpAccountModule is IPerpAccountModule {
             collateralUsd: collateralUsd,
             order: market.orders[accountId],
             position: position,
-            healthRating: position.getHealthRating(
+            healthFactor: position.getHealthFactor(
                 collateralUsd,
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)

@@ -60,7 +60,7 @@ interface ILiquidationModule is IBasePerpMarket {
     ) external view returns (uint256 im, uint256 mm);
 
     /**
-     * @dev Returns the health rating for a given account by market. A health factor of 1 means it's up for liquidation.
+     * @dev Returns the health factor for a given account by market. A health factor of 1 means it's up for liquidation.
      */
-    function getHealthRating(uint128 accountId, uint128 marketId) external view returns (uint256);
+    function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256);
 }

@@ -142,11 +142,11 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getHealthRating(uint128 accountId, uint128 marketId) external view returns (uint256) {
+    function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
-            market.positions[accountId].getHealthRating(
+            market.positions[accountId].getHealthFactor(
                 PerpCollateral.getCollateralUsd(accountId, marketId),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)

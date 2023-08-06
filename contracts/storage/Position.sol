@@ -98,7 +98,7 @@ library Position {
     }
 
     /**
-     * @dev Return whether the `newPosition` can be liquidated using their healthRating.
+     * @dev Return whether the `newPosition` can be liquidated using their health factor.
      */
     function validateNextPositionIsLiquidatable(
         Position.Data memory newPosition,
@@ -106,7 +106,7 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
-        (uint256 healthRating, , , ) = getHealthRating(
+        (uint256 healthFactor, , , ) = getHealthFactor(
             newPosition.marketId,
             newPosition.size,
             newPosition.entryPrice,
@@ -116,7 +116,7 @@ library Position {
             price,
             marketConfig
         );
-        if (healthRating <= DecimalMath.UNIT) {
+        if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition(newPosition.accountId);
         }
     }
@@ -286,9 +286,9 @@ library Position {
     }
 
     /**
-     * @dev Given the marketId, config, and position{...} details, retrieve the health rating.
+     * @dev Given the marketId, config, and position{...} details, retrieve the health factor.
      */
-    function getHealthRating(
+    function getHealthFactor(
         uint128 marketId,
         int128 positionSize,
         uint256 positionEntryPrice,
@@ -297,7 +297,7 @@ library Position {
         uint256 collateralUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 healthRating, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
         PerpMarket.Data storage market = PerpMarket.load(marketId);
         int256 netFundingPerUnit = market.getNextFunding(price) - positionEntryFundingAccrued;
         accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
@@ -314,7 +314,7 @@ library Position {
 
         // margin / mm <= 1 means liquidation.
         (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
-        healthRating = remainingMarginUsd.divDecimal(mm);
+        healthFactor = remainingMarginUsd.divDecimal(mm);
     }
 
     // --- Member (views) --- //
@@ -331,7 +331,7 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-        (uint256 healthRating, , , ) = getHealthRating(
+        (uint256 healthFactor, , , ) = getHealthFactor(
             self.marketId,
             self.size,
             self.entryPrice,
@@ -341,19 +341,19 @@ library Position {
             price,
             marketConfig
         );
-        return healthRating <= DecimalMath.UNIT;
+        return healthFactor <= DecimalMath.UNIT;
     }
 
     /**
-     * @dev An overloaded function over `getHealthRating` using the a Position storage struct.
+     * @dev An overloaded function over `getHealthFactor` using the a Position storage struct.
      */
-    function getHealthRating(
+    function getHealthFactor(
         Position.Data storage self,
         uint256 collateralUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256) {
-        (uint256 healthRating, , , ) = getHealthRating(
+        (uint256 healthFactor, , , ) = getHealthFactor(
             self.marketId,
             self.size,
             self.entryPrice,
@@ -363,7 +363,7 @@ library Position {
             price,
             marketConfig
         );
-        return healthRating;
+        return healthFactor;
     }
 
     // --- Member (mutative) --- //

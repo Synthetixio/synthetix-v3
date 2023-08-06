@@ -30,7 +30,7 @@ interface IPerpAccountModule {
         // @dev Struct of position if one is open, default values if none.
         Position.Data position;
         // @dev Health factor for position in market if a position is open
-        uint256 healthRating;
+        uint256 healthFactor;
     }
 
     // --- Views --- //
