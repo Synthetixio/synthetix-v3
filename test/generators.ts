@@ -70,12 +70,13 @@ export const genMarket = () => ({
   specific: {
     oracleNodeId: genBytes32(),
     pythPriceFeedId: genBytes32(),
-    skewScale: bn(genInt(100_000, 500_000)),
     makerFee: wei(genFloat(0.0001, 0.0005)).toBN(), // 1 - 5bps
     takerFee: wei(genFloat(0.0006, 0.0008)).toBN(), // 1 - 8bps
     maxMarketSize: bn(genInt(20_000, 50_000)),
     maxFundingVelocity: bn(genInt(3, 9)),
     minMarginUsd: bn(genInt(50, 60)),
+    minCreditPercent: bn(genFloat(1, 1.1)),
+    skewScale: bn(genInt(100_000, 500_000)),
     minMarginRatio: bn(genFloat(0.01, 0.02)),
     incrementalMarginScalar: bn(genFloat(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'

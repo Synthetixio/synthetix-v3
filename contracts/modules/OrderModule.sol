@@ -248,7 +248,9 @@ contract OrderModule is IOrderModule {
         uint256 limitPrice,
         uint256 keeperFeeBufferUsd,
         uint256 oraclePrice
-    ) external view {}
+    ) external view {
+        // TODO: Implement me
+    }
 
     /**
      * @inheritdoc IOrderModule

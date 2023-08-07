@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -15,10 +15,10 @@ import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import "../interfaces/IMarketCollateralModule.sol";
 
 contract MarketCollateralModule is IMarketCollateralModule {
-    using PerpMarket for PerpMarket.Data;
-    using Position for Position.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
+    using PerpMarket for PerpMarket.Data;
+    using Position for Position.Data;
 
     /**
      * @dev Validates whether the margin requirements are acceptable after withdrawing.

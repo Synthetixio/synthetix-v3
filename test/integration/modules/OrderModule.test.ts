@@ -12,7 +12,7 @@ describe('OrderModule', () => {
   beforeEach(restore);
 
   describe('commitOrder', () => {
-    it('should successfully commit order with no existing position', async () => {
+    it('should commit order with no existing position', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -187,13 +187,13 @@ describe('OrderModule', () => {
   });
 
   describe('settleOrder', () => {
-    it('should successfully settle an order that exists');
-    it('should successfully settle an order that completely closes existing position');
-    it('should successfully settle an order that partially closes existing');
-    it('should successfully settle an order that adds to an existing order');
-    it('should successfully settle an order that flips from one side to the other');
+    it('should settle an order that exists');
+    it('should settle an order that completely closes existing position');
+    it('should settle an order that partially closes existing');
+    it('should settle an order that adds to an existing order');
+    it('should settle an order that flips from one side to the other');
 
-    it('should successfully commit order if price moves but still safe');
+    it('should commit order if price moves but still safe');
     it('should allow position reduction even if insufficient unless in liquidation');
 
     it('should recompute funding on settlement');

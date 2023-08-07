@@ -57,4 +57,14 @@ contract PerpAccountModule is IPerpAccountModule {
             )
         });
     }
+
+    /**
+     * @inheritdoc IPerpAccountModule
+     */
+    function getPositionDigest(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (IPerpAccountModule.PositionDigest memory digest) {
+        // TODO: Implement me
+    }
 }

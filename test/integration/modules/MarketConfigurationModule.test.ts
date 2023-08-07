@@ -13,7 +13,7 @@ describe('MarketConfigurationModule', async () => {
   beforeEach(restore);
 
   describe('setMarketConfiguration', () => {
-    it('should successfully configure market', async () => {
+    it('should configure market', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
@@ -49,7 +49,7 @@ describe('MarketConfigurationModule', async () => {
   });
 
   describe('setMarketConfigurationById', () => {
-    it('should successfully configure market by id', async () => {
+    it('should configure market by id', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
@@ -62,11 +62,13 @@ describe('MarketConfigurationModule', async () => {
 
       assert.equal(specific.oracleNodeId, config.oracleNodeId);
       assert.equal(specific.pythPriceFeedId, config.pythPriceFeedId);
-      assertBn.equal(specific.skewScale, config.skewScale);
+
       assertBn.equal(specific.makerFee, config.makerFee);
       assertBn.equal(specific.takerFee, config.takerFee);
       assertBn.equal(specific.maxMarketSize, config.maxMarketSize);
       assertBn.equal(specific.maxFundingVelocity, config.maxFundingVelocity);
+      assertBn.equal(specific.skewScale, config.skewScale);
+      assertBn.equal(specific.minCreditPercent, config.minCreditPercent);
       assertBn.equal(specific.minMarginUsd, config.minMarginUsd);
       assertBn.equal(specific.minMarginRatio, config.minMarginRatio);
       assertBn.equal(specific.incrementalMarginScalar, config.incrementalMarginScalar);

@@ -33,6 +33,8 @@ describe('MarketCollateralModule', async () => {
       assert.equal(receipt.events?.length, 0);
     });
 
+    it('should recompute funding on transfer');
+
     it('should revert transfers when an order is pending');
 
     describe('deposit', () => {
@@ -330,7 +332,7 @@ describe('MarketCollateralModule', async () => {
   });
 
   describe('setCollateralConfiguration()', () => {
-    it('should successfully configure many collaterals', async () => {
+    it('should configure many collaterals', async () => {
       const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
       const from = owner();
 

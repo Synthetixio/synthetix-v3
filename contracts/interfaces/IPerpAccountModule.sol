@@ -33,6 +33,19 @@ interface IPerpAccountModule {
         uint256 healthFactor;
     }
 
+    struct PositionDigest {
+        // @dev id of the account that was queried
+        uint128 accountId;
+        // @dev id of the market that was queried
+        uint128 marketId;
+        // @dev Notional value of deposited collateral.
+        uint256 collateralUsd;
+        // @dev Health factor for position in market if a position is open
+        uint256 healthFactor;
+
+        // TODO: Add a lot more details but also consider is this even valueable? Does AccountDigest provide enough?
+    }
+
     // --- Views --- //
 
     /**
@@ -43,7 +56,11 @@ interface IPerpAccountModule {
         uint128 marketId
     ) external view returns (IPerpAccountModule.AccountDigest memory digest);
 
-    // TODO: Add .getPositionDigest
-    //
-    // A richer digest with details around margin, collateral value, pnl, accrued funding etc.
+    /**
+     * @dev Returns a digest of an open position belonging to `accountId` in `marketId`.
+     */
+    function getPositionDigest(
+        uint128 accountId,
+        uint128 marketId
+    ) external view returns (IPerpAccountModule.PositionDigest memory digest);
 }

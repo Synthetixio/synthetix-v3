@@ -6,15 +6,17 @@ import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import "../interfaces/IPerpMarketFactoryModule.sol";
 
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for int128;
+    using DecimalMath for uint128;
+    using DecimalMath for uint256;
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
 
@@ -104,10 +106,9 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
         // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
         // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
-        //
-        // TODO: The ratio param lol. It should be defined at the market level.
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        return market.size * market.getOraclePrice();
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        return market.size.mulDecimal(market.getOraclePrice()).mulDecimal(marketConfig.minCreditPercent);
     }
 
     /**

@@ -46,11 +46,12 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         config.oracleNodeId = data.oracleNodeId;
         config.pythPriceFeedId = data.pythPriceFeedId;
-        config.skewScale = data.skewScale;
         config.makerFee = data.makerFee;
         config.takerFee = data.takerFee;
         config.maxMarketSize = data.maxMarketSize;
         config.maxFundingVelocity = data.maxFundingVelocity;
+        config.skewScale = data.skewScale;
+        config.minCreditPercent = data.minCreditPercent;
         config.minMarginUsd = data.minMarginUsd;
         config.minMarginRatio = data.minMarginRatio;
         config.incrementalMarginScalar = data.incrementalMarginScalar;

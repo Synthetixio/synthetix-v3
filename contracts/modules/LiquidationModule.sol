@@ -66,13 +66,12 @@ contract LiquidationModule is ILiquidationModule {
             uint256 keeperFee
         ) = Position.validateLiquidation(accountId, market, marketConfig, oraclePrice);
 
+        // Update market to reflect a successful full or partial liquidation.
         market.lastLiquidationTime = block.timestamp;
         market.lastLiquidationUtilization += liqSize;
         market.skew -= oldPosition.size;
         market.size -= MathUtil.abs(oldPosition.size).to128();
-
         market.updateDebtCorrection(market.positions[accountId], newPosition);
-
         market.positions[accountId].update(newPosition);
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();

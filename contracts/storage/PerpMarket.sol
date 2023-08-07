@@ -4,11 +4,11 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {IPyth} from "../external/pyth/IPyth.sol";
-import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {PerpCollateral} from "./PerpCollateral.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
+import {IPyth} from "../external/pyth/IPyth.sol";
+import {PythStructs} from "../external/pyth/PythStructs.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 

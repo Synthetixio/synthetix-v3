@@ -28,11 +28,12 @@ interface IMarketConfigurationModule {
     struct ConfigureByMarketParameters {
         bytes32 oracleNodeId;
         bytes32 pythPriceFeedId;
-        uint128 skewScale;
         uint128 makerFee;
         uint128 takerFee;
         uint128 maxMarketSize;
         uint128 maxFundingVelocity;
+        uint128 skewScale;
+        uint128 minCreditPercent;
         uint256 minMarginUsd;
         uint256 minMarginRatio;
         uint256 incrementalMarginScalar;

@@ -17,6 +17,8 @@ library PerpMarketConfiguration {
 
     // --- Storage --- //
 
+    // TODO: Slot pack the hell out of GlobalData and Data.
+
     // @dev Perp market configuration shared across all markets
     struct GlobalData {
         // A reference to the core Synthetix v3 system.
@@ -63,13 +65,14 @@ library PerpMarketConfiguration {
         uint128 makerFee;
         // Fee paid (in bps) when the order _increases_ skew.
         uint128 takerFee;
-        // TODO: Pack maxMarketSize, maxFundingVelocity and skewScale into 256bits.
         // Maximum amount of size in native units for either side of the market (OI would be maxMarketSize * 2).
         uint128 maxMarketSize;
         // The maximum velocity funding rate can change by.
         uint128 maxFundingVelocity;
         // Skew scaling denominator constant.
         uint128 skewScale;
+        // A multiplier on OI * price * minCreditPercent to increase/decrease min credit for market.
+        uint128 minCreditPercent;
         // Minimum margin in USD added to MM and IM.
         uint256 minMarginUsd;
         // Used in addition with IMR to determine IM and MM.
