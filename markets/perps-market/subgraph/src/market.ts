@@ -5,6 +5,8 @@ import {
   LiquidationParametersSet,
   LockedOiRatioSet,
   OrderFeesSet,
+  MarketUpdated,
+  FactoryInitialized,
 } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
 import { Market } from '../generated/schema';
@@ -16,6 +18,19 @@ export function handleMarketCreated(event: MarketCreated): void {
   market.perpsMarketId = event.params.perpsMarketId;
   market.marketName = event.params.marketName;
   market.marketSymbol = event.params.marketSymbol;
+  market.save();
+}
+
+export function handleMarketUpdated(event: MarketUpdated): void {
+  const id = event.params.marketId.toString();
+  const market = new Market(id);
+
+  market.price = event.params.price;
+  market.skew = event.params.skew;
+  market.size = event.params.size;
+  market.sizeDelta = event.params.sizeDelta;
+  market.currentFundingRate = event.params.currentFundingRate;
+  market.currentFundingVelocity = event.params.currentFundingVelocity;
   market.save();
 }
 
@@ -55,9 +70,11 @@ export function handleLiquidationParametersSet(event: LiquidationParametersSet):
   const market = Market.load(id);
 
   if (market) {
-    market.initialMarginFraction = event.params.initialMarginRatioD18;
+    market.initialMarginRatioD18 = event.params.initialMarginRatioD18;
     market.liquidationRewardRatioD18 = event.params.liquidationRewardRatioD18;
-    market.maintenanceMarginFraction = event.params.maintenanceMarginRatioD18;
+    market.maintenanceMarginRatioD18 = event.params.maintenanceMarginRatioD18;
+    market.maxSecondsInLiquidationWindow = event.params.maxSecondsInLiquidationWindow;
+    market.minimumPositionMargin = event.params.minimumPositionMargin;
     market.maxLiquidationLimitAccumulationMultiplier =
       event.params.maxLiquidationLimitAccumulationMultiplier;
     market.save();
