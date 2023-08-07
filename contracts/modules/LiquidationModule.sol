@@ -72,11 +72,19 @@ contract LiquidationModule is ILiquidationModule {
         market.skew -= oldPosition.size;
         market.size -= MathUtil.abs(oldPosition.size).to128();
         market.updateDebtCorrection(market.positions[accountId], newPosition);
-        market.positions[accountId].update(newPosition);
+
+        address flagger = market.flaggedLiquidations[accountId];
+
+        // Full liquidation (size=0) vs. partial liquidation.
+        if (newPosition.size == 0) {
+            delete market.positions[accountId];
+            delete market.flaggedLiquidations[accountId];
+        } else {
+            market.positions[accountId].update(newPosition);
+        }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
-        address flagger = market.flaggedLiquidations[accountId];
         if (flagger == msg.sender) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
         } else {
