@@ -14,6 +14,8 @@ import "../nodes/ConstantNode.sol";
 import "../storage/NodeOutput.sol";
 import "../storage/NodeDefinition.sol";
 
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+
 /**
  * @title Module for managing nodes
  * @dev See INodeModule.
@@ -151,6 +153,13 @@ contract NodeModule is INodeModule {
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
     ) internal view returns (NodeOutput.Data memory price) {
+        if (runtimeKeys.length != runtimeValues.length) {
+            revert ParameterError.InvalidParameter(
+                "runtimeValues",
+                "must be same length as runtimeKeys"
+            );
+        }
+
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.load(nodeId);
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
