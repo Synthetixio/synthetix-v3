@@ -9,7 +9,9 @@ export function handleOrderCommitted(event: OrderCommitted): void {
     '-' +
     event.params.marketId.toString() +
     '-' +
-    event.params.accountId.toString();
+    event.params.accountId.toString() +
+    '-' +
+    event.block.number.toString();
 
   let order = Order.load(id);
 
@@ -26,9 +28,7 @@ export function handleOrderCommitted(event: OrderCommitted): void {
   order.expirationTime = event.params.expirationTime;
   order.trackingCode = event.params.trackingCode;
   order.owner = event.params.sender.toHexString();
-
-  const sizeDelta = BigInt.fromString(event.params.sizeDelta.toString());
-  order.size = order.size.plus(sizeDelta);
+  order.size = event.params.sizeDelta;
 
   order.block = event.block.number;
   order.timestamp = event.block.timestamp;
