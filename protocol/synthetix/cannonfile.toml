@@ -210,7 +210,7 @@ func = "initOrUpgradeToken"
 args = [
   "0x555344546f6b656e000000000000000000000000000000000000000000000000",
   "Synthetic USD Token v3",
-  "snxUSD",
+  "sUSD",
   18,
   "<%= contracts.USDRouter.address %>"
 ]
