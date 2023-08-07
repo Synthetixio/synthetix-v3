@@ -15,7 +15,7 @@ export type PerpsMarket = {
 export type PerpsMarkets = Array<PerpsMarket>;
 
 export type PerpsMarketData = Array<{
-  requestedMarketId: ethers.BigNumber;
+  requestedMarketId: ethers.BigNumber | number;
   name: string;
   token: string;
   price: ethers.BigNumber;
@@ -29,7 +29,8 @@ export type PerpsMarketData = Array<{
   };
   liquidationParams?: {
     initialMarginFraction: ethers.BigNumber;
-    maintenanceMarginFraction: ethers.BigNumber;
+    minimumInitialMarginRatio: ethers.BigNumber;
+    maintenanceMarginScalar: ethers.BigNumber;
     maxLiquidationLimitAccumulationMultiplier: ethers.BigNumber;
     liquidationRewardRatio: ethers.BigNumber;
     maxSecondsInLiquidationWindow: ethers.BigNumber;
@@ -145,7 +146,8 @@ export const bootstrapPerpsMarkets = (
           await contracts.PerpsMarket.connect(r.owner()).setLiquidationParameters(
             marketId,
             liquidationParams.initialMarginFraction,
-            liquidationParams.maintenanceMarginFraction,
+            liquidationParams.minimumInitialMarginRatio,
+            liquidationParams.maintenanceMarginScalar,
             liquidationParams.liquidationRewardRatio,
             liquidationParams.maxLiquidationLimitAccumulationMultiplier,
             liquidationParams.maxSecondsInLiquidationWindow,
@@ -180,7 +182,7 @@ export const bootstrapPerpsMarkets = (
       });
 
       return {
-        marketId: () => marketId,
+        marketId: () => (isNumber(marketId) ? ethers.BigNumber.from(marketId) : marketId),
         aggregator: () => aggregator,
         strategyId: () => strategyId,
       };
@@ -198,3 +200,5 @@ export const bootstrapPerpsMarkets = (
     poolId: r.poolId,
   };
 };
+
+const isNumber = (n: ethers.BigNumber | number): n is number => typeof n === 'number' && !isNaN(n);

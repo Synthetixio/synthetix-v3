@@ -29,7 +29,8 @@ describe('MarketConfiguration', async () => {
     maxFundingVelocity: bn(0.3),
     skewScale: bn(1),
     initialMarginFraction: bn(2),
-    maintenanceMarginFraction: bn(10),
+    minimumInitialMarginRatio: bn(0.01),
+    maintenanceMarginScalar: bn(0.5),
     lockedOiPercentRatioD18: bn(15),
     maxLiquidationLimitAccumulationMultiplier: bn(5),
     minimumPositionMargin: bn(50),
@@ -148,13 +149,14 @@ describe('MarketConfiguration', async () => {
         .setLiquidationParameters(
           marketId,
           fixture.initialMarginFraction,
-          fixture.maintenanceMarginFraction,
+          fixture.minimumInitialMarginRatio,
+          fixture.maintenanceMarginScalar,
           fixture.liquidationRewardRatioD18,
           fixture.maxLiquidationLimitAccumulationMultiplier,
           fixture.maxSecondsInLiquidationWindow,
           fixture.minimumPositionMargin
         ),
-      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginFraction.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()}, ${fixture.maxSecondsInLiquidationWindow.toString()}, ${fixture.minimumPositionMargin.toString()})`,
+      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginScalar.toString()}, ${fixture.minimumInitialMarginRatio.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()}, ${fixture.maxSecondsInLiquidationWindow.toString()}, ${fixture.minimumPositionMargin.toString()})`,
 
       systems().PerpsMarket
     );
@@ -165,7 +167,7 @@ describe('MarketConfiguration', async () => {
       await systems()
         .PerpsMarket.connect(owner())
         .setLockedOiRatio(marketId, fixture.lockedOiPercentRatioD18),
-      'LockedOiRatioD18Set(' +
+      'LockedOiRatioSet(' +
         marketId.toString() +
         ', ' +
         fixture.lockedOiPercentRatioD18.toString() +
@@ -207,7 +209,8 @@ describe('MarketConfiguration', async () => {
         .setLiquidationParameters(
           marketId,
           fixture.initialMarginFraction,
-          fixture.maintenanceMarginFraction,
+          fixture.minimumInitialMarginRatio,
+          fixture.maintenanceMarginScalar,
           fixture.liquidationRewardRatioD18,
           fixture.maxLiquidationLimitAccumulationMultiplier,
           fixture.maxSecondsInLiquidationWindow,
@@ -269,13 +272,15 @@ describe('MarketConfiguration', async () => {
   it('get liquidationParameters', async () => {
     const [
       initialMarginFraction,
-      maintenanceMarginFraction,
+      minimumInitialMarginRatio,
+      maintenanceMarginScalar,
       liquidationRewardRatioD18,
       maxLiquidationLimitAccumulationMultiplier,
       maxSecondsInLiquidationWindow,
     ] = await systems().PerpsMarket.getLiquidationParameters(marketId);
     assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
-    assertBn.equal(maintenanceMarginFraction, fixture.maintenanceMarginFraction);
+    assertBn.equal(minimumInitialMarginRatio, fixture.minimumInitialMarginRatio);
+    assertBn.equal(maintenanceMarginScalar, fixture.maintenanceMarginScalar);
     assertBn.equal(liquidationRewardRatioD18, fixture.liquidationRewardRatioD18);
     assertBn.equal(
       maxLiquidationLimitAccumulationMultiplier,

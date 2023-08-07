@@ -93,22 +93,12 @@ describe('ModifyCollateral Withdraw', () => {
     });
 
     it('properly reflects core system collateral balance', async () => {
-      // const perpsBalanceAfter = await synthMarkets()[0]
-      //   .synth()
-      //   .connect(trader1())
-      //   .balanceOf(systems().PerpsMarket.address);
-
       const btcCollateralValue = await systems().Core.getMarketCollateralAmount(
         superMarketId(),
         synthMarkets()[0].synthAddress()
       );
 
       assertBn.equal(btcCollateralValue, depositAmount.sub(withdrawAmount).toBN());
-
-      // assertBn.equal(
-      //   perpsBalanceAfter,
-      //   wei(perpsBalanceBefore).add(depositAmount).sub(withdrawAmount).toBN()
-      // );
     });
 
     it('emits correct event with the expected values', async () => {
@@ -131,7 +121,8 @@ describe('ModifyCollateral Withdraw', () => {
         fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
+          minimumInitialMarginRatio: bn(0.01),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: bn(10),
@@ -149,7 +140,8 @@ describe('ModifyCollateral Withdraw', () => {
         fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
         liquidationParams: {
           initialMarginFraction: bn(2),
-          maintenanceMarginFraction: bn(1),
+          minimumInitialMarginRatio: bn(0.01),
+          maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
           maxSecondsInLiquidationWindow: bn(10),
@@ -259,20 +251,28 @@ describe('ModifyCollateral Withdraw', () => {
         );
       });
     });
-    describe('allow withdraw when its less than "collateral available for withdraw', () => {
+    describe('allow withdraw when its less than collateral available for withdraw', () => {
       const restore = snapshotCheckpoint(provider);
 
+      let initialMarginReq: ethers.BigNumber;
+
       before('withdraw allowed amount', async () => {
+        [initialMarginReq] = await systems()
+          .PerpsMarket.connect(trader1())
+          .getRequiredMargins(trader1AccountId);
+        // available margin = collateral value + pnl = $19000
+        const withdrawAmt = bn(19_000).sub(initialMarginReq).mul(-1);
+
         await systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-17000));
+          .modifyCollateral(trader1AccountId, sUSDSynthId, withdrawAmt);
       });
       after(restore);
 
       it('has correct available margin', async () => {
         assertBn.equal(
           await systems().PerpsMarket.getAvailableMargin(trader1AccountId),
-          bn(2000) // collateral value  + pnl =  (20000 - 17000) + -1000
+          initialMarginReq
         );
       });
     });
@@ -292,7 +292,7 @@ describe('ModifyCollateral Withdraw', () => {
           systems()
             .PerpsMarket.connect(trader1())
             .modifyCollateral(trader1AccountId, sUSDSynthId, bn(-18000)),
-          `InsufficientCollateralAvailableForWithdraw("${bn(17000)}", "${bn(18000)}")`
+          `InsufficientCollateralAvailableForWithdraw("${bn(14000)}", "${bn(18000)}")`
         );
       });
 

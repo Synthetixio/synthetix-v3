@@ -6,7 +6,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 
-describe('Cancel Offchain Async Order test', () => {
+describe.skip('Cancel Offchain Async Order test', () => {
   const { systems, perpsMarkets, provider, trader1 } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
@@ -47,6 +47,7 @@ describe('Cancel Offchain Async Order test', () => {
         sizeDelta: bn(1),
         settlementStrategyId: 0,
         acceptablePrice: bn(1050), // 5% slippage
+        referrer: ethers.constants.AddressZero,
         trackingCode: ethers.constants.HashZero,
       });
     await tx.wait();

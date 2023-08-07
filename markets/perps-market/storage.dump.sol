@@ -575,11 +575,13 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        int lastFundingRate;
-        int lastFundingValue;
+        int256 lastFundingRate;
+        int256 lastFundingValue;
         uint256 lastFundingTime;
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
+        int256 debtCorrectionAccumulator;
+        mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
     }
     struct MarketUpdateData {

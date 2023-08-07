@@ -14,7 +14,8 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),
@@ -32,7 +33,8 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),
@@ -50,7 +52,8 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),
@@ -68,7 +71,8 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(1.5),
-        maintenanceMarginFraction: bn(0.75),
+        minimumInitialMarginRatio: bn(0.035),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),
@@ -86,7 +90,8 @@ describe('Liquidation - margin', async () => {
       fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(1.5),
-        maintenanceMarginFraction: bn(0.75),
+        minimumInitialMarginRatio: bn(0.035),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),
@@ -98,7 +103,7 @@ describe('Liquidation - margin', async () => {
     },
   ];
 
-  const { systems, provider, trader1, perpsMarkets, owner } = bootstrapMarkets({
+  const { systems, provider, trader1, perpsMarkets, owner, keeper } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: perpsMarketConfigs,
     traderAccountIds: [2, 3],
@@ -184,6 +189,13 @@ describe('Liquidation - margin', async () => {
     it('has correct available margin', async () => {
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(18_850));
     });
+
+    it('is not eligible for liquidation', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(keeper()).liquidate(2),
+        'NotEligibleForLiquidation'
+      );
+    });
   });
 
   describe('prices changes', () => {
@@ -217,6 +229,13 @@ describe('Liquidation - margin', async () => {
 
     it('has correct available margin', async () => {
       assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(16_550));
+    });
+
+    it('is not eligible for liquidation', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(keeper()).liquidate(2),
+        'NotEligibleForLiquidation'
+      );
     });
   });
   describe('price change - available margin 0 ', () => {
@@ -257,7 +276,8 @@ describe('Liquidation - margin', async () => {
     before('set minimumPositionMargin for OP to 50', async () => {
       const opMarketId = perpsMarkets()[4].marketId();
       const initialMarginFraction = bn(1.5);
-      const maintenanceMarginFraction = bn(0.75);
+      const maintenanceMarginScalar = bn(0.035);
+      const minimumInitialMarginRatio = bn(0.5);
       const maxLiquidationLimitAccumulationMultiplier = bn(1);
       const liquidationRewardRatio = bn(0.05);
       const maxSecondsInLiquidationWindow = bn(10);
@@ -267,7 +287,8 @@ describe('Liquidation - margin', async () => {
         .setLiquidationParameters(
           opMarketId,
           initialMarginFraction,
-          maintenanceMarginFraction,
+          maintenanceMarginScalar,
+          minimumInitialMarginRatio,
           maxLiquidationLimitAccumulationMultiplier,
           liquidationRewardRatio,
           maxSecondsInLiquidationWindow,
@@ -293,7 +314,7 @@ describe('Liquidation - margin', async () => {
   describe('price change - eligible for liquidation', () => {
     [
       bn(31000), // btc
-      bn(1775), // eth
+      bn(1820), // eth
       bn(3), // link
       bn(1), // arb
       bn(1), // op, the only one that has a price change
@@ -305,7 +326,7 @@ describe('Liquidation - margin', async () => {
 
     [
       bn(-1150), // btc
-      bn(-4900), // eth
+      bn(-4000), // eth
       bn(-4100), // link
       bn(-5250), // arb
       bn(-5250), // op
@@ -320,7 +341,7 @@ describe('Liquidation - margin', async () => {
     });
 
     it('has correct available margin', async () => {
-      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(-650));
+      assertBn.equal(await systems().PerpsMarket.getAvailableMargin(2), bn(250));
     });
 
     it('reverts when trying to withdraw', async () => {

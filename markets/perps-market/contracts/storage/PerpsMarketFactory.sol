@@ -3,8 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
-import {IMarketCollateralModule} from "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 
@@ -62,8 +60,12 @@ library PerpsMarketFactory {
         self.synthetix.depositMarketCollateral(self.perpsMarketId, address(collateral), amount);
     }
 
-    function depositToMarketManager(Data storage self, uint128 marketId, uint256 amount) internal {
+    function depositMarketUsd(Data storage self, uint256 amount) internal {
         self.usdToken.approve(address(this), amount);
-        self.synthetix.depositMarketUsd(marketId, address(this), amount);
+        self.synthetix.depositMarketUsd(self.perpsMarketId, address(this), amount);
+    }
+
+    function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
+        self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
     }
 }
