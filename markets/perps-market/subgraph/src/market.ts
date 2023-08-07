@@ -35,14 +35,14 @@ export function handleMarketUpdated(event: MarketUpdatedEvent): void {
   market.save();
 
   // create MarketUpdated entity
-  const marketUpdatedid =
+  const marketUpdatedId =
     event.params.marketId.toString() +
     '-' +
     event.block.number.toString() +
     '-' +
     event.logIndex.toString();
 
-  let marketUpdated = new MarketUpdated(marketUpdatedid);
+  let marketUpdated = new MarketUpdated(marketUpdatedId);
 
   marketUpdated.timestamp = event.block.timestamp;
   marketUpdated.marketId = event.params.marketId;
