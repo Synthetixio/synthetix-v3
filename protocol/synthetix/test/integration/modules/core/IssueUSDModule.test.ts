@@ -450,7 +450,10 @@ describe('IssueUSDModule', function () {
     it('set the pool min collateal issuance ratio to 600%', async () => {
       await systems()
         .Core.connect(owner)
-        .setPoolCollateralIssuanceRatio(poolId, collateralAddress(), bn(6));
+        .setPoolCollateralConfiguration(poolId, collateralAddress(), {
+          collateralTypeDisabled: false,
+          issuanceRatioD18: bn(6),
+        });
     });
 
     it('verifies sufficient c-ratio', async () => {

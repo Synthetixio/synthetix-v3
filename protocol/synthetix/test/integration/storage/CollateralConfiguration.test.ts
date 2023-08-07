@@ -5,7 +5,7 @@ import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 
-describe('CollateralConfiguration', function () {
+describe.only('CollateralConfiguration', function () {
   const { systems, signers } = bootstrap();
 
   let owner: ethers.Signer;
@@ -52,6 +52,30 @@ describe('CollateralConfiguration', function () {
           0
         ),
         'InsufficientCollateralRatio("499", "100", "4990000000000000000", "5000000000000000000")',
+        systems().Core
+      );
+
+      // default to system issuanceRatioD18
+      await assertRevert(
+        systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+          fakeCollateral.address,
+          100,
+          499,
+          ONE.mul(3)
+        ),
+        'InsufficientCollateralRatio("499", "100", "4990000000000000000", "5000000000000000000")',
+        systems().Core
+      );
+
+      // override with minIssuanceRatioD18
+      await assertRevert(
+        systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+          fakeCollateral.address,
+          100,
+          500,
+          ONE.mul(6)
+        ),
+        'InsufficientCollateralRatio("500", "100", "5000000000000000000", "6000000000000000000")',
         systems().Core
       );
     });

@@ -709,7 +709,10 @@ describe('PoolModule Admin', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .enablePoolCollateralDelegation(thirdPoolId, collateralAddress()),
+          .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+            collateralTypeDisabled: false,
+            issuanceRatioD18: bn(0),
+          }),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
       );
@@ -725,7 +728,10 @@ describe('PoolModule Admin', function () {
     it('disable the collateral by pool owner', async () => {
       await systems()
         .Core.connect(user1)
-        .disablePoolCollateralDelegation(thirdPoolId, collateralAddress());
+        .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+          collateralTypeDisabled: false,
+          issuanceRatioD18: bn(2),
+        });
     });
 
     it('collateral is disabled for the pool', async () => {
@@ -736,7 +742,7 @@ describe('PoolModule Admin', function () {
     });
   });
 
-  describe('setPoolCollateralIssuanceRatio()', async () => {
+  describe('set pool collateral issuance ratio', async () => {
     before(restore);
 
     before('give user1 permission to create pool', async () => {
@@ -760,7 +766,10 @@ describe('PoolModule Admin', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .setPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress(), bn(2)),
+          .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+            collateralTypeDisabled: false,
+            issuanceRatioD18: bn(2),
+          }),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
       );
@@ -776,7 +785,10 @@ describe('PoolModule Admin', function () {
     it('set the pool collateal issuance ratio to 200%', async () => {
       await systems()
         .Core.connect(user1)
-        .setPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress(), bn(2));
+        .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+          collateralTypeDisabled: false,
+          issuanceRatioD18: bn(2),
+        });
 
       await assertBn.equal(
         await systems().Core.getPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress()),

@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../storage/MarketConfiguration.sol";
+import "../storage/PoolCollateralConfiguration.sol";
 
 /**
  * @title Module for the creation and management of pools.
@@ -74,31 +75,17 @@ interface IPoolModule {
         address indexed sender
     );
 
+    event PoolCollateralConfigurationUpdated(
+        uint128 indexed poolId,
+        address collateralType,
+        PoolCollateralConfiguration.Data config
+    );
+
     /**
      * @notice Emitted when a system-wide minimum liquidity ratio is set
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio
      */
     event SetMinLiquidityRatio(uint256 minLiquidityRatio);
-
-    /**
-     * @notice Gets fired when pool collateral is enabled.
-     * @param poolId The id of the pool for which the collateral is being enabled.
-     * @param collateral The address of the collateral.
-     * @param sender The address that triggered the action.
-     */
-    event PoolCollateralEnabled(uint128 indexed poolId, address collateral, address indexed sender);
-
-    /**
-     * @notice Gets fired when pool collateral is disabled.
-     * @param poolId The id of the pool for which the collateral is being disabled.
-     * @param collateral The address of the collateral.
-     * @param sender The address that triggered the action.
-     */
-    event PoolCollateralDisabled(
-        uint128 indexed poolId,
-        address collateral,
-        address indexed sender
-    );
 
     /**
      * @notice Creates a pool with the requested pool id.
@@ -188,20 +175,6 @@ interface IPoolModule {
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
 
     /**
-     * @notice Gets fired when a pool collateral is disabled for a pool.
-     * @param poolId The id of the pool for which the collateral is being disabled.
-     * @param collateral The address of the collateral.
-     */
-    function disablePoolCollateralDelegation(uint128 poolId, address collateral) external;
-
-    /**
-     * @notice Gets fired when a collateral is enabled for a pool.
-     * @param poolId The id of the pool for which the collateral is being enabled.
-     * @param collateral The address of the collateral.
-     */
-    function enablePoolCollateralDelegation(uint128 poolId, address collateral) external;
-
-    /**
      @notice Shows if a given collateral type is enabled for deposits and delegation in a given pool.
      * @param poolId The id of the pool for to check the collateral for.
      * @param collateral The address of the collateral.
@@ -212,15 +185,15 @@ interface IPoolModule {
     ) external view returns (bool enabled);
 
     /**
-     @notice sets a pool minimum issuance ratio
-     * @param poolId The id of the pool for to check the collateral for.
-     * @param collateral The address of the collateral.
-     * @param issuanceRatioD18 The minimum issuance ratio denominated with 18 decimal places
+     * @notice Allows the pool owner to set the configuration of a specific collateral type for their pool.
+     * @param poolId The id of the pool whose configuration is being set.
+     * @param collateralType The collate
+     * @param newConfig The config to set
      */
-    function setPoolCollateralIssuanceRatio(
+    function setPoolCollateralConfiguration(
         uint128 poolId,
-        address collateral,
-        uint256 issuanceRatioD18
+        address collateralType,
+        PoolCollateralConfiguration.Data memory newConfig
     ) external;
 
     /**

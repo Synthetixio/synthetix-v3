@@ -231,51 +231,28 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function enablePoolCollateralDelegation(uint128 poolId, address collateral) external override {
-        Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
-
-        pool.collateralConfigurations[collateral].collateralTypeDisabled = false;
-
-        emit PoolCollateralEnabled(poolId, collateral, msg.sender);
-    }
-
-    /**
-     * @inheritdoc IPoolModule
-     */
-    function disablePoolCollateralDelegation(uint128 poolId, address collateral) external override {
-        Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
-
-        pool.collateralConfigurations[collateral].collateralTypeDisabled = true;
-
-        emit PoolCollateralDisabled(poolId, collateral, msg.sender);
-    }
-
-    /**
-     * @inheritdoc IPoolModule
-     */
     function isDelegationEnabledByPool(
         uint128 poolId,
         address collateral
     ) external view override returns (bool) {
-        return !Pool.load(poolId).collateralConfigurations[collateral].collateralTypeDisabled;
+        return
+            !Pool.loadExisting(poolId).collateralConfigurations[collateral].collateralTypeDisabled;
     }
 
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolCollateralIssuanceRatio(
+    function setPoolCollateralConfiguration(
         uint128 poolId,
-        address collateral,
-        uint256 issuanceRatioD18
+        address collateralType,
+        PoolCollateralConfiguration.Data memory newConfig
     ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
-        pool.collateralConfigurations[collateral].issuanceRatioD18 = issuanceRatioD18;
+        pool.collateralConfigurations[collateralType] = newConfig;
 
-        emit PoolCollateralDisabled(poolId, collateral, msg.sender);
+        emit PoolCollateralConfigurationUpdated(poolId, collateralType, newConfig);
     }
 
     /**

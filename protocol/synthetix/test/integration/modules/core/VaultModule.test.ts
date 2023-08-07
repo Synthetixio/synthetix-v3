@@ -4,7 +4,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import assert from 'assert/strict';
 import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrapWithStakedPool } from '../../bootstrap';
+import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
@@ -338,7 +338,10 @@ describe('VaultModule', function () {
       before('disable collateral for the pool by the pool owner', async () => {
         await systems()
           .Core.connect(user1)
-          .disablePoolCollateralDelegation(fakeVaultId, collateralAddress());
+          .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
+            collateralTypeDisabled: true,
+            issuanceRatioD18: bn(0),
+          });
       });
 
       // fails when collateral is disabled for the pool by pool owner
@@ -361,7 +364,10 @@ describe('VaultModule', function () {
       it('collateral is enabled by the pool owner', async () => {
         await systems()
           .Core.connect(user1)
-          .enablePoolCollateralDelegation(fakeVaultId, collateralAddress());
+          .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
+            collateralTypeDisabled: false,
+            issuanceRatioD18: bn(0),
+          });
       });
 
       it('the delegation works as expected with the enabled collateral', async () => {
