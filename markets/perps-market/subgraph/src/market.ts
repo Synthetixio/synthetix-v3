@@ -5,11 +5,11 @@ import {
   LiquidationParametersSet,
   LockedOiRatioSet,
   OrderFeesSet,
-  MarketUpdated,
+  MarketUpdated as MarketUpdatedEvent,
   FactoryInitialized,
 } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
-import { Market } from '../generated/schema';
+import { Market, MarketUpdated } from '../generated/schema';
 
 export function handleMarketCreated(event: MarketCreated): void {
   const id = event.params.perpsMarketId.toString();
@@ -21,7 +21,7 @@ export function handleMarketCreated(event: MarketCreated): void {
   market.save();
 }
 
-export function handleMarketUpdated(event: MarketUpdated): void {
+export function handleMarketUpdated(event: MarketUpdatedEvent): void {
   const id = event.params.marketId.toString();
   const market = new Market(id);
 
@@ -31,7 +31,29 @@ export function handleMarketUpdated(event: MarketUpdated): void {
   market.sizeDelta = event.params.sizeDelta;
   market.currentFundingRate = event.params.currentFundingRate;
   market.currentFundingVelocity = event.params.currentFundingVelocity;
+
   market.save();
+
+  // create MarketUpdated entity
+  const marketUpdatedId =
+    event.params.marketId.toString() +
+    '-' +
+    event.block.number.toString() +
+    '-' +
+    event.logIndex.toString();
+
+  let marketUpdated = new MarketUpdated(marketUpdatedId);
+
+  marketUpdated.timestamp = event.block.timestamp;
+  marketUpdated.marketId = event.params.marketId;
+  marketUpdated.price = event.params.price;
+  marketUpdated.skew = event.params.skew;
+  marketUpdated.size = event.params.size;
+  marketUpdated.sizeDelta = event.params.sizeDelta;
+  marketUpdated.currentFundingRate = event.params.currentFundingRate;
+  marketUpdated.currentFundingVelocity = event.params.currentFundingVelocity;
+
+  marketUpdated.save();
 }
 
 export function handleMarketPriceDataUpdated(event: MarketPriceDataUpdated): void {
