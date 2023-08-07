@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
-describe('LiquidationModule', function () {
+describe.only('LiquidationModule', function () {
   const {
     signers,
     systems,
@@ -283,6 +283,14 @@ describe('LiquidationModule', function () {
           await systems()
             .Core.connect(user2)
             .mintUsd(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
+          console.log('error');
+          await systems()
+            .Core.connect(user2)
+            .withdraw(
+              liquidatorAccountId,
+              await systems().Core.getUsdToken(),
+              liquidatorAccountStartingBalance
+            );
         });
 
         before('record collateral ratio', async () => {

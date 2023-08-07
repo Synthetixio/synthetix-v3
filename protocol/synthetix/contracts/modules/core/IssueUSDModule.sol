@@ -1,17 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../../interfaces/IIssueUSDModule.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+
+import "../../interfaces/IIssueUSDModule.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Collateral.sol";
 import "../../storage/Config.sol";
-
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
  * @title Module for the minting and burning of stablecoins.
@@ -38,10 +37,8 @@ contract IssueUSDModule is IIssueUSDModule {
     using SafeCastI256 for int256;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
-
     bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
     bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
-
     bytes32 private constant _CONFIG_MINT_FEE_RATIO = "mintUsd_feeRatio";
     bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
     bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
@@ -105,10 +102,16 @@ contract IssueUSDModule is IIssueUSDModule {
         // Mint stablecoins to the sender
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(address(this), amount);
 
+        account.collaterals[collateralType].decreaseAvailableCollateral(
+            CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
+        );
+
         account
             .collaterals[AssociatedSystem.load(_USD_TOKEN).getAddress()]
             .increaseAvailableCollateral(
-                CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
+                CollateralConfiguration
+                    .load(AssociatedSystem.load(_USD_TOKEN).getAddress())
+                    .convertTokenToSystemAmount(amount)
             );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
@@ -132,11 +135,7 @@ contract IssueUSDModule is IIssueUSDModule {
         FeatureFlag.ensureAccessToFeature(_BURN_FEATURE_FLAG);
         Pool.Data storage pool = Pool.load(poolId);
 
-        Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
-            accountId,
-            AccountRBAC._WITHDRAW_PERMISSION,
-            Config.readUint(_CONFIG_TIMEOUT_BURN, 0)
-        );
+        Account.Data storage account = Account.load(accountId);
 
         // Retrieve current position debt
         int256 debt = pool.updateAccountDebt(collateralType, accountId);
@@ -159,13 +158,11 @@ contract IssueUSDModule is IIssueUSDModule {
         }
 
         // Burn the stablecoins
-        AssociatedSystem.load(_USD_TOKEN).asToken().burn(address(this), amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
-        account
-            .collaterals[AssociatedSystem.load(_USD_TOKEN).getAddress()]
-            .decreaseAvailableCollateral(
-                CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
-            );
+        account.collaterals[collateralType].increaseAvailableCollateral(
+            CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
+        );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);

@@ -145,6 +145,9 @@ describe('IssueUSDModule', function () {
           collateralAddress(),
           depositAmount.div(10) // should be enough
         );
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
       });
 
       it(
@@ -174,6 +177,10 @@ describe('IssueUSDModule', function () {
             collateralAddress(),
             depositAmount.div(10) // should be enough
           );
+
+          await systems()
+            .Core.connect(user1)
+            .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
         });
 
         it(
@@ -216,6 +223,9 @@ describe('IssueUSDModule', function () {
           collateralAddress(),
           depositAmount.div(10) // should be enough
         );
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
       });
 
       it(
@@ -257,6 +267,9 @@ describe('IssueUSDModule', function () {
       await systems()
         .Core.connect(user1)
         .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
+      await systems()
+        .Core.connect(user1)
+        .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
     });
 
     const restoreBurn = snapshotCheckpoint(provider);
@@ -366,6 +379,9 @@ describe('IssueUSDModule', function () {
 
       before('account partial burn debt', async () => {
         // in order to burn all with the fee we need a bit more
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(1000));
         tx = await systems()
           .Core.connect(user1)
           .burnUsd(accountId, poolId, collateralAddress(), depositAmount); // pay off everything

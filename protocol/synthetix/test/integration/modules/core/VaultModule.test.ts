@@ -378,6 +378,10 @@ describe('VaultModule', function () {
             collateralAddress(),
             depositAmount.div(100) // should be enough collateral to mint this
           );
+
+          await systems()
+            .Core.connect(user2)
+            .withdraw(user2AccountId, await systems().Core.getUsdToken(), depositAmount.div(100));
         });
 
         // lock enough collateral that the market will *become* capacity locked when the user
@@ -700,6 +704,9 @@ describe('VaultModule', function () {
 
         describe('remove collateral', async () => {
           before('repay debt', async () => {
+            await systems()
+              .Core.connect(user2)
+              .withdraw(user2AccountId, await systems().Core.getUsdToken(), depositAmount.div(100));
             await systems()
               .Core.connect(user2)
               .burnUsd(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));

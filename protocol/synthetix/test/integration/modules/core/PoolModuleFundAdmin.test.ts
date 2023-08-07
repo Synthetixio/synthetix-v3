@@ -461,6 +461,9 @@ describe('PoolModule Admin', function () {
           // in the market, and then reset the market
 
           await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), Hundred);
+          await systems()
+            .Core.connect(user1)
+            .withdraw(accountId, await systems().Core.getUsdToken(), Hundred);
           await systems().USD.connect(user1).approve(MockMarket().address, Hundred);
           await MockMarket().connect(user1).buySynth(Hundred);
 
