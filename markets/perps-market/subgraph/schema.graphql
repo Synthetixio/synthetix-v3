@@ -4,21 +4,6 @@ type Account @entity {
   owner: String!
 }
 
-type LiquidatedAccount @entity {
-  id: ID!
-  accountId: BigInt!
-  keeperLiquidationReward: BigInt
-  accountFullyLiquidated: Boolean
-}
-
-type LiquidatedPosition @entity {
-  id: ID!
-  accountId: BigInt!
-  marketId: BigInt
-  amountLiquidated: BigInt
-  currentPositionSize: BigInt
-}
-
 type Market @entity {
   id: ID!
   perpsMarketId: BigInt!
@@ -101,6 +86,32 @@ type GlobalConfiguration @entity {
 }
 
 # raw events
+type AccountLiquidated @entity {
+  id: ID!
+  timestamp: BigInt!
+  accountId: BigInt!
+  liquidationReward: BigInt!
+  fullyLiquidated: Boolean!
+}
+
+type PositionLiquidated @entity {
+  id: ID!
+  timestamp: BigInt!
+  accountId: BigInt!
+  marketId: BigInt!
+  amountLiquidated: BigInt!
+  currentPositionSize: BigInt!
+}
+
+type CollateralModified @entity {
+  id: ID!
+  timestamp: BigInt!
+  accountId: BigInt!
+  synthMarketId: BigInt!
+  amount: BigInt!
+  sender: Bytes!
+}
+
 type OrderCommitted @entity {
   id: ID!
   timestamp: BigInt!
