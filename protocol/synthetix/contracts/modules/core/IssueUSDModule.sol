@@ -99,20 +99,18 @@ contract IssueUSDModule is IIssueUSDModule {
         // Decrease the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
 
+        AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
+
         // Mint stablecoins to the sender
-        AssociatedSystem.load(_USD_TOKEN).asToken().mint(address(this), amount);
+        usdToken.asToken().mint(address(this), amount);
 
         account.collaterals[collateralType].decreaseAvailableCollateral(
             CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
         );
 
-        account
-            .collaterals[AssociatedSystem.load(_USD_TOKEN).getAddress()]
-            .increaseAvailableCollateral(
-                CollateralConfiguration
-                    .load(AssociatedSystem.load(_USD_TOKEN).getAddress())
-                    .convertTokenToSystemAmount(amount)
-            );
+        account.collaterals[usdToken.getAddress()].increaseAvailableCollateral(
+            CollateralConfiguration.load(usdToken.getAddress()).convertTokenToSystemAmount(amount)
+        );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);

@@ -283,7 +283,7 @@ describe.only('LiquidationModule', function () {
           await systems()
             .Core.connect(user2)
             .mintUsd(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
-          console.log('error');
+
           await systems()
             .Core.connect(user2)
             .withdraw(
