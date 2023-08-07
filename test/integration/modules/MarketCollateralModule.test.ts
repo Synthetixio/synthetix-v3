@@ -13,7 +13,7 @@ describe('MarketCollateralModule', async () => {
 
   beforeEach(restore);
 
-  describe('transferTo()', () => {
+  describe('transferTo', () => {
     it('should noop with a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -36,6 +36,8 @@ describe('MarketCollateralModule', async () => {
     it('should recompute funding on transfer');
 
     it('should revert transfers when an order is pending');
+
+    it('should revert when market is paused');
 
     describe('deposit', () => {
       it('should allow deposit of collateral to an existing accountId', async () => {

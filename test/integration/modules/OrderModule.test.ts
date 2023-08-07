@@ -193,7 +193,11 @@ describe('OrderModule', () => {
     it('should settle an order that adds to an existing order');
     it('should settle an order that flips from one side to the other');
 
-    it('should commit order if price moves but still safe');
+    it('should have a position opened after settlement');
+
+    it('should remove older after settlement');
+
+    it('should commit order when price moves but new position still safe');
     it('should allow position reduction even if insufficient unless in liquidation');
 
     it('should recompute funding on settlement');
@@ -227,7 +231,19 @@ describe('OrderModule', () => {
     it('should revert when not enough wei is available to pay pyth fee');
   });
 
-  describe('getOrderFees', () => {});
+  describe('getOrderFees', () => {
+    describe('orderFee', () => {
+      it('should charger maker fees when reducing skew');
+
+      it('should charge taker fee when expanding skew');
+
+      it('should charge a combination of maker and taker when skew flips');
+    });
+
+    describe('keeperFee', () => {
+      it('should calculate keeper fees proportional to block.baseFee and profit margin');
+    });
+  });
 
   describe('getFillPrice', () => {});
 });
