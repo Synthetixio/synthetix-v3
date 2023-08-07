@@ -33,7 +33,8 @@ describe('MarketCollateralModule', async () => {
       assert.equal(receipt.events?.length, 0);
     });
 
-    it('should recompute funding on transfer');
+    it('should emit all events in correct order');
+    it('should recompute funding');
 
     it('should revert transfers when an order is pending');
 

@@ -39,7 +39,8 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should recompute funding on commitment');
+    it('should emit all events in correct order');
+    it('should recompute funding');
 
     it('should revert when market is paused');
 
@@ -200,7 +201,8 @@ describe('OrderModule', () => {
     it('should commit order when price moves but new position still safe');
     it('should allow position reduction even if insufficient unless in liquidation');
 
-    it('should recompute funding on settlement');
+    it('should emit all events in correct order');
+    it('should recompute funding');
 
     it('should update market size and skew upon settlement');
 

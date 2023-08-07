@@ -10,6 +10,9 @@ describe('LiquidationModule', () => {
   describe('flagPosition', () => {
     it('should flag a position with a health rating <= 1');
 
+    it('should emit all events in correct order');
+    it('should recompute funding');
+
     it('should revert when position already flagged');
     it('should revert when position health rating > 1');
     it('should revert when no open position');
@@ -26,8 +29,11 @@ describe('LiquidationModule', () => {
     it('should update lastLiq{time,utilization}');
     it('should send liqReward to flagger and keeperFee to liquidator');
     it('should send send both fees to flagger if same keeper');
+    it('should remove flagger on full liquidation');
+    it('should not remove flagger on partial liquidation');
 
-    it('should recompute funding on liquidation');
+    it('should emit all events in correct order');
+    it('should recompute funding');
 
     it('should revert when market is paused');
     it('should revert when liq cap has been met');
