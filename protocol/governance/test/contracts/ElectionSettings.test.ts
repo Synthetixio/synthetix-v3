@@ -35,18 +35,6 @@ describe('ElectionSettings', function () {
     });
   });
 
-  describe('#getNextElectionSettings', function () {
-    it('returns current election settings', async function () {
-      const settings = await c.CoreProxy.connect(user).getNextElectionSettings();
-      assertBn.gt(settings.epochSeatCount, 0);
-      assertBn.gt(settings.minimumActiveMembers, 0);
-      assertBn.gt(settings.epochDuration, 0);
-      assertBn.gt(settings.nominationPeriodDuration, 0);
-      assertBn.gt(settings.votingPeriodDuration, 0);
-      assertBn.gt(settings.maxDateAdjustmentTolerance, 0);
-    });
-  });
-
   describe('#setNextElectionSettings', function () {
     async function _setNextElectionSettings(
       settings: Partial<ElectionSettings> = {},

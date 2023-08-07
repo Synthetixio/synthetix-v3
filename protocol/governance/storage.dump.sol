@@ -297,11 +297,6 @@ contract ElectionCredentials {
     bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
 }
 
-// @custom:artifact contracts/submodules/election/ElectionSettingsManager.sol:ElectionSettingsManager
-contract ElectionSettingsManager {
-    uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1;
-}
-
 // @custom:artifact contracts/submodules/election/ElectionTally.sol:ElectionTally
 contract ElectionTally {
     uint16 private constant _DEFAULT_EVALUATION_BATCH_SIZE = 500;

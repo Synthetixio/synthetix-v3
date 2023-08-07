@@ -123,7 +123,6 @@ describe('SnapshotVotePowerModule', function () {
         await c.CoreProxy.Council_get_lastElectionId()
       );
 
-      console.log('GOT THE SNAPSHOT ID', snapshotId);
       await c.SnapshotRecordMock.setBalanceOfOnPeriod(await user.getAddress(), 100, snapshotId);
     });
 

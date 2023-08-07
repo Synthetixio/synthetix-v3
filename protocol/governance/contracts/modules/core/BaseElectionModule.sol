@@ -9,19 +9,15 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/main/contracts/storage/CrossChain.sol";
 import "@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol";
 import "../../interfaces/IElectionModule.sol";
-import "../../submodules/election/ElectionSettingsManager.sol";
-import "../../submodules/election/ElectionSchedule.sol";
 import "../../submodules/election/ElectionCredentials.sol";
-import "../../submodules/election/ElectionVotes.sol";
 import "../../submodules/election/ElectionTally.sol";
+
+import "../../storage/Council.sol";
 
 contract BaseElectionModule is
     IElectionModule,
-    ElectionSettingsManager,
-    ElectionSchedule,
-    ElectionCredentials,
-    ElectionVotes,
-    ElectionTally,
+		ElectionCredentials,
+		ElectionTally,
     InitializableMixin,
     ProxyStorage
 {
@@ -122,19 +118,7 @@ contract BaseElectionModule is
             revert ParameterError.InvalidParameter("mothershipChainId", "must be nonzero");
         }
 
-        CrossChain.Data storage cc = CrossChain.load();
-        gasTokenUsed = cc.broadcast(
-            cc.getSupportedNetworks(),
-            abi.encodeWithSelector(this._recvConfigureMothership.selector, cc.mothershipChainId),
-            _CROSSCHAIN_GAS_LIMIT
-        );
-    }
-
-    function _recvConfigureMothership(uint64 mothershipChainId) external {
-        CrossChain.onlyCrossChain();
         CrossChain.load().mothershipChainId = mothershipChainId;
-
-        emit MothershipChainIdUpdated(mothershipChainId);
     }
 
     function tweakEpochSchedule(
@@ -171,8 +155,7 @@ contract BaseElectionModule is
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
-        _setElectionSettings(
-            Council.load().getNextElectionSettings(),
+        Council.load().getNextElectionSettings().setElectionSettings(
             epochSeatCount,
             minimumActiveMembers,
             epochDuration,
@@ -238,11 +221,24 @@ contract BaseElectionModule is
     ) public virtual override {
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
+				if (candidates.length != amounts.length) {
+					revert ParameterError.InvalidParameter("candidates", "length must match amounts");
+				}
+
         Ballot.Data storage ballot = Ballot.load(
             Council.load().lastElectionId,
             msg.sender,
             block.chainid
         );
+
+				uint256 totalAmounts = 0;
+				for (uint i = 0;i < amounts.length;i++) {
+					totalAmounts += amounts[i];
+				}
+
+				if (totalAmounts == 0 || ballot.votingPower != totalAmounts) {
+						revert ParameterError.InvalidParameter("amounts", "must be nonzero and sum to ballot voting power");
+				}
 
         ballot.votedCandidates = candidates;
         ballot.amounts = amounts;
@@ -250,7 +246,7 @@ contract BaseElectionModule is
         CrossChain.Data storage cc = CrossChain.load();
         cc.transmit(
             cc.mothershipChainId,
-            abi.encodeWithSelector(this._recvCast.selector, ballot),
+            abi.encodeWithSelector(this._recvCast.selector, msg.sender, block.chainid, ballot),
             _CROSSCHAIN_GAS_LIMIT
         );
     }
@@ -411,5 +407,36 @@ contract BaseElectionModule is
 
     function getCouncilMembers() external view override returns (address[] memory) {
         return Council.load().councilMembers.values();
+    }
+
+
+    function _validateCandidates(address[] calldata candidates) internal virtual {
+        uint length = candidates.length;
+
+        if (length == 0) {
+            revert NoCandidates();
+        }
+
+        SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
+
+        for (uint i = 0; i < length; i++) {
+            address candidate = candidates[i];
+
+            // Reject candidates that are not nominated.
+            if (!nominees.contains(candidate)) {
+                revert NotNominated();
+            }
+
+            // Reject duplicate candidates.
+            if (i < length - 1) {
+                for (uint j = i + 1; j < length; j++) {
+                    address otherCandidate = candidates[j];
+
+                    if (candidate == otherCandidate) {
+                        revert DuplicateCandidates(candidate);
+                    }
+                }
+            }
+        }
     }
 }

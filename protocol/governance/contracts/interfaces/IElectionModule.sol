@@ -6,6 +6,27 @@ import {ElectionSettings} from "../storage/ElectionSettings.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
+		
+		error NotMothership();
+		error AlreadyNominated();
+		error ElectionAlreadyEvaluated();
+		error ElectionNotEvaluated();
+		error NotNominated();
+		error NoCandidates();
+		error DuplicateCandidates(address duplicatedCandidate);
+		
+		event ElectionModuleInitialized();
+		event EpochStarted(uint256 indexed epochId);
+		event MothershipChainIdUpdated(uint256 indexed mothershipChainId);
+		event EpochScheduleUpdated(uint64 indexed epochId, uint64 startDate, uint64 endDate);
+		event CouncilMembersDismissed(address[] dismissedMembers, uint256 epochId);
+		event EmergencyElectionStarted(uint256 indexed epochId);
+		event CandidateNominated(address indexed candidate, uint256 indexed epochId);
+		event NominationWithdrawn(address indexed candidate, uint256 indexed epochId);
+		event VoteRecorded(address indexed voter, uint256 indexed precinct, uint256 indexed epochId, uint256 votingPower);
+		event ElectionBatchEvaluated(uint256 indexed epochId, uint256 numEvaluatedBallots, uint256 totalBallots);
+		event ElectionEvaluated(uint256 indexed epochId, uint256 ballotCount);
+
     // ---------------------------------------
     // Initialization
     // ---------------------------------------
