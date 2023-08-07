@@ -37,36 +37,37 @@ contract OrderModule is IOrderModule {
     ) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Order.Data storage order = market.orders[accountId];
 
         // A new order cannot be submitted if one is already pending.
-        if (order.sizeDelta != 0) {
+        if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound(accountId);
         }
 
         uint256 oraclePrice = market.getOraclePrice();
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        recomputeFunding(market, oraclePrice);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        Position.TradeParams memory params = Position.TradeParams({
-            sizeDelta: sizeDelta,
-            oraclePrice: oraclePrice,
-            fillPrice: Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
-            makerFee: marketConfig.makerFee,
-            takerFee: marketConfig.takerFee,
-            limitPrice: limitPrice,
-            keeperFeeBufferUsd: keeperFeeBufferUsd
-        });
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         //
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        (, uint256 _orderFee, uint256 keeperFee) = Position.validateTrade(accountId, market, params);
+        (, uint256 orderFee, uint256 keeperFee) = Position.validateTrade(
+            accountId,
+            market,
+            Position.TradeParams({
+                sizeDelta: sizeDelta,
+                oraclePrice: oraclePrice,
+                fillPrice: Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+                makerFee: marketConfig.makerFee,
+                takerFee: marketConfig.takerFee,
+                limitPrice: limitPrice,
+                keeperFeeBufferUsd: keeperFeeBufferUsd
+            })
+        );
 
-        market.updateOrder(
+        market.orders[accountId].update(
             Order.Data({
                 accountId: accountId,
                 sizeDelta: sizeDelta,
@@ -75,8 +76,15 @@ contract OrderModule is IOrderModule {
                 keeperFeeBufferUsd: keeperFeeBufferUsd
             })
         );
+        emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, orderFee, keeperFee);
+    }
 
-        emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, _orderFee, keeperFee);
+    /**
+     * @dev Generic helper for funding recomputation during order management.
+     */
+    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
+        (int256 fundingRate, ) = market.recomputeFunding(price);
+        emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
     }
 
     /**
@@ -153,8 +161,6 @@ contract OrderModule is IOrderModule {
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
 
-        market.removeOrder(accountId);
-
         // Update skew and market size upon successful settlement.
         market.skew += newPosition.size - oldPosition.size;
         market.size += (MathUtil.abs(newPosition.size).toInt() - MathUtil.abs(oldPosition.size).toInt())
@@ -162,7 +168,14 @@ contract OrderModule is IOrderModule {
             .to128();
 
         market.updateDebtCorrection(oldPosition, newPosition);
-        market.updatePosition(newPosition); // TODO: If the settlement is to close, need a position.clear()?
+
+        // TODO: How do we deal with partially closing a profitable position?
+        if (newPosition.size == 0) {
+            delete market.positions[accountId];
+        } else {
+            market.positions[accountId].update(newPosition);
+        }
+        delete market.orders[accountId];
     }
 
     /**
@@ -200,8 +213,7 @@ contract OrderModule is IOrderModule {
 
         validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, params);
 
-        (int256 fundingRate, ) = market.recomputeFunding(pythPrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        recomputeFunding(market, pythPrice);
 
         // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
         (Position.Data memory newPosition, uint256 orderFee, uint256 keeperFee) = Position.validateTrade(

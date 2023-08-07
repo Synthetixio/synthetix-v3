@@ -141,27 +141,6 @@ library PerpMarket {
     }
 
     /**
-     * @dev Updates position for `data.accountId` with `data`.
-     */
-    function updatePosition(PerpMarket.Data storage self, Position.Data memory data) internal {
-        self.positions[data.accountId].update(data);
-    }
-
-    /**
-     * @dev Updates order for `data.accountId` with `data`.
-     */
-    function updateOrder(PerpMarket.Data storage self, Order.Data memory data) internal {
-        self.orders[data.accountId].update(data);
-    }
-
-    /**
-     * @dev Removes the order from the market at `accountId`.
-     */
-    function removeOrder(PerpMarket.Data storage self, uint128 accountId) internal {
-        delete self.orders[accountId];
-    }
-
-    /**
      * @dev Recompute and store funding related values given the current market conditions.
      */
     function recomputeFunding(

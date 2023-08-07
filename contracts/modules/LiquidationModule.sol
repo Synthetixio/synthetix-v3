@@ -73,8 +73,7 @@ contract LiquidationModule is ILiquidationModule {
 
         market.updateDebtCorrection(market.positions[accountId], newPosition);
 
-        // TODO: Consider moving this out and updating directly at the module?
-        market.updatePosition(newPosition);
+        market.positions[accountId].update(newPosition);
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 

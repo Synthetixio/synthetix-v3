@@ -124,9 +124,11 @@ library Position {
     /**
      * @dev Given an open position and trade params for the next position return the new position after validation.
      *
-     * This is the core position validation pre/post order settlement. It validates the state of the current position
-     * if one is available then the new position on market attributes like max OI, liquidation, margins, leverage etc.
-     * When a current and new position checks pass, a new in-memory position is returned for downstream processing.
+     * Validates whether the `params` would lead to a valid 'next' next position (through series of revert errors
+     * if not). This is the core position validation pre/post order settlement. It validates the state of the current
+     * position if one is available then the new position on market attributes like max OI, liquidation, margins,
+     * leverage etc. When a current and new position checks pass, a new in-memory position is returned for downstream
+     * processing.
      */
     function validateTrade(
         uint128 accountId,
