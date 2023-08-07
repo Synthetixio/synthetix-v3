@@ -21,10 +21,10 @@ interface IMulticallModule {
      * @dev Fails immediately on revert of any call.
      * @return results Array of each call's response corresponding
      */
-    /*function multicallThrough(
+    function multicallThrough(
         address[] calldata to,
         bytes[] calldata data
     ) external payable returns (bytes[] memory results);
 
-    function getMessageSender() external view returns (address);*/
+    function getMessageSender() external view returns (address);
 }

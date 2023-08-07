@@ -36,8 +36,10 @@ contract MulticallModule is IMulticallModule {
         }
     }
 
-    // uncomment this when governance approves `multicallThrough` functionality (didnt want to put this in a separate PR for now)
-    /*function multicallThrough(
+    /**
+     * @inheritdoc IMulticallModule
+     */
+    function multicallThrough(
         address[] calldata to,
         bytes[] calldata data
     ) public payable override returns (bytes[] memory results) {
@@ -45,6 +47,7 @@ contract MulticallModule is IMulticallModule {
             revert RecursiveMulticall(msg.sender);
         }
 
+        // solhint-disable-next-line numcast/safe-cast
         Config.put(_CONFIG_MESSAGE_SENDER, bytes32(uint256(uint160(msg.sender))));
 
         results = new bytes[](data.length);
@@ -70,7 +73,10 @@ contract MulticallModule is IMulticallModule {
         Config.put(_CONFIG_MESSAGE_SENDER, 0);
     }
 
+    /**
+     * @inheritdoc IMulticallModule
+     */
     function getMessageSender() external view override returns (address) {
         return Config.readAddress(_CONFIG_MESSAGE_SENDER, address(0));
-    }*/
+    }
 }

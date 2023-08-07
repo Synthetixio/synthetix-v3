@@ -4,6 +4,8 @@ import assert from 'assert/strict';
 import { bootstrap } from '../../bootstrap';
 import { ethers } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import hre from 'hardhat';
 
 describe('MulticallModule', function () {
   const { systems, signers } = bootstrap();
@@ -50,7 +52,7 @@ describe('MulticallModule', function () {
     });
   });
 
-  describe.skip('multicallThrough()', () => {
+  describe('multicallThrough()', () => {
     it('passes through errors', async () => {
       await assertRevert(
         systems()
@@ -96,6 +98,34 @@ describe('MulticallModule', function () {
 
         assert.equal(await systems().Account.ownerOf(1234434), await user1.getAddress());
         assert.equal((await systems().OracleManager.getNode(nodeId)).nodeType, 8);
+      });
+    });
+
+    describe('verify messageSender', async () => {
+      let receiverContract: ethers.Contract;
+      let tx: ethers.providers.TransactionResponse;
+      before('deploy multicall receiver', async () => {
+        const factory = await hre.ethers.getContractFactory('MulticallReceiver');
+        const MulticallReceiver = await factory.deploy();
+        receiverContract = await MulticallReceiver.deployed();
+        tx = await systems()
+          .Core.connect(user1)
+          .multicallThrough(
+            [receiverContract.address],
+            [receiverContract.interface.encodeFunctionData('testMessageSender')]
+          );
+      });
+
+      it('emits event confirming msg sender is correct', async () => {
+        await assertEvent(
+          tx,
+          `MessageSenderTested("${await user1.getAddress()}")`,
+          receiverContract
+        );
+      });
+
+      it('should have reset messageSender after multicall', async () => {
+        assert.equal(await systems().Core.getMessageSender(), ethers.constants.AddressZero);
       });
     });
   });
