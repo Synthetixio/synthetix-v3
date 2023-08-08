@@ -7,7 +7,9 @@ import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
+import {PerpsPrice} from "./PerpsPrice.sol";
 import {PerpsAccount} from "./PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {OrderFee} from "./OrderFee.sol";
@@ -24,6 +26,7 @@ library AsyncOrder {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
+    using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using PerpsMarket for PerpsMarket.Data;
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
@@ -239,6 +242,8 @@ library AsyncOrder {
         uint orderFees;
         uint availableMargin;
         uint currentLiquidationMargin;
+        uint accumulatedLiquidationRewards;
+        uint currentLiquidationReward;
         int128 newPositionSize;
         uint newNotionalValue;
         int currentAvailableMargin;
@@ -277,8 +282,14 @@ library AsyncOrder {
         PerpsAccount.Data storage account = PerpsAccount.load(runtime.accountId);
 
         bool isEligible;
-        (isEligible, runtime.currentAvailableMargin, , runtime.requiredMaintenanceMargin) = account
-            .isEligibleForLiquidation();
+        (
+            isEligible,
+            runtime.currentAvailableMargin,
+            ,
+            runtime.requiredMaintenanceMargin,
+            runtime.accumulatedLiquidationRewards,
+
+        ) = account.isEligibleForLiquidation();
 
         if (isEligible) {
             revert PerpsAccount.AccountLiquidatable(runtime.accountId);
@@ -328,25 +339,17 @@ library AsyncOrder {
         );
 
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
-        (, , runtime.initialRequiredMargin, , ) = marketConfig.calculateRequiredMargins(
-            runtime.newPositionSize,
-            runtime.fillPrice
-        );
-
-        // use order price to determine notional value here since we need to subtract
-        // this amount
-        (, , , uint256 currentMarketMaintenanceMargin, ) = marketConfig.calculateRequiredMargins(
-            oldPosition.size,
-            orderPrice
-        );
-
-        // requiredMaintenanceMargin includes the maintenance margin for the current position that's
-        // being modified, so we subtract the maintenance margin and use the initial required margin
         runtime.totalRequiredMargin =
-            runtime.orderFees +
-            runtime.requiredMaintenanceMargin +
-            runtime.initialRequiredMargin -
-            currentMarketMaintenanceMargin;
+            _getRequiredMarginWithNewPosition(
+                marketConfig,
+                runtime.marketId,
+                oldPosition.size,
+                runtime.newPositionSize,
+                runtime.fillPrice,
+                runtime.requiredMaintenanceMargin,
+                runtime.accumulatedLiquidationRewards
+            ) +
+            runtime.orderFees;
 
         if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
@@ -458,5 +461,43 @@ library AsyncOrder {
 
         // the fill price is the average of those prices
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+    }
+
+    /**
+     * @notice After the required margins are calculated with the old position, this function replaces the
+     * old position data with the new position margin requirements and returns them.
+     */
+    function _getRequiredMarginWithNewPosition(
+        PerpsMarketConfiguration.Data storage marketConfig,
+        uint128 marketId,
+        int128 oldPositionSize,
+        int128 newPositionSize,
+        uint256 fillPrice,
+        uint currentTotalMaintenanceMargin,
+        uint currentTotalLiquidationRewards
+    ) internal view returns (uint) {
+        // get initial margin requirement for the new position
+        (, , uint newRequiredMargin, , uint newLiquidationReward) = marketConfig
+            .calculateRequiredMargins(newPositionSize, fillPrice);
+
+        // get maintenance margin of old position
+        (, , , uint256 oldRequiredMargin, uint oldLiquidationReward) = marketConfig
+            .calculateRequiredMargins(oldPositionSize, PerpsPrice.getCurrentPrice(marketId));
+
+        // remove the maintenance margin and add the initial margin requirement
+        // this gets us our total required margin for new position
+        uint requiredMarginForNewPosition = currentTotalMaintenanceMargin +
+            newRequiredMargin -
+            oldRequiredMargin;
+
+        // do same thing for liquidation rewards and compute against global configured min/max liq reward
+        uint requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
+            .load()
+            .liquidationReward(
+                currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward
+            );
+
+        // this is the required margin for the new position (minus any order fees)
+        return requiredMarginForNewPosition + requiredLiquidationRewardMargin;
     }
 }
