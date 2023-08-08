@@ -2,7 +2,6 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import {
-  OpenPositionData,
   calculateFillPrice,
   getMaxLiquidationReward,
   openPosition,
@@ -11,7 +10,7 @@ import {
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
-describe.only('Orders - margin validation', () => {
+describe('Orders - margin validation', () => {
   const liqParams = {
     btc: {
       imRatio: wei(0.02),

@@ -1,4 +1,4 @@
-import Wei, { wei } from '@synthetixio/wei';
+import Wei from '@synthetixio/wei';
 
 type Config = {
   initialMarginRatio: Wei;
