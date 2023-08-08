@@ -24,16 +24,18 @@ contract MarginModule is IMarginModule {
      * @dev Validates whether the margin requirements are acceptable after withdrawing.
      */
     function validatePositionPostWithdraw(Position.Data storage position, PerpMarket.Data storage market) private view {
-        uint256 notionalValueUsd = Margin.getNotionalValueUsd(position.accountId, position.marketId);
+        uint256 marginUsd = Margin.getMarginUsd(position.accountId, market);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(position.marketId);
 
+        uint256 oraclePrice = market.getOraclePrice();
+
         // Ensure does not lead to instant liquidation.
-        if (position.isLiquidatable(notionalValueUsd, market.getOraclePrice(), marketConfig)) {
+        if (position.isLiquidatable(marginUsd, oraclePrice, marketConfig)) {
             revert ErrorUtil.CanLiquidatePosition(position.accountId);
         }
 
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, market.getOraclePrice(), marketConfig);
-        if (notionalValueUsd - position.feesIncurredUsd < im) {
+        (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
+        if (marginUsd < im) {
             revert ErrorUtil.InsufficientMargin();
         }
     }

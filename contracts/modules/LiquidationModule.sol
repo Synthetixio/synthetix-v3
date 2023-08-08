@@ -26,7 +26,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         bool isLiquidatable = market.positions[accountId].isLiquidatable(
-            Margin.getNotionalValueUsd(accountId, marketId),
+            Margin.getMarginUsd(accountId, market),
             market.getOraclePrice(),
             PerpMarketConfiguration.load(marketId)
         );
@@ -161,7 +161,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].isLiquidatable(
-                Margin.getNotionalValueUsd(accountId, marketId),
+                Margin.getMarginUsd(accountId, market),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             );
@@ -192,7 +192,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].getHealthFactor(
-                Margin.getNotionalValueUsd(accountId, marketId),
+                Margin.getMarginUsd(accountId, market),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             );

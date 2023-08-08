@@ -102,7 +102,7 @@ library Position {
      */
     function validateNextPositionIsLiquidatable(
         Position.Data memory newPosition,
-        uint256 notionalValueUsd,
+        uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
@@ -111,8 +111,7 @@ library Position {
             newPosition.size,
             newPosition.entryPrice,
             newPosition.entryFundingAccrued,
-            newPosition.feesIncurredUsd,
-            notionalValueUsd,
+            marginUsd,
             price,
             marketConfig
         );
@@ -143,14 +142,14 @@ library Position {
         uint128 marketId = market.id;
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        uint256 notionalValueUsd = Margin.getNotionalValueUsd(accountId, marketId);
+        uint256 marginUsd = Margin.getMarginUsd(accountId, market);
 
         // --- Existing position validation --- //
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
         if (currentPosition.size != 0) {
             // Determine if the currentPosition can immediately be liquidated.
-            if (isLiquidatable(currentPosition, notionalValueUsd, params.fillPrice, marketConfig)) {
+            if (isLiquidatable(currentPosition, marginUsd, params.fillPrice, marketConfig)) {
                 revert ErrorUtil.CanLiquidatePosition(accountId);
             }
 
@@ -159,7 +158,7 @@ library Position {
             // NOTE: The use of fillPrice and not oraclePrice to perform calculations below. Also consider this is the
             // "raw" remaining margin which does not account for fees (liquidation fees, penalties, liq premium fees etc.).
             (uint256 imcp, , ) = getLiquidationMarginUsd(currentPosition.size, params.fillPrice, marketConfig);
-            if (notionalValueUsd - currentPosition.feesIncurredUsd < imcp) {
+            if (marginUsd < imcp) {
                 revert ErrorUtil.InsufficientMargin();
             }
         }
@@ -184,12 +183,13 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 imnp, , ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
 
-        if (!positionDecreasing && notionalValueUsd.toInt() - newPosition.feesIncurredUsd.toInt() < imnp.toInt()) {
+        // TODO: Need to rethink this. We should be using the new position's margin (not the old).
+        if (!positionDecreasing && marginUsd.toInt() - newPosition.feesIncurredUsd.toInt() < imnp.toInt()) {
             revert ErrorUtil.InsufficientMargin();
         }
 
         // Check new position can't just be instantly liquidated.
-        validateNextPositionIsLiquidatable(newPosition, notionalValueUsd, params.fillPrice, marketConfig);
+        validateNextPositionIsLiquidatable(newPosition, marginUsd, params.fillPrice, marketConfig);
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
@@ -305,8 +305,7 @@ library Position {
         int128 positionSize,
         uint256 positionEntryPrice,
         int256 positionEntryFundingAccrued,
-        uint256 positionFeesIncurredUsd,
-        uint256 notionalValueUsd,
+        uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
@@ -320,9 +319,7 @@ library Position {
         // Ensure we also deduct the realized losses in fees to open trade.
         //
         // The remaining margin is defined as sum(collateral * price) + PnL + funding in USD.
-        remainingMarginUsd = MathUtil
-            .max(notionalValueUsd.toInt() + pnl + accruedFunding - positionFeesIncurredUsd.toInt(), 0)
-            .toUint();
+        remainingMarginUsd = MathUtil.max(marginUsd.toInt() + pnl + accruedFunding, 0).toUint();
 
         // margin / mm <= 1 means liquidation.
         (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);
@@ -336,7 +333,7 @@ library Position {
      */
     function isLiquidatable(
         Position.Data storage self,
-        uint256 notionalValueUsd,
+        uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (bool) {
@@ -348,8 +345,7 @@ library Position {
             self.size,
             self.entryPrice,
             self.entryFundingAccrued,
-            self.feesIncurredUsd,
-            notionalValueUsd,
+            marginUsd,
             price,
             marketConfig
         );
@@ -361,7 +357,7 @@ library Position {
      */
     function getHealthFactor(
         Position.Data storage self,
-        uint256 notionalValueUsd,
+        uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256) {
@@ -370,8 +366,7 @@ library Position {
             self.size,
             self.entryPrice,
             self.entryFundingAccrued,
-            self.feesIncurredUsd,
-            notionalValueUsd,
+            marginUsd,
             price,
             marketConfig
         );

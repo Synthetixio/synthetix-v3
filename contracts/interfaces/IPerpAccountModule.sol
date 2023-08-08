@@ -23,7 +23,7 @@ interface IPerpAccountModule {
         uint128 marketId;
         // @dev Array of data pertaining to deposited collateral
         IPerpAccountModule.DepositedCollateral[] collateral;
-        // @dev Notional value of deposited collateral.
+        // @dev Notional value of deposited collateral in USD.
         uint256 notionalValueUsd;
         // @dev Struct of order if one is pending, default values if none.
         Order.Data order;
@@ -34,13 +34,13 @@ interface IPerpAccountModule {
     }
 
     struct PositionDigest {
-        // @dev id of the account that was queried
+        // @dev id of the account that was queried.
         uint128 accountId;
-        // @dev id of the market that was queried
+        // @dev id of the market that was queried.
         uint128 marketId;
-        // @dev Notional value of deposited collateral.
-        uint256 notionalValueUsd;
-        // @dev Health factor for position in market if a position is open
+        // @dev Total remaining margin for position in USD.
+        uint256 marginUsd;
+        // @dev Health factor for position in market if a position is open.
         uint256 healthFactor;
 
         // TODO: Add a lot more details but also consider is this even valueable? Does AccountDigest provide enough?
