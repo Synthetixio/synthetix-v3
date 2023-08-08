@@ -14,7 +14,7 @@ Please caution as this project is **_still under active development, not yet rel
   <img src="./docs/images/summary.png">
 </p>
 
-_You can find more details on the working model under `docs/`._
+_You can find more details on the working model under [`docs/images`](./docs/images/)._
 
 ## Development
 
@@ -54,6 +54,8 @@ The test environment is a composition of `bootstrap` function calls, tighly coup
 - Registers and configures perp markets with the core system
 
 All of these operates happen asynchronously in loosely chained `before` blocks. You can execute tests by:
+
+Two primary differences to note in how tests are written in bfp-market is all tests defined in `it` blocks are isolated (ensured by the `beforeEach(restore)` rather than a `before(restore)`) and the use of [generator functions](./test) and a mixture of [realistic market parameters](./test/data) rather than hardcoded values as input data for each test.
 
 ```bash
 npm run test
