@@ -26,7 +26,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         bool isLiquidatable = market.positions[accountId].isLiquidatable(
-            Margin.getCollateralUsd(accountId, marketId),
+            Margin.getNotionalValueUsd(accountId, marketId),
             market.getOraclePrice(),
             PerpMarketConfiguration.load(marketId)
         );
@@ -76,12 +76,12 @@ contract LiquidationModule is ILiquidationModule {
         // TODO: Deal with partially removing deposited collateral (?)
         //
         // We can reuse the feesIncurredUsd to sum the partial amount liquidated. Ensure when looking at IM/MM and inferring
-        // liqRewards we need to look at collateralUsd - feeIncurredUsd (need a better name).
+        // liqRewards we need to look at notionalValueUsd - feeIncurredUsd (need a better name).
         //
         // TODO:
         //
-        // - collateralUsd = raw collateral value in USD
-        // - marginUsd = collateralUsd - fees.
+        // - notionalValueUsd = raw collateral value in USD
+        // - marginUsd = notionalValueUsd - fees.
         //
         // When paying out profitable traders on close, update their sUSD collateral balance before applying debt correction?
         // On close, any profitable amount is applied to their margin.
@@ -161,7 +161,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].isLiquidatable(
-                Margin.getCollateralUsd(accountId, marketId),
+                Margin.getNotionalValueUsd(accountId, marketId),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             );
@@ -192,7 +192,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].getHealthFactor(
-                Margin.getCollateralUsd(accountId, marketId),
+                Margin.getNotionalValueUsd(accountId, marketId),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             );

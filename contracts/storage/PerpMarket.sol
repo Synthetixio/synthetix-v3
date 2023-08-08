@@ -108,12 +108,12 @@ library PerpMarket {
      * @dev Returns the relative debt correction for a single position.
      */
     function getPositionDebtCorrection(
-        uint256 collateralUsd,
+        uint256 notionalValueUsd,
         int128 size,
         uint256 entryPrice,
         int256 entryFundingAccrued
     ) internal pure returns (int256) {
-        return collateralUsd.toInt() - (size.mulDecimal(entryPrice.toInt() + entryFundingAccrued));
+        return notionalValueUsd.toInt() - (size.mulDecimal(entryPrice.toInt() + entryFundingAccrued));
     }
 
     /**
@@ -124,15 +124,15 @@ library PerpMarket {
         Position.Data storage oldPosition,
         Position.Data memory newPosition
     ) internal {
-        uint256 collateralUsd = Margin.getCollateralUsd(newPosition.accountId, newPosition.marketId);
+        uint256 notionalValueUsd = Margin.getNotionalValueUsd(newPosition.accountId, newPosition.marketId);
         int256 oldCorrection = getPositionDebtCorrection(
-            collateralUsd,
+            notionalValueUsd,
             oldPosition.size,
             oldPosition.entryPrice,
             oldPosition.entryFundingAccrued
         );
         int256 newCorrection = getPositionDebtCorrection(
-            collateralUsd,
+            notionalValueUsd,
             newPosition.size,
             newPosition.entryPrice,
             newPosition.entryFundingAccrued

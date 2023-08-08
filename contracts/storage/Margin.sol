@@ -70,7 +70,10 @@ library Margin {
     /**
      * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
-    function getCollateralUsd(uint128 accountId, uint128 marketId) internal view returns (uint256 collateralValueUsd) {
+    function getNotionalValueUsd(
+        uint128 accountId,
+        uint128 marketId
+    ) internal view returns (uint256 collateralValueUsd) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);

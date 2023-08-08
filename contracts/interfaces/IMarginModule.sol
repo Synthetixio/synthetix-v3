@@ -47,5 +47,13 @@ interface IMarginModule is IBasePerpMarket {
 
     // --- Views --- //
 
+    /**
+     * @dev Retrieves the configured collaterals used as margin.
+     */
     function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory collaterals);
+
+    /**
+     * @dev Retrieves the total value of deposited collaterals in USD.
+     */
+    function getNotionalValueUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
 }

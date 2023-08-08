@@ -40,18 +40,18 @@ contract PerpAccountModule is IPerpAccountModule {
             }
         }
 
-        uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId);
+        uint256 notionalValueUsd = Margin.getNotionalValueUsd(accountId, marketId);
         Position.Data storage position = market.positions[accountId];
 
         digest = IPerpAccountModule.AccountDigest({
             accountId: accountId,
             marketId: marketId,
             collateral: collateral,
-            collateralUsd: collateralUsd,
+            notionalValueUsd: notionalValueUsd,
             order: market.orders[accountId],
             position: position,
             healthFactor: position.getHealthFactor(
-                collateralUsd,
+                notionalValueUsd,
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             )
