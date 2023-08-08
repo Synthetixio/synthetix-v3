@@ -30,9 +30,10 @@ contract BaseElectionModule is
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
-    /// @dev Used to allow certain functions to only be configured on the "mothership" chain.
+    /// @dev Used to allow certain functions to only be executed on the "mothership" chain.
+    /// The mothership is considered to be the first chain id in the supported networks list.
     modifier onlyMothership() {
-        if (CrossChain.load().mothershipChainId != block.chainid.to64()) {
+        if (CrossChain.load().getSupportedNetworks()[0] != block.chainid.to64()) {
             revert NotMothership();
         }
 
@@ -108,17 +109,6 @@ contract BaseElectionModule is
 
     function _isInitialized() internal view override returns (bool) {
         return Council.load().initialized;
-    }
-
-    function configureMothership(uint64 mothershipChainId) external returns (uint256 gasTokenUsed) {
-        OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Council.ElectionPeriod.Administration);
-
-        if (mothershipChainId == 0) {
-            revert ParameterError.InvalidParameter("mothershipChainId", "must be nonzero");
-        }
-
-        CrossChain.load().mothershipChainId = mothershipChainId;
     }
 
     function tweakEpochSchedule(
@@ -248,7 +238,7 @@ contract BaseElectionModule is
 
         CrossChain.Data storage cc = CrossChain.load();
         cc.transmit(
-            cc.mothershipChainId,
+            cc.getSupportedNetworks()[0],
             abi.encodeWithSelector(this._recvCast.selector, msg.sender, block.chainid, ballot),
             _CROSSCHAIN_GAS_LIMIT
         );
