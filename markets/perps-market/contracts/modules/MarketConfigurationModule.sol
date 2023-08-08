@@ -5,9 +5,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
-import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
-import {OrderFee} from "../storage/OrderFee.sol";
 
 /**
  * @title Module for updating configuration in relation to async order modules.
@@ -108,7 +106,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function setLiquidationParameters(
         uint128 marketId,
         uint256 initialMarginRatioD18,
-        uint256 maintenanceMarginRatioD18,
+        uint256 minimumInitialMarginRatioD18,
+        uint256 maintenanceMarginScalarD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
         uint256 maxSecondsInLiquidationWindow,
@@ -118,7 +117,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         config.initialMarginRatioD18 = initialMarginRatioD18;
-        config.maintenanceMarginRatioD18 = maintenanceMarginRatioD18;
+        config.maintenanceMarginScalarD18 = maintenanceMarginScalarD18;
+        config.minimumInitialMarginRatioD18 = minimumInitialMarginRatioD18;
         config.liquidationRewardRatioD18 = liquidationRewardRatioD18;
         config
             .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
@@ -128,7 +128,8 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         emit LiquidationParametersSet(
             marketId,
             initialMarginRatioD18,
-            maintenanceMarginRatioD18,
+            maintenanceMarginScalarD18,
+            minimumInitialMarginRatioD18,
             liquidationRewardRatioD18,
             maxLiquidationLimitAccumulationMultiplier,
             maxSecondsInLiquidationWindow,
@@ -167,20 +168,24 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         override
         returns (
             uint256 initialMarginRatioD18,
-            uint256 maintenanceMarginRatioD18,
+            uint256 minimumInitialMarginRatioD18,
+            uint256 maintenanceMarginScalarD18,
             uint256 liquidationRewardRatioD18,
             uint256 maxLiquidationLimitAccumulationMultiplier,
-            uint256 maxSecondsInLiquidationWindow
+            uint256 maxSecondsInLiquidationWindow,
+            uint256 minimumPositionMargin
         )
     {
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
         initialMarginRatioD18 = config.initialMarginRatioD18;
-        maintenanceMarginRatioD18 = config.maintenanceMarginRatioD18;
+        minimumInitialMarginRatioD18 = config.minimumInitialMarginRatioD18;
+        maintenanceMarginScalarD18 = config.maintenanceMarginScalarD18;
         liquidationRewardRatioD18 = config.liquidationRewardRatioD18;
         maxLiquidationLimitAccumulationMultiplier = config
             .maxLiquidationLimitAccumulationMultiplier;
         maxSecondsInLiquidationWindow = config.maxSecondsInLiquidationWindow;
+        minimumPositionMargin = config.minimumPositionMargin;
     }
 
     /**

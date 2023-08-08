@@ -15,7 +15,8 @@ describe('Account margins test', () => {
       fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),
@@ -33,7 +34,8 @@ describe('Account margins test', () => {
       fundingParams: { skewScale: bn(1000), maxFundingVelocity: bn(0) },
       liquidationParams: {
         initialMarginFraction: bn(2),
-        maintenanceMarginFraction: bn(1),
+        minimumInitialMarginRatio: bn(0.01),
+        maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
         maxSecondsInLiquidationWindow: bn(10),
@@ -117,12 +119,15 @@ describe('Account margins test', () => {
       const notionalBtcValue = wei(2).mul(wei(30_000));
       const notionalEthValue = wei(20).mul(wei(2000));
 
-      btcInitialMargin = notionalBtcValue.mul(wei(2).div(wei(btcSkewScale)).mul(wei(2)));
-      ethInitialMargin = notionalEthValue.mul(wei(20).div(wei(ethSkewScale)).mul(wei(2)));
+      const btcInitialMarginRatio = wei(2).div(wei(btcSkewScale)).mul(wei(2)).add(wei(0.01));
+      const ethInitialMarginRatio = wei(20).div(wei(ethSkewScale)).mul(wei(2)).add(wei(0.01));
+
+      btcInitialMargin = notionalBtcValue.mul(btcInitialMarginRatio);
+      ethInitialMargin = notionalEthValue.mul(ethInitialMarginRatio);
 
       // maintenance margin ratio == 1
-      btcMaintenanceMargin = notionalBtcValue.mul(wei(2).div(wei(btcSkewScale)));
-      ethMaintenanceMargin = notionalEthValue.mul(wei(20).div(wei(ethSkewScale)));
+      btcMaintenanceMargin = btcInitialMargin.mul(wei(0.5));
+      ethMaintenanceMargin = ethInitialMargin.mul(wei(0.5));
 
       // in above config: 1000 + 500
       minimumPositionMargin = wei(1500);

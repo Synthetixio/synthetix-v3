@@ -11,26 +11,27 @@ import assert from 'assert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
 
 describe('Commit Offchain Async Order test', () => {
-  const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: bn(10_000),
-        sellPrice: bn(10_000),
-      },
-    ],
-    perpsMarkets: [
-      {
-        requestedMarketId: 25,
-        name: 'Ether',
-        token: 'snxETH',
-        price: bn(1000),
-        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
-      },
-    ],
-    traderAccountIds: [2, 3],
-  });
+  const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper, owner } =
+    bootstrapMarkets({
+      synthMarkets: [
+        {
+          name: 'Bitcoin',
+          token: 'snxBTC',
+          buyPrice: bn(10_000),
+          sellPrice: bn(10_000),
+        },
+      ],
+      perpsMarkets: [
+        {
+          requestedMarketId: 25,
+          name: 'Ether',
+          token: 'snxETH',
+          price: bn(1000),
+          fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+        },
+      ],
+      traderAccountIds: [2, 3],
+    });
   let ethMarketId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
 
@@ -42,6 +43,8 @@ describe('Commit Offchain Async Order test', () => {
     ethMarketId = perpsMarkets()[0].marketId();
     btcSynth = synthMarkets()[0];
   });
+
+  const restoreToCommit = snapshotCheckpoint(provider);
 
   describe('failures', () => {
     it('reverts if market id is incorrect', async () => {
@@ -111,9 +114,46 @@ describe('Commit Offchain Async Order test', () => {
         `PermissionDenied("${2}", "${PERPS_COMMIT_ASYNC_ORDER_PERMISSION_NAME}", "${await keeper().getAddress()}")`
       );
     });
-  });
 
-  const restoreToCommit = snapshotCheckpoint(provider);
+    it(`reverts if settlementStrategyId is not existent`, async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarketId,
+            accountId: 2,
+            sizeDelta: bn(1),
+            settlementStrategyId: 1337, // invalid id
+            acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        'InvalidSettlementStrategy("1337")'
+      );
+    });
+
+    it(`reverts if strategy id is disabled`, async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setSettlementStrategyEnabled(ethMarketId, 0, false);
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarketId,
+            accountId: 2,
+            sizeDelta: bn(1),
+            settlementStrategyId: 0,
+            acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        'InvalidSettlementStrategy("0")'
+      );
+    });
+
+    after(restoreToCommit);
+  });
 
   const testCases: Array<{ name: string; collateralData: DepositCollateralData }> = [
     {

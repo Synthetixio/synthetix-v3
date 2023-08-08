@@ -1598,6 +1598,63 @@ export class CoreProxy__getMarketFeesResult {
   }
 }
 
+export class CoreProxy__getMarketPoolDebtDistributionResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromSignedBigInt(this.value2));
+    return map;
+  }
+
+  getSharesD18(): BigInt {
+    return this.value0;
+  }
+
+  getTotalSharesD18(): BigInt {
+    return this.value1;
+  }
+
+  getValuePerShareD27(): BigInt {
+    return this.value2;
+  }
+}
+
+export class CoreProxy__getMarketPoolsResult {
+  value0: Array<BigInt>;
+  value1: Array<BigInt>;
+
+  constructor(value0: Array<BigInt>, value1: Array<BigInt>) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigIntArray(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigIntArray(this.value1));
+    return map;
+  }
+
+  getInRangePoolIds(): Array<BigInt> {
+    return this.value0;
+  }
+
+  getOutRangePoolIds(): Array<BigInt> {
+    return this.value1;
+  }
+}
+
 export class CoreProxy__getPoolConfigurationResultValue0Struct extends ethereum.Tuple {
   get marketId(): BigInt {
     return this[0].toBigInt();
@@ -2719,6 +2776,69 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getMarketPoolDebtDistribution(
+    marketId: BigInt,
+    poolId: BigInt
+  ): CoreProxy__getMarketPoolDebtDistributionResult {
+    let result = super.call(
+      'getMarketPoolDebtDistribution',
+      'getMarketPoolDebtDistribution(uint128,uint128):(uint256,uint128,int128)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(poolId)]
+    );
+
+    return new CoreProxy__getMarketPoolDebtDistributionResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt()
+    );
+  }
+
+  try_getMarketPoolDebtDistribution(
+    marketId: BigInt,
+    poolId: BigInt
+  ): ethereum.CallResult<CoreProxy__getMarketPoolDebtDistributionResult> {
+    let result = super.tryCall(
+      'getMarketPoolDebtDistribution',
+      'getMarketPoolDebtDistribution(uint128,uint128):(uint256,uint128,int128)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(poolId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getMarketPoolDebtDistributionResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt()
+      )
+    );
+  }
+
+  getMarketPools(marketId: BigInt): CoreProxy__getMarketPoolsResult {
+    let result = super.call('getMarketPools', 'getMarketPools(uint128):(uint128[],uint128[])', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return new CoreProxy__getMarketPoolsResult(
+      result[0].toBigIntArray(),
+      result[1].toBigIntArray()
+    );
+  }
+
+  try_getMarketPools(marketId: BigInt): ethereum.CallResult<CoreProxy__getMarketPoolsResult> {
+    let result = super.tryCall('getMarketPools', 'getMarketPools(uint128):(uint128[],uint128[])', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getMarketPoolsResult(value[0].toBigIntArray(), value[1].toBigIntArray())
+    );
   }
 
   getMarketReportedDebt(marketId: BigInt): BigInt {
@@ -5035,6 +5155,90 @@ export class GetMarketDebtPerShareCall__Outputs {
 
   get value0(): BigInt {
     return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
+export class GetMarketPoolDebtDistributionCall extends ethereum.Call {
+  get inputs(): GetMarketPoolDebtDistributionCall__Inputs {
+    return new GetMarketPoolDebtDistributionCall__Inputs(this);
+  }
+
+  get outputs(): GetMarketPoolDebtDistributionCall__Outputs {
+    return new GetMarketPoolDebtDistributionCall__Outputs(this);
+  }
+}
+
+export class GetMarketPoolDebtDistributionCall__Inputs {
+  _call: GetMarketPoolDebtDistributionCall;
+
+  constructor(call: GetMarketPoolDebtDistributionCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+}
+
+export class GetMarketPoolDebtDistributionCall__Outputs {
+  _call: GetMarketPoolDebtDistributionCall;
+
+  constructor(call: GetMarketPoolDebtDistributionCall) {
+    this._call = call;
+  }
+
+  get sharesD18(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+
+  get totalSharesD18(): BigInt {
+    return this._call.outputValues[1].value.toBigInt();
+  }
+
+  get valuePerShareD27(): BigInt {
+    return this._call.outputValues[2].value.toBigInt();
+  }
+}
+
+export class GetMarketPoolsCall extends ethereum.Call {
+  get inputs(): GetMarketPoolsCall__Inputs {
+    return new GetMarketPoolsCall__Inputs(this);
+  }
+
+  get outputs(): GetMarketPoolsCall__Outputs {
+    return new GetMarketPoolsCall__Outputs(this);
+  }
+}
+
+export class GetMarketPoolsCall__Inputs {
+  _call: GetMarketPoolsCall;
+
+  constructor(call: GetMarketPoolsCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class GetMarketPoolsCall__Outputs {
+  _call: GetMarketPoolsCall;
+
+  constructor(call: GetMarketPoolsCall) {
+    this._call = call;
+  }
+
+  get inRangePoolIds(): Array<BigInt> {
+    return this._call.outputValues[0].value.toBigIntArray();
+  }
+
+  get outRangePoolIds(): Array<BigInt> {
+    return this._call.outputValues[1].value.toBigIntArray();
   }
 }
 

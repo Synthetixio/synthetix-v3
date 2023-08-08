@@ -9,7 +9,6 @@ import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
-import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
@@ -139,7 +138,7 @@ library PerpsAccount {
         (
             bool isEligible,
             int256 availableMargin,
-            uint256 initialMaintenanceMargin,
+            uint256 initialRequiredMargin,
 
         ) = isEligibleForLiquidation(self);
 
@@ -148,7 +147,7 @@ library PerpsAccount {
         }
 
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - initialMaintenanceMargin;
+        availableWithdrawableCollateralUsd = availableMargin.toUint() - initialRequiredMargin;
 
         if (amountToWithdraw > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
@@ -371,6 +370,10 @@ library PerpsAccount {
 
         int128 oldPositionSize = position.size;
         amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
+
+        if (amountToLiquidate == 0) {
+            return (0, oldPositionSize, 0, marketUpdateData);
+        }
 
         int128 amtToLiquidationInt = amountToLiquidate.toInt();
         // reduce position size

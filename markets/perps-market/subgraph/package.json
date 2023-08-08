@@ -14,7 +14,7 @@
     "build:optimism-mainnet": "echo SKIP || node ./codegen optimism-mainnet && yarn codegen && graph build --output-dir ./build/optimism-mainnet --network optimism",
     "deploy:optimism-mainnet": "echo SKIP || graph deploy --output-dir ./build/optimism-mainnet --network optimism --product hosted-service snx-v3/perps-market-optimism-mainnet",
     "build:optimism-goerli": "node ./codegen optimism-goerli && yarn codegen && graph build --output-dir ./build/optimism-goerli --network optimism-goerli",
-    "deploy:optimism-goerli": "graph deploy --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service snx-v3/perps-market-optimism-goerli",
+    "deploy:optimism-goerli": "graph deploy --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service snx-v3/v3-perps-opt-goerli",
     "test": "echo 'SKIP: No tests' || graph test",
     "coverage": "yarn deployments:optimism-goerli && yarn codegen && git diff --exit-code && yarn test",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.50.1",
     "@graphprotocol/graph-ts": "^0.30.0",
-    "@usecannon/cli": "^2.4.20",
+    "@usecannon/cli": "^2.4.21",
     "ethers": "^5.7.2",
     "prettier": "^2.8.8"
   },

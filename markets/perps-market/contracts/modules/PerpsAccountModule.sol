@@ -118,9 +118,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         int256 availableMargin = account.getAvailableMargin();
-        (uint256 initialMaintenanceMargin, ) = account.getAccountRequiredMargins();
+        (uint256 initialRequiredMargin, ) = account.getAccountRequiredMargins();
 
-        withdrawableMargin = availableMargin - initialMaintenanceMargin.toInt();
+        withdrawableMargin = availableMargin - initialRequiredMargin.toInt();
     }
 
     /**
