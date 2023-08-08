@@ -181,12 +181,15 @@ library Position {
         // `marginUsd` is the previous position margin (which includes feesIncurredUsd deducted with open
         // position). We `-fee and -keeperFee` here because the new position would have incurred additional fees if
         // this trader were to be settled successfully.
-        if (!positionDecreasing && marginUsd.toInt() - fee.toInt() - keeperFee.toInt() < imnp.toInt()) {
+        //
+        // This is important as it helps avoid instant liquidation on successful settlement.
+        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - fee.toInt() - keeperFee.toInt(), 0).toUint();
+        if (!positionDecreasing && newMarginUsd < imnp) {
             revert ErrorUtil.InsufficientMargin();
         }
 
         // Check new position can't just be instantly liquidated.
-        validateNextPositionIsLiquidatable(market, newPosition, marginUsd, params.fillPrice, marketConfig);
+        validateNextPositionIsLiquidatable(market, newPosition, newMarginUsd, params.fillPrice, marketConfig);
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
