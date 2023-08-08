@@ -6,13 +6,13 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 
-library PerpCollateral {
+library Margin {
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
 
     // --- Constants --- //
 
-    bytes32 private constant _SLOT_NAMESPACE = keccak256(abi.encode("io.synthetix.bfp-market.PerpCollateral"));
+    bytes32 private constant _SLOT_NAMESPACE = keccak256(abi.encode("io.synthetix.bfp-market.Margin"));
 
     // --- Structs --- //
 
@@ -37,15 +37,15 @@ library PerpCollateral {
         mapping(address => uint256) available;
     }
 
-    function load(uint128 accountId, uint128 marketId) internal pure returns (PerpCollateral.Data storage d) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.PerpCollateral", accountId, marketId));
+    function load(uint128 accountId, uint128 marketId) internal pure returns (Margin.Data storage d) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.bfp-market.Margin", accountId, marketId));
 
         assembly {
             d.slot := s
         }
     }
 
-    function load() internal pure returns (PerpCollateral.GlobalData storage d) {
+    function load() internal pure returns (Margin.GlobalData storage d) {
         bytes32 s = _SLOT_NAMESPACE;
 
         assembly {
@@ -58,11 +58,11 @@ library PerpCollateral {
      */
     function getOraclePrice(address collateralType) internal view returns (uint256 price) {
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         price = globalMarketConfig
             .oracleManager
-            .process(globalCollateralConfig.supported[collateralType].oracleNodeId)
+            .process(globalMarginConfig.supported[collateralType].oracleNodeId)
             .price
             .toUint();
     }
@@ -72,22 +72,22 @@ library PerpCollateral {
      */
     function getCollateralUsd(uint128 accountId, uint128 marketId) internal view returns (uint256 collateralValueUsd) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpCollateral.GlobalData storage globalCollateralConfig = PerpCollateral.load();
-        PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         // Total available supported collaterals by market.
-        uint256 length = globalCollateralConfig.supportedAddresses.length;
+        uint256 length = globalMarginConfig.supportedAddresses.length;
 
         // Current mutative collateral type we're iterating over (address and internal obj).
         address currentCollateralType;
-        PerpCollateral.CollateralType memory currentCollateral;
+        Margin.CollateralType memory currentCollateral;
 
         for (uint256 i = 0; i < length; ) {
-            currentCollateralType = globalCollateralConfig.supportedAddresses[i];
-            currentCollateral = globalCollateralConfig.supported[currentCollateralType];
+            currentCollateralType = globalMarginConfig.supportedAddresses[i];
+            currentCollateral = globalMarginConfig.supported[currentCollateralType];
 
             // `INodeModule.process()` is an expensive op, skip if we can.
-            uint256 available = accountCollaterals.available[currentCollateralType];
+            uint256 available = accountMargin.available[currentCollateralType];
             if (available > 0) {
                 uint256 price = INodeModule(globalConfig.oracleManager)
                     .process(currentCollateral.oracleNodeId)

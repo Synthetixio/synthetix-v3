@@ -8,7 +8,7 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {Order} from "./Order.sol";
 import {PerpMarket} from "./PerpMarket.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
-import {PerpCollateral} from "./PerpCollateral.sol";
+import {Margin} from "./Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
@@ -143,7 +143,7 @@ library Position {
         uint128 marketId = market.id;
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
+        uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId);
 
         // --- Existing position validation --- //
 

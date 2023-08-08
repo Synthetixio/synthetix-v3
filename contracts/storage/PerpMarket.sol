@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {PerpCollateral} from "./PerpCollateral.sol";
+import {Margin} from "./Margin.sol";
 import {Order} from "./Order.sol";
 import {Position} from "./Position.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
@@ -124,7 +124,7 @@ library PerpMarket {
         Position.Data storage oldPosition,
         Position.Data memory newPosition
     ) internal {
-        uint256 collateralUsd = PerpCollateral.getCollateralUsd(newPosition.accountId, newPosition.marketId);
+        uint256 collateralUsd = Margin.getCollateralUsd(newPosition.accountId, newPosition.marketId);
         int256 oldCorrection = getPositionDebtCorrection(
             collateralUsd,
             oldPosition.size,

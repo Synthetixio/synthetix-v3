@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
-import {PerpCollateral} from "../storage/PerpCollateral.sol";
+import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import "../interfaces/IPerpAccountModule.sol";
 
@@ -22,25 +22,25 @@ contract PerpAccountModule is IPerpAccountModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
-        PerpCollateral.GlobalData storage collateralConfig = PerpCollateral.load();
-        PerpCollateral.Data storage accountCollaterals = PerpCollateral.load(accountId, marketId);
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-        uint256 length = collateralConfig.supportedAddresses.length;
+        uint256 length = globalMarginConfig.supportedAddresses.length;
         IPerpAccountModule.DepositedCollateral[] memory collateral = new DepositedCollateral[](length);
 
         for (uint256 i = 0; i < length; ) {
-            address collateralType = collateralConfig.supportedAddresses[i];
+            address collateralType = globalMarginConfig.supportedAddresses[i];
             collateral[i] = IPerpAccountModule.DepositedCollateral({
                 collateralType: collateralType,
-                available: accountCollaterals.available[collateralType],
-                oraclePrice: PerpCollateral.getOraclePrice(collateralType)
+                available: accountMargin.available[collateralType],
+                oraclePrice: Margin.getOraclePrice(collateralType)
             });
             unchecked {
                 i++;
             }
         }
 
-        uint256 collateralUsd = PerpCollateral.getCollateralUsd(accountId, marketId);
+        uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId);
         Position.Data storage position = market.positions[accountId];
 
         digest = IPerpAccountModule.AccountDigest({

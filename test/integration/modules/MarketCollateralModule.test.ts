@@ -7,7 +7,7 @@ import { genAddress, genBootstrap, genBytes32, genInt, genListOf, genOneOf, genT
 import { depositMargin } from '../../helpers';
 import { bn, shuffle } from '../../utils';
 
-describe('MarketCollateralModule', async () => {
+describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, owner, systems, restore } = bs;
 

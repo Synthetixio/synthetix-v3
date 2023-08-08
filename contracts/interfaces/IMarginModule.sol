@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "./IBasePerpMarket.sol";
 
-interface IMarketCollateralModule is IBasePerpMarket {
+interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //
 
     struct AvailableCollateral {
@@ -26,7 +26,7 @@ interface IMarketCollateralModule is IBasePerpMarket {
     // --- Mutative --- //
 
     /**
-     * @dev Transfers an accepted `collateral` from msg.sender to `accountId` on a specific `marketId`.
+     * @dev Transfers an accepted `collateral` as margin from msg.sender to `accountId` on a specific `marketId`.
      *
      * A negative `amountDelta` is a withdrawal. A variety of errors are thrown if limits or collateral
      * issues are found. A transfer, even when there is no open position will immediately deposit the
@@ -37,7 +37,7 @@ interface IMarketCollateralModule is IBasePerpMarket {
     function transferTo(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
 
     /**
-     * @dev Configure PerpCollateral with collateral types and their allowables.
+     * @dev Configure Margin with collateral types and their allowables.
      */
     function setCollateralConfiguration(
         address[] calldata collateralTypes,

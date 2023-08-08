@@ -5,7 +5,7 @@ import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import {PerpCollateral} from "../storage/PerpCollateral.sol";
+import {Margin} from "../storage/Margin.sol";
 import {Position} from "../storage/Position.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -26,7 +26,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         bool isLiquidatable = market.positions[accountId].isLiquidatable(
-            PerpCollateral.getCollateralUsd(accountId, marketId),
+            Margin.getCollateralUsd(accountId, marketId),
             market.getOraclePrice(),
             PerpMarketConfiguration.load(marketId)
         );
@@ -80,7 +80,6 @@ contract LiquidationModule is ILiquidationModule {
         //
         // TODO:
         //
-        // - Rename PerpCollateralModule to MarginModule
         // - collateralUsd = raw collateral value in USD
         // - marginUsd = collateralUsd - fees.
         //
@@ -162,7 +161,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].isLiquidatable(
-                PerpCollateral.getCollateralUsd(accountId, marketId),
+                Margin.getCollateralUsd(accountId, marketId),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             );
@@ -193,7 +192,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].getHealthFactor(
-                PerpCollateral.getCollateralUsd(accountId, marketId),
+                Margin.getCollateralUsd(accountId, marketId),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             );
