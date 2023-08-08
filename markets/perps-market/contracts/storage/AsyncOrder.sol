@@ -3,7 +3,6 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {SettlementStrategy} from "./SettlementStrategy.sol";
 import {Position} from "./Position.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";

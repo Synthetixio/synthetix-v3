@@ -47,7 +47,7 @@ function getHLevel(hsublevel: number | HelperOptions, opts?: HelperOptions) {
     opts = hsublevel;
     hsublevel = 1;
   }
-  const contextHLevel: number = opts.data?.hlevel ?? 0;
+  const contextHLevel: number = opts.data?.hlevel ?? 1;
   return { opts, hlevel: contextHLevel + hsublevel };
 }
 

@@ -9,7 +9,6 @@ import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
-import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
