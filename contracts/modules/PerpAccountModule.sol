@@ -30,30 +30,29 @@ contract PerpAccountModule is IPerpAccountModule {
 
         for (uint256 i = 0; i < length; ) {
             address collateralType = globalMarginConfig.supportedAddresses[i];
-            collateral[i] = IPerpAccountModule.DepositedCollateral({
-                collateralType: collateralType,
-                available: accountMargin.available[collateralType],
-                oraclePrice: Margin.getOraclePrice(collateralType)
-            });
+            collateral[i] = IPerpAccountModule.DepositedCollateral(
+                collateralType,
+                accountMargin.available[collateralType],
+                Margin.getOraclePrice(collateralType)
+            );
             unchecked {
                 i++;
             }
         }
 
         Position.Data storage position = market.positions[accountId];
-        digest = IPerpAccountModule.AccountDigest({
-            accountId: accountId,
-            marketId: marketId,
-            collateral: collateral,
-            notionalValueUsd: Margin.getNotionalValueUsd(accountId, marketId),
-            order: market.orders[accountId],
-            position: position,
-            healthFactor: position.getHealthFactor(
+        digest = IPerpAccountModule.AccountDigest(
+            collateral,
+            Margin.getNotionalValueUsd(accountId, marketId),
+            market.orders[accountId],
+            position,
+            position.getHealthFactor(
+                market,
                 Margin.getMarginUsd(accountId, market),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             )
-        });
+        );
     }
 
     /**

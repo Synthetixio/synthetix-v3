@@ -121,10 +121,11 @@ library PerpMarket {
      */
     function updateDebtCorrection(
         PerpMarket.Data storage self,
+        uint128 accountId,
         Position.Data storage oldPosition,
         Position.Data memory newPosition
     ) internal {
-        uint256 marginUsd = Margin.getMarginUsd(newPosition.accountId, self);
+        uint256 marginUsd = Margin.getMarginUsd(accountId, self);
         int256 oldCorrection = getPositionDebtCorrection(
             marginUsd,
             oldPosition.size,

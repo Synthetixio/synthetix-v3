@@ -56,25 +56,19 @@ contract OrderModule is IOrderModule {
         (, uint256 orderFee, uint256 keeperFee) = Position.validateTrade(
             accountId,
             market,
-            Position.TradeParams({
-                sizeDelta: sizeDelta,
-                oraclePrice: oraclePrice,
-                fillPrice: Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
-                makerFee: marketConfig.makerFee,
-                takerFee: marketConfig.takerFee,
-                limitPrice: limitPrice,
-                keeperFeeBufferUsd: keeperFeeBufferUsd
-            })
+            Position.TradeParams(
+                sizeDelta,
+                oraclePrice,
+                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+                marketConfig.makerFee,
+                marketConfig.takerFee,
+                limitPrice,
+                keeperFeeBufferUsd
+            )
         );
 
         market.orders[accountId].update(
-            Order.Data({
-                accountId: accountId,
-                sizeDelta: sizeDelta,
-                commitmentTime: block.timestamp,
-                limitPrice: limitPrice,
-                keeperFeeBufferUsd: keeperFeeBufferUsd
-            })
+            Order.Data(accountId, sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd)
         );
         emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, orderFee, keeperFee);
     }
@@ -167,7 +161,7 @@ contract OrderModule is IOrderModule {
             .toUint()
             .to128();
 
-        market.updateDebtCorrection(oldPosition, newPosition);
+        market.updateDebtCorrection(accountId, oldPosition, newPosition);
 
         // TODO: How do we deal with partially closing a profitable position?
         if (newPosition.size == 0) {
@@ -201,15 +195,15 @@ contract OrderModule is IOrderModule {
         PerpMarket.updatePythPrice(priceUpdateData);
         (uint256 pythPrice, uint256 publishTime) = market.getPythPrice(order.commitmentTime);
 
-        Position.TradeParams memory params = Position.TradeParams({
-            sizeDelta: order.sizeDelta,
-            oraclePrice: pythPrice,
-            fillPrice: Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice),
-            makerFee: marketConfig.makerFee,
-            takerFee: marketConfig.takerFee,
-            limitPrice: order.limitPrice,
-            keeperFeeBufferUsd: order.keeperFeeBufferUsd
-        });
+        Position.TradeParams memory params = Position.TradeParams(
+            order.sizeDelta,
+            pythPrice,
+            Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice),
+            marketConfig.makerFee,
+            marketConfig.takerFee,
+            order.limitPrice,
+            order.keeperFeeBufferUsd
+        );
 
         validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, params);
 

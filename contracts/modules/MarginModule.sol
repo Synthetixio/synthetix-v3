@@ -23,15 +23,19 @@ contract MarginModule is IMarginModule {
     /**
      * @dev Validates whether the margin requirements are acceptable after withdrawing.
      */
-    function validatePositionPostWithdraw(Position.Data storage position, PerpMarket.Data storage market) private view {
-        uint256 marginUsd = Margin.getMarginUsd(position.accountId, market);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(position.marketId);
+    function validatePositionPostWithdraw(
+        uint128 accountId,
+        Position.Data storage position,
+        PerpMarket.Data storage market
+    ) private view {
+        uint256 marginUsd = Margin.getMarginUsd(accountId, market);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         uint256 oraclePrice = market.getOraclePrice();
 
         // Ensure does not lead to instant liquidation.
-        if (position.isLiquidatable(marginUsd, oraclePrice, marketConfig)) {
-            revert ErrorUtil.CanLiquidatePosition(position.accountId);
+        if (position.isLiquidatable(market, marginUsd, oraclePrice, marketConfig)) {
+            revert ErrorUtil.CanLiquidatePosition();
         }
 
         (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
@@ -99,7 +103,7 @@ contract MarginModule is IMarginModule {
             // If an open position exists, verify this does _not_ place them into instant liquidation.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0) {
-                validatePositionPostWithdraw(position, market);
+                validatePositionPostWithdraw(accountId, position, market);
             }
 
             globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, absAmountDelta);

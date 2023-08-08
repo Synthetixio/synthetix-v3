@@ -17,10 +17,6 @@ interface IPerpAccountModule {
     }
 
     struct AccountDigest {
-        // @dev id of the account that was queried
-        uint128 accountId;
-        // @dev id of the market that was queried
-        uint128 marketId;
         // @dev Array of data pertaining to deposited collateral
         IPerpAccountModule.DepositedCollateral[] collateral;
         // @dev Notional value of deposited collateral in USD.

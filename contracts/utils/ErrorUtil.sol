@@ -54,7 +54,7 @@ library ErrorUtil {
     error OrderFound(uint128 accountId);
 
     // @dev Thrown when performing an update will cause a position to be instantly liquidated.
-    error CanLiquidatePosition(uint128 accountId);
+    error CanLiquidatePosition();
 
     // @dev Emitted when a collateral type in configuration is zero.
     error ZeroAddress();

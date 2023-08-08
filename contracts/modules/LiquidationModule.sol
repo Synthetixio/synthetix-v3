@@ -25,18 +25,18 @@ contract LiquidationModule is ILiquidationModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
+        // Cannot flag for liquidation unless they are liquidatable.
         bool isLiquidatable = market.positions[accountId].isLiquidatable(
+            market,
             Margin.getMarginUsd(accountId, market),
             market.getOraclePrice(),
             PerpMarketConfiguration.load(marketId)
         );
-
-        // Cannot flag for liquidation unless they are liquidatable.
         if (!isLiquidatable) {
             revert ErrorUtil.CannotLiquidatePosition();
         }
 
-        // Cannot reflag.
+        // Cannot reflag something that's already flagged.
         if (market.flaggedLiquidations[accountId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
         }
@@ -71,17 +71,12 @@ contract LiquidationModule is ILiquidationModule {
         market.lastLiquidationUtilization += liqSize;
         market.skew -= oldPosition.size;
         market.size -= MathUtil.abs(oldPosition.size).to128();
-        market.updateDebtCorrection(market.positions[accountId], newPosition);
+        market.updateDebtCorrection(accountId, market.positions[accountId], newPosition);
 
         // TODO: Deal with partially removing deposited collateral (?)
         //
         // We can reuse the feesIncurredUsd to sum the partial amount liquidated. Ensure when looking at IM/MM and inferring
         // liqRewards we need to look at notionalValueUsd - feeIncurredUsd (need a better name).
-        //
-        // TODO:
-        //
-        // - notionalValueUsd = raw collateral value in USD
-        // - marginUsd = notionalValueUsd - fees.
         //
         // When paying out profitable traders on close, update their sUSD collateral balance before applying debt correction?
         // On close, any profitable amount is applied to their margin.
@@ -161,6 +156,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].isLiquidatable(
+                market,
                 Margin.getMarginUsd(accountId, market),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
@@ -192,6 +188,7 @@ contract LiquidationModule is ILiquidationModule {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             market.positions[accountId].getHealthFactor(
+                market,
                 Margin.getMarginUsd(accountId, market),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)

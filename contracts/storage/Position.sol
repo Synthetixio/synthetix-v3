@@ -41,10 +41,6 @@ library Position {
     // --- Storage --- //
 
     struct Data {
-        // Owner of position.
-        uint128 accountId;
-        // Market this position belongs to (e.g. wstETHPERP)
-        uint128 marketId;
         // Size (in native units e.g. wstETH)
         int128 size;
         // The market's accumulated accrued funding at position open.
@@ -101,13 +97,14 @@ library Position {
      * @dev Return whether the `newPosition` can be liquidated using their health factor.
      */
     function validateNextPositionIsLiquidatable(
+        PerpMarket.Data storage market,
         Position.Data memory newPosition,
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
         (uint256 healthFactor, , , ) = getHealthFactor(
-            newPosition.marketId,
+            market,
             newPosition.size,
             newPosition.entryPrice,
             newPosition.entryFundingAccrued,
@@ -116,7 +113,7 @@ library Position {
             marketConfig
         );
         if (healthFactor <= DecimalMath.UNIT) {
-            revert ErrorUtil.CanLiquidatePosition(newPosition.accountId);
+            revert ErrorUtil.CanLiquidatePosition();
         }
     }
 
@@ -149,8 +146,8 @@ library Position {
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
         if (currentPosition.size != 0) {
             // Determine if the currentPosition can immediately be liquidated.
-            if (isLiquidatable(currentPosition, marginUsd, params.fillPrice, marketConfig)) {
-                revert ErrorUtil.CanLiquidatePosition(accountId);
+            if (isLiquidatable(currentPosition, market, marginUsd, params.fillPrice, marketConfig)) {
+                revert ErrorUtil.CanLiquidatePosition();
             }
 
             // Determine if the current position has enough margin to perform further changes.
@@ -168,14 +165,12 @@ library Position {
         // Derive fees incurred and next position if this order were to be settled successfully.
         fee = Order.getOrderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
         keeperFee = Order.getSettlementKeeperFee(params.keeperFeeBufferUsd);
-        newPosition = Position.Data({
-            accountId: accountId,
-            marketId: marketId,
-            size: currentPosition.size + params.sizeDelta,
-            entryFundingAccrued: market.currentFundingAccruedComputed,
-            entryPrice: params.fillPrice,
-            feesIncurredUsd: currentPosition.feesIncurredUsd + fee + keeperFee
-        });
+        newPosition = Position.Data(
+            currentPosition.size + params.sizeDelta,
+            market.currentFundingAccruedComputed,
+            params.fillPrice,
+            currentPosition.feesIncurredUsd + fee + keeperFee
+        );
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
         // avoid this completely due to positions at min margin would never be allowed to lower size.
@@ -189,7 +184,7 @@ library Position {
         }
 
         // Check new position can't just be instantly liquidated.
-        validateNextPositionIsLiquidatable(newPosition, marginUsd, params.fillPrice, marketConfig);
+        validateNextPositionIsLiquidatable(market, newPosition, marginUsd, params.fillPrice, marketConfig);
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
@@ -236,14 +231,12 @@ library Position {
 
         // Determine the resulting position post liqudation
         liqSize = MathUtil.min(remainingCapacity, MathUtil.abs(oldPosition.size)).to128();
-        newPosition = Position.Data({
-            accountId: accountId,
-            marketId: oldPosition.marketId,
-            size: oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
-            entryFundingAccrued: oldPosition.entryFundingAccrued,
-            entryPrice: oldPosition.entryPrice,
-            feesIncurredUsd: oldPosition.feesIncurredUsd
-        });
+        newPosition = Position.Data(
+            oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
+            oldPosition.entryFundingAccrued,
+            oldPosition.entryPrice,
+            oldPosition.feesIncurredUsd
+        );
 
         // TODO: Maybe have a separate fn for liqReward?
         (, , liqReward) = getLiquidationMarginUsd(oldPosition.size, price, marketConfig);
@@ -301,7 +294,7 @@ library Position {
      * @dev Given the marketId, config, and position{...} details, retrieve the health factor.
      */
     function getHealthFactor(
-        uint128 marketId,
+        PerpMarket.Data storage market,
         int128 positionSize,
         uint256 positionEntryPrice,
         int256 positionEntryFundingAccrued,
@@ -309,7 +302,6 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
-        PerpMarket.Data storage market = PerpMarket.load(marketId);
         int256 netFundingPerUnit = market.getNextFunding(price) - positionEntryFundingAccrued;
         accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
 
@@ -329,40 +321,17 @@ library Position {
     // --- Member (views) --- //
 
     /**
-     * @dev Determines the current position with additional details can be liquidated.
-     */
-    function isLiquidatable(
-        Position.Data storage self,
-        uint256 marginUsd,
-        uint256 price,
-        PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (bool) {
-        if (self.size == 0) {
-            return false;
-        }
-        (uint256 healthFactor, , , ) = getHealthFactor(
-            self.marketId,
-            self.size,
-            self.entryPrice,
-            self.entryFundingAccrued,
-            marginUsd,
-            price,
-            marketConfig
-        );
-        return healthFactor <= DecimalMath.UNIT;
-    }
-
-    /**
      * @dev An overloaded function over `getHealthFactor` using the a Position storage struct.
      */
     function getHealthFactor(
         Position.Data storage self,
+        PerpMarket.Data storage market,
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256) {
         (uint256 healthFactor, , , ) = getHealthFactor(
-            self.marketId,
+            market,
             self.size,
             self.entryPrice,
             self.entryFundingAccrued,
@@ -373,14 +342,28 @@ library Position {
         return healthFactor;
     }
 
+    /**
+     * @dev Determines the current position with additional details can be liquidated.
+     */
+    function isLiquidatable(
+        Position.Data storage self,
+        PerpMarket.Data storage market,
+        uint256 marginUsd,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (bool) {
+        if (self.size == 0) {
+            return false;
+        }
+        return getHealthFactor(self, market, marginUsd, price, marketConfig) <= DecimalMath.UNIT;
+    }
+
     // --- Member (mutative) --- //
 
     /**
      * @dev Clears the current position struct in-place of any stored data.
      */
     function update(Position.Data storage self, Position.Data memory data) internal {
-        self.accountId = data.accountId;
-        self.marketId = data.marketId;
         self.size = data.size;
         self.entryFundingAccrued = data.entryFundingAccrued;
         self.entryPrice = data.entryPrice;
