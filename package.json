@@ -37,7 +37,7 @@
     "publish:dev": "lerna publish --force-publish --canary --dist-tag dev --preid dev.$(git rev-parse --short HEAD)",
     "publish-contracts": "yarn workspaces foreach --verbose run publish-contracts",
     "prepublishOnly": "node ./prepublishOnly.js",
-    "docgen": "yarn clean && yarn workspaces foreach --verbose run docgen && yarn docgen:contracts",
+    "docgen": "yarn workspaces foreach --verbose run docgen && yarn docgen:contracts",
     "docgen:contracts": "yarn workspace @synthetixio/docgen docgen:contracts",
     "subgraphgen": "yarn workspaces foreach --verbose run subgraphgen"
   },
