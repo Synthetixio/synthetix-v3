@@ -706,9 +706,6 @@ describe('VaultModule', function () {
           before('repay debt', async () => {
             await systems()
               .Core.connect(user2)
-              .withdraw(user2AccountId, await systems().Core.getUsdToken(), depositAmount.div(100));
-            await systems()
-              .Core.connect(user2)
               .burnUsd(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));
           });
 
