@@ -26,7 +26,6 @@ contract CollateralModule is ICollateralModule {
     using Collateral for Collateral.Data;
     using SafeCastU256 for uint256;
 
-    bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
     bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
