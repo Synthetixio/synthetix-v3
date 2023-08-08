@@ -1,12 +1,18 @@
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import hre from 'hardhat';
 
-import type { CoreProxy, CouncilToken, BaseElectionProxy } from './generated/typechain';
+import type {
+  CoreProxy,
+  CouncilToken,
+  BaseElectionProxy,
+  SnapshotRecordMock,
+} from './generated/typechain';
 
 interface Contracts {
   CoreProxy: CoreProxy;
   CouncilToken: CouncilToken;
   BaseElectionProxy: BaseElectionProxy;
+  SnapshotRecordMock: SnapshotRecordMock;
 }
 
 const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Contracts>({
@@ -29,6 +35,7 @@ export function bootstrap() {
       CoreProxy: getContract('CoreProxy'),
       CouncilToken: getContract('CouncilToken'),
       BaseElectionProxy: getContract('BaseElectionProxy'),
+      SnapshotRecordMock: getContract('SnapshotRecordMock'),
     });
   });
 

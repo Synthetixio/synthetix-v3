@@ -1,8 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
-import { InitialModuleBundle } from '../generated/typechain';
 
 describe('UpgradeProposalModule', function () {
   const { c, getSigners, snapshotCheckpoint } = bootstrap();

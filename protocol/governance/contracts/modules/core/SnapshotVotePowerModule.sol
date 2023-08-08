@@ -12,14 +12,18 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
 
-    function setSnapshotContract(address snapshotContract) external override {
+    function setSnapshotContract(address snapshotContract, bool enabled) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
         Council.Data storage council = Council.load();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
-        snapshotVotePower.validFromEpoch = (council.lastElectionId + 1).to128();
-        snapshotVotePower.validToEpoch = 0;
+        if (enabled) {
+            snapshotVotePower.validFromEpoch = (council.lastElectionId + 1).to128();
+            snapshotVotePower.validToEpoch = 0;
+        } else {
+            snapshotVotePower.validToEpoch = (council.lastElectionId + 1).to128();
+        }
     }
 
     function takeVotePowerSnapshot(
@@ -30,8 +34,8 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         SnapshotVotePowerEpoch.Data storage snapshotVotePowerEpoch = SnapshotVotePower
             .load(snapshotContract)
             .epochs[Council.load().lastElectionId.to128()];
-        if (snapshotVotePowerEpoch.snapshotId.to128() > 0) {
-            revert SnapshotAlreadyTaken(snapshotVotePowerEpoch.snapshotId.to128());
+        if (snapshotVotePowerEpoch.snapshotId > 0) {
+            revert SnapshotAlreadyTaken(snapshotVotePowerEpoch.snapshotId);
         }
 
         snapshotId = block.timestamp.to128();
@@ -47,17 +51,29 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
         return
             snapshotVotePower.validFromEpoch <= electionId &&
-            snapshotVotePower.validToEpoch > electionId;
+            (snapshotVotePower.validToEpoch == 0 || snapshotVotePower.validToEpoch > electionId);
+    }
+
+    function getVotePowerSnapshotId(
+        address snapshotContract,
+        uint128 electionId
+    ) external view returns (uint128) {
+        return SnapshotVotePower.load(snapshotContract).epochs[electionId].snapshotId;
     }
 
     function prepareBallotWithSnapshot(
-        address voter,
-        address snapshotContract
+        address snapshotContract,
+        address voter
     ) external override returns (uint256 power) {
         Council.Data storage council = Council.load();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
         uint128 currentEpoch = council.lastElectionId.to128();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
+
+        if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
+            revert SnapshotNotTaken(snapshotContract, currentEpoch);
+        }
+
         power = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
             voter,
             snapshotVotePower.epochs[currentEpoch].snapshotId

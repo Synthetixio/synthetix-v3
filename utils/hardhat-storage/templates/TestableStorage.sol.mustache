@@ -11,19 +11,19 @@ pragma solidity ^0.8.0;
 import "{{{relativeSourceName}}}";
 
 contract Testable{{{libraryName}}}Storage {
-    {{#loadParams}}
+	{{#supportedLoadFunction}}
     function _getInstanceStore({{{loadParams}}}) internal pure returns ({{{libraryName}}}.Data storage) {
         return {{{libraryName}}}.load({{{loadInject}}});
     }
-    {{/loadParams}}
-    {{^loadParams}}
+    {{/supportedLoadFunction}}
+    {{^supportedLoadFunction}}
     function _getInstanceStore() internal pure returns ({{{libraryName}}}.Data storage data) {
-        bytes32 s = keccak256(abi.encode("Testable{{{libraryName}}}"));
+        bytes32 s = keccak256(abi.encode("{{{libraryName}}}"));
         assembly {
             data.slot := s
         }
     }
-    {{/loadParams}}
+    {{/supportedLoadFunction}}
 
     {{#fields}}
     function {{{libraryName}}}_set_{{{name}}}({{#loadParams}}{{{loadParams}}}, {{/loadParams}}{{{type}}} val) external {

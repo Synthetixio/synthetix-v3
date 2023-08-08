@@ -63,6 +63,9 @@ artifact = "contracts/modules/core/OwnerModule.sol:OwnerModule"
 [contract.UpgradeProposalModule]
 artifact = "contracts/modules/core/UpgradeProposalModule.sol:UpgradeProposalModule"
 
+[contract.SnapshotVotePowerModule]
+artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
+
 [contract.CouncilTokenModule]
 artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenModule"
 
@@ -71,6 +74,7 @@ contracts = [
   "AssociatedSystemsModule",
   "ElectionInspectorModule",
   "ElectionModule",
+	"SnapshotVotePowerModule",
   "OwnerModule",
   "UpgradeProposalModule",
 ]
@@ -78,6 +82,7 @@ depends = [
   "contract.AssociatedSystemsModule",
   "contract.ElectionInspectorModule",
   "contract.ElectionModule",
+	"contract.SnapshotVotePowerModule",
   "contract.OwnerModule",
   "contract.UpgradeProposalModule",
 ]

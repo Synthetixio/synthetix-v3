@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "../../interfaces/IElectionInspectorModule.sol";
-import "../../submodules/election/ElectionBase.sol";
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import "../../storage/Ballot.sol";
+import "../../storage/Election.sol";
 
-contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
+contract ElectionInspectorModule is IElectionInspectorModule {
     using SetUtil for SetUtil.AddressSet;
     using Ballot for Ballot.Data;
 

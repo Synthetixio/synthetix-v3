@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../../interfaces/IElectionModule.sol";
-import "../../submodules/election/DebtShareManager.sol";
-import "../../submodules/election/CrossChainDebtShareManager.sol";
 import "./BaseElectionModule.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders

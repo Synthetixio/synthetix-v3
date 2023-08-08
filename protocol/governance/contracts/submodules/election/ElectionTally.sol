@@ -2,10 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../../storage/Council.sol";
-import "./ElectionBase.sol";
 
 /// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
-contract ElectionTally is ElectionBase {
+contract ElectionTally {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
 

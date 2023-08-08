@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -219,31 +219,6 @@ library Council {
     }
 }
 
-// @custom:artifact contracts/storage/CrossChainDebtShare.sol:CrossChainDebtShare
-library CrossChainDebtShare {
-    struct Data {
-        bytes32 merkleRoot;
-        uint merkleRootBlockNumber;
-        mapping(address => uint) debtShares;
-    }
-}
-
-// @custom:artifact contracts/storage/DebtShare.sol:DebtShare
-library DebtShare {
-    bytes32 private constant _SLOT_DEBT_SHARE_STORAGE = keccak256(abi.encode("io.synthetix.governance.DebtShare"));
-    struct Data {
-        address debtShareContract;
-        mapping(uint => uint128) debtShareIds;
-        mapping(uint => CrossChainDebtShare.Data) crossChainDebtShareData;
-    }
-    function load() internal pure returns (Data storage debtShare) {
-        bytes32 s = _SLOT_DEBT_SHARE_STORAGE;
-        assembly {
-            debtShare.slot := s
-        }
-    }
-}
-
 // @custom:artifact contracts/storage/Election.sol:Election
 library Election {
     struct Data {
@@ -266,6 +241,7 @@ library Election {
 
 // @custom:artifact contracts/storage/ElectionSettings.sol:ElectionSettings
 library ElectionSettings {
+    uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1;
     struct Data {
         address proposedImplementation;
         uint8 epochSeatCount;
@@ -311,7 +287,7 @@ library SnapshotVotePower {
 // @custom:artifact contracts/storage/SnapshotVotePowerEpoch.sol:SnapshotVotePowerEpoch
 library SnapshotVotePowerEpoch {
     struct Data {
-        uint256 snapshotId;
+        uint128 snapshotId;
         mapping(address => uint256) recordedVotingPower;
     }
 }
@@ -321,12 +297,12 @@ contract ElectionCredentials {
     bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
 }
 
-// @custom:artifact contracts/submodules/election/ElectionSettingsManager.sol:ElectionSettingsManager
-contract ElectionSettingsManager {
-    uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1;
-}
-
 // @custom:artifact contracts/submodules/election/ElectionTally.sol:ElectionTally
 contract ElectionTally {
     uint16 private constant _DEFAULT_EVALUATION_BATCH_SIZE = 500;
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

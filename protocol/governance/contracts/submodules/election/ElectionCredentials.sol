@@ -3,16 +3,24 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
-import "./ElectionBase.sol";
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
+import "../../storage/Council.sol";
+
 /// @dev Core functionality for keeping track of council members with an NFT token
-contract ElectionCredentials is ElectionBase {
+contract ElectionCredentials {
     using SetUtil for SetUtil.AddressSet;
 
     using Council for Council.Data;
     using AssociatedSystem for AssociatedSystem.Data;
+
+    event CouncilMemberAdded(address indexed member, uint indexed epochIndex);
+    event CouncilMemberRemoved(address indexed member, uint indexed epochIndex);
+
+    error AlreadyACouncilMember();
+    error NotACouncilMember();
 
     bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
 
