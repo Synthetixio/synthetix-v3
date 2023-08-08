@@ -16,14 +16,14 @@ import "../../storage/Council.sol";
 
 contract BaseElectionModule is
     IElectionModule,
-		ElectionCredentials,
-		ElectionTally,
+    ElectionCredentials,
+    ElectionTally,
     InitializableMixin,
     ProxyStorage
 {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
-		using ElectionSettings for ElectionSettings.Data;
+    using ElectionSettings for ElectionSettings.Data;
     using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
     using Ballot for Ballot.Data;
@@ -82,7 +82,7 @@ contract BaseElectionModule is
             votingPeriodStartDate - nominationPeriodStartDate, // nominationPeriodDuration
             epochEndDate - votingPeriodStartDate, // votingPeriodDuration
             maxDateAdjustmentTolerance
-				);
+        );
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
 
@@ -128,7 +128,7 @@ contract BaseElectionModule is
     ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
-				Council.Data storage council = Council.load();
+        Council.Data storage council = Council.load();
         council.adjustEpochSchedule(
             council.getCurrentElection().epoch,
             newNominationPeriodStartDate,
@@ -221,9 +221,9 @@ contract BaseElectionModule is
     ) public virtual override {
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
-				if (candidates.length != amounts.length) {
-					revert ParameterError.InvalidParameter("candidates", "length must match amounts");
-				}
+        if (candidates.length != amounts.length) {
+            revert ParameterError.InvalidParameter("candidates", "length must match amounts");
+        }
 
         Ballot.Data storage ballot = Ballot.load(
             Council.load().lastElectionId,
@@ -231,14 +231,17 @@ contract BaseElectionModule is
             block.chainid
         );
 
-				uint256 totalAmounts = 0;
-				for (uint i = 0;i < amounts.length;i++) {
-					totalAmounts += amounts[i];
-				}
+        uint256 totalAmounts = 0;
+        for (uint i = 0; i < amounts.length; i++) {
+            totalAmounts += amounts[i];
+        }
 
-				if (totalAmounts == 0 || ballot.votingPower != totalAmounts) {
-						revert ParameterError.InvalidParameter("amounts", "must be nonzero and sum to ballot voting power");
-				}
+        if (totalAmounts == 0 || ballot.votingPower != totalAmounts) {
+            revert ParameterError.InvalidParameter(
+                "amounts",
+                "must be nonzero and sum to ballot voting power"
+            );
+        }
 
         ballot.votedCandidates = candidates;
         ballot.amounts = amounts;
@@ -408,7 +411,6 @@ contract BaseElectionModule is
     function getCouncilMembers() external view override returns (address[] memory) {
         return Council.load().councilMembers.values();
     }
-
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
         uint length = candidates.length;

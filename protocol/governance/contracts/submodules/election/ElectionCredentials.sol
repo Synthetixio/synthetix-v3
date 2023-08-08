@@ -16,11 +16,11 @@ contract ElectionCredentials {
     using Council for Council.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
-		event CouncilMemberAdded(address indexed member, uint indexed epochIndex);
-		event CouncilMemberRemoved(address indexed member, uint indexed epochIndex);
+    event CouncilMemberAdded(address indexed member, uint indexed epochIndex);
+    event CouncilMemberRemoved(address indexed member, uint indexed epochIndex);
 
-		error AlreadyACouncilMember();
-		error NotACouncilMember();
+    error AlreadyACouncilMember();
+    error NotACouncilMember();
 
     bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
 

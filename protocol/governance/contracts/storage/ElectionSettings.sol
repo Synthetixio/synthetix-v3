@@ -10,7 +10,7 @@ library ElectionSettings {
         uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     );
-		error InvalidElectionSettings();
+    error InvalidElectionSettings();
 
     struct Data {
         // Implementation proposed by previous Council to which can be upgraded to (see UpgradeProposalModule)
@@ -85,16 +85,11 @@ library ElectionSettings {
         }
     }
 
-    function minimumElectionPeriodDuration(
-        Data storage settings
-    ) internal view returns (uint) {
+    function minimumElectionPeriodDuration(Data storage settings) internal view returns (uint) {
         return _MIN_ELECTION_PERIOD_DURATION + settings.maxDateAdjustmentTolerance;
     }
 
-    function copyMissingFrom(
-        Data storage to,
-        Data storage from
-    ) internal {
+    function copyMissingFrom(Data storage to, Data storage from) internal {
         if (to.proposedImplementation == address(0)) {
             to.proposedImplementation = from.proposedImplementation;
         }

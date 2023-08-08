@@ -1,12 +1,10 @@
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
-
-import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-
-import assert from 'assert/strict';
 
 describe('SnapshotVotePowerModule', function () {
   const { c, getSigners, getProvider } = bootstrap();

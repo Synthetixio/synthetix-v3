@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/external/ISnapshotRecord.sol";
-import "hardhat/console.sol";
 
 contract SnapshotRecordMock is ISnapshotRecord {
     struct Period {
@@ -10,7 +9,7 @@ contract SnapshotRecordMock is ISnapshotRecord {
     }
 
     mapping(uint128 => Period) private _periods;
-		mapping(uint128 => uint) private _totalSupplyOnPeriod;
+    mapping(uint128 => uint) private _totalSupplyOnPeriod;
 
     function setBalanceOfOnPeriod(address user, uint balance, uint periodId) external {
         // solhint-disable-next-line numcast/safe-cast
@@ -23,20 +22,20 @@ contract SnapshotRecordMock is ISnapshotRecord {
         address user,
         uint128 periodId
     ) external view override returns (uint) {
-				console.log("INSIDE THE BALANCEOFONPERIOD FUNCTION");
         Period storage period = _periods[periodId];
 
         return period.balances[user];
     }
 
-		function takeSnapshot(uint128 snapshotId) external override {
-			// do nothing
-		}
+    function takeSnapshot(uint128 snapshotId) external override {
+        // do nothing
+    }
 
-		function setTotalSupplyOnPeriod(uint128 snapshotId, uint totalSupply) external {
-			_totalSupplyOnPeriod[snapshotId] = totalSupply;
-		}
-		function totalSupplyOnPeriod(uint128) external pure override returns (uint) {
-			return 0;
-		}
+    function setTotalSupplyOnPeriod(uint128 snapshotId, uint totalSupply) external {
+        _totalSupplyOnPeriod[snapshotId] = totalSupply;
+    }
+
+    function totalSupplyOnPeriod(uint128) external pure override returns (uint) {
+        return 0;
+    }
 }

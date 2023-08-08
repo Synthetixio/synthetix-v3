@@ -8,7 +8,6 @@ import "../../storage/SnapshotVotePower.sol";
 import "../../storage/Election.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "hardhat/console.sol";
 
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
@@ -19,12 +18,12 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
 
         Council.Data storage council = Council.load();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
-				if (enabled) {
-					snapshotVotePower.validFromEpoch = (council.lastElectionId + 1).to128();
-					snapshotVotePower.validToEpoch = 0;
-				} else {
-					snapshotVotePower.validToEpoch = (council.lastElectionId + 1).to128();
-				}
+        if (enabled) {
+            snapshotVotePower.validFromEpoch = (council.lastElectionId + 1).to128();
+            snapshotVotePower.validToEpoch = 0;
+        } else {
+            snapshotVotePower.validToEpoch = (council.lastElectionId + 1).to128();
+        }
     }
 
     function takeVotePowerSnapshot(
@@ -55,9 +54,12 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
             (snapshotVotePower.validToEpoch == 0 || snapshotVotePower.validToEpoch > electionId);
     }
 
-		function getVotePowerSnapshotId(address snapshotContract, uint128 electionId) external view returns (uint128) {
-				return SnapshotVotePower.load(snapshotContract).epochs[electionId].snapshotId;
-		}
+    function getVotePowerSnapshotId(
+        address snapshotContract,
+        uint128 electionId
+    ) external view returns (uint128) {
+        return SnapshotVotePower.load(snapshotContract).epochs[electionId].snapshotId;
+    }
 
     function prepareBallotWithSnapshot(
         address snapshotContract,
@@ -68,9 +70,9 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         uint128 currentEpoch = council.lastElectionId.to128();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
 
-				if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
-					revert SnapshotNotTaken(snapshotContract, currentEpoch);
-				}
+        if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {
+            revert SnapshotNotTaken(snapshotContract, currentEpoch);
+        }
 
         power = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
             voter,
