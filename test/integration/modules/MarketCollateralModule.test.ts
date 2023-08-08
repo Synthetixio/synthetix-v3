@@ -64,7 +64,7 @@ describe('MarginModule', async () => {
 
         await assertEvent(
           tx,
-          `Transfer("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta})`,
+          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta})`,
           PerpMarketProxy
         );
 
@@ -217,7 +217,7 @@ describe('MarginModule', async () => {
 
         await assertEvent(
           tx,
-          `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount})`,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount})`,
           PerpMarketProxy
         );
       });
@@ -241,7 +241,7 @@ describe('MarginModule', async () => {
         // Convert withdrawAmount back to positive beacuse Transfer takes in abs(amount).
         await assertEvent(
           tx,
-          `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount.mul(-1)})`,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount.mul(-1)})`,
           PerpMarketProxy
         );
       });

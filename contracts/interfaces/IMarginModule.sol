@@ -17,8 +17,11 @@ interface IMarginModule is IBasePerpMarket {
 
     // --- Events --- //
 
-    // @dev Emitted when collateral is transferred between user <-> Account.
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    // @dev Emitted when collateral is deposited from user to market.
+    event MarginDeposit(address indexed from, address indexed to, uint256 value);
+
+    // @dev Emitted when collateral is withdrawn from market to user.
+    event MarginWithdraw(address indexed from, address indexed to, uint256 value);
 
     // @dev Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);

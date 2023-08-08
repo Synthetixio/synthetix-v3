@@ -44,6 +44,36 @@ contract MarginModule is IMarginModule {
         }
     }
 
+    function transferAndDeposit(
+        uint128 marketId,
+        uint256 amount,
+        address collateralType,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        IERC20(collateralType).transferFrom(msg.sender, address(this), amount);
+        if (collateralType == address(globalConfig.usdToken)) {
+            globalConfig.synthetix.depositMarketUsd(marketId, address(this), amount);
+        } else {
+            globalConfig.synthetix.depositMarketCollateral(marketId, collateralType, amount);
+        }
+        emit MarginDeposit(msg.sender, address(this), amount);
+    }
+
+    function withdrawAndTransfer(
+        uint128 marketId,
+        uint256 amount,
+        address collateralType,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        if (collateralType == address(globalConfig.usdToken)) {
+            globalConfig.synthetix.withdrawMarketUsd(marketId, address(this), amount);
+        } else {
+            globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, amount);
+        }
+        IERC20(collateralType).transferFrom(address(this), msg.sender, amount);
+        emit MarginWithdraw(address(this), msg.sender, amount);
+    }
+
     /**
      * @inheritdoc IMarginModule
      */
@@ -74,24 +104,15 @@ contract MarginModule is IMarginModule {
             revert ErrorUtil.UnsupportedCollateral(collateralType);
         }
 
-        // TODO: When the collateral is sUSD then we can burn the sUSD for more credit rather than depositing.
-
+        // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
-            // Positive means to deposit into the markets.
-
             // Verify whether this will exceed the maximum allowable collateral amount.
             if (availableAmount + absAmountDelta > maxAllowable) {
                 revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
             }
-
             accountMargin.collaterals[collateralType] += absAmountDelta;
-            IERC20(collateralType).transferFrom(msg.sender, address(this), absAmountDelta);
-            globalConfig.synthetix.depositMarketCollateral(marketId, collateralType, absAmountDelta);
-
-            emit Transfer(msg.sender, address(this), absAmountDelta);
+            transferAndDeposit(marketId, absAmountDelta, collateralType, globalConfig);
         } else if (amountDelta < 0) {
-            // Negative means to withdraw from the markets.
-
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (availableAmount < absAmountDelta) {
                 revert ErrorUtil.InsufficientCollateral(collateralType, availableAmount, absAmountDelta);
@@ -100,14 +121,15 @@ contract MarginModule is IMarginModule {
             accountMargin.collaterals[collateralType] -= absAmountDelta;
 
             // If an open position exists, verify this does _not_ place them into instant liquidation.
+            //
+            // Ensure we perform this _after_ the accounting update so marginUsd uses with post withdrawal
+            // collateral amounts.
             Position.Data storage position = market.positions[accountId];
             if (position.size != 0) {
                 validatePositionPostWithdraw(accountId, position, market);
             }
 
-            globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, absAmountDelta);
-            IERC20(collateralType).transferFrom(address(this), msg.sender, absAmountDelta);
-            emit Transfer(address(this), msg.sender, absAmountDelta);
+            withdrawAndTransfer(marketId, absAmountDelta, collateralType, globalConfig);
         } else {
             // A zero amount is a no-op.
             return;
