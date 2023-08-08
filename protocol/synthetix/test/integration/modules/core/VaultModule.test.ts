@@ -366,7 +366,7 @@ describe('VaultModule', function () {
         await systems()
           .Core.connect(user1)
           .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
-            maxDepositD18: bn(10),
+            maxDepositD18: bn(1000000),
             collateralTypeDisabled: false,
             issuanceRatioD18: bn(0),
           });
@@ -448,6 +448,16 @@ describe('VaultModule', function () {
 
       describe('second user delegates', async () => {
         const user2AccountId = 283847;
+
+        before('set pool limit', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setPoolCollateralConfiguration(poolId, collateralAddress(), {
+              maxDepositD18: depositAmount.mul(10),
+              collateralTypeDisabled: false,
+              issuanceRatioD18: bn(0),
+            });
+        });
 
         before('second user delegates and mints', async () => {
           // user1 has extra collateral available

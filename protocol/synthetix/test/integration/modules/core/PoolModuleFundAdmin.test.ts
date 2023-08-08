@@ -731,7 +731,7 @@ describe('PoolModule Admin', function () {
         .Core.connect(user1)
         .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
           maxDepositD18: bn(10),
-          collateralTypeDisabled: false,
+          collateralTypeDisabled: true,
           issuanceRatioD18: bn(2),
         });
     });
