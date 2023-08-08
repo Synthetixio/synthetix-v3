@@ -7,5 +7,7 @@ library PoolCollateralConfiguration {
 
     struct Data {
         uint256 maxDepositD18;
+        bool collateralTypeDisabled;
+        uint256 issuanceRatioD18;
     }
 }

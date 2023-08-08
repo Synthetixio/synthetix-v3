@@ -75,6 +75,12 @@ interface IPoolModule {
         address indexed sender
     );
 
+    event PoolCollateralConfigurationUpdated(
+        uint128 indexed poolId,
+        address collateralType,
+        PoolCollateralConfiguration.Data config
+    );
+
     /**
      * @notice Emitted when a system-wide minimum liquidity ratio is set
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio
@@ -179,6 +185,26 @@ interface IPoolModule {
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
+
+    /**
+     @notice Shows if a given collateral type is enabled for deposits and delegation in a given pool.
+     * @param poolId The id of the pool for to check the collateral for.
+     * @param collateral The address of the collateral.
+     */
+    function isDelegationEnabledByPool(
+        uint128 poolId,
+        address collateral
+    ) external view returns (bool enabled);
+
+    /**
+     @notice returns a pool minimum issuance ratio
+     * @param poolId The id of the pool for to check the collateral for.
+     * @param collateral The address of the collateral.
+     */
+    function getPoolCollateralIssuanceRatio(
+        uint128 poolId,
+        address collateral
+    ) external returns (uint256 issuanceRatioD18);
 
     /**
      * @notice Retrieves the system-wide minimum liquidity ratio.

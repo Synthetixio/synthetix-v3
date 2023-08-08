@@ -8,6 +8,7 @@ import "./Vault.sol";
 import "./Market.sol";
 import "./PoolCollateralConfiguration.sol";
 import "./SystemPoolConfiguration.sol";
+import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -58,6 +59,11 @@ library Pool {
         uint256 currentCollateral,
         uint256 maxCollateral
     );
+
+    /**
+     * @notice Thrown when attempting delegate a pool disabled collateral
+     */
+    error PoolCollateralIsDisabled(address collateral, uint128 poolId);
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
@@ -537,6 +543,16 @@ library Pool {
                 self.vaults[collateralType].currentCollateral() + collateralAmountD18,
                 self.collateralConfigurations[collateralType].maxDepositD18
             );
+        }
+    }
+
+    /**
+     * @notice Shows if a given collateral type is enabled for deposits and delegation in given pool.
+     * @param collateralType The address of the collateral.
+     */
+    function checkDelegationEnabled(Data storage self, address collateralType) internal view {
+        if (self.collateralConfigurations[collateralType].collateralTypeDisabled) {
+            revert PoolCollateralIsDisabled(collateralType, self.id);
         }
     }
 }

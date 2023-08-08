@@ -86,7 +86,8 @@ contract IssueUSDModule is IIssueUSDModule {
         if (newDebt > 0) {
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 newDebt.toUint(),
-                collateralValue
+                collateralValue,
+                pool.collateralConfigurations[collateralType].issuanceRatioD18
             );
         }
 
