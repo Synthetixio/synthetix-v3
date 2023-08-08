@@ -68,6 +68,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
             revert ErrorUtil.UnsupportedCollateral(collateralType);
         }
 
+        // TODO: When the collateral is sUSD then we can burn the sUSD for more credit rather than depositing.
+
         if (amountDelta > 0) {
             // Positive means to deposit into the markets.
 

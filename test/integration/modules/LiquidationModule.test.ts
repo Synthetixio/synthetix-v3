@@ -31,6 +31,7 @@ describe('LiquidationModule', () => {
     it('should send send both fees to flagger if same keeper');
     it('should remove flagger on full liquidation');
     it('should not remove flagger on partial liquidation');
+    it('should remove all position collateral from market on liquidation');
 
     it('should emit all events in correct order');
     it('should recompute funding');

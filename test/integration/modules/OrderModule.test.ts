@@ -195,8 +195,8 @@ describe('OrderModule', () => {
     it('should settle an order that flips from one side to the other');
 
     it('should have a position opened after settlement');
-
     it('should remove older after settlement');
+    it('should update market size and skew upon settlement');
 
     it('should commit order when price moves but new position still safe');
     it('should allow position reduction even if insufficient unless in liquidation');
@@ -204,7 +204,7 @@ describe('OrderModule', () => {
     it('should emit all events in correct order');
     it('should recompute funding');
 
-    it('should update market size and skew upon settlement');
+    it('should pay sUSD to trader when closing a profitable trade');
 
     it('should pay a non-zero settlement fee to keeper');
 
