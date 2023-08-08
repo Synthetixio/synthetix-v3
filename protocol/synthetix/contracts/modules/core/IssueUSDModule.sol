@@ -10,8 +10,8 @@ import "../../interfaces/IIssueUSDModule.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Collateral.sol";
+import "../../storage/CollateralConfiguration.sol";
 import "../../storage/Config.sol";
-import "hardhat/console.sol";
 
 /**
  * @title Module for the minting and burning of stablecoins.
