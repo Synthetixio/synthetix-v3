@@ -37,7 +37,7 @@ library Margin {
 
     struct Data {
         // {collateralAddress: amount} (amount of collateral deposited into this account).
-        mapping(address => uint256) available;
+        mapping(address => uint256) collaterals;
     }
 
     function load(uint128 accountId, uint128 marketId) internal pure returns (Margin.Data storage d) {
@@ -91,7 +91,7 @@ library Margin {
             currentCollateral = globalMarginConfig.supported[currentCollateralType];
 
             // `INodeModule.process()` is an expensive op, skip if we can.
-            uint256 available = accountMargin.available[currentCollateralType];
+            uint256 available = accountMargin.collaterals[currentCollateralType];
             if (available > 0) {
                 uint256 price = INodeModule(globalConfig.oracleManager)
                     .process(currentCollateral.oracleNodeId)

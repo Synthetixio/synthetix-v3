@@ -178,8 +178,10 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 imnp, , ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
 
-        // TODO: Need to rethink this. We should be using the new position's margin (not the old).
-        if (!positionDecreasing && marginUsd.toInt() - newPosition.feesIncurredUsd.toInt() < imnp.toInt()) {
+        // `marginUsd` is the previous position margin (which includes feesIncurredUsd deducted with open
+        // position). We `-fee and -keeperFee` here because the new position would have incurred additional fees if
+        // this trader were to be settled successfully.
+        if (!positionDecreasing && marginUsd.toInt() - fee.toInt() - keeperFee.toInt() < imnp.toInt()) {
             revert ErrorUtil.InsufficientMargin();
         }
 
@@ -237,10 +239,20 @@ library Position {
             oldPosition.entryPrice,
             oldPosition.feesIncurredUsd
         );
-
-        // TODO: Maybe have a separate fn for liqReward?
-        (, , liqReward) = getLiquidationMarginUsd(oldPosition.size, price, marketConfig);
+        liqReward = getLiquidationReward(oldPosition.size, price, marketConfig);
         keeperFee = getLiquidationKeeperFee();
+    }
+
+    /**
+     * @dev Retrieves the liqReward (without IM/MM). Useful if you just want liqReward without the heavy gas costs of
+     * retrieving the MM (as it includes the liqKeeperFee which involves fetching current ETH/USD price).
+     */
+    function getLiquidationReward(
+        int128 positionSize,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint256) {
+        return MathUtil.abs(positionSize).mulDecimal(price).mulDecimal(marketConfig.liquidationRewardPercent);
     }
 
     /**
@@ -267,9 +279,12 @@ library Position {
             marketConfig.minMarginRatio;
         uint256 mmr = imr.mulDecimal(marketConfig.maintenanceMarginScalar);
 
-        liqReward = notional.mulDecimal(marketConfig.liquidationRewardPercent); // TODO: Include liqRewardKeeperFee (maybe?)
+        // Recalculating `abs(size) * price` but it's a small cost to ensure liqReward calculations are the same.
+        //
+        // See `getLiquidationReward` on why this is separated out.
+        liqReward = getLiquidationReward(positionSize, price, marketConfig);
         im = notional.mulDecimal(imr) + marketConfig.minMarginUsd;
-        mm = notional.mulDecimal(mmr) + marketConfig.minMarginUsd + liqReward;
+        mm = notional.mulDecimal(mmr) + marketConfig.minMarginUsd + liqReward + getLiquidationKeeperFee();
     }
 
     /**

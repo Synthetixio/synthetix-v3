@@ -66,7 +66,7 @@ contract MarginModule is IMarginModule {
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
-        uint256 availableAmount = accountMargin.available[collateralType];
+        uint256 availableAmount = accountMargin.collaterals[collateralType];
 
         Margin.CollateralType storage collateral = globalMarginConfig.supported[collateralType];
         uint256 maxAllowable = collateral.maxAllowable;
@@ -84,8 +84,7 @@ contract MarginModule is IMarginModule {
                 revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
             }
 
-            // TODO: Rename `available` to `collaterals`.
-            accountMargin.available[collateralType] += absAmountDelta;
+            accountMargin.collaterals[collateralType] += absAmountDelta;
             IERC20(collateralType).transferFrom(msg.sender, address(this), absAmountDelta);
             globalConfig.synthetix.depositMarketCollateral(marketId, collateralType, absAmountDelta);
 
@@ -98,7 +97,7 @@ contract MarginModule is IMarginModule {
                 revert ErrorUtil.InsufficientCollateral(collateralType, availableAmount, absAmountDelta);
             }
 
-            accountMargin.available[collateralType] -= absAmountDelta;
+            accountMargin.collaterals[collateralType] -= absAmountDelta;
 
             // If an open position exists, verify this does _not_ place them into instant liquidation.
             Position.Data storage position = market.positions[accountId];

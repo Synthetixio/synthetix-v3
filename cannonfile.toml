@@ -19,7 +19,6 @@ defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'
 
 # --- External Imports --- #
 
-# TODO: docs to download synthetix-v3 and run build/test to generate a -testable.
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 

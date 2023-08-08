@@ -32,7 +32,7 @@ contract PerpAccountModule is IPerpAccountModule {
             address collateralType = globalMarginConfig.supportedAddresses[i];
             collateral[i] = IPerpAccountModule.DepositedCollateral(
                 collateralType,
-                accountMargin.available[collateralType],
+                accountMargin.collaterals[collateralType],
                 Margin.getOraclePrice(collateralType)
             );
             unchecked {

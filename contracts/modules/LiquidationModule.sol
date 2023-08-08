@@ -132,7 +132,7 @@ contract LiquidationModule is ILiquidationModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
-        (, , liqReward) = Position.getLiquidationMarginUsd(
+        liqReward = Position.getLiquidationReward(
             market.positions[accountId].size,
             market.getOraclePrice(),
             PerpMarketConfiguration.load(marketId)
