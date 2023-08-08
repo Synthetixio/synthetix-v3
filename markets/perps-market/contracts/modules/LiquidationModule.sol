@@ -30,7 +30,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (!liquidatableAccounts.contains(accountId)) {
-            (bool isEligible, , , ) = account.isEligibleForLiquidation();
+            (bool isEligible, , , , , ) = account.isEligibleForLiquidation();
 
             if (isEligible) {
                 account.flagForLiquidation();
