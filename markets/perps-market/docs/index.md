@@ -1,3 +1,68 @@
+### Async Order Module
+
+#### commitOrder
+
+  ```solidity
+  function commitOrder(struct AsyncOrder.OrderCommitmentRequest commitment) external returns (struct AsyncOrder.Data retOrder, uint256 fees)
+  ```
+
+  Commit an async order via this function
+
+**Parameters**
+* `commitment` (*struct AsyncOrder.OrderCommitmentRequest*) - Order commitment data (see AsyncOrder.OrderCommitmentRequest struct).
+
+**Returns**
+* `retOrder` (*struct AsyncOrder.Data*) - order details (see AsyncOrder.Data struct).
+* `fees` (*uint256*) - order fees (protocol + settler)
+#### getOrder
+
+  ```solidity
+  function getOrder(uint128 accountId) external returns (struct AsyncOrder.Data order)
+  ```
+
+  Get async order claim details
+
+**Parameters**
+* `accountId` (*uint128*) - id of the account.
+
+**Returns**
+* `order` (*struct AsyncOrder.Data*) - async order claim details (see AsyncOrder.Data struct).
+#### computeOrderFees
+
+  ```solidity
+  function computeOrderFees(uint128 marketId, int128 sizeDelta) external view returns (uint256 orderFees)
+  ```
+
+  Simulates what the order fee would be for the given market with the specified size.
+
+  Note that this does not include the settlement reward fee, which is based on the strategy type used
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+* `sizeDelta` (*int128*) - size of position.
+
+**Returns**
+* `orderFees` (*uint256*) - incurred fees.
+
+#### OrderCommitted
+
+  ```solidity
+  event OrderCommitted(uint128 marketId, uint128 accountId, enum SettlementStrategy.Type orderType, int128 sizeDelta, uint256 acceptablePrice, uint256 settlementTime, uint256 expirationTime, bytes32 trackingCode, address sender)
+  ```
+
+  Gets fired when a new order is committed.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+* `orderType` (*enum SettlementStrategy.Type*) - Should send 0 (at time of writing) that correlates to the transaction type enum defined in SettlementStrategy.Type.
+* `sizeDelta` (*int128*) - requested change in size of the order sent by the user.
+* `acceptablePrice` (*uint256*) - maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
+* `settlementTime` (*uint256*) - Time at which the order can be settled.
+* `expirationTime` (*uint256*) - Time at which the order expired.
+* `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
+* `sender` (*address*) - address of the sender of the order. Authorized to commit by account owner.
+
 ### Async Order Settlement Module
 
 #### settle
@@ -45,6 +110,32 @@
 * `settlementReward` (*uint256*) - Amount of fees collected by the settler.
 * `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
 * `settler` (*address*) - address of the settler of the order.
+
+### Collateral Module
+
+#### setMaxCollateralAmount
+
+  ```solidity
+  function setMaxCollateralAmount(uint128 synthMarketId, uint256 collateralAmount) external
+  ```
+
+  Set the max collateral amoutn via this function
+
+**Parameters**
+* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
+* `collateralAmount` (*uint256*) - max amount that for the synth
+
+#### MaxCollateralSet
+
+  ```solidity
+  event MaxCollateralSet(uint128 synthMarketId, uint256 collateralAmount)
+  ```
+
+  Gets fired when max collateral amount for synth collateral for the system is set by owner.
+
+**Parameters**
+* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
+* `collateralAmount` (*uint256*) - max amount that was set for the synth
 
 ### Global Perps Market Module
 
@@ -247,90 +338,6 @@
 **Parameters**
 * `referrer` (*address*) - The address of the referrer
 * `shareRatioD18` (*uint256*) - The new share ratio for the referrer
-
-### IMarketEvents
-
-#### MarketUpdated
-
-  ```solidity
-  event MarketUpdated(uint128 marketId, uint256 price, int256 skew, uint256 size, int256 sizeDelta, int256 currentFundingRate, int256 currentFundingVelocity)
-  ```
-
-  Gets fired when the size of a market is updated by new orders or liquidations.
-
-**Parameters**
-* `marketId` (*uint128*) - Id of the market used for the trade.
-* `price` (*uint256*) - Price at the time of this event.
-* `skew` (*int256*) - Market skew at the time of the trade. Positive values mean more longs.
-* `size` (*uint256*) - Size of the entire market after settlement.
-* `sizeDelta` (*int256*) - Change in market size during this update.
-* `currentFundingRate` (*int256*) - The current funding rate of this market (0.001 = 0.1% per day)
-* `currentFundingVelocity` (*int256*) - The current rate of change of the funding rate (0.001 = +0.1% per day)
-
-### Async Order Module
-
-#### commitOrder
-
-  ```solidity
-  function commitOrder(struct AsyncOrder.OrderCommitmentRequest commitment) external returns (struct AsyncOrder.Data retOrder, uint256 fees)
-  ```
-
-  Commit an async order via this function
-
-**Parameters**
-* `commitment` (*struct AsyncOrder.OrderCommitmentRequest*) - Order commitment data (see AsyncOrder.OrderCommitmentRequest struct).
-
-**Returns**
-* `retOrder` (*struct AsyncOrder.Data*) - order details (see AsyncOrder.Data struct).
-* `fees` (*uint256*) - order fees (protocol + settler)
-#### getOrder
-
-  ```solidity
-  function getOrder(uint128 accountId) external returns (struct AsyncOrder.Data order)
-  ```
-
-  Get async order claim details
-
-**Parameters**
-* `accountId` (*uint128*) - id of the account.
-
-**Returns**
-* `order` (*struct AsyncOrder.Data*) - async order claim details (see AsyncOrder.Data struct).
-#### computeOrderFees
-
-  ```solidity
-  function computeOrderFees(uint128 marketId, int128 sizeDelta) external view returns (uint256 orderFees)
-  ```
-
-  Simulates what the order fee would be for the given market with the specified size.
-
-  Note that this does not include the settlement reward fee, which is based on the strategy type used
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-* `sizeDelta` (*int128*) - size of position.
-
-**Returns**
-* `orderFees` (*uint256*) - incurred fees.
-
-#### OrderCommitted
-
-  ```solidity
-  event OrderCommitted(uint128 marketId, uint128 accountId, enum SettlementStrategy.Type orderType, int128 sizeDelta, uint256 acceptablePrice, uint256 settlementTime, uint256 expirationTime, bytes32 trackingCode, address sender)
-  ```
-
-  Gets fired when a new order is committed.
-
-**Parameters**
-* `marketId` (*uint128*) - Id of the market used for the trade.
-* `accountId` (*uint128*) - Id of the account used for the trade.
-* `orderType` (*enum SettlementStrategy.Type*) - Should send 0 (at time of writing) that correlates to the transaction type enum defined in SettlementStrategy.Type.
-* `sizeDelta` (*int128*) - requested change in size of the order sent by the user.
-* `acceptablePrice` (*uint256*) - maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
-* `settlementTime` (*uint256*) - Time at which the order can be settled.
-* `expirationTime` (*uint256*) - Time at which the order expired.
-* `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
-* `sender` (*address*) - address of the sender of the order. Authorized to commit by account owner.
 
 ### Liquidation Module
 
@@ -663,6 +670,25 @@
 * `strategyId` (*uint256*) - the specific strategy.
 * `enabled` (*bool*) - whether the strategy is enabled or disabled.
 
+### IMarketEvents
+
+#### MarketUpdated
+
+  ```solidity
+  event MarketUpdated(uint128 marketId, uint256 price, int256 skew, uint256 size, int256 sizeDelta, int256 currentFundingRate, int256 currentFundingVelocity)
+  ```
+
+  Gets fired when the size of a market is updated by new orders or liquidations.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `price` (*uint256*) - Price at the time of this event.
+* `skew` (*int256*) - Market skew at the time of the trade. Positive values mean more longs.
+* `size` (*uint256*) - Size of the entire market after settlement.
+* `sizeDelta` (*int256*) - Change in market size during this update.
+* `currentFundingRate` (*int256*) - The current funding rate of this market (0.001 = 0.1% per day)
+* `currentFundingVelocity` (*int256*) - The current rate of change of the funding rate (0.001 = +0.1% per day)
+
 ### Perps Account Module
 
 #### modifyCollateral
@@ -924,30 +950,4 @@
   ```
 
   Given a marketId return a market's summary details in one call.
-
-### Collateral Module
-
-#### setMaxCollateralAmount
-
-  ```solidity
-  function setMaxCollateralAmount(uint128 synthMarketId, uint256 collateralAmount) external
-  ```
-
-  Set the max collateral amoutn via this function
-
-**Parameters**
-* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
-* `collateralAmount` (*uint256*) - max amount that for the synth
-
-#### MaxCollateralSet
-
-  ```solidity
-  event MaxCollateralSet(uint128 synthMarketId, uint256 collateralAmount)
-  ```
-
-  Gets fired when max collateral amount for synth collateral for the system is set by owner.
-
-**Parameters**
-* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
-* `collateralAmount` (*uint256*) - max amount that was set for the synth
 
