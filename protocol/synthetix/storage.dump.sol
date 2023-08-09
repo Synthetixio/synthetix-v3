@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.4;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -268,6 +268,7 @@ contract IssueUSDModule {
     bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
     bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
     bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
+    bytes32 private constant _CONFIG_TIMEOUT_BURN = "burnUsd_toAccount";
 }
 
 // @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
@@ -666,4 +667,9 @@ library CcipClient {
         uint256 gasLimit;
         bool strict;
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

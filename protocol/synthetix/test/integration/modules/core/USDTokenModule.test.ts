@@ -61,6 +61,9 @@ describe('USDTokenModule', function () {
       let usdBalanceBefore: ethers.BigNumber;
 
       before('record balances', async () => {
+        await systems()
+          .Core.connect(staker())
+          .withdraw(accountId, await systems().Core.getUsdToken(), fiftyUSD);
         usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
       });
 
