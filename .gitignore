@@ -3,3 +3,12 @@ cache/
 artifacts/
 typechain-types/
 test/generated/
+
+
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
