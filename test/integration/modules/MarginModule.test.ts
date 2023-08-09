@@ -13,7 +13,7 @@ describe('MarginModule', async () => {
 
   beforeEach(restore);
 
-  describe('transferTo', () => {
+  describe('modifyCollateral', () => {
     it('should noop with a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -22,7 +22,7 @@ describe('MarginModule', async () => {
       const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
       const amountDelta = bn(0);
 
-      const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
         trader.accountId,
         market.marketId(),
         collateral.address,
@@ -55,7 +55,7 @@ describe('MarginModule', async () => {
         await collateral.approve(PerpMarketProxy.address, amountDelta);
 
         const balanceBefore = await collateral.balanceOf(traderAddress);
-        const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           market.marketId(),
           collateral.address,
@@ -88,7 +88,7 @@ describe('MarginModule', async () => {
         await collateral.approve(PerpMarketProxy.address, amountDelta);
 
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             invalidAccountId,
             market.marketId(),
             collateral.address,
@@ -109,7 +109,7 @@ describe('MarginModule', async () => {
         const amountDelta = bn(genInt(10, 100));
 
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
             invalidCollateralAddress,
@@ -133,7 +133,7 @@ describe('MarginModule', async () => {
 
         // Perform withdraw with zero address.
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
             '0x0000000000000000000000000000000000000000',
@@ -159,7 +159,7 @@ describe('MarginModule', async () => {
         await collateral.approve(PerpMarketProxy.address, depositAmountDelta);
 
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
             collateral.address,
@@ -186,7 +186,7 @@ describe('MarginModule', async () => {
         await collateral.approve(PerpMarketProxy.address, amountAvailable);
 
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
             collateral.address,
@@ -208,7 +208,7 @@ describe('MarginModule', async () => {
         );
 
         // Perform the withdraw (full amount).
-        const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
           collateral.contract.address,
@@ -231,7 +231,7 @@ describe('MarginModule', async () => {
 
         // Perform the withdraw (partial amount).
         const withdrawAmount = collateralDepositAmount.div(2).mul(-1);
-        const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
           collateral.contract.address,
@@ -256,7 +256,7 @@ describe('MarginModule', async () => {
 
         // Perform withdraw with zero address.
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
             '0x0000000000000000000000000000000000000000',
@@ -274,7 +274,7 @@ describe('MarginModule', async () => {
 
         // Perform withdraw with zero address.
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             invalidAccountId,
             marketId,
             collateral.contract.address,
@@ -294,7 +294,7 @@ describe('MarginModule', async () => {
 
         // Perform withdraw with zero address.
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
             invalidCollateralAddress,
@@ -313,7 +313,7 @@ describe('MarginModule', async () => {
         const withdrawAmount = collateralDepositAmount.add(bn(1)).mul(-1);
 
         await assertRevert(
-          PerpMarketProxy.connect(trader.signer).transferTo(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
             collateral.contract.address,

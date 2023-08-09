@@ -83,7 +83,7 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function transferTo(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
+    function modifyCollateral(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
         if (collateralType == address(0)) {
             revert ErrorUtil.ZeroAddress();
         }

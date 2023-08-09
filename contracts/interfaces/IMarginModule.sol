@@ -37,7 +37,7 @@ interface IMarginModule is IBasePerpMarket {
      *
      * There are no fees associated with the transfer of collateral.
      */
-    function transferTo(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
+    function modifyCollateral(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
 
     /**
      * @dev Configure Margin with collateral types and their allowables.
