@@ -37,7 +37,7 @@ interface IMarginModule is IBasePerpMarket {
      *
      * There are no fees associated with the transfer of collateral.
      */
-    function transferTo(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
+    function modifyCollateral(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
 
     /**
      * @dev Configure Margin with collateral types and their allowables.
@@ -61,5 +61,5 @@ interface IMarginModule is IBasePerpMarket {
     /**
      * @dev Returns the total value of deposited collaterals in USD.
      */
-    function getNotionalValueUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
+    function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
 }

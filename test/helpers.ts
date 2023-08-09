@@ -16,7 +16,7 @@ export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) =>
   await collateralConnected.approve(PerpMarketProxy.address, collateralDepositAmount);
 
   // Perform the deposit
-  const tx = await PerpMarketProxy.connect(trader.signer).transferTo(
+  const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
     trader.accountId,
     market.marketId(),
     collateral.contract.address,

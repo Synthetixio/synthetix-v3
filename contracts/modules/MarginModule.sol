@@ -83,7 +83,7 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function transferTo(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
+    function modifyCollateral(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
         if (collateralType == address(0)) {
             revert ErrorUtil.ZeroAddress();
         }
@@ -224,7 +224,7 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getNotionalValueUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
-        return Margin.getNotionalValueUsd(accountId, marketId);
+    function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+        return Margin.getCollateralUsd(accountId, marketId);
     }
 }

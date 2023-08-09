@@ -43,7 +43,7 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage position = market.positions[accountId];
         digest = IPerpAccountModule.AccountDigest(
             collateral,
-            Margin.getNotionalValueUsd(accountId, marketId),
+            Margin.getCollateralUsd(accountId, marketId),
             market.orders[accountId],
             position,
             position.getHealthFactor(
