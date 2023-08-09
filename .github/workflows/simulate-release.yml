@@ -7,7 +7,7 @@ on:
       - "main"
 
 jobs:
-  test:
+  simulate-release:
     runs-on: ubuntu-latest
     env:
       CANNON_SETTINGS: ${{ secrets.CANNON_SETTINGS }}
@@ -17,15 +17,52 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        network: [goerli, optimistic-goerli]
-        project: [protocol/oracle-manager, protocol/synthetix]
+        workspace:
+          [
+            "@synthetixio/main",
+            "@synthetixio/oracle-manager",
+            "@synthetixio/governance",
+            "@synthetixio/legacy-market",
+            "@synthetixio/spot-market",
+            "@synthetixio/perps-market",
+          ]
         include:
-          - project: protocol/oracle-manager
-            cannonPackage: oracle-manager:latest
+          - workspace: "@synthetixio/main"
+            cannonPackage: "synthetix"
             impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          - project: protocol/synthetix
-            cannonPackage: synthetix:latest
+            proxy: "InitialCoreProxy"
+            chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+          - workspace: "@synthetixio/oracle-manager"
+            cannonPackage: "oracle-manager"
             impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+            proxy: "InitialProxy"
+            chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+          - workspace: "@synthetixio/governance"
+            cannonPackage: "oracle-manager"
+            impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+            proxy: "InitialProxy"
+            chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+          - workspace: "@synthetixio/legacy-market"
+            cannonPackage: "synthetix-legacy-market"
+            impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+            proxy: "InitialProxy"
+            chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+          - workspace: "@synthetixio/spot-market"
+            cannonPackage: "synthetix-spot-market"
+            impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+            proxy: "InitialProxy"
+            chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+          - workspace: "@synthetixio/perps-market"
+            cannonPackage: "synthetix-perps-market"
+            impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+            proxy: "InitialProxy"
+            chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -35,19 +72,34 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.16.0"
+          node-version: "16.20.1"
           cache: "yarn"
       - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
         with:
           run_daemon: true
       - run: yarn install --immutable --immutable-cache
-      - run: yarn build
-      - run: |
-          set -o pipefail
-          cd ${{ matrix.project }}
-          yarn hardhat cannon:build --upgrade-from ${{ matrix.cannonPackage }} \
-            --network ${{ matrix.network }} --dry-run \
-            --impersonate ${{ matrix.impersonate}} | tee deployment.txt
-      # verify that a new proxy has not been deployed, we cannot edit the proxy
-      # this is kind of hacky but sufficient for the time being
-      - run: '! grep "exec: contract.InitialProxy\|exec: contract.InitialCoreProxy" ${{ matrix.project }}/deployment.txt'
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from ${{ matrix.workspace }} run build:ts
+      - name: "Simulate release of '${{ matrix.cannonPackage }}' on chains '${{ matrix.chains }}'"
+        run: |
+          CHAINS="${{ matrix.chains }}"
+          WORKSPACE="${{ matrix.workspace }}"
+          for CHAIN in $CHAINS; do
+            echo
+            echo
+            echo
+            echo "...Checking $WORKSPACE on $CHAIN"
+
+            yarn workspace ${{ matrix.workspace }} exec \
+              hardhat cannon:build \
+                --dry-run \
+                --network $CHAIN \
+                --upgrade-from ${{ matrix.cannonPackage }}:latest \
+                --impersonate ${{ matrix.impersonate }} | tee deployment.log
+            
+            grep 'Successfully built package ${{ matrix.cannonPackage }}' deployment.log
+            
+            if [ $(grep -c 'exec: contract.${{ matrix.proxy }}' deployment.log) -gt 0 ]; then
+              echo "Proxy ${{ matrix.proxy }} was modified"
+              exit 1
+            fi
+          done
