@@ -65,7 +65,7 @@ type Order @entity {
   accountPnlRealized: BigInt
   newSize: BigInt
   collectedFees: BigInt
-  settelementReward: BigInt
+  settlementReward: BigInt
   settler: String
 
   block: BigInt!
@@ -98,4 +98,47 @@ type ReferrerShare @entity {
 type GlobalConfiguration @entity {
   id: ID!
   feeCollector: String
+}
+
+# raw events
+type OrderCommitted @entity {
+  id: ID!
+  timestamp: BigInt!
+  marketId: BigInt!
+  accountId: BigInt!
+  orderType: Int!
+  sizeDelta: BigInt!
+  acceptablePrice: BigInt!
+  settlementTime: BigInt!
+  expirationTime: BigInt!
+  trackingCode: Bytes!
+  sender: Bytes!
+}
+
+type OrderSettled @entity {
+  id: ID!
+  timestamp: BigInt!
+  marketId: BigInt!
+  accountId: BigInt!
+  fillPrice: BigInt!
+  sizeDelta: BigInt!
+  newSize: BigInt!
+  totalFees: BigInt!
+  referralFees: BigInt!
+  collectedFees: BigInt!
+  settlementReward: BigInt!
+  trackingCode: Bytes!
+  settler: Bytes!
+}
+
+type MarketUpdated @entity {
+  id: ID!
+  timestamp: BigInt!
+  marketId: BigInt!
+  price: BigInt!
+  skew: BigInt!
+  size: BigInt!
+  sizeDelta: BigInt!
+  currentFundingRate: BigInt!
+  currentFundingVelocity: BigInt!
 }

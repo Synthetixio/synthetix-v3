@@ -21,6 +21,7 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
   strategy.url = event.params.strategy.url;
   strategy.settlementReward = event.params.strategy.settlementReward;
   strategy.priceDeviationTolerance = event.params.strategy.priceDeviationTolerance;
+  strategy.enabled = !event.params.strategy.disabled;
 
   strategy.save();
 }
