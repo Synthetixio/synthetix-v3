@@ -44,6 +44,9 @@ contract MarginModule is IMarginModule {
         }
     }
 
+    /**
+     * @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
+     */
     function transferAndDeposit(
         uint128 marketId,
         uint256 amount,
@@ -59,6 +62,9 @@ contract MarginModule is IMarginModule {
         emit MarginDeposit(msg.sender, address(this), amount);
     }
 
+    /**
+     * @dev Performs an collateral withdraw from Synthetix, ERC20 transfer, and emits event.
+     */
     function withdrawAndTransfer(
         uint128 marketId,
         uint256 amount,
@@ -202,11 +208,13 @@ contract MarginModule is IMarginModule {
 
         uint256 length = globalMarginConfig.supportedAddresses.length;
         collaterals = new AvailableCollateral[](length);
+        address collateralType;
 
         for (uint256 i = 0; i < length; ) {
-            address _type = globalMarginConfig.supportedAddresses[i];
-            Margin.CollateralType storage c = globalMarginConfig.supported[_type];
-            collaterals[i] = AvailableCollateral(_type, c.oracleNodeId, c.maxAllowable);
+            collateralType = globalMarginConfig.supportedAddresses[i];
+            Margin.CollateralType storage c = globalMarginConfig.supported[collateralType];
+            collaterals[i] = AvailableCollateral(collateralType, c.oracleNodeId, c.maxAllowable);
+
             unchecked {
                 i++;
             }

@@ -6,6 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Order} from "../storage/Order.sol";
 import {Position} from "../storage/Position.sol";
+import {Margin} from "../storage/Margin.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
@@ -82,7 +83,7 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Ensures the order can only be settled iff time and price is acceptable.
+     * @dev Validates that an order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
@@ -161,14 +162,23 @@ contract OrderModule is IOrderModule {
             .toUint()
             .to128();
 
+        // TODO: Think through this a bit. Will debt be updated if the newPosition is a fully closed position?
         market.updateDebtCorrection(accountId, oldPosition, newPosition);
 
-        // TODO: How do we deal with partially closing a profitable position?
         if (newPosition.size == 0) {
+            // TODO: This can be made to be more efficient. Passing accountId, market/market.id to refetch and recalc is expensive.
+            //
+            // We only need to update the deposited collateral when the position closes completely. If not, keep accumulating fees
+            // and getMarginUsd to be updated to reflect PnL/feesIncurredUsd
+            int256 amount = Margin.getMarginUsd(accountId, market).toInt() -
+                Margin.getNotionalValueUsd(accountId, market.id).toInt();
+            Margin.updateCollateralUsd(accountId, market, amount);
             delete market.positions[accountId];
         } else {
             market.positions[accountId].update(newPosition);
         }
+
+        // Wipe the order, successfully settled!
         delete market.orders[accountId];
     }
 

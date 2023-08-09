@@ -52,7 +52,7 @@ library Position {
     }
 
     /**
-     * @dev Return whether a change in a position's size would violate the max market value constraint.
+     * @dev Validates whether a change in a position's size would violate the max market value constraint.
      *
      * A perp market has one configurable variable `maxMarketSize` which constraints the maximum open interest
      * a market can have on either side.
@@ -94,7 +94,7 @@ library Position {
     }
 
     /**
-     * @dev Return whether the `newPosition` can be liquidated using their health factor.
+     * @dev Validates whether the `newPosition` can be liquidated using their health factor.
      */
     function validateNextPositionIsLiquidatable(
         PerpMarket.Data storage market,
@@ -118,13 +118,7 @@ library Position {
     }
 
     /**
-     * @dev Given an open position and trade params for the next position return the new position after validation.
-     *
-     * Validates whether the `params` would lead to a valid 'next' next position (through series of revert errors
-     * if not). This is the core position validation pre/post order settlement. It validates the state of the current
-     * position if one is available then the new position on market attributes like max OI, liquidation, margins,
-     * leverage etc. When a current and new position checks pass, a new in-memory position is returned for downstream
-     * processing.
+     * @dev Validates whether the given `TradeParams` would lead to a valid next position.
      */
     function validateTrade(
         uint128 accountId,
@@ -196,7 +190,7 @@ library Position {
     }
 
     /**
-     * @dev Given account and position in market return a liquidated `newPosition` (or partially) after validation.
+     * @dev Validates whether the position at `accountId` and `marketId` would pass liquidation.
      */
     function validateLiquidation(
         uint128 accountId,
@@ -236,18 +230,19 @@ library Position {
 
         // Determine the resulting position post liqudation
         liqSize = MathUtil.min(remainingCapacity, MathUtil.abs(oldPosition.size)).to128();
+        liqReward = getLiquidationReward(oldPosition.size, price, marketConfig);
+        keeperFee = getLiquidationKeeperFee();
         newPosition = Position.Data(
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
             oldPosition.entryPrice,
-            oldPosition.feesIncurredUsd
+            // TODO: Need confirmation from fifa.
+            oldPosition.feesIncurredUsd + liqReward + keeperFee
         );
-        liqReward = getLiquidationReward(oldPosition.size, price, marketConfig);
-        keeperFee = getLiquidationKeeperFee();
     }
 
     /**
-     * @dev Retrieves the liqReward (without IM/MM). Useful if you just want liqReward without the heavy gas costs of
+     * @dev Returns the liqReward (without IM/MM). Useful if you just want liqReward without the heavy gas costs of
      * retrieving the MM (as it includes the liqKeeperFee which involves fetching current ETH/USD price).
      */
     function getLiquidationReward(
@@ -259,7 +254,7 @@ library Position {
     }
 
     /**
-     * @dev Given the necessary market details return the IM and MM for a specified position size.
+     * @dev Returns the IM and MM given relevant market details for a specified position size.
      *
      * Intuitively, IM (initial margin) can be thought of as the minimum amount of margin a trader must deposit
      * before they can open a trade. MM (maintenance margin) refers the amount of margin a trader must have
@@ -309,7 +304,7 @@ library Position {
     }
 
     /**
-     * @dev Given the marketId, config, and position{...} details, retrieve the health factor.
+     * @dev Returns the health factor given the marketId, config, and position{...} details.
      */
     function getHealthFactor(
         PerpMarket.Data storage market,
@@ -361,7 +356,7 @@ library Position {
     }
 
     /**
-     * @dev Determines the current position with additional details can be liquidated.
+     * @dev Returns whether the current position can be liquidated.
      */
     function isLiquidatable(
         Position.Data storage self,
@@ -374,6 +369,30 @@ library Position {
             return false;
         }
         return getHealthFactor(self, market, marginUsd, price, marketConfig) <= DecimalMath.UNIT;
+    }
+
+    /**
+     * @dev Returns the absolute profit or loss based on current price and entry price.
+     */
+    function getPnl(Position.Data storage self, uint256 price) internal view returns (int256) {
+        if (self.size == 0) {
+            return 0;
+        }
+        return self.size.mulDecimal(price.toInt() - self.entryPrice.toInt());
+    }
+
+    /**
+     * @dev Returns the funding accrued from when the position was opened to now.
+     */
+    function getAccruedFunding(
+        Position.Data storage self,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (int256) {
+        if (self.size == 0) {
+            return 0;
+        }
+        return self.size.mulDecimal(market.getNextFunding(price) - self.entryFundingAccrued);
     }
 
     // --- Member (mutative) --- //

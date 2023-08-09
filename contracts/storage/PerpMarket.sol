@@ -13,7 +13,7 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 
 /**
- * @dev Storage for a specific perp market within the bfp-market.
+ * @dev A single perp market denoted by marketId within bfp-market.
  *
  * As of writing this, there will _only be one_ perp market (i.e. wstETH) however, this allows
  * bfp-market to extend to allow more in the future.
@@ -245,21 +245,21 @@ library PerpMarket {
      */
     function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
         // calculations:
-        //  - velocity          = proportional_skew * max_funding_velocity
-        //  - proportional_skew = skew / skew_scale
+        //  - proportionalSkew = skew / skewScale
+        //  - velocity          = proportionalSkew * maxFundingVelocity
         //
         // example:
-        //  - prev_funding_rate     = 0
-        //  - velocity              = 0.0025
-        //  - time_delta            = 29,000s
-        //  - max_funding_velocity  = 0.025 (2.5%)
-        //  - skew                  = 300
-        //  - skew_scale            = 10,000
+        //  - fundingRate         = 0
+        //  - velocity            = 0.0025
+        //  - timeDelta           = 29,000s
+        //  - maxFundingVelocity  = 0.025 (2.5%)
+        //  - skew                = 300
+        //  - skewScale           = 10,000
         //
-        // funding_rate = prev_funding_rate + velocity * (time_delta / seconds_in_day)
-        // funding_rate = 0 + 0.0025 * (29,000 / 86,400)
-        //              = 0 + 0.0025 * 0.33564815
-        //              = 0.00083912
+        // currentFundingRate = fundingRate + velocity * (timeDelta / secondsInDay)
+        // currentFundingRate = 0 + 0.0025 * (29,000 / 86,400)
+        //                    = 0 + 0.0025 * 0.33564815
+        //                    = 0.00083912
         return
             self.currentFundingRateComputed +
             (getCurrentFundingVelocity(self).mulDecimal(getProportionalElapsed(self)));
@@ -291,7 +291,6 @@ library PerpMarket {
         // 100,000         skewScale
         // 0.0002 / 0.0006 {maker,taker}Fee
         // 1               scalar
-        // 2000            maxMarketSize
         // 30s             window
         //
         // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000

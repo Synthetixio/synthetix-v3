@@ -78,22 +78,7 @@ contract LiquidationModule is ILiquidationModule {
         // We can reuse the feesIncurredUsd to sum the partial amount liquidated. Ensure when looking at IM/MM and inferring
         // liqRewards we need to look at notionalValueUsd - feeIncurredUsd (need a better name).
         //
-        // When paying out profitable traders on close, update their sUSD collateral balance before applying debt correction?
-        // On close, any profitable amount is applied to their margin.
-        //
-        // Or... we have a generate updateMargin on every update which can shift their sUSD collateral?
-        // What happens if they only use ETH and the price of ETH falls? They're in negative PnL we can't deduct. Hence this
-        // can only happen on close AND if they are profitable.
-        //
-        // On close we deduct part of their collateral if at loss or increase sUSD balance if profitable. sUSD might have be
-        // be created a bit special
-
-        // I am a trader using wstETH as collateral
-        // I made 20% in unrealised profit but I want to withdraw some profits
-        // If they're in profit enough, they could theoretically withdraw all of their collateral and have a position
-        // that's deeply in profit, backed by nothing.
-        //
-        // Do we pay them out in sUSD? We would have to track that as a fee incurred and mint sUSD for them.
+        // TODO: Keep adding the liquidated amount (in USD) to feesIncurredUsd (renaming to accruedFeesUsd).
 
         address flagger = market.flaggedLiquidations[accountId];
 
@@ -101,12 +86,12 @@ contract LiquidationModule is ILiquidationModule {
         if (newPosition.size == 0) {
             delete market.positions[accountId];
             delete market.flaggedLiquidations[accountId];
+            Margin.writeOffCollateral(accountId, marketId);
         } else {
             market.positions[accountId].update(newPosition);
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-
         if (flagger == msg.sender) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
         } else {
