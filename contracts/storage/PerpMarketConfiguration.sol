@@ -8,6 +8,9 @@ import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INod
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 
+/**
+ * @dev Market specific and shared configuration.
+ */
 library PerpMarketConfiguration {
     using SafeCastI256 for int256;
 

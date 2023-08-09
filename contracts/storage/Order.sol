@@ -8,7 +8,7 @@ import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 
 /**
- * @dev An order that has yet to be settled for position modification.
+ * @dev A pending order that awaiting settlement for position modification.
  */
 library Order {
     using DecimalMath for uint256;

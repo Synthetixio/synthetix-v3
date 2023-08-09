@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { bn } from '../utils';
 
+// A collection of reasonably realistic market parameters for BTC, ETH, SOL, OP, and ARB markets.
 export const MARKETS = [
   {
     name: ethers.utils.formatBytes32String('BTCPERP'),
