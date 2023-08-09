@@ -25,7 +25,7 @@ git clone git@github.com:davidvuong/bfp-market.git
 # Install dependencies
 #
 # Note: It's --legacy-peer-deps due to nested conflicting dependencies on cannon.
-npm i --legacy-peer-deps
+yarn
 
 # Install ipfs
 #
@@ -41,7 +41,7 @@ npm i --legacy-peer-deps
 npx cannon setup
 
 # Build using cannon.
-npm run build
+yarn build
 ```
 
 ## Running tests
@@ -58,5 +58,5 @@ All of these operates happen asynchronously in loosely chained `before` blocks. 
 Two primary differences to note in how tests are written in bfp-market is all tests defined in `it` blocks are isolated (ensured by the `beforeEach(restore)` rather than a `before(restore)`) and the use of [generator functions](./test) and a mixture of [realistic market parameters](./test/data) rather than hardcoded values as input data for each test.
 
 ```bash
-npm run test
+yarn test
 ```
