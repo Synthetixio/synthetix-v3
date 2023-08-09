@@ -41,5 +41,6 @@
     "@synthetixio/core-modules": "^3.1.1",
     "@synthetixio/main": "^3.1.1",
     "@synthetixio/oracle-manager": "^3.1.1"
-  }
+  },
+  "packageManager": "yarn@3.6.0"
 }
