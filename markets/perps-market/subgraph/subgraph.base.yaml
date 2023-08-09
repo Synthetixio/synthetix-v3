@@ -33,7 +33,7 @@ dataSources:
           handler: handleMarketPriceDataUpdated
         - event: FundingParametersSet(indexed uint128,uint256,uint256)
           handler: handleFundingParametersSet
-        - event: LiquidationParametersSet(indexed uint128,uint256,uint256,uint256,uint256,uint256,uint256)
+        - event: LiquidationParametersSet(indexed uint128,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
           handler: handleLiquidationParametersSet
         - event: LockedOiRatioSet(indexed uint128,uint256)
           handler: handleLockedOiRatioSet
