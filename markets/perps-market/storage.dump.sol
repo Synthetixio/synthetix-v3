@@ -496,6 +496,8 @@ library AsyncOrder {
         uint orderFees;
         uint availableMargin;
         uint currentLiquidationMargin;
+        uint accumulatedLiquidationRewards;
+        uint currentLiquidationReward;
         int128 newPositionSize;
         uint newNotionalValue;
         int currentAvailableMargin;
