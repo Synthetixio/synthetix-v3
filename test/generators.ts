@@ -7,6 +7,8 @@ import type { bootstrap } from './bootstrap';
 
 // --- Primitive generators --- //
 
+export const genTimes = <A>(n: number, f: (n?: number) => A) => [...Array(n).keys()].map(f);
+
 export const genOneOf = <A>(l: A[]): A => {
   const a = shuffle(l)[0];
   return isNil(a) ? raise('oneOf found invalid sequence') : a;
@@ -19,7 +21,6 @@ export const genListOf = <A>(n: number, f: (n?: number) => A): A[] =>
 
 // --- Primitives --- //
 
-export const genTimes = <A>(n: number, f: (n?: number) => A) => [...Array(n).keys()].map(f);
 export const genString = (
   n: number,
   choices: string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
