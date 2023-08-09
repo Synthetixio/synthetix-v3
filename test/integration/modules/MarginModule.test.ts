@@ -335,6 +335,20 @@ describe('MarginModule', async () => {
   });
 
   describe('setCollateralConfiguration()', () => {
+    it('should revert when array has mismatched length', async () => {
+      const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
+      const from = owner();
+
+      const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
+      const oracleNodeIds = genListOf(genInt(1, 5), () => genBytes32());
+      const maxAllowables = genListOf(genInt(1, 5), () => bn(genInt(10_000, 100_000)));
+
+      await assertRevert(
+        PerpMarketProxy.connect(from).setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables),
+        `ArrayLengthMismatch()`
+      );
+    });
+
     it('should configure many collaterals', async () => {
       const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
       const from = owner();

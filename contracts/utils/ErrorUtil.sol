@@ -67,4 +67,7 @@ library ErrorUtil {
 
     // @dev Thrown when the supplied collateralType address is unsupported.
     error UnsupportedCollateral(address collateral);
+
+    // @dev Thrown when the input arrays have mismatched lengths.
+    error ArrayLengthMismatch();
 }

@@ -83,7 +83,12 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function modifyCollateral(uint128 accountId, uint128 marketId, address collateralType, int256 amountDelta) external {
+    function modifyCollateral(
+        uint128 accountId,
+        uint128 marketId,
+        address collateralType,
+        int256 amountDelta
+    ) external {
         if (collateralType == address(0)) {
             revert ErrorUtil.ZeroAddress();
         }
@@ -151,6 +156,10 @@ contract MarginModule is IMarginModule {
         uint128[] calldata maxAllowables
     ) external {
         OwnableStorage.onlyOwner();
+        // Check if all arrays are of the same length
+        if (collateralTypes.length != oracleNodeIds.length || collateralTypes.length != maxAllowables.length) {
+            revert ErrorUtil.ArrayLengthMismatch();
+        }
 
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
