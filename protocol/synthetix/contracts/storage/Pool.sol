@@ -53,7 +53,7 @@ library Pool {
     /**
      * @dev Thrown when pool has surpassed max collateral deposit
      */
-    error SurpassedPoolMaxCollateralDeposit(
+    error PoolCollateralLimitExceeded(
         uint128 poolId,
         address collateralType,
         uint256 currentCollateral,
@@ -526,7 +526,7 @@ library Pool {
         }
     }
 
-    function requireSufficientCollateralCapacity(
+    function checkPoolCollateralLimit(
         Data storage self,
         address collateralType,
         uint256 collateralAmountD18
@@ -537,7 +537,7 @@ library Pool {
             maxDeposit > 0 &&
             self.vaults[collateralType].currentCollateral() + collateralAmountD18 > maxDeposit
         ) {
-            revert SurpassedPoolMaxCollateralDeposit(
+            revert PoolCollateralLimitExceeded(
                 self.id,
                 collateralType,
                 self.vaults[collateralType].currentCollateral() + collateralAmountD18,

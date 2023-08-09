@@ -407,7 +407,7 @@ describe('VaultModule', function () {
               depositAmount.mul(2),
               ethers.utils.parseEther('1')
             ),
-          `SurpassedPoolMaxCollateralDeposit("${poolId}", "${collateralAddress()}", "${depositAmount
+          `PoolCollateralLimitExceeded("${poolId}", "${collateralAddress()}", "${depositAmount
             .mul(2)
             .toString()}", "${depositAmount.div(2).toString()}")`,
           systems().Core

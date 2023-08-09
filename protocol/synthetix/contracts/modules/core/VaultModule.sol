@@ -88,7 +88,7 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18 - currentCollateralAmount
             );
 
-            Pool.loadExisting(poolId).requireSufficientCollateralCapacity(
+            Pool.loadExisting(poolId).checkPoolCollateralLimit(
                 collateralType,
                 newCollateralAmountD18 - currentCollateralAmount
             );
