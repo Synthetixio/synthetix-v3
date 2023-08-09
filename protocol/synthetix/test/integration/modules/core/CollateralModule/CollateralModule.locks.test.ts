@@ -7,7 +7,7 @@ import assert from 'assert/strict';
 import { ContractTransaction, Signer } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems, provider, accountId, collateralAddress, depositAmount } =
     bootstrapWithStakedPool();
 
