@@ -179,7 +179,7 @@ library Margin {
     /**
      * @dev Returns the "raw" margin in USD before fees, `sum(p.collaterals.map(c => c.amount * c.price))`.
      */
-    function getNotionalValueUsd(uint128 accountId, uint128 marketId) internal view returns (uint256) {
+    function getCollateralUsd(uint128 accountId, uint128 marketId) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -216,7 +216,7 @@ library Margin {
      * @dev Returns the `notionalValueUsd - position.feesPaid` on an open position.
      */
     function getMarginUsd(uint128 accountId, PerpMarket.Data storage market) internal view returns (uint256) {
-        uint256 notionalValueUsd = getNotionalValueUsd(accountId, market.id);
+        uint256 notionalValueUsd = getCollateralUsd(accountId, market.id);
         Position.Data storage position = market.positions[accountId];
 
         if (position.size == 0) {

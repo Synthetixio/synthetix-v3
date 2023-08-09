@@ -171,7 +171,7 @@ contract OrderModule is IOrderModule {
             // We only need to update the deposited collateral when the position closes completely. If not, keep accumulating fees
             // and getMarginUsd to be updated to reflect PnL/feesIncurredUsd
             int256 amount = Margin.getMarginUsd(accountId, market).toInt() -
-                Margin.getNotionalValueUsd(accountId, market.id).toInt();
+                Margin.getCollateralUsd(accountId, market.id).toInt();
             Margin.updateCollateralUsd(accountId, market, amount);
             delete market.positions[accountId];
         } else {
