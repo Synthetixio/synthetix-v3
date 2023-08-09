@@ -3891,7 +3891,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 #### OrderSettled
 
   ```solidity
-  event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int256 pnl, int128 sizeDelta, int128 newSize, uint256 totalFees, uint256 referralFees, uint256 collectedFees, uint256 settlementReward, bytes32 trackingCode, address settler)
+  event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int256 pnl, int256 accruedFunding, int128 sizeDelta, int128 newSize, uint256 totalFees, uint256 referralFees, uint256 collectedFees, uint256 settlementReward, bytes32 trackingCode, address settler)
   ```
 
   Gets fired when a new order is settled.
@@ -3900,7 +3900,8 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `marketId` (*uint128*) - Id of the market used for the trade.
 * `accountId` (*uint128*) - Id of the account used for the trade.
 * `fillPrice` (*uint256*) - Price at which the order was settled.
-* `pnl` (*int256*) - 
+* `pnl` (*int256*) - Pnl of the previous closed position.
+* `accruedFunding` (*int256*) - Accrued funding of the previous closed position.
 * `sizeDelta` (*int128*) - Size delta from order.
 * `newSize` (*int128*) - New size of the position after settlement.
 * `totalFees` (*uint256*) - Amount of fees collected by the protocol.
@@ -4069,6 +4070,16 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 
 **Returns**
 * `shareRatioD18` (*uint256*) - The configured share percentage for the referrer
+#### getMarkets
+
+  ```solidity
+  function getMarkets() external returns (uint256[] marketIds)
+  ```
+
+  get all existing market ids
+
+**Returns**
+* `marketIds` (*uint256[]*) - an array of existing market ids
 
 #### MaxCollateralAmountSet
 
@@ -4578,7 +4589,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 #### getRequiredMargins
 
   ```solidity
-  function getRequiredMargins(uint128 accountId) external view returns (uint256 requiredInitialMargin, uint256 requiredMaintenanceMargin)
+  function getRequiredMargins(uint128 accountId) external view returns (uint256 requiredInitialMargin, uint256 requiredMaintenanceMargin, uint256 totalAccumulatedLiquidationRewards, uint256 maxLiquidationReward)
   ```
 
   Gets the initial/maintenance margins across all positions that an account has open.
@@ -4589,6 +4600,8 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Returns**
 * `requiredInitialMargin` (*uint256*) - initial margin req (used when withdrawing collateral).
 * `requiredMaintenanceMargin` (*uint256*) - maintenance margin req (used to determine liquidation threshold).
+* `totalAccumulatedLiquidationRewards` (*uint256*) - sum of all liquidation rewards of if all account open positions were to be liquidated fully.
+* `maxLiquidationReward` (*uint256*) - max liquidation reward the keeper would receive if account was fully liquidated. Note here that the accumulated rewards are checked against the global max/min configured liquidation rewards.
 
 #### CollateralModified
 

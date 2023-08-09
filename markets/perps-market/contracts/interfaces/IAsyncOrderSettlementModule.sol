@@ -25,6 +25,8 @@ interface IAsyncOrderSettlementModule {
      * @param marketId Id of the market used for the trade.
      * @param accountId Id of the account used for the trade.
      * @param fillPrice Price at which the order was settled.
+     * @param pnl Pnl of the previous closed position.
+     * @param accruedFunding Accrued funding of the previous closed position.
      * @param sizeDelta Size delta from order.
      * @param newSize New size of the position after settlement.
      * @param totalFees Amount of fees collected by the protocol.
@@ -39,6 +41,7 @@ interface IAsyncOrderSettlementModule {
         uint128 indexed accountId,
         uint256 fillPrice,
         int256 pnl,
+        int256 accruedFunding,
         int128 sizeDelta,
         int128 newSize,
         uint256 totalFees,
@@ -56,6 +59,7 @@ interface IAsyncOrderSettlementModule {
         int128 newPositionSize;
         int128 sizeDelta;
         int256 pnl;
+        int256 accruedFunding;
         uint256 pnlUint;
         uint256 amountToDeduct;
         uint256 settlementReward;
