@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.4;
+pragma solidity >=0.8.11<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -150,6 +150,23 @@ library AssociatedSystem {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/storage/CrossChain.sol:CrossChain
+library CrossChain {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.core-modules.CrossChain"));
+    struct Data {
+        address ccipRouter;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint64) ccipChainIdToSelector;
+        mapping(uint64 => uint64) ccipSelectorToChainId;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
+    }
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/FeatureFlag.sol:FeatureFlag
 library FeatureFlag {
     struct Data {
@@ -177,6 +194,33 @@ library Initialized {
         assembly {
             store.slot := s
         }
+    }
+}
+
+// @custom:artifact @synthetixio/core-modules/contracts/utils/CcipClient.sol:CcipClient
+library CcipClient {
+    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
+    struct EVMTokenAmount {
+        address token;
+        uint256 amount;
+    }
+    struct Any2EVMMessage {
+        bytes32 messageId;
+        uint64 sourceChainSelector;
+        bytes sender;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+    }
+    struct EVM2AnyMessage {
+        bytes receiver;
+        bytes data;
+        EVMTokenAmount[] tokenAmounts;
+        address feeToken;
+        bytes extraArgs;
+    }
+    struct EVMExtraArgsV1 {
+        uint256 gasLimit;
+        bool strict;
     }
 }
 
@@ -312,14 +356,6 @@ contract RewardsManagerModule {
     bytes32 private constant _CLAIM_FEATURE_FLAG = "claimRewards";
 }
 
-// @custom:artifact contracts/modules/core/UtilsModule.sol:UtilsModule
-contract UtilsModule {
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
-    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-}
-
 // @custom:artifact contracts/modules/core/VaultModule.sol:VaultModule
 contract VaultModule {
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
@@ -411,24 +447,6 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
-    }
-}
-
-// @custom:artifact contracts/storage/CrossChain.sol:CrossChain
-library CrossChain {
-    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
-    struct Data {
-        address ccipRouter;
-        SetUtil.UintSet supportedNetworks;
-        mapping(uint64 => uint64) ccipChainIdToSelector;
-        mapping(uint64 => uint64) ccipSelectorToChainId;
-        uint64 mothershipChainId;
-    }
-    function load() internal pure returns (Data storage crossChain) {
-        bytes32 s = _SLOT_CROSS_CHAIN;
-        assembly {
-            crossChain.slot := s
-        }
     }
 }
 
@@ -637,32 +655,5 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
         mapping(uint128 => uint64) lastDelegationTime;
-    }
-}
-
-// @custom:artifact contracts/utils/CcipClient.sol:CcipClient
-library CcipClient {
-    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
-    struct EVMTokenAmount {
-        address token;
-        uint256 amount;
-    }
-    struct Any2EVMMessage {
-        bytes32 messageId;
-        uint64 sourceChainSelector;
-        bytes sender;
-        bytes data;
-        EVMTokenAmount[] tokenAmounts;
-    }
-    struct EVM2AnyMessage {
-        bytes receiver;
-        bytes data;
-        EVMTokenAmount[] tokenAmounts;
-        address feeToken;
-        bytes extraArgs;
-    }
-    struct EVMExtraArgsV1 {
-        uint256 gasLimit;
-        bool strict;
     }
 }

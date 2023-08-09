@@ -25,6 +25,9 @@ artifact = "contracts/modules/CoreModule.sol:CoreModule"
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
+[contract.CrossChainModule]
+artifact = "contracts/modules/CrossChainModule.sol:CrossChainModule"
+
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
