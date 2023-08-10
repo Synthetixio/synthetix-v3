@@ -131,4 +131,10 @@ interface IGlobalPerpsMarketModule {
      * @return shareRatioD18 The configured share percentage for the referrer
      */
     function getReferrerShare(address referrer) external returns (uint256 shareRatioD18);
+
+    /**
+     * @notice get all existing market ids
+     * @return marketIds an array of existing market ids
+     */
+    function getMarkets() external returns (uint256[] memory marketIds);
 }
