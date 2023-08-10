@@ -375,6 +375,7 @@ describe('Settle Offchain Async Order test', () => {
               accountId,
               fillPrice,
               0,
+              0,
               sizeDelta,
               newPositionSize,
               totalFees,

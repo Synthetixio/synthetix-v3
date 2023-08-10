@@ -1,8 +1,6 @@
-# Solidity API
+### Async Order Configuration Module
 
-## Async Order Configuration Module
-
-### addSettlementStrategy
+#### addSettlementStrategy
 
   ```solidity
   function addSettlementStrategy(uint128 synthMarketId, struct SettlementStrategy.Data strategy) external returns (uint256 strategyId)
@@ -16,7 +14,7 @@
 
 **Returns**
 * `strategyId` (*uint256*) - newly created settlement strategy id.
-### setSettlementStrategyEnabled
+#### setSettlementStrategyEnabled
 
   ```solidity
   function setSettlementStrategyEnabled(uint128 synthMarketId, uint256 strategyId, bool enabled) external
@@ -31,7 +29,7 @@
 * `strategyId` (*uint256*) - id of the strategy.
 * `enabled` (*bool*) - set enabled/disabled.
 
-### getSettlementStrategy
+#### getSettlementStrategy
 
   ```solidity
   function getSettlementStrategy(uint128 marketId, uint256 strategyId) external view returns (struct SettlementStrategy.Data settlementStrategy)
@@ -46,7 +44,7 @@
 **Returns**
 * `settlementStrategy` (*struct SettlementStrategy.Data*) - 
 
-### SettlementStrategyAdded
+#### SettlementStrategyAdded
 
   ```solidity
   event SettlementStrategyAdded(uint128 synthMarketId, uint256 strategyId)
@@ -58,7 +56,7 @@
 * `synthMarketId` (*uint128*) - adds settlement strategy to this specific market.
 * `strategyId` (*uint256*) - the newly created settlement strategy id.
 
-### SettlementStrategyUpdated
+#### SettlementStrategyUpdated
 
   ```solidity
   event SettlementStrategyUpdated(uint128 synthMarketId, uint256 strategyId, bool enabled)
@@ -73,9 +71,9 @@
 * `strategyId` (*uint256*) - id of the strategy.
 * `enabled` (*bool*) - true/false.
 
-## Async Order Module
+### Async Order Module
 
-### commitOrder
+#### commitOrder
 
   ```solidity
   function commitOrder(uint128 marketId, enum Transaction.Type orderType, uint256 amountProvided, uint256 settlementStrategyId, uint256 minimumSettlementAmount, address referrer) external returns (struct AsyncOrderClaim.Data asyncOrderClaim)
@@ -95,7 +93,7 @@
 
 **Returns**
 * `asyncOrderClaim` (*struct AsyncOrderClaim.Data*) - claim details (see AsyncOrderClaim.Data struct).
-### cancelOrder
+#### cancelOrder
 
   ```solidity
   function cancelOrder(uint128 marketId, uint128 asyncOrderId) external
@@ -111,7 +109,7 @@ needs to satisfy commitmentTime + settlementDelay + settlementDuration < block.t
 * `marketId` (*uint128*) - Id of the market used for the trade.
 * `asyncOrderId` (*uint128*) - id of the async order created during commitment.
 
-### getAsyncOrderClaim
+#### getAsyncOrderClaim
 
   ```solidity
   function getAsyncOrderClaim(uint128 marketId, uint128 asyncOrderId) external view returns (struct AsyncOrderClaim.Data asyncOrderClaim)
@@ -126,7 +124,7 @@ needs to satisfy commitmentTime + settlementDelay + settlementDuration < block.t
 **Returns**
 * `asyncOrderClaim` (*struct AsyncOrderClaim.Data*) - claim details (see AsyncOrderClaim.Data struct).
 
-### OrderCommitted
+#### OrderCommitted
 
   ```solidity
   event OrderCommitted(uint128 marketId, enum Transaction.Type orderType, uint256 amountProvided, uint128 asyncOrderId, address sender, address referrer)
@@ -142,7 +140,7 @@ needs to satisfy commitmentTime + settlementDelay + settlementDuration < block.t
 * `sender` (*address*) - trader address.
 * `referrer` (*address*) - Optional address of the referrer, for fee share
 
-### OrderCancelled
+#### OrderCancelled
 
   ```solidity
   event OrderCancelled(uint128 marketId, uint128 asyncOrderId, struct AsyncOrderClaim.Data asyncOrderClaim, address sender)
@@ -156,9 +154,9 @@ needs to satisfy commitmentTime + settlementDelay + settlementDuration < block.t
 * `asyncOrderClaim` (*struct AsyncOrderClaim.Data*) - claim details (see AsyncOrderClaim.Data struct).
 * `sender` (*address*) - trader address and also the receiver of the funds.
 
-## Async Order Settlement Module
+### Async Order Settlement Module
 
-### settleOrder
+#### settleOrder
 
   ```solidity
   function settleOrder(uint128 marketId, uint128 asyncOrderId) external returns (uint256 finalOrderAmount, struct OrderFees.Data)
@@ -176,7 +174,7 @@ if the strategy is offchain, this function will revert with OffchainLookup error
 **Returns**
 * `finalOrderAmount` (*uint256*) - amount returned to trader after fees.
 * `[1]` (*struct OrderFees.Data*) - OrderFees.Data breakdown of all the fees incurred for the transaction.
-### settlePythOrder
+#### settlePythOrder
 
   ```solidity
   function settlePythOrder(bytes result, bytes extraData) external payable returns (uint256 finalOrderAmount, struct OrderFees.Data fees)
@@ -198,7 +196,7 @@ To determine the fee, the client should first call getUpdateFee() from Pyth's ve
 * `finalOrderAmount` (*uint256*) - amount returned to trader after fees.
 * `fees` (*struct OrderFees.Data*) - breakdown of all the fees incurred for the transaction.
 
-### OrderSettled
+#### OrderSettled
 
   ```solidity
   event OrderSettled(uint128 marketId, uint128 asyncOrderId, uint256 finalOrderAmount, struct OrderFees.Data fees, uint256 collectedFees, address settler, uint256 price, enum Transaction.Type orderType)
@@ -216,9 +214,9 @@ To determine the fee, the client should first call getUpdateFee() from Pyth's ve
 * `price` (*uint256*) - 
 * `orderType` (*enum Transaction.Type*) - 
 
-## Atomic Order Module
+### Atomic Order Module
 
-### buyExactIn
+#### buyExactIn
 
   ```solidity
   function buyExactIn(uint128 synthMarketId, uint256 amountUsd, uint256 minAmountReceived, address referrer) external returns (uint256 synthAmount, struct OrderFees.Data fees)
@@ -239,7 +237,7 @@ Uses the buyFeedId configured for the market.
 **Returns**
 * `synthAmount` (*uint256*) - Synth received on the trade based on amount provided by trader.
 * `fees` (*struct OrderFees.Data*) - breakdown of all the fees incurred for the transaction.
-### buy
+#### buy
 
   ```solidity
   function buy(uint128 marketId, uint256 usdAmount, uint256 minAmountReceived, address referrer) external returns (uint256 synthAmount, struct OrderFees.Data fees)
@@ -256,7 +254,7 @@ Uses the buyFeedId configured for the market.
 **Returns**
 * `synthAmount` (*uint256*) - (see buyExactIn)
 * `fees` (*struct OrderFees.Data*) - (see buyExactIn)
-### buyExactOut
+#### buyExactOut
 
   ```solidity
   function buyExactOut(uint128 synthMarketId, uint256 synthAmount, uint256 maxUsdAmount, address referrer) external returns (uint256 usdAmountCharged, struct OrderFees.Data fees)
@@ -275,7 +273,7 @@ Uses the buyFeedId configured for the market.
 **Returns**
 * `usdAmountCharged` (*uint256*) - amount of USD charged for the trade
 * `fees` (*struct OrderFees.Data*) - breakdown of all the fees incurred for the transaction
-### quoteBuyExactIn
+#### quoteBuyExactIn
 
   ```solidity
   function quoteBuyExactIn(uint128 synthMarketId, uint256 usdAmount) external view returns (uint256 synthAmount, struct OrderFees.Data fees)
@@ -290,7 +288,7 @@ Uses the buyFeedId configured for the market.
 **Returns**
 * `synthAmount` (*uint256*) - return amount of synth given the USD amount - fees
 * `fees` (*struct OrderFees.Data*) - breakdown of all the quoted fees for the buy txn
-### quoteBuyExactOut
+#### quoteBuyExactOut
 
   ```solidity
   function quoteBuyExactOut(uint128 synthMarketId, uint256 synthAmount) external view returns (uint256 usdAmountCharged, struct OrderFees.Data)
@@ -305,7 +303,7 @@ Uses the buyFeedId configured for the market.
 **Returns**
 * `usdAmountCharged` (*uint256*) - USD amount charged for the synth requested - fees
 * `[1]` (*struct OrderFees.Data*) - fees  breakdown of all the quoted fees for the buy txn
-### sellExactIn
+#### sellExactIn
 
   ```solidity
   function sellExactIn(uint128 synthMarketId, uint256 sellAmount, uint256 minAmountReceived, address referrer) external returns (uint256 returnAmount, struct OrderFees.Data fees)
@@ -325,7 +323,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 **Returns**
 * `returnAmount` (*uint256*) - Amount of snxUSD returned to user
 * `fees` (*struct OrderFees.Data*) - breakdown of all the fees incurred for the transaction.
-### sellExactOut
+#### sellExactOut
 
   ```solidity
   function sellExactOut(uint128 marketId, uint256 usdAmount, uint256 maxSynthAmount, address referrer) external returns (uint256 synthToBurn, struct OrderFees.Data fees)
@@ -344,7 +342,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 **Returns**
 * `synthToBurn` (*uint256*) - amount of synth charged for the specified usd amount
 * `fees` (*struct OrderFees.Data*) - breakdown of all the fees incurred for the transaction
-### sell
+#### sell
 
   ```solidity
   function sell(uint128 marketId, uint256 synthAmount, uint256 minUsdAmount, address referrer) external returns (uint256 usdAmountReceived, struct OrderFees.Data fees)
@@ -361,7 +359,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 **Returns**
 * `usdAmountReceived` (*uint256*) - (see sellExactIn)
 * `fees` (*struct OrderFees.Data*) - (see sellExactIn)
-### quoteSellExactIn
+#### quoteSellExactIn
 
   ```solidity
   function quoteSellExactIn(uint128 marketId, uint256 synthAmount) external view returns (uint256 returnAmount, struct OrderFees.Data fees)
@@ -378,7 +376,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 **Returns**
 * `returnAmount` (*uint256*) - amount of USD expected back
 * `fees` (*struct OrderFees.Data*) - breakdown of all the quoted fees for the txn
-### quoteSellExactOut
+#### quoteSellExactOut
 
   ```solidity
   function quoteSellExactOut(uint128 marketId, uint256 usdAmount) external view returns (uint256 synthToBurn, struct OrderFees.Data fees)
@@ -396,7 +394,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `synthToBurn` (*uint256*) - amount of synth expected from trader
 * `fees` (*struct OrderFees.Data*) - breakdown of all the quoted fees for the txn
 
-### SynthBought
+#### SynthBought
 
   ```solidity
   event SynthBought(uint256 synthMarketId, uint256 synthReturned, struct OrderFees.Data fees, uint256 collectedFees, address referrer, uint256 price)
@@ -412,7 +410,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `referrer` (*address*) - Optional address of the referrer, for fee share
 * `price` (*uint256*) - 
 
-### SynthSold
+#### SynthSold
 
   ```solidity
   event SynthSold(uint256 synthMarketId, uint256 amountReturned, struct OrderFees.Data fees, uint256 collectedFees, address referrer, uint256 price)
@@ -428,9 +426,9 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `referrer` (*address*) - Optional address of the referrer, for fee share
 * `price` (*uint256*) - 
 
-## Market Configuration Module
+### Market Configuration Module
 
-### getMarketFees
+#### getMarketFees
 
   ```solidity
   function getMarketFees(uint128 synthMarketId) external returns (uint256 atomicFixedFee, uint256 asyncFixedFee, int256 wrapFee, int256 unwrapFee)
@@ -446,7 +444,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `asyncFixedFee` (*uint256*) - fixed fee amount represented in bips with 18 decimals.
 * `wrapFee` (*int256*) - wrapping fee in %, 18 decimals. Can be negative.
 * `unwrapFee` (*int256*) - unwrapping fee in %, 18 decimals. Can be negative.
-### setAtomicFixedFee
+#### setAtomicFixedFee
 
   ```solidity
   function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external
@@ -460,7 +458,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `synthMarketId` (*uint128*) - Id of the market the fee applies to.
 * `atomicFixedFee` (*uint256*) - fixed fee amount represented in bips with 18 decimals.
 
-### setAsyncFixedFee
+#### setAsyncFixedFee
 
   ```solidity
   function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external
@@ -474,7 +472,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `synthMarketId` (*uint128*) - Id of the market the fee applies to.
 * `asyncFixedFee` (*uint256*) - fixed fee amount represented in bips with 18 decimals.
 
-### setMarketSkewScale
+#### setMarketSkewScale
 
   ```solidity
   function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external
@@ -488,7 +486,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `synthMarketId` (*uint128*) - Id of the market the skew scale applies to.
 * `skewScale` (*uint256*) - max amount of synth which makes the skew 100%. the fee is derived as a % of the max value.  100% premium means outstanding synth == skewScale.
 
-### getMarketSkewScale
+#### getMarketSkewScale
 
   ```solidity
   function getMarketSkewScale(uint128 synthMarketId) external returns (uint256 skewScale)
@@ -501,7 +499,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 
 **Returns**
 * `skewScale` (*uint256*) - max amount of synth which makes the skew 100%. the fee is derived as a % of the max value.  100% premium means outstanding synth == skewScale.
-### setMarketUtilizationFees
+#### setMarketUtilizationFees
 
   ```solidity
   function setMarketUtilizationFees(uint128 synthMarketId, uint256 utilizationFeeRate) external
@@ -516,7 +514,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 * `synthMarketId` (*uint128*) - Id of the market the utilization fee applies to.
 * `utilizationFeeRate` (*uint256*) - the rate is represented in bips with 18 decimals and is the rate at which fee increases based on the % above 100% utilization of the delegated collateral for the market.
 
-### getMarketUtilizationFees
+#### getMarketUtilizationFees
 
   ```solidity
   function getMarketUtilizationFees(uint128 synthMarketId) external returns (uint256 utilizationFeeRate)
@@ -531,7 +529,7 @@ Leftover fees not collected get deposited into the market manager to improve mar
 
 **Returns**
 * `utilizationFeeRate` (*uint256*) - the rate is represented in bips with 18 decimals and is the rate at which fee increases based on the % above 100% utilization of the delegated collateral for the market.
-### setCollateralLeverage
+#### setCollateralLeverage
 
   ```solidity
   function setCollateralLeverage(uint128 synthMarketId, uint256 collateralLeverage) external
@@ -546,7 +544,7 @@ this leverage value is a value applied to delegated collateral which is compared
 * `synthMarketId` (*uint128*) - Id of the market the collateral leverage applies to.
 * `collateralLeverage` (*uint256*) - the leverage is represented as % with 18 decimals. 1 = 1x leverage
 
-### getCollateralLeverage
+#### getCollateralLeverage
 
   ```solidity
   function getCollateralLeverage(uint128 synthMarketId) external returns (uint256 collateralLeverage)
@@ -561,7 +559,7 @@ this leverage value is a value applied to delegated collateral which is compared
 
 **Returns**
 * `collateralLeverage` (*uint256*) - the leverage is represented as % with 18 decimals. 1 = 1x leverage
-### setCustomTransactorFees
+#### setCustomTransactorFees
 
   ```solidity
   function setCustomTransactorFees(uint128 synthMarketId, address transactor, uint256 fixedFeeAmount) external
@@ -578,7 +576,7 @@ especially useful for direct integrations where configured traders get a discoun
 * `transactor` (*address*) - address of the trader getting discounted fees.
 * `fixedFeeAmount` (*uint256*) - the fixed fee applying to the provided transactor.
 
-### getCustomTransactorFees
+#### getCustomTransactorFees
 
   ```solidity
   function getCustomTransactorFees(uint128 synthMarketId, address transactor) external returns (uint256 fixedFeeAmount)
@@ -595,7 +593,7 @@ especially useful for direct integrations where configured traders get a discoun
 
 **Returns**
 * `fixedFeeAmount` (*uint256*) - the fixed fee applying to the provided transactor.
-### setFeeCollector
+#### setFeeCollector
 
   ```solidity
   function setFeeCollector(uint128 synthMarketId, address feeCollector) external
@@ -611,7 +609,7 @@ if fee collector is not set, the fees are deposited into the market manager.
 * `synthMarketId` (*uint128*) - Id of the market the fee collector applies to.
 * `feeCollector` (*address*) - address of the fee collector inheriting the IFeeCollector interface.
 
-### getFeeCollector
+#### getFeeCollector
 
   ```solidity
   function getFeeCollector(uint128 synthMarketId) external returns (address feeCollector)
@@ -624,7 +622,7 @@ if fee collector is not set, the fees are deposited into the market manager.
 
 **Returns**
 * `feeCollector` (*address*) - address of the fee collector inheriting the IFeeCollector interface.
-### setWrapperFees
+#### setWrapperFees
 
   ```solidity
   function setWrapperFees(uint128 synthMarketId, int256 wrapFee, int256 unwrapFee) external
@@ -640,7 +638,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `wrapFee` (*int256*) - wrapping fee in %, 18 decimals. Can be negative.
 * `unwrapFee` (*int256*) - unwrapping fee in %, 18 decimals. Can be negative.
 
-### updateReferrerShare
+#### updateReferrerShare
 
   ```solidity
   function updateReferrerShare(uint128 marketId, address referrer, uint256 sharePercentage) external
@@ -653,7 +651,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `referrer` (*address*) - The address of the referrer
 * `sharePercentage` (*uint256*) - The new share percentage for the referrer
 
-### getReferrerShare
+#### getReferrerShare
 
   ```solidity
   function getReferrerShare(uint128 marketId, address referrer) external returns (uint256 sharePercentage)
@@ -668,7 +666,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 **Returns**
 * `sharePercentage` (*uint256*) - The new share percentage for the referrer
 
-### MarketUtilizationFeesSet
+#### MarketUtilizationFeesSet
 
   ```solidity
   event MarketUtilizationFeesSet(uint256 synthMarketId, uint256 utilizationFeeRate)
@@ -680,7 +678,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `synthMarketId` (*uint256*) - market id
 * `utilizationFeeRate` (*uint256*) - utilization fee rate value
 
-### MarketSkewScaleSet
+#### MarketSkewScaleSet
 
   ```solidity
   event MarketSkewScaleSet(uint256 synthMarketId, uint256 skewScale)
@@ -692,7 +690,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `synthMarketId` (*uint256*) - market id
 * `skewScale` (*uint256*) - skew scale value
 
-### CollateralLeverageSet
+#### CollateralLeverageSet
 
   ```solidity
   event CollateralLeverageSet(uint256 synthMarketId, uint256 collateralLeverage)
@@ -704,7 +702,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `synthMarketId` (*uint256*) - market id
 * `collateralLeverage` (*uint256*) - leverage value
 
-### AtomicFixedFeeSet
+#### AtomicFixedFeeSet
 
   ```solidity
   event AtomicFixedFeeSet(uint256 synthMarketId, uint256 atomicFixedFee)
@@ -716,7 +714,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `synthMarketId` (*uint256*) - market id
 * `atomicFixedFee` (*uint256*) - fee value
 
-### AsyncFixedFeeSet
+#### AsyncFixedFeeSet
 
   ```solidity
   event AsyncFixedFeeSet(uint256 synthMarketId, uint256 asyncFixedFee)
@@ -728,7 +726,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `synthMarketId` (*uint256*) - market id
 * `asyncFixedFee` (*uint256*) - fee value
 
-### TransactorFixedFeeSet
+#### TransactorFixedFeeSet
 
   ```solidity
   event TransactorFixedFeeSet(uint256 synthMarketId, address transactor, uint256 fixedFeeAmount)
@@ -743,7 +741,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `transactor` (*address*) - fixed fee for the transactor (overrides the global fixed fee)
 * `fixedFeeAmount` (*uint256*) - the fixed fee for the corresponding market, and transactor
 
-### FeeCollectorSet
+#### FeeCollectorSet
 
   ```solidity
   event FeeCollectorSet(uint256 synthMarketId, address feeCollector)
@@ -755,7 +753,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `synthMarketId` (*uint256*) - Id of the market to set the collector for.
 * `feeCollector` (*address*) - the address of the fee collector to set.
 
-### WrapperFeesSet
+#### WrapperFeesSet
 
   ```solidity
   event WrapperFeesSet(uint256 synthMarketId, int256 wrapFee, int256 unwrapFee)
@@ -768,22 +766,22 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 * `wrapFee` (*int256*) - wrapping fee in %, 18 decimals. Can be negative.
 * `unwrapFee` (*int256*) - unwrapping fee in %, 18 decimals. Can be negative.
 
-### ReferrerShareUpdated
+#### ReferrerShareUpdated
 
   ```solidity
   event ReferrerShareUpdated(uint128 marketId, address referrer, uint256 sharePercentage)
   ```
 
-  Emitted when the owner of the market has changed.
+  Emitted when the share percentage for a referrer address has been updated.
 
 **Parameters**
 * `marketId` (*uint128*) - Id of the market
 * `referrer` (*address*) - The address of the referrer
 * `sharePercentage` (*uint256*) - The new share percentage for the referrer
 
-## Spot Market Factory Module
+### Spot Market Factory Module
 
-### setSynthetix
+#### setSynthetix
 
   ```solidity
   function setSynthetix(contract ISynthetixSystem synthetix) external
@@ -796,7 +794,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 **Parameters**
 * `synthetix` (*contract ISynthetixSystem*) - synthetix v3 core system address
 
-### setSynthImplementation
+#### setSynthImplementation
 
   ```solidity
   function setSynthImplementation(address synthImplementation) external
@@ -807,7 +805,7 @@ fees can be negative.  this is a way to unwind the wrapper if needed by providin
 **Parameters**
 * `synthImplementation` (*address*) - erc20 implementation address
 
-### createSynth
+#### createSynth
 
   ```solidity
   function createSynth(string tokenName, string tokenSymbol, address synthOwner) external returns (uint128 synthMarketId)
@@ -825,7 +823,7 @@ Sets up the market owner who can update configuration for the synth.
 
 **Returns**
 * `synthMarketId` (*uint128*) - id of the synth market that was created
-### getSynth
+#### getSynth
 
   ```solidity
   function getSynth(uint128 marketId) external view returns (address synthAddress)
@@ -840,7 +838,7 @@ Sets up the market owner who can update configuration for the synth.
 
 **Returns**
 * `synthAddress` (*address*) - address of the proxy for the synth
-### getSynthImpl
+#### getSynthImpl
 
   ```solidity
   function getSynthImpl(uint128 marketId) external view returns (address implAddress)
@@ -856,7 +854,7 @@ This address should not be used directly--use `getSynth` instead
 
 **Returns**
 * `implAddress` (*address*) - address of the proxy for the synth
-### updatePriceData
+#### updatePriceData
 
   ```solidity
   function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external
@@ -871,7 +869,7 @@ This address should not be used directly--use `getSynth` instead
 * `buyFeedId` (*bytes32*) - the oracle manager buy feed node id
 * `sellFeedId` (*bytes32*) - the oracle manager sell feed node id
 
-### upgradeSynthImpl
+#### upgradeSynthImpl
 
   ```solidity
   function upgradeSynthImpl(uint128 marketId) external
@@ -885,7 +883,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `marketId` (*uint128*) - id of the market
 
-### setDecayRate
+#### setDecayRate
 
   ```solidity
   function setDecayRate(uint128 marketId, uint256 rate) external
@@ -897,7 +895,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `marketId` (*uint128*) - the market to update the synth decay rate for
 * `rate` (*uint256*) - APY to decay of the synth to decay by, as a 18 decimal ratio
 
-### nominateMarketOwner
+#### nominateMarketOwner
 
   ```solidity
   function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) external
@@ -911,7 +909,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `synthMarketId` (*uint128*) - synth market id value
 * `newNominatedOwner` (*address*) - The address that is to become nominated.
 
-### acceptMarketOwnership
+#### acceptMarketOwnership
 
   ```solidity
   function acceptMarketOwnership(uint128 synthMarketId) external
@@ -924,7 +922,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `synthMarketId` (*uint128*) - synth market id value
 
-### renounceMarketNomination
+#### renounceMarketNomination
 
   ```solidity
   function renounceMarketNomination(uint128 synthMarketId) external
@@ -937,7 +935,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `synthMarketId` (*uint128*) - synth market id value
 
-### getMarketOwner
+#### getMarketOwner
 
   ```solidity
   function getMarketOwner(uint128 synthMarketId) external view returns (address)
@@ -948,7 +946,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `synthMarketId` (*uint128*) - synth market id value
 
-### name
+#### name
 
   ```solidity
   function name(uint128 marketId) external view returns (string)
@@ -956,15 +954,15 @@ Anyone who is willing and able to spend the gas can call this method.
 
   returns a human-readable name for a given market
 
-### reportedDebt
+#### reportedDebt
 
   ```solidity
   function reportedDebt(uint128 marketId) external view returns (uint256)
   ```
 
-  returns amount of USD that the market would try to mint256 if everything was withdrawn
+  returns amount of USD that the market would try to mint if everything was withdrawn
 
-### minimumCredit
+#### minimumCredit
 
   ```solidity
   function minimumCredit(uint128 marketId) external view returns (uint256)
@@ -972,7 +970,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
   prevents reduction of available credit capacity by specifying this amount, for which withdrawals will be disallowed
 
-### supportsInterface
+#### supportsInterface
 
   ```solidity
   function supportsInterface(bytes4 interfaceID) external view returns (bool)
@@ -986,7 +984,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Returns**
 * `[0]` (*bool*) - True if the contract supports the specified interface.
 
-### SynthetixSystemSet
+#### SynthetixSystemSet
 
   ```solidity
   event SynthetixSystemSet(address synthetix, address usdTokenAddress, address oracleManager)
@@ -999,7 +997,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `usdTokenAddress` (*address*) - address of the USDToken contract
 * `oracleManager` (*address*) - address of the Oracle Manager contract
 
-### SynthImplementationSet
+#### SynthImplementationSet
 
   ```solidity
   event SynthImplementationSet(address synthImplementation)
@@ -1010,7 +1008,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `synthImplementation` (*address*) - address of the synth implementation
 
-### SynthRegistered
+#### SynthRegistered
 
   ```solidity
   event SynthRegistered(uint256 synthMarketId)
@@ -1021,7 +1019,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `synthMarketId` (*uint256*) - Id of the synth market that was created
 
-### SynthImplementationUpgraded
+#### SynthImplementationUpgraded
 
   ```solidity
   event SynthImplementationUpgraded(uint256 synthMarketId, address proxy, address implementation)
@@ -1034,7 +1032,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `proxy` (*address*) - the synth proxy servicing the latest implementation
 * `implementation` (*address*) - the latest implementation of the synth
 
-### SynthPriceDataUpdated
+#### SynthPriceDataUpdated
 
   ```solidity
   event SynthPriceDataUpdated(uint256 synthMarketId, bytes32 buyFeedId, bytes32 sellFeedId)
@@ -1047,7 +1045,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `buyFeedId` (*bytes32*) - the oracle manager feed id for the buy price
 * `sellFeedId` (*bytes32*) - the oracle manager feed id for the sell price
 
-### DecayRateUpdated
+#### DecayRateUpdated
 
   ```solidity
   event DecayRateUpdated(uint128 marketId, uint256 rate)
@@ -1059,7 +1057,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `marketId` (*uint128*) - Id of the synth market
 * `rate` (*uint256*) - the new decay rate (1e16 means 1% decay per year)
 
-### MarketOwnerNominated
+#### MarketOwnerNominated
 
   ```solidity
   event MarketOwnerNominated(uint128 marketId, address newOwner)
@@ -1071,7 +1069,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `marketId` (*uint128*) - id of the market
 * `newOwner` (*address*) - The address that has been nominated.
 
-### MarketNominationRenounced
+#### MarketNominationRenounced
 
   ```solidity
   event MarketNominationRenounced(uint128 marketId, address nominee)
@@ -1083,7 +1081,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `marketId` (*uint128*) - id of the market
 * `nominee` (*address*) - The address that has been nominated.
 
-### MarketOwnerChanged
+#### MarketOwnerChanged
 
   ```solidity
   event MarketOwnerChanged(uint128 marketId, address oldOwner, address newOwner)
@@ -1096,9 +1094,9 @@ Anyone who is willing and able to spend the gas can call this method.
 * `oldOwner` (*address*) - The previous owner of the market.
 * `newOwner` (*address*) - The new owner of the market.
 
-## Synth Token Module
+### Synth Token Module
 
-### setDecayRate
+#### setDecayRate
 
   ```solidity
   function setDecayRate(uint256 _rate) external
@@ -1109,7 +1107,7 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `_rate` (*uint256*) - The decay rate with 18 decimals (1e16 means 1% decay per year).
 
-### decayRate
+#### decayRate
 
   ```solidity
   function decayRate() external returns (uint256)
@@ -1117,7 +1115,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
   get decay rate for a year
 
-### advanceEpoch
+#### advanceEpoch
 
   ```solidity
   function advanceEpoch() external returns (uint256)
@@ -1125,7 +1123,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
   advance epoch manually in order to avoid precision loss
 
-### isInitialized
+#### isInitialized
 
   ```solidity
   function isInitialized() external returns (bool)
@@ -1135,7 +1133,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*bool*) - A boolean with the result of the query.
-### initialize
+#### initialize
 
   ```solidity
   function initialize(string tokenName, string tokenSymbol, uint8 tokenDecimals) external
@@ -1143,7 +1141,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
   Initializes the token with name, symbol, and decimals.
 
-### mint
+#### mint
 
   ```solidity
   function mint(address to, uint256 amount) external
@@ -1155,7 +1153,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `to` (*address*) - The address to receive the newly minted tokens.
 * `amount` (*uint256*) - The amount of tokens to mint.
 
-### burn
+#### burn
 
   ```solidity
   function burn(address from, uint256 amount) external
@@ -1167,7 +1165,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `from` (*address*) - The address whose tokens will be burnt.
 * `amount` (*uint256*) - The amount of tokens to burn.
 
-### setAllowance
+#### setAllowance
 
   ```solidity
   function setAllowance(address from, address spender, uint256 amount) external
@@ -1180,7 +1178,7 @@ Anyone who is willing and able to spend the gas can call this method.
 * `spender` (*address*) - The address that is given allowance.
 * `amount` (*uint256*) - The amount of allowance being given.
 
-### name
+#### name
 
   ```solidity
   function name() external view returns (string)
@@ -1190,7 +1188,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*string*) - A string with the name of the token.
-### symbol
+#### symbol
 
   ```solidity
   function symbol() external view returns (string)
@@ -1200,7 +1198,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*string*) - A string with the symbol of the token.
-### decimals
+#### decimals
 
   ```solidity
   function decimals() external view returns (uint8)
@@ -1210,7 +1208,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*uint8*) - The number of decimals.
-### totalSupply
+#### totalSupply
 
   ```solidity
   function totalSupply() external view returns (uint256)
@@ -1220,7 +1218,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*uint256*) - The total number of tokens.
-### balanceOf
+#### balanceOf
 
   ```solidity
   function balanceOf(address owner) external view returns (uint256)
@@ -1233,7 +1231,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*uint256*) - The number of tokens owned by the user.
-### allowance
+#### allowance
 
   ```solidity
   function allowance(address owner, address spender) external view returns (uint256)
@@ -1247,7 +1245,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*uint256*) - The amount of tokens `spender` can transfer on `owner`'s behalf.
-### transfer
+#### transfer
 
   ```solidity
   function transfer(address to, uint256 amount) external returns (bool)
@@ -1261,7 +1259,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*bool*) - A boolean which is true if the operation succeeded.
-### approve
+#### approve
 
   ```solidity
   function approve(address spender, uint256 amount) external returns (bool)
@@ -1275,7 +1273,7 @@ Anyone who is willing and able to spend the gas can call this method.
 
 **Returns**
 * `[0]` (*bool*) - A boolean which is true if the operation succeeded.
-### increaseAllowance
+#### increaseAllowance
 
   ```solidity
   function increaseAllowance(address spender, uint256 addedValue) external returns (bool)
@@ -1292,7 +1290,7 @@ Requirements:
 
 - `spender` cannot be the zero address.
 
-### decreaseAllowance
+#### decreaseAllowance
 
   ```solidity
   function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool)
@@ -1311,7 +1309,7 @@ Requirements:
 - `spender` must have allowance for the caller of at least
 `subtractedValue`.
 
-### transferFrom
+#### transferFrom
 
   ```solidity
   function transferFrom(address from, address to, uint256 amount) external returns (bool)
@@ -1327,7 +1325,7 @@ Requirements:
 **Returns**
 * `[0]` (*bool*) - A boolean which is true if the operation succeeded.
 
-### Transfer
+#### Transfer
 
   ```solidity
   event Transfer(address from, address to, uint256 amount)
@@ -1340,7 +1338,7 @@ Requirements:
 * `to` (*address*) - The address that received the tokens.
 * `amount` (*uint256*) - The number of tokens that were transferred.
 
-### Approval
+#### Approval
 
   ```solidity
   event Approval(address owner, address spender, uint256 amount)
@@ -1353,9 +1351,9 @@ Requirements:
 * `spender` (*address*) - The address that received the allowance.
 * `amount` (*uint256*) - The number of tokens that were added to `spender`'s allowance.
 
-## Wrapper Module
+### Wrapper Module
 
-### setWrapper
+#### setWrapper
 
   ```solidity
   function setWrapper(uint128 marketId, address wrapCollateralType, uint256 maxWrappableAmount) external
@@ -1371,7 +1369,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `wrapCollateralType` (*address*) - The collateral being used to wrap the synth.
 * `maxWrappableAmount` (*uint256*) - The maximum amount of collateral that can be wrapped.
 
-### wrap
+#### wrap
 
   ```solidity
   function wrap(uint128 marketId, uint256 wrapAmount, uint256 minAmountReceived) external returns (uint256 amountToMint, struct OrderFees.Data fees)
@@ -1389,7 +1387,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Returns**
 * `amountToMint` (*uint256*) - Amount of synth returned to user.
 * `fees` (*struct OrderFees.Data*) - breakdown of all fees. in this case, only wrapper fees are returned.
-### unwrap
+#### unwrap
 
   ```solidity
   function unwrap(uint128 marketId, uint256 unwrapAmount, uint256 minAmountReceived) external returns (uint256 returnCollateralAmount, struct OrderFees.Data fees)
@@ -1408,7 +1406,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `returnCollateralAmount` (*uint256*) - Amount of collateral returned.
 * `fees` (*struct OrderFees.Data*) - breakdown of all fees. in this case, only wrapper fees are returned.
 
-### WrapperSet
+#### WrapperSet
 
   ```solidity
   event WrapperSet(uint256 synthMarketId, address wrapCollateralType, uint256 maxWrappableAmount)
@@ -1421,7 +1419,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `wrapCollateralType` (*address*) - the collateral used to wrap the synth.
 * `maxWrappableAmount` (*uint256*) - the local supply cap for the wrapper.
 
-### SynthWrapped
+#### SynthWrapped
 
   ```solidity
   event SynthWrapped(uint256 synthMarketId, uint256 amountWrapped, struct OrderFees.Data fees, uint256 feesCollected)
@@ -1435,7 +1433,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `fees` (*struct OrderFees.Data*) - breakdown of all the fees incurred for the transaction.
 * `feesCollected` (*uint256*) - fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
 
-### SynthUnwrapped
+#### SynthUnwrapped
 
   ```solidity
   event SynthUnwrapped(uint256 synthMarketId, uint256 amountUnwrapped, struct OrderFees.Data fees, uint256 feesCollected)
