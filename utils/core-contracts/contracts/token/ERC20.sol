@@ -166,9 +166,7 @@ contract ERC20 is IERC20 {
     }
 
     function _checkZeroAddressOrAmount(address target, uint256 amount) private pure {
-        if (target == address(0)) {
-            revert ParameterError.InvalidParameter("target", "Zero address");
-        }
+        _checkZeroAddress(target);
 
         if (amount == 0) {
             revert ParameterError.InvalidParameter("amount", "Zero amount");
