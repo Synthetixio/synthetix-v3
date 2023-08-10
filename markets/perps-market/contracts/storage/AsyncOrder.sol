@@ -328,7 +328,7 @@ library AsyncOrder {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
-        oldPosition = PerpsMarket.load(runtime.marketId).positions[runtime.accountId];
+        oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
@@ -339,7 +339,7 @@ library AsyncOrder {
 
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
         runtime.totalRequiredMargin =
-            _getRequiredMarginWithNewPosition(
+            getRequiredMarginWithNewPosition(
                 marketConfig,
                 runtime.marketId,
                 oldPosition.size,
@@ -466,7 +466,7 @@ library AsyncOrder {
      * @notice After the required margins are calculated with the old position, this function replaces the
      * old position data with the new position margin requirements and returns them.
      */
-    function _getRequiredMarginWithNewPosition(
+    function getRequiredMarginWithNewPosition(
         PerpsMarketConfiguration.Data storage marketConfig,
         uint128 marketId,
         int128 oldPositionSize,
