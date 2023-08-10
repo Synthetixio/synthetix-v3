@@ -27,9 +27,10 @@ contract PerpAccountModule is IPerpAccountModule {
 
         uint256 length = globalMarginConfig.supportedAddresses.length;
         IPerpAccountModule.DepositedCollateral[] memory collateral = new DepositedCollateral[](length);
+        address collateralType;
 
         for (uint256 i = 0; i < length; ) {
-            address collateralType = globalMarginConfig.supportedAddresses[i];
+            collateralType = globalMarginConfig.supportedAddresses[i];
             collateral[i] = IPerpAccountModule.DepositedCollateral(
                 collateralType,
                 accountMargin.collaterals[collateralType],
