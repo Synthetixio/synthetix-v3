@@ -17,6 +17,13 @@ defaultValue = "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
+# What is salt?
+#
+# salt - The salt is a string which, when changed, will result in a new contract deployment.
+# @see: https://usecannon.com/docs/technical-reference
+[setting.salt]
+defaultValue = "bfp"
+
 # --- External Imports --- #
 
 [import.synthetix]
@@ -62,10 +69,6 @@ args = []
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
-# What is salt?
-#
-# salt - The salt is a string which, when changed, will result in a new contract deployment.
-# @see: https://usecannon.com/docs/technical-reference
 salt = "<%= settings.salt %>"
 depends = [
   "contract.CoreModule"
@@ -78,24 +81,25 @@ contracts = [
   "synthetix.AccountModule",
   "synthetix.AssociatedSystemsModule",
   "CoreModule",
+  "FeatureFlagModule",
   "PerpMarketFactoryModule",
   "MarketConfigurationModule",
   "PerpAccountModule",
   "MarginModule",
   "OrderModule",
   "LiquidationModule",
-  "FeatureFlagModule"
+
 ]
 depends = [
   "import.synthetix",
   "contract.CoreModule",
+  "contract.FeatureFlagModule",
   "contract.PerpMarketFactoryModule",
   "contract.MarketConfigurationModule",
   "contract.PerpAccountModule",
   "contract.MarginModule",
   "contract.OrderModule",
   "contract.LiquidationModule",
-  "contract.FeatureFlagModule",
 ]
 
 # --- Post Deployment --- #
@@ -152,8 +156,6 @@ factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
 
 # --- Mocks --- #
-#
-# TODO: Move this into a separate `cannonfile.test.toml` file.
 
 [contract.SnxV3CollateralMock]
 artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"

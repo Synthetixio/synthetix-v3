@@ -5,5 +5,5 @@ import {CoreModule as BaseCoreModule} from "@synthetixio/core-modules/contracts/
 
 // solhint-disable-next-line no-empty-blocks
 contract CoreModule is BaseCoreModule {
-
+    // NOTE: Needed for UUPSProxy.
 }
