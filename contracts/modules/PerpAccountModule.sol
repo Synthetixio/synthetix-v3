@@ -21,7 +21,6 @@ contract PerpAccountModule is IPerpAccountModule {
     ) external view returns (IPerpAccountModule.AccountDigest memory digest) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
@@ -49,7 +48,7 @@ contract PerpAccountModule is IPerpAccountModule {
             position,
             position.getHealthFactor(
                 market,
-                Margin.getMarginUsd(accountId, market),
+                Margin.getMarginUsd(accountId, market, market.getOraclePrice()),
                 market.getOraclePrice(),
                 PerpMarketConfiguration.load(marketId)
             )

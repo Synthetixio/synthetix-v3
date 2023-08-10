@@ -28,10 +28,10 @@ contract MarginModule is IMarginModule {
         Position.Data storage position,
         PerpMarket.Data storage market
     ) private view {
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
-
         uint256 oraclePrice = market.getOraclePrice();
+        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
+
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
         // Ensure does not lead to instant liquidation.
         if (position.isLiquidatable(market, marginUsd, oraclePrice, marketConfig)) {

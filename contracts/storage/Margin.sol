@@ -215,21 +215,22 @@ library Margin {
     /**
      * @dev Returns the `notionalValueUsd - position.feesPaid` on an open position.
      */
-    function getMarginUsd(uint128 accountId, PerpMarket.Data storage market) internal view returns (uint256) {
+    function getMarginUsd(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        uint256 price
+    ) internal view returns (uint256) {
         uint256 notionalValueUsd = getCollateralUsd(accountId, market.id);
         Position.Data storage position = market.positions[accountId];
-
         if (position.size == 0) {
             return notionalValueUsd;
         }
-
-        uint256 oraclePrice = market.getOraclePrice();
         return
             MathUtil
                 .max(
                     notionalValueUsd.toInt() +
-                        position.getPnl(oraclePrice) +
-                        position.getAccruedFunding(market, oraclePrice) -
+                        position.getPnl(price) +
+                        position.getAccruedFunding(market, price) -
                         position.feesIncurredUsd.toInt(),
                     0
                 )

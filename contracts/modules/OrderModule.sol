@@ -152,7 +152,8 @@ contract OrderModule is IOrderModule {
     function updateMarketPostSettlement(
         uint128 accountId,
         PerpMarket.Data storage market,
-        Position.Data memory newPosition
+        Position.Data memory newPosition,
+        uint256 pythPrice
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
 
@@ -163,16 +164,16 @@ contract OrderModule is IOrderModule {
             .to128();
 
         // TODO: Think through this a bit. Will debt be updated if the newPosition is a fully closed position?
-        market.updateDebtCorrection(accountId, oldPosition, newPosition);
+        market.updateDebtCorrection(accountId, oldPosition, newPosition, pythPrice);
+
+        // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
+        if (oldPosition.size != 0) {
+            int256 amountUsd = Margin.getMarginUsd(accountId, market, pythPrice).toInt() -
+                Margin.getCollateralUsd(accountId, market.id).toInt();
+            Margin.updateCollateralUsd(accountId, market, amountUsd);
+        }
 
         if (newPosition.size == 0) {
-            // TODO: This can be made to be more efficient. Passing accountId, market/market.id to refetch and recalc is expensive.
-            //
-            // We only need to update the deposited collateral when the position closes completely. If not, keep accumulating fees
-            // and getMarginUsd to be updated to reflect PnL/feesIncurredUsd
-            int256 amount = Margin.getMarginUsd(accountId, market).toInt() -
-                Margin.getCollateralUsd(accountId, market.id).toInt();
-            Margin.updateCollateralUsd(accountId, market, amount);
             delete market.positions[accountId];
         } else {
             market.positions[accountId].update(newPosition);
@@ -226,7 +227,7 @@ contract OrderModule is IOrderModule {
             params
         );
 
-        updateMarketPostSettlement(accountId, market, newPosition);
+        updateMarketPostSettlement(accountId, market, newPosition, pythPrice);
 
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
 

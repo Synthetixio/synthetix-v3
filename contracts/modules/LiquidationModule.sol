@@ -24,12 +24,13 @@ contract LiquidationModule is ILiquidationModule {
     function flagPosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        uint256 oraclePrice = market.getOraclePrice();
 
         // Cannot flag for liquidation unless they are liquidatable.
         bool isLiquidatable = market.positions[accountId].isLiquidatable(
             market,
-            Margin.getMarginUsd(accountId, market),
-            market.getOraclePrice(),
+            Margin.getMarginUsd(accountId, market, oraclePrice),
+            oraclePrice,
             PerpMarketConfiguration.load(marketId)
         );
         if (!isLiquidatable) {
@@ -71,7 +72,7 @@ contract LiquidationModule is ILiquidationModule {
         market.lastLiquidationUtilization += liqSize;
         market.skew -= oldPosition.size;
         market.size -= MathUtil.abs(oldPosition.size).to128();
-        market.updateDebtCorrection(accountId, market.positions[accountId], newPosition);
+        market.updateDebtCorrection(accountId, market.positions[accountId], newPosition, oraclePrice);
 
         // TODO: Deal with partially removing deposited collateral (?)
         //
@@ -116,7 +117,6 @@ contract LiquidationModule is ILiquidationModule {
     ) external view returns (uint256 liqReward, uint256 keeperFee) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
         liqReward = Position.getLiquidationReward(
             market.positions[accountId].size,
             market.getOraclePrice(),
@@ -139,11 +139,12 @@ contract LiquidationModule is ILiquidationModule {
     function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        uint256 oraclePrice = market.getOraclePrice();
         return
             market.positions[accountId].isLiquidatable(
                 market,
-                Margin.getMarginUsd(accountId, market),
-                market.getOraclePrice(),
+                Margin.getMarginUsd(accountId, market, oraclePrice),
+                oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );
     }
@@ -171,11 +172,12 @@ contract LiquidationModule is ILiquidationModule {
     function getHealthFactor(uint128 accountId, uint128 marketId) external view returns (uint256) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        uint256 oraclePrice = market.getOraclePrice();
         return
             market.positions[accountId].getHealthFactor(
                 market,
-                Margin.getMarginUsd(accountId, market),
-                market.getOraclePrice(),
+                Margin.getMarginUsd(accountId, market, oraclePrice),
+                oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );
     }

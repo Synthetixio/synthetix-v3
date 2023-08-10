@@ -123,9 +123,10 @@ library PerpMarket {
         PerpMarket.Data storage self,
         uint128 accountId,
         Position.Data storage oldPosition,
-        Position.Data memory newPosition
+        Position.Data memory newPosition,
+        uint256 price
     ) internal {
-        uint256 marginUsd = Margin.getMarginUsd(accountId, self);
+        uint256 marginUsd = Margin.getMarginUsd(accountId, self, price);
         int256 oldCorrection = getPositionDebtCorrection(
             marginUsd,
             oldPosition.size,

@@ -133,7 +133,7 @@ library Position {
         uint128 marketId = market.id;
         Position.Data storage currentPosition = market.positions[accountId];
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market);
+        uint256 marginUsd = Margin.getMarginUsd(accountId, market, params.oraclePrice);
 
         // --- Existing position validation --- //
 
