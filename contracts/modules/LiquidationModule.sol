@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
@@ -13,6 +13,7 @@ import "../interfaces/ILiquidationModule.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
@@ -53,7 +54,6 @@ contract LiquidationModule is ILiquidationModule {
     function liquidatePosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
 
         uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
@@ -65,23 +65,20 @@ contract LiquidationModule is ILiquidationModule {
             uint128 liqSize,
             uint256 liqReward,
             uint256 keeperFee
-        ) = Position.validateLiquidation(accountId, market, marketConfig, oraclePrice);
+        ) = Position.validateLiquidation(accountId, market, PerpMarketConfiguration.load(marketId), oraclePrice);
 
         // Update market to reflect a successful full or partial liquidation.
         market.lastLiquidationTime = block.timestamp;
         market.lastLiquidationUtilization += liqSize;
         market.skew -= oldPosition.size;
         market.size -= MathUtil.abs(oldPosition.size).to128();
-        market.updateDebtCorrection(accountId, market.positions[accountId], newPosition, oraclePrice);
 
-        // TODO: Deal with partially removing deposited collateral (?)
-        //
-        // We can reuse the feesIncurredUsd to sum the partial amount liquidated. Ensure when looking at IM/MM and inferring
-        // liqRewards we need to look at notionalValueUsd - feeIncurredUsd (need a better name).
-        //
-        // TODO: Keep adding the liquidated amount (in USD) to feesIncurredUsd (renaming to accruedFeesUsd).
+        // Update market debt relative to the liqReward and keeperFee incurred.
+        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
+        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
+        market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
 
-        address flagger = market.flaggedLiquidations[accountId];
+        // TODO: Rename feesIncurredUsd (renaming to accruedFeesUsd).
 
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
@@ -92,6 +89,7 @@ contract LiquidationModule is ILiquidationModule {
             market.positions[accountId].update(newPosition);
         }
 
+        address flagger = market.flaggedLiquidations[accountId];
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         if (flagger == msg.sender) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
@@ -101,9 +99,6 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         emit PositionLiquidated(accountId, marketId, msg.sender, flagger, liqReward, keeperFee);
-
-        // No need to interact with the Synthetix core system. Collateral has already been deposited. We just need to update
-        // internal account to reflect debt has been reduced allowing LPs to mint more pro rata.
     }
 
     // --- Views --- //

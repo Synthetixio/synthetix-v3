@@ -54,7 +54,7 @@ contract OrderModule is IOrderModule {
         // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
         // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
         // order will reach liquidation or insufficient margin for the desired leverage.
-        (, uint256 orderFee, uint256 keeperFee) = Position.validateTrade(
+        Position.ValidatedTrade memory trade = Position.validateTrade(
             accountId,
             market,
             Position.TradeParams(
@@ -71,7 +71,7 @@ contract OrderModule is IOrderModule {
         market.orders[accountId].update(
             Order.Data(accountId, sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd)
         );
-        emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, orderFee, keeperFee);
+        emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, trade.orderFee, trade.keeperFee);
     }
 
     /**
@@ -153,7 +153,8 @@ contract OrderModule is IOrderModule {
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
-        uint256 pythPrice
+        uint256 marginUsd,
+        uint256 newMarginUsd
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
 
@@ -163,14 +164,11 @@ contract OrderModule is IOrderModule {
             .toUint()
             .to128();
 
-        // TODO: Think through this a bit. Will debt be updated if the newPosition is a fully closed position?
-        market.updateDebtCorrection(accountId, oldPosition, newPosition, pythPrice);
+        market.updateDebtCorrection(oldPosition, newPosition, marginUsd, newMarginUsd);
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
-            int256 amountUsd = Margin.getMarginUsd(accountId, market, pythPrice).toInt() -
-                Margin.getCollateralUsd(accountId, market.id).toInt();
-            Margin.updateCollateralUsd(accountId, market, amountUsd);
+            Margin.updateCollateralUsd(accountId, market, newMarginUsd.toInt() - marginUsd.toInt());
         }
 
         if (newPosition.size == 0) {
@@ -220,18 +218,13 @@ contract OrderModule is IOrderModule {
 
         recomputeFunding(market, pythPrice);
 
-        // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        (Position.Data memory newPosition, uint256 orderFee, uint256 keeperFee) = Position.validateTrade(
-            accountId,
-            market,
-            params
-        );
+        Position.ValidatedTrade memory trade = Position.validateTrade(accountId, market, params);
 
-        updateMarketPostSettlement(accountId, market, newPosition, pythPrice);
+        updateMarketPostSettlement(accountId, market, trade.newPosition, trade.marginUsd, trade.newMarginUsd);
 
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, trade.keeperFee);
 
-        emit OrderSettled(accountId, marketId, order.sizeDelta, orderFee, keeperFee);
+        emit OrderSettled(accountId, marketId, order.sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
     /**

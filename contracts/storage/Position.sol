@@ -38,6 +38,14 @@ library Position {
         uint256 keeperFeeBufferUsd;
     }
 
+    struct ValidatedTrade {
+        Position.Data newPosition;
+        uint256 orderFee;
+        uint256 keeperFee;
+        uint256 marginUsd;
+        uint256 newMarginUsd;
+    }
+
     // --- Storage --- //
 
     struct Data {
@@ -124,15 +132,14 @@ library Position {
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.TradeParams memory params
-    ) internal view returns (Position.Data memory newPosition, uint256 fee, uint256 keeperFee) {
+    ) internal view returns (Position.ValidatedTrade memory) {
         // Empty order is a no.
         if (params.sizeDelta == 0) {
             revert ErrorUtil.NilOrder();
         }
 
-        uint128 marketId = market.id;
         Position.Data storage currentPosition = market.positions[accountId];
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
         uint256 marginUsd = Margin.getMarginUsd(accountId, market, params.oraclePrice);
 
         // --- Existing position validation --- //
@@ -154,16 +161,22 @@ library Position {
             }
         }
 
-        // --- New position (as though the order was successfully settled)! --- //
+        // --- New position validation (as though the order settled) --- //
 
         // Derive fees incurred and next position if this order were to be settled successfully.
-        fee = Order.getOrderFee(params.sizeDelta, params.fillPrice, market.skew, params.makerFee, params.takerFee);
-        keeperFee = Order.getSettlementKeeperFee(params.keeperFeeBufferUsd);
-        newPosition = Position.Data(
+        uint256 orderFee = Order.getOrderFee(
+            params.sizeDelta,
+            params.fillPrice,
+            market.skew,
+            params.makerFee,
+            params.takerFee
+        );
+        uint256 keeperFee = Order.getSettlementKeeperFee(params.keeperFeeBufferUsd);
+        Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
             params.fillPrice,
-            currentPosition.feesIncurredUsd + fee + keeperFee
+            orderFee + keeperFee
         );
 
         // Minimum position margin checks, however if a position is decreasing (i.e. derisking by lowering size), we
@@ -177,7 +190,7 @@ library Position {
         // this trader were to be settled successfully.
         //
         // This is important as it helps avoid instant liquidation on successful settlement.
-        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - fee.toInt() - keeperFee.toInt(), 0).toUint();
+        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - orderFee.toInt() - keeperFee.toInt(), 0).toUint();
         if (!positionDecreasing && newMarginUsd < imnp) {
             revert ErrorUtil.InsufficientMargin();
         }
@@ -187,6 +200,8 @@ library Position {
 
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
+
+        return Position.ValidatedTrade(newPosition, orderFee, keeperFee, marginUsd, newMarginUsd);
     }
 
     /**
@@ -236,7 +251,7 @@ library Position {
             oldPosition.size > 0 ? oldPosition.size - liqSize.toInt() : oldPosition.size + liqSize.toInt(),
             oldPosition.entryFundingAccrued,
             oldPosition.entryPrice,
-            // TODO: Need confirmation from fifa.
+            // An accumulation of fees paid on liquidation and reward paid out to the liquidator.
             oldPosition.feesIncurredUsd + liqReward + keeperFee
         );
     }
