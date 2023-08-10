@@ -339,9 +339,10 @@ describe('MarginModule', async () => {
       const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
       const from = owner();
 
+      // `maxAllowables` to have _at least_ 6 elements to ensure there's _always_ a mismatch.
       const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
       const oracleNodeIds = genListOf(genInt(1, 5), () => genBytes32());
-      const maxAllowables = genListOf(genInt(1, 5), () => bn(genInt(10_000, 100_000)));
+      const maxAllowables = genListOf(genInt(6, 10), () => bn(genInt(10_000, 100_000)));
 
       await assertRevert(
         PerpMarketProxy.connect(from).setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables),
