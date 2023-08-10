@@ -629,20 +629,24 @@ export class LiquidationParametersSet__Params {
     return this._event.parameters[2].value.toBigInt();
   }
 
-  get liquidationRewardRatioD18(): BigInt {
+  get minimumInitialMarginRatioD18(): BigInt {
     return this._event.parameters[3].value.toBigInt();
   }
 
-  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
+  get liquidationRewardRatioD18(): BigInt {
     return this._event.parameters[4].value.toBigInt();
   }
 
-  get maxSecondsInLiquidationWindow(): BigInt {
+  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
     return this._event.parameters[5].value.toBigInt();
   }
 
-  get minimumPositionMargin(): BigInt {
+  get maxSecondsInLiquidationWindow(): BigInt {
     return this._event.parameters[6].value.toBigInt();
+  }
+
+  get minimumPositionMargin(): BigInt {
+    return this._event.parameters[7].value.toBigInt();
   }
 }
 
@@ -1287,13 +1291,25 @@ export class PerpsMarketProxy__getLiquidationParametersResult {
   value2: BigInt;
   value3: BigInt;
   value4: BigInt;
+  value5: BigInt;
+  value6: BigInt;
 
-  constructor(value0: BigInt, value1: BigInt, value2: BigInt, value3: BigInt, value4: BigInt) {
+  constructor(
+    value0: BigInt,
+    value1: BigInt,
+    value2: BigInt,
+    value3: BigInt,
+    value4: BigInt,
+    value5: BigInt,
+    value6: BigInt
+  ) {
     this.value0 = value0;
     this.value1 = value1;
     this.value2 = value2;
     this.value3 = value3;
     this.value4 = value4;
+    this.value5 = value5;
+    this.value6 = value6;
   }
 
   toMap(): TypedMap<string, ethereum.Value> {
@@ -1303,6 +1319,8 @@ export class PerpsMarketProxy__getLiquidationParametersResult {
     map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
     map.set('value3', ethereum.Value.fromUnsignedBigInt(this.value3));
     map.set('value4', ethereum.Value.fromUnsignedBigInt(this.value4));
+    map.set('value5', ethereum.Value.fromUnsignedBigInt(this.value5));
+    map.set('value6', ethereum.Value.fromUnsignedBigInt(this.value6));
     return map;
   }
 
@@ -1310,20 +1328,28 @@ export class PerpsMarketProxy__getLiquidationParametersResult {
     return this.value0;
   }
 
-  getMaintenanceMarginRatioD18(): BigInt {
+  getMinimumInitialMarginRatioD18(): BigInt {
     return this.value1;
   }
 
-  getLiquidationRewardRatioD18(): BigInt {
+  getMaintenanceMarginScalarD18(): BigInt {
     return this.value2;
   }
 
-  getMaxLiquidationLimitAccumulationMultiplier(): BigInt {
+  getLiquidationRewardRatioD18(): BigInt {
     return this.value3;
   }
 
-  getMaxSecondsInLiquidationWindow(): BigInt {
+  getMaxLiquidationLimitAccumulationMultiplier(): BigInt {
     return this.value4;
+  }
+
+  getMaxSecondsInLiquidationWindow(): BigInt {
+    return this.value5;
+  }
+
+  getMinimumPositionMargin(): BigInt {
+    return this.value6;
   }
 }
 
@@ -2397,7 +2423,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   getLiquidationParameters(marketId: BigInt): PerpsMarketProxy__getLiquidationParametersResult {
     let result = super.call(
       'getLiquidationParameters',
-      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256)',
+      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256,uint256,uint256)',
       [ethereum.Value.fromUnsignedBigInt(marketId)]
     );
 
@@ -2406,7 +2432,9 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
       result[1].toBigInt(),
       result[2].toBigInt(),
       result[3].toBigInt(),
-      result[4].toBigInt()
+      result[4].toBigInt(),
+      result[5].toBigInt(),
+      result[6].toBigInt()
     );
   }
 
@@ -2415,7 +2443,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   ): ethereum.CallResult<PerpsMarketProxy__getLiquidationParametersResult> {
     let result = super.tryCall(
       'getLiquidationParameters',
-      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256)',
+      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256,uint256,uint256)',
       [ethereum.Value.fromUnsignedBigInt(marketId)]
     );
     if (result.reverted) {
@@ -2428,7 +2456,9 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
         value[1].toBigInt(),
         value[2].toBigInt(),
         value[3].toBigInt(),
-        value[4].toBigInt()
+        value[4].toBigInt(),
+        value[5].toBigInt(),
+        value[6].toBigInt()
       )
     );
   }
@@ -3815,24 +3845,28 @@ export class SetLiquidationParametersCall__Inputs {
     return this._call.inputValues[1].value.toBigInt();
   }
 
-  get maintenanceMarginRatioD18(): BigInt {
+  get minimumInitialMarginRatioD18(): BigInt {
     return this._call.inputValues[2].value.toBigInt();
   }
 
-  get liquidationRewardRatioD18(): BigInt {
+  get maintenanceMarginScalarD18(): BigInt {
     return this._call.inputValues[3].value.toBigInt();
   }
 
-  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
+  get liquidationRewardRatioD18(): BigInt {
     return this._call.inputValues[4].value.toBigInt();
   }
 
-  get maxSecondsInLiquidationWindow(): BigInt {
+  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
     return this._call.inputValues[5].value.toBigInt();
   }
 
-  get minimumPositionMargin(): BigInt {
+  get maxSecondsInLiquidationWindow(): BigInt {
     return this._call.inputValues[6].value.toBigInt();
+  }
+
+  get minimumPositionMargin(): BigInt {
+    return this._call.inputValues[7].value.toBigInt();
   }
 }
 

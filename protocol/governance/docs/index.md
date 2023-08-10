@@ -1,8 +1,6 @@
-# Solidity API
+### Council Token Module
 
-## Council Token Module
-
-### isInitialized
+#### isInitialized
 
   ```solidity
   function isInitialized() external returns (bool)
@@ -12,7 +10,7 @@
 
 **Returns**
 * `[0]` (*bool*) - A boolean with the result of the query.
-### initialize
+#### initialize
 
   ```solidity
   function initialize(string tokenName, string tokenSymbol, string uri) external
@@ -20,7 +18,7 @@
 
   Initializes the token with name, symbol, and uri.
 
-### mint
+#### mint
 
   ```solidity
   function mint(address to, uint256 tokenId) external
@@ -32,7 +30,7 @@
 * `to` (*address*) - The address to receive the newly minted tokens.
 * `tokenId` (*uint256*) - The ID of the newly minted token
 
-### safeMint
+#### safeMint
 
   ```solidity
   function safeMint(address to, uint256 tokenId, bytes data) external
@@ -45,7 +43,7 @@
 * `tokenId` (*uint256*) - The ID of the newly minted token
 * `data` (*bytes*) - any data which should be sent to the receiver
 
-### burn
+#### burn
 
   ```solidity
   function burn(uint256 tokenId) external
@@ -56,7 +54,7 @@
 **Parameters**
 * `tokenId` (*uint256*) - The token to burn
 
-### setAllowance
+#### setAllowance
 
   ```solidity
   function setAllowance(uint256 tokenId, address spender) external
@@ -68,7 +66,7 @@
 * `tokenId` (*uint256*) - The token which should be allowed to spender
 * `spender` (*address*) - The address that is given allowance.
 
-### setBaseTokenURI
+#### setBaseTokenURI
 
   ```solidity
   function setBaseTokenURI(string uri) external
@@ -79,7 +77,7 @@
 **Parameters**
 * `uri` (*string*) - The new base token uri
 
-### totalSupply
+#### totalSupply
 
   ```solidity
   function totalSupply() external view returns (uint256)
@@ -87,7 +85,7 @@
 
   Returns the total amount of tokens stored by the contract.
 
-### tokenOfOwnerByIndex
+#### tokenOfOwnerByIndex
 
   ```solidity
   function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
@@ -100,7 +98,7 @@ Requirements:
 - `owner` must be a valid address
 - `index` must be less than the balance of the tokens for the owner
 
-### tokenByIndex
+#### tokenByIndex
 
   ```solidity
   function tokenByIndex(uint256 index) external view returns (uint256)
@@ -112,7 +110,7 @@ Use along with {totalSupply} to enumerate all tokens.
 Requirements:
 - `index` must be less than the total supply of the tokens
 
-### balanceOf
+#### balanceOf
 
   ```solidity
   function balanceOf(address holder) external view returns (uint256 balance)
@@ -124,7 +122,7 @@ Requirements:
 
 - `holder` must be a valid address
 
-### ownerOf
+#### ownerOf
 
   ```solidity
   function ownerOf(uint256 tokenId) external view returns (address owner)
@@ -136,7 +134,7 @@ Requirements:
 
 - `tokenId` must exist.
 
-### safeTransferFrom
+#### safeTransferFrom
 
   ```solidity
   function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external
@@ -154,7 +152,7 @@ Requirements:
 
 Emits a {Transfer} event.
 
-### safeTransferFrom
+#### safeTransferFrom
 
   ```solidity
   function safeTransferFrom(address from, address to, uint256 tokenId) external
@@ -173,7 +171,7 @@ Requirements:
 
 Emits a {Transfer} event.
 
-### transferFrom
+#### transferFrom
 
   ```solidity
   function transferFrom(address from, address to, uint256 tokenId) external
@@ -192,7 +190,7 @@ Requirements:
 
 Emits a {Transfer} event.
 
-### approve
+#### approve
 
   ```solidity
   function approve(address to, uint256 tokenId) external
@@ -210,7 +208,7 @@ Requirements:
 
 Emits an {Approval} event.
 
-### setApprovalForAll
+#### setApprovalForAll
 
   ```solidity
   function setApprovalForAll(address operator, bool approved) external
@@ -225,7 +223,7 @@ Requirements:
 
 Emits an {ApprovalForAll} event.
 
-### getApproved
+#### getApproved
 
   ```solidity
   function getApproved(uint256 tokenId) external view returns (address operator)
@@ -237,7 +235,7 @@ Requirements:
 
 - `tokenId` must exist.
 
-### isApprovedForAll
+#### isApprovedForAll
 
   ```solidity
   function isApprovedForAll(address owner, address operator) external view returns (bool)
@@ -247,7 +245,7 @@ Requirements:
 
 See {setApprovalForAll}
 
-### Transfer
+#### Transfer
 
   ```solidity
   event Transfer(address from, address to, uint256 tokenId)
@@ -255,7 +253,7 @@ See {setApprovalForAll}
 
   Emitted when `tokenId` token is transferred from `from` to `to`.
 
-### Approval
+#### Approval
 
   ```solidity
   event Approval(address owner, address approved, uint256 tokenId)
@@ -263,7 +261,7 @@ See {setApprovalForAll}
 
   Emitted when `owner` enables `approved` to manage the `tokenId` token.
 
-### ApprovalForAll
+#### ApprovalForAll
 
   ```solidity
   event ApprovalForAll(address owner, address operator, bool approved)
@@ -271,17 +269,17 @@ See {setApprovalForAll}
 
   Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
 
-## IDebtShare
+### IDebtShare
 
-### balanceOfOnPeriod
+#### balanceOfOnPeriod
 
   ```solidity
   function balanceOfOnPeriod(address account, uint256 periodId) external view returns (uint256)
   ```
 
-## Election Inspector Module
+### Election Inspector Module
 
-### getEpochStartDateForIndex
+#### getEpochStartDateForIndex
 
   ```solidity
   function getEpochStartDateForIndex(uint256 epochIndex) external view returns (uint64)
@@ -289,7 +287,7 @@ See {setApprovalForAll}
 
   Returns the date in which the given epoch started
 
-### getEpochEndDateForIndex
+#### getEpochEndDateForIndex
 
   ```solidity
   function getEpochEndDateForIndex(uint256 epochIndex) external view returns (uint64)
@@ -297,7 +295,7 @@ See {setApprovalForAll}
 
   Returns the date in which the given epoch ended
 
-### getNominationPeriodStartDateForIndex
+#### getNominationPeriodStartDateForIndex
 
   ```solidity
   function getNominationPeriodStartDateForIndex(uint256 epochIndex) external view returns (uint64)
@@ -305,7 +303,7 @@ See {setApprovalForAll}
 
   Returns the date in which the Nomination period in the given epoch started
 
-### getVotingPeriodStartDateForIndex
+#### getVotingPeriodStartDateForIndex
 
   ```solidity
   function getVotingPeriodStartDateForIndex(uint256 epochIndex) external view returns (uint64)
@@ -313,7 +311,7 @@ See {setApprovalForAll}
 
   Returns the date in which the Voting period in the given epoch started
 
-### wasNominated
+#### wasNominated
 
   ```solidity
   function wasNominated(address candidate, uint256 epochIndex) external view returns (bool)
@@ -321,7 +319,7 @@ See {setApprovalForAll}
 
   Shows if a candidate was nominated in the given epoch
 
-### getNomineesAtEpoch
+#### getNomineesAtEpoch
 
   ```solidity
   function getNomineesAtEpoch(uint256 epochIndex) external view returns (address[])
@@ -329,7 +327,7 @@ See {setApprovalForAll}
 
   Returns a list of all nominated candidates in the given epoch
 
-### getBallotVotedAtEpoch
+#### getBallotVotedAtEpoch
 
   ```solidity
   function getBallotVotedAtEpoch(address user, uint256 epochIndex) external view returns (bytes32)
@@ -337,7 +335,7 @@ See {setApprovalForAll}
 
   Returns the ballot id that user voted on in the given election
 
-### hasVotedInEpoch
+#### hasVotedInEpoch
 
   ```solidity
   function hasVotedInEpoch(address user, uint256 epochIndex) external view returns (bool)
@@ -345,7 +343,7 @@ See {setApprovalForAll}
 
   Returns if user has voted in the given election
 
-### getBallotVotesInEpoch
+#### getBallotVotesInEpoch
 
   ```solidity
   function getBallotVotesInEpoch(bytes32 ballotId, uint256 epochIndex) external view returns (uint256)
@@ -353,7 +351,7 @@ See {setApprovalForAll}
 
   Returns the number of votes given to a particular ballot in a given epoch
 
-### getBallotCandidatesInEpoch
+#### getBallotCandidatesInEpoch
 
   ```solidity
   function getBallotCandidatesInEpoch(bytes32 ballotId, uint256 epochIndex) external view returns (address[])
@@ -361,7 +359,7 @@ See {setApprovalForAll}
 
   Returns the list of candidates that a particular ballot has in a given epoch
 
-### getCandidateVotesInEpoch
+#### getCandidateVotesInEpoch
 
   ```solidity
   function getCandidateVotesInEpoch(address candidate, uint256 epochIndex) external view returns (uint256)
@@ -369,7 +367,7 @@ See {setApprovalForAll}
 
   Returns the number of votes a candidate received in a given epoch
 
-### getElectionWinnersInEpoch
+#### getElectionWinnersInEpoch
 
   ```solidity
   function getElectionWinnersInEpoch(uint256 epochIndex) external view returns (address[])
@@ -377,9 +375,9 @@ See {setApprovalForAll}
 
   Returns the winners of the given election
 
-## Election Module
+### Election Module
 
-### initOrUpgradeElectionModule
+#### initOrUpgradeElectionModule
 
   ```solidity
   function initOrUpgradeElectionModule(address[] firstCouncil, uint8 minimumActiveMembers, uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate) external
@@ -387,7 +385,7 @@ See {setApprovalForAll}
 
   Initializes the module and immediately starts the first epoch
 
-### isElectionModuleInitialized
+#### isElectionModuleInitialized
 
   ```solidity
   function isElectionModuleInitialized() external view returns (bool)
@@ -395,7 +393,7 @@ See {setApprovalForAll}
 
   Shows whether the module has been initialized
 
-### tweakEpochSchedule
+#### tweakEpochSchedule
 
   ```solidity
   function tweakEpochSchedule(uint64 newNominationPeriodStartDate, uint64 newVotingPeriodStartDate, uint64 newEpochEndDate) external
@@ -403,7 +401,7 @@ See {setApprovalForAll}
 
   Adjusts the current epoch schedule requiring that the current period remains Administration, and that changes are small (see setMaxDateAdjustmentTolerance)
 
-### modifyEpochSchedule
+#### modifyEpochSchedule
 
   ```solidity
   function modifyEpochSchedule(uint64 newNominationPeriodStartDate, uint64 newVotingPeriodStartDate, uint64 newEpochEndDate) external
@@ -411,7 +409,7 @@ See {setApprovalForAll}
 
   Adjusts the current epoch schedule requiring that the current period remains Administration
 
-### setMinEpochDurations
+#### setMinEpochDurations
 
   ```solidity
   function setMinEpochDurations(uint64 newMinNominationPeriodDuration, uint64 newMinVotingPeriodDuration, uint64 newMinEpochDuration) external
@@ -419,7 +417,7 @@ See {setApprovalForAll}
 
   Determines minimum values for epoch schedule adjustments
 
-### setMaxDateAdjustmentTolerance
+#### setMaxDateAdjustmentTolerance
 
   ```solidity
   function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external
@@ -427,7 +425,7 @@ See {setApprovalForAll}
 
   Determines adjustment size for tweakEpochSchedule
 
-### setDefaultBallotEvaluationBatchSize
+#### setDefaultBallotEvaluationBatchSize
 
   ```solidity
   function setDefaultBallotEvaluationBatchSize(uint256 newDefaultBallotEvaluationBatchSize) external
@@ -435,7 +433,7 @@ See {setApprovalForAll}
 
   Determines batch size when evaluate() is called with numBallots = 0
 
-### setNextEpochSeatCount
+#### setNextEpochSeatCount
 
   ```solidity
   function setNextEpochSeatCount(uint8 newSeatCount) external
@@ -443,7 +441,7 @@ See {setApprovalForAll}
 
   Determines the number of council members in the next epoch
 
-### setMinimumActiveMembers
+#### setMinimumActiveMembers
 
   ```solidity
   function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external
@@ -451,7 +449,7 @@ See {setApprovalForAll}
 
   Determines the minimum number of council members before triggering an emergency election
 
-### dismissMembers
+#### dismissMembers
 
   ```solidity
   function dismissMembers(address[] members) external
@@ -459,7 +457,7 @@ See {setApprovalForAll}
 
   Allows the owner to remove one or more council members, triggering an election if a threshold is met
 
-### nominate
+#### nominate
 
   ```solidity
   function nominate() external
@@ -467,7 +465,7 @@ See {setApprovalForAll}
 
   Allows anyone to self-nominate during the Nomination period
 
-### withdrawNomination
+#### withdrawNomination
 
   ```solidity
   function withdrawNomination() external
@@ -475,7 +473,7 @@ See {setApprovalForAll}
 
   Self-withdrawal of nominations during the Nomination period
 
-### cast
+#### cast
 
   ```solidity
   function cast(address[] candidates) external
@@ -483,7 +481,7 @@ See {setApprovalForAll}
 
   Allows anyone with vote power to vote on nominated candidates during the Voting period
 
-### withdrawVote
+#### withdrawVote
 
   ```solidity
   function withdrawVote() external
@@ -491,7 +489,7 @@ See {setApprovalForAll}
 
   Allows votes to be withdraw
 
-### evaluate
+#### evaluate
 
   ```solidity
   function evaluate(uint256 numBallots) external
@@ -499,7 +497,7 @@ See {setApprovalForAll}
 
   Processes ballots in batches during the Evaluation period (after epochEndDate)
 
-### resolve
+#### resolve
 
   ```solidity
   function resolve() external
@@ -507,7 +505,7 @@ See {setApprovalForAll}
 
   Shuffles NFTs and resolves an election after it has been evaluated
 
-### getMinEpochDurations
+#### getMinEpochDurations
 
   ```solidity
   function getMinEpochDurations() external view returns (uint64 minNominationPeriodDuration, uint64 minVotingPeriodDuration, uint64 minEpochDuration)
@@ -515,7 +513,7 @@ See {setApprovalForAll}
 
   Exposes minimum durations required when adjusting epoch schedules
 
-### getMaxDateAdjustmenTolerance
+#### getMaxDateAdjustmenTolerance
 
   ```solidity
   function getMaxDateAdjustmenTolerance() external view returns (uint64)
@@ -523,7 +521,7 @@ See {setApprovalForAll}
 
   Exposes maximum size of adjustments when calling tweakEpochSchedule
 
-### getDefaultBallotEvaluationBatchSize
+#### getDefaultBallotEvaluationBatchSize
 
   ```solidity
   function getDefaultBallotEvaluationBatchSize() external view returns (uint256)
@@ -531,7 +529,7 @@ See {setApprovalForAll}
 
   Shows the default batch size when calling evaluate() with numBallots = 0
 
-### getNextEpochSeatCount
+#### getNextEpochSeatCount
 
   ```solidity
   function getNextEpochSeatCount() external view returns (uint8)
@@ -539,7 +537,7 @@ See {setApprovalForAll}
 
   Shows the number of council members that the next epoch will have
 
-### getMinimumActiveMembers
+#### getMinimumActiveMembers
 
   ```solidity
   function getMinimumActiveMembers() external view returns (uint8)
@@ -547,7 +545,7 @@ See {setApprovalForAll}
 
   Returns the minimum active members that the council needs to avoid an emergency election
 
-### getEpochIndex
+#### getEpochIndex
 
   ```solidity
   function getEpochIndex() external view returns (uint256)
@@ -555,7 +553,7 @@ See {setApprovalForAll}
 
   Returns the index of the current epoch. The first epoch's index is 1
 
-### getEpochStartDate
+#### getEpochStartDate
 
   ```solidity
   function getEpochStartDate() external view returns (uint64)
@@ -563,7 +561,7 @@ See {setApprovalForAll}
 
   Returns the date in which the current epoch started
 
-### getEpochEndDate
+#### getEpochEndDate
 
   ```solidity
   function getEpochEndDate() external view returns (uint64)
@@ -571,7 +569,7 @@ See {setApprovalForAll}
 
   Returns the date in which the current epoch will end
 
-### getNominationPeriodStartDate
+#### getNominationPeriodStartDate
 
   ```solidity
   function getNominationPeriodStartDate() external view returns (uint64)
@@ -579,7 +577,7 @@ See {setApprovalForAll}
 
   Returns the date in which the Nomination period in the current epoch will start
 
-### getVotingPeriodStartDate
+#### getVotingPeriodStartDate
 
   ```solidity
   function getVotingPeriodStartDate() external view returns (uint64)
@@ -587,7 +585,7 @@ See {setApprovalForAll}
 
   Returns the date in which the Voting period in the current epoch will start
 
-### getCurrentPeriod
+#### getCurrentPeriod
 
   ```solidity
   function getCurrentPeriod() external view returns (uint256)
@@ -595,7 +593,7 @@ See {setApprovalForAll}
 
   Returns the current period type: Administration, Nomination, Voting, Evaluation
 
-### isNominated
+#### isNominated
 
   ```solidity
   function isNominated(address candidate) external view returns (bool)
@@ -603,7 +601,7 @@ See {setApprovalForAll}
 
   Shows if a candidate has been nominated in the current epoch
 
-### getNominees
+#### getNominees
 
   ```solidity
   function getNominees() external view returns (address[])
@@ -611,7 +609,7 @@ See {setApprovalForAll}
 
   Returns a list of all nominated candidates in the current epoch
 
-### calculateBallotId
+#### calculateBallotId
 
   ```solidity
   function calculateBallotId(address[] candidates) external pure returns (bytes32)
@@ -619,7 +617,7 @@ See {setApprovalForAll}
 
   Hashes a list of candidates (used for identifying and storing ballots)
 
-### getBallotVoted
+#### getBallotVoted
 
   ```solidity
   function getBallotVoted(address user) external view returns (bytes32)
@@ -627,7 +625,7 @@ See {setApprovalForAll}
 
   Returns the ballot id that user voted on in the current election
 
-### hasVoted
+#### hasVoted
 
   ```solidity
   function hasVoted(address user) external view returns (bool)
@@ -635,7 +633,7 @@ See {setApprovalForAll}
 
   Returns if user has voted in the current election
 
-### getVotePower
+#### getVotePower
 
   ```solidity
   function getVotePower(address user) external view returns (uint256)
@@ -643,7 +641,7 @@ See {setApprovalForAll}
 
   Returns the vote power of user in the current election
 
-### getBallotVotes
+#### getBallotVotes
 
   ```solidity
   function getBallotVotes(bytes32 ballotId) external view returns (uint256)
@@ -651,7 +649,7 @@ See {setApprovalForAll}
 
   Returns the number of votes given to a particular ballot
 
-### getBallotCandidates
+#### getBallotCandidates
 
   ```solidity
   function getBallotCandidates(bytes32 ballotId) external view returns (address[])
@@ -659,7 +657,7 @@ See {setApprovalForAll}
 
   Returns the list of candidates that a particular ballot has
 
-### isElectionEvaluated
+#### isElectionEvaluated
 
   ```solidity
   function isElectionEvaluated() external view returns (bool)
@@ -667,7 +665,7 @@ See {setApprovalForAll}
 
   Returns whether all ballots in the current election have been counted
 
-### getCandidateVotes
+#### getCandidateVotes
 
   ```solidity
   function getCandidateVotes(address candidate) external view returns (uint256)
@@ -675,7 +673,7 @@ See {setApprovalForAll}
 
   Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
 
-### getElectionWinners
+#### getElectionWinners
 
   ```solidity
   function getElectionWinners() external view returns (address[])
@@ -683,7 +681,7 @@ See {setApprovalForAll}
 
   Returns the winners of the current election. Requires the election to be partially or totally evaluated
 
-### getCouncilToken
+#### getCouncilToken
 
   ```solidity
   function getCouncilToken() external view returns (address)
@@ -691,7 +689,7 @@ See {setApprovalForAll}
 
   Returns the address of the council NFT token
 
-### getCouncilMembers
+#### getCouncilMembers
 
   ```solidity
   function getCouncilMembers() external view returns (address[])
@@ -699,9 +697,9 @@ See {setApprovalForAll}
 
   Returns the current NFT token holders
 
-## Synthetix Election Module
+### Synthetix Election Module
 
-### initOrUpgradeElectionModule
+#### initOrUpgradeElectionModule
 
   ```solidity
   function initOrUpgradeElectionModule(address[] firstCouncil, uint8 minimumActiveMembers, uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate, address debtShareContract) external
@@ -709,7 +707,7 @@ See {setApprovalForAll}
 
   Initializes the module and immediately starts the first epoch
 
-### setDebtShareContract
+#### setDebtShareContract
 
   ```solidity
   function setDebtShareContract(address newDebtShareContractAddress) external
@@ -717,7 +715,7 @@ See {setApprovalForAll}
 
   Sets the Synthetix v2 DebtShare contract that determines vote power
 
-### getDebtShareContract
+#### getDebtShareContract
 
   ```solidity
   function getDebtShareContract() external view returns (address)
@@ -725,7 +723,7 @@ See {setApprovalForAll}
 
   Returns the Synthetix v2 DebtShare contract that determines vote power
 
-### setDebtShareSnapshotId
+#### setDebtShareSnapshotId
 
   ```solidity
   function setDebtShareSnapshotId(uint256 snapshotId) external
@@ -733,7 +731,7 @@ See {setApprovalForAll}
 
   Sets the Synthetix v2 DebtShare snapshot that determines vote power for this epoch
 
-### getDebtShareSnapshotId
+#### getDebtShareSnapshotId
 
   ```solidity
   function getDebtShareSnapshotId() external view returns (uint256)
@@ -741,7 +739,7 @@ See {setApprovalForAll}
 
   Returns the Synthetix v2 DebtShare snapshot id set for this epoch
 
-### getDebtShare
+#### getDebtShare
 
   ```solidity
   function getDebtShare(address user) external view returns (uint256)
@@ -749,7 +747,7 @@ See {setApprovalForAll}
 
   Returns the Synthetix v2 debt share for the provided address, at this epoch's snapshot
 
-### setCrossChainDebtShareMerkleRoot
+#### setCrossChainDebtShareMerkleRoot
 
   ```solidity
   function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint256 blocknumber) external
@@ -757,7 +755,7 @@ See {setApprovalForAll}
 
   Allows the system owner to declare a merkle root for user debt shares on other chains for this epoch
 
-### getCrossChainDebtShareMerkleRoot
+#### getCrossChainDebtShareMerkleRoot
 
   ```solidity
   function getCrossChainDebtShareMerkleRoot() external view returns (bytes32)
@@ -765,7 +763,7 @@ See {setApprovalForAll}
 
   Returns the current epoch's merkle root for user debt shares on other chains
 
-### getCrossChainDebtShareMerkleRootBlockNumber
+#### getCrossChainDebtShareMerkleRootBlockNumber
 
   ```solidity
   function getCrossChainDebtShareMerkleRootBlockNumber() external view returns (uint256)
@@ -773,7 +771,7 @@ See {setApprovalForAll}
 
   Returns the current epoch's merkle root block number
 
-### declareCrossChainDebtShare
+#### declareCrossChainDebtShare
 
   ```solidity
   function declareCrossChainDebtShare(address account, uint256 debtShare, bytes32[] merkleProof) external
@@ -781,7 +779,7 @@ See {setApprovalForAll}
 
   Allows users to declare their Synthetix v2 debt shares on other chains
 
-### getDeclaredCrossChainDebtShare
+#### getDeclaredCrossChainDebtShare
 
   ```solidity
   function getDeclaredCrossChainDebtShare(address account) external view returns (uint256)
@@ -789,7 +787,7 @@ See {setApprovalForAll}
 
   Returns the Synthetix v2 debt shares for the provided address, at this epoch's snapshot, in other chains
 
-### declareAndCast
+#### declareAndCast
 
   ```solidity
   function declareAndCast(uint256 debtShare, bytes32[] merkleProof, address[] candidates) external
@@ -797,7 +795,7 @@ See {setApprovalForAll}
 
   Declares cross chain debt shares and casts a vote
 
-### initOrUpgradeElectionModule
+#### initOrUpgradeElectionModule
 
   ```solidity
   function initOrUpgradeElectionModule(address[] firstCouncil, uint8 minimumActiveMembers, uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate) external
@@ -805,7 +803,7 @@ See {setApprovalForAll}
 
   Initializes the module and immediately starts the first epoch
 
-### isElectionModuleInitialized
+#### isElectionModuleInitialized
 
   ```solidity
   function isElectionModuleInitialized() external view returns (bool)
@@ -813,7 +811,7 @@ See {setApprovalForAll}
 
   Shows whether the module has been initialized
 
-### tweakEpochSchedule
+#### tweakEpochSchedule
 
   ```solidity
   function tweakEpochSchedule(uint64 newNominationPeriodStartDate, uint64 newVotingPeriodStartDate, uint64 newEpochEndDate) external
@@ -821,7 +819,7 @@ See {setApprovalForAll}
 
   Adjusts the current epoch schedule requiring that the current period remains Administration, and that changes are small (see setMaxDateAdjustmentTolerance)
 
-### modifyEpochSchedule
+#### modifyEpochSchedule
 
   ```solidity
   function modifyEpochSchedule(uint64 newNominationPeriodStartDate, uint64 newVotingPeriodStartDate, uint64 newEpochEndDate) external
@@ -829,7 +827,7 @@ See {setApprovalForAll}
 
   Adjusts the current epoch schedule requiring that the current period remains Administration
 
-### setMinEpochDurations
+#### setMinEpochDurations
 
   ```solidity
   function setMinEpochDurations(uint64 newMinNominationPeriodDuration, uint64 newMinVotingPeriodDuration, uint64 newMinEpochDuration) external
@@ -837,7 +835,7 @@ See {setApprovalForAll}
 
   Determines minimum values for epoch schedule adjustments
 
-### setMaxDateAdjustmentTolerance
+#### setMaxDateAdjustmentTolerance
 
   ```solidity
   function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external
@@ -845,7 +843,7 @@ See {setApprovalForAll}
 
   Determines adjustment size for tweakEpochSchedule
 
-### setDefaultBallotEvaluationBatchSize
+#### setDefaultBallotEvaluationBatchSize
 
   ```solidity
   function setDefaultBallotEvaluationBatchSize(uint256 newDefaultBallotEvaluationBatchSize) external
@@ -853,7 +851,7 @@ See {setApprovalForAll}
 
   Determines batch size when evaluate() is called with numBallots = 0
 
-### setNextEpochSeatCount
+#### setNextEpochSeatCount
 
   ```solidity
   function setNextEpochSeatCount(uint8 newSeatCount) external
@@ -861,7 +859,7 @@ See {setApprovalForAll}
 
   Determines the number of council members in the next epoch
 
-### setMinimumActiveMembers
+#### setMinimumActiveMembers
 
   ```solidity
   function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external
@@ -869,7 +867,7 @@ See {setApprovalForAll}
 
   Determines the minimum number of council members before triggering an emergency election
 
-### dismissMembers
+#### dismissMembers
 
   ```solidity
   function dismissMembers(address[] members) external
@@ -877,7 +875,7 @@ See {setApprovalForAll}
 
   Allows the owner to remove one or more council members, triggering an election if a threshold is met
 
-### nominate
+#### nominate
 
   ```solidity
   function nominate() external
@@ -885,7 +883,7 @@ See {setApprovalForAll}
 
   Allows anyone to self-nominate during the Nomination period
 
-### withdrawNomination
+#### withdrawNomination
 
   ```solidity
   function withdrawNomination() external
@@ -893,7 +891,7 @@ See {setApprovalForAll}
 
   Self-withdrawal of nominations during the Nomination period
 
-### cast
+#### cast
 
   ```solidity
   function cast(address[] candidates) external
@@ -901,7 +899,7 @@ See {setApprovalForAll}
 
   Allows anyone with vote power to vote on nominated candidates during the Voting period
 
-### withdrawVote
+#### withdrawVote
 
   ```solidity
   function withdrawVote() external
@@ -909,7 +907,7 @@ See {setApprovalForAll}
 
   Allows votes to be withdraw
 
-### evaluate
+#### evaluate
 
   ```solidity
   function evaluate(uint256 numBallots) external
@@ -917,7 +915,7 @@ See {setApprovalForAll}
 
   Processes ballots in batches during the Evaluation period (after epochEndDate)
 
-### resolve
+#### resolve
 
   ```solidity
   function resolve() external
@@ -925,7 +923,7 @@ See {setApprovalForAll}
 
   Shuffles NFTs and resolves an election after it has been evaluated
 
-### getMinEpochDurations
+#### getMinEpochDurations
 
   ```solidity
   function getMinEpochDurations() external view returns (uint64 minNominationPeriodDuration, uint64 minVotingPeriodDuration, uint64 minEpochDuration)
@@ -933,7 +931,7 @@ See {setApprovalForAll}
 
   Exposes minimum durations required when adjusting epoch schedules
 
-### getMaxDateAdjustmenTolerance
+#### getMaxDateAdjustmenTolerance
 
   ```solidity
   function getMaxDateAdjustmenTolerance() external view returns (uint64)
@@ -941,7 +939,7 @@ See {setApprovalForAll}
 
   Exposes maximum size of adjustments when calling tweakEpochSchedule
 
-### getDefaultBallotEvaluationBatchSize
+#### getDefaultBallotEvaluationBatchSize
 
   ```solidity
   function getDefaultBallotEvaluationBatchSize() external view returns (uint256)
@@ -949,7 +947,7 @@ See {setApprovalForAll}
 
   Shows the default batch size when calling evaluate() with numBallots = 0
 
-### getNextEpochSeatCount
+#### getNextEpochSeatCount
 
   ```solidity
   function getNextEpochSeatCount() external view returns (uint8)
@@ -957,7 +955,7 @@ See {setApprovalForAll}
 
   Shows the number of council members that the next epoch will have
 
-### getMinimumActiveMembers
+#### getMinimumActiveMembers
 
   ```solidity
   function getMinimumActiveMembers() external view returns (uint8)
@@ -965,7 +963,7 @@ See {setApprovalForAll}
 
   Returns the minimum active members that the council needs to avoid an emergency election
 
-### getEpochIndex
+#### getEpochIndex
 
   ```solidity
   function getEpochIndex() external view returns (uint256)
@@ -973,7 +971,7 @@ See {setApprovalForAll}
 
   Returns the index of the current epoch. The first epoch's index is 1
 
-### getEpochStartDate
+#### getEpochStartDate
 
   ```solidity
   function getEpochStartDate() external view returns (uint64)
@@ -981,7 +979,7 @@ See {setApprovalForAll}
 
   Returns the date in which the current epoch started
 
-### getEpochEndDate
+#### getEpochEndDate
 
   ```solidity
   function getEpochEndDate() external view returns (uint64)
@@ -989,7 +987,7 @@ See {setApprovalForAll}
 
   Returns the date in which the current epoch will end
 
-### getNominationPeriodStartDate
+#### getNominationPeriodStartDate
 
   ```solidity
   function getNominationPeriodStartDate() external view returns (uint64)
@@ -997,7 +995,7 @@ See {setApprovalForAll}
 
   Returns the date in which the Nomination period in the current epoch will start
 
-### getVotingPeriodStartDate
+#### getVotingPeriodStartDate
 
   ```solidity
   function getVotingPeriodStartDate() external view returns (uint64)
@@ -1005,7 +1003,7 @@ See {setApprovalForAll}
 
   Returns the date in which the Voting period in the current epoch will start
 
-### getCurrentPeriod
+#### getCurrentPeriod
 
   ```solidity
   function getCurrentPeriod() external view returns (uint256)
@@ -1013,7 +1011,7 @@ See {setApprovalForAll}
 
   Returns the current period type: Administration, Nomination, Voting, Evaluation
 
-### isNominated
+#### isNominated
 
   ```solidity
   function isNominated(address candidate) external view returns (bool)
@@ -1021,7 +1019,7 @@ See {setApprovalForAll}
 
   Shows if a candidate has been nominated in the current epoch
 
-### getNominees
+#### getNominees
 
   ```solidity
   function getNominees() external view returns (address[])
@@ -1029,7 +1027,7 @@ See {setApprovalForAll}
 
   Returns a list of all nominated candidates in the current epoch
 
-### calculateBallotId
+#### calculateBallotId
 
   ```solidity
   function calculateBallotId(address[] candidates) external pure returns (bytes32)
@@ -1037,7 +1035,7 @@ See {setApprovalForAll}
 
   Hashes a list of candidates (used for identifying and storing ballots)
 
-### getBallotVoted
+#### getBallotVoted
 
   ```solidity
   function getBallotVoted(address user) external view returns (bytes32)
@@ -1045,7 +1043,7 @@ See {setApprovalForAll}
 
   Returns the ballot id that user voted on in the current election
 
-### hasVoted
+#### hasVoted
 
   ```solidity
   function hasVoted(address user) external view returns (bool)
@@ -1053,7 +1051,7 @@ See {setApprovalForAll}
 
   Returns if user has voted in the current election
 
-### getVotePower
+#### getVotePower
 
   ```solidity
   function getVotePower(address user) external view returns (uint256)
@@ -1061,7 +1059,7 @@ See {setApprovalForAll}
 
   Returns the vote power of user in the current election
 
-### getBallotVotes
+#### getBallotVotes
 
   ```solidity
   function getBallotVotes(bytes32 ballotId) external view returns (uint256)
@@ -1069,7 +1067,7 @@ See {setApprovalForAll}
 
   Returns the number of votes given to a particular ballot
 
-### getBallotCandidates
+#### getBallotCandidates
 
   ```solidity
   function getBallotCandidates(bytes32 ballotId) external view returns (address[])
@@ -1077,7 +1075,7 @@ See {setApprovalForAll}
 
   Returns the list of candidates that a particular ballot has
 
-### isElectionEvaluated
+#### isElectionEvaluated
 
   ```solidity
   function isElectionEvaluated() external view returns (bool)
@@ -1085,7 +1083,7 @@ See {setApprovalForAll}
 
   Returns whether all ballots in the current election have been counted
 
-### getCandidateVotes
+#### getCandidateVotes
 
   ```solidity
   function getCandidateVotes(address candidate) external view returns (uint256)
@@ -1093,7 +1091,7 @@ See {setApprovalForAll}
 
   Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
 
-### getElectionWinners
+#### getElectionWinners
 
   ```solidity
   function getElectionWinners() external view returns (address[])
@@ -1101,7 +1099,7 @@ See {setApprovalForAll}
 
   Returns the winners of the current election. Requires the election to be partially or totally evaluated
 
-### getCouncilToken
+#### getCouncilToken
 
   ```solidity
   function getCouncilToken() external view returns (address)
@@ -1109,7 +1107,7 @@ See {setApprovalForAll}
 
   Returns the address of the council NFT token
 
-### getCouncilMembers
+#### getCouncilMembers
 
   ```solidity
   function getCouncilMembers() external view returns (address[])
