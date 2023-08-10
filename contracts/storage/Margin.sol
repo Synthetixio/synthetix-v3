@@ -62,12 +62,12 @@ library Margin {
 
     // --- Mutative --- //
 
-    // TODO: Need better names for `updateCollateralUsd` and `writeOffCollateral` :thinking:
-
     /**
-     * @dev Reduces deposited collateral amountUsd
+     * @dev Reevaluates the collateral in `market` for `accountId` with `amountUsd`. When amount is negative,
+     * portion of their collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
+     * account.
      */
-    function updateCollateralUsd(uint128 accountId, PerpMarket.Data storage market, int256 amountUsd) internal {
+    function updateAccountCollateral(uint128 accountId, PerpMarket.Data storage market, int256 amountUsd) internal {
         // Nothing to update, this is a no-op.
         if (amountUsd == 0) {
             return;
@@ -136,9 +136,11 @@ library Margin {
     }
 
     /**
-     * @dev Zeros out the deposited collateral for `accountId` in `marketId`.
+     * @dev Zeros out the deposited collateral for `accountId` in `marketId`. This is used in scenarios
+     * where we can confidently remove the collateral credited to `accountId` e.g. at the end of a liquidation
+     * event.
      */
-    function writeOffCollateral(uint128 accountId, uint128 marketId) internal {
+    function clearAccountCollateral(uint128 accountId, uint128 marketId) internal {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
@@ -165,15 +167,15 @@ library Margin {
     /**
      * @dev Returns the latest oracle price for the collateral at `collateralType`.
      */
-    function getOraclePrice(address collateralType) internal view returns (uint256 price) {
+    function getOraclePrice(address collateralType) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
-
-        price = globalMarketConfig
-            .oracleManager
-            .process(globalMarginConfig.supported[collateralType].oracleNodeId)
-            .price
-            .toUint();
+        return
+            globalMarketConfig
+                .oracleManager
+                .process(globalMarginConfig.supported[collateralType].oracleNodeId)
+                .price
+                .toUint();
     }
 
     /**
@@ -231,7 +233,7 @@ library Margin {
                     notionalValueUsd.toInt() +
                         position.getPnl(price) +
                         position.getAccruedFunding(market, price) -
-                        position.feesIncurredUsd.toInt(),
+                        position.accruedFeesUsd.toInt(),
                     0
                 )
                 .toUint();

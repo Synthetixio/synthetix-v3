@@ -55,8 +55,8 @@ library Position {
         int256 entryFundingAccrued;
         // The fill price at which this position was opened with.
         uint256 entryPrice;
-        // Cost in USD to open this positions (e.g. keeper + order fees).
-        uint256 feesIncurredUsd;
+        // Accured static fees incurred to manage this position (e.g. keeper + order + liqRewards + xyz).
+        uint256 accruedFeesUsd;
     }
 
     /**
@@ -185,7 +185,7 @@ library Position {
             MathUtil.abs(newPosition.size) < MathUtil.abs(currentPosition.size);
         (uint256 imnp, , ) = getLiquidationMarginUsd(newPosition.size, params.fillPrice, marketConfig);
 
-        // `marginUsd` is the previous position margin (which includes feesIncurredUsd deducted with open
+        // `marginUsd` is the previous position margin (which includes accruedFeesUsd deducted with open
         // position). We `-fee and -keeperFee` here because the new position would have incurred additional fees if
         // this trader were to be settled successfully.
         //
@@ -252,7 +252,7 @@ library Position {
             oldPosition.entryFundingAccrued,
             oldPosition.entryPrice,
             // An accumulation of fees paid on liquidation and reward paid out to the liquidator.
-            oldPosition.feesIncurredUsd + liqReward + keeperFee
+            oldPosition.accruedFeesUsd + liqReward + keeperFee
         );
     }
 
@@ -419,6 +419,6 @@ library Position {
         self.size = data.size;
         self.entryFundingAccrued = data.entryFundingAccrued;
         self.entryPrice = data.entryPrice;
-        self.feesIncurredUsd = data.feesIncurredUsd;
+        self.accruedFeesUsd = data.accruedFeesUsd;
     }
 }

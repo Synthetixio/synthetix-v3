@@ -32,7 +32,5 @@ interface IPerpMarketFactoryModule is IMarket {
     /**
      * @dev Registers a new PerpMarket with Synthetix and initializes storage.
      */
-    function createMarket(
-        IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
-    ) external returns (uint128 id);
+    function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
 }

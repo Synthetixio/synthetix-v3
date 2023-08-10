@@ -18,7 +18,7 @@ contract PerpAccountModule is IPerpAccountModule {
     function getAccountDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.AccountDigest memory digest) {
+    ) external view returns (IPerpAccountModule.AccountDigest memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -41,18 +41,19 @@ contract PerpAccountModule is IPerpAccountModule {
         }
 
         Position.Data storage position = market.positions[accountId];
-        digest = IPerpAccountModule.AccountDigest(
-            collateral,
-            Margin.getCollateralUsd(accountId, marketId),
-            market.orders[accountId],
-            position,
-            position.getHealthFactor(
-                market,
-                Margin.getMarginUsd(accountId, market, market.getOraclePrice()),
-                market.getOraclePrice(),
-                PerpMarketConfiguration.load(marketId)
-            )
-        );
+        return
+            IPerpAccountModule.AccountDigest(
+                collateral,
+                Margin.getCollateralUsd(accountId, marketId),
+                market.orders[accountId],
+                position,
+                position.getHealthFactor(
+                    market,
+                    Margin.getMarginUsd(accountId, market, market.getOraclePrice()),
+                    market.getOraclePrice(),
+                    PerpMarketConfiguration.load(marketId)
+                )
+            );
     }
 
     /**
@@ -61,7 +62,7 @@ contract PerpAccountModule is IPerpAccountModule {
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.PositionDigest memory digest) {
+    ) external view returns (IPerpAccountModule.PositionDigest memory) {
         // TODO: Implement me
     }
 }

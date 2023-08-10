@@ -168,7 +168,7 @@ contract OrderModule is IOrderModule {
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
-            Margin.updateCollateralUsd(accountId, market, newMarginUsd.toInt() - marginUsd.toInt());
+            Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - marginUsd.toInt());
         }
 
         if (newPosition.size == 0) {
@@ -274,17 +274,21 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function getFillPrice(uint128 marketId, int128 sizeDelta) external view returns (uint256 price) {
+    function getFillPrice(uint128 marketId, int128 sizeDelta) external view returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-        price = Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, market.getOraclePrice());
+        return
+            Order.getFillPrice(
+                market.skew,
+                PerpMarketConfiguration.load(marketId).skewScale,
+                sizeDelta,
+                market.getOraclePrice()
+            );
     }
 
     /**
      * @inheritdoc IOrderModule
      */
-    function getOraclePrice(uint128 marketId) external view returns (uint256 price) {
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        price = market.getOraclePrice();
+    function getOraclePrice(uint128 marketId) external view returns (uint256) {
+        return PerpMarket.exists(marketId).getOraclePrice();
     }
 }

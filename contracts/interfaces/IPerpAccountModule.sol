@@ -50,7 +50,7 @@ interface IPerpAccountModule {
     function getAccountDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.AccountDigest memory digest);
+    ) external view returns (IPerpAccountModule.AccountDigest memory);
 
     /**
      * @dev Returns a digest of an open position belonging to `accountId` in `marketId`.
@@ -58,5 +58,5 @@ interface IPerpAccountModule {
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.PositionDigest memory digest);
+    ) external view returns (IPerpAccountModule.PositionDigest memory);
 }

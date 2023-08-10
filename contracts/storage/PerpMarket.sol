@@ -161,10 +161,10 @@ library PerpMarket {
     /**
      * @dev Returns the latest oracle price from the preconfigured `oracleNodeId`.
      */
-    function getOraclePrice(PerpMarket.Data storage self) internal view returns (uint256 price) {
+    function getOraclePrice(PerpMarket.Data storage self) internal view returns (uint256) {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-        price = globalConfig.oracleManager.process(marketConfig.oracleNodeId).price.toUint();
+        return globalConfig.oracleManager.process(marketConfig.oracleNodeId).price.toUint();
     }
 
     /**

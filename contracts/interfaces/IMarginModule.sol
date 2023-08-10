@@ -56,7 +56,7 @@ interface IMarginModule is IBasePerpMarket {
     /**
      * @dev Returns the configured collaterals used as margin.
      */
-    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory collaterals);
+    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory);
 
     /**
      * @dev Returns the total value of deposited collaterals in USD.

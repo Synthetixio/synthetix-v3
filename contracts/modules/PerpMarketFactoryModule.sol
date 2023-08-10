@@ -64,16 +64,16 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IPerpMarketFactoryModule
      */
-    function createMarket(
-        IPerpMarketFactoryModule.CreatePerpMarketParameters memory data
-    ) external returns (uint128 id) {
+    function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128) {
         OwnableStorage.onlyOwner();
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        id = globalConfig.synthetix.registerMarket(address(this));
+        uint128 id = globalConfig.synthetix.registerMarket(address(this));
 
         PerpMarket.create(id, data.name);
         emit MarketCreated(id, data.name);
+
+        return id;
     }
 
     // --- Required functions to be IMarket compatible --- //

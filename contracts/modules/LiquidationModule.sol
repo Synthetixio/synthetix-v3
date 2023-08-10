@@ -78,13 +78,11 @@ contract LiquidationModule is ILiquidationModule {
         uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
         market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
 
-        // TODO: Rename feesIncurredUsd (renaming to accruedFeesUsd).
-
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
             delete market.positions[accountId];
             delete market.flaggedLiquidations[accountId];
-            Margin.writeOffCollateral(accountId, marketId);
+            Margin.clearAccountCollateral(accountId, marketId);
         } else {
             market.positions[accountId].update(newPosition);
         }

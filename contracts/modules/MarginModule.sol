@@ -212,11 +212,11 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
-    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory collaterals) {
+    function getConfiguredCollaterals() external view returns (AvailableCollateral[] memory) {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
         uint256 length = globalMarginConfig.supportedAddresses.length;
-        collaterals = new AvailableCollateral[](length);
+        MarginModule.AvailableCollateral[] memory collaterals = new AvailableCollateral[](length);
         address collateralType;
 
         for (uint256 i = 0; i < length; ) {
@@ -228,6 +228,8 @@ contract MarginModule is IMarginModule {
                 i++;
             }
         }
+
+        return collaterals;
     }
 
     /**
