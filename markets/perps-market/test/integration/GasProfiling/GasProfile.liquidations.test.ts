@@ -5,16 +5,47 @@ import { SynthMarkets } from '@synthetixio/spot-market/test/common';
 import { ethers } from 'ethers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
-const PRICE = bn(1_000);
-const MARKETS_QUANTITY = 100;
-const TOTAL_POSITIONS_SIZE = 10;
-
 /**
  * This test is used to profile the gas consumption of liquidations.
  * @dev This test is not meant to be run in CI, it is only used to profile gas consumption.
  * @dev To run this test, replace the `skip` for `only` and run `REPORT_GAS=true yarn test`.
  */
 describe.skip('Gas profiling - Liquidation', async () => {
+  const PRICE = bn(1_000);
+  const MARKETS_QUANTITY = 100;
+  const TOTAL_POSITIONS_SIZE = 10;
+  const generateFakeMarketConfigs = (quantity: number) => {
+    return Array.from({ length: quantity }, (_, i) => ({
+      requestedMarketId: 50 + i,
+      name: 'FakeMarket' + i,
+      token: 'FAKE' + i,
+      price: PRICE,
+      fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
+      liquidationParams: {
+        initialMarginFraction: bn(2),
+        minimumInitialMarginRatio: bn(0.001),
+        maintenanceMarginScalar: bn(0.05),
+        maxLiquidationLimitAccumulationMultiplier: bn(1),
+        liquidationRewardRatio: bn(0.01),
+        maxSecondsInLiquidationWindow: bn(10),
+        minimumPositionMargin: bn(0),
+      },
+      settlementStrategy: {
+        settlementReward: bn(0),
+      },
+    }));
+  };
+
+  const getPositionSizes = (quantity: number) => {
+    return Array.from({ length: quantity }, () => {
+      return bn(TOTAL_POSITIONS_SIZE / quantity);
+    }).concat(
+      Array.from({ length: MARKETS_QUANTITY - quantity }, () => {
+        return bn(0);
+      })
+    );
+  };
+
   const perpsMarketConfigs = generateFakeMarketConfigs(MARKETS_QUANTITY);
 
   const { systems, provider, trader1, synthMarkets, keeper, superMarketId, perpsMarkets } =
@@ -85,7 +116,7 @@ describe.skip('Gas profiling - Liquidation', async () => {
 
   let positionSizes: () => ethers.BigNumber[];
 
-  [1, 2, 5, 10, 50, 100].forEach((quantity, i) => {
+  [1, 2, 5, 10, 50, 100].forEach((quantity) => {
     describe(`Liquidation of ${quantity} positions`, () => {
       before('open positions', async () => {
         positionSizes = () => getPositionSizes(quantity);
@@ -123,7 +154,7 @@ describe.skip('Gas profiling - Liquidation', async () => {
 
       describe('liquidate', async () => {
         before('change perps token price', async () => {
-          for (const [_, perpsMarket] of perpsMarkets().entries()) {
+          for (const [, perpsMarket] of perpsMarkets().entries()) {
             await perpsMarket.aggregator().mockSetCurrentPrice(bn(200));
           }
         });
@@ -145,35 +176,3 @@ describe.skip('Gas profiling - Liquidation', async () => {
     });
   });
 });
-
-const generateFakeMarketConfigs = (quantity: number) => {
-  return Array.from({ length: quantity }, (_, i) => ({
-    requestedMarketId: 50 + i,
-    name: 'FakeMarket' + i,
-    token: 'FAKE' + i,
-    price: PRICE,
-    fundingParams: { skewScale: bn(100), maxFundingVelocity: bn(0) },
-    liquidationParams: {
-      initialMarginFraction: bn(2),
-      minimumInitialMarginRatio: bn(0.001),
-      maintenanceMarginScalar: bn(0.05),
-      maxLiquidationLimitAccumulationMultiplier: bn(1),
-      liquidationRewardRatio: bn(0.01),
-      maxSecondsInLiquidationWindow: bn(10),
-      minimumPositionMargin: bn(0),
-    },
-    settlementStrategy: {
-      settlementReward: bn(0),
-    },
-  }));
-};
-
-const getPositionSizes = (quantity: number) => {
-  return Array.from({ length: quantity }, (_) => {
-    return bn(TOTAL_POSITIONS_SIZE / quantity);
-  }).concat(
-    Array.from({ length: MARKETS_QUANTITY - quantity }, (_) => {
-      return bn(0);
-    })
-  );
-};
