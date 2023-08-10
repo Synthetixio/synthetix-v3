@@ -16,7 +16,7 @@ library PerpMarketConfiguration {
 
     // --- Constants --- //
 
-    bytes32 private constant _SLOT_NAMESPACE = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
+    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.PerpMarketConfiguration"));
 
     // --- Storage --- //
 
@@ -101,7 +101,7 @@ library PerpMarketConfiguration {
     }
 
     function load() internal pure returns (PerpMarketConfiguration.GlobalData storage d) {
-        bytes32 s = _SLOT_NAMESPACE;
+        bytes32 s = SLOT_NAME;
 
         assembly {
             d.slot := s

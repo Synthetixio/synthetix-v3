@@ -19,7 +19,7 @@ library Margin {
 
     // --- Constants --- //
 
-    bytes32 private constant _SLOT_NAMESPACE = keccak256(abi.encode("io.synthetix.bfp-market.Margin"));
+    bytes32 private constant SLOT_NAME = keccak256(abi.encode("io.synthetix.bfp-market.Margin"));
 
     // --- Structs --- //
 
@@ -53,7 +53,7 @@ library Margin {
     }
 
     function load() internal pure returns (Margin.GlobalData storage d) {
-        bytes32 s = _SLOT_NAMESPACE;
+        bytes32 s = SLOT_NAME;
 
         assembly {
             d.slot := s
