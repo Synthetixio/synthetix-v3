@@ -7,7 +7,9 @@ import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {PerpsAccount} from "../storage/PerpsAccount.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {Position} from "../storage/Position.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
@@ -24,6 +26,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using PerpsPrice for PerpsPrice.Data;
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
+    using PerpsAccount for PerpsAccount.Data;
     using SettlementStrategy for SettlementStrategy.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
@@ -89,13 +92,49 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function computeOrderFees(
         uint128 marketId,
         int128 sizeDelta
-    ) external view override returns (uint256 orderFees) {
-        PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
-        int256 skew = perpsMarket.skew;
+    ) external view override returns (uint256 orderFees, uint256 fillPrice) {
+        (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta);
+    }
+
+    function requiredMarginForOrder(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta
+    ) external view override returns (uint256 requiredMargin) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
             marketId
         );
-        uint256 fillPrice = AsyncOrder.calculateFillPrice(
+
+        Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
+        (
+            ,
+            uint256 currentMaintenanceMargin,
+            uint256 currentTotalLiquidationRewards,
+
+        ) = PerpsAccount.load(accountId).getAccountRequiredMargins();
+        (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta);
+
+        return
+            AsyncOrder.getRequiredMarginWithNewPosition(
+                marketConfig,
+                marketId,
+                oldPosition.size,
+                oldPosition.size + sizeDelta,
+                fillPrice,
+                currentMaintenanceMargin,
+                currentTotalLiquidationRewards
+            ) + orderFees;
+    }
+
+    function _computeOrderFees(
+        uint128 marketId,
+        int128 sizeDelta
+    ) private view returns (uint256 orderFees, uint256 fillPrice) {
+        int256 skew = PerpsMarket.load(marketId).skew;
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
+            marketId
+        );
+        fillPrice = AsyncOrder.calculateFillPrice(
             skew,
             marketConfig.skewScale,
             sizeDelta,

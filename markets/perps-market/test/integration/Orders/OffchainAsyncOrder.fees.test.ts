@@ -155,10 +155,8 @@ describe('Offchain Async Order test - fees', () => {
         });
 
         it('returns proper fees on getOrderFees', async () => {
-          assertBn.equal(
-            await systems().PerpsMarket.computeOrderFees(ethMarketId, sizeDelta),
-            feesPaidOnSettle.perpsMarketFee
-          );
+          const [orderFees] = await systems().PerpsMarket.computeOrderFees(ethMarketId, sizeDelta);
+          assertBn.equal(orderFees, feesPaidOnSettle.perpsMarketFee);
         });
 
         it('validate that not fees are paid on commit', async () => {
