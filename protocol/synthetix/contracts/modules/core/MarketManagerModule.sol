@@ -196,7 +196,7 @@ contract MarketManagerModule is IMarketManagerModule {
         feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0));
         address feeAddress = address(0);
         address configFeeAddress = Config.readAddress(
-            _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS,
+            _CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS,
             address(0)
         );
 

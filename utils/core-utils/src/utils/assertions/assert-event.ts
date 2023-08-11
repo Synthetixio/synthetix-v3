@@ -4,7 +4,8 @@ import { ethers } from 'ethers';
 export default async function assertEvent(
   receipt: ethers.providers.TransactionReceipt | ethers.providers.TransactionResponse,
   expectedMatch: string,
-  contract: ethers.Contract
+  contract: ethers.Contract,
+  notExisting: boolean = false
 ) {
   if ((receipt as ethers.providers.TransactionResponse).wait) {
     receipt = await (receipt as ethers.providers.TransactionResponse).wait();
@@ -22,7 +23,14 @@ export default async function assertEvent(
 
       seenEvents.push(text);
 
-      if (text.toLowerCase().includes(expectedMatch.toLowerCase()) || text.match(expectedMatch)) {
+      const textHasExpectedMatch =
+        text.toLowerCase().includes(expectedMatch.toLowerCase()) || text.match(expectedMatch);
+
+      if (notExisting && !textHasExpectedMatch) {
+        return;
+      }
+
+      if (textHasExpectedMatch) {
         return;
       }
     } catch {
