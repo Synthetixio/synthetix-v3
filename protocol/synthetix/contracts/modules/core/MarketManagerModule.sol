@@ -194,10 +194,15 @@ contract MarketManagerModule is IMarketManagerModule {
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0));
-        address feeAddress = feeAmount > 0
-            ? Config.readAddress(_CONFIG_DEPOSIT_MARKET_USD_FEE_ADDRESS, address(0))
-            : address(0);
+        address feeAddress = address(0);
+        address configFeeAddress = Config.readAddress(
+            _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS,
+            address(0)
+        );
 
+        if (feeAmount > 0 && configFeeAddress != address(0)) {
+            feeAddress = configFeeAddress;
+        }
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
@@ -239,9 +244,15 @@ contract MarketManagerModule is IMarketManagerModule {
         if (amount + feeAmount > getWithdrawableMarketUsd(marketId))
             revert NotEnoughLiquidity(marketId, amount);
 
-        address feeAddress = feeAmount > 0
-            ? Config.readAddress(_CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS, address(0))
-            : address(0);
+        address feeAddress = address(0);
+        address configFeeAddress = Config.readAddress(
+            _CONFIG_WITHDRAW_MARKET_USD_FEE_ADDRESS,
+            address(0)
+        );
+
+        if (feeAmount > 0 && configFeeAddress != address(0)) {
+            feeAddress = configFeeAddress;
+        }
 
         // Adjust accounting.
         marketData.creditCapacityD18 -= (amount + feeAmount).toInt().to128();
