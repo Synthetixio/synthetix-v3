@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../verifications';
 
-describe.only('PoolModule Create / Ownership', function () {
+describe('PoolModule Create / Ownership', function () {
   const { signers, systems, MockMarket, marketId, poolId, depositAmount } =
     bootstrapWithMockMarketAndPool();
 
