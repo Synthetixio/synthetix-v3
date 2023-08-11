@@ -334,7 +334,7 @@ describe('MarginModule', async () => {
     });
   });
 
-  describe('setCollateralConfiguration()', () => {
+  describe('setCollateralConfiguration', () => {
     it('should revert when array has mismatched length', async () => {
       const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
       const from = owner();
@@ -417,5 +417,25 @@ describe('MarginModule', async () => {
     });
 
     it('should revoke/approve collateral with 0/maxAllowable');
+  });
+
+  describe('getConfiguredCollaterals', () => {
+    it('should return all available configured collaterals');
+  });
+
+  describe('getCollateralUsd', () => {
+    it('should return marginUsd that reflects value of collateral when no positions opened');
+
+    it('should return zero marginUsd when no collateral has been depoisted');
+
+    it('should return marginUsd + value of position when in profit');
+
+    it('should return marginUsd - value of position when not in profit');
+
+    it('should not consider a position in a different market for the same account');
+
+    it('should revert when accountId does not exist');
+
+    it('should revert when marketId does not exist');
   });
 });
