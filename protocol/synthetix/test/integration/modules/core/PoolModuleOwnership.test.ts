@@ -213,7 +213,6 @@ describe('PoolModule Create / Ownership', function () {
           );
         });
         it('pool has no owner', async () => {
-          await systems().Core.getPoolOwner(2);
           assert.equal(await systems().Core.getPoolOwner(2), ethers.constants.AddressZero);
         });
       });
