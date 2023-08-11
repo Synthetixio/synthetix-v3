@@ -75,9 +75,12 @@ contract IssueUSDModule is IIssueUSDModule {
         }
 
         uint256 feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_MINT_FEE_RATIO, 0));
-        address feeAddress = feeAmount > 0
-            ? Config.readAddress(_CONFIG_MINT_FEE_ADDRESS, address(0))
-            : address(0);
+        address feeAddress = address(0);
+        address configFeeAddress = Config.readAddress(_CONFIG_MINT_FEE_ADDRESS, address(0));
+
+        if (feeAmount > 0 && configFeeAddress != address(0)) {
+            feeAddress = configFeeAddress;
+        }
 
         newDebt += feeAmount.toInt();
 
@@ -130,10 +133,12 @@ contract IssueUSDModule is IIssueUSDModule {
 
         uint256 feePercent = Config.readUint(_CONFIG_BURN_FEE_RATIO, 0);
         uint256 feeAmount = amount - amount.divDecimal(DecimalMath.UNIT + feePercent);
-        address feeAddress = feeAmount > 0
-            ? Config.readAddress(_CONFIG_BURN_FEE_ADDRESS, address(0))
-            : address(0);
+        address feeAddress = address(0);
+        address configFeeAddress = Config.readAddress(_CONFIG_BURN_FEE_ADDRESS, address(0));
 
+        if (feeAmount > 0 && configFeeAddress != address(0)) {
+            feeAddress = configFeeAddress;
+        }
         // Only allow burning the total debt of the position
         if (amount.toInt() > debt + debt.mulDecimal(feePercent.toInt())) {
             feeAmount = debt.toUint().mulDecimal(feePercent);

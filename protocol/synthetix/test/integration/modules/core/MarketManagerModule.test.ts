@@ -214,6 +214,16 @@ describe('MarketManagerModule', function () {
             systems().Core
           );
         });
+
+        it('no event emitted when fee address is 0', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('depositMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+            );
+          await assertEvent(txn, `MarketSystemFeePaid`, systems().Core, true);
+        });
       });
     });
   });
@@ -346,6 +356,16 @@ describe('MarketManagerModule', function () {
             `MarketSystemFeePaid(${marketId()}, ${One.div(200)})`,
             systems().Core
           );
+        });
+
+        it('no event emitted when fee address is 0', async () => {
+          await systems()
+            .Core.connect(owner)
+            .setConfig(
+              ethers.utils.formatBytes32String('withdrawMarketUsd_feeAddress'),
+              ethers.utils.hexZeroPad(ethers.constants.AddressZero, 32)
+            );
+          await assertEvent(txn, `MarketSystemFeePaid`, systems().Core, true);
         });
       });
     });
