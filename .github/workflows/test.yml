@@ -9,11 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
       CANNON_IPFS_URL: "http://127.0.0.1:5001"
       CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
     strategy:
+      fail-fast: false
       matrix:
         package:
           [
