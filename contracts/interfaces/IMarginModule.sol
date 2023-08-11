@@ -17,11 +17,11 @@ interface IMarginModule is IBasePerpMarket {
 
     // --- Events --- //
 
-    // @dev Emitted when collateral is deposited from user to market.
-    event MarginDeposit(address indexed from, address indexed to, uint256 value);
+    // @dev Emitted when margin is deposited from user to market.
+    event MarginDeposit(address indexed from, address indexed to, uint256 value, address collateral);
 
-    // @dev Emitted when collateral is withdrawn from market to user.
-    event MarginWithdraw(address indexed from, address indexed to, uint256 value);
+    // @dev Emitted when margin is withdrawn from market to user.
+    event MarginWithdraw(address indexed from, address indexed to, uint256 value, address collateral);
 
     // @dev Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);
@@ -29,7 +29,7 @@ interface IMarginModule is IBasePerpMarket {
     // --- Mutative --- //
 
     /**
-     * @dev Transfers an accepted `collateral` as margin from msg.sender to `accountId` on a specific `marketId`.
+     * @dev Transfers an accepted `collateral` as margin from sender to `accountId` on a specific `marketId`.
      *
      * A negative `amountDelta` is a withdrawal. A variety of errors are thrown if limits or collateral
      * issues are found. A transfer, even when there is no open position will immediately deposit the
@@ -40,7 +40,7 @@ interface IMarginModule is IBasePerpMarket {
     function modifyCollateral(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
 
     /**
-     * @dev Configure Margin with collateral types and their allowables.
+     * @dev Configure with collateral types, their allowables, and a ref to the oracle for price data.
      *
      * Recommended to use sUSD as the first collateralType so that negative PnL deducts from sUSD before other
      * collateral types to facilitate better UX.

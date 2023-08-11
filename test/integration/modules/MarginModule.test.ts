@@ -64,7 +64,7 @@ describe('MarginModule', async () => {
 
         await assertEvent(
           tx,
-          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta})`,
+          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta}, "${collateral.address}")`,
           PerpMarketProxy
         );
 
@@ -217,7 +217,7 @@ describe('MarginModule', async () => {
 
         await assertEvent(
           tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount})`,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
           PerpMarketProxy
         );
       });
@@ -228,20 +228,22 @@ describe('MarginModule', async () => {
           bs,
           genTrader(bs)
         );
+        const collateralAddress = collateral.contract.address;
 
         // Perform the withdraw (partial amount).
         const withdrawAmount = collateralDepositAmount.div(2).mul(-1);
         const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          collateral.contract.address,
+          collateralAddress,
           withdrawAmount
         );
 
         // Convert withdrawAmount back to positive beacuse Transfer takes in abs(amount).
+        const withdrawAmountAbs = withdrawAmount.abs();
         await assertEvent(
           tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount.mul(-1)})`,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmountAbs}, "${collateralAddress}")`,
           PerpMarketProxy
         );
       });

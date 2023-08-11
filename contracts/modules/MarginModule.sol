@@ -59,7 +59,7 @@ contract MarginModule is IMarginModule {
         } else {
             globalConfig.synthetix.depositMarketCollateral(marketId, collateralType, amount);
         }
-        emit MarginDeposit(msg.sender, address(this), amount);
+        emit MarginDeposit(msg.sender, address(this), amount, collateralType);
     }
 
     /**
@@ -77,7 +77,7 @@ contract MarginModule is IMarginModule {
             globalConfig.synthetix.withdrawMarketCollateral(marketId, collateralType, amount);
         }
         IERC20(collateralType).transferFrom(address(this), msg.sender, amount);
-        emit MarginWithdraw(address(this), msg.sender, amount);
+        emit MarginWithdraw(address(this), msg.sender, amount, collateralType);
     }
 
     /**
