@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { bn } from '../utils';
 
-// A collection of reasonably realistic market parameters for BTC, ETH, SOL, OP, and ARB markets.
+// A collection of reasonably realistic market parameters for BTC, ETH, SOL, OP, and ARB.
 export const MARKETS = [
   {
     name: ethers.utils.formatBytes32String('BTCPERP'),
@@ -53,7 +53,7 @@ export const MARKETS = [
       pythPriceFeedId: '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
       makerFee: bn(0.0002),
       takerFee: bn(0.0008),
-      maxMarketSize: bn(27_000),
+      maxMarketSize: bn(220_000),
       maxFundingVelocity: bn(36),
       skewScale: bn(7_500_000),
       minCreditPercent: bn(1),
