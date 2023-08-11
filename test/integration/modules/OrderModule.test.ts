@@ -138,6 +138,8 @@ describe('OrderModule', () => {
 
     it('should revert when an existing position can be liquidated');
 
+    it('should revert when an existing position is flagged for liquidation');
+
     it('should revert when accountId does not exist', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -212,7 +214,8 @@ describe('OrderModule', () => {
     it('should revert when this order exceeds maxMarketSize (oi)');
     it('should revert when sizeDelta is 0');
     it('should revert when an existing position can be liquidated');
-    it('should revert when maxLeverage is exceeded');
+    it('should revert when an existing position is flagged for liquidation');
+    it('should revert when margin falls below maintenance margin');
     it('should revert when accountId does not exist');
     it('should revert when marketId does not exist');
     it('should revert if not enough time has passed');

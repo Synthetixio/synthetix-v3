@@ -6,7 +6,7 @@ import "./IBasePerpMarket.sol";
 interface ILiquidationModule is IBasePerpMarket {
     // --- Events --- //
 
-    // @dev Emitted when position has been liquidated.
+    // @dev Emitted when a position has been liquidated.
     event PositionLiquidated(
         uint128 indexed accountId,
         uint128 marketId,
@@ -16,8 +16,8 @@ interface ILiquidationModule is IBasePerpMarket {
         uint256 keeperFee
     );
 
-    // @dev Emitted when position is flagged for liquidation.
-    event PositionFlaggedLiquidation(uint128 indexed accountId, uint128 marketId, address indexed flagger);
+    // @dev Emitted when a position is flagged for liquidation.
+    event PositionFlaggedLiquidation(uint128 indexed accountId, uint128 marketId, address flagger);
 
     // --- Mutative --- //
 

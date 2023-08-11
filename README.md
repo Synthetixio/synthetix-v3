@@ -23,8 +23,6 @@ _You can find more details on the working model under [`docs/images`](./docs/ima
 git clone git@github.com:davidvuong/bfp-market.git
 
 # Install dependencies
-#
-# Note: It's --legacy-peer-deps due to nested conflicting dependencies on cannon.
 yarn
 
 # Install ipfs
