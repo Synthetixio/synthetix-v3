@@ -146,6 +146,11 @@ library Position {
 
         // There's an existing position. Make sure we have a valid existing position before allowing modification.
         if (currentPosition.size != 0) {
+            // Position is frozen due to prior flagged for liquidation.
+            if (market.flaggedLiquidations[accountId] != address(0)) {
+                revert ErrorUtil.PositionFlagged();
+            }
+
             // Determine if the currentPosition can immediately be liquidated.
             if (isLiquidatable(currentPosition, market, marginUsd, params.fillPrice, marketConfig)) {
                 revert ErrorUtil.CanLiquidatePosition();
