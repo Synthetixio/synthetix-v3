@@ -5,7 +5,7 @@ export default async function assertEvent(
   receipt: ethers.providers.TransactionReceipt | ethers.providers.TransactionResponse,
   expectedMatch: string,
   contract: ethers.Contract,
-  notExisting: boolean = false
+  notExisting = false
 ) {
   if ((receipt as ethers.providers.TransactionResponse).wait) {
     receipt = await (receipt as ethers.providers.TransactionResponse).wait();
