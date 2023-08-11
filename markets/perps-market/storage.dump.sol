@@ -423,10 +423,16 @@ interface IAsyncOrderSettlementModule {
         int128 newPositionSize;
         int128 sizeDelta;
         int256 pnl;
+        int256 accruedFunding;
         uint256 pnlUint;
         uint256 amountToDeduct;
         uint256 settlementReward;
-        PerpsMarketFactory.Data factory;
+        uint256 fillPrice;
+        uint256 totalFees;
+        uint256 referralFees;
+        uint256 feeCollectorFees;
+        Position.Data newPosition;
+        PerpsMarket.MarketUpdateData updateData;
     }
 }
 
@@ -471,13 +477,8 @@ contract PerpsMarketFactoryModule {
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
 library AsyncOrder {
     struct Data {
-        uint128 accountId;
-        uint128 marketId;
-        int128 sizeDelta;
-        uint128 settlementStrategyId;
         uint256 settlementTime;
-        uint256 acceptablePrice;
-        bytes32 trackingCode;
+        OrderCommitmentRequest request;
     }
     struct OrderCommitmentRequest {
         uint128 marketId;
@@ -486,12 +487,18 @@ library AsyncOrder {
         uint128 settlementStrategyId;
         uint256 acceptablePrice;
         bytes32 trackingCode;
+        address referrer;
     }
     struct SimulateDataRuntime {
+        int128 sizeDelta;
+        uint128 accountId;
+        uint128 marketId;
         uint fillPrice;
         uint orderFees;
         uint availableMargin;
         uint currentLiquidationMargin;
+        uint accumulatedLiquidationRewards;
+        uint currentLiquidationReward;
         int128 newPositionSize;
         uint newNotionalValue;
         int currentAvailableMargin;
@@ -530,6 +537,8 @@ library GlobalPerpsMarket {
 library GlobalPerpsMarketConfiguration {
     bytes32 private constant _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION = keccak256(abi.encode("io.synthetix.perps-market.GlobalPerpsMarketConfiguration"));
     struct Data {
+        address feeCollector;
+        mapping(address => uint256) referrerShare;
         mapping(uint128 => uint) maxCollateralAmounts;
         uint128[] synthDeductionPriority;
         uint minLiquidationRewardUsd;
@@ -608,12 +617,13 @@ library PerpsMarketConfiguration {
         uint256 maxFundingVelocity;
         uint256 skewScale;
         uint256 initialMarginRatioD18;
-        uint256 maintenanceMarginRatioD18;
+        uint256 maintenanceMarginScalarD18;
         uint256 lockedOiRatioD18;
         uint256 maxLiquidationLimitAccumulationMultiplier;
         uint256 maxSecondsInLiquidationWindow;
         uint256 liquidationRewardRatioD18;
         uint256 minimumPositionMargin;
+        uint256 minimumInitialMarginRatioD18;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
