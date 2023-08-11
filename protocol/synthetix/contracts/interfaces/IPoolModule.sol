@@ -55,6 +55,12 @@ interface IPoolModule {
     event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
 
     /**
+     * @notice Gets fired when pool owner renounces his own ownership.
+     * @param poolId The id of the pool for which the owner nomination was renounced.
+     */
+    event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
+
+    /**
      * @notice Gets fired when pool name changes.
      * @param poolId The id of the pool whose name was updated.
      * @param name The new name of the pool.
@@ -146,6 +152,12 @@ interface IPoolModule {
      * @param poolId The id of the pool for which the caller is renouncing ownership nomination.
      */
     function renouncePoolNomination(uint128 poolId) external;
+
+    /**
+     * @notice Allows the current owner to renounce his ownership.
+     * @param poolId The id of the pool for which the caller is renouncing ownership nomination.
+     */
+    function renouncePoolOwnership(uint128 poolId) external;
 
     /**
      * @notice Returns the current pool owner.
