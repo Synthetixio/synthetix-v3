@@ -229,6 +229,8 @@ describe('Commit Offchain Async Order test', () => {
         startTime = await getTxTime(provider(), tx);
       });
 
+      const restoreToSettle = snapshotCheckpoint(provider);
+
       it('emit event', async () => {
         await assertEvent(
           tx,
@@ -270,6 +272,7 @@ describe('Commit Offchain Async Order test', () => {
       });
 
       describe('can settle order', () => {
+        before(restoreToSettle);
         before('settle', async () => {
           const settlementTime = startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1;
           await fastForwardTo(settlementTime, provider());
@@ -327,6 +330,74 @@ describe('Commit Offchain Async Order test', () => {
             assertBn.equal(order.settlementTime, startTime + 5);
             assertBn.equal(order.request.acceptablePrice, bn(1050));
             assert.equal(order.request.trackingCode, ethers.constants.HashZero);
+          });
+        });
+      });
+
+      describe('when order expired', () => {
+        let expirationTime: number;
+
+        before('move after expiration', async () => {
+          expirationTime =
+            startTime +
+            DEFAULT_SETTLEMENT_STRATEGY.settlementDelay +
+            DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
+            1;
+          await fastForwardTo(expirationTime, provider());
+        });
+
+        it('reverts if attempt to settle', async () => {
+          await assertRevert(
+            settleOrder({
+              systems,
+              keeper: keeper(),
+              accountId: 2,
+              feedId: DEFAULT_SETTLEMENT_STRATEGY.feedId,
+              settlementTime: expirationTime,
+              offChainPrice: 1000,
+            }),
+            'SettlementWindowExpired'
+          );
+        });
+
+        describe('can commit another order after expiration', () => {
+          let tx: ethers.ContractTransaction;
+          let secondOrderStartTime: number;
+          before('commit the order', async () => {
+            tx = await systems()
+              .PerpsMarket.connect(trader1())
+              .commitOrder({
+                marketId: ethMarketId,
+                accountId: 2,
+                sizeDelta: bn(1),
+                settlementStrategyId: 0,
+                acceptablePrice: bn(1050), // 5% slippage
+                referrer: ethers.constants.AddressZero,
+                trackingCode: ethers.constants.HashZero,
+              });
+            secondOrderStartTime = await getTxTime(provider(), tx);
+          });
+
+          it('emit the order commited event', async () => {
+            await assertEvent(
+              tx,
+              `OrderCommitted(${ethMarketId}, 2, ${DEFAULT_SETTLEMENT_STRATEGY.strategyType}, ${bn(
+                1
+              )}, ${bn(1050)}, ${secondOrderStartTime + 5}, ${secondOrderStartTime + 5 + 120}, "${
+                ethers.constants.HashZero
+              }", "${await trader1().getAddress()}")`,
+              systems().PerpsMarket
+            );
+          });
+
+          it('emit the order expired event', async () => {
+            await assertEvent(
+              tx,
+              `PreviousOrderExpired(${ethMarketId}, 2, ${bn(1)}, ${bn(1050)}, ${startTime + 5}, "${
+                ethers.constants.HashZero
+              }")`,
+              systems().PerpsMarket
+            );
           });
         });
       });
