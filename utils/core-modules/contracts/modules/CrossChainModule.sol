@@ -79,8 +79,4 @@ contract CrossChainModule is ICrossChainModule {
             cc.ccipSelectorToChainId[ccipSelectors[i]] = supportedNetworks[i];
         }
     }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
-        return interfaceId == type(IAny2EVMMessageReceiver).interfaceId;
-    }
 }
