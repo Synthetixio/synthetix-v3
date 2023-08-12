@@ -152,22 +152,8 @@ library AsyncOrder {
     }
 
     /**
-     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
-     * @dev non-existent order is considered an order with sizeDelta == 0.
-     */
-    function createValid(
-        OrderCommitmentRequest memory newRequest,
-        SettlementStrategy.Data storage strategy
-    ) internal returns (Data storage order) {
-        order = checkPendingOrder(newRequest.accountId);
-
-        order.settlementTime = block.timestamp + strategy.settlementDelay;
-        order.request = newRequest;
-    }
-
-    /**
      * @dev Reverts if there is a pending order.
-     * @dev A pending order is one that has a sizeDelta or isn't expired yet.
+     * @dev A pending order is one that has a sizeDelta and isn't expired yet.
      */
     function checkPendingOrder(uint128 accountId) internal view returns (Data storage order) {
         order = load(accountId);

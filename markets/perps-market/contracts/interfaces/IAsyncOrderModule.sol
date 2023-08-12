@@ -33,6 +33,24 @@ interface IAsyncOrderModule {
     );
 
     /**
+     * @notice Gets fired when a new order is committed while a previous one was expired.
+     * @param marketId Id of the market used for the trade.
+     * @param accountId Id of the account used for the trade.
+     * @param sizeDelta requested change in size of the order sent by the user.
+     * @param acceptablePrice maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
+     * @param settlementTime Time at which the order can be settled.
+     * @param trackingCode Optional code for integrator tracking purposes.
+     */
+    event PreviousOrderExpired(
+        uint128 indexed marketId,
+        uint128 indexed accountId,
+        int128 sizeDelta,
+        uint256 acceptablePrice,
+        uint256 settlementTime,
+        bytes32 indexed trackingCode
+    );
+
+    /**
      * @notice Commit an async order via this function
      * @param commitment Order commitment data (see AsyncOrder.OrderCommitmentRequest struct).
      * @return retOrder order details (see AsyncOrder.Data struct).
