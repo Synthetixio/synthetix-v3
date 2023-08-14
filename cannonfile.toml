@@ -7,13 +7,6 @@ description = "bfp market for Synthetix v3"
 description = "bfp market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-# TODO: Configurable to depending on chain.
-#
-# @see: https://docs.pyth.network/documentation/pythnet-price-feeds/evm
-[setting.pyth]
-description = "pyth evm contract address"
-defaultValue = "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C"
-
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
@@ -102,7 +95,7 @@ depends = [
   "contract.LiquidationModule",
 ]
 
-# --- Post Deployment --- #
+# --- Proxy Post Deployment --- #
 
 [invoke.upgradeProxy]
 target = ["InitialPerpMarketProxy"]
@@ -119,24 +112,6 @@ depends = [
   "contract.InitialPerpMarketProxy",
   "router.Router"
 ]
-
-[invoke.setSynthetix]
-target = ["PerpMarketProxy"]
-fromCall.func = "owner"
-func = "setSynthetix"
-args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>",
-]
-depends = ["invoke.upgradeProxy"]
-
-[invoke.setPyth]
-target = ["PerpMarketProxy"]
-fromCall.func = "owner"
-func = "setPyth"
-args = [
-  "<%= settings.pyth %>",
-]
-depends = ["invoke.upgradeProxy"]
 
 # @see: https://github.com/Synthetixio/synthetix-v3/blob/main/utils/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol#L63
 [invoke.initOrUpgradeNft]
@@ -197,6 +172,29 @@ args = [120, 1] # 120s, 1wei
 [contract.AggregatorV3Mock]
 artifact = "contracts/mocks/AggregatorV3Mock.sol:AggregatorV3Mock"
 args = []
+
+# --- Market Post Deployment Configuration --- #
+
+[invoke.setSynthetix]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setSynthetix"
+args = [
+  "<%= imports.synthetix.contracts.CoreProxy.address %>",
+]
+depends = ["invoke.upgradeProxy"]
+
+[invoke.setPyth]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setPyth"
+args = [
+  "<%= contracts.PythMock.address %>",
+]
+depends = [
+  "invoke.upgradeProxy",
+  "contract.PythMock"
+]
 
 # --- Feature Flags --- #
 
