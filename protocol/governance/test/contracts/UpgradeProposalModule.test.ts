@@ -1,6 +1,8 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
+import hre from 'hardhat';
 import { bootstrap } from '../bootstrap';
+import { InitialModuleBundle } from '../generated/typechain';
 
 describe('UpgradeProposalModule', function () {
   const { c, getSigners, snapshotCheckpoint } = bootstrap();
@@ -32,20 +34,20 @@ describe('UpgradeProposalModule', function () {
       const current = await c.CoreProxy.getImplementation();
       await assertRevert(c.CoreProxy.upgradeTo(current), 'NoChange');
     });
+
+    describe('when proposing a valid implementation', function () {
+      let NewImplementation: InitialModuleBundle;
+
+      snapshotCheckpoint();
+
+      before('create new implementation', async function () {
+        const factory = await hre.ethers.getContractFactory('InitialModuleBundle', owner);
+        NewImplementation = await factory.deploy();
+      });
+
+      it('reverts', async function () {
+        await c.CoreProxy.upgradeTo(NewImplementation.address);
+      });
+    });
   });
-
-  // describe('#simulateUpgradeTo', function () {
-  //   let NewImplementation: InitialModuleBundle;
-
-  //   snapshotCheckpoint();
-
-  //   before('create new implementation', async function () {
-  //     const factory = await hre.ethers.getContractFactory('InitialModuleBundle', owner);
-  //     NewImplementation = await factory.deploy();
-  //   });
-
-  //   it('reverts', async function () {
-  //     await c.CoreProxy.simulateUpgradeTo(NewImplementation.address);
-  //   });
-  // });
 });

@@ -160,11 +160,11 @@ contract BaseElectionModule is
 
         Council.Data storage store = Council.load();
 
-        uint epochIndex = store.lastElectionId;
+        uint electionId = store.currentElectionId;
 
-        _removeCouncilMembers(membersToDismiss, epochIndex);
+        _removeCouncilMembers(membersToDismiss, electionId);
 
-        emit CouncilMembersDismissed(membersToDismiss, epochIndex);
+        emit CouncilMembersDismissed(membersToDismiss, electionId);
 
         if (store.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
 
@@ -177,7 +177,7 @@ contract BaseElectionModule is
 
         store.jumpToNominationPeriod();
 
-        emit EmergencyElectionStarted(epochIndex);
+        emit EmergencyElectionStarted(electionId);
     }
 
     function nominate() public virtual override {
@@ -188,7 +188,7 @@ contract BaseElectionModule is
 
         nominees.add(msg.sender);
 
-        emit CandidateNominated(msg.sender, Council.load().lastElectionId);
+        emit CandidateNominated(msg.sender, Council.load().currentElectionId);
 
         // TODO: add ballot id to emitted event
     }
@@ -201,7 +201,7 @@ contract BaseElectionModule is
 
         nominees.remove(msg.sender);
 
-        emit NominationWithdrawn(msg.sender, Council.load().lastElectionId);
+        emit NominationWithdrawn(msg.sender, Council.load().currentElectionId);
     }
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
@@ -216,7 +216,7 @@ contract BaseElectionModule is
         }
 
         Ballot.Data storage ballot = Ballot.load(
-            Council.load().lastElectionId,
+            Council.load().currentElectionId,
             msg.sender,
             block.chainid
         );
@@ -255,9 +255,9 @@ contract BaseElectionModule is
 
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
-        uint256 lastElectionId = council.lastElectionId;
+        uint256 currentElectionId = council.currentElectionId;
 
-        Ballot.Data storage storedBallot = Ballot.load(lastElectionId, voter, precinct);
+        Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, precinct);
 
         storedBallot.copy(ballot);
         storedBallot.validate();
@@ -269,7 +269,7 @@ contract BaseElectionModule is
 
         election.ballotPtrs.push(ballotPtr);
 
-        emit VoteRecorded(msg.sender, precinct, lastElectionId, ballot.votingPower);
+        emit VoteRecorded(msg.sender, precinct, currentElectionId, ballot.votingPower);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
@@ -282,7 +282,7 @@ contract BaseElectionModule is
 
         _evaluateNextBallotBatch(numBallots);
 
-        uint currentEpochIndex = Council.load().lastElectionId;
+        uint currentEpochIndex = Council.load().currentElectionId;
 
         uint totalBallots = election.ballotPtrs.length;
         if (election.numEvaluatedBallots < totalBallots) {
@@ -306,7 +306,7 @@ contract BaseElectionModule is
 
         if (!election.evaluated) revert ElectionNotEvaluated();
 
-        uint newEpochIndex = store.lastElectionId + 1;
+        uint newEpochIndex = store.currentElectionId + 1;
 
         _removeAllCouncilMembers(newEpochIndex);
         _addCouncilMembers(election.winners.values(), newEpochIndex);
@@ -343,7 +343,7 @@ contract BaseElectionModule is
     }
 
     function getEpochIndex() external view override returns (uint) {
-        return Council.load().lastElectionId;
+        return Council.load().currentElectionId;
     }
 
     function getCurrentPeriod() external view override returns (uint) {
@@ -361,7 +361,7 @@ contract BaseElectionModule is
 
     function hasVoted(address user, uint256 precinct) public view override returns (bool) {
         Council.Data storage council = Council.load();
-        Ballot.Data storage ballot = Ballot.load(council.lastElectionId, user, precinct);
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, user, precinct);
         return ballot.votingPower > 0 && ballot.votedCandidates.length > 0;
     }
 
