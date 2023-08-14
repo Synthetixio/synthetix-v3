@@ -1,6 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+/**
+ * @title Market events used on several places in the system.
+ */
 interface IMarketEvents {
     /**
      * @notice Gets fired when the size of a market is updated by new orders or liquidations.

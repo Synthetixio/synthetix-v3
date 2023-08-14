@@ -30,7 +30,7 @@
 #### computeOrderFees
 
   ```solidity
-  function computeOrderFees(uint128 marketId, int128 sizeDelta) external view returns (uint256 orderFees)
+  function computeOrderFees(uint128 marketId, int128 sizeDelta) external view returns (uint256 orderFees, uint256 fillPrice)
   ```
 
   Simulates what the order fee would be for the given market with the specified size.
@@ -43,6 +43,24 @@
 
 **Returns**
 * `orderFees` (*uint256*) - incurred fees.
+* `fillPrice` (*uint256*) - price at which the order would be filled.
+#### requiredMarginForOrder
+
+  ```solidity
+  function requiredMarginForOrder(uint128 marketId, uint128 accountId, int128 sizeDelta) external view returns (uint256 requiredMargin)
+  ```
+
+  For a given market, account id, and a position size, returns the required total account margin for this order to succeed
+
+  Useful for integrators to determine if an order will succeed or fail
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+* `accountId` (*uint128*) - id of the trader account.
+* `sizeDelta` (*int128*) - size of position.
+
+**Returns**
+* `requiredMargin` (*uint256*) - margin required for the order to succeed.
 
 #### OrderCommitted
 
@@ -62,6 +80,22 @@
 * `expirationTime` (*uint256*) - Time at which the order expired.
 * `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
 * `sender` (*address*) - address of the sender of the order. Authorized to commit by account owner.
+
+#### PreviousOrderExpired
+
+  ```solidity
+  event PreviousOrderExpired(uint128 marketId, uint128 accountId, int128 sizeDelta, uint256 acceptablePrice, uint256 settlementTime, bytes32 trackingCode)
+  ```
+
+  Gets fired when a new order is committed while a previous one was expired.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+* `sizeDelta` (*int128*) - requested change in size of the order sent by the user.
+* `acceptablePrice` (*uint256*) - maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
+* `settlementTime` (*uint256*) - Time at which the order can be settled.
+* `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
 
 ### Async Order Settlement Module
 
@@ -347,11 +381,20 @@
   function liquidate(uint128 accountId) external
   ```
 
+  Liquidates an account.
+
+  according to the current situation and account size it can be a partial or full liquidation.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account to liquidate.
+
 #### liquidateFlagged
 
   ```solidity
   function liquidateFlagged() external
   ```
+
+  Liquidates all flagged accounts.
 
 #### PositionLiquidated
 
@@ -359,11 +402,28 @@
   event PositionLiquidated(uint128 accountId, uint128 marketId, uint256 amountLiquidated, int128 currentPositionSize)
   ```
 
+  Gets fired when an account position is liquidated .
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account liquidated.
+* `marketId` (*uint128*) - Id of the position's market.
+* `amountLiquidated` (*uint256*) - amount liquidated.
+* `currentPositionSize` (*int128*) - position size after liquidation.
+
 #### AccountLiquidated
 
   ```solidity
   event AccountLiquidated(uint128 accountId, uint256 reward, bool fullLiquidation)
   ```
+
+  Gets fired when an account is liquidated.
+
+  this event is fired once per liquidation tx after the each position that can be liquidated at the time was liquidated.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account liquidated.
+* `reward` (*uint256*) - total reward sent to liquidator.
+* `fullLiquidation` (*bool*) - flag indicating if it was a partial or full liquidation.
 
 ### Market Configuration Module
 
@@ -825,11 +885,22 @@
   function initializeFactory() external returns (uint128)
   ```
 
+  Initializes the factory.
+
+  this function should be called only once.
+
+**Returns**
+* `[0]` (*uint128*) - globalPerpsMarketId Id of the global perps market id.
 #### setSynthetix
 
   ```solidity
   function setSynthetix(contract ISynthetixSystem synthetix) external
   ```
+
+  Sets the synthetix system.
+
+**Parameters**
+* `synthetix` (*contract ISynthetixSystem*) - address of the main synthetix proxy.
 
 #### setSpotMarket
 
@@ -837,12 +908,26 @@
   function setSpotMarket(contract ISpotMarketSystem spotMarket) external
   ```
 
+  Sets the spot market system.
+
+**Parameters**
+* `spotMarket` (*contract ISpotMarketSystem*) - address of the spot market proxy.
+
 #### createMarket
 
   ```solidity
   function createMarket(uint128 requestedMarketId, string marketName, string marketSymbol) external returns (uint128)
   ```
 
+  Creates a new market.
+
+**Parameters**
+* `requestedMarketId` (*uint128*) - id of the market to create.
+* `marketName` (*string*) - name of the market to create.
+* `marketSymbol` (*string*) - symbol of the market to create.
+
+**Returns**
+* `[0]` (*uint128*) - perpsMarketId Id of the created perps market.
 #### name
 
   ```solidity
@@ -887,11 +972,23 @@
   event FactoryInitialized(uint128 globalPerpsMarketId)
   ```
 
+  Gets fired when the factory is initialized.
+
+**Parameters**
+* `globalPerpsMarketId` (*uint128*) - the new global perps market id.
+
 #### MarketCreated
 
   ```solidity
   event MarketCreated(uint128 perpsMarketId, string marketName, string marketSymbol)
   ```
+
+  Gets fired when a market is created.
+
+**Parameters**
+* `perpsMarketId` (*uint128*) - the newly created perps market id.
+* `marketName` (*string*) - the newly created perps market name.
+* `marketSymbol` (*string*) - the newly created perps market symbol.
 
 ### Perps Market Module
 
@@ -901,48 +998,107 @@
   function metadata(uint128 marketId) external view returns (string name, string symbol)
   ```
 
+  Gets a market metadata.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `name` (*string*) - Name of the market.
+* `symbol` (*string*) - Symbol of the market.
 #### skew
 
   ```solidity
   function skew(uint128 marketId) external view returns (int256)
   ```
 
+  Gets a market's skew.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `[0]` (*int256*) - skew Skew of the market.
 #### size
 
   ```solidity
   function size(uint128 marketId) external view returns (uint256)
   ```
 
+  Gets a market's size.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `[0]` (*uint256*) - size Size of the market.
 #### maxOpenInterest
 
   ```solidity
   function maxOpenInterest(uint128 marketId) external view returns (uint256)
   ```
 
+  Gets a market's max open interest.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `[0]` (*uint256*) - maxOpenInterest Max open interest of the market.
 #### currentFundingRate
 
   ```solidity
   function currentFundingRate(uint128 marketId) external view returns (int256)
   ```
 
+  Gets a market's current funding rate.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `[0]` (*int256*) - currentFundingRate Current funding rate of the market.
 #### currentFundingVelocity
 
   ```solidity
   function currentFundingVelocity(uint128 marketId) external view returns (int256)
   ```
 
+  Gets a market's current funding velocity.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `[0]` (*int256*) - currentFundingVelocity Current funding velocity of the market.
 #### indexPrice
 
   ```solidity
   function indexPrice(uint128 marketId) external view returns (uint256)
   ```
 
+  Gets a market's index price.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `[0]` (*uint256*) - indexPrice Index price of the market.
 #### fillPrice
 
   ```solidity
   function fillPrice(uint128 marketId, int128 orderSize, uint256 price) external returns (uint256)
   ```
 
+  Gets a market's fill price for a specific order size and index price.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+* `orderSize` (*int128*) - Order size.
+* `price` (*uint256*) - Index price.
+
+**Returns**
+* `[0]` (*uint256*) - price Fill price.
 #### getMarketSummary
 
   ```solidity
@@ -950,4 +1106,10 @@
   ```
 
   Given a marketId return a market's summary details in one call.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market.
+
+**Returns**
+* `summary` (*struct IPerpsMarketModule.MarketSummary*) - Market summary (see MarketSummary).
 
