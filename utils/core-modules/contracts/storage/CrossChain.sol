@@ -9,7 +9,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
 
 /**
- * @title System wide configuration for anything
+ * @title System wide configuration for anything related to cross-chain
  */
 library CrossChain {
     using SetUtil for SetUtil.UintSet;
