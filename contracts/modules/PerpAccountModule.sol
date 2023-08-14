@@ -6,11 +6,15 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+
 import "../interfaces/IPerpAccountModule.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
+    using DecimalMath for uint256;
 
     /**
      * @inheritdoc IPerpAccountModule
@@ -62,7 +66,33 @@ contract PerpAccountModule is IPerpAccountModule {
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.PositionDigest memory) {
-        // TODO: Implement me
+    ) public view returns (IPerpAccountModule.PositionDigest memory) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage position = market.positions[accountId];
+
+        uint256 price = market.getOraclePrice();
+        (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) = position
+            .getHealthFactor(
+                market,
+                Margin.getMarginUsd(accountId, market, price),
+                price,
+                PerpMarketConfiguration.load(marketId)
+            );
+        uint256 notional = MathUtil.abs(position.size).mulDecimal(price);
+
+        return
+            IPerpAccountModule.PositionDigest(
+                accountId,
+                marketId,
+                remainingMarginUsd,
+                healthFactor,
+                notional,
+                pnl,
+                accruedFunding,
+                position.entryPrice,
+                price,
+                position.size
+            );
     }
 }
