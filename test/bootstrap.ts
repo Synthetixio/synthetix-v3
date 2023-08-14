@@ -233,7 +233,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   };
   let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
 
-  before('configure collaterals and their prices', async () => {
+  before('configure margin collaterals and their prices', async () => {
     collaterals = await configureCollateral();
   });
 

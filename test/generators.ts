@@ -48,7 +48,7 @@ export const genBootstrap = () => ({
   },
   global: {
     priceDivergencePercent: wei(genFloat(0.1, 0.3)).toBN(),
-    pythPublishTimeMin: 6,
+    pythPublishTimeMin: 8,
     pythPublishTimeMax: 12,
     minOrderAge: 12,
     maxOrderAge: 60,
