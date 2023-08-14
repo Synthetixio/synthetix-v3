@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
@@ -45,8 +46,12 @@ describe('UpgradeProposalModule', function () {
         NewImplementation = await factory.deploy();
       });
 
-      it('reverts', async function () {
+      before('call to upgradeTo', async function () {
         await c.CoreProxy.upgradeTo(NewImplementation.address);
+      });
+
+      it('saves the value', async function () {
+        assert.equal(await c.CoreProxy.getProposedImplementation(), NewImplementation.address);
       });
     });
   });
