@@ -264,13 +264,13 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function getFillPrice(uint128 marketId, int128 sizeDelta) external view returns (uint256) {
+    function getFillPrice(uint128 marketId, int128 size) external view returns (uint256) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return
             Order.getFillPrice(
                 market.skew,
                 PerpMarketConfiguration.load(marketId).skewScale,
-                sizeDelta,
+                size,
                 market.getOraclePrice()
             );
     }

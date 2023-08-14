@@ -106,7 +106,7 @@ interface IOrderModule is IBasePerpMarket {
      *
      * More can be read in SIP-279.
      */
-    function getFillPrice(uint128 marketId, int128 sizeDelta) external view returns (uint256);
+    function getFillPrice(uint128 marketId, int128 size) external view returns (uint256);
 
     /**
      * @dev Returns the oracle price given the `marketId`.
