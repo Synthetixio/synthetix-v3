@@ -4,7 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {MockPyth as BaseMockPyth} from "@synthetixio/oracle-manager/contracts/mocks/pyth/MockPyth.sol";
 
 /**
- * @title Module for connecting to other systems.
+ * @title Mocked Pyth.
  * See oracle-manager/../MockPyth
  */
 contract MockPyth is BaseMockPyth {

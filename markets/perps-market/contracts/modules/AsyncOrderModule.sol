@@ -16,7 +16,7 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 
 /**
- * @title Module for committing and settling async orders.
+ * @title Module for committing async orders.
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
