@@ -88,16 +88,15 @@ export const genMarket = () => ({
 });
 
 /**
- * Generate a limit price 1 - 5% within the oracle price. The limit will be higher (long) or lower (short).
+ * Generate a limit price 5 - 10% within the oracle price. The limit will be higher (long) or lower (short).
  */
-export const genLimitPrice = (sizeDelta: BigNumber, oraclePrice: BigNumber) =>
-  sizeDelta.lt(0)
-    ? wei(oraclePrice)
-        .mul(1 + genFloat(-0.01, -0.05))
-        .toBN()
-    : wei(oraclePrice)
-        .mul(1 + genFloat(0.01, 0.05))
-        .toBN();
+export const genLimitPrice = (sizeDelta: BigNumber, oraclePrice: BigNumber) => {
+  const priceImpactPercentage = genFloat(0.05, 0.1);
+  const limitPrice = sizeDelta.lt(0)
+    ? wei(oraclePrice).mul(1 - priceImpactPercentage)
+    : wei(oraclePrice).mul(1 + priceImpactPercentage);
+  return limitPrice.toBN();
+};
 
 // --- Higher level generators --- //
 
