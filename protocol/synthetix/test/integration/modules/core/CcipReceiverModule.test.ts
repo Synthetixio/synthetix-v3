@@ -3,10 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import {
-  bn,
-  bootstrapWithStakedPool,
-} from '../../../../../protocol/synthetix/test/integration/bootstrap';
+import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
 describe('CcipReceiverModule', function () {
   const { owner, signers, systems, staker, accountId, poolId, collateralAddress } =

@@ -40,6 +40,9 @@ artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
+[contract.CcipReceiverModule]
+artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
+
 [contract.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 
@@ -96,6 +99,7 @@ contracts = [
     "AccountModule",
     "AssociateDebtModule",
     "AssociatedSystemsModule",
+    "CcipReceiverModule",
     "CollateralModule",
     "CollateralConfigurationModule",
     "CrossChainModule",
@@ -118,6 +122,7 @@ depends = [
   "contract.AccountModule",
   "contract.AssociateDebtModule",
   "contract.AssociatedSystemsModule",
+  "contract.CcipReceiverModule",
   "contract.CollateralModule",
   "contract.CollateralConfigurationModule",
   "contract.CrossChainModule",
