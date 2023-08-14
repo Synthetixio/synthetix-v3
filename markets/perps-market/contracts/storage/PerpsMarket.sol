@@ -310,4 +310,11 @@ library PerpsMarket {
 
         return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
     }
+
+    function accountPosition(
+        uint128 marketId,
+        uint128 accountId
+    ) internal view returns (Position.Data storage position) {
+        position = load(marketId).positions[accountId];
+    }
 }
