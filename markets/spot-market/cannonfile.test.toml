@@ -1,5 +1,5 @@
-name = "synthetix-spot-market"
-version = "<%= package.version %>-testable"
+name = "synthetix-spot-market-testable"
+version = "<%= package.version %>"
 description = "Spot market implementation"
 
 [setting.coreProxyOwner]
@@ -11,7 +11,7 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.version %>-testable"
+defaultValue = "synthetix-testable:<%= package.version %>"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"

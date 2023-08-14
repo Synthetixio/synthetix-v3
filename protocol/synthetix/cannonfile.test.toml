@@ -1,6 +1,7 @@
 # overrides to create a testable deployment of the core system
 
-version = "<%= package.version %>-testable"
+name = "synthetix-testable"
+version = "<%= package.version %>"
 
 include = [
   "cannonfile.toml"
