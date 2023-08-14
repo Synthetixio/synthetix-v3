@@ -7,6 +7,7 @@ import type { genTrader } from './generators';
 
 type Bs = ReturnType<typeof bootstrap>;
 
+/** Given generated trade meta, deposit collateral and return trader. */
 export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) => {
   const { trader, market, collateral, collateralDepositAmount } = await tr;
   const { PerpMarketProxy } = bs.systems();
@@ -27,6 +28,7 @@ export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) =>
   return tr;
 };
 
+/** Generic update on market specific params */
 export const setMarketConfigurationById = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
@@ -40,4 +42,31 @@ export const setMarketConfigurationById = async (
   await tx.wait();
 
   return await PerpMarketProxy.getMarketConfigurationById(marketId);
+};
+
+/** Update market's Pyth and CL oracle price, given the price and time of update. */
+export const getPythPriceData = async (
+  bs: ReturnType<typeof bootstrap>,
+  marketId: BigNumber,
+  price: number,
+  publishTime?: number,
+  priceExpo = -4,
+  priceConfidence = 1
+) => {
+  const { systems } = bs;
+  const { PythMock, PerpMarketProxy } = systems();
+
+  const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
+  const updateData = await PythMock.createPriceFeedUpdateData(
+    config.pythPriceFeedId,
+    price,
+    priceConfidence,
+    priceExpo,
+    price,
+    priceConfidence,
+    publishTime ?? Math.floor(Date.now() / 1000)
+  );
+  const updateFee = await PythMock.getUpdateFee([updateData]);
+
+  return { updateData, updateFee };
 };

@@ -272,6 +272,7 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   return {
     ...core,
+    args,
     traders: () => traders,
     keeper: () => keeper,
     restore,
