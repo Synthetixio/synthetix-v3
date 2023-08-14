@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./IBasePerpMarket.sol";
+import {Order} from "../storage/Order.sol";
 
 interface IOrderModule is IBasePerpMarket {
     // --- Events --- //
@@ -61,6 +62,11 @@ interface IOrderModule is IBasePerpMarket {
     function cancelOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
+
+    /**
+     * @dev Returns the order belonging to `accountId` in `marketId`.
+     */
+    function getOrder(uint128 accountId, uint128 marketId) external view returns (Order.Data memory);
 
     /**
      * @dev Given details about a trader, simulate a what would happen if the order were to be committed.

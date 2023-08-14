@@ -190,7 +190,7 @@ contract OrderModule is IOrderModule {
         Order.Data storage order = market.orders[accountId];
 
         // No order available to settle.
-        if (order.sizeDelta != 0) {
+        if (order.sizeDelta == 0) {
             revert ErrorUtil.OrderNotFound(accountId);
         }
 
@@ -234,6 +234,15 @@ contract OrderModule is IOrderModule {
         // TODO: Consider removing cancellations. Do we need it?
         //
         // If an order is stale, on next settle, we can simply wipe the order, emit event, start new order.
+    }
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function getOrder(uint128 accountId, uint128 marketId) external view returns (Order.Data memory) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return market.orders[accountId];
     }
 
     /**
