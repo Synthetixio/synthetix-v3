@@ -12,8 +12,8 @@ interface IMarketConfigurationModule {
     // @dev See PerpMarketConfiguration.GlobalData
     struct ConfigureParameters {
         uint128 priceDivergencePercent;
-        int128 pythPublishTimeMin;
-        int128 pythPublishTimeMax;
+        uint128 pythPublishTimeMin;
+        uint128 pythPublishTimeMax;
         uint128 minOrderAge;
         uint128 maxOrderAge;
         uint256 minKeeperFeeUsd;

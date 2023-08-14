@@ -87,40 +87,32 @@ contract OrderModule is IOrderModule {
      */
     function validateOrderPriceReadiness(
         PerpMarketConfiguration.GlobalData storage globalConfig,
-        PerpMarket.Data storage market,
         uint256 commitmentTime,
         uint256 publishTime,
         Position.TradeParams memory params
     ) private view {
-        uint128 minOrderAge = globalConfig.minOrderAge;
-        uint128 maxOrderAge = globalConfig.maxOrderAge;
-
         // The publishTime is _before_ the commitmentTime
         if (publishTime < commitmentTime) {
             revert ErrorUtil.StalePrice();
         }
         // Stale order can only be canceled.
-        if (block.timestamp - commitmentTime > maxOrderAge) {
+        if (block.timestamp - commitmentTime > globalConfig.maxOrderAge) {
             revert ErrorUtil.StaleOrder();
         }
-        // publishTime commitmentTime delta must be at least minAge.
-        if (publishTime - commitmentTime < minOrderAge) {
+        // Minimum block.timestamp must pass before allowing this operation.
+        if (block.timestamp < globalConfig.minOrderAge) {
             revert ErrorUtil.OrderNotReady();
         }
 
-        // publishTime must be within `ct + minAge + ptm <= pt <= ct + maxAge + ptm'`
+        // Time delta must be within pythPublishTimeMin and pythPublishTimeMax.
         //
-        // ct     = commitmentTime
-        // pt     = publishTime
-        // minAge = minimum time passed (not ready)
-        // maxAge = maximum time passed (stale)
-        // ptm    = publishTimeMin
-        // ptm'   = publishTimeMax
-        uint256 ctptd = publishTime - commitmentTime; // ctptd is commitmentTimePublishTimeDelta
-        if (ctptd < (commitmentTime.toInt() + minOrderAge.toInt() + globalConfig.pythPublishTimeMin).toUint()) {
-            revert ErrorUtil.InvalidPrice();
-        }
-        if (ctptd > (commitmentTime.toInt() + maxOrderAge.toInt() + globalConfig.pythPublishTimeMax).toUint()) {
+        // If `minOrderAge` is 12s then publishTime must be between 8 and 12 (inclusive). When inferring
+        // this parameter off-chain and prior to configuration, it must look at `minOrderAge` to a relative value.
+        uint256 publishCommitmentTimeDelta = publishTime - commitmentTime;
+        if (
+            publishCommitmentTimeDelta < globalConfig.pythPublishTimeMin ||
+            publishCommitmentTimeDelta > globalConfig.pythPublishTimeMax
+        ) {
             revert ErrorUtil.InvalidPrice();
         }
 
@@ -132,17 +124,6 @@ contract OrderModule is IOrderModule {
             (params.sizeDelta < 0 && params.fillPrice < params.limitPrice)
         ) {
             revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
-        }
-
-        // Ensure pythPrice does not deviate too far from oracle price.
-        //
-        // NOTE: `params.oraclePrice` is the pythPrice on settlement.
-        uint256 oraclePrice = market.getOraclePrice();
-        uint256 priceDivergence = oraclePrice > params.oraclePrice
-            ? oraclePrice / params.oraclePrice - DecimalMath.UNIT
-            : params.oraclePrice / oraclePrice - DecimalMath.UNIT;
-        if (priceDivergence > globalConfig.priceDivergencePercent) {
-            revert ErrorUtil.PriceDivergenceTooHigh(oraclePrice, params.oraclePrice);
         }
     }
 
@@ -214,7 +195,7 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(globalConfig, market, order.commitmentTime, publishTime, params);
+        validateOrderPriceReadiness(globalConfig, order.commitmentTime, publishTime, params);
 
         recomputeFunding(market, pythPrice);
 

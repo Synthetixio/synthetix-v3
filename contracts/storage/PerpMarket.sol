@@ -178,8 +178,7 @@ library PerpMarket {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
 
         // @see: external/pyth/IPyth.sol for more details.
-        uint256 maxAge = (commitmentTime.toInt() + globalConfig.minOrderAge.toInt() + globalConfig.pythPublishTimeMax)
-            .toUint();
+        uint256 maxAge = commitmentTime + globalConfig.pythPublishTimeMax;
         PythStructs.Price memory latestPrice = globalConfig.pyth.getPriceNoOlderThan(
             marketConfig.pythPriceFeedId,
             maxAge

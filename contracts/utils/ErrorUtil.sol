@@ -11,9 +11,6 @@ library ErrorUtil {
     // @dev Thrown when a price is not acceptable.
     error InvalidPrice();
 
-    // @dev Thrown when Pyth price and on-chain price deviates too far.
-    error PriceDivergenceTooHigh(uint256 p1, uint256 p2);
-
     // @dev Thrown when an expected order cannot be found.
     error OrderNotFound(uint128 accountId);
 

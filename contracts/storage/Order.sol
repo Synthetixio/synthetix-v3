@@ -29,17 +29,16 @@ library Order {
     /**
      * @dev See IOrderModule.fillPrice
      */
-    function getFillPrice(
-        int128 skew,
-        uint128 skewScale,
-        int128 sizeDelta,
-        uint256 oraclePrice
-    ) internal pure returns (uint256) {
-        int256 oraclePriceI = oraclePrice.toInt();
+    function getFillPrice(int128 skew, uint128 skewScale, int128 size, uint256 price) internal pure returns (uint256) {
+        // Calculate pd (premium/discount) before and after trade
         int256 pdBefore = skew.divDecimal(skewScale.toInt());
-        int256 pdAfter = (skew + sizeDelta).divDecimal(skewScale.toInt());
-        int256 priceBefore = oraclePriceI + (oraclePriceI.mulDecimal(pdBefore));
-        int256 priceAfter = oraclePriceI + (oraclePriceI.mulDecimal(pdAfter));
+        int256 pdAfter = (skew + size).divDecimal(skewScale.toInt());
+
+        // Calculate price before and after trade with pd applied
+        int256 priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
+        int256 priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+
+        // fillPrice is the average of those prices.
         return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
