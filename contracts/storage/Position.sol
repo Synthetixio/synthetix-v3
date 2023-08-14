@@ -362,17 +362,17 @@ library Position {
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256) {
-        (uint256 healthFactor, , , ) = getHealthFactor(
-            market,
-            self.size,
-            self.entryPrice,
-            self.entryFundingAccrued,
-            marginUsd,
-            price,
-            marketConfig
-        );
-        return healthFactor;
+    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+        return
+            getHealthFactor(
+                market,
+                self.size,
+                self.entryPrice,
+                self.entryFundingAccrued,
+                marginUsd,
+                price,
+                marketConfig
+            );
     }
 
     /**
@@ -388,7 +388,10 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-        return getHealthFactor(self, market, marginUsd, price, marketConfig) <= DecimalMath.UNIT;
+
+        (uint256 healthFactor, , , ) = getHealthFactor(self, market, marginUsd, price, marketConfig);
+
+        return healthFactor <= DecimalMath.UNIT;
     }
 
     /**
