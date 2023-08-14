@@ -51,12 +51,18 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         store.oracle = synthetix.getOracleManager();
     }
 
+    /**
+     * @inheritdoc IPerpsMarketFactoryModule
+     */
     function setSpotMarket(ISpotMarketSystem spotMarket) external override {
         OwnableStorage.onlyOwner();
 
         PerpsMarketFactory.load().spotMarket = spotMarket;
     }
 
+    /**
+     * @inheritdoc IPerpsMarketFactoryModule
+     */
     function initializeFactory() external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
         OwnableStorage.onlyOwner();
@@ -99,6 +105,9 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return requestedMarketId;
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     // solc-ignore-next-line func-mutability
     function name(uint128 perpsMarketId) external view override returns (string memory) {
         // todo: set name on initialize?
@@ -106,6 +115,9 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return "Perps Market";
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function reportedDebt(uint128 perpsMarketId) external view override returns (uint256) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
@@ -131,6 +143,9 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         return 0;
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function minimumCredit(uint128 perpsMarketId) external view override returns (uint256) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 

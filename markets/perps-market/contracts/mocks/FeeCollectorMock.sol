@@ -3,6 +3,9 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "../interfaces/external/IFeeCollector.sol";
 
+/**
+ * @title Mock Fee Collector.
+ */
 contract FeeCollectorMock is IFeeCollector {
     uint internal feeRatioD18;
 
