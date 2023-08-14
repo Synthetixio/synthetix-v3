@@ -20,7 +20,7 @@ interface IPerpAccountModule {
         // @dev Array of data pertaining to deposited collateral
         IPerpAccountModule.DepositedCollateral[] collateral;
         // @dev Notional value of deposited collateral in USD.
-        uint256 notionalValueUsd;
+        uint256 collateralUsd;
         // @dev Struct of order if one is pending, default values if none.
         Order.Data order;
         // @dev Struct of position if one is open, default values if none.
