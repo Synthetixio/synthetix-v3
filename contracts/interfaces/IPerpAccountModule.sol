@@ -23,10 +23,8 @@ interface IPerpAccountModule {
         uint256 collateralUsd;
         // @dev Struct of order if one is pending, default values if none.
         Order.Data order;
-        // @dev Struct of position if one is open, default values if none.
-        Position.Data position;
-        // @dev Health factor for position in market if a position is open
-        uint256 healthFactor;
+        // @dev Struct of PositionDigest if a position is open, default values if none.
+        PositionDigest position;
     }
 
     struct PositionDigest {

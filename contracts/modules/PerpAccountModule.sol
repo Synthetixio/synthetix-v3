@@ -44,19 +44,12 @@ contract PerpAccountModule is IPerpAccountModule {
             }
         }
 
-        Position.Data storage position = market.positions[accountId];
         return
             IPerpAccountModule.AccountDigest(
                 collateral,
                 Margin.getCollateralUsd(accountId, marketId),
                 market.orders[accountId],
-                position,
-                position.getHealthFactor(
-                    market,
-                    Margin.getMarginUsd(accountId, market, market.getOraclePrice()),
-                    market.getOraclePrice(),
-                    PerpMarketConfiguration.load(marketId)
-                )
+                getPositionDigest(accountId, marketId)
             );
     }
 
