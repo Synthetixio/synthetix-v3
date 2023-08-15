@@ -7,10 +7,17 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {IPerpsMarketModule} from "../interfaces/IPerpsMarketModule.sol";
 
+/**
+ * @title Module for getting perps market information.
+ * @dev See IPerpsMarketModule.
+ */
 contract PerpsMarketModule is IPerpsMarketModule {
     using PerpsMarket for PerpsMarket.Data;
     using AsyncOrder for AsyncOrder.Data;
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function metadata(
         uint128 marketId
     ) external view override returns (string memory name, string memory symbol) {
@@ -18,30 +25,51 @@ contract PerpsMarketModule is IPerpsMarketModule {
         return (market.name, market.symbol);
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function skew(uint128 marketId) external view override returns (int256) {
         return PerpsMarket.load(marketId).skew;
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function size(uint128 marketId) external view override returns (uint256) {
         return PerpsMarket.load(marketId).size;
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function maxOpenInterest(uint128 marketId) external view override returns (uint256) {
         return PerpsMarketConfiguration.load(marketId).maxMarketSize;
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function currentFundingRate(uint128 marketId) external view override returns (int) {
         return PerpsMarket.load(marketId).currentFundingRate();
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function currentFundingVelocity(uint128 marketId) external view override returns (int) {
         return PerpsMarket.load(marketId).currentFundingVelocity();
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function indexPrice(uint128 marketId) external view override returns (uint) {
         return PerpsPrice.getCurrentPrice(marketId);
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function fillPrice(
         uint128 marketId,
         int128 orderSize,
@@ -56,6 +84,9 @@ contract PerpsMarketModule is IPerpsMarketModule {
             );
     }
 
+    /**
+     * @inheritdoc IPerpsMarketModule
+     */
     function getMarketSummary(
         uint128 marketId
     ) external view override returns (MarketSummary memory summary) {

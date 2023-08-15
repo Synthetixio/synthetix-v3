@@ -62,7 +62,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when fill price exceeds the acceptable price set at submission.
      */
-    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
+    error AcceptablePriceExceeded(uint256 fillPrice, uint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
@@ -152,22 +152,8 @@ library AsyncOrder {
     }
 
     /**
-     * @dev Reverts if the order does not belongs to the market or not exists. Otherwise, returns the order.
-     * @dev non-existent order is considered an order with sizeDelta == 0.
-     */
-    function createValid(
-        OrderCommitmentRequest memory newRequest,
-        SettlementStrategy.Data storage strategy
-    ) internal returns (Data storage order) {
-        order = checkPendingOrder(newRequest.accountId);
-
-        order.settlementTime = block.timestamp + strategy.settlementDelay;
-        order.request = newRequest;
-    }
-
-    /**
      * @dev Reverts if there is a pending order.
-     * @dev A pending order is one that has a sizeDelta or isn't expired yet.
+     * @dev A pending order is one that has a sizeDelta and isn't expired yet.
      */
     function checkPendingOrder(uint128 accountId) internal view returns (Data storage order) {
         order = load(accountId);
@@ -328,7 +314,7 @@ library AsyncOrder {
             revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
         }
 
-        oldPosition = PerpsMarket.load(runtime.marketId).positions[runtime.accountId];
+        oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
@@ -339,7 +325,7 @@ library AsyncOrder {
 
         runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
         runtime.totalRequiredMargin =
-            _getRequiredMarginWithNewPosition(
+            getRequiredMarginWithNewPosition(
                 marketConfig,
                 runtime.marketId,
                 oldPosition.size,
@@ -466,7 +452,7 @@ library AsyncOrder {
      * @notice After the required margins are calculated with the old position, this function replaces the
      * old position data with the new position margin requirements and returns them.
      */
-    function _getRequiredMarginWithNewPosition(
+    function getRequiredMarginWithNewPosition(
         PerpsMarketConfiguration.Data storage marketConfig,
         uint128 marketId,
         int128 oldPositionSize,
