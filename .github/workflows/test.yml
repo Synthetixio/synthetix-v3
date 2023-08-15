@@ -46,9 +46,9 @@ jobs:
       - name: Cache Hardhat artifacts
         uses: actions/cache@v3
         with:
-          key: hardhat-${{ matrix.workspace }}-${{ env.GITHUB_REF }}-${{ steps.date.outputs.date }}
+          key: hardhat-${{ matrix.workspace }}-${{ github.head_ref }}-${{ steps.date.outputs.date }}
           restore-keys: |
-            hardhat-${{ matrix.workspace }}-${{ env.GITHUB_REF }}
+            hardhat-${{ matrix.workspace }}-${{ github.head_ref }}
             hardhat-${{ matrix.workspace }}
           path: |
             markets/**/cache
@@ -60,9 +60,9 @@ jobs:
       - name: Cache Cannon packages
         uses: actions/cache@v3
         with:
-          key: cannon-${{ matrix.workspace }}-${{ env.GITHUB_REF }}-${{ steps.date.outputs.date }}
+          key: cannon-${{ matrix.workspace }}-${{ github.head_ref }}-${{ steps.date.outputs.date }}
           restore-keys: |
-            cannon-${{ matrix.workspace }}-${{ env.GITHUB_REF }}
+            cannon-${{ matrix.workspace }}-${{ github.head_ref }}
             cannon-${{ matrix.workspace }}
           path: |
             ~/.local/share/cannon
