@@ -2,7 +2,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genInt, genOrder, genTrader } from '../../generators';
-import { depositMargin, getPythPriceData, setMarketConfigurationById } from '../../helpers';
+import { commitAndSettle, depositMargin, getPythPriceData, setMarketConfigurationById } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
@@ -245,8 +245,19 @@ describe('OrderModule', () => {
     it('should settle an order that flips from one side to the other');
 
     it('should have a position opened after settlement');
-    it('should remove older after settlement');
-    it('should update market size and skew upon settlement');
+
+    it('should update market size and skew upon settlement', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const marketDigest = await PerpMarketProxy.getMarketDigest(marketId);
+      assertBn.equal(marketDigest.size, order.sizeDelta.abs());
+      assertBn.equal(marketDigest.skew, order.sizeDelta);
+    });
 
     it('should commit order when price moves but new position still safe');
     it('should allow position reduction even if insufficient unless in liquidation');

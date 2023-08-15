@@ -117,4 +117,25 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
         return interfaceId == type(IMarket).interfaceId || interfaceId == this.supportsInterface.selector;
     }
+
+    // --- Views --- //
+
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
+    function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        return
+            IPerpMarketFactoryModule.MarketDigest(
+                market.name,
+                market.skew,
+                market.size,
+                market.getOraclePrice(),
+                market.getCurrentFundingVelocity(),
+                market.getCurrentFundingRate(),
+                market.lastLiquidationTime,
+                market.getRemainingLiquidatableSizeCapacity(marketConfig)
+            );
+    }
 }

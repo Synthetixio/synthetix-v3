@@ -4,12 +4,24 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
 
 interface IPerpMarketFactoryModule is IMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
         bytes32 name;
+    }
+
+    struct MarketDigest {
+        bytes32 name;
+        int128 skew;
+        uint128 size;
+        uint256 oraclePrice;
+        int256 fundingVelocity;
+        int256 currentFundingRate;
+        uint256 lastLiquidationTime;
+        uint256 remainingLiquidatableSizeCapacity;
     }
 
     // --- Mutative --- //
@@ -33,4 +45,9 @@ interface IPerpMarketFactoryModule is IMarket {
      * @dev Registers a new PerpMarket with Synthetix and initializes storage.
      */
     function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
+
+    /**
+     * @dev Returns a digest of a market given the `marketId`.
+     */
+    function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
 }
