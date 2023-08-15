@@ -37,8 +37,6 @@ contract MockExternalNode is IExternalNode {
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
-        return
-            interfaceId == type(IExternalNode).interfaceId ||
-            interfaceId == this.supportsInterface.selector;
+        return true
     }
 }
