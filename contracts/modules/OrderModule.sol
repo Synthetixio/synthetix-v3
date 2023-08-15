@@ -68,9 +68,7 @@ contract OrderModule is IOrderModule {
             )
         );
 
-        market.orders[accountId].update(
-            Order.Data(accountId, sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd)
-        );
+        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
         emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, trade.orderFee, trade.keeperFee);
     }
 
@@ -116,9 +114,9 @@ contract OrderModule is IOrderModule {
             revert ErrorUtil.InvalidPrice();
         }
 
-        // Ensure pythPrice based fillPrice is within limitPrice.
+        // Ensure pythPrice based fillPrice does not exceed limitPrice on the fill.
         //
-        // NOTE: When long then revert when `fillPrice < limitPrice`, when short then fillPrice < limitPrice`.
+        // NOTE: When long then revert when `fillPrice > limitPrice`, when short then fillPrice < limitPrice`.
         if (
             (params.sizeDelta > 0 && params.fillPrice > params.limitPrice) ||
             (params.sizeDelta < 0 && params.fillPrice < params.limitPrice)
