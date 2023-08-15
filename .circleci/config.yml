@@ -338,7 +338,7 @@ jobs:
       - yarn-install
       #      - wait-for-ipfs
 
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose run build:ts
+      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
       - run: yarn workspaces foreach --verbose run size-contracts
 
   lint:
