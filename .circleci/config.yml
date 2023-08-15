@@ -1,9 +1,74 @@
 version: 2.1
 
+parameters:
+  node-version:
+    type: string
+    default: "16.20.1"
+
 commands:
   yarn-install:
     steps:
       - run: yarn install --immutable --immutable-cache
+
+  install-foundry:
+    steps:
+      - restore_cache:
+          keys:
+            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+
+      - run:
+          name: "Install Foundry"
+          working_directory: ~/
+          environment:
+            SHELL: /bin/bash
+          command: |-
+            if [ command -v anvil ]; then
+              echo "Anvil already installed"
+              anvil --version
+            else
+              curl -L https://foundry.paradigm.xyz | bash
+              export PATH="$PATH:$HOME/.foundry/bin"
+              echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+              foundryup
+            fi
+
+      - save_cache:
+          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          paths:
+            - "~/.foundry"
+
+  install-ipfs:
+    steps:
+      - restore_cache:
+          keys:
+            - ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+
+      - run:
+          name: "Install IPFS"
+          working_directory: ~/
+          command: |
+            if [ command -v ipfs ]; then
+              echo "IPFS already installed"
+              ipfs version
+              ipfs id
+            else
+              LATEST_VERSION=$(curl -sSL https://dist.ipfs.tech/go-ipfs/versions | tail -n 1)
+              LATEST_VERSION_NUMBER=${LATEST_VERSION#*v}
+              DOWNLOAD_URL="https://dist.ipfs.tech/go-ipfs/${LATEST_VERSION}/go-ipfs_${LATEST_VERSION}_linux-amd64.tar.gz"
+              echo "DOWNLOAD_URL=$DOWNLOAD_URL"
+              curl -sSL -o ipfs.tar.gz $DOWNLOAD_URL
+              tar -xzf ipfs.tar.gz
+              export PATH="$PATH:$HOME/go-ipfs"
+              echo 'export PATH=$PATH:$HOME/go-ipfs' >> $BASH_ENV
+              rm -rf ~/.ipfs
+              ipfs init
+            fi
+
+      - save_cache:
+          key: ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+          paths:
+            - "~/go-ipfs"
+            - "~/.ipfs"
 
   run-ipfs-daemon:
     steps:
@@ -20,22 +85,23 @@ commands:
 jobs:
   build-testable:
     docker:
-      - image: noisekit/synthetix-cci:node-16.20.1
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
-      - run: echo export PATH="$PATH:$HOME/.foundry/bin:$HOME/go-ipfs" > $BASH_ENV
       - checkout
+      - install-foundry
+      - install-ipfs
       - run-ipfs-daemon
       - yarn-install
       - run: yarn workspaces foreach --topological-dev --verbose run build:ts
 
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CACHE_VERSION }}
+            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}
 
       - run: yarn workspaces foreach --topological-dev --verbose run build-testable
 
       - save_cache:
-          key: cannon-{{ .Environment.CACHE_VERSION }}
+          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}
           paths:
             - "~/.local/share/cannon"
 
@@ -44,11 +110,12 @@ jobs:
       workspace:
         type: string
     docker:
-      - image: noisekit/synthetix-cci:node-16.20.1
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     parallelism: 2
     steps:
-      - run: echo export PATH="$PATH:$HOME/.foundry/bin:$HOME/go-ipfs" > $BASH_ENV
       - checkout
+      - install-foundry
+      - install-ipfs
       - run-ipfs-daemon
       - yarn-install
 
@@ -56,7 +123,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CACHE_VERSION }}
+            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}
 
       - run:
           environment:
