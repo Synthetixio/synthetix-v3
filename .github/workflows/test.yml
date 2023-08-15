@@ -43,6 +43,7 @@ jobs:
       - name: Cache Cannon packages
         uses: actions/cache@v3
         with:
+          key: cannon-${{ matrix.workspace }}
           path: |
             ~/.local/share/cannon
 
