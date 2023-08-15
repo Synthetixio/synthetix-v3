@@ -340,7 +340,6 @@ describe('VaultModule', function () {
           .Core.connect(user1)
           .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
             maxDepositD18: bn(10),
-            collateralTypeDisabled: true,
             issuanceRatioD18: bn(0),
           });
       });
@@ -357,7 +356,9 @@ describe('VaultModule', function () {
               depositAmount.div(50),
               ethers.utils.parseEther('1')
             ),
-          `PoolCollateralIsDisabled("${collateralAddress()}", "${fakeVaultId}")`,
+          `PoolCollateralLimitExceeded("${fakeVaultId}", "${collateralAddress()}", "${depositAmount
+            .div(50)
+            .toString()}", "${bn(10).toString()}")`,
           systems().Core
         );
       });
@@ -367,7 +368,6 @@ describe('VaultModule', function () {
           .Core.connect(user1)
           .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
             maxDepositD18: bn(1000000),
-            collateralTypeDisabled: false,
             issuanceRatioD18: bn(0),
           });
       });
@@ -391,7 +391,6 @@ describe('VaultModule', function () {
           .Core.connect(owner)
           .setPoolCollateralConfiguration(poolId, collateralAddress(), {
             maxDepositD18: depositAmount.div(2),
-            collateralTypeDisabled: false,
             issuanceRatioD18: bn(0),
           });
       });
@@ -454,7 +453,6 @@ describe('VaultModule', function () {
             .Core.connect(owner)
             .setPoolCollateralConfiguration(poolId, collateralAddress(), {
               maxDepositD18: depositAmount.mul(10),
-              collateralTypeDisabled: false,
               issuanceRatioD18: bn(0),
             });
         });

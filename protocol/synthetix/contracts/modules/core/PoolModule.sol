@@ -200,6 +200,24 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
+    function disablePoolCollateralByDefault(uint128 poolId) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+
+        pool.collateralDisabledByDefault = true;
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function enablePoolCollateralByDefault(uint128 poolId) external override {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+
+        pool.collateralDisabledByDefault = false;
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
     function getPoolConfiguration(
         uint128 poolId
     ) external view override returns (MarketConfiguration.Data[] memory) {
@@ -226,17 +244,6 @@ contract PoolModule is IPoolModule {
         pool.name = name;
 
         emit PoolNameUpdated(poolId, name, msg.sender);
-    }
-
-    /**
-     * @inheritdoc IPoolModule
-     */
-    function isDelegationEnabledByPool(
-        uint128 poolId,
-        address collateral
-    ) external view override returns (bool) {
-        return
-            !Pool.loadExisting(poolId).collateralConfigurations[collateral].collateralTypeDisabled;
     }
 
     /**

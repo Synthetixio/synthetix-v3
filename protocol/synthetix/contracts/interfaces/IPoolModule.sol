@@ -119,6 +119,18 @@ interface IPoolModule {
     ) external;
 
     /**
+     * @notice Allows collaterals accepeted by the system will be accpeted by the pool by default
+     * @param poolId The id of the pool.
+     */
+    function enablePoolCollateralByDefault(uint128 poolId) external;
+
+    /**
+     * @notice Prevents collaterals accepeted by the system will not be accpeted by the pool by default
+     * @param poolId The id of the pool.
+     */
+    function disablePoolCollateralByDefault(uint128 poolId) external;
+
+    /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
      * @param poolId The id of the pool whose configuration is being queried.
      * @return markets The array of MarketConfiguration objects that describe the pool's configuration.
@@ -185,16 +197,6 @@ interface IPoolModule {
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
-
-    /**
-     @notice Shows if a given collateral type is enabled for deposits and delegation in a given pool.
-     * @param poolId The id of the pool for to check the collateral for.
-     * @param collateral The address of the collateral.
-     */
-    function isDelegationEnabledByPool(
-        uint128 poolId,
-        address collateral
-    ) external view returns (bool enabled);
 
     /**
      @notice returns a pool minimum issuance ratio

@@ -79,9 +79,6 @@ contract VaultModule is IVaultModule {
             // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
             CollateralConfiguration.collateralEnabled(collateralType);
 
-            // Check if delegation is enabled for the pool
-            Pool.load(poolId).checkDelegationEnabled(collateralType);
-
             Account.requireSufficientCollateral(
                 accountId,
                 collateralType,
