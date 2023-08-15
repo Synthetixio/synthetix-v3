@@ -1,5 +1,7 @@
+import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { bn } from '../utils';
+
+export const bn = (n: number) => wei(n).toBN();
 
 // A collection of reasonably realistic market parameters for BTC, ETH, SOL, OP, and ARB.
 export const MARKETS = [

@@ -2,10 +2,10 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
+import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
-import { genAddress, genBootstrap, genBytes32, genInt, genListOf, genOneOf, genTrader } from '../../generators';
+import { bn, genAddress, genBootstrap, genBytes32, genNumber, genListOf, genOneOf, genTrader } from '../../generators';
 import { depositMargin } from '../../helpers';
-import { bn, shuffle } from '../../utils';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -50,7 +50,7 @@ describe('MarginModule', async () => {
         const market = genOneOf(markets());
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
-        const amountDelta = bn(genInt(50, 100_000));
+        const amountDelta = bn(genNumber(50, 100_000));
         await collateral.mint(trader.signer.getAddress(), amountDelta);
         await collateral.approve(PerpMarketProxy.address, amountDelta);
 
@@ -78,12 +78,12 @@ describe('MarginModule', async () => {
         const { PerpMarketProxy } = systems();
 
         const trader = genOneOf(traders());
-        const invalidAccountId = genInt(42069, 50000);
+        const invalidAccountId = genNumber(42069, 50000);
 
         const market = genOneOf(markets());
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
-        const amountDelta = bn(genInt(50, 100_000));
+        const amountDelta = bn(genNumber(50, 100_000));
         await collateral.mint(trader.signer.getAddress(), amountDelta);
         await collateral.approve(PerpMarketProxy.address, amountDelta);
 
@@ -106,7 +106,7 @@ describe('MarginModule', async () => {
         const trader = genOneOf(traders());
         const market = genOneOf(markets());
         const invalidCollateralAddress = genAddress();
-        const amountDelta = bn(genInt(10, 100));
+        const amountDelta = bn(genNumber(10, 100));
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
@@ -127,7 +127,7 @@ describe('MarginModule', async () => {
         const marketId = market.marketId();
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
-        const depositAmountDelta = bn(genInt(500, 1000));
+        const depositAmountDelta = bn(genNumber(500, 1000));
         await collateral.mint(trader.signer.getAddress(), depositAmountDelta);
         await collateral.approve(PerpMarketProxy.address, depositAmountDelta);
 
@@ -179,8 +179,8 @@ describe('MarginModule', async () => {
         const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
 
         // Ensure the amount available is lower than amount to deposit (i.e. depositing more than available).
-        const amountToDeposit = bn(genInt(100, 1000));
-        const amountAvailable = amountToDeposit.sub(bn(genInt(50, 99)));
+        const amountToDeposit = bn(genNumber(100, 1000));
+        const amountAvailable = amountToDeposit.sub(bn(genNumber(50, 99)));
 
         await collateral.mint(trader.signer.getAddress(), amountAvailable);
         await collateral.approve(PerpMarketProxy.address, amountAvailable);
@@ -272,7 +272,7 @@ describe('MarginModule', async () => {
       it('should revert withdraw to an account that does not exist', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-        const invalidAccountId = bn(genInt(42069, 50_000));
+        const invalidAccountId = bn(genNumber(42069, 50_000));
 
         // Perform withdraw with zero address.
         await assertRevert(
@@ -343,8 +343,8 @@ describe('MarginModule', async () => {
 
       // `maxAllowables` to have _at least_ 6 elements to ensure there's _always_ a mismatch.
       const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
-      const oracleNodeIds = genListOf(genInt(1, 5), () => genBytes32());
-      const maxAllowables = genListOf(genInt(6, 10), () => bn(genInt(10_000, 100_000)));
+      const oracleNodeIds = genListOf(genNumber(1, 5), () => genBytes32());
+      const maxAllowables = genListOf(genNumber(6, 10), () => bn(genNumber(10_000, 100_000)));
 
       await assertRevert(
         PerpMarketProxy.connect(from).setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables),
@@ -360,7 +360,7 @@ describe('MarginModule', async () => {
       const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
       const n = collateralTypes.length;
       const oracleNodeIds = genListOf(n, () => genBytes32());
-      const maxAllowables = genListOf(n, () => bn(genInt(10_000, 100_000)));
+      const maxAllowables = genListOf(n, () => bn(genNumber(10_000, 100_000)));
 
       const tx = await PerpMarketProxy.connect(from).setCollateralConfiguration(
         collateralTypes,
@@ -413,7 +413,7 @@ describe('MarginModule', async () => {
       const from = owner();
       const zeroAddress = '0x0000000000000000000000000000000000000000';
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([zeroAddress], [genBytes32()], [bn(genInt())]),
+        PerpMarketProxy.connect(from).setCollateralConfiguration([zeroAddress], [genBytes32()], [bn(genNumber())]),
         'ZeroAddress'
       );
     });

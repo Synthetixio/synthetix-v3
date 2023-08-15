@@ -1,11 +1,11 @@
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genInt, genOrder, genTrader } from '../../generators';
-import { commitAndSettle, depositMargin, getPythPriceData, setMarketConfigurationById } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
+import { bootstrap } from '../../bootstrap';
+import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
+import { commitAndSettle, depositMargin, getPythPriceData, setMarketConfigurationById } from '../../helpers';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -217,7 +217,7 @@ describe('OrderModule', () => {
       const pythPublishTimeMin = config.pythPublishTimeMin.toNumber();
       const pythPublishTimeMax = config.pythPublishTimeMax.toNumber();
 
-      const publishTimeDelta = genInt(0, pythPublishTimeMax - pythPublishTimeMin);
+      const publishTimeDelta = genNumber(0, pythPublishTimeMax - pythPublishTimeMin);
       const settlementTime = commitmentTime + minOrderAge;
       const publishTime = settlementTime - publishTimeDelta;
 

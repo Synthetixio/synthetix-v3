@@ -14,8 +14,7 @@ import type { IMarketConfigurationModule } from './generated/typechain/MarketCon
 import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
-import { genInt } from './generators';
-import { bn } from './utils';
+import { genNumber, bn } from './generators';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
@@ -179,9 +178,9 @@ export const bootstrap = (args: BootstrapArgs) => {
   // Overall market allows up to n collaterals, each having their own oracle node.
   const configureCollateral = async () => {
     const collaterals = [
-      { contract: systems.CollateralMock, initialPrice: bn(genInt(25, 100)), max: bn(10_000_000) },
-      { contract: systems.Collateral2Mock, initialPrice: bn(genInt(1, 10)), max: bn(999_999) },
-      { contract: systems.Collateral3Mock, initialPrice: bn(genInt(1000, 5000)), max: bn(100_000) },
+      { contract: systems.CollateralMock, initialPrice: bn(genNumber(25, 100)), max: bn(10_000_000) },
+      { contract: systems.Collateral2Mock, initialPrice: bn(genNumber(1, 10)), max: bn(999_999) },
+      { contract: systems.Collateral3Mock, initialPrice: bn(genNumber(1000, 5000)), max: bn(100_000) },
     ];
     const collateralTypes = collaterals.map(({ contract }) => contract.address);
     const owner = getOwner();

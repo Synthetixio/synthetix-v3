@@ -3,8 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genMarket, genOneOf } from '../../generators';
-import { bn } from '../../utils';
+import { bn, genBootstrap, genMarket, genOneOf } from '../../generators';
 
 describe('MarketConfigurationModule', async () => {
   const bs = bootstrap(genBootstrap());

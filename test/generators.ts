@@ -2,8 +2,16 @@ import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
 import { wei } from '@synthetixio/wei';
 import { MARKETS } from './data/markets.fixture';
-import { bn, isNil, raise, shuffle } from './utils';
+import { shuffle, isNil, random } from 'lodash';
 import type { bootstrap } from './bootstrap';
+
+// --- Utils --- //
+
+export const raise = (err: string): never => {
+  throw new Error(err);
+};
+
+export const bn = (n: number) => wei(n).toBN();
 
 // --- Primitive generators --- //
 
@@ -32,8 +40,7 @@ export const genString = (
 export const genAddress = () => ethers.Wallet.createRandom().address;
 export const genMarketName = () => genString(3, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') + 'PERP';
 export const genBytes32 = () => ethers.utils.formatBytes32String(crypto.randomBytes(8).toString('hex'));
-export const genFloat = (min = 0, max = 1) => Math.random() * (max - min + 1) + min;
-export const genInt = (min = 0, max = 1) => Math.floor(genFloat(min, max));
+export const genNumber = (min = 0, max = 1) => random(min, max);
 
 // --- Composition --- //
 //
@@ -42,22 +49,22 @@ export const genInt = (min = 0, max = 1) => Math.floor(genFloat(min, max));
 // `genMarket` which doesn't necessarily depend on existing state and might be used for isolated cases.
 
 export const genBootstrap = () => ({
-  initialEthPrice: bn(genInt(1900, 2500)),
+  initialEthPrice: bn(genNumber(1900, 2500)),
   pool: {
-    initialCollateralPrice: bn(genInt(100, 10_000)),
+    initialCollateralPrice: bn(genNumber(100, 10_000)),
   },
   global: {
-    priceDivergencePercent: wei(genFloat(0.1, 0.3)).toBN(),
+    priceDivergencePercent: wei(genNumber(0.1, 0.3)).toBN(),
     pythPublishTimeMin: 8,
     pythPublishTimeMax: 12,
     minOrderAge: 12,
     maxOrderAge: 60,
-    minKeeperFeeUsd: bn(genInt(10, 15)),
-    maxKeeperFeeUsd: bn(genInt(50, 100)),
-    keeperProfitMarginPercent: wei(genFloat(0.1, 0.2)).toBN(),
+    minKeeperFeeUsd: bn(genNumber(10, 15)),
+    maxKeeperFeeUsd: bn(genNumber(50, 100)),
+    keeperProfitMarginPercent: wei(genNumber(0.1, 0.2)).toBN(),
     keeperSettlementGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
-    keeperLiquidationFeeUsd: bn(genInt(1, 5)),
+    keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
   },
   markets: shuffle(MARKETS),
 });
@@ -67,22 +74,22 @@ export const genBootstrap = () => ({
  */
 export const genMarket = () => ({
   name: ethers.utils.formatBytes32String(genMarketName()),
-  initialPrice: bn(genInt(1, 10_000)),
+  initialPrice: bn(genNumber(1, 10_000)),
   specific: {
     oracleNodeId: genBytes32(),
     pythPriceFeedId: genBytes32(),
-    makerFee: wei(genFloat(0.0001, 0.0005)).toBN(), // 1 - 5bps
-    takerFee: wei(genFloat(0.0006, 0.0008)).toBN(), // 1 - 8bps
-    maxMarketSize: bn(genInt(20_000, 50_000)),
-    maxFundingVelocity: bn(genInt(3, 9)),
-    minMarginUsd: bn(genInt(50, 60)),
-    minCreditPercent: bn(genFloat(1, 1.1)),
-    skewScale: bn(genInt(100_000, 500_000)),
-    minMarginRatio: bn(genFloat(0.01, 0.02)),
-    incrementalMarginScalar: bn(genFloat(0.04, 0.06)),
+    makerFee: wei(genNumber(0.0001, 0.0005)).toBN(), // 1 - 5bps
+    takerFee: wei(genNumber(0.0006, 0.0008)).toBN(), // 1 - 8bps
+    maxMarketSize: bn(genNumber(20_000, 50_000)),
+    maxFundingVelocity: bn(genNumber(3, 9)),
+    minMarginUsd: bn(genNumber(50, 60)),
+    minCreditPercent: bn(genNumber(1, 1.1)),
+    skewScale: bn(genNumber(100_000, 500_000)),
+    minMarginRatio: bn(genNumber(0.01, 0.02)),
+    incrementalMarginScalar: bn(genNumber(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
-    liquidationRewardPercent: wei(genFloat(0.005, 0.0075)).toBN(),
-    liquidationLimitScalar: bn(genFloat(0.9, 1.2)),
+    liquidationRewardPercent: wei(genNumber(0.005, 0.0075)).toBN(),
+    liquidationLimitScalar: bn(genNumber(0.9, 1.2)),
     liquidationWindowDuration: bn(genOneOf([36, 48, 60])),
   },
 });
@@ -91,14 +98,14 @@ export const genMarket = () => ({
  * Generate a limit price 5 - 10% within the oracle price. The limit will be higher (long) or lower (short).
  */
 export const genLimitPrice = (isLong: boolean, oraclePrice: BigNumber) => {
-  const priceImpactPercentage = genFloat(0.05, 0.1);
+  const priceImpactPercentage = genNumber(0.05, 0.1);
   const limitPrice = isLong
     ? wei(oraclePrice).mul(1 + priceImpactPercentage)
     : wei(oraclePrice).mul(1 - priceImpactPercentage);
   return limitPrice.toBN();
 };
 
-export const genKeeperFeeBufferUsd = () => bn(genFloat(2, 10));
+export const genKeeperFeeBufferUsd = () => bn(genNumber(2, 10));
 
 // --- Higher level generators --- //
 
