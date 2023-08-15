@@ -42,6 +42,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
 				console.log('IM A DUMMY CHANGE');
+				console.log('and another one');
         PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid
