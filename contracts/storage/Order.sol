@@ -19,7 +19,6 @@ library Order {
     using SafeCastU256 for uint256;
 
     struct Data {
-        uint128 accountId;
         int128 sizeDelta;
         uint256 commitmentTime;
         uint256 limitPrice;
@@ -115,9 +114,9 @@ library Order {
      * @dev Updates the current order struct in-place with new data from `data`.
      */
     function update(Order.Data storage self, Order.Data memory data) internal {
-        self.accountId = data.accountId;
         self.commitmentTime = data.commitmentTime;
         self.limitPrice = data.limitPrice;
         self.sizeDelta = data.sizeDelta;
+        self.keeperFeeBufferUsd = data.keeperFeeBufferUsd;
     }
 }
