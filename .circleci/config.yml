@@ -115,14 +115,27 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}
+            - cannon-{{ .Environment.CACHE_VERSION }}
 
       - run: yarn workspaces foreach --topological-dev --verbose run build-testable
 
       - save_cache:
-          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}
+          key: cannon-{{ .Environment.CACHE_VERSION }}
           paths:
             - "~/.local/share/cannon"
+
+      # As we generated all the testables, we also got typechain-types generated for all packages, cache them
+#      - save_cache:
+#          key: typechain-types-{{ .Environment.CACHE_VERSION }}
+#          paths:
+#            - "utils/core-modules/typechain-types"
+#            - "protocol/synthetix/typechain-types"
+#            - "protocol/governance/typechain-types"
+#            - "protocol/oracle-manager/typechain-types"
+#            - "protocol/governance/typechain-types"
+#            - "markets/legacy-market/typechain-types"
+#            - "markets/perps-market/typechain-types"
+#            - "markets/spot-market/typechain-types"
 
 jobs:
   build-testable:
@@ -163,7 +176,9 @@ jobs:
 
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}
+            - cannon-{{ .Environment.CACHE_VERSION }}
+
+      - run: yarn workspace "<< parameters.workspace >>" run build-testable
 
       - run:
           environment:
