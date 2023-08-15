@@ -12,9 +12,9 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import "../interfaces/IPerpAccountModule.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
+    using DecimalMath for uint256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
-    using DecimalMath for uint256;
 
     /**
      * @inheritdoc IPerpAccountModule
