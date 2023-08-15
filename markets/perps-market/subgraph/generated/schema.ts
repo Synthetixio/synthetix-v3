@@ -1790,6 +1790,19 @@ export class OrderSettled extends Entity {
     this.set('fillPrice', Value.fromBigInt(value));
   }
 
+  get accruedFunding(): BigInt {
+    let value = this.get('accruedFunding');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set accruedFunding(value: BigInt) {
+    this.set('accruedFunding', Value.fromBigInt(value));
+  }
+
   get sizeDelta(): BigInt {
     let value = this.get('sizeDelta');
     if (!value || value.kind == ValueKind.NULL) {
@@ -1892,6 +1905,137 @@ export class OrderSettled extends Entity {
 
   set settler(value: Bytes) {
     this.set('settler', Value.fromBytes(value));
+  }
+}
+
+export class PreviousOrderExpired extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save PreviousOrderExpired entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type PreviousOrderExpired must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('PreviousOrderExpired', id.toString(), this);
+    }
+  }
+
+  static loadInBlock(id: string): PreviousOrderExpired | null {
+    return changetype<PreviousOrderExpired | null>(store.get_in_block('PreviousOrderExpired', id));
+  }
+
+  static load(id: string): PreviousOrderExpired | null {
+    return changetype<PreviousOrderExpired | null>(store.get('PreviousOrderExpired', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get('timestamp');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set timestamp(value: BigInt) {
+    this.set('timestamp', Value.fromBigInt(value));
+  }
+
+  get marketId(): BigInt {
+    let value = this.get('marketId');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set marketId(value: BigInt) {
+    this.set('marketId', Value.fromBigInt(value));
+  }
+
+  get accountId(): BigInt {
+    let value = this.get('accountId');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set accountId(value: BigInt) {
+    this.set('accountId', Value.fromBigInt(value));
+  }
+
+  get sizeDelta(): BigInt {
+    let value = this.get('sizeDelta');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set sizeDelta(value: BigInt) {
+    this.set('sizeDelta', Value.fromBigInt(value));
+  }
+
+  get acceptablePrice(): BigInt {
+    let value = this.get('acceptablePrice');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set acceptablePrice(value: BigInt) {
+    this.set('acceptablePrice', Value.fromBigInt(value));
+  }
+
+  get settlementTime(): BigInt {
+    let value = this.get('settlementTime');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set settlementTime(value: BigInt) {
+    this.set('settlementTime', Value.fromBigInt(value));
+  }
+
+  get trackingCode(): Bytes {
+    let value = this.get('trackingCode');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set trackingCode(value: Bytes) {
+    this.set('trackingCode', Value.fromBytes(value));
   }
 }
 

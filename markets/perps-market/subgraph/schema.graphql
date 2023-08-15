@@ -143,6 +143,17 @@ type OrderSettled @entity {
   settler: Bytes!
 }
 
+type PreviousOrderExpired @entity {
+  id: ID!
+  timestamp: BigInt!
+  marketId: BigInt!
+  accountId: BigInt!
+  sizeDelta: BigInt!
+  acceptablePrice: BigInt!
+  settlementTime: BigInt!
+  trackingCode: Bytes!
+}
+
 type MarketUpdated @entity {
   id: ID!
   timestamp: BigInt!

@@ -23,6 +23,7 @@ dataSources:
         - PositionLiquidated
         - OrderCommitted
         - OrderSettled
+        - PreviousOrderExpired
         - MarketUpdated
       eventHandlers:
         - event: AccountCreated(indexed uint128,indexed address)
@@ -49,6 +50,8 @@ dataSources:
           handler: handleOrderCommitted
         - event: OrderSettled(indexed uint128,indexed uint128,uint256,int256,int256,int128,int128,uint256,uint256,uint256,uint256,indexed bytes32,address)
           handler: handleOrderSettled
+        - event: PreviousOrderExpired(indexed uint128,indexed uint128,int128,uint256,uint256,indexed bytes32)
+          handler: handlePreviousOrderExpired
         - event: PositionLiquidated(indexed uint128,indexed uint128,uint256,int128)
           handler: handlePositionLiquidated
         - event: AccountLiquidated(indexed uint128,uint256,bool)
