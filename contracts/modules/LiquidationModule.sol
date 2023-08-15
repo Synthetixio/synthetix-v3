@@ -166,12 +166,12 @@ contract LiquidationModule is ILiquidationModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 oraclePrice = market.getOraclePrice();
-        (uint256 healthFactor, , , ) = market.positions[accountId].getHealthFactor(
-            market,
-            Margin.getMarginUsd(accountId, market, oraclePrice),
-            oraclePrice,
-            PerpMarketConfiguration.load(marketId)
-        );
-        return healthFactor;
+        return
+            market.positions[accountId].getHealthFactor(
+                market,
+                Margin.getMarginUsd(accountId, market, oraclePrice),
+                oraclePrice,
+                PerpMarketConfiguration.load(marketId)
+            );
     }
 }

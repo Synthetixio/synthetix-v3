@@ -65,13 +65,12 @@ contract PerpAccountModule is IPerpAccountModule {
         Position.Data storage position = market.positions[accountId];
 
         uint256 price = market.getOraclePrice();
-        (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) = position
-            .getHealthFactor(
-                market,
-                Margin.getMarginUsd(accountId, market, price),
-                price,
-                PerpMarketConfiguration.load(marketId)
-            );
+        (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) = position.getHealthData(
+            market,
+            Margin.getMarginUsd(accountId, market, price),
+            price,
+            PerpMarketConfiguration.load(marketId)
+        );
         uint256 notional = MathUtil.abs(position.size).mulDecimal(price);
 
         return
