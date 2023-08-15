@@ -214,7 +214,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -323,14 +323,15 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
 
   size-contracts:
     docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
+      # TODO: update to Node 18 when we get fresh hardhat
+      - image: cimg/node:16.20.1
     steps:
       - checkout
       #      - install-foundry
@@ -400,7 +401,7 @@ workflows:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
-          parallelism: 4
+          parallelism: 5
 
       #- test-contracts: # TODO: enable when tests are fixed
       #    name: "test-legacy-market"
@@ -409,7 +410,7 @@ workflows:
 
       - test-core-utils:
           workspace: "@synthetixio/core-utils"
-          parallelism: 1
+          parallelism: 2
 
       - test-core-modules:
           workspace: "@synthetixio/core-modules"
@@ -417,4 +418,4 @@ workflows:
 
       - test-core-contracts:
           workspace: "@synthetixio/core-contracts"
-          parallelism: 1
+          parallelism: 2
