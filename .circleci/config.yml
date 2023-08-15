@@ -161,18 +161,19 @@ jobs:
             - "protocol/synthetix/typechain-types"
             - "protocol/governance/typechain-types"
             - "protocol/oracle-manager/typechain-types"
-            - "protocol/governance/typechain-types"
             - "markets/legacy-market/typechain-types"
             - "markets/perps-market/typechain-types"
             - "markets/spot-market/typechain-types"
 
-  test:
+  test-contracts:
     parameters:
       workspace:
         type: string
+      parallelism:
+        type: number
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    parallelism: 2
+    parallelism: << parameters.parallelism >>
     steps:
       - checkout
       - install-foundry
@@ -222,7 +223,37 @@ workflows:
   tests:
     jobs:
       - build-testable
-      - test:
+
+      - test-contracts:
           name: "test-main"
-          workspace: "@synthetixio/main"
           requires: [build-testable]
+          workspace: "@synthetixio/main"
+          parallelism: 2
+
+      - test-contracts:
+          name: "test-oracle-manager"
+          requires: [build-testable]
+          workspace: "@synthetixio/oracle-manager"
+          parallelism: 1
+
+      #- test-contracts: # TODO: enable when we have some tests
+      #    name: "test-governance"
+      #    workspace: "@synthetixio/governance"
+      #    requires: [build-testable]
+
+      - test-contracts:
+          name: "test-spot-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/spot-market"
+          parallelism: 1
+
+      - test-contracts:
+          name: "test-perps-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/perps-market"
+          parallelism: 3
+
+      #- test-contracts: # TODO: enable when tests are fixed
+      #    name: "test-legacy-market"
+      #    workspace: "@synthetixio/legacy-market"
+      #    requires: [build-testable]
