@@ -6,9 +6,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
     strategy:
       fail-fast: false
       matrix:
@@ -43,9 +40,11 @@ jobs:
         with:
           node-version: "16.20.1"
           cache: "yarn"
-      - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
+      - name: Cache Cannon packages
+        uses: actions/cache@v3
         with:
-          run_daemon: true
+          path: |
+            ~/.local/share/cannon
 
       - run: yarn install --immutable --immutable-cache
       - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build:ts
