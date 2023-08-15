@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: "16.20.1"
+    default: "18.17.1"
 
 commands:
   yarn-install:
@@ -148,6 +148,8 @@ jobs:
 
       - run: yarn workspaces foreach --topological-dev --verbose run build-testable
 
+      - run: yarn workspaces foreach --verbose run check:storage
+
       - save_cache:
           key: cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
           paths:
@@ -172,7 +174,8 @@ jobs:
       parallelism:
         type: integer
     docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
+      # TODO: update to Node 18 when we get fresh hardhat
+      - image: cimg/node:16.20.1
     parallelism: << parameters.parallelism >>
     steps:
       - checkout
@@ -256,7 +259,8 @@ jobs:
         type: integer
     parallelism: << parameters.parallelism >>
     docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
+      # TODO: update to Node 18 when we get fresh hardhat
+      - image: cimg/node:16.20.1
     steps:
       - checkout
       - install-foundry
@@ -294,7 +298,8 @@ jobs:
         type: integer
     parallelism: << parameters.parallelism >>
     docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
+      # TODO: update to Node 18 when we get fresh hardhat
+      - image: cimg/node:16.20.1
     steps:
       - checkout
       - yarn-install
@@ -322,11 +327,49 @@ jobs:
       - store_test_results:
           path: "/tmp/junit"
 
+  size-contracts:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      #      - install-foundry
+      #      - install-ipfs
+      #      - run-ipfs-daemon
+      - yarn-install
+      #      - wait-for-ipfs
+
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose run build:ts
+      - run: yarn workspaces foreach --verbose run size-contracts
+
+  lint:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run: yarn dedupe --check
+      - run: yarn deps
+      - run: yarn deps:mismatched
+      - run: yarn deps:circular
+      - run: yarn lint
+
+  check-packages:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - run: yarn install --immutable --immutable-cache --check-cache
+
 workflows:
   version: 2.1
 
   tests:
     jobs:
+      - lint
+      - size-contracts
+      - check-packages
+
       - build-testable
 
       - test-contracts:
@@ -343,8 +386,8 @@ workflows:
 
       #- test-contracts: # TODO: enable when we have some tests
       #    name: "test-governance"
-      #    workspace: "@synthetixio/governance"
       #    requires: [build-testable]
+      #    workspace: "@synthetixio/governance"
 
       - test-contracts:
           name: "test-spot-market"
@@ -360,8 +403,8 @@ workflows:
 
       #- test-contracts: # TODO: enable when tests are fixed
       #    name: "test-legacy-market"
-      #    workspace: "@synthetixio/legacy-market"
       #    requires: [build-testable]
+      #    workspace: "@synthetixio/legacy-market"
 
       - test-core-utils:
           workspace: "@synthetixio/core-utils"
