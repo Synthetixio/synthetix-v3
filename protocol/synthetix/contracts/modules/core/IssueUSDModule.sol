@@ -130,8 +130,6 @@ contract IssueUSDModule is IIssueUSDModule {
         FeatureFlag.ensureAccessToFeature(_BURN_FEATURE_FLAG);
         Pool.Data storage pool = Pool.load(poolId);
 
-        Account.Data storage account = Account.load(accountId);
-
         // Retrieve current position debt
         int256 debt = pool.updateAccountDebt(collateralType, accountId);
 
@@ -152,12 +150,14 @@ contract IssueUSDModule is IIssueUSDModule {
             amount = debt.toUint() + feeAmount;
         }
 
-        // Burn the stablecoins
-        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
+        AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
 
-        account.collaterals[collateralType].increaseAvailableCollateral(
-            CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(amount)
-        );
+        // Burn the stablecoins
+        usdToken.asToken().burn(address(this), amount);
+
+        Account.Data storage account = Account.load(accountId);
+
+        account.collaterals[usdToken.getAddress()].decreaseAvailableCollateral(amount);
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);

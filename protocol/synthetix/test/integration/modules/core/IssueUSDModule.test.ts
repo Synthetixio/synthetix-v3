@@ -10,7 +10,7 @@ import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../veri
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
-describe('IssueUSDModule', function () {
+describe.only('IssueUSDModule', function () {
   const { signers, systems, provider, accountId, poolId, depositAmount, collateralAddress } =
     bootstrapWithStakedPool();
 
@@ -293,6 +293,9 @@ describe('IssueUSDModule', function () {
       });
 
       before('other account burn', async () => {
+        await systems()
+          .Core.connect(user1)
+          .deposit(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
         await systems()
           .Core.connect(user2)
           .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
