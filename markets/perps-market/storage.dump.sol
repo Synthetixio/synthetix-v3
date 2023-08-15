@@ -434,6 +434,7 @@ interface IAsyncOrderSettlementModule {
         int128 newPositionSize;
         int128 sizeDelta;
         int256 pnl;
+        int256 accruedFunding;
         uint256 pnlUint;
         uint256 amountToDeduct;
         uint256 settlementReward;

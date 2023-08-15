@@ -62,7 +62,7 @@ library AsyncOrder {
     /**
      * @notice Thrown when fill price exceeds the acceptable price set at submission.
      */
-    error AcceptablePriceExceeded(uint256 acceptablePrice, uint256 fillPrice);
+    error AcceptablePriceExceeded(uint256 fillPrice, uint256 acceptablePrice);
 
     /**
      * @notice Gets thrown when pending orders exist and attempts to modify collateral.
