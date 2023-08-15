@@ -3,7 +3,9 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: "18.17.1"
+    default: "16.20.1"
+    # TODO: update to Node 18 when we get fresh hardhat
+    # default: "18.17.1"
 
 commands:
   yarn-install:
@@ -174,8 +176,7 @@ jobs:
       parallelism:
         type: integer
     docker:
-      # TODO: update to Node 18 when we get fresh hardhat
-      - image: cimg/node:16.20.1
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     parallelism: << parameters.parallelism >>
     steps:
       - checkout
@@ -227,8 +228,7 @@ jobs:
         type: integer
     parallelism: << parameters.parallelism >>
     docker:
-      # TODO: update to Node 18 after fixing couple of failing (for some reason) tests
-      - image: cimg/node:16.20.1
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
       - yarn-install
@@ -260,8 +260,7 @@ jobs:
         type: integer
     parallelism: << parameters.parallelism >>
     docker:
-      # TODO: update to Node 18 when we get fresh hardhat
-      - image: cimg/node:16.20.1
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
       - install-foundry
@@ -299,8 +298,7 @@ jobs:
         type: integer
     parallelism: << parameters.parallelism >>
     docker:
-      # TODO: update to Node 18 when we get fresh hardhat
-      - image: cimg/node:16.20.1
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
       - yarn-install
@@ -330,8 +328,7 @@ jobs:
 
   size-contracts:
     docker:
-      # TODO: update to Node 18 when we get fresh hardhat
-      - image: cimg/node:16.20.1
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
       #      - install-foundry
