@@ -193,7 +193,7 @@ library Margin {
         Margin.CollateralType memory collateral;
         uint256 available;
         uint256 price;
-        uint256 notionalValueUsd;
+        uint256 collateralValueUsd;
 
         for (uint256 i = 0; i < length; ) {
             collateralType = globalMarginConfig.supportedAddresses[i];
@@ -203,7 +203,7 @@ library Margin {
             available = accountMargin.collaterals[collateralType];
             if (available > 0) {
                 price = INodeModule(globalConfig.oracleManager).process(collateral.oracleNodeId).price.toUint();
-                notionalValueUsd += available.mulDecimal(price);
+                collateralValueUsd += available.mulDecimal(price);
             }
 
             unchecked {
@@ -211,26 +211,26 @@ library Margin {
             }
         }
 
-        return notionalValueUsd;
+        return collateralValueUsd;
     }
 
     /**
-     * @dev Returns the `notionalValueUsd - position.feesPaid` on an open position.
+     * @dev Returns the `collateralValueUsd - position.feesPaid` on an open position.
      */
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
         uint256 price
     ) internal view returns (uint256) {
-        uint256 notionalValueUsd = getCollateralUsd(accountId, market.id);
+        uint256 collateralValueUsd = getCollateralUsd(accountId, market.id);
         Position.Data storage position = market.positions[accountId];
         if (position.size == 0) {
-            return notionalValueUsd;
+            return collateralValueUsd;
         }
         return
             MathUtil
                 .max(
-                    notionalValueUsd.toInt() +
+                    collateralValueUsd.toInt() +
                         position.getPnl(price) +
                         position.getAccruedFunding(market, price) -
                         position.accruedFeesUsd.toInt(),

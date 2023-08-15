@@ -111,7 +111,7 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view {
-        (uint256 healthFactor, , , ) = getHealthFactor(
+        (uint256 healthFactor, , , ) = getHealthData(
             market,
             newPosition.size,
             newPosition.entryPrice,
@@ -120,6 +120,7 @@ library Position {
             price,
             marketConfig
         );
+
         if (healthFactor <= DecimalMath.UNIT) {
             revert ErrorUtil.CanLiquidatePosition();
         }
@@ -324,9 +325,9 @@ library Position {
     }
 
     /**
-     * @dev Returns the health factor given the marketId, config, and position{...} details.
+     * @dev Returns the health data given the marketId, config, and position{...} details.
      */
-    function getHealthFactor(
+    function getHealthData(
         PerpMarket.Data storage market,
         int128 positionSize,
         uint256 positionEntryPrice,
@@ -354,8 +355,19 @@ library Position {
     // --- Member (views) --- //
 
     /**
-     * @dev An overloaded function over `getHealthFactor` using the a Position storage struct.
+     * @dev An overloaded function over `getHealthData` using the a Position storage struct.
      */
+    function getHealthData(
+        Position.Data storage self,
+        PerpMarket.Data storage market,
+        uint256 marginUsd,
+        uint256 price,
+        PerpMarketConfiguration.Data storage marketConfig
+    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+        return
+            getHealthData(market, self.size, self.entryPrice, self.entryFundingAccrued, marginUsd, price, marketConfig);
+    }
+
     function getHealthFactor(
         Position.Data storage self,
         PerpMarket.Data storage market,
@@ -363,7 +375,7 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256) {
-        (uint256 healthFactor, , , ) = getHealthFactor(
+        (uint256 healthFactor, , , ) = getHealthData(
             market,
             self.size,
             self.entryPrice,
@@ -388,7 +400,10 @@ library Position {
         if (self.size == 0) {
             return false;
         }
-        return getHealthFactor(self, market, marginUsd, price, marketConfig) <= DecimalMath.UNIT;
+
+        (uint256 healthFactor, , , ) = getHealthData(self, market, marginUsd, price, marketConfig);
+
+        return healthFactor <= DecimalMath.UNIT;
     }
 
     /**

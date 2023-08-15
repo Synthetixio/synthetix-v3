@@ -6,9 +6,13 @@ import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+
 import "../interfaces/IPerpAccountModule.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
+    using DecimalMath for uint256;
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
@@ -40,19 +44,12 @@ contract PerpAccountModule is IPerpAccountModule {
             }
         }
 
-        Position.Data storage position = market.positions[accountId];
         return
             IPerpAccountModule.AccountDigest(
                 collateral,
                 Margin.getCollateralUsd(accountId, marketId),
                 market.orders[accountId],
-                position,
-                position.getHealthFactor(
-                    market,
-                    Margin.getMarginUsd(accountId, market, market.getOraclePrice()),
-                    market.getOraclePrice(),
-                    PerpMarketConfiguration.load(marketId)
-                )
+                getPositionDigest(accountId, marketId)
             );
     }
 
@@ -62,7 +59,33 @@ contract PerpAccountModule is IPerpAccountModule {
     function getPositionDigest(
         uint128 accountId,
         uint128 marketId
-    ) external view returns (IPerpAccountModule.PositionDigest memory) {
-        // TODO: Implement me
+    ) public view returns (IPerpAccountModule.PositionDigest memory) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage position = market.positions[accountId];
+
+        uint256 oraclePrice = market.getOraclePrice();
+        (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd) = position
+            .getHealthData(
+                market,
+                Margin.getMarginUsd(accountId, market, oraclePrice),
+                oraclePrice,
+                PerpMarketConfiguration.load(marketId)
+            );
+        uint256 notionalValueUsd = MathUtil.abs(position.size).mulDecimal(oraclePrice);
+
+        return
+            IPerpAccountModule.PositionDigest(
+                accountId,
+                marketId,
+                remainingMarginUsd,
+                healthFactor,
+                notionalValueUsd,
+                unrealizedPnl,
+                accruedFunding,
+                position.entryPrice,
+                oraclePrice,
+                position.size
+            );
     }
 }

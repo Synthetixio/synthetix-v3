@@ -20,13 +20,11 @@ interface IPerpAccountModule {
         // @dev Array of data pertaining to deposited collateral
         IPerpAccountModule.DepositedCollateral[] collateral;
         // @dev Notional value of deposited collateral in USD.
-        uint256 notionalValueUsd;
+        uint256 collateralUsd;
         // @dev Struct of order if one is pending, default values if none.
         Order.Data order;
-        // @dev Struct of position if one is open, default values if none.
-        Position.Data position;
-        // @dev Health factor for position in market if a position is open
-        uint256 healthFactor;
+        // @dev Struct of PositionDigest if a position is open, default values if none.
+        PositionDigest position;
     }
 
     struct PositionDigest {
@@ -38,8 +36,18 @@ interface IPerpAccountModule {
         uint256 marginUsd;
         // @dev Health factor for position in market if a position is open.
         uint256 healthFactor;
-
-        // TODO: Add a lot more details but also consider is this even valueable? Does AccountDigest provide enough?
+        // @dev Notional value of position in USD.
+        uint256 notionalValueUsd;
+        // @dev Unrealized PnL of position in USD.
+        int256 unrealizedPnl;
+        // @dev funding accrued in USD.
+        int256 accruedFunding;
+        // @dev  Entry price of the position.
+        uint256 entryPrice;
+        // @dev Current price
+        uint256 oraclePrice;
+        // @dev Position size
+        int128 size;
     }
 
     // --- Views --- //
