@@ -139,22 +139,62 @@ describe('Create Market test', () => {
           .setFundingParameters(marketId, bn(100_000), bn(0));
       });
 
-      before('add collateral', async () => {
-        await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
+      before('ensure per account max is set to zero', async () => {
+        await systems().PerpsMarket.connect(owner()).setMaxPerAccount(0, 0);
       });
 
-      it('should be able to use the market', async () => {
-        await systems()
-          .PerpsMarket.connect(trader1())
-          .commitOrder({
-            marketId: marketId,
-            accountId: 2,
-            sizeDelta: bn(1),
-            settlementStrategyId: 0,
-            acceptablePrice: bn(1050), // 5% slippage
-            referrer: ethers.constants.AddressZero,
-            trackingCode: ethers.constants.HashZero,
+      it('reverts when trying add collateral if max collaterals per account is zero', async () => {
+        await assertRevert(
+          systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000)),
+          'MaxCollateralsPerAccountReached("0")'
+        );
+      });
+
+      describe('when max collaterals per account is set to non-zero', () => {
+        before('set max collaterals per account', async () => {
+          await systems().PerpsMarket.connect(owner()).setMaxPerAccount(0, 1000);
+        });
+
+        before('add collateral', async () => {
+          await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
+        });
+
+        it('reverts when trying to add position if max positions per account is zero', async () => {
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(trader1())
+              .commitOrder({
+                marketId: marketId,
+                accountId: 2,
+                sizeDelta: bn(1),
+                settlementStrategyId: 0,
+                acceptablePrice: bn(1050), // 5% slippage
+                referrer: ethers.constants.AddressZero,
+
+                trackingCode: ethers.constants.HashZero,
+              }),
+            'MaxPositionsPerAccountReached("0")'
+          );
+        });
+
+        describe('when max positions per account is set to non-zero', () => {
+          before('set max positions per account', async () => {
+            await systems().PerpsMarket.connect(owner()).setMaxPerAccount(1000, 1000);
           });
+          it('should be able to use the market', async () => {
+            await systems()
+              .PerpsMarket.connect(trader1())
+              .commitOrder({
+                marketId: marketId,
+                accountId: 2,
+                sizeDelta: bn(1),
+                settlementStrategyId: 0,
+                acceptablePrice: bn(1050), // 5% slippage
+                referrer: ethers.constants.AddressZero,
+                trackingCode: ethers.constants.HashZero,
+              });
+          });
+        });
       });
     });
   });

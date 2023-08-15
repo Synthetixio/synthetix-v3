@@ -128,6 +128,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         runtime.marketId = asyncOrder.request.marketId;
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
+
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
@@ -139,6 +140,11 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
+
+        if (oldPosition.size == 0) {
+            //is a new position, check if not exceeding max positions per account
+            perpsAccount.canOpenNewPosition();
+        }
 
         // use fill price to calculate realized pnl
         (runtime.pnl, , , runtime.accruedFunding, ) = oldPosition.getPnl(runtime.fillPrice);

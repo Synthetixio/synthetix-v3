@@ -42,6 +42,13 @@ interface IGlobalPerpsMarketModule {
     event ReferrerShareUpdated(address referrer, uint256 shareRatioD18);
 
     /**
+     * @notice Gets fired when the max number of Positions and Collaterals per Account are set by owner.
+     * @param maxPositionsPerAccount The max number of concurrent Positions per Account
+     * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
+     */
+    event MaxPerAccountSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
+
+    /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
      */
     error InvalidFeeCollectorInterface(address invalidFeeCollector);
@@ -117,6 +124,25 @@ interface IGlobalPerpsMarketModule {
      * @return feeCollector address of the fee collector contract
      */
     function getFeeCollector() external view returns (address feeCollector);
+
+    /**
+     * @notice Set or update the max number of Positions and Collaterals per Account
+     * @param maxPositionsPerAccount The max number of concurrent Positions per Account
+     * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
+     */
+    function setMaxPerAccount(
+        uint128 maxPositionsPerAccount,
+        uint128 maxCollateralsPerAccount
+    ) external;
+
+    /**
+     * @notice get the max number of Positions and Collaterals per Account
+     * @param maxPositionsPerAccount The max number of concurrent Positions per Account
+     * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
+     */
+    function getMaxPerAccount()
+        external
+        returns (uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 
     /**
      * @notice Update the referral share percentage for a referrer

@@ -156,4 +156,33 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     function getMarkets() external view override returns (uint256[] memory marketIds) {
         marketIds = GlobalPerpsMarket.load().activeMarkets.values();
     }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function setMaxPerAccount(
+        uint128 maxPositionsPerAccount,
+        uint128 maxCollateralsPerAccount
+    ) external override {
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        store.maxPositionsPerAccount = maxPositionsPerAccount;
+        store.maxCollateralsPerAccount = maxCollateralsPerAccount;
+
+        emit MaxPerAccountSet(maxPositionsPerAccount, maxCollateralsPerAccount);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getMaxPerAccount()
+        external
+        view
+        override
+        returns (uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount)
+    {
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        maxPositionsPerAccount = store.maxPositionsPerAccount;
+        maxCollateralsPerAccount = store.maxCollateralsPerAccount;
+    }
 }
