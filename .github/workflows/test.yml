@@ -40,10 +40,16 @@ jobs:
         with:
           node-version: "16.20.1"
           cache: "yarn"
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Cache Hardhat artifacts
         uses: actions/cache@v3
         with:
-          key: hardhat-${{ matrix.workspace }}
+          key: hardhat-${{ matrix.workspace }}-${{ env.GITHUB_REF }}-${{ steps.date.outputs.date }}
+          restore-keys: |
+            hardhat-${{ matrix.workspace }}-${{ env.GITHUB_REF }}
+            hardhat-${{ matrix.workspace }}
           path: |
             markets/**/cache
             markets/**/artifacts
@@ -54,7 +60,10 @@ jobs:
       - name: Cache Cannon packages
         uses: actions/cache@v3
         with:
-          key: cannon-${{ matrix.workspace }}
+          key: cannon-${{ matrix.workspace }}-${{ env.GITHUB_REF }}-${{ steps.date.outputs.date }}
+          restore-keys: |
+            cannon-${{ matrix.workspace }}-${{ env.GITHUB_REF }}
+            cannon-${{ matrix.workspace }}
           path: |
             ~/.local/share/cannon
 
