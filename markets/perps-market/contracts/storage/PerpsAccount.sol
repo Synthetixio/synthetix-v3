@@ -73,21 +73,25 @@ library PerpsAccount {
         }
     }
 
-    function canOpenNewPosition(Data storage self) internal view {
-        uint128 maxPositionsPerAccount = GlobalPerpsMarketConfiguration
-            .load()
-            .maxPositionsPerAccount;
-        if (maxPositionsPerAccount <= self.openPositionMarketIds.length()) {
-            revert MaxPositionsPerAccountReached(maxPositionsPerAccount);
+    function validateMaxPositions(Data storage self, uint128 marketId) internal view {
+        if (PerpsMarket.accountPosition(marketId, self.id).size == 0) {
+            uint128 maxPositionsPerAccount = GlobalPerpsMarketConfiguration
+                .load()
+                .maxPositionsPerAccount;
+            if (maxPositionsPerAccount <= self.openPositionMarketIds.length()) {
+                revert MaxPositionsPerAccountReached(maxPositionsPerAccount);
+            }
         }
     }
 
-    function canAddNewCollateral(Data storage self) internal view {
-        uint128 maxCollateralsPerAccount = GlobalPerpsMarketConfiguration
-            .load()
-            .maxCollateralsPerAccount;
-        if (maxCollateralsPerAccount <= self.activeCollateralTypes.length()) {
-            revert MaxCollateralsPerAccountReached(maxCollateralsPerAccount);
+    function validateMaxCollaterals(Data storage self, uint128 synthMarketId) internal view {
+        if (self.collateralAmounts[synthMarketId] == 0) {
+            uint128 maxCollateralsPerAccount = GlobalPerpsMarketConfiguration
+                .load()
+                .maxCollateralsPerAccount;
+            if (maxCollateralsPerAccount <= self.activeCollateralTypes.length()) {
+                revert MaxCollateralsPerAccountReached(maxCollateralsPerAccount);
+            }
         }
     }
 

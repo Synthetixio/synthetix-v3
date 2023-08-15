@@ -53,10 +53,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         PerpsAccount.Data storage account = PerpsAccount.create(accountId);
         uint128 perpsMarketId = perpsMarketFactory.perpsMarketId;
 
-        if (account.collateralAmounts[synthMarketId] == 0) {
-            // if the account has no collateral in this market, we need to check if it can add a new collateral
-            account.canAddNewCollateral();
-        }
+        account.validateMaxCollaterals(synthMarketId);
 
         AsyncOrder.checkPendingOrder(account.id);
 

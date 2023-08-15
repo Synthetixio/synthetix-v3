@@ -71,11 +71,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        // Check if there's a previous position open on this market, if not check if the account can open a new position
-        if (PerpsMarket.accountPosition(commitment.marketId, commitment.accountId).size == 0) {
-            //is a new position, check if not exceeding max positions per account
-            PerpsAccount.load(commitment.accountId).canOpenNewPosition();
-        }
+        PerpsAccount.load(commitment.accountId).validateMaxPositions(commitment.marketId);
 
         // Replace previous (or empty) order with the commitment request
         order.settlementTime = block.timestamp + strategy.settlementDelay;
