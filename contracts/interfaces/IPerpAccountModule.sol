@@ -39,9 +39,9 @@ interface IPerpAccountModule {
         // @dev Notional value of position in USD.
         uint256 notionalValue;
         // @dev Unrealized PnL of position in USD.
-        int totalPnl;
+        int256 unrealizedPnl;
         // @dev funding accrued in USD.
-        int accruedFunding;
+        int256 accruedFunding;
         // @dev  Entry price of the position.
         uint256 entryPrice;
         // @dev Current price
