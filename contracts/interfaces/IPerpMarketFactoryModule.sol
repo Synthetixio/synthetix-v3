@@ -46,6 +46,8 @@ interface IPerpMarketFactoryModule is IMarket {
      */
     function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
 
+    // --- Views --- //
+
     /**
      * @dev Returns a digest of a market given the `marketId`.
      */

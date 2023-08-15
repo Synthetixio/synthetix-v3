@@ -217,7 +217,6 @@ describe('OrderModule', () => {
       const pythPublishTimeMin = config.pythPublishTimeMin.toNumber();
       const pythPublishTimeMax = config.pythPublishTimeMax.toNumber();
 
-      // PublishTime is allowed to be between settlement + [0, maxAge - minAge]. For example, `[0, 12 - 8] = [0, 4]`.
       const publishTimeDelta = genInt(0, pythPublishTimeMax - pythPublishTimeMin);
       const settlementTime = commitmentTime + minOrderAge;
       const publishTime = settlementTime - publishTimeDelta;
