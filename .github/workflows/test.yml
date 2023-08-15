@@ -40,6 +40,14 @@ jobs:
         with:
           node-version: "16.20.1"
           cache: "yarn"
+      - name: Cache Hardhat artifacts
+        uses: actions/cache@v3
+        with:
+          key: hardhat-${{ matrix.workspace }}
+          path: |
+            protocol/**/cache
+            protocol/**/artifacts
+            protocol/**/test/generated
       - name: Cache Cannon packages
         uses: actions/cache@v3
         with:
