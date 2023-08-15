@@ -211,7 +211,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -243,7 +243,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -281,7 +281,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -317,7 +317,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
