@@ -1,41 +1,9 @@
 version: 2.1
 
-parameters:
-  node-version:
-    type: string
-    default: "16.20.1"
-
 commands:
   yarn-install:
     steps:
       - run: yarn install --immutable --immutable-cache
-
-  install-foundry:
-    steps:
-      - run:
-          name: "Install foundry used for cannon and e2e tests"
-          environment:
-            SHELL: /bin/bash
-          command: |-
-            apt update && apt install --yes curl
-            curl -L https://foundry.paradigm.xyz | bash
-            export PATH="$PATH:$HOME/.foundry/bin"
-            echo export PATH="$PATH:$HOME/.foundry/bin" > $BASH_ENV
-            foundryup
-
-  install-ipfs:
-    steps:
-      - run:
-          name: "Install IPFS"
-          command: |
-            LATEST_VERSION=$(curl -sSL https://dist.ipfs.tech/go-ipfs/versions | tail -n 1)
-            LATEST_VERSION_NUMBER=${LATEST_VERSION#*v}
-            DOWNLOAD_URL="https://dist.ipfs.tech/go-ipfs/${LATEST_VERSION}/go-ipfs_${LATEST_VERSION}_linux-amd64.tar.gz"
-            echo "DOWNLOAD_URL=$DOWNLOAD_URL"
-            curl -sSL -o ipfs.tar.gz $DOWNLOAD_URL
-            tar -xzf ipfs.tar.gz
-            sudo cp -f ./go-ipfs/ipfs /usr/local/bin/
-            ipfs init
 
   run-ipfs-daemon:
     steps:
@@ -55,14 +23,13 @@ jobs:
       workspace:
         type: string
     docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
+      - image: noisekit/synthetix-cci:node-16.20.1
     parallelism: 2
     environment:
       NODE_ENV: test
     steps:
+      - run: echo export PATH="$PATH:$HOME/.foundry/bin:$HOME/go-ipfs" > $BASH_ENV
       - checkout
-      - install-foundry
-      - install-ipfs
       - run-ipfs-daemon
       - yarn-install
 
