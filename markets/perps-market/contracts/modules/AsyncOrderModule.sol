@@ -15,6 +15,8 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Module for committing async orders.
  * @dev See IAsyncOrderModule.
@@ -39,6 +41,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
     ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
+				console.log('IM A DUMMY CHANGE');
         PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid
