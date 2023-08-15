@@ -22,13 +22,14 @@ commands:
           environment:
             SHELL: /bin/bash
           command: |-
-            if [ command -v anvil ]; then
+            export PATH="$PATH:$HOME/.foundry/bin"
+            echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+
+            if command -v anvil; then
               echo "Anvil already installed"
               anvil --version
             else
               curl -L https://foundry.paradigm.xyz | bash
-              export PATH="$PATH:$HOME/.foundry/bin"
-              echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
               foundryup
             fi
 
@@ -47,7 +48,10 @@ commands:
           name: "Install IPFS"
           working_directory: ~/
           command: |
-            if [ command -v ipfs ]; then
+            export PATH="$PATH:$HOME/go-ipfs"
+            echo 'export PATH=$PATH:$HOME/go-ipfs' >> $BASH_ENV
+
+            if command -v ipfs; then
               echo "IPFS already installed"
               ipfs version
               ipfs id
@@ -58,8 +62,6 @@ commands:
               echo "DOWNLOAD_URL=$DOWNLOAD_URL"
               curl -sSL -o ipfs.tar.gz $DOWNLOAD_URL
               tar -xzf ipfs.tar.gz
-              export PATH="$PATH:$HOME/go-ipfs"
-              echo 'export PATH=$PATH:$HOME/go-ipfs' >> $BASH_ENV
               rm -rf ~/.ipfs
               ipfs init
             fi
@@ -82,6 +84,22 @@ commands:
           name: "Wait for IPFS daemon to start"
           command: wget --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
 
+  version-contracts:
+    steps:
+      # Find the last update of any contract
+      - run: |
+          git log -1 -- \
+            utils/core-modules/contracts \
+            utils/core-contracts/contracts \
+            protocol/synthetix/contracts \
+            protocol/governance/contracts \
+            protocol/oracle-manager/contracts \
+            markets/spot-market/contracts \
+            markets/perps-market/contracts \
+            markets/legacy-market/contracts \
+            > /tmp/version--contracts.txt
+      - run: cat /tmp/version--contracts.txt
+
   version-testable-contracts:
     steps:
       # Currently we only have testable contracts generated for @synthetixio/main
@@ -89,14 +107,25 @@ commands:
       - run: git log -1 -- protocol/synthetix/contracts > /tmp/version--testable-contracts.txt
       - run: cat /tmp/version--testable-contracts.txt
 
-  restore-testable-contracts:
+jobs:
+  build-testable:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
+      - checkout
+      - install-foundry
+      - install-ipfs
+      - run-ipfs-daemon
+      - yarn-install
+      - wait-for-ipfs
+      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
+
+      - version-testable-contracts
+
       - restore_cache:
           keys:
             - testable-contracts-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
 
-  save-testable-contracts:
-    steps:
       - run:
           name: "@synthetixio/main: generate-testable"
           command: |-
@@ -111,49 +140,31 @@ commands:
             - "protocol/synthetix/contracts/generated"
             # Add more folders here if we generate more
 
-  build-testable:
-    steps:
+      - version-contracts
+
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CACHE_VERSION }}
+            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
 
       - run: yarn workspaces foreach --topological-dev --verbose run build-testable
 
       - save_cache:
-          key: cannon-{{ .Environment.CACHE_VERSION }}
+          key: cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
           paths:
             - "~/.local/share/cannon"
 
       # As we generated all the testables, we also got typechain-types generated for all packages, cache them
-#      - save_cache:
-#          key: typechain-types-{{ .Environment.CACHE_VERSION }}
-#          paths:
-#            - "utils/core-modules/typechain-types"
-#            - "protocol/synthetix/typechain-types"
-#            - "protocol/governance/typechain-types"
-#            - "protocol/oracle-manager/typechain-types"
-#            - "protocol/governance/typechain-types"
-#            - "markets/legacy-market/typechain-types"
-#            - "markets/perps-market/typechain-types"
-#            - "markets/spot-market/typechain-types"
-
-jobs:
-  build-testable:
-    docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
-    steps:
-      - checkout
-      - install-foundry
-      - install-ipfs
-      - run-ipfs-daemon
-      - yarn-install
-      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
-
-      - version-testable-contracts
-      - restore-testable-contracts
-      - save-testable-contracts
-
-      - build-testable
+      - save_cache:
+          key: typechain-types-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+          paths:
+            - "utils/core-modules/typechain-types"
+            - "protocol/synthetix/typechain-types"
+            - "protocol/governance/typechain-types"
+            - "protocol/oracle-manager/typechain-types"
+            - "protocol/governance/typechain-types"
+            - "markets/legacy-market/typechain-types"
+            - "markets/perps-market/typechain-types"
+            - "markets/spot-market/typechain-types"
 
   test:
     parameters:
@@ -168,17 +179,24 @@ jobs:
       - install-ipfs
       - run-ipfs-daemon
       - yarn-install
+      - wait-for-ipfs
+
+      - version-contracts
+      - restore_cache:
+          keys:
+            - typechain-types-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
 
       - version-testable-contracts
-      - restore-testable-contracts
+      - restore_cache:
+          keys:
+            - testable-contracts-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
 
       - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
-      - restore_cache:
-          keys:
-            - cannon-{{ .Environment.CACHE_VERSION }}
-
-      - run: yarn workspace "<< parameters.workspace >>" run build-testable
+      # - run: yarn workspace "<< parameters.workspace >>" run build-testable
 
       - run:
           environment:
