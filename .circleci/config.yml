@@ -1,0 +1,98 @@
+version: 2.1
+
+parameters:
+  node-version:
+    type: string
+    default: "16.20.1"
+
+commands:
+  yarn-install:
+    steps:
+      - run: yarn install --immutable --immutable-cache
+
+  install-foundry:
+    steps:
+      - run:
+          name: "Install foundry used for cannon and e2e tests"
+          environment:
+            SHELL: /bin/bash
+          command: |-
+            apt update && apt install --yes curl
+            curl -L https://foundry.paradigm.xyz | bash
+            export PATH="$PATH:$HOME/.foundry/bin"
+            echo export PATH="$PATH:$HOME/.foundry/bin" > $BASH_ENV
+            foundryup
+
+  install-ipfs:
+    steps:
+      - run:
+          name: "Install IPFS"
+          command: |
+            LATEST_VERSION=$(curl -sSL https://dist.ipfs.tech/go-ipfs/versions | tail -n 1)
+            LATEST_VERSION_NUMBER=${LATEST_VERSION#*v}
+            DOWNLOAD_URL="https://dist.ipfs.tech/go-ipfs/${LATEST_VERSION}/go-ipfs_${LATEST_VERSION}_linux-amd64.tar.gz"
+            echo "DOWNLOAD_URL=$DOWNLOAD_URL"
+            curl -sSL -o ipfs.tar.gz $DOWNLOAD_URL
+            tar -xzf ipfs.tar.gz
+            sudo cp -f ./go-ipfs/ipfs /usr/local/bin/
+            ipfs init
+
+  run-ipfs-daemon:
+    steps:
+      - run:
+          command: ipfs daemon
+          background: true
+
+  wait-for-ipfs:
+    steps:
+      - run:
+          name: "Wait for IPFS daemon to start"
+          command: wget --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
+
+jobs:
+  test:
+    parameters:
+      workspace:
+        type: string
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    parallelism: 2
+    environment:
+      NODE_ENV: test
+    steps:
+      - checkout
+      - install-foundry
+      - install-ipfs
+      - run-ipfs-daemon
+      - yarn-install
+
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build-testable
+
+      - run:
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+workflows:
+  version: 2.1
+
+  ui:
+    jobs:
+      - test:
+          name: "test-main"
+          workspace: "@synthetixio/main"
