@@ -126,9 +126,9 @@ args = [
   "<%= imports.synthetix.contracts.AccountRouter.address %>"
 ]
 depends = ["invoke.upgradeProxy"]
-factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
-factory.AccountProxy.event = "AssociatedSystemSet"
-factory.AccountProxy.arg = 2
+factory.PerpAccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.PerpAccountProxy.event = "AssociatedSystemSet"
+factory.PerpAccountProxy.arg = 2
 
 # --- Mocks --- #
 
