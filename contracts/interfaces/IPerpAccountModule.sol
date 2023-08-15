@@ -37,7 +37,7 @@ interface IPerpAccountModule {
         // @dev Health factor for position in market if a position is open.
         uint256 healthFactor;
         // @dev Notional value of position in USD.
-        uint256 notionalValue;
+        uint256 notionalValueUsd;
         // @dev Unrealized PnL of position in USD.
         int256 unrealizedPnl;
         // @dev funding accrued in USD.

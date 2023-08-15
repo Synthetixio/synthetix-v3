@@ -68,11 +68,11 @@ contract PerpAccountModule is IPerpAccountModule {
         (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd) = position
             .getHealthData(
                 market,
-                Margin.getMarginUsd(accountId, market, price),
+                Margin.getMarginUsd(accountId, market, oraclePrice),
                 oraclePrice,
                 PerpMarketConfiguration.load(marketId)
             );
-        uint256 notionalValue = MathUtil.abs(position.size).mulDecimal(price);
+        uint256 notionalValueUsd = MathUtil.abs(position.size).mulDecimal(oraclePrice);
 
         return
             IPerpAccountModule.PositionDigest(
@@ -80,7 +80,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 marketId,
                 remainingMarginUsd,
                 healthFactor,
-                notionalValue,
+                notionalValueUsd,
                 unrealizedPnl,
                 accruedFunding,
                 position.entryPrice,
