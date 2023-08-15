@@ -45,6 +45,9 @@ jobs:
         with:
           key: hardhat-${{ matrix.workspace }}
           path: |
+            markets/**/cache
+            markets/**/artifacts
+            markets/**/test/generated
             protocol/**/cache
             protocol/**/artifacts
             protocol/**/test/generated
