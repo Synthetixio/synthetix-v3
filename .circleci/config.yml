@@ -82,6 +82,48 @@ commands:
           name: "Wait for IPFS daemon to start"
           command: wget --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
 
+  version-testable-contracts:
+    steps:
+      # Currently we only have testable contracts generated for @synthetixio/main
+      # Add more folders to version calc (space separated)
+      - run: git log -1 -- protocol/synthetix/contracts > /tmp/version--testable-contracts.txt
+      - run: cat /tmp/version--testable-contracts.txt
+
+  restore-testable-contracts:
+    steps:
+      - restore_cache:
+          keys:
+            - testable-contracts-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
+
+  save-testable-contracts:
+    steps:
+      - run:
+          name: "@synthetixio/main: generate-testable"
+          command: |-
+            if test -d "protocol/synthetix/contracts/generated/test" && [ $(ls protocol/synthetix/contracts/generated/test | wc -l) -gt 1  ]; then
+              echo "SKIP, no changes detected"
+            else
+              yarn workspace "@synthetixio/main" run generate-testable
+            fi
+      - save_cache:
+          key: testable-contracts-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
+          paths:
+            - "protocol/synthetix/contracts/generated"
+            # Add more folders here if we generate more
+
+  build-testable:
+    steps:
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}
+
+      - run: yarn workspaces foreach --topological-dev --verbose run build-testable
+
+      - save_cache:
+          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}
+          paths:
+            - "~/.local/share/cannon"
+
 jobs:
   build-testable:
     docker:
@@ -94,16 +136,11 @@ jobs:
       - yarn-install
       - run: yarn workspaces foreach --topological-dev --verbose run build:ts
 
-      - restore_cache:
-          keys:
-            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}
+      - version-testable-contracts
+      - restore-testable-contracts
+      - save-testable-contracts
 
-      - run: yarn workspaces foreach --topological-dev --verbose run build-testable
-
-      - save_cache:
-          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}
-          paths:
-            - "~/.local/share/cannon"
+      - build-testable
 
   test:
     parameters:
@@ -118,6 +155,9 @@ jobs:
       - install-ipfs
       - run-ipfs-daemon
       - yarn-install
+
+      - version-testable-contracts
+      - restore-testable-contracts
 
       - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
