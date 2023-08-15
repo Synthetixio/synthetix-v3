@@ -36,10 +36,7 @@ describe('OrderModule', () => {
       assertBn.equal(pendingOrder.keeperFeeBufferUsd, order.keeperFeeBufferUsd);
       assertBn.equal(pendingOrder.commitmentTime, block.timestamp);
 
-      // NOTE: Partial match, just to confirm the order was successfully emitted.
-      //
-      // The last 2 arguments are fees on the order, which is tested separately. `assertRevert`, despite calling `text.match`
-      // does not allow a regex expression... so this will have to change in the future.
+      // TODO: Add full event match to include all propertie when events are more finalsied.
       await assertEvent(
         tx,
         `OrderSubmitted(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${block.timestamp}`,
@@ -217,20 +214,25 @@ describe('OrderModule', () => {
       const commitmentTime = pendingOrder.commitmentTime.toNumber();
       const config = await PerpMarketProxy.getMarketConfiguration();
       const minOrderAge = config.minOrderAge.toNumber();
-      const maxOrderAge = config.maxOrderAge.toNumber();
+      const pythPublishTimeMin = config.pythPublishTimeMin.toNumber();
+      const pythPublishTimeMax = config.pythPublishTimeMax.toNumber();
 
+      // PublishTime is allowed to be between settlement + [0, maxAge - minAge]. For example, `[0, 12 - 8] = [0, 4]`.
+      const publishTimeDelta = genInt(0, pythPublishTimeMax - pythPublishTimeMin);
       const settlementTime = commitmentTime + minOrderAge;
-      // // const publishTime = settlementTime - genInt(0, maxOrderAge - minOrderAge);
-      const publishTime = settlementTime - 2;
+      const publishTime = settlementTime - publishTimeDelta;
 
       const oraclePrice = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
       const { updateData, updateFee } = await getPythPriceData(bs, marketId, oraclePrice, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
-      await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+      const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
         value: updateFee,
       });
+
+      // TODO: Add full event match to include all propertie when events are more finalsied.
+      await assertEvent(tx, `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}`, PerpMarketProxy);
 
       // There should be no order.
       const pendingOrder2 = await PerpMarketProxy.getOrder(trader.accountId, marketId);

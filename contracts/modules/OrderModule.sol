@@ -203,7 +203,7 @@ contract OrderModule is IOrderModule {
 
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, trade.keeperFee);
 
-        emit OrderSettled(accountId, marketId, order.sizeDelta, trade.orderFee, trade.keeperFee);
+        emit OrderSettled(accountId, marketId, params.sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
     /**
