@@ -90,13 +90,15 @@ export const genMarket = () => ({
 /**
  * Generate a limit price 5 - 10% within the oracle price. The limit will be higher (long) or lower (short).
  */
-export const genLimitPrice = (sizeDelta: BigNumber, oraclePrice: BigNumber) => {
+export const genLimitPrice = (isLong: boolean, oraclePrice: BigNumber) => {
   const priceImpactPercentage = genFloat(0.05, 0.1);
-  const limitPrice = sizeDelta.lt(0)
-    ? wei(oraclePrice).mul(1 - priceImpactPercentage)
-    : wei(oraclePrice).mul(1 + priceImpactPercentage);
+  const limitPrice = isLong
+    ? wei(oraclePrice).mul(1 + priceImpactPercentage)
+    : wei(oraclePrice).mul(1 - priceImpactPercentage);
   return limitPrice.toBN();
 };
+
+export const genKeeperFeeBufferUsd = () => bn(genFloat(2, 10));
 
 // --- Higher level generators --- //
 
@@ -130,8 +132,6 @@ export const genTrader = async (bs: Bs) => {
   };
 };
 
-export const genKeeperOrderBufferFeeUsd = () => bn(genFloat(2, 10));
-
 export const genOrder = async (
   bs: Bs,
   market: Market,
@@ -142,9 +142,9 @@ export const genOrder = async (
   const { systems } = bs;
   const { PerpMarketProxy } = systems();
 
-  const keeperOrderBufferFeeUsd = genKeeperOrderBufferFeeUsd();
+  const keeperFeeBufferUsd = genKeeperFeeBufferUsd();
   const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
-  const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperOrderBufferFeeUsd);
+  const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperFeeBufferUsd);
   const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
 
   // Use a reasonble amount of leverage
@@ -154,12 +154,13 @@ export const genOrder = async (
   let sizeDelta = marginUsd.div(oraclePrice).mul(wei(leverage)).toBN();
   sizeDelta = genOneOf([sizeDelta, sizeDelta.mul(-1)]);
 
-  const limitPrice = genLimitPrice(sizeDelta, oraclePrice);
+  const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice);
+
   const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
-  const fees = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperOrderBufferFeeUsd);
+  const fees = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
 
   return {
-    keeperOrderBufferFeeUsd,
+    keeperFeeBufferUsd,
     marginUsd: marginUsd.toBN(),
     leverage,
     sizeDelta,

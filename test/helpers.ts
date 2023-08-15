@@ -2,12 +2,13 @@ import { BigNumber } from 'ethers';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
 import type { genTrader } from './generators';
+import { wei } from '@synthetixio/wei';
 
 // --- Mutative helpers --- //
 
 type Bs = ReturnType<typeof bootstrap>;
 
-/** Given generated trade meta, deposit collateral and return trader. */
+/** Returns a generated trader with collateral and market details. */
 export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) => {
   const { trader, market, collateral, collateralDepositAmount } = await tr;
   const { PerpMarketProxy } = bs.systems();
@@ -28,7 +29,7 @@ export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) =>
   return tr;
 };
 
-/** Generic update on market specific params */
+/** Generic update on market specific params. */
 export const setMarketConfigurationById = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
@@ -44,25 +45,26 @@ export const setMarketConfigurationById = async (
   return await PerpMarketProxy.getMarketConfigurationById(marketId);
 };
 
-/** Update market's Pyth and CL oracle price, given the price and time of update. */
+/** Returns a Pyth updateData blob and the update fee in wei. */
 export const getPythPriceData = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   price: number,
   publishTime?: number,
-  priceExpo = -4,
+  priceExpo = 6,
   priceConfidence = 1
 ) => {
   const { systems } = bs;
   const { PythMock, PerpMarketProxy } = systems();
 
+  const pythPrice = wei(price, priceExpo).toBN();
   const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
   const updateData = await PythMock.createPriceFeedUpdateData(
     config.pythPriceFeedId,
-    price,
+    pythPrice,
     priceConfidence,
-    priceExpo,
-    price,
+    -priceExpo,
+    pythPrice,
     priceConfidence,
     publishTime ?? Math.floor(Date.now() / 1000)
   );

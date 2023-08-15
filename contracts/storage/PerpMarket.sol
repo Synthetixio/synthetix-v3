@@ -25,6 +25,7 @@ library PerpMarket {
     using DecimalMath for uint128;
     using DecimalMath for int256;
     using DecimalMath for uint256;
+    using DecimalMath for int64;
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
@@ -184,19 +185,11 @@ library PerpMarket {
             maxAge
         );
 
-        // How to calculate the Pyth price:
-        //
-        // latestPrice.price fixed-point representation base
-        // latestPrice.expo  fixed-point representation exponent (to go from base to decimal)
-        // latestPrice.conf  fixed-point representation of confidence
-        //
-        // price = 12276250
-        // expo = -5
-        // price = 12276250 * 10^(-5) =  122.76250
-        //
-        // 18 decimals => rebasedPrice = 12276250 * 10^(18-5) = 122762500000000000000
-        uint256 baseConvertion = 10 ** uint(int(18) + latestPrice.expo);
-        price = (latestPrice.price * int(baseConvertion)).toUint();
+        // @see: synthetix-v3/protocol/oracle-manager/contracts/nodes/PythNode.sol
+        int256 factor = 18 + latestPrice.expo;
+        price = (
+            factor > 0 ? latestPrice.price.upscale(factor.toUint()) : latestPrice.price.downscale((-factor).toUint())
+        ).toUint();
         publishTime = latestPrice.publishTime;
     }
 
