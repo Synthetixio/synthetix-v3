@@ -3,7 +3,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
 import { createStakedPool } from '@synthetixio/main/test/common';
 import {
   PerpMarketProxy,
-  AccountProxy,
+  PerpAccountProxy,
   SnxV3CollateralMock,
   SynthetixUsdXCollateralMock,
   WrappedStakedEthCollateralMock,
@@ -39,7 +39,7 @@ export interface Contracts {
   SynthetixUsdXCollateralMock: SynthetixUsdXCollateralMock;
   WrappedStakedEthCollateralMock: WrappedStakedEthCollateralMock;
   PerpMarketProxy: PerpMarketProxy;
-  AccountProxy: AccountProxy;
+  PerpAccountProxy: PerpAccountProxy;
   PythMock: PythMock;
   AggregatorV3Mock: AggregatorV3Mock;
 }
@@ -78,7 +78,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   let systems: Systems;
   before('load contracts', () => {
     systems = {
-      Account: getContract('AccountProxy'),
+      Account: getContract('PerpAccountProxy'),
       PerpMarketProxy: getContract('PerpMarketProxy'),
       Core: getContract('synthetix.CoreProxy'),
       USD: getContract('synthetix.USDProxy'),
