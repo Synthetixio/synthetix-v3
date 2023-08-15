@@ -67,4 +67,7 @@ library ErrorUtil {
 
     // @dev Thrown when the input arrays have mismatched lengths.
     error ArrayLengthMismatch();
+
+    // @dev Thrown when we expect a position not to exist but it does.
+    error PositionFound(uint128 accountId);
 }
