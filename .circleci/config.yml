@@ -227,7 +227,8 @@ jobs:
         type: integer
     parallelism: << parameters.parallelism >>
     docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
+      # TODO: update to Node 18 after fixing couple of failing (for some reason) tests
+      - image: cimg/node:16.20.1
     steps:
       - checkout
       - yarn-install
@@ -399,7 +400,7 @@ workflows:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
-          parallelism: 3
+          parallelism: 4
 
       #- test-contracts: # TODO: enable when tests are fixed
       #    name: "test-legacy-market"
