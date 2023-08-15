@@ -48,22 +48,24 @@ jobs:
         with:
           key: hardhat-${{ matrix.workspace }}-${{ github.head_ref }}-${{ steps.date.outputs.date }}
           restore-keys: |
-            hardhat-${{ matrix.workspace }}-${{ github.head_ref }}
-            hardhat-${{ matrix.workspace }}
+            hardhat-test-${{ matrix.workspace }}-${{ github.head_ref }}
+            hardhat-test-${{ matrix.workspace }}
           path: |
             markets/**/cache
             markets/**/artifacts
             markets/**/test/generated
+            markets/**/typechain-types
             protocol/**/cache
             protocol/**/artifacts
             protocol/**/test/generated
+            protocol/**/typechain-types
       - name: Cache Cannon packages
         uses: actions/cache@v3
         with:
           key: cannon-${{ matrix.workspace }}-${{ github.head_ref }}-${{ steps.date.outputs.date }}
           restore-keys: |
-            cannon-${{ matrix.workspace }}-${{ github.head_ref }}
-            cannon-${{ matrix.workspace }}
+            cannon-test-${{ matrix.workspace }}-${{ github.head_ref }}
+            cannon-test-${{ matrix.workspace }}
           path: |
             ~/.local/share/cannon
 
