@@ -18,6 +18,27 @@ commands:
           command: wget --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
 
 jobs:
+  build-testable:
+    docker:
+      - image: noisekit/synthetix-cci:node-16.20.1
+    steps:
+      - run: echo export PATH="$PATH:$HOME/.foundry/bin:$HOME/go-ipfs" > $BASH_ENV
+      - checkout
+      - run-ipfs-daemon
+      - yarn-install
+      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
+
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CACHE_VERSION }}
+
+      - run: yarn workspaces foreach --topological-dev --verbose run build-testable
+
+      - save_cache:
+          key: cannon-{{ .Environment.CACHE_VERSION }}
+          paths:
+            - "~/.local/share/cannon"
+
   test:
     parameters:
       workspace:
@@ -25,8 +46,6 @@ jobs:
     docker:
       - image: noisekit/synthetix-cci:node-16.20.1
     parallelism: 2
-    environment:
-      NODE_ENV: test
     steps:
       - run: echo export PATH="$PATH:$HOME/.foundry/bin:$HOME/go-ipfs" > $BASH_ENV
       - checkout
@@ -35,7 +54,9 @@ jobs:
 
       - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build-testable
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CACHE_VERSION }}
 
       - run:
           environment:
@@ -58,8 +79,10 @@ jobs:
 workflows:
   version: 2.1
 
-  ui:
+  tests:
     jobs:
+      - build-testable
       - test:
           name: "test-main"
           workspace: "@synthetixio/main"
+          requires: [build-testable]
