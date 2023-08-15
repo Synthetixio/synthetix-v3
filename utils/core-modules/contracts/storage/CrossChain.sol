@@ -9,7 +9,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
 
 /**
- * @title System wide configuration for anything
+ * @title System wide configuration for anything related to cross-chain
  */
 library CrossChain {
     using SetUtil for SetUtil.UintSet;
@@ -23,7 +23,7 @@ library CrossChain {
     error InvalidMessage();
 
     bytes32 private constant _SLOT_CROSS_CHAIN =
-        keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
+        keccak256(abi.encode("io.synthetix.core-modules.CrossChain"));
 
     struct Data {
         ICcipRouterClient ccipRouter;

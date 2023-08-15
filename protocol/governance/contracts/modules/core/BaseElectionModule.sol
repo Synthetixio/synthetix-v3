@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/main/contracts/storage/CrossChain.sol";
+import "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import "@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../submodules/election/ElectionCredentials.sol";

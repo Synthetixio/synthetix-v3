@@ -94,6 +94,14 @@ library SetUtil {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/modules/CrossChainModule.sol:CrossChainModule
+contract CrossChainModule {
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
+    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
+    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/modules/NftModule.sol:NftModule
 contract NftModule {
     bytes32 internal constant _INITIALIZED_NAME = "NftModule";
@@ -117,22 +125,9 @@ library AssociatedSystem {
     }
 }
 
-// @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
-library Initialized {
-    struct Data {
-        bool initialized;
-    }
-    function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
-        assembly {
-            store.slot := s
-        }
-    }
-}
-
-// @custom:artifact @synthetixio/main/contracts/storage/CrossChain.sol:CrossChain
+// @custom:artifact @synthetixio/core-modules/contracts/storage/CrossChain.sol:CrossChain
 library CrossChain {
-    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.core-modules.CrossChain"));
     struct Data {
         address ccipRouter;
         SetUtil.UintSet supportedNetworks;
@@ -147,7 +142,20 @@ library CrossChain {
     }
 }
 
-// @custom:artifact @synthetixio/main/contracts/utils/CcipClient.sol:CcipClient
+// @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
+library Initialized {
+    struct Data {
+        bool initialized;
+    }
+    function load(bytes32 id) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
+// @custom:artifact @synthetixio/core-modules/contracts/utils/CcipClient.sol:CcipClient
 library CcipClient {
     bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
     struct EVMTokenAmount {
