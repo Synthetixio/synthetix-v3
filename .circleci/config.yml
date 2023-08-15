@@ -170,7 +170,7 @@ jobs:
       workspace:
         type: string
       parallelism:
-        type: number
+        type: integer
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     parallelism: << parameters.parallelism >>
@@ -197,9 +197,114 @@ jobs:
 
       - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
-      # - run: yarn workspace "<< parameters.workspace >>" run build-testable
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-utils:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
+          name: "Run tests"
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-modules:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+      - install-ipfs
+      - run-ipfs-daemon
+      - yarn-install
+      - wait-for-ipfs
+
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-contracts:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run: yarn workspace "<< parameters.workspace >>" run compile-contracts
+
+      - run:
+          name: "Run tests"
           environment:
             REPORT_GAS: true
           command: |
@@ -257,3 +362,15 @@ workflows:
       #    name: "test-legacy-market"
       #    workspace: "@synthetixio/legacy-market"
       #    requires: [build-testable]
+
+      - test-core-utils:
+          workspace: "@synthetixio/core-utils"
+          parallelism: 1
+
+      - test-core-modules:
+          workspace: "@synthetixio/core-modules"
+          parallelism: 1
+
+      - test-core-contracts:
+          workspace: "@synthetixio/core-contracts"
+          parallelism: 1
