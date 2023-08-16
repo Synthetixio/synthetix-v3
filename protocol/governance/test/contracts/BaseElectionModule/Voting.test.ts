@@ -12,10 +12,6 @@ describe('ElectionModule - voting', () => {
     [, user, otherUser] = getSigners();
   });
 
-  before('set mothership', async () => {
-    await c.CoreProxy.configureMothership(13370);
-  });
-
   before('create voting power for user', async () => {
     await c.CoreProxy.Ballot_set_votingPower(
       await c.CoreProxy.Council_get_currentElectionId(),

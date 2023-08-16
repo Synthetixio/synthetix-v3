@@ -7,7 +7,6 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
-import "@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../submodules/election/ElectionCredentials.sol";
 import "../../submodules/election/ElectionTally.sol";
@@ -18,8 +17,7 @@ contract BaseElectionModule is
     IElectionModule,
     ElectionCredentials,
     ElectionTally,
-    InitializableMixin,
-    ProxyStorage
+    InitializableMixin
 {
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
