@@ -43,6 +43,18 @@ library GlobalPerpsMarketConfiguration {
          * @dev maximum configured liquidation reward for the sender who liquidates the account
          */
         uint maxLiquidationRewardUsd;
+        /**
+         * @dev maximum configured number of concurrent positions per account.
+         * @notice If set to zero it means no new positions can be opened, but existing positions can be increased or decreased.
+         * @notice If set to a larger number (larger than number of markets created) it means is unlimited.
+         */
+        uint128 maxPositionsPerAccount;
+        /**
+         * @dev maximum configured number of concurrent collaterals per account.
+         * @notice If set to zero it means no new collaterals can be added accounts, but existing collaterals can be increased or decreased.
+         * @notice If set to a larger number (larger than number of collaterals enabled) it means is unlimited.
+         */
+        uint128 maxCollateralsPerAccount;
     }
 
     function load() internal pure returns (Data storage globalMarketConfig) {
