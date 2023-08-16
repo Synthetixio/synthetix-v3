@@ -51,6 +51,10 @@ library PerpsAccount {
 
     error AccountLiquidatable(uint128 accountId);
 
+    error MaxPositionsPerAccountReached(uint128 maxPositionsPerAccount);
+
+    error MaxCollateralsPerAccountReached(uint128 maxCollateralsPerAccount);
+
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
 
@@ -66,6 +70,30 @@ library PerpsAccount {
         account = load(id);
         if (account.id == 0) {
             account.id = id;
+        }
+    }
+
+    function validateMaxPositions(uint128 accountId, uint128 marketId) internal view {
+        if (PerpsMarket.accountPosition(marketId, accountId).size == 0) {
+            uint128 maxPositionsPerAccount = GlobalPerpsMarketConfiguration
+                .load()
+                .maxPositionsPerAccount;
+            if (maxPositionsPerAccount <= load(accountId).openPositionMarketIds.length()) {
+                revert MaxPositionsPerAccountReached(maxPositionsPerAccount);
+            }
+        }
+    }
+
+    function validateMaxCollaterals(uint128 accountId, uint128 synthMarketId) internal view {
+        Data storage account = load(accountId);
+
+        if (account.collateralAmounts[synthMarketId] == 0) {
+            uint128 maxCollateralsPerAccount = GlobalPerpsMarketConfiguration
+                .load()
+                .maxCollateralsPerAccount;
+            if (maxCollateralsPerAccount <= account.activeCollateralTypes.length()) {
+                revert MaxCollateralsPerAccountReached(maxCollateralsPerAccount);
+            }
         }
     }
 
