@@ -53,6 +53,8 @@ contract PerpsAccountModule is IPerpsAccountModule {
         PerpsAccount.Data storage account = PerpsAccount.create(accountId);
         uint128 perpsMarketId = perpsMarketFactory.perpsMarketId;
 
+        PerpsAccount.validateMaxCollaterals(accountId, synthMarketId);
+
         AsyncOrder.checkPendingOrder(account.id);
 
         if (amountDelta > 0) {
