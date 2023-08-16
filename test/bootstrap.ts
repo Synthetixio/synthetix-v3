@@ -179,39 +179,54 @@ export const bootstrap = (args: BootstrapArgs) => {
   // Overall market allows up to n collaterals, each having their own oracle node.
   const configureCollateral = async () => {
     const collaterals = [
-      // { contract: systems.CollateralMock, initialPrice: bn(genNumber(25, 100)), max: bn(10_000_000) },
-      { contract: systems.Collateral2Mock, initialPrice: bn(genNumber(1, 10)), max: bn(999_999) },
-      { contract: systems.Collateral3Mock, initialPrice: bn(genNumber(1000, 5000)), max: bn(100_000) },
+      // `CollteralMock` is the same staked collateral (e.g. SNX)
+      {
+        contract: systems.CollateralMock,
+        initialPrice: args.pool.stakedCollateralPrice,
+        max: bn(10_000_000),
+        oracleNodeId: stakedPool.oracleNodeId(),
+      },
+      {
+        contract: systems.Collateral2Mock,
+        initialPrice: bn(genNumber(1, 10)),
+        max: bn(999_999),
+        oracleNodeId: undefined,
+      },
+      {
+        contract: systems.Collateral3Mock,
+        initialPrice: bn(genNumber(1000, 5000)),
+        max: bn(100_000),
+        oracleNodeId: undefined,
+      },
     ];
     const collateralTypes = collaterals.map(({ contract }) => contract.address);
     const owner = getOwner();
 
     let collateralOracles: Awaited<ReturnType<typeof createOracleNode>>[] = [];
     for (const { initialPrice, contract } of collaterals) {
+      const collateralOracle = await createOracleNode(owner, initialPrice, systems.OracleManager);
+      collateralOracles.push(collateralOracle);
+
       // Update core system to allow this collateral to be deposited for all provisioned markets.
       for (const market of markets) {
         // Ensure core system recognises this collateral.
-        let tx = await systems.Core.connect(owner).configureCollateral({
+        await systems.Core.connect(owner).configureCollateral({
           tokenAddress: contract.address,
-          oracleNodeId: market.oracleNodeId(),
+          oracleNodeId: collateralOracle.oracleNodeId,
           issuanceRatioD18: bn(1),
           liquidationRatioD18: bn(1),
           liquidationRewardD18: bn(1),
           minDelegationD18: bn(1),
           depositingEnabled: true,
         });
-        await tx.wait();
 
         // Ensure core system has enough capacity to deposit this collateral for market x.
-        tx = await systems.Core.connect(owner).configureMaximumMarketCollateral(
+        await systems.Core.connect(owner).configureMaximumMarketCollateral(
           market.marketId(),
           contract.address,
           constants.MaxUint256
         );
-        await tx.wait();
       }
-
-      collateralOracles.push(await createOracleNode(owner, initialPrice, systems.OracleManager));
     }
 
     const oracleNodeIds = collateralOracles.map(({ oracleNodeId }) => oracleNodeId);
