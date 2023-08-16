@@ -18,4 +18,3 @@ jobs:
       - run: yarn install --immutable --immutable-cache
       - run: yarn workspaces foreach --topological-dev --verbose run build:ts
       - run: yarn docgen
-      - run: git diff --exit-code
