@@ -93,12 +93,12 @@ contract OrderModule is IOrderModule {
         if (publishTime < commitmentTime) {
             revert ErrorUtil.StalePrice();
         }
-        // Stale order can only be canceled.
-        if (block.timestamp - commitmentTime > globalConfig.maxOrderAge) {
+        // A stale order is one where time passed is max age or older (>=).
+        if (block.timestamp - commitmentTime >= globalConfig.maxOrderAge) {
             revert ErrorUtil.StaleOrder();
         }
-        // Minimum block.timestamp must pass before allowing this operation.
-        if (block.timestamp < globalConfig.minOrderAge) {
+        // Amount of time that has passed must be at least the minimum order age (>=).
+        if (block.timestamp - commitmentTime < globalConfig.minOrderAge) {
             revert ErrorUtil.OrderNotReady();
         }
 
@@ -170,7 +170,7 @@ contract OrderModule is IOrderModule {
 
         // No order available to settle.
         if (order.sizeDelta == 0) {
-            revert ErrorUtil.OrderNotFound(accountId);
+            revert ErrorUtil.OrderNotFound();
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();

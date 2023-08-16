@@ -12,7 +12,10 @@ library ErrorUtil {
     error InvalidPrice();
 
     // @dev Thrown when an expected order cannot be found.
-    error OrderNotFound(uint128 accountId);
+    error OrderNotFound();
+
+    // @dev Thrown when an order exists when none is expected.
+    error OrderFound(uint128 accountId);
 
     // @dev Thrown when order not ready for settlement.
     error OrderNotReady();
@@ -46,9 +49,6 @@ library ErrorUtil {
 
     // @dev Thrown when an account has insufficient margin to perform a trade.
     error InsufficientMargin();
-
-    // @dev Thrown when an order exists when none is expected.
-    error OrderFound(uint128 accountId);
 
     // @dev Thrown when performing an update will cause a position to be instantly liquidated.
     error CanLiquidatePosition();

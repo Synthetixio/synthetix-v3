@@ -4,6 +4,7 @@ import type { bootstrap } from './bootstrap';
 import { type genTrader, type genOrder, genNumber } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { isNil } from 'lodash';
 
 // --- Mutative helpers --- //
 
@@ -48,13 +49,18 @@ export const setMarketConfigurationById = async (
 export const getPythPriceData = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
-  price: number,
   publishTime?: number,
+  price?: number,
   priceExpo = 6,
   priceConfidence = 1
 ) => {
   const { systems } = bs;
   const { PythMock, PerpMarketProxy } = systems();
+
+  // Default price to the current market oraclePrice.
+  if (isNil(price)) {
+    price = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
+  }
 
   const pythPrice = wei(price, priceExpo).toBN();
   const config = await PerpMarketProxy.getMarketConfigurationById(marketId);
@@ -68,28 +74,18 @@ export const getPythPriceData = async (
     publishTime ?? Math.floor(Date.now() / 1000)
   );
   const updateFee = await PythMock.getUpdateFee([updateData]);
-
   return { updateData, updateFee };
 };
 
-/** Commits a generated `order` for `trader` on `marketId` and settles successfully. */
-export const commitAndSettle = async (
+export const getFastForwardTimestamp = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
-  trader: ReturnType<Bs['traders']>[number],
-  order: Awaited<ReturnType<typeof genOrder>>
+  trader: ReturnType<Bs['traders']>[number]
 ) => {
   const { PerpMarketProxy } = bs.systems();
-  await PerpMarketProxy.connect(trader.signer).commitOrder(
-    trader.accountId,
-    marketId,
-    order.sizeDelta,
-    order.limitPrice,
-    order.keeperFeeBufferUsd
-  );
-  const pendingOrder = await PerpMarketProxy.getOrder(trader.accountId, marketId);
 
-  const commitmentTime = pendingOrder.commitmentTime.toNumber();
+  const order = await PerpMarketProxy.getOrder(trader.accountId, marketId);
+  const commitmentTime = order.commitmentTime.toNumber();
   const config = await PerpMarketProxy.getMarketConfiguration();
   const minOrderAge = config.minOrderAge.toNumber();
   const pythPublishTimeMin = config.pythPublishTimeMin.toNumber();
@@ -100,11 +96,29 @@ export const commitAndSettle = async (
   const settlementTime = commitmentTime + minOrderAge;
   const publishTime = settlementTime - publishTimeDelta;
 
-  const oraclePrice = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
-  const { updateData, updateFee } = await getPythPriceData(bs, marketId, oraclePrice, publishTime);
+  return { commitmentTime, settlementTime, publishTime };
+};
 
+/** Commits a generated `order` for `trader` on `marketId` and settles successfully. */
+export const commitAndSettle = async (
+  bs: ReturnType<typeof bootstrap>,
+  marketId: BigNumber,
+  trader: ReturnType<Bs['traders']>[number],
+  { sizeDelta, limitPrice, keeperFeeBufferUsd }: Awaited<ReturnType<typeof genOrder>>
+) => {
+  const { PerpMarketProxy } = bs.systems();
+  await PerpMarketProxy.connect(trader.signer).commitOrder(
+    trader.accountId,
+    marketId,
+    sizeDelta,
+    limitPrice,
+    keeperFeeBufferUsd
+  );
+
+  const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, bs.provider());
 
+  const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
   return PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
     value: updateFee,
   });

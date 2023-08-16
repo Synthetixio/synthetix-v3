@@ -5,7 +5,13 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
-import { commitAndSettle, depositMargin, getPythPriceData, setMarketConfigurationById } from '../../helpers';
+import {
+  commitAndSettle,
+  depositMargin,
+  getFastForwardTimestamp,
+  getPythPriceData,
+  setMarketConfigurationById,
+} from '../../helpers';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -209,18 +215,8 @@ describe('OrderModule', () => {
       const pendingOrder = await PerpMarketProxy.getOrder(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
-      const commitmentTime = pendingOrder.commitmentTime.toNumber();
-      const config = await PerpMarketProxy.getMarketConfiguration();
-      const minOrderAge = config.minOrderAge.toNumber();
-      const pythPublishTimeMin = config.pythPublishTimeMin.toNumber();
-      const pythPublishTimeMax = config.pythPublishTimeMax.toNumber();
-
-      const publishTimeDelta = genNumber(0, pythPublishTimeMax - pythPublishTimeMin);
-      const settlementTime = commitmentTime + minOrderAge;
-      const publishTime = settlementTime - publishTimeDelta;
-
-      const oraclePrice = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
-      const { updateData, updateFee } = await getPythPriceData(bs, marketId, oraclePrice, publishTime);
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
 
       await fastForwardTo(settlementTime, provider());
 
@@ -294,14 +290,123 @@ describe('OrderModule', () => {
         order.keeperFeeBufferUsd
       );
 
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      await fastForwardTo(settlementTime, provider());
+
       const invalidAccountId = 69420;
+      await assertRevert(
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(invalidAccountId, marketId, [updateData], {
+          value: updateFee,
+        }),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
     });
 
-    it('should revert when marketId does not exist', async () => {});
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
-    it('should revert if not enough time has passed');
-    it('should revert if order is stale');
-    it('should revert when there is no pending order');
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      await fastForwardTo(settlementTime, provider());
+
+      const invalidMarketId = 420420;
+      await assertRevert(
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, invalidMarketId, [updateData], {
+          value: updateFee,
+        }),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert if not enough time has passed', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      // Fast forward block.timestamp but make sure it's _just_ before readiness.
+      const config = await PerpMarketProxy.getMarketConfiguration();
+      const settlementTime = commitmentTime + genNumber(0, config.minOrderAge.toNumber() - 1);
+      await fastForwardTo(settlementTime, provider());
+
+      await assertRevert(
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          value: updateFee,
+        }),
+        `OrderNotReady()`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert if order is stale', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      const { commitmentTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      // Fast forward block.timestamp but make sure it's at or after max age.
+      const maxOrderAge = (await PerpMarketProxy.getMarketConfiguration()).maxOrderAge.toNumber();
+      const settlementTime = commitmentTime + genNumber(maxOrderAge, maxOrderAge * 2);
+      await fastForwardTo(settlementTime, provider());
+
+      await assertRevert(
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          value: updateFee,
+        }),
+        `StaleOrder()`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when there is no pending order', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+      const { publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
+
+      await assertRevert(
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          value: updateFee,
+        }),
+        `OrderNotFound()`,
+        PerpMarketProxy
+      );
+    });
 
     it('should revert if long exceeds limit price');
     it('should revert if short exceeds limit price');
@@ -313,6 +418,7 @@ describe('OrderModule', () => {
     it('should revert when price deviations exceed threshold');
 
     it('should revert when price is zero (i.e. invalid)');
+    it('should revert when pyth price is stale');
     it('should revert if off-chain pyth publishTime is not within acceptance window');
     it('should revert if pyth vaa merkle/blob is invalid');
     it('should revert when not enough wei is available to pay pyth fee');
