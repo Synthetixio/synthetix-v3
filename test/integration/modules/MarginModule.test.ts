@@ -4,7 +4,17 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assert from 'assert';
 import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
-import { bn, genAddress, genBootstrap, genBytes32, genNumber, genListOf, genOneOf, genTrader } from '../../generators';
+import {
+  bn,
+  genAddress,
+  genBootstrap,
+  genBytes32,
+  genNumber,
+  genListOf,
+  genOneOf,
+  genTrader,
+  genCollateralForTrader,
+} from '../../generators';
 import { depositMargin } from '../../helpers';
 
 describe('MarginModule', async () => {
@@ -417,6 +427,32 @@ describe('MarginModule', async () => {
         assertBn.equal(
           await collateral2.contract.balanceOf(traderAddress),
           collateralDepositAmount2.add(collateralWalletBalanceBeforeWithdrawal2)
+        );
+      });
+
+      it('should revert withdraw to an account that does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+        const invalidAccountId = bn(genNumber(42069, 50_000));
+
+        // Perform withdraw with invalid account
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(invalidAccountId, marketId),
+          `AccountNotFound("${invalidAccountId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert withdraw to a market that does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader } = await depositMargin(bs, genTrader(bs));
+        const invalidMarketId = bn(genNumber(42069, 50_000));
+
+        // Perform withdraw with invalid market
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, invalidMarketId),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
         );
       });
     });
