@@ -78,4 +78,17 @@ workflows:
 
   docgen:
     jobs:
-      - docgen
+      - docgen:
+          name: "docgen-release"
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - docgen:
+          name: "docgen-dev"
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /docgen/
