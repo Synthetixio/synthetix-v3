@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, constants, ethers } from 'ethers';
 import hre from 'hardhat';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
@@ -10,7 +10,7 @@ import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../veri
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
-describe.only('IssueUSDModule', function () {
+describe('IssueUSDModule', function () {
   const { signers, systems, provider, accountId, poolId, depositAmount, collateralAddress } =
     bootstrapWithStakedPool();
 
@@ -294,7 +294,21 @@ describe.only('IssueUSDModule', function () {
 
       before('other account burn', async () => {
         await systems()
-          .Core.connect(user1)
+          .Core.connect(owner)
+          .configureCollateral({
+            tokenAddress: await systems().Core.getUsdToken(),
+            oracleNodeId: ethers.utils.formatBytes32String(''),
+            issuanceRatioD18: 200,
+            liquidationRatioD18: 100,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
+            depositingEnabled: true,
+          });
+        await systems()
+          .USD.connect(user2)
+          .approve(systems().Core.address, constants.MaxUint256.toString());
+        await systems()
+          .Core.connect(user2)
           .deposit(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
         await systems()
           .Core.connect(user2)
@@ -326,6 +340,27 @@ describe.only('IssueUSDModule', function () {
       });
 
       before('account partial burn debt', async () => {
+        await systems()
+          .Core.connect(owner)
+          .configureCollateral({
+            tokenAddress: await systems().Core.getUsdToken(),
+            oracleNodeId: ethers.utils.formatBytes32String(''),
+            issuanceRatioD18: 200,
+            liquidationRatioD18: 100,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
+            depositingEnabled: true,
+          });
+        await systems()
+          .USD.connect(user1)
+          .approve(systems().Core.address, constants.MaxUint256.toString());
+        await systems()
+          .Core.connect(user1)
+          .deposit(
+            accountId,
+            await systems().Core.getUsdToken(),
+            depositAmount.div(20).add(depositAmount.div(2000))
+          );
         // in order to burn all with the fee we need a bit more
         await systems()
           .Core.connect(user1)

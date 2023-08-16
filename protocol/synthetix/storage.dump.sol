@@ -268,7 +268,6 @@ contract IssueUSDModule {
     bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
     bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
     bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
-    bytes32 private constant _CONFIG_TIMEOUT_BURN = "burnUsd_toAccount";
 }
 
 // @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
@@ -545,14 +544,23 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        mapping(address => bool) collateralTypeDisabled;
-        mapping(address => uint256) issuanceRatioD18;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 maxDepositD18;
+        bool collateralTypeDisabled;
+        uint256 issuanceRatioD18;
     }
 }
 
