@@ -104,22 +104,19 @@ contract MarginModule is IMarginModule {
 
         uint256 length = globalMarginConfig.supportedAddresses.length;
         address collateralType;
-        Margin.CollateralType memory collateral;
         uint256 available;
 
-        for (uint256 i = 0; i < length; ) {
+        for (uint256 i = 0; i < length; i++) {
             collateralType = globalMarginConfig.supportedAddresses[i];
-            collateral = globalMarginConfig.supported[collateralType];
-
             available = accountMargin.collaterals[collateralType];
 
-            accountMargin.collaterals[collateralType] -= available;
-            // withdraw all avaiable collareal
-            withdrawAndTransfer(marketId, available, collateralType, globalConfig);
-
-            unchecked {
-                i++;
+            if (available == 0) {
+                continue;
             }
+
+            accountMargin.collaterals[collateralType] -= available;
+            // withdraw all available collateral
+            withdrawAndTransfer(marketId, available, collateralType, globalConfig);
         }
     }
 
