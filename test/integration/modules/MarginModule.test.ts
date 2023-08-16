@@ -15,7 +15,7 @@ import {
   genTrader,
   genOrder,
 } from '../../generators';
-import { commitOrder, depositMargin } from '../../helpers';
+import { commitAndSettle, commitOrder, depositMargin } from '../../helpers';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -468,6 +468,21 @@ describe('MarginModule', async () => {
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
           `OrderFound("${trader.accountId}")`,
+          PerpMarketProxy
+        );
+      });
+      it('should revert when trader have open position', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        await commitAndSettle(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+
+        // Perform withdraw with invalid market
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `PositionFound("${trader.accountId}", "${marketId}")`,
           PerpMarketProxy
         );
       });
