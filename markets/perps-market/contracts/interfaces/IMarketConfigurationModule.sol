@@ -2,8 +2,6 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
-import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
-import {OrderFee} from "../storage/OrderFee.sol";
 
 /**
  * @title Module for updating configuration in relation to async order modules.
@@ -20,6 +18,13 @@ interface IMarketConfigurationModule {
         SettlementStrategy.Data strategy,
         uint256 indexed strategyId
     );
+
+    /**
+     * @notice Gets fired when feed id for perps market is updated.
+     * @param marketId id of perps market
+     * @param feedId oracle node id
+     */
+    event MarketPriceDataUpdated(uint128 indexed marketId, bytes32 feedId);
 
     /**
      * @notice Gets fired when order fees are updated.
@@ -55,6 +60,7 @@ interface IMarketConfigurationModule {
         uint128 indexed marketId,
         uint256 initialMarginRatioD18,
         uint256 maintenanceMarginRatioD18,
+        uint256 minimumInitialMarginRatioD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
         uint256 maxSecondsInLiquidationWindow,
@@ -73,7 +79,7 @@ interface IMarketConfigurationModule {
      * @param marketId udpates funding parameters to this specific market.
      * @param lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
-    event LockedOiRatioD18Set(uint128 indexed marketId, uint256 lockedOiRatioD18);
+    event LockedOiRatioSet(uint128 indexed marketId, uint256 lockedOiRatioD18);
 
     /**
      * @notice Gets fired when a settlement strategy is enabled or disabled.
@@ -103,6 +109,13 @@ interface IMarketConfigurationModule {
     function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external;
 
     /**
+     * @notice Set node id for perps market
+     * @param perpsMarketId id of the market to set price feed.
+     * @param feedId the node feed id
+     */
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
+
+    /**
      * @notice Set funding parameters for a market with this function.
      * @param marketId id of the market to set funding parameters.
      * @param skewScale the skew scale.
@@ -118,7 +131,8 @@ interface IMarketConfigurationModule {
      * @notice Set liquidation parameters for a market with this function.
      * @param marketId id of the market to set liquidation parameters.
      * @param initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
-     * @param maintenanceMarginRatioD18 the maintenance margin ratio (as decimal with 18 digits precision).
+     * @param minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
+     * @param maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
      * @param liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
      * @param maxLiquidationLimitAccumulationMultiplier the max liquidation limit accumulation multiplier.
      * @param maxSecondsInLiquidationWindow the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
@@ -127,7 +141,8 @@ interface IMarketConfigurationModule {
     function setLiquidationParameters(
         uint128 marketId,
         uint256 initialMarginRatioD18,
-        uint256 maintenanceMarginRatioD18,
+        uint256 minimumInitialMarginRatioD18,
+        uint256 maintenanceMarginScalarD18,
         uint256 liquidationRewardRatioD18,
         uint256 maxLiquidationLimitAccumulationMultiplier,
         uint256 maxSecondsInLiquidationWindow,
@@ -176,10 +191,12 @@ interface IMarketConfigurationModule {
      * @notice Gets liquidation parameters details of a market.
      * @param marketId id of the market.
      * @return initialMarginRatioD18 the initial margin ratio (as decimal with 18 digits precision).
-     * @return maintenanceMarginRatioD18 the maintenance margin ratio (as decimal with 18 digits precision).
+     * @return minimumInitialMarginRatioD18 the minimum initial margin ratio (as decimal with 18 digits precision).
+     * @return maintenanceMarginScalarD18 the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
      * @return liquidationRewardRatioD18 the liquidation reward ratio (as decimal with 18 digits precision).
      * @return maxLiquidationLimitAccumulationMultiplier the max liquidation limit accumulation multiplier.
      * @return maxSecondsInLiquidationWindow the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
+     * @return minimumPositionMargin the minimum position margin.
      */
     function getLiquidationParameters(
         uint128 marketId
@@ -188,10 +205,12 @@ interface IMarketConfigurationModule {
         view
         returns (
             uint256 initialMarginRatioD18,
-            uint256 maintenanceMarginRatioD18,
+            uint256 minimumInitialMarginRatioD18,
+            uint256 maintenanceMarginScalarD18,
             uint256 liquidationRewardRatioD18,
             uint256 maxLiquidationLimitAccumulationMultiplier,
-            uint256 maxSecondsInLiquidationWindow
+            uint256 maxSecondsInLiquidationWindow,
+            uint256 minimumPositionMargin
         );
 
     /**
@@ -226,5 +245,5 @@ interface IMarketConfigurationModule {
      * @param marketId id of the market.
      * @return lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
-    function getLockedOiRatioD18(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
+    function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18);
 }

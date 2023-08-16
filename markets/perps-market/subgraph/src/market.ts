@@ -1,42 +1,67 @@
 import {
   MarketPriceDataUpdated,
-  MarketOwnerChanged,
-  MarketRegistered,
+  MarketCreated,
   FundingParametersSet,
   LiquidationParametersSet,
-  LockedOiPercentSet,
+  LockedOiRatioSet,
   OrderFeesSet,
-} from '../generated/PerpsMarket/PerpsMarketProxy';
+  MarketUpdated as MarketUpdatedEvent,
+  FactoryInitialized,
+} from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
-import { Market } from '../generated/schema';
+import { Market, MarketUpdated } from '../generated/schema';
 
-export function handleMarketRegistered(event: MarketRegistered): void {
+export function handleMarketCreated(event: MarketCreated): void {
   const id = event.params.perpsMarketId.toString();
   const market = new Market(id);
 
   market.perpsMarketId = event.params.perpsMarketId;
-  market.marketOwner = event.params.marketOwner.toHexString();
   market.marketName = event.params.marketName;
   market.marketSymbol = event.params.marketSymbol;
   market.save();
 }
 
+export function handleMarketUpdated(event: MarketUpdatedEvent): void {
+  const id = event.params.marketId.toString();
+  const market = new Market(id);
+
+  market.price = event.params.price;
+  market.skew = event.params.skew;
+  market.size = event.params.size;
+  market.sizeDelta = event.params.sizeDelta;
+  market.currentFundingRate = event.params.currentFundingRate;
+  market.currentFundingVelocity = event.params.currentFundingVelocity;
+
+  market.save();
+
+  // create MarketUpdated entity
+  const marketUpdatedId =
+    event.params.marketId.toString() +
+    '-' +
+    event.block.number.toString() +
+    '-' +
+    event.logIndex.toString();
+
+  let marketUpdated = new MarketUpdated(marketUpdatedId);
+
+  marketUpdated.timestamp = event.block.timestamp;
+  marketUpdated.marketId = event.params.marketId;
+  marketUpdated.price = event.params.price;
+  marketUpdated.skew = event.params.skew;
+  marketUpdated.size = event.params.size;
+  marketUpdated.sizeDelta = event.params.sizeDelta;
+  marketUpdated.currentFundingRate = event.params.currentFundingRate;
+  marketUpdated.currentFundingVelocity = event.params.currentFundingVelocity;
+
+  marketUpdated.save();
+}
+
 export function handleMarketPriceDataUpdated(event: MarketPriceDataUpdated): void {
-  const id = event.params.perpsMarketId.toString();
+  const id = event.params.marketId.toString();
   const market = Market.load(id);
 
   if (market) {
     market.feedId = event.params.feedId;
-    market.save();
-  }
-}
-
-export function handleMarketOwnerChanged(event: MarketOwnerChanged): void {
-  const id = event.params.perpsMarketId.toString();
-  const market = Market.load(id);
-
-  if (market) {
-    market.owner = event.params.newOwner.toHexString();
     market.save();
   }
 }
@@ -52,12 +77,12 @@ export function handleFundingParametersSet(event: FundingParametersSet): void {
   }
 }
 
-export function handleLockedOiPercentSet(event: LockedOiPercentSet): void {
+export function handleLockedOiRatioSet(event: LockedOiRatioSet): void {
   const id = event.params.marketId.toString();
   const market = Market.load(id);
 
   if (market) {
-    market.lockedOiPercent = event.params.lockedOiPercent;
+    market.lockedOiPercent = event.params.lockedOiRatioD18;
     market.save();
   }
 }
@@ -67,9 +92,11 @@ export function handleLiquidationParametersSet(event: LiquidationParametersSet):
   const market = Market.load(id);
 
   if (market) {
-    market.initialMarginFraction = event.params.initialMarginFraction;
+    market.initialMarginRatioD18 = event.params.initialMarginRatioD18;
     market.liquidationRewardRatioD18 = event.params.liquidationRewardRatioD18;
-    market.maintenanceMarginFraction = event.params.maintenanceMarginFraction;
+    market.maintenanceMarginRatioD18 = event.params.maintenanceMarginRatioD18;
+    market.maxSecondsInLiquidationWindow = event.params.maxSecondsInLiquidationWindow;
+    market.minimumPositionMargin = event.params.minimumPositionMargin;
     market.maxLiquidationLimitAccumulationMultiplier =
       event.params.maxLiquidationLimitAccumulationMultiplier;
     market.save();

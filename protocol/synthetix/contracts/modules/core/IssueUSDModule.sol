@@ -1,17 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../../interfaces/IIssueUSDModule.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
+import "../../interfaces/IIssueUSDModule.sol";
+
 import "../../storage/Account.sol";
+import "../../storage/Collateral.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/Config.sol";
-
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
  * @title Module for the minting and burning of stablecoins.
@@ -23,6 +23,7 @@ contract IssueUSDModule is IIssueUSDModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
+    using Collateral for Collateral.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
@@ -37,10 +38,8 @@ contract IssueUSDModule is IIssueUSDModule {
     using SafeCastI256 for int256;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
-
     bytes32 private constant _MINT_FEATURE_FLAG = "mintUsd";
     bytes32 private constant _BURN_FEATURE_FLAG = "burnUsd";
-
     bytes32 private constant _CONFIG_MINT_FEE_RATIO = "mintUsd_feeRatio";
     bytes32 private constant _CONFIG_BURN_FEE_RATIO = "burnUsd_feeRatio";
     bytes32 private constant _CONFIG_MINT_FEE_ADDRESS = "mintUsd_feeAddress";
@@ -56,7 +55,11 @@ contract IssueUSDModule is IIssueUSDModule {
         uint256 amount
     ) external override {
         FeatureFlag.ensureAccessToFeature(_MINT_FEATURE_FLAG);
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._MINT_PERMISSION);
+
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._MINT_PERMISSION
+        );
 
         // disabled collateralType cannot be used for minting
         CollateralConfiguration.collateralEnabled(collateralType);
@@ -86,7 +89,8 @@ contract IssueUSDModule is IIssueUSDModule {
         if (newDebt > 0) {
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 newDebt.toUint(),
-                collateralValue
+                collateralValue,
+                pool.collateralConfigurations[collateralType].issuanceRatioD18
             );
         }
 
@@ -96,8 +100,14 @@ contract IssueUSDModule is IIssueUSDModule {
         // Decrease the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
 
+        AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
+
         // Mint stablecoins to the sender
-        AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
+        usdToken.asToken().mint(address(this), amount);
+
+        account.collaterals[usdToken.getAddress()].increaseAvailableCollateral(
+            CollateralConfiguration.load(usdToken.getAddress()).convertTokenToSystemAmount(amount)
+        );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
@@ -140,8 +150,14 @@ contract IssueUSDModule is IIssueUSDModule {
             amount = debt.toUint() + feeAmount;
         }
 
+        AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
+
         // Burn the stablecoins
-        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
+        usdToken.asToken().burn(address(this), amount);
+
+        Account.Data storage account = Account.load(accountId);
+
+        account.collaterals[usdToken.getAddress()].decreaseAvailableCollateral(amount);
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);

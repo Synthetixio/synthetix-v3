@@ -18,6 +18,10 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
         uint64 minPublishTime,
         uint64 maxPublishTime
     ) external payable override returns (IPythVerifier.PriceFeed[] memory priceFeeds) {
+        // mention the variables in the block to prevent unused local variable warning
+        updateData;
+        maxPublishTime;
+
         priceFeeds = new IPythVerifier.PriceFeed[](1);
 
         priceFeeds[0] = IPythVerifier.PriceFeed({
@@ -41,12 +45,16 @@ contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
     function verify(
         bytes memory chainlinkBlob
     ) external view override returns (bytes memory verifierResponse) {
+        // mention the variables in the block to prevent unused local variable warning
+        chainlinkBlob;
         // solhint-disable-next-line numcast/safe-cast
         int192 priceFormatted = int192(price) * 10 ** 18;
         verifierResponse = abi.encode("ETH-USD", block.timestamp, 10, priceFormatted);
     }
 
     function getUpdateFee(uint256 updateDataSize) external view override returns (uint256) {
+        // mention the variables in the block to prevent unused local variable warning
+        updateDataSize;
         return 1;
     }
 }

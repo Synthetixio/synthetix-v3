@@ -138,9 +138,9 @@ args = [
 depends = [
   "invoke.upgrade_proxy"
 ]
-factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
-factory.AccountProxy.event = "AssociatedSystemSet"
-factory.AccountProxy.arg = 2
+factory.PerpsAccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.PerpsAccountProxy.event = "AssociatedSystemSet"
+factory.PerpsAccountProxy.arg = 2
 
 # add pool owner to feature flag allow list
 [invoke.addPerpsMarketToFeatureFlag]
@@ -156,3 +156,12 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 depends = ['invoke.setSynthetix']
+
+[invoke.initializeFactory]
+target = ["PerpsMarketProxy"]
+func = "initializeFactory"
+from = "<%= settings.owner %>"
+depends = ['invoke.setSynthetix']
+
+extra.superMarketId.event = "FactoryInitialized"
+extra.superMarketId.arg = 0

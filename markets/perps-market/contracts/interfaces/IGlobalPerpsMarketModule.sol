@@ -29,6 +29,29 @@ interface IGlobalPerpsMarketModule {
     );
 
     /**
+     * @notice emitted when custom fee collector is set
+     * @param feeCollector the address of the fee collector to set.
+     */
+    event FeeCollectorSet(address feeCollector);
+
+    /**
+     * @notice Emitted when the share percentage for a referrer address has been updated.
+     * @param referrer The address of the referrer
+     * @param shareRatioD18 The new share ratio for the referrer
+     */
+    event ReferrerShareUpdated(address referrer, uint256 shareRatioD18);
+
+    /**
+     * @notice Thrown when the fee collector does not implement the IFeeCollector interface
+     */
+    error InvalidFeeCollectorInterface(address invalidFeeCollector);
+
+    /**
+     * @notice Thrown when a referrer share gets set to larger than 100%
+     */
+    error InvalidReferrerShareRatio(uint256 shareRatioD18);
+
+    /**
      * @notice Sets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param collateralAmount Max collateral amount to set for the synth market id.
@@ -75,4 +98,43 @@ interface IGlobalPerpsMarketModule {
         external
         view
         returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd);
+
+    /**
+     * @notice Gets the total collateral value of all deposited collateral from all traders.
+     * @return totalCollateralValue value of all collateral
+     */
+    function totalGlobalCollateralValue() external view returns (uint256 totalCollateralValue);
+
+    /**
+     * @notice Sets the fee collector contract.
+     * @dev must conform to the IFeeCollector interface
+     * @param feeCollector address of the fee collector contract
+     */
+    function setFeeCollector(address feeCollector) external;
+
+    /**
+     * @notice Gets the configured feeCollector contract
+     * @return feeCollector address of the fee collector contract
+     */
+    function getFeeCollector() external view returns (address feeCollector);
+
+    /**
+     * @notice Update the referral share percentage for a referrer
+     * @param referrer The address of the referrer
+     * @param shareRatioD18 The new share percentage for the referrer
+     */
+    function updateReferrerShare(address referrer, uint256 shareRatioD18) external;
+
+    /**
+     * @notice get the referral share percentage for the specified referrer
+     * @param referrer The address of the referrer
+     * @return shareRatioD18 The configured share percentage for the referrer
+     */
+    function getReferrerShare(address referrer) external returns (uint256 shareRatioD18);
+
+    /**
+     * @notice get all existing market ids
+     * @return marketIds an array of existing market ids
+     */
+    function getMarkets() external returns (uint256[] memory marketIds);
 }

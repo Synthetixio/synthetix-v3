@@ -6,7 +6,9 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
+import "./PoolCollateralConfiguration.sol";
 import "./SystemPoolConfiguration.sol";
+import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -47,6 +49,21 @@ library Pool {
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
+
+    /**
+     * @dev Thrown when pool has surpassed max collateral deposit
+     */
+    error PoolCollateralLimitExceeded(
+        uint128 poolId,
+        address collateralType,
+        uint256 currentCollateral,
+        uint256 maxCollateral
+    );
+
+    /**
+     * @notice Thrown when attempting delegate a pool disabled collateral
+     */
+    error PoolCollateralIsDisabled(address collateral, uint128 poolId);
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
@@ -113,6 +130,7 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
     }
 
     /**
@@ -505,6 +523,36 @@ library Pool {
                 // solhint-disable-next-line numcast/safe-cast
                 uint32(lastDelegationTime + requiredMinDelegationTime - block.timestamp)
             );
+        }
+    }
+
+    function checkPoolCollateralLimit(
+        Data storage self,
+        address collateralType,
+        uint256 collateralAmountD18
+    ) internal view {
+        uint256 maxDeposit = self.collateralConfigurations[collateralType].maxDepositD18;
+
+        if (
+            maxDeposit > 0 &&
+            self.vaults[collateralType].currentCollateral() + collateralAmountD18 > maxDeposit
+        ) {
+            revert PoolCollateralLimitExceeded(
+                self.id,
+                collateralType,
+                self.vaults[collateralType].currentCollateral() + collateralAmountD18,
+                self.collateralConfigurations[collateralType].maxDepositD18
+            );
+        }
+    }
+
+    /**
+     * @notice Shows if a given collateral type is enabled for deposits and delegation in given pool.
+     * @param collateralType The address of the collateral.
+     */
+    function checkDelegationEnabled(Data storage self, address collateralType) internal view {
+        if (self.collateralConfigurations[collateralType].collateralTypeDisabled) {
+            revert PoolCollateralIsDisabled(collateralType, self.id);
         }
     }
 }

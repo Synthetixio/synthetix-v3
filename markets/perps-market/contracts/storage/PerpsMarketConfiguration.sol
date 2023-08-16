@@ -28,11 +28,14 @@ library PerpsMarketConfiguration {
          */
         uint256 initialMarginRatioD18;
         /**
-         * @dev the maintenance margin requirements for this market when opening a position
+         * @dev This scalar is applied to the calculated initial margin ratio
          * @dev this generally will be lower than initial margin but is used to determine when to liquidate a position
          * @dev this fraction is multiplied by the impact of the position on the skew (position size / skewScale)
          */
-        uint256 maintenanceMarginRatioD18;
+        uint256 maintenanceMarginScalarD18;
+        /**
+         * @dev This ratio is multiplied by the market's notional size (size * currentPrice) to determine how much credit is required for the market to be sufficiently backed by the LPs
+         */
         uint256 lockedOiRatioD18;
         /**
          * @dev This multiplier is applied to the max liquidation value when calculating max liquidation for a given market
@@ -48,9 +51,13 @@ library PerpsMarketConfiguration {
          */
         uint256 liquidationRewardRatioD18;
         /**
-         * @dev minimum position value in USD, this is used when we calculate maintenance margin
+         * @dev minimum position value in USD, this is a constant value added to position margin requirements (initial/maintenance)
          */
         uint256 minimumPositionMargin;
+        /**
+         * @dev This value gets applied to the initial margin ratio to ensure there's a cap on the max leverage regardless of position size
+         */
+        uint256 minimumInitialMarginRatioD18;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -95,12 +102,16 @@ library PerpsMarketConfiguration {
         uint256 sizeAbs = MathUtil.abs(size.to256());
         uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.divDecimal(self.skewScale);
 
-        initialMarginRatio = impactOnSkew.mulDecimal(self.initialMarginRatioD18);
-        maintenanceMarginRatio = impactOnSkew.mulDecimal(self.maintenanceMarginRatioD18);
+        initialMarginRatio =
+            impactOnSkew.mulDecimal(self.initialMarginRatioD18) +
+            self.minimumInitialMarginRatioD18;
+        maintenanceMarginRatio = initialMarginRatio.mulDecimal(self.maintenanceMarginScalarD18);
 
         uint256 notional = sizeAbs.mulDecimal(price);
-        initialMargin = notional.mulDecimal(initialMarginRatio);
-        maintenanceMargin = notional.mulDecimal(maintenanceMarginRatio);
+        initialMargin = notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
+        maintenanceMargin =
+            notional.mulDecimal(maintenanceMarginRatio) +
+            self.minimumPositionMargin;
 
         liquidationMargin = calculateLiquidationReward(self, notional);
     }
@@ -109,9 +120,10 @@ library PerpsMarketConfiguration {
      * @notice given a strategy id, returns the entire settlement strategy struct
      */
     function loadValidSettlementStrategy(
-        Data storage self,
+        uint128 marketId,
         uint128 settlementStrategyId
     ) internal view returns (SettlementStrategy.Data storage strategy) {
+        Data storage self = load(marketId);
         if (settlementStrategyId >= self.settlementStrategies.length) {
             revert InvalidSettlementStrategy(settlementStrategyId);
         }
