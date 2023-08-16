@@ -10,6 +10,8 @@ describe('LiquidationModule', () => {
   describe('flagPosition', () => {
     it('should flag a position with a health rating <= 1');
 
+    it('should remove any pending orders when present');
+
     it('should emit all events in correct order');
     it('should recompute funding');
 

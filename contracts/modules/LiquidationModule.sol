@@ -7,6 +7,7 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {Margin} from "../storage/Margin.sol";
 import {Position} from "../storage/Position.sol";
+import {Order} from "../storage/Order.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import "../interfaces/ILiquidationModule.sol";
@@ -41,6 +42,12 @@ contract LiquidationModule is ILiquidationModule {
         // Cannot reflag something that's already flagged.
         if (market.flaggedLiquidations[accountId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
+        }
+
+        // Remove any pending orders that may exist.
+        Order.Data storage order = market.orders[accountId];
+        if (order.sizeDelta != 0) {
+            delete market.orders[accountId];
         }
 
         // Flag and emit event.

@@ -74,6 +74,7 @@ export const getPythPriceData = async (
   return { updateData, updateFee };
 };
 
+/** Commits a generated `order` for `trader` on `marketId` and settles successfully. */
 export const commitAndSettle = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
