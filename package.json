@@ -4,7 +4,9 @@
   "scripts": {
     "test": "TS_NODE_SKIP_IGNORE=true hardhat test",
     "build": "hardhat cannon:build",
-    "build:clean": "hardhat cannon:build --wipe"
+    "build:clean": "hardhat cannon:build --wipe",
+    "contracts:size": "hardhat size-contracts",
+    "contracts:compile": "hardhat compile"
   },
   "license": "MIT",
   "engines": {
@@ -30,6 +32,7 @@
     "ethers": "^5.7.2",
     "hardhat": "2.15.0",
     "hardhat-cannon": "^2.4.21",
+    "hardhat-contract-sizer": "^2.10.0",
     "lodash": "^4.17.21",
     "prettier": "^2.8.8",
     "prettier-plugin-solidity": "^1.1.3",
@@ -44,5 +47,5 @@
     "@synthetixio/main": "^3.2.0",
     "@synthetixio/oracle-manager": "^3.2.0"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@3.6.1"
 }

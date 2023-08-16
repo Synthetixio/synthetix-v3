@@ -9,8 +9,9 @@
     "skipLibCheck": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": false
+    "sourceMap": false,
+    "noEmit": true
   },
-  "include": ["./scripts", "./test", "./typechain-types"],
+  "include": ["./scripts", "./test", "./typechain-types", "./typed"],
   "files": ["./hardhat.config.ts"]
 }

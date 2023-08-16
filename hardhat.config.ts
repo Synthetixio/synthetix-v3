@@ -1,5 +1,6 @@
 import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
+import 'hardhat-contract-sizer';
 import 'hardhat-cannon';
 
 // Router generation cannon plugin.
@@ -20,10 +21,21 @@ const config = {
     },
   },
   networks: {
-    cannon: {
+    local: {
       url: '127.0.0.1:8545',
-      publicSourceCode: false, // Should publish contract sources along with bytecode?
+      gas: 12_000_000, // Prevent gas estimation for better error results in tests
     },
+    hardhat: {
+      gas: 12_000_000, // Prevent gas estimation for better error results in tests
+    },
+  },
+  warnings: {
+    'contracts/mocks/**/*': {
+      default: 'off',
+    },
+  },
+  cannon: {
+    publicSourceCode: false, // Should publish contract sources along with bytecode?
   },
 };
 
