@@ -152,6 +152,25 @@ library AsyncOrder {
     }
 
     /**
+     * @dev Updates the order with the new commitment request data and settlement time.
+     * @dev Reverts if there's a pending order.
+     * @dev Reverts if accont cannot open a new position (due to max allowed reached).
+     */
+    function updateValid(
+        Data storage self,
+        OrderCommitmentRequest memory newRequest,
+        SettlementStrategy.Data storage strategy
+    ) internal {
+        checkPendingOrder(newRequest.accountId);
+
+        PerpsAccount.load(newRequest.accountId).validateMaxPositions(newRequest.marketId);
+
+        // Replace previous (or empty) order with the commitment request
+        self.settlementTime = block.timestamp + strategy.settlementDelay;
+        self.request = newRequest;
+    }
+
+    /**
      * @dev Reverts if there is a pending order.
      * @dev A pending order is one that has a sizeDelta and isn't expired yet.
      */
