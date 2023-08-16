@@ -38,7 +38,6 @@ describe('LiquidationModule', () => {
     it('should emit all events in correct order');
     it('should recompute funding');
 
-    it('should revert when market is paused');
     it('should revert when liq cap has been met');
     it('should revert when position is not flagged');
     it('should revert when no open position or already liquidated');

@@ -47,8 +47,6 @@ describe('OrderModule', () => {
     it('should emit all events in correct order');
     it('should recompute funding');
 
-    it('should revert when market is paused');
-
     it('should revert insufficient margin when margin is less than initial margin', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -243,7 +241,17 @@ describe('OrderModule', () => {
     it('should settle an order that adds to an existing order');
     it('should settle an order that flips from one side to the other');
 
-    it('should have a position opened after settlement');
+    it('should have a position opened after settlement', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const positionDigest = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      assertBn.equal(positionDigest.size, order.sizeDelta.abs());
+    });
 
     it('should update market size and skew upon settlement', async () => {
       const { PerpMarketProxy } = systems();
@@ -268,7 +276,6 @@ describe('OrderModule', () => {
 
     it('should pay a non-zero settlement fee to keeper');
 
-    it('should revert when market is paused');
     it('should revert when this order exceeds maxMarketSize (oi)');
     it('should revert when sizeDelta is 0');
     it('should revert when an existing position can be liquidated');
@@ -297,7 +304,7 @@ describe('OrderModule', () => {
 
   describe('getOrderFees', () => {
     describe('orderFee', () => {
-      it('should charger maker fees when reducing skew');
+      it('should charge maker fees when reducing skew');
 
       it('should charge taker fee when expanding skew');
 
