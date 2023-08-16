@@ -28,6 +28,28 @@
 **Returns**
 * `order` (*struct AsyncOrder.Data*) - async order claim details (see AsyncOrder.Data struct).
 #### computeOrderFees
+  Modify the collateral delegated to the account.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+* `synthMarketId` (*uint128*) - Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+* `amountDelta` (*int256*) - requested change in amount of collateral delegated to the account.
+
+### getCollateralAmount
+
+  ```solidity
+  function getCollateralAmount(uint128 accountId, uint128 synthMarketId) external view returns (uint256)
+  ```
+
+  Gets the account's collateral value for a specific collateral.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+* `synthMarketId` (*uint128*) - Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+
+**Returns**
+* `[0]` (*uint256*) - collateralValue collateral value of the account.
+### totalCollateralValue
 
   ```solidity
   function computeOrderFees(uint128 marketId, int128 sizeDelta) external view returns (uint256 orderFees, uint256 fillPrice)
@@ -45,6 +67,14 @@
 * `orderFees` (*uint256*) - incurred fees.
 * `fillPrice` (*uint256*) - price at which the order would be filled.
 #### requiredMarginForOrder
+  Gets the account's total collateral value.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+
+**Returns**
+* `[0]` (*uint256*) - collateralValue total collateral value of the account. USD denominated.
+### totalAccountOpenInterest
 
   ```solidity
   function requiredMarginForOrder(uint128 marketId, uint128 accountId, int128 sizeDelta) external view returns (uint256 requiredMargin)
@@ -63,9 +93,18 @@
 * `requiredMargin` (*uint256*) - margin required for the order to succeed.
 
 #### OrderCommitted
+  Gets the account's total open interest value.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+
+**Returns**
+* `[0]` (*uint256*) - openInterestValue total open interest value of the account.
+### getOpenPosition
 
   ```solidity
   event OrderCommitted(uint128 marketId, uint128 accountId, enum SettlementStrategy.Type orderType, int128 sizeDelta, uint256 acceptablePrice, uint256 settlementTime, uint256 expirationTime, bytes32 trackingCode, address sender)
+  function getOpenPosition(uint128 accountId, uint128 marketId) external view returns (int256 pnl, int256 accruedFunding, int256 size)
   ```
 
   Gets fired when a new order is committed.
@@ -88,6 +127,7 @@
   ```
 
   Gets fired when a new order is committed while a previous one was expired.
+  Gets the details of an open position.
 
 **Parameters**
 * `marketId` (*uint128*) - Id of the market used for the trade.
@@ -100,6 +140,11 @@
 ### Async Order Settlement Module
 
 #### settle
+**Returns**
+* `pnl` (*int256*) - pnl of the position.
+* `accruedFunding` (*int256*) - accrued funding of the position.
+* `size` (*int256*) - size of the position.
+### getAvailableMargin
 
   ```solidity
   function settle(uint128 accountId) external view
@@ -111,10 +156,16 @@
 * `accountId` (*uint128*) - Id of the account used for the trade.
 
 #### settlePythOrder
+  Gets the available margin of an account. It can be negative due to pnl.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
 
   ```solidity
   function settlePythOrder(bytes result, bytes extraData) external payable
   ```
+**Returns**
+* `[0]` (*int256*) - availableMargin available margin of the position.
 
   Settles an offchain order using the offchain retrieved data from pyth.
 
@@ -129,6 +180,15 @@
   ```
 
   Gets fired when a new order is settled.
+  Gets fired when an account colateral is modified.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+* `synthMarketId` (*uint128*) - Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+* `amountDelta` (*int256*) - requested change in amount of collateral delegated to the account.
+* `sender` (*address*) - address of the sender of the size modification. Authorized by account owner.
+
+## Async Order Module
 
 **Parameters**
 * `marketId` (*uint128*) - Id of the market used for the trade.
@@ -160,10 +220,13 @@
 * `collateralAmount` (*uint256*) - max amount that for the synth
 
 #### MaxCollateralSet
+  Commit an async order via this function
 
   ```solidity
   event MaxCollateralSet(uint128 synthMarketId, uint256 collateralAmount)
   ```
+**Parameters**
+* `commitment` (*struct AsyncOrder.OrderCommitmentRequest*) - Order commitment data (see AsyncOrder.OrderCommitmentRequest struct).
 
   Gets fired when max collateral amount for synth collateral for the system is set by owner.
 
@@ -174,6 +237,10 @@
 ### Global Perps Market Module
 
 #### setMaxCollateralAmount
+**Returns**
+* `retOrder` (*struct AsyncOrder.Data*) - order details (see AsyncOrder.Data struct).
+* `fees` (*uint256*) - order fees (protocol + settler)
+### cancelOrder
 
   ```solidity
   function setMaxCollateralAmount(uint128 synthMarketId, uint256 collateralAmount) external
@@ -186,6 +253,28 @@
 * `collateralAmount` (*uint256*) - Max collateral amount to set for the synth market id.
 
 #### getMaxCollateralAmount
+  Cancel an expired order via this function
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+
+### getOrder
+
+  ```solidity
+  function getOrder(uint128 marketId, uint128 accountId) external returns (struct AsyncOrder.Data order)
+  ```
+
+  Get async order claim details
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - id of the account.
+
+**Returns**
+* `order` (*struct AsyncOrder.Data*) - async order claim details (see AsyncOrder.Data struct).
+
+### OrderCommitted
 
   ```solidity
   function getMaxCollateralAmount(uint128 synthMarketId) external view returns (uint256)
@@ -199,12 +288,35 @@
 **Returns**
 * `[0]` (*uint256*) - maxCollateralAmount max collateral amount of the specified synth market id
 #### setSynthDeductionPriority
+  Gets fired when a new order is committed.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+* `orderType` (*enum SettlementStrategy.Type*) - Should send 0 (at time of writing) that correlates to the transaction type enum defined in SettlementStrategy.Type.
+* `sizeDelta` (*int128*) - requested change in size of the order sent by the user.
+* `acceptablePrice` (*uint256*) - maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
+* `settlementTime` (*uint256*) - Time at which the order can be settled.
+* `expirationTime` (*uint256*) - Time at which the order expired.
+* `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
+* `sender` (*address*) - address of the sender of the order. Authorized to commit by account owner.
+
+### OrderCanceled
 
   ```solidity
   function setSynthDeductionPriority(uint128[] newSynthDeductionPriority) external
   ```
 
   Sets the synth deduction priority ordered list.
+  Gets fired when a new order is canceled.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+* `settlementTime` (*uint256*) - Time at which the order can be settled.
+* `acceptablePrice` (*uint256*) - maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
+
+## Async Order Settlement Module
 
   The synth deduction priority is used to determine the order in which synths are deducted from an account. Id 0 is snxUSD and should be first in the list.
 
@@ -224,6 +336,13 @@
 **Returns**
 * `[0]` (*uint128[]*) - synthDeductionPriority Ordered array of synth market ids for deduction priority.
 #### setLiquidationRewardGuards
+  Settles an offchain order. It's expected to revert with the OffchainLookup error with the data needed to perform the offchain lookup.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+
+### settlePythOrder
 
   ```solidity
   function setLiquidationRewardGuards(uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd) external
@@ -236,12 +355,33 @@
 * `maxLiquidationRewardUsd` (*uint256*) - Maximum liquidation reward expressed as USD value.
 
 #### getLiquidationRewardGuards
+  Settles an offchain order using the offchain retrieved data from pyth.
+
+**Parameters**
+* `result` (*bytes*) - the blob of data retrieved offchain.
+* `extraData` (*bytes*) - Extra data from OffchainLookupData.
+
+### OrderSettled
 
   ```solidity
   function getLiquidationRewardGuards() external view returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
   ```
 
   Gets the liquidation reward guard (min and max).
+  Gets fired when a new order is settled.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+* `fillPrice` (*uint256*) - Price at which the order was settled.
+* `sizeDelta` (*int128*) - Size delta from order.
+* `newSize` (*int128*) - New size of the position after settlement.
+* `collectedFees` (*uint256*) - Amount of fees collected by the protocol.
+* `settlementReward` (*uint256*) - Amount of fees collected by the settler.
+* `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
+* `settler` (*address*) - address of the settler of the order.
+
+## Collateral Module
 
 **Returns**
 * `minLiquidationRewardUsd` (*uint256*) - Minimum liquidation reward expressed as USD value.

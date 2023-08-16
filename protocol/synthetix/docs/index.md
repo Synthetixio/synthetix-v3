@@ -1942,7 +1942,9 @@ rewards-over-time will be halted)
 **Parameters**
 * `amount` (*uint256*) - The amount of snxUSD to be burned, denominated with 18 decimals of precision.
 
-#### isInitialized
+**Returns**
+* `feesPaidD18` (*uint256*) - The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
+### isInitialized
 
   ```solidity
   function isInitialized() external returns (bool)

@@ -56,6 +56,21 @@
 
 **Returns**
 * `node` (*struct NodeOutput.Data*) - The node's output data
+#### processWithRuntime
+
+  ```solidity
+  function processWithRuntime(bytes32 nodeId, bytes32[] runtimeKeys, bytes32[] runtimeValues) external view returns (struct NodeOutput.Data node)
+  ```
+
+  Returns a node current output data
+
+**Parameters**
+* `nodeId` (*bytes32*) - The node ID
+* `runtimeKeys` (*bytes32[]*) - Keys corresponding to runtime values which could be used by the node graph
+* `runtimeValues` (*bytes32[]*) - The values used by the node graph
+
+**Returns**
+* `node` (*struct NodeOutput.Data*) - The node's output data
 
 #### NodeRegistered
 
@@ -110,7 +125,7 @@
 #### process
 
   ```solidity
-  function process(struct NodeOutput.Data[] prices, bytes parameters) internal view returns (struct NodeOutput.Data nodeOutput)
+  function process(struct NodeOutput.Data[] prices, bytes parameters, bytes32[] runtimeKeys, bytes32[] runtimeValues) internal view returns (struct NodeOutput.Data nodeOutput)
   ```
 
 #### isValid
@@ -247,5 +262,65 @@
 
   ```solidity
   function isValid(struct NodeDefinition.Data nodeDefinition) internal view returns (bool valid)
+  ```
+
+### Router
+
+#### fallback
+
+  ```solidity
+  fallback() external payable
+  ```
+
+#### receive
+
+  ```solidity
+  receive() external payable
+  ```
+
+#### _forward
+
+  ```solidity
+  function _forward() internal
+  ```
+
+### Router
+
+#### fallback
+
+  ```solidity
+  fallback() external payable
+  ```
+
+#### receive
+
+  ```solidity
+  receive() external payable
+  ```
+
+#### _forward
+
+  ```solidity
+  function _forward() internal
+  ```
+
+### Router
+
+#### fallback
+
+  ```solidity
+  fallback() external payable
+  ```
+
+#### receive
+
+  ```solidity
+  receive() external payable
+  ```
+
+#### _forward
+
+  ```solidity
+  function _forward() internal
   ```
 
