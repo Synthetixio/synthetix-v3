@@ -285,7 +285,23 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert withdraw to a market that does not exist');
+      it('should revert withdraw to a market that does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+        const invalidMarketId = bn(genNumber(42069, 50_000));
+
+        // Perform withdraw with zero address.
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            invalidMarketId,
+            collateral.contract.address,
+            collateralDepositAmount.mul(-1)
+          ),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
 
       it('should revert withdraw of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
