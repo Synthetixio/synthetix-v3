@@ -935,6 +935,19 @@ Anyone who is willing and able to spend the gas can call this method.
 **Parameters**
 * `synthMarketId` (*uint128*) - synth market id value
 
+#### renounceMarketOwnership
+
+  ```solidity
+  function renounceMarketOwnership(uint128 synthMarketId) external
+  ```
+
+  Allows the market owner to renounce his ownership.
+
+  Reverts if the caller is not the owner.
+
+**Parameters**
+* `synthMarketId` (*uint128*) - synth market id value
+
 #### getMarketOwner
 
   ```solidity
@@ -1446,4 +1459,64 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `amountUnwrapped` (*uint256*) - amount of synth unwrapped.
 * `fees` (*struct OrderFees.Data*) - breakdown of all the fees incurred for the transaction.
 * `feesCollected` (*uint256*) - fees collected by the configured FeeCollector for the market (rest of the fees are deposited to market manager).
+
+### AsyncOrderClaimTokenModuleRouter
+
+#### fallback
+
+  ```solidity
+  fallback() external payable
+  ```
+
+#### receive
+
+  ```solidity
+  receive() external payable
+  ```
+
+#### _forward
+
+  ```solidity
+  function _forward() internal
+  ```
+
+### Router
+
+#### fallback
+
+  ```solidity
+  fallback() external payable
+  ```
+
+#### receive
+
+  ```solidity
+  receive() external payable
+  ```
+
+#### _forward
+
+  ```solidity
+  function _forward() internal
+  ```
+
+### SynthRouter
+
+#### fallback
+
+  ```solidity
+  fallback() external payable
+  ```
+
+#### receive
+
+  ```solidity
+  receive() external payable
+  ```
+
+#### _forward
+
+  ```solidity
+  function _forward() internal
+  ```
 

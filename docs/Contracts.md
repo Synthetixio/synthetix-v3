@@ -748,7 +748,34 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `tokenAmount` (*uint256*) - The amount of collateral that was withdrawn, denominated in the token's native decimal representation.
 * `sender` (*address*) - The address of the account that triggered the withdrawal.
 
+<<<<<<< HEAD
+## Cross ChainUSD Module
+
+### transferCrossChain
+
+  ```solidity
+  function transferCrossChain(uint64 destChainId, uint256 amount) external payable returns (uint256 gasTokenUsed)
+  ```
+
+  Allows users to transfer tokens cross-chain using CCIP.
+
+**Parameters**
+* `destChainId` (*uint64*) - The id of the chain where tokens are to be transferred to.
+* `amount` (*uint256*) - The amount of tokens to be transferred, denominated with 18 decimals of precision.
+
+**Returns**
+* `gasTokenUsed` (*uint256*) - The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
+
+### TransferCrossChainInitiated
+
+  ```solidity
+  event TransferCrossChainInitiated(uint64 destChainId, uint256 amount, address sender)
+  ```
+
+## IssueUSD Module
+=======
 ### Cross ChainUSD Module
+>>>>>>> sip-326-332-333-334
 
 #### transferCrossChain
 
@@ -1142,7 +1169,24 @@ See `IMarket`.
 
 **Returns**
 * `withdrawableD18` (*uint256*) - The total amount of snxUSD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
+<<<<<<< HEAD
+### getMarketAddress
+
+  ```solidity
+  function getMarketAddress(uint128 marketId) external view returns (address marketAddress)
+  ```
+
+  Returns the contract address for the specified market.
+
+**Parameters**
+* `marketId` (*uint128*) - The id of the market
+
+**Returns**
+* `marketAddress` (*address*) - The contract address for the specified market
+### getMarketNetIssuance
+=======
 #### getMarketNetIssuance
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getMarketNetIssuance(uint128 marketId) external view returns (int128 issuanceD18)
@@ -1941,7 +1985,11 @@ rewards-over-time will be halted)
 * `spender` (*address*) - The address to which the holder has given allowance to.
 * `amount` (*uint256*) - The amount of snxUSD to be burned, denominated with 18 decimals of precision.
 
+<<<<<<< HEAD
+### burn
+=======
 #### burn
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function burn(uint256 amount) external
@@ -1952,7 +2000,11 @@ rewards-over-time will be halted)
 **Parameters**
 * `amount` (*uint256*) - The amount of snxUSD to be burned, denominated with 18 decimals of precision.
 
+<<<<<<< HEAD
+### isInitialized
+=======
 #### isInitialized
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function isInitialized() external returns (bool)
@@ -3806,6 +3858,14 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
   function commitOrder(struct AsyncOrder.OrderCommitmentRequest commitment) external returns (struct AsyncOrder.Data retOrder, uint256 fees)
   ```
 
+<<<<<<< HEAD
+  Modify the collateral delegated to the account.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+* `synthMarketId` (*uint128*) - Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+* `amountDelta` (*int256*) - requested change in amount of collateral delegated to the account.
+=======
   Commit an async order via this function
 
 **Parameters**
@@ -3832,6 +3892,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
   ```solidity
   function computeOrderFees(uint128 marketId, int128 sizeDelta) external view returns (uint256 orderFees, uint256 fillPrice)
   ```
+>>>>>>> sip-326-332-333-334
 
   Simulates what the order fee would be for the given market with the specified size.
 
@@ -3850,19 +3911,142 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
   function requiredMarginForOrder(uint128 marketId, uint128 accountId, int128 sizeDelta) external view returns (uint256 requiredMargin)
   ```
 
+<<<<<<< HEAD
+  Gets the account's collateral value for a specific collateral.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+* `synthMarketId` (*uint128*) - Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+
+**Returns**
+* `[0]` (*uint256*) - collateralValue collateral value of the account.
+### totalCollateralValue
+
+  ```solidity
+  function totalCollateralValue(uint128 accountId) external view returns (uint256)
+  ```
+
+  Gets the account's total collateral value.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+
+**Returns**
+* `[0]` (*uint256*) - collateralValue total collateral value of the account. USD denominated.
+### totalAccountOpenInterest
+
+  ```solidity
+  function totalAccountOpenInterest(uint128 accountId) external view returns (uint256)
+  ```
+
+  Gets the account's total open interest value.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+
+**Returns**
+* `[0]` (*uint256*) - openInterestValue total open interest value of the account.
+### getOpenPosition
+
+  ```solidity
+  function getOpenPosition(uint128 accountId, uint128 marketId) external view returns (int256 pnl, int256 accruedFunding, int256 size)
+  ```
+
+  Gets the details of an open position.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+* `marketId` (*uint128*) - Id of the position market.
+
+**Returns**
+* `pnl` (*int256*) - pnl of the position.
+* `accruedFunding` (*int256*) - accrued funding of the position.
+* `size` (*int256*) - size of the position.
+### getAvailableMargin
+
+  ```solidity
+  function getAvailableMargin(uint128 accountId) external view returns (int256)
+  ```
+
+  Gets the available margin of an account. It can be negative due to pnl.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+
+**Returns**
+* `[0]` (*int256*) - availableMargin available margin of the position.
+
+### CollateralModified
+=======
   For a given market, account id, and a position size, returns the required total account margin for this order to succeed
+>>>>>>> sip-326-332-333-334
 
   Useful for integrators to determine if an order will succeed or fail
 
+<<<<<<< HEAD
+  Gets fired when an account colateral is modified.
+
+**Parameters**
+* `accountId` (*uint128*) - Id of the account.
+* `synthMarketId` (*uint128*) - Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
+* `amountDelta` (*int256*) - requested change in amount of collateral delegated to the account.
+* `sender` (*address*) - address of the sender of the size modification. Authorized by account owner.
+
+## Async Order Module
+=======
 **Parameters**
 * `marketId` (*uint128*) - id of the market.
 * `accountId` (*uint128*) - id of the trader account.
 * `sizeDelta` (*int128*) - size of position.
+>>>>>>> sip-326-332-333-334
 
 **Returns**
 * `requiredMargin` (*uint256*) - margin required for the order to succeed.
 
+<<<<<<< HEAD
+  ```solidity
+  function commitOrder(struct AsyncOrder.OrderCommitmentRequest commitment) external returns (struct AsyncOrder.Data retOrder, uint256 fees)
+  ```
+
+  Commit an async order via this function
+
+**Parameters**
+* `commitment` (*struct AsyncOrder.OrderCommitmentRequest*) - Order commitment data (see AsyncOrder.OrderCommitmentRequest struct).
+
+**Returns**
+* `retOrder` (*struct AsyncOrder.Data*) - order details (see AsyncOrder.Data struct).
+* `fees` (*uint256*) - order fees (protocol + settler)
+### cancelOrder
+
+  ```solidity
+  function cancelOrder(uint128 marketId, uint128 accountId) external
+  ```
+
+  Cancel an expired order via this function
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+
+### getOrder
+
+  ```solidity
+  function getOrder(uint128 marketId, uint128 accountId) external returns (struct AsyncOrder.Data order)
+  ```
+
+  Get async order claim details
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - id of the account.
+
+**Returns**
+* `order` (*struct AsyncOrder.Data*) - async order claim details (see AsyncOrder.Data struct).
+
+### OrderCommitted
+=======
 #### OrderCommitted
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event OrderCommitted(uint128 marketId, uint128 accountId, enum SettlementStrategy.Type orderType, int128 sizeDelta, uint256 acceptablePrice, uint256 settlementTime, uint256 expirationTime, bytes32 trackingCode, address sender)
@@ -3881,13 +4065,29 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
 * `sender` (*address*) - address of the sender of the order. Authorized to commit by account owner.
 
+<<<<<<< HEAD
+### OrderCanceled
+=======
 #### PreviousOrderExpired
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event PreviousOrderExpired(uint128 marketId, uint128 accountId, int128 sizeDelta, uint256 acceptablePrice, uint256 settlementTime, bytes32 trackingCode)
   ```
 
+<<<<<<< HEAD
+  Gets fired when a new order is canceled.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+* `settlementTime` (*uint256*) - Time at which the order can be settled.
+* `acceptablePrice` (*uint256*) - maximum or minimum, depending on the sizeDelta direction, accepted price to settle the order, set by the user.
+
+## Async Order Settlement Module
+=======
   Gets fired when a new order is committed while a previous one was expired.
+>>>>>>> sip-326-332-333-334
 
 **Parameters**
 * `marketId` (*uint128*) - Id of the market used for the trade.
@@ -3908,15 +4108,49 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
   Settles an offchain order. It's expected to revert with the OffchainLookup error with the data needed to perform the offchain lookup.
 
 **Parameters**
+<<<<<<< HEAD
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+
+### settlePythOrder
+=======
 * `accountId` (*uint128*) - Id of the account used for the trade.
 
 #### settlePythOrder
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function settlePythOrder(bytes result, bytes extraData) external payable
   ```
 
   Settles an offchain order using the offchain retrieved data from pyth.
+<<<<<<< HEAD
+
+**Parameters**
+* `result` (*bytes*) - the blob of data retrieved offchain.
+* `extraData` (*bytes*) - Extra data from OffchainLookupData.
+
+### OrderSettled
+
+  ```solidity
+  event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int128 sizeDelta, int128 newSize, uint256 collectedFees, uint256 settlementReward, bytes32 trackingCode, address settler)
+  ```
+
+  Gets fired when a new order is settled.
+
+**Parameters**
+* `marketId` (*uint128*) - Id of the market used for the trade.
+* `accountId` (*uint128*) - Id of the account used for the trade.
+* `fillPrice` (*uint256*) - Price at which the order was settled.
+* `sizeDelta` (*int128*) - Size delta from order.
+* `newSize` (*int128*) - New size of the position after settlement.
+* `collectedFees` (*uint256*) - Amount of fees collected by the protocol.
+* `settlementReward` (*uint256*) - Amount of fees collected by the settler.
+* `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
+* `settler` (*address*) - address of the settler of the order.
+
+## Collateral Module
+=======
 
 **Parameters**
 * `result` (*bytes*) - the blob of data retrieved offchain.
@@ -3927,6 +4161,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
   ```solidity
   event OrderSettled(uint128 marketId, uint128 accountId, uint256 fillPrice, int256 pnl, int256 accruedFunding, int128 sizeDelta, int128 newSize, uint256 totalFees, uint256 referralFees, uint256 collectedFees, uint256 settlementReward, bytes32 trackingCode, address settler)
   ```
+>>>>>>> sip-326-332-333-334
 
   Gets fired when a new order is settled.
 
@@ -3959,7 +4194,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
 * `collateralAmount` (*uint256*) - max amount that for the synth
 
+<<<<<<< HEAD
+### MaxCollateralSet
+=======
 #### MaxCollateralSet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event MaxCollateralSet(uint128 synthMarketId, uint256 collateralAmount)
@@ -3971,9 +4210,15 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
 * `collateralAmount` (*uint256*) - max amount that was set for the synth
 
+<<<<<<< HEAD
+## Global Perps Market Module
+
+### setMaxCollateralAmount
+=======
 ### Global Perps Market Module
 
 #### setMaxCollateralAmount
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setMaxCollateralAmount(uint128 synthMarketId, uint256 collateralAmount) external
@@ -3985,7 +4230,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
 * `collateralAmount` (*uint256*) - Max collateral amount to set for the synth market id.
 
+<<<<<<< HEAD
+### getMaxCollateralAmount
+=======
 #### getMaxCollateralAmount
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getMaxCollateralAmount(uint128 synthMarketId) external view returns (uint256)
@@ -3998,7 +4247,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 
 **Returns**
 * `[0]` (*uint256*) - maxCollateralAmount max collateral amount of the specified synth market id
+<<<<<<< HEAD
+### setSynthDeductionPriority
+=======
 #### setSynthDeductionPriority
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setSynthDeductionPriority(uint128[] newSynthDeductionPriority) external
@@ -4011,7 +4264,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Parameters**
 * `newSynthDeductionPriority` (*uint128[]*) - Ordered array of synth market ids for deduction priority.
 
+<<<<<<< HEAD
+### getSynthDeductionPriority
+=======
 #### getSynthDeductionPriority
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getSynthDeductionPriority() external view returns (uint128[])
@@ -4023,7 +4280,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 
 **Returns**
 * `[0]` (*uint128[]*) - synthDeductionPriority Ordered array of synth market ids for deduction priority.
+<<<<<<< HEAD
+### setLiquidationRewardGuards
+=======
 #### setLiquidationRewardGuards
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setLiquidationRewardGuards(uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd) external
@@ -4035,7 +4296,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `minLiquidationRewardUsd` (*uint256*) - Minimum liquidation reward expressed as USD value.
 * `maxLiquidationRewardUsd` (*uint256*) - Maximum liquidation reward expressed as USD value.
 
+<<<<<<< HEAD
+### getLiquidationRewardGuards
+=======
 #### getLiquidationRewardGuards
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getLiquidationRewardGuards() external view returns (uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
@@ -4046,6 +4311,10 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Returns**
 * `minLiquidationRewardUsd` (*uint256*) - Minimum liquidation reward expressed as USD value.
 * `maxLiquidationRewardUsd` (*uint256*) - Maximum liquidation reward expressed as USD value.
+<<<<<<< HEAD
+
+### MaxCollateralAmountSet
+=======
 #### totalGlobalCollateralValue
 
   ```solidity
@@ -4116,6 +4385,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `marketIds` (*uint256[]*) - an array of existing market ids
 
 #### MaxCollateralAmountSet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event MaxCollateralAmountSet(uint128 synthMarketId, uint256 collateralAmount)
@@ -4127,7 +4397,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
 * `collateralAmount` (*uint256*) - max amount that was set for the synth
 
+<<<<<<< HEAD
+### SynthDeductionPrioritySet
+=======
 #### SynthDeductionPrioritySet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event SynthDeductionPrioritySet(uint128[] newSynthDeductionPriority)
@@ -4138,13 +4412,24 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Parameters**
 * `newSynthDeductionPriority` (*uint128[]*) - new synth id priority order for deductions.
 
+<<<<<<< HEAD
+### LiquidationRewardGuardsSet
+=======
 #### LiquidationRewardGuardsSet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event LiquidationRewardGuardsSet(uint256 minLiquidationRewardUsd, uint256 maxLiquidationRewardUsd)
   ```
 
   Gets fired when liquidation reward guard is set or updated.
+<<<<<<< HEAD
+
+**Parameters**
+* `minLiquidationRewardUsd` (*uint256*) - Minimum liquidation reward expressed as USD value.
+* `maxLiquidationRewardUsd` (*uint256*) - Maximum liquidation reward expressed as USD value.
+=======
+>>>>>>> sip-326-332-333-334
 
 **Parameters**
 * `minLiquidationRewardUsd` (*uint256*) - Minimum liquidation reward expressed as USD value.
@@ -4241,7 +4526,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 
 **Returns**
 * `strategyId` (*uint256*) - id of the new settlement strategy.
+<<<<<<< HEAD
+### setOrderFees
+=======
 #### setOrderFees
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external
@@ -4254,6 +4543,9 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `makerFeeRatio` (*uint256*) - the maker fee ratio.
 * `takerFeeRatio` (*uint256*) - the taker fee ratio.
 
+<<<<<<< HEAD
+### setFundingParameters
+=======
 #### updatePriceData
 
   ```solidity
@@ -4267,6 +4559,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `feedId` (*bytes32*) - the node feed id
 
 #### setFundingParameters
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setFundingParameters(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity) external
@@ -4279,7 +4572,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `skewScale` (*uint256*) - the skew scale.
 * `maxFundingVelocity` (*uint256*) - the max funding velocity.
 
+<<<<<<< HEAD
+### setLiquidationParameters
+=======
 #### setLiquidationParameters
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setLiquidationParameters(uint128 marketId, uint256 initialMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 maintenanceMarginScalarD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin) external
@@ -4290,14 +4587,22 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Parameters**
 * `marketId` (*uint128*) - id of the market to set liquidation parameters.
 * `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
+<<<<<<< HEAD
+* `maintenanceMarginRatioD18` (*uint256*) - the maintenance margin ratio (as decimal with 18 digits precision).
+=======
 * `minimumInitialMarginRatioD18` (*uint256*) - the minimum initial margin ratio (as decimal with 18 digits precision).
 * `maintenanceMarginScalarD18` (*uint256*) - the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
+>>>>>>> sip-326-332-333-334
 * `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
 * `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
 * `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
 * `minimumPositionMargin` (*uint256*) - the minimum position margin.
 
+<<<<<<< HEAD
+### setMaxMarketSize
+=======
 #### setMaxMarketSize
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external
@@ -4311,7 +4616,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `marketId` (*uint128*) - id of the market to set the max market value.
 * `maxMarketSize` (*uint256*) - the max market size in market asset units.
 
+<<<<<<< HEAD
+### setLockedOiRatio
+=======
 #### setLockedOiRatio
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external
@@ -4323,7 +4632,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `marketId` (*uint128*) - id of the market to set locked OI ratio.
 * `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
 
+<<<<<<< HEAD
+### setSettlementStrategyEnabled
+=======
 #### setSettlementStrategyEnabled
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function setSettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled) external
@@ -4336,7 +4649,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `strategyId` (*uint256*) - the specific strategy.
 * `enabled` (*bool*) - whether the strategy is enabled or disabled.
 
+<<<<<<< HEAD
+### getSettlementStrategy
+=======
 #### getSettlementStrategy
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getSettlementStrategy(uint128 marketId, uint256 strategyId) external view returns (struct SettlementStrategy.Data settlementStrategy)
@@ -4350,7 +4667,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 
 **Returns**
 * `settlementStrategy` (*struct SettlementStrategy.Data*) - strategy details (see SettlementStrategy.Data struct).
+<<<<<<< HEAD
+### getLiquidationParameters
+=======
 #### getLiquidationParameters
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getLiquidationParameters(uint128 marketId) external view returns (uint256 initialMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 maintenanceMarginScalarD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin)
@@ -4363,6 +4684,13 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 
 **Returns**
 * `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
+<<<<<<< HEAD
+* `maintenanceMarginRatioD18` (*uint256*) - the maintenance margin ratio (as decimal with 18 digits precision).
+* `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
+* `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
+* `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
+### getFundingParameters
+=======
 * `minimumInitialMarginRatioD18` (*uint256*) - the minimum initial margin ratio (as decimal with 18 digits precision).
 * `maintenanceMarginScalarD18` (*uint256*) - the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
 * `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
@@ -4370,6 +4698,7 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
 * `minimumPositionMargin` (*uint256*) - the minimum position margin.
 #### getFundingParameters
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getFundingParameters(uint128 marketId) external view returns (uint256 skewScale, uint256 maxFundingVelocity)
@@ -4383,7 +4712,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Returns**
 * `skewScale` (*uint256*) - the skew scale.
 * `maxFundingVelocity` (*uint256*) - the max funding velocity.
+<<<<<<< HEAD
+### getMaxMarketSize
+=======
 #### getMaxMarketSize
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getMaxMarketSize(uint128 marketId) external view returns (uint256 maxMarketSize)
@@ -4396,7 +4729,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 
 **Returns**
 * `maxMarketSize` (*uint256*) - the max market size in market asset units.
+<<<<<<< HEAD
+### getOrderFees
+=======
 #### getOrderFees
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getOrderFees(uint128 marketId) external view returns (uint256 makerFeeRatio, uint256 takerFeeRatio)
@@ -4410,7 +4747,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Returns**
 * `makerFeeRatio` (*uint256*) - the maker fee ratio.
 * `takerFeeRatio` (*uint256*) - the taker fee ratio.
+<<<<<<< HEAD
+### getLockedOiRatioD18
+=======
 #### getLockedOiRatio
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18)
@@ -4424,7 +4765,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 **Returns**
 * `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
 
+<<<<<<< HEAD
+### SettlementStrategyAdded
+=======
 #### SettlementStrategyAdded
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event SettlementStrategyAdded(uint128 marketId, struct SettlementStrategy.Data strategy, uint256 strategyId)
@@ -4462,7 +4807,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `makerFeeRatio` (*uint256*) - the maker fee ratio.
 * `takerFeeRatio` (*uint256*) - the taker fee ratio.
 
+<<<<<<< HEAD
+### FundingParametersSet
+=======
 #### FundingParametersSet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity)
@@ -4475,7 +4824,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `skewScale` (*uint256*) - the skew scale.
 * `maxFundingVelocity` (*uint256*) - the max funding velocity.
 
+<<<<<<< HEAD
+### LiquidationParametersSet
+=======
 #### LiquidationParametersSet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event LiquidationParametersSet(uint128 marketId, uint256 initialMarginRatioD18, uint256 maintenanceMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin)
@@ -4487,13 +4840,20 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `marketId` (*uint128*) - udpates funding parameters to this specific market.
 * `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
 * `maintenanceMarginRatioD18` (*uint256*) - the maintenance margin ratio (as decimal with 18 digits precision).
+<<<<<<< HEAD
+=======
 * `minimumInitialMarginRatioD18` (*uint256*) - 
+>>>>>>> sip-326-332-333-334
 * `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
 * `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
 * `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
 * `minimumPositionMargin` (*uint256*) - the minimum position margin.
 
+<<<<<<< HEAD
+### MaxMarketSizeSet
+=======
 #### MaxMarketSizeSet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event MaxMarketSizeSet(uint128 marketId, uint256 maxMarketSize)
@@ -4505,7 +4865,11 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `marketId` (*uint128*) - udpates funding parameters to this specific market.
 * `maxMarketSize` (*uint256*) - the max market value.
 
+<<<<<<< HEAD
+### LockedOiRatioD18Set
+=======
 #### LockedOiRatioSet
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event LockedOiRatioSet(uint128 marketId, uint256 lockedOiRatioD18)
@@ -4517,13 +4881,27 @@ There is a synthetix v3 core system supply cap also set. If the current supply b
 * `marketId` (*uint128*) - udpates funding parameters to this specific market.
 * `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
 
+<<<<<<< HEAD
+### SettlementStrategyEnabled
+=======
 #### SettlementStrategyEnabled
+>>>>>>> sip-326-332-333-334
 
   ```solidity
   event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled)
   ```
 
   Gets fired when a settlement strategy is enabled or disabled.
+<<<<<<< HEAD
+
+**Parameters**
+* `marketId` (*uint128*) - udpates funding parameters to this specific market.
+* `strategyId` (*uint256*) - the specific strategy.
+* `enabled` (*bool*) - whether the strategy is enabled or disabled.
+
+## IMarketEvents
+=======
+>>>>>>> sip-326-332-333-334
 
 **Parameters**
 * `marketId` (*uint128*) - udpates funding parameters to this specific market.
