@@ -184,27 +184,30 @@ export const bootstrap = (args: BootstrapArgs) => {
         contract: systems.CollateralMock,
         initialPrice: args.pool.stakedCollateralPrice,
         max: bn(10_000_000),
-        oracleNodeId: stakedPool.oracleNodeId(),
+        oracleNode: {
+          oracleNodeId: stakedPool.oracleNodeId(),
+          aggregator: stakedPool.aggregator() as AggregatorV3Mock,
+        },
       },
       {
         contract: systems.Collateral2Mock,
         initialPrice: bn(genNumber(1, 10)),
         max: bn(999_999),
-        oracleNodeId: undefined,
+        oracleNode: undefined,
       },
       {
         contract: systems.Collateral3Mock,
         initialPrice: bn(genNumber(1000, 5000)),
         max: bn(100_000),
-        oracleNodeId: undefined,
+        oracleNode: undefined,
       },
     ];
     const collateralTypes = collaterals.map(({ contract }) => contract.address);
     const owner = getOwner();
 
     let collateralOracles: Awaited<ReturnType<typeof createOracleNode>>[] = [];
-    for (const { initialPrice, contract } of collaterals) {
-      const collateralOracle = await createOracleNode(owner, initialPrice, systems.OracleManager);
+    for (const { initialPrice, contract, oracleNode } of collaterals) {
+      const collateralOracle = oracleNode ?? (await createOracleNode(owner, initialPrice, systems.OracleManager));
       collateralOracles.push(collateralOracle);
 
       // Update core system to allow this collateral to be deposited for all provisioned markets.
