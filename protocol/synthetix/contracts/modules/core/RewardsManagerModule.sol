@@ -251,10 +251,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         rewardIds.remove(rewardId);
 
-        if (distributor == address(0)) {
-            revert ParameterError.InvalidParameter("distributor", "must be non-zero");
-        }
-
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
         // ensure rewards emission is stopped (users can still come in to claim rewards after the fact)
