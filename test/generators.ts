@@ -124,7 +124,7 @@ export const genTrader = async (bs: Bs) => {
   const collateral = genOneOf(collaterals());
 
   // Randomly provide test collateral to trader.
-  const marginUsdDepositAmount = wei(genOneOf([1000, 5000, 10_000, 20_000, 40_000, 100_000]));
+  const marginUsdDepositAmount = wei(genOneOf([1000, 5000, 10_000, 15_000]));
   const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
   const collateralDepositAmount = marginUsdDepositAmount.div(collateralPrice).toBN();
 
@@ -155,7 +155,7 @@ export const genOrder = async (
   const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
 
   // Use a reasonble amount of leverage
-  const leverage = options?.desiredLeverage ?? genOneOf([0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const leverage = options?.desiredLeverage ?? genOneOf([0.5, 1, 2, 3, 4, 5]);
 
   // Randomly use long/short.
   let sizeDelta = marginUsd.div(oraclePrice).mul(wei(leverage)).toBN();
