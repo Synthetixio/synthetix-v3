@@ -53,6 +53,7 @@ describe('MarginModule', async () => {
         await collateral.approve(PerpMarketProxy.address, amountDelta);
 
         const balanceBefore = await collateral.balanceOf(traderAddress);
+
         const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           market.marketId(),
@@ -347,6 +348,77 @@ describe('MarginModule', async () => {
       it('should revert withdraw if places position into liquidation');
 
       it('should revert when account is flagged for liquidation');
+    });
+    describe('withdrawAllCollateral', () => {
+      it('should withdrawal of all account of collateral', async () => {
+        const { PerpMarketProxy } = systems();
+        const traderObj = await genTrader(bs);
+        const { collaterals } = bs;
+
+        // We want to make sure we have two different types of collateral
+        const collateral = collaterals()[0];
+        const collateral2 = collaterals()[1];
+
+        // Deposit margin with collateral 1
+        const { trader, traderAddress, marketId, collateralDepositAmount } = await depositMargin(
+          bs,
+          Promise.resolve({ ...traderObj, collateral })
+        );
+        // Deposit margin with collateral 2
+        const { collateralDepositAmount: collateralDepositAmount2 } = await depositMargin(
+          bs,
+          Promise.resolve({ ...traderObj, collateral: collateral2 })
+        );
+
+        // Assert deposit went thorough and  we have two different types of collateral
+        const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        const { available: collateralBalance = bn(0) } =
+          accountDigest.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+        const { available: collateral2Balance = bn(0) } =
+          accountDigest.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+
+        assertBn.equal(collateralBalance, collateralDepositAmount);
+        assertBn.equal(collateral2Balance, collateralDepositAmount2);
+
+        // Store balances before withdrawal
+        const collateralWalletBalanceBeforeWithdrawal = await collateral.contract.balanceOf(traderAddress);
+        const collateralWalletBalanceBeforeWithdrawal2 = await collateral2.contract.balanceOf(traderAddress);
+
+        // Perform the withdrawAllCollateral
+        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
+        // Assert that events are triggered
+        await assertEvent(
+          tx,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
+          PerpMarketProxy
+        );
+        await assertEvent(
+          tx,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount2}, "${collateral2.contract.address}")`,
+          PerpMarketProxy
+        );
+
+        // Assert that no collateral is left the market
+        const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        const { available: collateralBalanceAfter = bn(0) } =
+          accountDigestAfter.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+        const { available: collateral2BalanceAfter = bn(0) } =
+          accountDigestAfter.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+
+        assertBn.equal(collateralBalanceAfter, bn(0));
+        assertBn.equal(collateral2BalanceAfter, bn(0));
+
+        // Assert that we have the collateral back in the trader's wallet
+        assertBn.equal(
+          await collateral.contract.balanceOf(traderAddress),
+          collateralDepositAmount.add(collateralWalletBalanceBeforeWithdrawal)
+        );
+        assertBn.equal(
+          await collateral2.contract.balanceOf(traderAddress),
+          collateralDepositAmount2.add(collateralWalletBalanceBeforeWithdrawal2)
+        );
+      });
     });
   });
 
