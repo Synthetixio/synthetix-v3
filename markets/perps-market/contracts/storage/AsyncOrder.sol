@@ -163,7 +163,7 @@ library AsyncOrder {
     ) internal {
         checkPendingOrder(newRequest.accountId);
 
-        PerpsAccount.load(newRequest.accountId).validateMaxPositions(newRequest.marketId);
+        PerpsAccount.validateMaxPositions(newRequest.accountId, newRequest.marketId);
 
         // Replace previous (or empty) order with the commitment request
         self.settlementTime = block.timestamp + strategy.settlementDelay;

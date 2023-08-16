@@ -130,7 +130,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     const { maxPositionsPerAccount, maxCollateralsPerAccount } = data;
     await systems()
       .PerpsMarket.connect(owner())
-      .setMaxPerAccount(
+      .setPerAccountCaps(
         maxPositionsPerAccount ? maxPositionsPerAccount : 100000,
         maxCollateralsPerAccount ? maxCollateralsPerAccount : 100000
       );

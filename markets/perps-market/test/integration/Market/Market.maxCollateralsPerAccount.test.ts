@@ -62,7 +62,7 @@ describe('Markets - Max Collaterals per account', () => {
   });
 
   before('ensure max collaterals is set to 0', async () => {
-    await systems().PerpsMarket.connect(owner()).setMaxPerAccount(_UNLIMMITED, 0);
+    await systems().PerpsMarket.connect(owner()).setPerAccountCaps(_UNLIMMITED, 0);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -78,7 +78,7 @@ describe('Markets - Max Collaterals per account', () => {
     before(restore);
 
     before('set max collaterals per account', async () => {
-      await systems().PerpsMarket.connect(owner()).setMaxPerAccount(_UNLIMMITED, 1);
+      await systems().PerpsMarket.connect(owner()).setPerAccountCaps(_UNLIMMITED, 1);
     });
 
     it('should be able to add collateral', async () => {
@@ -102,7 +102,7 @@ describe('Markets - Max Collaterals per account', () => {
     before(restore);
 
     before('set max collaterals per account', async () => {
-      await systems().PerpsMarket.connect(owner()).setMaxPerAccount(_UNLIMMITED, _UNLIMMITED);
+      await systems().PerpsMarket.connect(owner()).setPerAccountCaps(_UNLIMMITED, _UNLIMMITED);
     });
 
     it('should be able to add more than one collateral type (two)', async () => {
@@ -113,7 +113,7 @@ describe('Markets - Max Collaterals per account', () => {
 
     describe('when reducing the max collaterals per account', () => {
       before('reduce max collaterals per account', async () => {
-        await systems().PerpsMarket.connect(owner()).setMaxPerAccount(_UNLIMMITED, 2);
+        await systems().PerpsMarket.connect(owner()).setPerAccountCaps(_UNLIMMITED, 2);
       });
 
       it('should revert when attempting to add a 3rd collateral', async () => {

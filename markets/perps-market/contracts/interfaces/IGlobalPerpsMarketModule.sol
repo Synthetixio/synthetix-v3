@@ -46,7 +46,7 @@ interface IGlobalPerpsMarketModule {
      * @param maxPositionsPerAccount The max number of concurrent Positions per Account
      * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
      */
-    event MaxPerAccountSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
+    event PerAccountCapsSet(uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 
     /**
      * @notice Thrown when the fee collector does not implement the IFeeCollector interface
@@ -130,7 +130,7 @@ interface IGlobalPerpsMarketModule {
      * @param maxPositionsPerAccount The max number of concurrent Positions per Account
      * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
      */
-    function setMaxPerAccount(
+    function setPerAccountCaps(
         uint128 maxPositionsPerAccount,
         uint128 maxCollateralsPerAccount
     ) external;
@@ -140,7 +140,7 @@ interface IGlobalPerpsMarketModule {
      * @param maxPositionsPerAccount The max number of concurrent Positions per Account
      * @param maxCollateralsPerAccount The max number of concurrent Collaterals per Account
      */
-    function getMaxPerAccount()
+    function getPerAccountCaps()
         external
         returns (uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount);
 

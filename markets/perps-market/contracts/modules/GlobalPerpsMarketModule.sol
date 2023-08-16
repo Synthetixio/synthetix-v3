@@ -160,7 +160,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function setMaxPerAccount(
+    function setPerAccountCaps(
         uint128 maxPositionsPerAccount,
         uint128 maxCollateralsPerAccount
     ) external override {
@@ -169,13 +169,13 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         store.maxPositionsPerAccount = maxPositionsPerAccount;
         store.maxCollateralsPerAccount = maxCollateralsPerAccount;
 
-        emit MaxPerAccountSet(maxPositionsPerAccount, maxCollateralsPerAccount);
+        emit PerAccountCapsSet(maxPositionsPerAccount, maxCollateralsPerAccount);
     }
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getMaxPerAccount()
+    function getPerAccountCaps()
         external
         view
         override

@@ -74,7 +74,7 @@ describe('Markets - Max positions per account', () => {
   });
 
   before('ensure max positions is set to 0', async () => {
-    await systems().PerpsMarket.connect(owner()).setMaxPerAccount(0, _UNLIMMITED);
+    await systems().PerpsMarket.connect(owner()).setPerAccountCaps(0, _UNLIMMITED);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -94,7 +94,7 @@ describe('Markets - Max positions per account', () => {
     before(restore);
 
     before('set max positions per account', async () => {
-      await systems().PerpsMarket.connect(owner()).setMaxPerAccount(1, _UNLIMMITED);
+      await systems().PerpsMarket.connect(owner()).setPerAccountCaps(1, _UNLIMMITED);
     });
 
     it('should be able to open a position', async () => {
@@ -134,7 +134,7 @@ describe('Markets - Max positions per account', () => {
     before(restore);
 
     before('set max positions per account', async () => {
-      await systems().PerpsMarket.connect(owner()).setMaxPerAccount(_UNLIMMITED, _UNLIMMITED);
+      await systems().PerpsMarket.connect(owner()).setPerAccountCaps(_UNLIMMITED, _UNLIMMITED);
     });
 
     it('should be able to open more than one position position', async () => {
@@ -153,7 +153,7 @@ describe('Markets - Max positions per account', () => {
 
     describe('when reducing the max positions per account', () => {
       before('reduce max positions per account', async () => {
-        await systems().PerpsMarket.connect(owner()).setMaxPerAccount(2, _UNLIMMITED);
+        await systems().PerpsMarket.connect(owner()).setPerAccountCaps(2, _UNLIMMITED);
       });
       it('should revert when attempting to open a 3rd position', async () => {
         await assertRevert(

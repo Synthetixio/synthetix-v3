@@ -140,7 +140,7 @@ describe('Create Market test', () => {
       });
 
       before('ensure per account max is set to zero', async () => {
-        await systems().PerpsMarket.connect(owner()).setMaxPerAccount(0, 0);
+        await systems().PerpsMarket.connect(owner()).setPerAccountCaps(0, 0);
       });
 
       it('reverts when trying add collateral if max collaterals per account is zero', async () => {
@@ -152,7 +152,7 @@ describe('Create Market test', () => {
 
       describe('when max collaterals per account is set to non-zero', () => {
         before('set max collaterals per account', async () => {
-          await systems().PerpsMarket.connect(owner()).setMaxPerAccount(0, 1000);
+          await systems().PerpsMarket.connect(owner()).setPerAccountCaps(0, 1000);
         });
 
         before('add collateral', async () => {
@@ -179,7 +179,7 @@ describe('Create Market test', () => {
 
         describe('when max positions per account is set to non-zero', () => {
           before('set max positions per account', async () => {
-            await systems().PerpsMarket.connect(owner()).setMaxPerAccount(1000, 1000);
+            await systems().PerpsMarket.connect(owner()).setPerAccountCaps(1000, 1000);
           });
           it('should be able to use the market', async () => {
             await systems()
