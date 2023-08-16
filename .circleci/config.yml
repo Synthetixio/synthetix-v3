@@ -1,0 +1,29 @@
+version: 2.1
+
+parameters:
+  node-version:
+    type: string
+    default: "16.20.1"
+
+commands:
+  yarn-install:
+    steps:
+      - run: yarn install --immutable --immutable-cache
+
+jobs:
+  docgen:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
+      - run: yarn docgen
+
+workflows:
+  version: 2.1
+
+  docgen:
+    jobs:
+      - docgen
