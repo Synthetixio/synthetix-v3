@@ -51,7 +51,9 @@ export const genNumber = (min = 0, max = 1) => random(min, max);
 export const genBootstrap = () => ({
   initialEthPrice: bn(genNumber(1900, 2500)),
   pool: {
-    initialCollateralPrice: bn(genNumber(100, 10_000)),
+    // 50M USD of staked collateral.
+    stakedCollateralPrice: bn(100),
+    stakedAmount: bn(500_000),
   },
   global: {
     priceDivergencePercent: wei(genNumber(0.1, 0.3)).toBN(),

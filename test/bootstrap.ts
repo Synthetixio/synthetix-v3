@@ -59,7 +59,8 @@ const restoreSnapshot = _bootstraped.createSnapshot();
 export interface BootstrapArgs {
   initialEthPrice: BigNumber;
   pool: {
-    initialCollateralPrice: BigNumber;
+    stakedCollateralPrice: BigNumber;
+    stakedAmount: BigNumber;
   };
   global: IMarketConfigurationModule.ConfigureParametersStruct;
   markets: {
@@ -105,7 +106,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   };
 
   // Create a pool which makes `args.markets.length` with all equal weighting.
-  const stakedPool = createStakedPool(core, args.pool.initialCollateralPrice);
+  const stakedPool = createStakedPool(core, args.pool.stakedCollateralPrice, args.pool.stakedAmount);
 
   before('configure global market', async () => {
     const tx = await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
@@ -178,7 +179,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   // Overall market allows up to n collaterals, each having their own oracle node.
   const configureCollateral = async () => {
     const collaterals = [
-      { contract: systems.CollateralMock, initialPrice: bn(genNumber(25, 100)), max: bn(10_000_000) },
+      // { contract: systems.CollateralMock, initialPrice: bn(genNumber(25, 100)), max: bn(10_000_000) },
       { contract: systems.Collateral2Mock, initialPrice: bn(genNumber(1, 10)), max: bn(999_999) },
       { contract: systems.Collateral3Mock, initialPrice: bn(genNumber(1000, 5000)), max: bn(100_000) },
     ];

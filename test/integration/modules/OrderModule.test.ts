@@ -250,7 +250,7 @@ describe('OrderModule', () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       const positionDigest = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      assertBn.equal(positionDigest.size, order.sizeDelta.abs());
+      assertBn.equal(positionDigest.size, order.sizeDelta);
     });
 
     it('should update market size and skew upon settlement', async () => {
