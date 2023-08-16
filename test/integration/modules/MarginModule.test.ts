@@ -13,9 +13,9 @@ import {
   genListOf,
   genOneOf,
   genTrader,
-  genCollateralForTrader,
+  genOrder,
 } from '../../generators';
-import { depositMargin } from '../../helpers';
+import { commitOrder, depositMargin } from '../../helpers';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -430,7 +430,7 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert withdraw to an account that does not exist', async () => {
+      it('should revert when an account does not exist', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId } = await depositMargin(bs, genTrader(bs));
         const invalidAccountId = bn(genNumber(42069, 50_000));
@@ -443,7 +443,7 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert withdraw to a market that does not exist', async () => {
+      it('should revert when market does not exist', async () => {
         const { PerpMarketProxy } = systems();
         const { trader } = await depositMargin(bs, genTrader(bs));
         const invalidMarketId = bn(genNumber(42069, 50_000));
@@ -452,6 +452,22 @@ describe('MarginModule', async () => {
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, invalidMarketId),
           `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when trader have open order', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        await commitOrder(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+
+        // Perform withdraw with invalid market
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `OrderFound("${trader.accountId}")`,
           PerpMarketProxy
         );
       });
