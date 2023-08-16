@@ -95,7 +95,7 @@ contract MarginModule is IMarginModule {
         // Prevent collateral transfers when there's an open position.
         Position.Data storage position = market.positions[accountId];
         if (position.size != 0) {
-            revert ErrorUtil.PositionFound(accountId);
+            revert ErrorUtil.PositionFound(accountId, marketId);
         }
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();

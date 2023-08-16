@@ -29,6 +29,9 @@ library ErrorUtil {
     // @dev Thrown when an expected position cannot be found.
     error PositionNotFound();
 
+    // @dev Thrown when we expect a position not to exist but it does.
+    error PositionFound(uint128 accountId, uint128 marketId);
+
     // @dev Thrown when attempting to mutate a position (or reflag) flagged for liquidation.
     error PositionFlagged();
 
@@ -67,7 +70,4 @@ library ErrorUtil {
 
     // @dev Thrown when the input arrays have mismatched lengths.
     error ArrayLengthMismatch();
-
-    // @dev Thrown when we expect a position not to exist but it does.
-    error PositionFound(uint128 accountId);
 }
