@@ -7,7 +7,7 @@ library Guardian {
     bytes32 private constant _STORAGE_SLOT =
         keccak256(abi.encode("io.synthetix.governance.Guardian"));
 
-    uint64 public constant RESCUE_DELAY = 7 days;
+    uint64 public constant ACCEPT_OWNERSHIP_DELAY = 7 days;
 
     struct Data {
         address guardian;

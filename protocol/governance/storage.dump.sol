@@ -276,6 +276,23 @@ library Epoch {
     }
 }
 
+// @custom:artifact contracts/storage/Guardian.sol:Guardian
+library Guardian {
+    bytes32 private constant _STORAGE_SLOT = keccak256(abi.encode("io.synthetix.governance.Guardian"));
+    uint64 public constant ACCEPT_OWNERSHIP_DELAY = 7;
+    struct Data {
+        address guardian;
+        address nominatedGuardian;
+        uint64 ownershipRequestedAt;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = _STORAGE_SLOT;
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
 // @custom:artifact contracts/storage/SnapshotVotePower.sol:SnapshotVotePower
 library SnapshotVotePower {
     struct Data {
