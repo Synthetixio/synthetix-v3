@@ -24,8 +24,8 @@ library Council {
         SetUtil.AddressSet councilMembers;
         // Council token id's by council member address
         mapping(address => uint) councilTokenIds;
-        // id of the last election
-        uint lastElectionId;
+        // id of the current epoch
+        uint currentElectionId;
     }
 
     enum ElectionPeriod {
@@ -48,40 +48,40 @@ library Council {
 
     function newElection(Data storage self) internal returns (uint newElectionId) {
         getNextElectionSettings(self).copyMissingFrom(getCurrentElectionSettings(self));
-        newElectionId = ++self.lastElectionId;
+        newElectionId = ++self.currentElectionId;
         initScheduleFromSettings(self);
     }
 
     function getCurrentElection(
         Data storage self
     ) internal view returns (Election.Data storage election) {
-        return Election.load(self.lastElectionId);
+        return Election.load(self.currentElectionId);
     }
 
     function getPreviousElection(
         Data storage self
     ) internal view returns (Election.Data storage election) {
         // NOTE: will revert if there was no previous election
-        return Election.load(self.lastElectionId - 1);
+        return Election.load(self.currentElectionId - 1);
     }
 
     function getCurrentElectionSettings(
         Data storage self
     ) internal view returns (ElectionSettings.Data storage settings) {
-        return ElectionSettings.load(self.lastElectionId);
+        return ElectionSettings.load(self.currentElectionId);
     }
 
     function getPreviousElectionSettings(
         Data storage self
     ) internal view returns (ElectionSettings.Data storage settings) {
         // NOTE: will revert if there was no previous settings
-        return ElectionSettings.load(self.lastElectionId - 1);
+        return ElectionSettings.load(self.currentElectionId - 1);
     }
 
     function getNextElectionSettings(
         Data storage self
     ) internal view returns (ElectionSettings.Data storage settings) {
-        return ElectionSettings.load(self.lastElectionId + 1);
+        return ElectionSettings.load(self.currentElectionId + 1);
     }
 
     /// @dev Determines the current period type according to the current time and the epoch's dates

@@ -26,6 +26,7 @@ describe('SnapshotVotePowerModule', function () {
         c.CoreProxy
       );
     });
+
     it('should set snapshot contract', async function () {
       await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
       // shouldn't be valid for current epoch
@@ -41,7 +42,7 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('should allow for snapshot contracts to be removed on the next epoch', async function () {
-      await c.CoreProxy.Council_set_lastElectionId(0);
+      await c.CoreProxy.Council_set_currentElectionId(0);
       await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, true);
       await c.CoreProxy.Council_newElection();
       await c.CoreProxy.setSnapshotContract(c.SnapshotRecordMock.address, false);
@@ -83,7 +84,7 @@ describe('SnapshotVotePowerModule', function () {
         assertBn.equal(
           await c.CoreProxy.getVotePowerSnapshotId(
             c.SnapshotRecordMock.address,
-            await c.CoreProxy.Council_get_lastElectionId()
+            await c.CoreProxy.Council_get_currentElectionId()
           ),
           0
         );
@@ -91,7 +92,7 @@ describe('SnapshotVotePowerModule', function () {
         assertBn.gt(
           await c.CoreProxy.getVotePowerSnapshotId(
             c.SnapshotRecordMock.address,
-            await c.CoreProxy.Council_get_lastElectionId()
+            await c.CoreProxy.Council_get_currentElectionId()
           ),
           0
         );
@@ -118,7 +119,7 @@ describe('SnapshotVotePowerModule', function () {
 
       const snapshotId = await c.CoreProxy.getVotePowerSnapshotId(
         c.SnapshotRecordMock.address,
-        await c.CoreProxy.Council_get_lastElectionId()
+        await c.CoreProxy.Council_get_currentElectionId()
       );
 
       await c.SnapshotRecordMock.setBalanceOfOnPeriod(await user.getAddress(), 100, snapshotId);
@@ -156,7 +157,7 @@ describe('SnapshotVotePowerModule', function () {
         assertBn.equal(foundVotingPower, 100);
 
         const ballotVotingPower = await c.CoreProxy.Ballot_get_votingPower(
-          await c.CoreProxy.Council_get_lastElectionId(),
+          await c.CoreProxy.Council_get_currentElectionId(),
           await user.getAddress(),
           13370 // precinct is current chain id
         );

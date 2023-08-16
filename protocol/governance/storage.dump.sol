@@ -216,7 +216,7 @@ library Council {
         address councilToken;
         SetUtil.AddressSet councilMembers;
         mapping(address => uint) councilTokenIds;
-        uint lastElectionId;
+        uint currentElectionId;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_COUNCIL_STORAGE;

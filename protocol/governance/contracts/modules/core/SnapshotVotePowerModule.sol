@@ -19,10 +19,10 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         Council.Data storage council = Council.load();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
         if (enabled) {
-            snapshotVotePower.validFromEpoch = (council.lastElectionId + 1).to128();
+            snapshotVotePower.validFromEpoch = (council.currentElectionId + 1).to128();
             snapshotVotePower.validToEpoch = 0;
         } else {
-            snapshotVotePower.validToEpoch = (council.lastElectionId + 1).to128();
+            snapshotVotePower.validToEpoch = (council.currentElectionId + 1).to128();
         }
     }
 
@@ -33,7 +33,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
         SnapshotVotePowerEpoch.Data storage snapshotVotePowerEpoch = SnapshotVotePower
             .load(snapshotContract)
-            .epochs[Council.load().lastElectionId.to128()];
+            .epochs[Council.load().currentElectionId.to128()];
         if (snapshotVotePowerEpoch.snapshotId > 0) {
             revert SnapshotAlreadyTaken(snapshotVotePowerEpoch.snapshotId);
         }
@@ -67,7 +67,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     ) external override returns (uint256 power) {
         Council.Data storage council = Council.load();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
-        uint128 currentEpoch = council.lastElectionId.to128();
+        uint128 currentEpoch = council.currentElectionId.to128();
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
 
         if (snapshotVotePower.epochs[currentEpoch].snapshotId == 0) {

@@ -18,7 +18,7 @@ describe('ElectionModule - voting', () => {
 
   before('create voting power for user', async () => {
     await c.CoreProxy.Ballot_set_votingPower(
-      await c.CoreProxy.Council_get_lastElectionId(),
+      await c.CoreProxy.Council_get_currentElectionId(),
       await user.getAddress(),
       13370,
       100
