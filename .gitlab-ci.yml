@@ -1,0 +1,87 @@
+image: node:18
+
+stages:
+- build
+- build-testable
+- test
+
+before_script:
+- export CANNON_DIRECTORY="$(pwd)/.cannon"
+
+# This folder is cached between builds
+# https://docs.gitlab.com/ee/ci/yaml/index.html#cache
+cache:
+  paths:
+    - .cannon
+
+build:
+  stage: build
+  script: yarn install --immutable --immutable-cache && yarn build
+
+build-testable:
+  stage: build-testable
+  script: yarn workspaces foreach --topological-dev --recursive --verbose run build-testable
+
+.test:
+  stage: test
+  script: yarn hardhat test
+  only:
+    refs:
+    - merge_requests
+
+test-core-contracts:
+  extends: .test
+  before_script: 
+  - cd utils/core-contracts
+  only:
+    changes:
+    - utils/core-contracts/*
+
+test-core-modules:
+  extends: .test
+  before_script: 
+  - cd utils/core-modules
+  only:
+    changes:
+    - utils/core-contracts/*
+    - utils/core-modules/*
+
+test-oracle-manager:
+  extends: .test
+  before_script: 
+  - cd protocol/oracle-manager
+  only:
+    changes:
+    - utils/core-contracts/*
+    - utils/core-modules/*
+    - protocol/oracle-manager/*
+
+test-synthetix:
+  extends: .test
+  before_script:
+    - cd protocol/synthetix
+  only:
+    changes:
+    - utils/core-contracts/*
+    - utils/core-modules/*
+    - protocol/synthetix/*
+
+test-spot-market:
+  extends: .test
+  before_script:
+    - cd markets/spot-market
+  only:
+    changes:
+    - utils/core-contracts/*
+    - utils/core-modules/*
+    - markets/spot-market/*
+
+test-perps-market:
+  extends: .test
+  before_script:
+    - cd markets/perps-market
+  only:
+    changes:
+    - utils/core-contracts/*
+    - utils/core-modules/*
+    - markets/perps-market/*
