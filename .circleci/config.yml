@@ -17,9 +17,11 @@ jobs:
     steps:
       - checkout
       - yarn-install
-
       - run: yarn workspaces foreach --topological-dev --verbose run build:ts
       - run: yarn docgen
+      - store_artifacts:
+          path: "docs/smart-contracts.md"
+          destination: "smart-contracts.md"
 
 workflows:
   version: 2.1
