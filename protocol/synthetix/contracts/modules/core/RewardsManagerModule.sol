@@ -155,7 +155,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         if (address(vault.rewards[rewardId].distributor) != distributor) {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
