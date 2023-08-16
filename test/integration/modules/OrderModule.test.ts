@@ -277,12 +277,28 @@ describe('OrderModule', () => {
     it('should pay a non-zero settlement fee to keeper');
 
     it('should revert when this order exceeds maxMarketSize (oi)');
-    it('should revert when sizeDelta is 0');
     it('should revert when an existing position can be liquidated');
     it('should revert when an existing position is flagged for liquidation');
     it('should revert when margin falls below maintenance margin');
-    it('should revert when accountId does not exist');
-    it('should revert when marketId does not exist');
+
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      const invalidAccountId = 69420;
+    });
+
+    it('should revert when marketId does not exist', async () => {});
+
     it('should revert if not enough time has passed');
     it('should revert if order is stale');
     it('should revert when there is no pending order');

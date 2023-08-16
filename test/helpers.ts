@@ -19,13 +19,12 @@ export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) =>
   await collateralConnected.approve(PerpMarketProxy.address, collateralDepositAmount);
 
   // Perform the deposit
-  const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+  await PerpMarketProxy.connect(trader.signer).modifyCollateral(
     trader.accountId,
     market.marketId(),
     collateral.contract.address,
     collateralDepositAmount
   );
-  await tx.wait();
 
   return tr;
 };
@@ -40,8 +39,7 @@ export const setMarketConfigurationById = async (
   const { PerpMarketProxy } = systems();
 
   const data = await PerpMarketProxy.getMarketConfigurationById(marketId);
-  const tx = await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, { ...data, ...params });
-  await tx.wait();
+  await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, { ...data, ...params });
 
   return await PerpMarketProxy.getMarketConfigurationById(marketId);
 };

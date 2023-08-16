@@ -109,8 +109,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   const stakedPool = createStakedPool(core, args.pool.stakedCollateralPrice, args.pool.stakedAmount);
 
   before('configure global market', async () => {
-    const tx = await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
-    await tx.wait();
+    await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration(args.global);
   });
 
   let ethOracleNodeId: string;
@@ -121,8 +120,7 @@ export const bootstrap = (args: BootstrapArgs) => {
       args.initialEthPrice,
       systems.OracleManager
     );
-    const tx = await systems.PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
-    await tx.wait();
+    await systems.PerpMarketProxy.connect(getOwner()).setEthOracleNodeId(oracleNodeId);
 
     ethOracleNodeId = oracleNodeId;
     ethOracleAgg = aggregator;
@@ -145,28 +143,25 @@ export const bootstrap = (args: BootstrapArgs) => {
 
     before(`provision market - ${readableName}`, async () => {
       marketId = await systems.PerpMarketProxy.callStatic.createMarket({ name });
-      const tx = await systems.PerpMarketProxy.createMarket({ name });
-      await tx.wait();
+      await systems.PerpMarketProxy.createMarket({ name });
     });
 
     before(`delegate pool collateral to market - ${name}`, async () => {
-      const tx = await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, [
+      await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, [
         {
           marketId,
           weightD18: utils.parseEther('1'),
           maxDebtShareValueD18: utils.parseEther('1'),
         },
       ]);
-      await tx.wait();
     });
 
     before(`configure market - ${readableName}`, async () => {
-      const tx = await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
+      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
         ...specific,
         // Override the generic supplied oracleNodeId with the one that was just created.
         oracleNodeId,
       });
-      await tx.wait();
     });
 
     return {
@@ -236,12 +231,11 @@ export const bootstrap = (args: BootstrapArgs) => {
     const maxAllowables = collaterals.map(({ max }) => max);
 
     // Allow this collateral to be depositable into the perp market.
-    const tx = await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
+    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
       collateralTypes,
       oracleNodeIds,
       maxAllowables
     );
-    await tx.wait();
 
     return collaterals.map((collateral, idx) => ({
       ...collateral,
