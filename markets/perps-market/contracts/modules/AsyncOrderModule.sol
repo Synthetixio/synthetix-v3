@@ -55,8 +55,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
             .loadValidSettlementStrategy(commitment.marketId, commitment.settlementStrategyId);
 
-        // pull order from storage and check if it is valid (not pending unexpired order)
-        AsyncOrder.Data storage order = AsyncOrder.checkPendingOrder(commitment.accountId);
+        AsyncOrder.Data storage order = AsyncOrder.load(commitment.accountId);
 
         // if order (previous) sizeDelta is not zero and didn't revert while checking, it means the previous order expired
         if (order.request.sizeDelta != 0) {
@@ -71,9 +70,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        // Replace previous (or empty) order with the commitment request
-        order.settlementTime = block.timestamp + strategy.settlementDelay;
-        order.request = commitment;
+        order.updateValid(commitment, strategy);
 
         (, uint feesAccrued, , ) = order.validateRequest(
             strategy,
