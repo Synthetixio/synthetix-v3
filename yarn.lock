@@ -6893,9 +6893,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eth-gas-reporter@npm:^0.2.25":
-  version: 0.2.25
-  resolution: "eth-gas-reporter@npm:0.2.25"
+"eth-gas-reporter@git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors":
+  version: 0.2.24
+  resolution: "eth-gas-reporter@https://github.com/dbeal-eth/eth-gas-reporter.git#commit=1772400f123bb9ddda777170f53594205fffda87"
   dependencies:
     "@ethersproject/abi": ^5.0.0-beta.146
     "@solidity-parser/parser": ^0.14.0
@@ -6917,7 +6917,7 @@ __metadata:
   peerDependenciesMeta:
     "@codechecks/client":
       optional: true
-  checksum: 3bfa81e554b069bb817f2a073a601a0429e6b582c56ad99db0727dc2a102ab00fc27888820b8a042a194a8fb7d40954d10cd7b011ede6b8170285d2d5a88666c
+  checksum: d4587d1d5162fa9afa8b0ce856352bbdce301703000b7aa7b05fa48454224a46f356900face12840c095b2ac31d6d7c61913b0e2a10591a492f05b452ba760c2
   languageName: node
   linkType: hard
 
