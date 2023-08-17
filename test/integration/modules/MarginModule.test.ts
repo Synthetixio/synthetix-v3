@@ -841,7 +841,26 @@ describe('MarginModule', async () => {
     });
 
     it('should not consider a position in a different market for the same account');
-    it('should reflect collateral increasing in price');
+    it('should reflect collateral price changes', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+
+      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      assertBn.equal(marginUsdBeforePriceChange, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+
+      const newPrice = wei(collateralPrice)
+        .mul(genOneOf([1.1, 0.9]))
+        .toBN();
+      await collateral.aggregator().mockSetCurrentPrice(newPrice);
+
+      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      assertBn.equal(marginUsdAfterPriceChange, wei(collateralDepositAmount).mul(newPrice).toBN());
+    });
 
     it('should revert when accountId does not exist', async () => {
       const { PerpMarketProxy } = systems();
