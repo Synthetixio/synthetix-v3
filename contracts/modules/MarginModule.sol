@@ -55,12 +55,13 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) private {
         IERC20(collateralType).transferFrom(msg.sender, address(this), amount);
+        uint256 feeAmount;
         if (collateralType == address(globalConfig.usdToken)) {
-            globalConfig.synthetix.depositMarketUsd(marketId, address(this), amount);
+            feeAmount = globalConfig.synthetix.depositMarketUsd(marketId, address(this), amount);
         } else {
             globalConfig.synthetix.depositMarketCollateral(marketId, collateralType, amount);
         }
-        emit MarginDeposit(msg.sender, address(this), amount, collateralType);
+        emit MarginDeposit(msg.sender, address(this), amount, feeAmount, collateralType);
     }
 
     /**
