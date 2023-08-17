@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { BigNumber, constants, ethers, utils } from 'ethers';
+import { BigNumber, constants, ethers } from 'ethers';
 import hre from 'hardhat';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';

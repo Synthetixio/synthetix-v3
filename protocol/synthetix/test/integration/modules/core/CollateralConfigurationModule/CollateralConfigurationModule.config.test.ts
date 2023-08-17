@@ -9,7 +9,7 @@ import {
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems, provider } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer, collateralPrice: number;
