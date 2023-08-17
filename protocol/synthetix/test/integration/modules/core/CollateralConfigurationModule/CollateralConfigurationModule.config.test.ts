@@ -7,14 +7,17 @@ import {
   verifyCollateralListed,
 } from '../CollateralModule/CollateralModule.helper';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
-describe('CollateralModule', function () {
-  const { signers, systems } = bootstrap();
+describe.only('CollateralModule', function () {
+  const { signers, systems, provider } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer, collateralPrice: number;
 
   let Collateral: Ethers.Contract, AnotherCollateral: Ethers.Contract;
   let oracleNodeId: string, oracleNodeId2: string;
+
+  const restore = snapshotCheckpoint(provider);
 
   describe('CollateralModule - Collateral configuration', function () {
     before('identify signers', async () => {
@@ -177,6 +180,55 @@ describe('CollateralModule', function () {
           }),
           `Unauthorized("${await user1.getAddress()}")`,
           systems().Core
+        );
+      });
+    });
+
+    describe('fails at sanity checks', () => {
+      before(restore);
+
+      it('issuanceRatioD18 is below 100%', async () => {
+        await assertRevert(
+          systems().Core.connect(systemOwner).configureCollateral({
+            tokenAddress: AnotherCollateral.address,
+            oracleNodeId: oracleNodeId2,
+            issuanceRatioD18: 99,
+            liquidationRatioD18: 250,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
+            depositingEnabled: false,
+          }),
+          'InvalidParameter("issuanceRatioD18", "must be greater than 100%")'
+        );
+      });
+
+      it('liquidationRatioD18 is below 100%', async () => {
+        await assertRevert(
+          systems().Core.connect(systemOwner).configureCollateral({
+            tokenAddress: AnotherCollateral.address,
+            oracleNodeId: oracleNodeId2,
+            issuanceRatioD18: 100,
+            liquidationRatioD18: 99,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
+            depositingEnabled: false,
+          }),
+          'InvalidParameter("liquidationRatioD18", "must be greater than 100%")'
+        );
+      });
+
+      it('issuanceRatioD18 is smaller than liquidationRatioD18', async () => {
+        await assertRevert(
+          systems().Core.connect(systemOwner).configureCollateral({
+            tokenAddress: AnotherCollateral.address,
+            oracleNodeId: oracleNodeId2,
+            issuanceRatioD18: 100,
+            liquidationRatioD18: 250,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
+            depositingEnabled: false,
+          }),
+          'InvalidParameter("issuanceRatioD18", "must be greater than liquidationRatioD18")'
         );
       });
     });

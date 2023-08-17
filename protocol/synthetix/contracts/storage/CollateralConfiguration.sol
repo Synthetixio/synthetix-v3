@@ -142,6 +142,24 @@ library CollateralConfiguration {
             );
         }
 
+        if (config.issuanceRatioD18 < 100) {
+            revert ParameterError.InvalidParameter("issuanceRatioD18", "must be greater than 100%");
+        }
+
+        if (config.liquidationRatioD18 < 100) {
+            revert ParameterError.InvalidParameter(
+                "liquidationRatioD18",
+                "must be greater than 100%"
+            );
+        }
+
+        if (config.issuanceRatioD18 < config.liquidationRatioD18) {
+            revert ParameterError.InvalidParameter(
+                "issuanceRatioD18",
+                "must be greater than liquidationRatioD18"
+            );
+        }
+
         Data storage storedConfig = load(config.tokenAddress);
 
         storedConfig.tokenAddress = config.tokenAddress;
