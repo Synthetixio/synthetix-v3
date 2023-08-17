@@ -79,18 +79,20 @@ describe('BaseElectionModule - Initialization', function () {
         before('initialize', async function () {
           epochStartDate = await getTime(getProvider());
 
-          const administrationPeriodDuration = daysToSeconds(14);
-          const nominationPeriodDuration = daysToSeconds(7);
-          const votingPeriodDuration = daysToSeconds(7);
+          const administrationPeriodDuration = 14;
+          const nominationPeriodDuration = 7;
+          const votingPeriodDuration = 7;
 
           const epochDuration =
             administrationPeriodDuration + nominationPeriodDuration + votingPeriodDuration;
 
           epochEndDate = epochStartDate + daysToSeconds(epochDuration);
-          nominationPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration) * 2;
+          nominationPeriodStartDate =
+            epochEndDate - daysToSeconds(votingPeriodDuration + nominationPeriodDuration);
           votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
 
-          const initialNominationPeriodStartDate = epochStartDate + administrationPeriodDuration;
+          const initialNominationPeriodStartDate =
+            epochStartDate + daysToSeconds(administrationPeriodDuration);
 
           const tx = await _initOrUpdateElectionSettings({
             minimumActiveMembers: 1,
@@ -128,12 +130,6 @@ describe('BaseElectionModule - Initialization', function () {
 
         it('emitted a EpochStarted event', async function () {
           await assertEvent(rx, 'EpochStarted(0)', c.CoreProxy);
-        });
-
-        describe('when called for a second time', function () {
-          it('reverts', async function () {
-            await assertRevert(_initOrUpdateElectionSettings(), 'AlreadyInitialized');
-          });
         });
       });
     });
