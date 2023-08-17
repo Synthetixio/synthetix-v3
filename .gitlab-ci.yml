@@ -1,4 +1,4 @@
-image: node:18
+image: ghcr.io/foundry-rs/foundry:latest
 
 stages:
 - build
@@ -6,6 +6,7 @@ stages:
 - test
 
 before_script:
+- apk add nodejs npm
 - export CANNON_DIRECTORY="$(pwd)/.cannon"
 
 # This folder is cached between builds
