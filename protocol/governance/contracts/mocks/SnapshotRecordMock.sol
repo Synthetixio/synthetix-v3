@@ -27,6 +27,7 @@ contract SnapshotRecordMock is ISnapshotRecord {
         return period.balances[user];
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function takeSnapshot(uint128 snapshotId) external override {
         // do nothing
     }
