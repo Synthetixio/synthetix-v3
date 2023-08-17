@@ -22,12 +22,11 @@ describe('BaseElectionModule - Initialization', function () {
 
   async function _initOrUpdateElectionSettings({
     caller = owner,
-    epochSeatCount = 2,
     minimumActiveMembers = 1,
-    nominationPeriodStartDate = 0,
-    votingPeriodStartDate = 0,
-    epochEndDate = 0,
-    maxDateAdjustmentTolerance = daysToSeconds(2),
+    initialNominationPeriodStartDate = 0,
+    administrationPeriodDuration = daysToSeconds(14),
+    nominationPeriodDuration = daysToSeconds(7),
+    votingPeriodDuration = daysToSeconds(7),
   } = {}) {
     const now = await getTime(getProvider());
 
@@ -47,12 +46,11 @@ describe('BaseElectionModule - Initialization', function () {
 
     return BaseElectionModule.connect(caller).initOrUpdateElectionSettings(
       [await caller.getAddress()],
-      epochSeatCount,
       minimumActiveMembers,
       nominationPeriodStartDate,
+      nominationPeriodDiratopm,
       votingPeriodStartDate,
-      epochEndDate,
-      maxDateAdjustmentTolerance
+      epochEndDate
     );
   }
 

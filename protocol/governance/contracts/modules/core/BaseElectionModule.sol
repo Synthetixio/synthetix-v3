@@ -75,12 +75,9 @@ contract BaseElectionModule is
         }
 
         uint8 epochSeatCount = uint8(initialCouncil.length);
-        uint64 epochStartDate = block.timestamp.to64();
-        uint64 epochEndDate = epochStartDate +
-            administrationPeriodDuration +
+        uint64 epochDuration = administrationPeriodDuration +
             nominationPeriodDuration +
             votingPeriodDuration;
-        uint64 epochDuration = epochEndDate - epochStartDate;
 
         // Set the expected epoch durations for next council
         Council.load().getNextElectionSettings().setElectionSettings(
@@ -107,10 +104,17 @@ contract BaseElectionModule is
             maxDateAdjustmentTolerance
         );
 
-        uint64 votingPeriodStartDate = initialNominationPeriodStartDate + nominationPeriodDuration;
+        // calculate periods timestamps based on durations
+        uint64 epochStartDate = block.timestamp.to64();
+        uint64 epochEndDate = epochStartDate + epochDuration;
+        uint64 votingPeriodStartDate = epochEndDate - votingPeriodDuration;
+
+        // Allow to not set "initialNominationPeriodStartDate" and infer it from the durations
+        if (initialNominationPeriodStartDate == 0) {
+            initialNominationPeriodStartDate = votingPeriodStartDate - nominationPeriodDuration;
+        }
 
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
-
         store.configureEpochSchedule(
             firstEpoch,
             epochStartDate,

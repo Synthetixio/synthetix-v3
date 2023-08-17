@@ -39,7 +39,7 @@ interface IElectionModule {
     // Initialization
     // ---------------------------------------
 
-    /// @notice Initializes the module and immediately starts the first epoch
+    /// @notice Initialises the module and immediately starts the first epoch
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         uint8 minimumActiveMembers,
