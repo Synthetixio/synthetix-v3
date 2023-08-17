@@ -30,7 +30,7 @@ describe('SynthetixElectionModule - Initialization', function () {
       it('reverts', async function () {
         await assertRevert(
           CoreProxy.connect(user)[
-            'updateElectionSettings(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
+            'initOrUpdateElectionSettings(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
           ]([await user.getAddress()], 2, 1, 0, 0, 0, 2),
           'Unauthorized'
         );
@@ -66,7 +66,7 @@ describe('SynthetixElectionModule - Initialization', function () {
           votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
 
           const tx2 = await CoreProxy[
-            'updateElectionSettings(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
+            'initOrUpdateElectionSettings(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
           ](
             [await owner.getAddress(), await user.getAddress()],
             2,
@@ -107,7 +107,7 @@ describe('SynthetixElectionModule - Initialization', function () {
         describe('when called for a second time', function () {
           before('initialize again', async function () {
             await CoreProxy[
-              'updateElectionSettings(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
+              'initOrUpdateElectionSettings(address[],uint8,uint8,uint64,uint64,uint64,uint64)'
             ](
               [await owner.getAddress(), await user.getAddress()],
               10, // Change epochSeatCount

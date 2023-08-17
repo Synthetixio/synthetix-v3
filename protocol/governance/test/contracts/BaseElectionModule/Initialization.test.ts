@@ -20,7 +20,7 @@ describe('BaseElectionModule - Initialization', function () {
   const epochDuration = 90;
   const votingPeriodDuration = 7;
 
-  async function _updateElectionSettings({
+  async function _initOrUpdateElectionSettings({
     caller = owner,
     epochSeatCount = 2,
     minimumActiveMembers = 1,
@@ -45,7 +45,7 @@ describe('BaseElectionModule - Initialization', function () {
       epochEndDate = now + daysToSeconds(epochDuration);
     }
 
-    return BaseElectionModule.connect(caller).updateElectionSettings(
+    return BaseElectionModule.connect(caller).initOrUpdateElectionSettings(
       [await caller.getAddress()],
       epochSeatCount,
       minimumActiveMembers,
@@ -73,7 +73,7 @@ describe('BaseElectionModule - Initialization', function () {
   describe('when initializing the module', function () {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
-        await assertRevert(_updateElectionSettings({ caller: user }), 'Unauthorized');
+        await assertRevert(_initOrUpdateElectionSettings({ caller: user }), 'Unauthorized');
       });
     });
 
@@ -82,14 +82,14 @@ describe('BaseElectionModule - Initialization', function () {
         describe('with invalid minimumActiveMembers', function () {
           it('reverts using 0', async function () {
             await assertRevert(
-              _updateElectionSettings({ minimumActiveMembers: 0 }),
+              _initOrUpdateElectionSettings({ minimumActiveMembers: 0 }),
               'InvalidElectionSettings'
             );
           });
 
           it('reverts using more than epochSeatCount', async function () {
             await assertRevert(
-              _updateElectionSettings({ epochSeatCount: 2, minimumActiveMembers: 3 }),
+              _initOrUpdateElectionSettings({ epochSeatCount: 2, minimumActiveMembers: 3 }),
               'InvalidElectionSettings'
             );
           });
@@ -110,7 +110,7 @@ describe('BaseElectionModule - Initialization', function () {
           nominationPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration) * 2;
           votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
 
-          const tx = await _updateElectionSettings({
+          const tx = await _initOrUpdateElectionSettings({
             epochSeatCount: 2,
             minimumActiveMembers: 1,
             nominationPeriodStartDate,
@@ -150,7 +150,7 @@ describe('BaseElectionModule - Initialization', function () {
 
         describe('when called for a second time', function () {
           it('reverts', async function () {
-            await assertRevert(_updateElectionSettings(), 'AlreadyInitialized');
+            await assertRevert(_initOrUpdateElectionSettings(), 'AlreadyInitialized');
           });
         });
       });

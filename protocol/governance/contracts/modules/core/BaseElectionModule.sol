@@ -38,56 +38,62 @@ contract BaseElectionModule is
         _;
     }
 
-    function updateElectionSettings(
-        address[] memory firstCouncil,
+    function initOrUpdateElectionSettings(
+        address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
-        uint64 maxDateAdjustmentTolerance
-    ) external virtual override onlyIfNotInitialized {
+        uint64 initialNominationPeriodStartDate,
+        uint64 administrationPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
+    ) external override {
         OwnableStorage.onlyOwner();
 
-        _updateElectionSettings(
-            firstCouncil,
+        _initOrUpdateElectionSettings(
+            initialCouncil,
             minimumActiveMembers,
-            nominationPeriodStartDate,
-            votingPeriodStartDate,
-            epochEndDate,
-            maxDateAdjustmentTolerance
+            initialNominationPeriodStartDate,
+            administrationPeriodDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
+            3 days
         );
     }
 
-    function _updateElectionSettings(
-        address[] memory firstCouncil,
+    function _initOrUpdateElectionSettings(
+        address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
+        uint64 initialNominationPeriodStartDate,
+        uint64 administrationPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     ) internal {
         Council.Data storage store = Council.load();
 
-        if (firstCouncil.length > type(uint8).max) {
+        if (initialCouncil.length > type(uint8).max) {
             revert TooManyMembers();
         }
 
-        uint8 epochSeatCount = uint8(firstCouncil.length);
+        uint8 epochSeatCount = uint8(initialCouncil.length);
         uint64 epochStartDate = block.timestamp.to64();
+        uint64 epochEndDate = epochStartDate +
+            administrationPeriodDuration +
+            nominationPeriodDuration +
+            votingPeriodDuration;
         uint64 epochDuration = epochEndDate - epochStartDate;
-        uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
-        uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
 
+        // Set the expected epoch durations for next council
+        Council.load().getNextElectionSettings().setElectionSettings(
+            epochSeatCount,
+            minimumActiveMembers,
+            epochDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
+            maxDateAdjustmentTolerance
+        );
+
+        // If the contract is already initialized, don't initialize current epoch
         if (_isInitialized()) {
-            Council.load().getNextElectionSettings().setElectionSettings(
-                epochSeatCount,
-                minimumActiveMembers,
-                epochDuration,
-                nominationPeriodDuration,
-                votingPeriodDuration,
-                maxDateAdjustmentTolerance
-            );
-
             return;
         }
 
@@ -101,17 +107,19 @@ contract BaseElectionModule is
             maxDateAdjustmentTolerance
         );
 
+        uint64 votingPeriodStartDate = initialNominationPeriodStartDate + nominationPeriodDuration;
+
         Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
 
         store.configureEpochSchedule(
             firstEpoch,
             epochStartDate,
-            nominationPeriodStartDate,
+            initialNominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
         );
 
-        _addCouncilMembers(firstCouncil, 0);
+        _addCouncilMembers(initialCouncil, 0);
 
         store.initialized = true;
 
