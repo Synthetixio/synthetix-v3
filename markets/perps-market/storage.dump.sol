@@ -554,6 +554,8 @@ library GlobalPerpsMarketConfiguration {
         uint128[] synthDeductionPriority;
         uint minLiquidationRewardUsd;
         uint maxLiquidationRewardUsd;
+        uint128 maxPositionsPerAccount;
+        uint128 maxCollateralsPerAccount;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
