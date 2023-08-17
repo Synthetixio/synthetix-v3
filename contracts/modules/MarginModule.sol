@@ -284,6 +284,17 @@ contract MarginModule is IMarginModule {
      * @inheritdoc IMarginModule
      */
     function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.exists(marketId);
         return Margin.getCollateralUsd(accountId, marketId);
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
     }
 }

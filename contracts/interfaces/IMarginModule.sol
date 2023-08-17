@@ -69,4 +69,9 @@ interface IMarginModule is IBasePerpMarket {
      * @dev Returns the total value of deposited collaterals in USD.
      */
     function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
+
+    /**
+     * @dev Returns the total value of deposited collaterals, minus fees and + pnl in USD.
+     */
+    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256);
 }
