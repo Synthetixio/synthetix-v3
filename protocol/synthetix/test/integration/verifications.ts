@@ -38,8 +38,8 @@ export function verifyChecksCollateralEnabled(
     before('disable collateral', async () => {
       await c().configureCollateral({
         depositingEnabled: false,
-        issuanceRatioD18: 0,
-        liquidationRatioD18: 0,
+        issuanceRatioD18: 1000,
+        liquidationRatioD18: 1000,
         liquidationRewardD18: 0,
         oracleNodeId: ethers.utils.formatBytes32String(''),
         tokenAddress: collateralAddress(),

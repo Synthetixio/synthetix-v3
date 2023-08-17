@@ -506,7 +506,7 @@ describe('IssueUSDModule', function () {
   describe('establish a more stringent collateralization ratio for the pool', async () => {
     before(restore);
 
-    it('set the pool min collateal issuance ratio to 600%', async () => {
+    it('set the pool min collateral issuance ratio to 600%', async () => {
       await systems()
         .Core.connect(owner)
         .setPoolCollateralConfiguration(poolId, collateralAddress(), {
