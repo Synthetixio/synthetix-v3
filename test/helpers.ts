@@ -10,6 +10,11 @@ import { isNil } from 'lodash';
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
+// --- Calculation helpers --- //
+
+export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
+  wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
+
 // --- Mutative helpers --- //
 
 type Bs = ReturnType<typeof bootstrap>;

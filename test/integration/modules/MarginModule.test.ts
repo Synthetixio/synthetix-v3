@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { wei } from '@synthetixio/wei';
 import assert from 'assert';
 import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
@@ -16,7 +17,14 @@ import {
   genTrader,
   genOrder,
 } from '../../generators';
-import { ZERO_ADDRESS, approveAndMintMargin, commitAndSettle, commitOrder, depositMargin } from '../../helpers';
+import {
+  ZERO_ADDRESS,
+  approveAndMintMargin,
+  calcPnl,
+  commitAndSettle,
+  commitOrder,
+  depositMargin,
+} from '../../helpers';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -720,18 +728,145 @@ describe('MarginModule', async () => {
     it('should revoke/approve collateral with 0/maxAllowable');
   });
   describe('getCollateralUsd', () => {
-    it('should return marginUsd that reflects value of collateral when no positions opened');
+    it('should returns collateral without deducting fees');
+    it('more cases');
+  });
 
-    it('should return zero marginUsd when no collateral has been depoisted');
+  describe('getMarginUsd', () => {
+    it('should return marginUsd that reflects value of collateral when no positions opened', async () => {
+      const { PerpMarketProxy, Core } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount, marginUsdDepositAmount, collateralPrice } =
+        await depositMargin(bs, genTrader(bs));
+      // TODO: discuss
+      // This will always be 0 in our mock, but the core system could turn on fees.
+      // These fees would only be turned on for sUSD.
+      // Currently getMarketFees ignores the passed marketId and always return fees for sUSD no matter what market id is passed
+      const { depositFeeAmount } =
+        'Synthetix Stablecoin' === (await collateral.contract.name())
+          ? await Core.getMarketFees(marketId, marginUsdDepositAmount.toBN())
+          : { depositFeeAmount: bn(0) };
 
-    it('should return marginUsd + value of position when in profit');
+      const marginUsd = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
 
-    it('should return marginUsd - value of position when not in profit');
+      assertBn.equal(marginUsd, wei(collateralDepositAmount).mul(collateralPrice).add(depositFeeAmount).toBN());
+    });
+
+    it('should return zero marginUsd when no collateral has been deposited', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId } = await genTrader(bs);
+      assertBn.equal(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId), bn(0));
+    });
+
+    it('should return marginUsd + value of position when in profit', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(pnl);
+      // Assert margin before price change
+      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
+
+      // Make sure we're always in profit
+      const newPrice = order.sizeDelta.gt(0) ? order.oraclePrice.mul(2) : order.oraclePrice.div(2);
+      // Update price
+      await market.aggregator().mockSetCurrentPrice(newPrice);
+
+      // Collect some data for expected margin calculation
+      const { accruedFunding } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
+
+      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      // Calculate expected margin
+      const expectedMarginUsdAfterPriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(newPnl)
+        .add(accruedFunding);
+      // Assert marginUSD after price update
+      assertBn.equal(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN());
+    });
+
+    it('should return marginUsd - value of position when not in profit', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 }); // low leverage to avoid underwater
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(pnl);
+
+      // Assert margin before price change
+      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
+
+      // TODO: discuss
+      // Rather than having two very similar looking test we could rely on randomness to test profit vs loss situations?
+      // This test is exactly the same as the prev one expect this line
+      // Make sure we're always in loss
+      const newPrice = order.sizeDelta.gt(0)
+        ? wei(order.oraclePrice).div(1.1).toBN()
+        : wei(order.oraclePrice).mul(1.1).toBN();
+      // Update price
+      await market.aggregator().mockSetCurrentPrice(newPrice);
+
+      // Collect some data for expected margin calculation
+      const { accruedFunding } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
+
+      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      // Calculate expected margin
+      const expectedMarginUsdAfterPriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(newPnl)
+        .add(accruedFunding);
+      // Assert marginUSD after price update
+      assertBn.equal(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN());
+    });
 
     it('should not consider a position in a different market for the same account');
+    it('should reflect collateral increasing in price');
 
-    it('should revert when accountId does not exist');
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { marketId } = await genTrader(bs);
+      const invalidAccountId = bn(genNumber(42069, 50_000));
 
-    it('should revert when marketId does not exist');
+      // Perform withdraw with invalid market
+      await assertRevert(
+        PerpMarketProxy.getMarginUsd(invalidAccountId, marketId),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader } = await genTrader(bs);
+      const invalidMarketId = bn(genNumber(42069, 50_000));
+
+      // Perform withdraw with invalid market
+      await assertRevert(
+        PerpMarketProxy.getMarginUsd(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 });
