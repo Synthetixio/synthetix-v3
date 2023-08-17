@@ -17,7 +17,6 @@ contract ElectionModule is IElectionModule, BaseElectionModule {
     /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 epochSeatCount,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodDuration,
@@ -40,7 +39,6 @@ contract ElectionModule is IElectionModule, BaseElectionModule {
 
         _initOrUpgradeElectionModule(
             firstCouncil,
-            epochSeatCount,
             minimumActiveMembers,
             nominationPeriodStartDate,
             votingPeriodStartDate,
@@ -60,18 +58,5 @@ contract ElectionModule is IElectionModule, BaseElectionModule {
         }
 
         super.cast(candidates, amounts);
-    }
-
-    // ---------------------------------------
-    // Internal
-    // ---------------------------------------
-
-    function _sqrt(uint x) internal pure returns (uint y) {
-        uint z = (x + 1) / 2;
-        y = x;
-        while (z < y) {
-            y = z;
-            z = (x / z + z) / 2;
-        }
     }
 }

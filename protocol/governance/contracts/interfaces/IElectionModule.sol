@@ -13,6 +13,7 @@ interface IElectionModule {
     error NotNominated();
     error NoCandidates();
     error DuplicateCandidates(address duplicatedCandidate);
+    error TooManyMembers();
 
     event ElectionModuleInitialized();
     event EpochStarted(uint256 indexed epochId);
@@ -41,7 +42,6 @@ interface IElectionModule {
     /// @notice Initializes the module and immediately starts the first epoch
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 epochSeatCount,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,

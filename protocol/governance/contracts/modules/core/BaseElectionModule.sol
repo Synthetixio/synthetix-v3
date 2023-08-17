@@ -40,7 +40,6 @@ contract BaseElectionModule is
 
     function initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 epochSeatCount,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
@@ -51,7 +50,6 @@ contract BaseElectionModule is
 
         _initOrUpgradeElectionModule(
             firstCouncil,
-            epochSeatCount,
             minimumActiveMembers,
             nominationPeriodStartDate,
             votingPeriodStartDate,
@@ -62,7 +60,6 @@ contract BaseElectionModule is
 
     function _initOrUpgradeElectionModule(
         address[] memory firstCouncil,
-        uint8 epochSeatCount,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
@@ -73,9 +70,13 @@ contract BaseElectionModule is
 
         uint64 epochStartDate = block.timestamp.to64();
 
+        if (firstCouncil.length > type(uint8).max) {
+            revert TooManyMembers();
+        }
+
         ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
         settings.setElectionSettings(
-            epochSeatCount,
+            uint8(firstCouncil.length), // epochSeatCount
             minimumActiveMembers,
             epochEndDate - epochStartDate, // epochDuration
             votingPeriodStartDate - nominationPeriodStartDate, // nominationPeriodDuration
