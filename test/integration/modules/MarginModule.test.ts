@@ -149,7 +149,7 @@ describe('MarginModule', async () => {
         const feeAmount = 0; // fee amount for sUSD can be configured in core system MarketManager
         await assertEvent(
           tx,
-          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta}, ${feeAmount} "${collateral.address}")`,
+          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta}, ${feeAmount}, "${collateral.address}")`,
           PerpMarketProxy
         );
 
