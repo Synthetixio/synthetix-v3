@@ -17,9 +17,6 @@ describe('BaseElectionModule - Initialization', function () {
 
   let BaseElectionModule: BaseElectionModule;
 
-  const epochDuration = 90;
-  const votingPeriodDuration = 7;
-
   async function _initOrUpdateElectionSettings({
     caller = owner,
     minimumActiveMembers = 1,
@@ -28,29 +25,13 @@ describe('BaseElectionModule - Initialization', function () {
     nominationPeriodDuration = daysToSeconds(7),
     votingPeriodDuration = daysToSeconds(7),
   } = {}) {
-    const now = await getTime(getProvider());
-
-    if (nominationPeriodStartDate === 0) {
-      nominationPeriodStartDate =
-        now + daysToSeconds(epochDuration) - daysToSeconds(votingPeriodDuration) * 2;
-    }
-
-    if (votingPeriodStartDate === 0) {
-      votingPeriodStartDate =
-        now + daysToSeconds(epochDuration) - daysToSeconds(votingPeriodDuration);
-    }
-
-    if (epochEndDate === 0) {
-      epochEndDate = now + daysToSeconds(epochDuration);
-    }
-
     return BaseElectionModule.connect(caller).initOrUpdateElectionSettings(
       [await caller.getAddress()],
       minimumActiveMembers,
-      nominationPeriodStartDate,
-      nominationPeriodDiratopm,
-      votingPeriodStartDate,
-      epochEndDate
+      initialNominationPeriodStartDate,
+      administrationPeriodDuration,
+      nominationPeriodDuration,
+      votingPeriodDuration
     );
   }
 
@@ -84,13 +65,6 @@ describe('BaseElectionModule - Initialization', function () {
               'InvalidElectionSettings'
             );
           });
-
-          it('reverts using more than epochSeatCount', async function () {
-            await assertRevert(
-              _initOrUpdateElectionSettings({ epochSeatCount: 2, minimumActiveMembers: 3 }),
-              'InvalidElectionSettings'
-            );
-          });
         });
       });
 
@@ -104,16 +78,26 @@ describe('BaseElectionModule - Initialization', function () {
 
         before('initialize', async function () {
           epochStartDate = await getTime(getProvider());
+
+          const administrationPeriodDuration = daysToSeconds(14);
+          const nominationPeriodDuration = daysToSeconds(7);
+          const votingPeriodDuration = daysToSeconds(7);
+
+          const epochDuration =
+            administrationPeriodDuration + nominationPeriodDuration + votingPeriodDuration;
+
           epochEndDate = epochStartDate + daysToSeconds(epochDuration);
           nominationPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration) * 2;
           votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
 
+          const initialNominationPeriodStartDate = epochStartDate + administrationPeriodDuration;
+
           const tx = await _initOrUpdateElectionSettings({
-            epochSeatCount: 2,
             minimumActiveMembers: 1,
-            nominationPeriodStartDate,
-            votingPeriodStartDate,
-            epochEndDate,
+            initialNominationPeriodStartDate,
+            administrationPeriodDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
           });
 
           rx = await tx.wait();

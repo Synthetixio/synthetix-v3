@@ -10,7 +10,6 @@ import "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../submodules/election/ElectionCredentials.sol";
 import "../../submodules/election/ElectionTally.sol";
-
 import "../../storage/Council.sol";
 
 contract BaseElectionModule is
@@ -75,6 +74,11 @@ contract BaseElectionModule is
         }
 
         uint8 epochSeatCount = uint8(initialCouncil.length);
+
+        administrationPeriodDuration = administrationPeriodDuration * 1 days;
+        nominationPeriodDuration = nominationPeriodDuration * 1 days;
+        votingPeriodDuration = votingPeriodDuration * 1 days;
+
         uint64 epochDuration = administrationPeriodDuration +
             nominationPeriodDuration +
             votingPeriodDuration;
