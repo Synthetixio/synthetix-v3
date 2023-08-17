@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import "./Election.sol";
-import "./ElectionSettings.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {Epoch} from "./Epoch.sol";
+import {Election} from "./Election.sol";
+import {ElectionSettings} from "./ElectionSettings.sol";
 
 library Council {
     using ElectionSettings for ElectionSettings.Data;
@@ -223,7 +225,7 @@ library Council {
 
         // Keep the previous durations, but shift everything back
         // so that nominations start now
-        uint64 newNominationPeriodStartDate = uint64(block.timestamp);
+        uint64 newNominationPeriodStartDate = SafeCastU256.to64(block.timestamp);
         uint64 newVotingPeriodStartDate = newNominationPeriodStartDate +
             settings.nominationPeriodDuration;
         uint64 newEpochEndDate = newVotingPeriodStartDate + settings.votingPeriodDuration;
@@ -241,7 +243,7 @@ library Council {
     function initScheduleFromSettings(Data storage self) internal {
         ElectionSettings.Data storage settings = getCurrentElectionSettings(self);
 
-        uint64 currentEpochStartDate = uint64(block.timestamp);
+        uint64 currentEpochStartDate = SafeCastU256.to64(block.timestamp);
         uint64 currentEpochEndDate = currentEpochStartDate + settings.epochDuration;
         uint64 currentVotingPeriodStartDate = currentEpochEndDate - settings.votingPeriodDuration;
         uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate -

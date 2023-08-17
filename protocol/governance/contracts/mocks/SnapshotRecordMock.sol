@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/external/ISnapshotRecord.sol";
+import {ISnapshotRecord} from "../interfaces/external/ISnapshotRecord.sol";
 
 contract SnapshotRecordMock is ISnapshotRecord {
     struct Period {

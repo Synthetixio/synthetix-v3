@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../../interfaces/IElectionModule.sol";
-import "./BaseElectionModule.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {IElectionModule} from "../../interfaces/IElectionModule.sol";
+import {Council} from "../../storage/Council.sol";
+import {BaseElectionModule} from "./BaseElectionModule.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 contract ElectionModule is IElectionModule, BaseElectionModule {

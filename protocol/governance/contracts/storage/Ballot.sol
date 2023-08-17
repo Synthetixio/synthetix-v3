@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
 /**
  * @title Ballot
  * @dev A single vote cast by a address/precinct combination.

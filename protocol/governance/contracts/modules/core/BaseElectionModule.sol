@@ -1,16 +1,20 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
-import "../../interfaces/IElectionModule.sol";
-import "../../submodules/election/ElectionCredentials.sol";
-import "../../submodules/election/ElectionTally.sol";
-import "../../storage/Council.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
+import {IElectionModule} from "../../interfaces/IElectionModule.sol";
+import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
+import {ElectionTally} from "../../submodules/election/ElectionTally.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {Council} from "../../storage/Council.sol";
+import {Election} from "../../storage/Election.sol";
+import {Epoch} from "../../storage/Epoch.sol";
+import {ElectionSettings} from "../../storage/ElectionSettings.sol";
 
 contract BaseElectionModule is
     IElectionModule,
@@ -73,6 +77,7 @@ contract BaseElectionModule is
             revert TooManyMembers();
         }
 
+        // solhint-disable-next-line numcast/safe-cast
         uint8 epochSeatCount = uint8(initialCouncil.length);
 
         administrationPeriodDuration = administrationPeriodDuration * 1 days;

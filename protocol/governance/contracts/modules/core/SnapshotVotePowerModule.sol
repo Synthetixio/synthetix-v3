@@ -1,13 +1,14 @@
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-// SPDX-License-Identifier: MIT
 
-import "../../interfaces/ISnapshotVotePowerModule.sol";
-import "../../interfaces/external/ISnapshotRecord.sol";
-import "../../storage/Council.sol";
-import "../../storage/SnapshotVotePower.sol";
-import "../../storage/Election.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ISnapshotVotePowerModule} from "../../interfaces/ISnapshotVotePowerModule.sol";
+import {ISnapshotRecord} from "../../interfaces/external/ISnapshotRecord.sol";
+import {Council} from "../../storage/Council.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {SnapshotVotePower} from "../../storage/SnapshotVotePower.sol";
+import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
 
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;

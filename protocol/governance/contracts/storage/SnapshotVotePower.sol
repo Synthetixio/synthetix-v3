@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./SnapshotVotePowerEpoch.sol";
+import {SnapshotVotePowerEpoch} from "./SnapshotVotePowerEpoch.sol";
 
 library SnapshotVotePower {
     struct Data {

@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Epoch} from "../storage/Epoch.sol";
 import {ElectionSettings} from "../storage/ElectionSettings.sol";
+import {Epoch} from "../storage/Epoch.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
