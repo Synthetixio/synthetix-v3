@@ -652,7 +652,7 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should configure many collaterals', async () => {
+    it('should configure many collaterals, also tests getConfiguredCollaterals', async () => {
       const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
       const from = owner();
 
@@ -719,11 +719,6 @@ describe('MarginModule', async () => {
 
     it('should revoke/approve collateral with 0/maxAllowable');
   });
-
-  describe('getConfiguredCollaterals', () => {
-    it('should return all available configured collaterals');
-  });
-
   describe('getCollateralUsd', () => {
     it('should return marginUsd that reflects value of collateral when no positions opened');
 
