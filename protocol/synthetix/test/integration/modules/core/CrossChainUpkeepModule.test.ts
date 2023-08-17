@@ -4,7 +4,7 @@ import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import { verifyUsesFeatureFlag } from '../../verifications';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
-describe('CrossChainPoolModule', function () {
+describe('CrossChainUpkeepModule', function () {
   const { signers, systems } = bootstrapWithMockMarketAndPool();
 
   let user1: ethers.Signer;
@@ -30,32 +30,28 @@ describe('CrossChainPoolModule', function () {
   describe('handleOracleFulfillment()', () => {
     const requestId = ethers.utils.formatBytes32String('woot');
 
-    before('initiate fake functions call', async () => {
-
-    });
+    before('initiate fake functions call', async () => {});
 
     it('checks that its chainlink functions only', async () => {
       await assertRevert(
-        systems().Core.handleOracleFulfillment(requestId, '', ''),
-        `Unauthorized(${await user1.getAddress()})`,
+        systems().Core.handleOracleFulfillment(requestId, '0x', '0x'),
+        `Unauthorized(${await owner.getAddress()})`,
         systems().Core
       );
     });
 
     describe('chainlink call failure', async () => {
       it('does nothing', async () => {
-        await systems().Core.handleOracleFulfillment(requestId, '', '0xfoobar');
+        await systems().Core.connect(user1).handleOracleFulfillment(requestId, '0x', '0xfoobar');
       });
     });
 
     describe('successful call', async () => {
       before('exec', async () => {
-        await systems().Core.handleOracleFulfillment(requestId, '', '');
+        await systems().Core.connect(user1).handleOracleFulfillment(requestId, '0xfoobar', '0x');
       });
 
-      it('triggers pool heartbeats', async () => {
-
-      });
+      it('triggers pool heartbeats', async () => {});
     });
   });
 

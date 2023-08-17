@@ -170,7 +170,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     function getThisChainPoolLiquidity(
         uint128 poolId
     ) external view override returns (uint256 liquidityD18) {
-        return Pool.loadExisting(poolId).totalCapacityD18;
+        return Pool.loadExisting(poolId).vaultsDebtDistribution.totalSharesD18;
     }
 
     function getThisChainPoolCumulativeMarketDebt(

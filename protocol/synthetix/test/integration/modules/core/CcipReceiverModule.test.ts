@@ -24,7 +24,11 @@ describe('CcipReceiverModule', function () {
   before('set ccip settings', async () => {
     await systems()
       .Core.connect(owner())
-      .configureChainlinkCrossChain(await FakeCcip.getAddress(), ethers.constants.AddressZero);
+      .configureChainlinkCrossChain(
+        await FakeCcip.getAddress(),
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero
+      );
 
     await systems()
       .Core.connect(owner())

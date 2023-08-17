@@ -126,7 +126,6 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        uint128 totalCapacityD18;
         int128 cumulativeDebtD18;
         mapping(uint256 => uint256) heldMarketConfigurationWeights;
         mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
@@ -166,7 +165,7 @@ library Pool {
         return
             isCrossChainEnabled(self)
                 ? self.crossChain[0].latestSync.liquidity
-                : self.totalCapacityD18;
+                : self.vaultsDebtDistribution.totalSharesD18;
     }
 
     function getTotalDebts(Data storage self) internal view returns (int256) {
@@ -327,7 +326,6 @@ library Pool {
             .loadAvailableCollaterals();
 
         int256 totalDebtD18;
-				uint256 totalCapacityD18;
 
         for (uint i = 0; i < availableCollaterals.length(); i++) {
             address collateralType = availableCollaterals.valueAt(i);
@@ -354,7 +352,6 @@ library Pool {
             self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
 
 						totalDebtD18 += debtD18;
-						totalCapacityD18 += capacityD18;
         }
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
