@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assert from 'assert/strict';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber, constants, ethers } from 'ethers';
 import hre from 'hardhat';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 import Permissions from '../../mixins/AccountRBACMixin.permissions';
@@ -82,6 +82,18 @@ describe('VaultModule', function () {
         depositingEnabled: true,
       })
     ).wait();
+
+    await systems()
+      .Core.connect(owner)
+      .configureCollateral({
+        tokenAddress: await systems().Core.getUsdToken(),
+        oracleNodeId: ethers.utils.formatBytes32String(''),
+        issuanceRatioD18: 150,
+        liquidationRatioD18: 100,
+        liquidationRewardD18: 0,
+        minDelegationD18: 0,
+        depositingEnabled: true,
+      });
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -815,6 +827,14 @@ describe('VaultModule', function () {
 
         describe('remove collateral', async () => {
           before('repay debt', async () => {
+            await systems()
+              .USD.connect(user2)
+              .approve(systems().Core.address, constants.MaxUint256.toString());
+
+            await systems()
+              .Core.connect(user2)
+              .deposit(user2AccountId, await systems().Core.getUsdToken(), depositAmount.div(100));
+
             await systems()
               .Core.connect(user2)
               .burnUsd(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));

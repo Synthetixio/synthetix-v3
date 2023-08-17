@@ -164,7 +164,6 @@ contract IssueUSDModule is IIssueUSDModule {
 
             emit IssuanceFeePaid(accountId, poolId, collateralType, feeAmount);
         }
-
         // Decrease the debt of the position
         pool.assignDebtToAccount(collateralType, accountId, -(amount - feeAmount).toInt());
 
