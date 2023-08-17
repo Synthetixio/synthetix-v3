@@ -12,10 +12,9 @@ contract ElectionModule is IElectionModule, BaseElectionModule {
     using SafeCastU256 for uint256;
 
     error TooManyCandidates();
-    error WrongInitializer();
 
     /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
-    function initOrUpgradeElectionModule(
+    function updateElectionSettings(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
@@ -25,10 +24,6 @@ contract ElectionModule is IElectionModule, BaseElectionModule {
     ) external override(BaseElectionModule, IElectionModule) {
         OwnableStorage.onlyOwner();
 
-        if (_isInitialized()) {
-            return;
-        }
-
         uint64 epochStartDate = block.timestamp.to64();
         uint64 epochEndDate = epochStartDate + (1 days * epochDuration);
         uint64 votingPeriodStartDate = epochEndDate - (1 days * votingPeriodDuration);
@@ -37,7 +32,7 @@ contract ElectionModule is IElectionModule, BaseElectionModule {
             nominationPeriodStartDate = votingPeriodStartDate - (1 days * votingPeriodDuration);
         }
 
-        _initOrUpgradeElectionModule(
+        _updateElectionSettings(
             firstCouncil,
             minimumActiveMembers,
             nominationPeriodStartDate,

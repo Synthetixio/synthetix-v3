@@ -128,7 +128,7 @@ factory.CouncilToken.arg = 2
 
 [invoke.init_election_module]
 target = ["CoreProxy"]
-func = "initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64,uint64)"
+func = "updateElectionSettings(address[],uint8,uint8,uint64,uint64,uint64,uint64)"
 args = [
   ["<%= settings.init_council_member %>"],
   "<%= settings.epoch_seat_count %>",

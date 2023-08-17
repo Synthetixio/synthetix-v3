@@ -40,7 +40,7 @@ interface IElectionModule {
     // ---------------------------------------
 
     /// @notice Initializes the module and immediately starts the first epoch
-    function initOrUpgradeElectionModule(
+    function updateElectionSettings(
         address[] memory firstCouncil,
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
