@@ -15,6 +15,7 @@ export interface Proxies {
   CoreProxy: CoreProxy;
   USDProxy: USDProxy;
   CollateralMock: CollateralMock;
+  Collateral2Mock: CollateralMock;
   ['oracle_manager.Proxy']: OracleManagerProxy;
 }
 
@@ -23,6 +24,7 @@ export interface Systems {
   Core: CoreProxy;
   USD: USDProxy;
   CollateralMock: CollateralMock;
+  Collateral2Mock: CollateralMock;
   OracleManager: OracleManagerProxy;
 }
 
@@ -42,6 +44,7 @@ export function bootstrap() {
       USD: getContract('USDProxy'),
       OracleManager: getContract('oracle_manager.Proxy'),
       CollateralMock: getContract('CollateralMock'),
+      Collateral2Mock: getContract('Collateral2Mock'),
     } as Systems;
   });
 

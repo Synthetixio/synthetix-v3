@@ -8,6 +8,9 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
+import { calculateFillPrice } from '../helpers/fillPrice';
+import { wei } from '@synthetixio/wei';
+import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
 
 describe('Settle Offchain Async Order test', () => {
   const { systems, perpsMarkets, synthMarkets, provider, trader1, keeper } = bootstrapMarkets({
@@ -21,10 +24,11 @@ describe('Settle Offchain Async Order test', () => {
     ],
     perpsMarkets: [
       {
+        requestedMarketId: 25,
         name: 'Ether',
         token: 'snxETH',
         price: bn(1000),
-        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(0) },
+        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
       },
     ],
     traderAccountIds: [2, 3],
@@ -39,25 +43,15 @@ describe('Settle Offchain Async Order test', () => {
 
   describe('failures before commiting orders', () => {
     describe('using settle', () => {
-      it('reverts if market id is incorrect', async () => {
-        await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(1337, 2),
-          'InvalidMarket("1337")'
-        );
-      });
-
       it('reverts if account id is incorrect (not valid order)', async () => {
         await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 1337),
+          systems().PerpsMarket.connect(trader1()).settle(1337),
           'OrderNotValid()'
         );
       });
 
       it('reverts if order was not settled before (not valid order)', async () => {
-        await assertRevert(
-          systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
-          'OrderNotValid()'
-        );
+        await assertRevert(systems().PerpsMarket.connect(trader1()).settle(2), 'OrderNotValid()');
       });
     });
 
@@ -79,21 +73,8 @@ describe('Settle Offchain Async Order test', () => {
         updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
       });
 
-      it('reverts if market id is incorrect', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [1337, 2]);
-        await assertRevert(
-          systems()
-            .PerpsMarket.connect(keeper())
-            .settlePythOrder(pythPriceData, extraData, { value: updateFee }),
-          'InvalidMarket("1337")'
-        );
-      });
-
       it('reverts if account id is incorrect (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(
-          ['uint128', 'uint128'],
-          [ethMarketId, 1337]
-        );
+        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [1337]);
         await assertRevert(
           systems()
             .PerpsMarket.connect(keeper())
@@ -103,7 +84,7 @@ describe('Settle Offchain Async Order test', () => {
       });
 
       it('reverts if order was not settled before (not valid order)', async () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [ethMarketId, 2]);
+        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
         await assertRevert(
           systems()
             .PerpsMarket.connect(keeper())
@@ -186,13 +167,14 @@ describe('Settle Offchain Async Order test', () => {
             sizeDelta: bn(1),
             settlementStrategyId: 0,
             acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           });
         startTime = await getTxTime(provider(), tx);
       });
 
       before('setup bytes data', () => {
-        extraData = ethers.utils.defaultAbiCoder.encode(['uint128', 'uint128'], [ethMarketId, 2]);
+        extraData = ethers.utils.defaultAbiCoder.encode(['uint128'], [2]);
         pythCallData = ethers.utils.solidityPack(
           ['bytes32', 'uint64'],
           [
@@ -209,8 +191,8 @@ describe('Settle Offchain Async Order test', () => {
 
         it('with settle', async () => {
           await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
-            'SettlementWindowExpired'
+            systems().PerpsMarket.connect(trader1()).settle(2),
+            'SettlementWindowNotOpen'
           );
         });
 
@@ -229,7 +211,7 @@ describe('Settle Offchain Async Order test', () => {
             systems()
               .PerpsMarket.connect(keeper())
               .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
-            'SettlementWindowExpired'
+            'SettlementWindowNotOpen'
           );
         });
       });
@@ -250,7 +232,7 @@ describe('Settle Offchain Async Order test', () => {
 
         it('with settle', async () => {
           await assertRevert(
-            systems().PerpsMarket.connect(trader1()).settle(ethMarketId, 2),
+            systems().PerpsMarket.connect(trader1()).settle(2),
             'SettlementWindowExpired'
           );
         });
@@ -348,7 +330,7 @@ describe('Settle Offchain Async Order test', () => {
           //   : pythSettlementStrategy.url;
 
           await assertRevert(
-            systems().PerpsMarket.connect(keeper()).settle(ethMarketId, 2),
+            systems().PerpsMarket.connect(keeper()).settle(2),
             `OffchainLookup("${systems().PerpsMarket.address}", "${
               DEFAULT_SETTLEMENT_STRATEGY.url
             }", "${pythCallData}", "${functionSig}", "${extraData}")`
@@ -379,16 +361,60 @@ describe('Settle Offchain Async Order test', () => {
               .settlePythOrder(pythPriceData, extraData, { value: updateFee });
           });
 
-          it('emits event', async () => {
-            // TODO Calculate the correct fill price instead of hardcoding
-            const fillPrice = bn(1000.005);
+          it('emits event settle event', async () => {
+            const accountId = 2;
+            const fillPrice = calculateFillPrice(wei(0), wei(100_000), wei(1), wei(1000)).toBN();
+            const sizeDelta = bn(1);
+            const newPositionSize = bn(1);
+            const totalFees = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const settlementReward = DEFAULT_SETTLEMENT_STRATEGY.settlementReward;
+            const trackingCode = `"${ethers.constants.HashZero}"`;
+            const msgSender = `"${await keeper().getAddress()}"`;
+            const params = [
+              ethMarketId,
+              accountId,
+              fillPrice,
+              0,
+              0,
+              sizeDelta,
+              newPositionSize,
+              totalFees,
+              0, // referral fees
+              0, // collected fees
+              settlementReward,
+              trackingCode,
+              msgSender,
+            ];
             await assertEvent(
               settleTx,
-              `OrderSettled(${ethMarketId}, 2, ${fillPrice}, 0, ${bn(1)}, ${
-                DEFAULT_SETTLEMENT_STRATEGY.settlementReward
-              }, ${DEFAULT_SETTLEMENT_STRATEGY.settlementReward}, "${
-                ethers.constants.HashZero
-              }", "${await keeper().getAddress()}")`,
+              `OrderSettled(${params.join(', ')})`,
+              systems().PerpsMarket
+            );
+          });
+
+          it('emits market updated event', async () => {
+            const price = bn(1000);
+            const marketSize = bn(1);
+            const marketSkew = bn(1);
+            const sizeDelta = bn(1);
+            const currentFundingRate = bn(0);
+            const currentFundingVelocity = calcCurrentFundingVelocity({
+              skew: wei(1),
+              skewScale: wei(100_000),
+              maxFundingVelocity: wei(10),
+            });
+            const params = [
+              ethMarketId,
+              price,
+              marketSkew,
+              marketSize,
+              sizeDelta,
+              currentFundingRate,
+              currentFundingVelocity.toBN(), // Funding rates should be tested more thoroughly elsewhre
+            ];
+            await assertEvent(
+              settleTx,
+              `MarketUpdated(${params.join(', ')})`,
               systems().PerpsMarket
             );
           });

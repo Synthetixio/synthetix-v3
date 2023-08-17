@@ -15,6 +15,7 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "clean": "yarn workspaces foreach --parallel --verbose run clean",
+    "build-prerelease-dev": "git diff --exit-code && yarn lerna exec -- npm version prepatch --no-git-tag-version --no-workspaces-update && yarn && yarn build && git stash && yarn",
     "build": "yarn workspaces foreach --topological-dev --verbose run build",
     "test": "yarn workspaces foreach --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --verbose run coverage",
@@ -36,19 +37,22 @@
     "publish:dev": "lerna publish --force-publish --canary --dist-tag dev --preid dev.$(git rev-parse --short HEAD)",
     "publish-contracts": "yarn workspaces foreach --verbose run publish-contracts",
     "prepublishOnly": "node ./prepublishOnly.js",
-    "docgen": "yarn workspaces foreach --verbose run docgen"
+    "docgen": "yarn workspaces foreach --verbose run docgen && yarn docgen:contracts",
+    "docgen:contracts": "yarn workspace @synthetixio/docgen docgen:contracts",
+    "subgraphgen": "yarn workspaces foreach --verbose run subgraphgen"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.0.0",
     "@lerna-lite/cli": "1.17.0",
+    "@lerna-lite/exec": "1.17.0",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@synthetixio/deps": "workspace:*",
     "@types/mocha": "10.0.1",
     "@types/node": "18.11.10",
     "@typescript-eslint/eslint-plugin": "5.45.0",
     "@typescript-eslint/parser": "5.45.0",
-    "@usecannon/cli": "^2.4.17",
+    "@usecannon/cli": "^2.4.21",
     "eslint": "8.29.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-no-only-tests": "3.1.0",

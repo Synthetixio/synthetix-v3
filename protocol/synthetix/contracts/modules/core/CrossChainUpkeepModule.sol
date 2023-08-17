@@ -148,7 +148,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         pool.setCrossChainSyncData(syncData);
 
         // assign accumulated debt
-        pool.distributeDebtToVaults(assignedDebt);
+        pool.assignDebt(assignedDebt);
 
         // make sure the markets limits are set as expect
         pool.recalculateAllCollaterals();
@@ -167,13 +167,15 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
      */
     function checkUpkeep(
         bytes memory data
-    ) public view override returns (bool upkeepNeeded, bytes memory) {
-        uint poolId = abi.decode(data, (uint));
-        Pool.Data storage pool = Pool.loadExisting(abi.decode(data, (uint128)));
+    ) public view override returns (bool upkeepNeeded, bytes memory performData) {
+        uint128 poolId = abi.decode(data, (uint128));
+        Pool.Data storage pool = Pool.loadExisting(poolId);
 
         upkeepNeeded =
             (block.timestamp - pool.crossChain[0].latestSync.dataTimestamp) >
             pool.crossChain[0].chainlinkSubscriptionInterval;
+
+				performData = data;
     }
 
     /**

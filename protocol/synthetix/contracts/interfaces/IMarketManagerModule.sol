@@ -228,4 +228,13 @@ interface IMarketManagerModule {
      * @return minRatioD18 The current market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function getMinLiquidityRatio(uint128 marketId) external view returns (uint256 minRatioD18);
+
+    function getMarketPools(
+        uint128 marketId
+    ) external returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds);
+
+    function getMarketPoolDebtDistribution(
+        uint128 marketId,
+        uint128 poolId
+    ) external returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27);
 }

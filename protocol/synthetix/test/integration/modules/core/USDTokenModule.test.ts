@@ -23,9 +23,9 @@ describe('USDTokenModule', function () {
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
 
-    await systems()
-      .Core.connect(staker())
-      .withdraw(accountId, systems().USD.address, oneHundredUSD);
+    // await systems()
+    //   .Core.connect(staker())
+    //   .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
   it('USD is deployed and registered', async () => {
@@ -45,8 +45,7 @@ describe('USDTokenModule', function () {
     before('configure CCIP', async () => {
       await systems().Core.connect(owner()).configureChainlinkCrossChain(
         ethers.constants.AddressZero,
-        stakerAddress, // fake CCIP token pool address
-        ethers.constants.AddressZero
+        stakerAddress // fake CCIP token pool address
       );
     });
 

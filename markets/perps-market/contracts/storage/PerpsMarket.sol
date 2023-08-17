@@ -3,13 +3,10 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 
 /**
@@ -22,45 +19,34 @@ library PerpsMarket {
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
     using Position for Position.Data;
-
-    error OnlyMarketOwner(address marketOwner, address sender);
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     error InvalidMarket(uint128 marketId);
 
     error PriceFeedNotSet(uint128 marketId);
 
+    error MarketAlreadyExists(uint128 marketId);
+
     struct Data {
-        address owner;
-        address nominatedOwner;
         string name;
         string symbol;
         uint128 id;
         int256 skew;
         uint256 size;
         // TODO: move to new data structure?
-        int lastFundingRate;
-        int lastFundingValue;
+        int256 lastFundingRate;
+        int256 lastFundingValue;
         uint256 lastFundingTime;
         // liquidation data
         uint128 lastTimeLiquidationCapacityUpdated;
         uint128 lastUtilizedLiquidationCapacity;
+        // debt calculation
+        // accumulates total notional size of the market including accrued funding until the last time any position changed
+        int256 debtCorrectionAccumulator;
         // accountId => asyncOrder
         mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
-    }
-
-    function create(
-        uint128 id,
-        address owner,
-        string memory name,
-        string memory symbol
-    ) internal returns (Data storage market) {
-        market = load(id);
-        market.id = id;
-        market.owner = owner;
-        market.name = name;
-        market.symbol = symbol;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -71,12 +57,28 @@ library PerpsMarket {
         }
     }
 
+    function createValid(
+        uint128 id,
+        string memory name,
+        string memory symbol
+    ) internal returns (Data storage market) {
+        if (id == 0 || load(id).id == id) {
+            revert InvalidMarket(id);
+        }
+
+        market = load(id);
+
+        market.id = id;
+        market.name = name;
+        market.symbol = symbol;
+    }
+
     /**
      * @dev Reverts if the market does not exist with appropriate error. Otherwise, returns the market.
      */
     function loadValid(uint128 marketId) internal view returns (Data storage market) {
         market = load(marketId);
-        if (market.owner == address(0)) {
+        if (market.id == 0) {
             revert InvalidMarket(marketId);
         }
 
@@ -85,64 +87,99 @@ library PerpsMarket {
         }
     }
 
-    // TODO: can remove and use loadWithVerifiedOwner
-    function onlyMarketOwner(Data storage self) internal view {
-        if (self.owner != msg.sender) {
-            revert OnlyMarketOwner(self.owner, msg.sender);
-        }
-    }
+    /**
+     * @dev Returns the max amount of liquidation that can occur based on the market configuration
+     * @notice Based on the configured liquidation window, a trader can only be liquidated for a certain
+     *   amount within that window.  If the amount requested is greater than the amount allowed, the
+     *   smaller amount is returned.  The function also updates its accounting to ensure the results on
+     *   subsequent liquidations work appropriately.
+     */
+    function maxLiquidatableAmount(
+        Data storage self,
+        uint256 requestedLiquidationAmount
+    ) internal returns (uint128 liquidatableAmount) {
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
-    function maxLiquidatableAmount(uint128 marketId) internal returns (uint) {
-        Data storage self = load(marketId);
-        uint maxLiquidationValue = maxLiquidationPerSecond(marketId);
+        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
+        // this would only be 0 if fees or skew scale are configured to be 0.
+        // in that case, (very unlikely), allow full liquidation
+        if (maxLiquidationAmountPerSecond == 0) {
+            return requestedLiquidationAmount.to128();
+        }
+
         uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
+        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
 
-        self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
-        uint unlockedLiquidationCapacity = timeSinceLastUpdate * maxLiquidationValue;
-        if (unlockedLiquidationCapacity > self.lastUtilizedLiquidationCapacity) {
-            self.lastUtilizedLiquidationCapacity = 0;
+        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
+            maxLiquidationAmountPerSecond;
+        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
+            liquidatableAmount = MathUtil
+                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
+                .to128();
+            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
         } else {
-            self.lastUtilizedLiquidationCapacity =
-                self.lastUtilizedLiquidationCapacity -
-                unlockedLiquidationCapacity.to128();
+            liquidatableAmount = MathUtil
+                .min(
+                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
+                    requestedLiquidationAmount
+                )
+                .to128();
+            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
         }
 
-        return
-            (maxLiquidationValue *
-                PerpsMarketConfiguration.load(marketId).maxLiquidationLimitAccumulationMultiplier) -
-            self.lastUtilizedLiquidationCapacity;
+        // only update timestamp if there is something being liquidated
+        if (liquidatableAmount > 0) {
+            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+        }
     }
 
-    function maxLiquidationPerSecond(uint128 marketId) internal view returns (uint) {
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            marketId
-        );
-        OrderFee.Data storage orderFeeData = marketConfig.orderFees;
-        return (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(marketConfig.skewScale);
+    struct MarketUpdateData {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
     }
 
+    /**
+     * @dev Use this function to update both market/position size/skew.
+     * @dev Size and skew should not be updated directly.
+     * @dev The return value is used to emit a MarketUpdated event.
+     */
     function updatePositionData(
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal {
+    ) internal returns (MarketUpdateData memory) {
         Position.Data storage oldPosition = self.positions[accountId];
+
         int128 oldPositionSize = oldPosition.size;
+        int128 newPositionSize = newPosition.size;
 
-        self.size = (self.size + MathUtil.abs(newPosition.size)) - MathUtil.abs(oldPositionSize);
-        self.skew += newPosition.size - oldPositionSize;
-        oldPosition.updatePosition(newPosition);
-    }
+        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.skew += newPositionSize - oldPositionSize;
 
-    function loadWithVerifiedOwner(
-        uint128 id,
-        address possibleOwner
-    ) internal view returns (Data storage market) {
-        market = load(id);
+        uint currentPrice = newPosition.latestInteractionPrice;
+        (int totalPositionPnl, , , , ) = oldPosition.getPnl(currentPrice);
 
-        if (market.owner != possibleOwner) {
-            revert AccessError.Unauthorized(possibleOwner);
-        }
+        int sizeDelta = newPositionSize - oldPositionSize;
+        int fundingDelta = calculateNextFunding(self, currentPrice).mulDecimal(sizeDelta);
+        int notionalDelta = currentPrice.toInt().mulDecimal(sizeDelta);
+
+        // update the market debt correction accumulator before losing oldPosition details
+        // by adding the new updated notional (old - new size) plus old position pnl
+        self.debtCorrectionAccumulator += fundingDelta + notionalDelta + totalPositionPnl;
+
+        oldPosition.update(newPosition);
+
+        return
+            MarketUpdateData(
+                self.id,
+                self.skew,
+                self.size,
+                self.lastFundingRate,
+                currentFundingVelocity(self)
+            );
     }
 
     function recomputeFunding(
@@ -221,43 +258,63 @@ library PerpsMarket {
         return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
     }
 
-    // TODO: David will refactor this
     function validatePositionSize(
         Data storage self,
         uint maxSize,
         int oldSize,
         int newSize
-    ) internal view returns (bool) {
+    ) internal view {
         // Allow users to reduce an order no matter the market conditions.
-        if (MathUtil.sameSide(oldSize, newSize) && MathUtil.abs(newSize) <= MathUtil.abs(oldSize)) {
-            return false;
+        bool isNotReducingInterest = !(MathUtil.sameSide(oldSize, newSize) &&
+            MathUtil.abs(newSize) <= MathUtil.abs(oldSize));
+        if (isNotReducingInterest) {
+            int newSkew = self.skew - oldSize + newSize;
+
+            int newMarketSize = self.size.toInt() -
+                MathUtil.abs(oldSize).toInt() +
+                MathUtil.abs(newSize).toInt();
+
+            int newSideSize;
+            if (0 < newSize) {
+                // long case: marketSize + skew
+                //            = (|longSize| + |shortSize|) + (longSize + shortSize)
+                //            = 2 * longSize
+                newSideSize = newMarketSize + newSkew;
+            } else {
+                // short case: marketSize - skew
+                //            = (|longSize| + |shortSize|) - (longSize + shortSize)
+                //            = 2 * -shortSize
+                newSideSize = newMarketSize - newSkew;
+            }
+
+            // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
+            if (maxSize < MathUtil.abs(newSideSize / 2)) {
+                revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                    self.id,
+                    maxSize,
+                    newSideSize / 2
+                );
+            }
         }
+    }
 
-        // Either the user is flipping sides, or they are increasing an order on the same side they're already on;
-        // we check that the side of the market their order is on would not break the limit.
-        int newSkew = self.skew - oldSize + newSize;
-        int newMarketSize = self.size.toInt() -
-            MathUtil.abs(oldSize).toInt() +
-            MathUtil.abs(newSize).toInt();
+    /**
+     * @dev Returns the market debt incurred by all positions
+     * @notice  Market debt is the sum of all position sizes multiplied by the price, and old positions pnl that is included in the debt correction accumulator.
+     */
+    function marketDebt(Data storage self, uint price) internal view returns (int) {
+        // all positions sizes multiplied by the price is equivalent to skew times price
+        // and the debt correction accumulator is the  sum of all positions pnl
+        int traderUnrealizedPnl = self.skew.mulDecimal(price.toInt());
+        int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
 
-        int newSideSize;
-        if (0 < newSize) {
-            // long case: marketSize + skew
-            //            = (|longSize| + |shortSize|) + (longSize + shortSize)
-            //            = 2 * longSize
-            newSideSize = newMarketSize + newSkew;
-        } else {
-            // short case: marketSize - skew
-            //            = (|longSize| + |shortSize|) - (longSize + shortSize)
-            //            = 2 * -shortSize
-            newSideSize = newMarketSize - newSkew;
-        }
+        return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
+    }
 
-        // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
-        if (maxSize < MathUtil.abs(newSideSize / 2)) {
-            return true;
-        }
-
-        return false;
+    function accountPosition(
+        uint128 marketId,
+        uint128 accountId
+    ) internal view returns (Position.Data storage position) {
+        position = load(marketId).positions[accountId];
     }
 }

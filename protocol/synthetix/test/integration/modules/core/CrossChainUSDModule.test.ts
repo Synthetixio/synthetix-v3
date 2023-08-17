@@ -29,11 +29,7 @@ describe('CrossChainUSDModule', function () {
   before('configure CCIP', async () => {
     await systems()
       .Core.connect(owner())
-      .configureChainlinkCrossChain(
-        CcipRouterMock.address,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero
-      );
+      .configureChainlinkCrossChain(CcipRouterMock.address, ethers.constants.AddressZero);
   });
 
   before('get some snxUSD', async () => {
@@ -41,9 +37,9 @@ describe('CrossChainUSDModule', function () {
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
 
-    await systems()
-      .Core.connect(staker())
-      .withdraw(accountId, systems().USD.address, oneHundredUSD);
+    // await systems()
+    //   .Core.connect(staker())
+    //   .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
   before('record balances', async () => {

@@ -15,7 +15,8 @@
       "allowBranch": [
         "main",
         "lerna",
-        "xchain-pools"
+        "xchain-pools",
+        "teleporters"
       ]
     }
   }

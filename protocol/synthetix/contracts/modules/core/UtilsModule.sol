@@ -5,6 +5,7 @@ import "@synthetixio/core-modules/contracts/interfaces/IAssociatedSystemsModule.
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../../interfaces/IUtilsModule.sol";
 
@@ -21,6 +22,7 @@ import "../../interfaces/external/IAny2EVMMessageReceiver.sol";
 contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using SetUtil for SetUtil.UintSet;
+    using SafeCastU256 for uint256;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";

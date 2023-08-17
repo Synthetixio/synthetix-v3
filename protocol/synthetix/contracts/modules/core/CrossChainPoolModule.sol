@@ -176,7 +176,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     function getThisChainPoolCumulativeMarketDebt(
         uint128 poolId
     ) external override returns (int256 cumulativeDebtD18) {
-        (cumulativeDebtD18, ) = Pool.loadExisting(poolId).rebalanceMarketsInPool();
+        (, cumulativeDebtD18) = Pool.loadExisting(poolId).distributeDebtToVaults(address(0));
     }
 
     function getThisChainPoolTotalDebt(

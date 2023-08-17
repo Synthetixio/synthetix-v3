@@ -8,7 +8,7 @@ describe('ModifyCollateral Deposit', () => {
   const oneBTC = bn(1);
   const marginAmount = bn(10_000);
 
-  const { systems, owner, synthMarkets, trader1 } = bootstrapMarkets({
+  const { systems, owner, superMarketId, synthMarkets, trader1 } = bootstrapMarkets({
     synthMarkets: [
       {
         name: 'Bitcoin',
@@ -34,7 +34,6 @@ describe('ModifyCollateral Deposit', () => {
 
   describe('deposit by modifyCollateral()', async () => {
     let spotBalanceBefore: ethers.BigNumber;
-    let perpsBalanceBefore: ethers.BigNumber;
     let modifyCollateralTxn: ethers.providers.TransactionResponse;
 
     before('owner sets limits to max', async () => {
@@ -54,11 +53,6 @@ describe('ModifyCollateral Deposit', () => {
         .synth()
         .connect(trader1())
         .balanceOf(await trader1().getAddress());
-
-      perpsBalanceBefore = await synthMarkets()[0]
-        .synth()
-        .connect(trader1())
-        .balanceOf(systems().PerpsMarket.address);
     });
 
     before('trader1 approves the perps market', async () => {
@@ -92,12 +86,13 @@ describe('ModifyCollateral Deposit', () => {
       assertBn.equal(spotBalanceAfter, spotBalanceBefore.sub(oneBTC));
     });
 
-    it('properly reflects the perps market balance', async () => {
-      const perpsBalanceAfter = await synthMarkets()[0]
-        .synth()
-        .connect(trader1())
-        .balanceOf(systems().PerpsMarket.address);
-      assertBn.equal(perpsBalanceAfter, perpsBalanceBefore.add(oneBTC));
+    it('properly reflects core system collateral balance', async () => {
+      const btcCollateralValue = await systems().Core.getMarketCollateralAmount(
+        superMarketId(),
+        synthMarkets()[0].synthAddress()
+      );
+
+      assertBn.equal(btcCollateralValue, oneBTC);
     });
 
     it('emits correct event with the expected values', async () => {
@@ -108,6 +103,14 @@ describe('ModifyCollateral Deposit', () => {
         )}, "${await trader1().getAddress()}"`,
         systems().PerpsMarket
       );
+    });
+
+    it('returns the correct amount when calling getCollateralAmount', async () => {
+      const collateralBalance = await systems().PerpsMarket.getCollateralAmount(
+        accountIds[0],
+        synthBTCMarketId
+      );
+      assertBn.equal(collateralBalance, bn(1));
     });
   });
 });

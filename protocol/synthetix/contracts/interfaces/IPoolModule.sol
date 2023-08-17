@@ -12,6 +12,11 @@ interface IPoolModule {
      * @notice Thrown when the requested pool ID is greater or equal to type(uint128).max / 2
      */
     error InvalidPoolId(uint128 poolId);
+    
+		/**
+     * @notice Thrown when attempting to delegate collateral to a market whose capacity is locked.
+     */
+    error CapacityLocked(uint256 marketId);
 
     /**
      * @notice Gets fired when pool will be created.
@@ -182,6 +187,8 @@ interface IPoolModule {
 
     /**
      * @notice Distributes cached debt in a pool to its vaults and updates market credit capacities.
+     * @param poolId the pool to rebalance
+     * @param optionalCollateralType in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
      */
-    function rebalancePool(uint128 poolId) external;
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external;
 }

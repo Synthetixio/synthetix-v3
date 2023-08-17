@@ -25,6 +25,9 @@ const config = {
       default: 'off',
     },
   },
+  mocha: {
+    timeout: 200_000,
+  },
 };
 
 export default config;

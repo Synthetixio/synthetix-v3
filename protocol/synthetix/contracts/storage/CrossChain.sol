@@ -20,6 +20,7 @@ library CrossChain {
     error NotCcipRouter(address);
     error UnsupportedNetwork(uint64);
     error InsufficientCcipFee(uint256 requiredAmount, uint256 availableAmount);
+    error InvalidMessage();
 
     bytes32 private constant _SLOT_CROSS_CHAIN =
         keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
@@ -53,7 +54,7 @@ library CrossChain {
             revert NotCcipRouter(msg.sender);
         }
 
-        uint64 sourceChainId = self.ccipSelectorToChainId[data.sourceChainId];
+        uint64 sourceChainId = self.ccipSelectorToChainId[data.sourceChainSelector];
 
         if (!self.supportedNetworks.contains(sourceChainId)) {
             revert UnsupportedNetwork(sourceChainId);

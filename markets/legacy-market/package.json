@@ -4,9 +4,10 @@
   "description": "Contract for migration from v2x to v3",
   "private": true,
   "scripts": {
-    "build": "hardhat cannon:build",
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat cannon:build",
     "test": "hardhat test",
-    "coverage": "hardhat coverage",
+    "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",

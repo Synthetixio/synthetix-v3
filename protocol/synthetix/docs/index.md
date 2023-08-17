@@ -1,8 +1,6 @@
-# Solidity API
+### Account Module
 
-## Account Module
-
-### getAccountPermissions
+#### getAccountPermissions
 
   ```solidity
   function getAccountPermissions(uint128 accountId) external view returns (struct IAccountModule.AccountPermissions[] accountPerms)
@@ -15,7 +13,7 @@
 
 **Returns**
 * `accountPerms` (*struct IAccountModule.AccountPermissions[]*) - An array of AccountPermission objects describing the permissions granted to the account.
-### createAccount
+#### createAccount
 
   ```solidity
   function createAccount(uint128 requestedAccountId) external
@@ -26,7 +24,7 @@
 **Parameters**
 * `requestedAccountId` (*uint128*) - The id requested for the account being created. Reverts if id already exists. Requirements: - `requestedAccountId` must not already be minted. - `requestedAccountId` must be less than type(uint128).max / 2 Emits a {AccountCreated} event.
 
-### createAccount
+#### createAccount
 
   ```solidity
   function createAccount() external returns (uint128 accountId)
@@ -36,7 +34,7 @@
 
 Emits a {AccountCreated} event.
 
-### notifyAccountTransfer
+#### notifyAccountTransfer
 
   ```solidity
   function notifyAccountTransfer(address to, uint128 accountId) external
@@ -50,7 +48,7 @@ Emits a {AccountCreated} event.
 * `to` (*address*) - The new holder of the account NFT.
 * `accountId` (*uint128*) - The id of the account that was just transferred. Requirements: - `msg.sender` must be the account token.
 
-### grantPermission
+#### grantPermission
 
   ```solidity
   function grantPermission(uint128 accountId, bytes32 permission, address user) external
@@ -63,7 +61,7 @@ Emits a {AccountCreated} event.
 * `permission` (*bytes32*) - The bytes32 identifier of the permission.
 * `user` (*address*) - The target address that received the permission. Requirements: - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission. Emits a {PermissionGranted} event.
 
-### revokePermission
+#### revokePermission
 
   ```solidity
   function revokePermission(uint128 accountId, bytes32 permission, address user) external
@@ -76,7 +74,7 @@ Emits a {AccountCreated} event.
 * `permission` (*bytes32*) - The bytes32 identifier of the permission.
 * `user` (*address*) - The target address that no longer has the permission. Requirements: - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission. Emits a {PermissionRevoked} event.
 
-### renouncePermission
+#### renouncePermission
 
   ```solidity
   function renouncePermission(uint128 accountId, bytes32 permission) external
@@ -88,7 +86,7 @@ Emits a {AccountCreated} event.
 * `accountId` (*uint128*) - The id of the account whose permission was renounced.
 * `permission` (*bytes32*) - The bytes32 identifier of the permission. Emits a {PermissionRevoked} event.
 
-### hasPermission
+#### hasPermission
 
   ```solidity
   function hasPermission(uint128 accountId, bytes32 permission, address user) external view returns (bool hasPermission)
@@ -103,7 +101,7 @@ Emits a {AccountCreated} event.
 
 **Returns**
 * `hasPermission` (*bool*) - A boolean with the response of the query.
-### isAuthorized
+#### isAuthorized
 
   ```solidity
   function isAuthorized(uint128 accountId, bytes32 permission, address target) external view returns (bool isAuthorized)
@@ -118,7 +116,7 @@ Emits a {AccountCreated} event.
 
 **Returns**
 * `isAuthorized` (*bool*) - A boolean with the response of the query.
-### getAccountTokenAddress
+#### getAccountTokenAddress
 
   ```solidity
   function getAccountTokenAddress() external view returns (address accountNftToken)
@@ -128,7 +126,7 @@ Emits a {AccountCreated} event.
 
 **Returns**
 * `accountNftToken` (*address*) - The address of the account token.
-### getAccountOwner
+#### getAccountOwner
 
   ```solidity
   function getAccountOwner(uint128 accountId) external view returns (address owner)
@@ -141,7 +139,7 @@ Emits a {AccountCreated} event.
 
 **Returns**
 * `owner` (*address*) - The owner of the given account id.
-### getAccountLastInteraction
+#### getAccountLastInteraction
 
   ```solidity
   function getAccountLastInteraction(uint128 accountId) external view returns (uint256 timestamp)
@@ -155,7 +153,7 @@ Emits a {AccountCreated} event.
 **Returns**
 * `timestamp` (*uint256*) - The unix timestamp of the last time a permissioned action occured with the account
 
-### AccountCreated
+#### AccountCreated
 
   ```solidity
   event AccountCreated(uint128 accountId, address owner)
@@ -167,7 +165,7 @@ Emits a {AccountCreated} event.
 * `accountId` (*uint128*) - The id of the account.
 * `owner` (*address*) - The address that owns the created account.
 
-### PermissionGranted
+#### PermissionGranted
 
   ```solidity
   event PermissionGranted(uint128 accountId, bytes32 permission, address user, address sender)
@@ -181,7 +179,7 @@ Emits a {AccountCreated} event.
 * `user` (*address*) - The target address to whom the permission was granted.
 * `sender` (*address*) - The Address that granted the permission.
 
-### PermissionRevoked
+#### PermissionRevoked
 
   ```solidity
   event PermissionRevoked(uint128 accountId, bytes32 permission, address user, address sender)
@@ -195,9 +193,9 @@ Emits a {AccountCreated} event.
 * `user` (*address*) - The target address for which the permission was revoked.
 * `sender` (*address*) - The address that revoked the permission.
 
-## Account Token Module
+### Account Token Module
 
-### isInitialized
+#### isInitialized
 
   ```solidity
   function isInitialized() external returns (bool)
@@ -207,7 +205,7 @@ Emits a {AccountCreated} event.
 
 **Returns**
 * `[0]` (*bool*) - A boolean with the result of the query.
-### initialize
+#### initialize
 
   ```solidity
   function initialize(string tokenName, string tokenSymbol, string uri) external
@@ -215,7 +213,7 @@ Emits a {AccountCreated} event.
 
   Initializes the token with name, symbol, and uri.
 
-### mint
+#### mint
 
   ```solidity
   function mint(address to, uint256 tokenId) external
@@ -227,7 +225,7 @@ Emits a {AccountCreated} event.
 * `to` (*address*) - The address to receive the newly minted tokens.
 * `tokenId` (*uint256*) - The ID of the newly minted token
 
-### safeMint
+#### safeMint
 
   ```solidity
   function safeMint(address to, uint256 tokenId, bytes data) external
@@ -240,7 +238,7 @@ Emits a {AccountCreated} event.
 * `tokenId` (*uint256*) - The ID of the newly minted token
 * `data` (*bytes*) - any data which should be sent to the receiver
 
-### burn
+#### burn
 
   ```solidity
   function burn(uint256 tokenId) external
@@ -251,7 +249,7 @@ Emits a {AccountCreated} event.
 **Parameters**
 * `tokenId` (*uint256*) - The token to burn
 
-### setAllowance
+#### setAllowance
 
   ```solidity
   function setAllowance(uint256 tokenId, address spender) external
@@ -263,7 +261,7 @@ Emits a {AccountCreated} event.
 * `tokenId` (*uint256*) - The token which should be allowed to spender
 * `spender` (*address*) - The address that is given allowance.
 
-### setBaseTokenURI
+#### setBaseTokenURI
 
   ```solidity
   function setBaseTokenURI(string uri) external
@@ -274,7 +272,7 @@ Emits a {AccountCreated} event.
 **Parameters**
 * `uri` (*string*) - The new base token uri
 
-### totalSupply
+#### totalSupply
 
   ```solidity
   function totalSupply() external view returns (uint256)
@@ -282,7 +280,7 @@ Emits a {AccountCreated} event.
 
   Returns the total amount of tokens stored by the contract.
 
-### tokenOfOwnerByIndex
+#### tokenOfOwnerByIndex
 
   ```solidity
   function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
@@ -295,7 +293,7 @@ Requirements:
 - `owner` must be a valid address
 - `index` must be less than the balance of the tokens for the owner
 
-### tokenByIndex
+#### tokenByIndex
 
   ```solidity
   function tokenByIndex(uint256 index) external view returns (uint256)
@@ -307,7 +305,7 @@ Use along with {totalSupply} to enumerate all tokens.
 Requirements:
 - `index` must be less than the total supply of the tokens
 
-### balanceOf
+#### balanceOf
 
   ```solidity
   function balanceOf(address holder) external view returns (uint256 balance)
@@ -319,7 +317,7 @@ Requirements:
 
 - `holder` must be a valid address
 
-### ownerOf
+#### ownerOf
 
   ```solidity
   function ownerOf(uint256 tokenId) external view returns (address owner)
@@ -331,7 +329,7 @@ Requirements:
 
 - `tokenId` must exist.
 
-### safeTransferFrom
+#### safeTransferFrom
 
   ```solidity
   function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external
@@ -349,7 +347,7 @@ Requirements:
 
 Emits a {Transfer} event.
 
-### safeTransferFrom
+#### safeTransferFrom
 
   ```solidity
   function safeTransferFrom(address from, address to, uint256 tokenId) external
@@ -368,7 +366,7 @@ Requirements:
 
 Emits a {Transfer} event.
 
-### transferFrom
+#### transferFrom
 
   ```solidity
   function transferFrom(address from, address to, uint256 tokenId) external
@@ -387,7 +385,7 @@ Requirements:
 
 Emits a {Transfer} event.
 
-### approve
+#### approve
 
   ```solidity
   function approve(address to, uint256 tokenId) external
@@ -405,7 +403,7 @@ Requirements:
 
 Emits an {Approval} event.
 
-### setApprovalForAll
+#### setApprovalForAll
 
   ```solidity
   function setApprovalForAll(address operator, bool approved) external
@@ -420,7 +418,7 @@ Requirements:
 
 Emits an {ApprovalForAll} event.
 
-### getApproved
+#### getApproved
 
   ```solidity
   function getApproved(uint256 tokenId) external view returns (address operator)
@@ -432,7 +430,7 @@ Requirements:
 
 - `tokenId` must exist.
 
-### isApprovedForAll
+#### isApprovedForAll
 
   ```solidity
   function isApprovedForAll(address owner, address operator) external view returns (bool)
@@ -442,7 +440,7 @@ Requirements:
 
 See {setApprovalForAll}
 
-### Transfer
+#### Transfer
 
   ```solidity
   event Transfer(address from, address to, uint256 tokenId)
@@ -450,7 +448,7 @@ See {setApprovalForAll}
 
   Emitted when `tokenId` token is transferred from `from` to `to`.
 
-### Approval
+#### Approval
 
   ```solidity
   event Approval(address owner, address approved, uint256 tokenId)
@@ -458,7 +456,7 @@ See {setApprovalForAll}
 
   Emitted when `owner` enables `approved` to manage the `tokenId` token.
 
-### ApprovalForAll
+#### ApprovalForAll
 
   ```solidity
   event ApprovalForAll(address owner, address operator, bool approved)
@@ -466,9 +464,9 @@ See {setApprovalForAll}
 
   Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
 
-## Associate Debt Module
+### Associate Debt Module
 
-### associateDebt
+#### associateDebt
 
   ```solidity
   function associateDebt(uint128 marketId, uint128 poolId, address collateralType, uint128 accountId, uint256 amount) external returns (int256 debtAmount)
@@ -494,7 +492,7 @@ other accounts would be left with no change to their debt, however.
 **Returns**
 * `debtAmount` (*int256*) - The updated debt of the position, denominated with 18 decimals of precision.
 
-### DebtAssociated
+#### DebtAssociated
 
   ```solidity
   event DebtAssociated(uint128 marketId, uint128 poolId, address collateralType, uint128 accountId, uint256 amount, int256 updatedDebt)
@@ -510,9 +508,9 @@ other accounts would be left with no change to their debt, however.
 * `amount` (*uint256*) - The amount of debt being associated with the specified account, denominated with 18 decimals of precision.
 * `updatedDebt` (*int256*) - The total updated debt of the account, denominated with 18 decimals of precision
 
-## Collateral Configuration Module
+### Collateral Configuration Module
 
-### configureCollateral
+#### configureCollateral
 
   ```solidity
   function configureCollateral(struct CollateralConfiguration.Data config) external
@@ -523,7 +521,7 @@ other accounts would be left with no change to their debt, however.
 **Parameters**
 * `config` (*struct CollateralConfiguration.Data*) - The CollateralConfiguration object describing the new configuration. Requirements: - `msg.sender` must be the owner of the system. Emits a {CollateralConfigured} event.
 
-### getCollateralConfigurations
+#### getCollateralConfigurations
 
   ```solidity
   function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralConfiguration.Data[] collaterals)
@@ -538,7 +536,7 @@ other accounts would be left with no change to their debt, however.
 
 **Returns**
 * `collaterals` (*struct CollateralConfiguration.Data[]*) - The list of collateral configuration objects set in the system.
-### getCollateralConfiguration
+#### getCollateralConfiguration
 
   ```solidity
   function getCollateralConfiguration(address collateralType) external view returns (struct CollateralConfiguration.Data collateral)
@@ -551,7 +549,7 @@ other accounts would be left with no change to their debt, however.
 
 **Returns**
 * `collateral` (*struct CollateralConfiguration.Data*) - The configuration object describing the given collateral.
-### getCollateralPrice
+#### getCollateralPrice
 
   ```solidity
   function getCollateralPrice(address collateralType) external view returns (uint256 priceD18)
@@ -565,7 +563,7 @@ other accounts would be left with no change to their debt, however.
 **Returns**
 * `priceD18` (*uint256*) - The price of the given collateral, denominated with 18 decimals of precision.
 
-### CollateralConfigured
+#### CollateralConfigured
 
   ```solidity
   event CollateralConfigured(address collateralType, struct CollateralConfiguration.Data config)
@@ -577,9 +575,9 @@ other accounts would be left with no change to their debt, however.
 * `collateralType` (*address*) - The address of the collateral type that was just configured.
 * `config` (*struct CollateralConfiguration.Data*) - The object with the newly configured details.
 
-## Collateral Module
+### Collateral Module
 
-### deposit
+#### deposit
 
   ```solidity
   function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external
@@ -594,7 +592,7 @@ other accounts would be left with no change to their debt, however.
 * `collateralType` (*address*) - The address of the token to be deposited.
 * `tokenAmount` (*uint256*) - The amount being deposited, denominated in the token's native decimal representation. Emits a {Deposited} event.
 
-### withdraw
+#### withdraw
 
   ```solidity
   function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external
@@ -607,7 +605,7 @@ other accounts would be left with no change to their debt, however.
 * `collateralType` (*address*) - The address of the token to be withdrawn.
 * `tokenAmount` (*uint256*) - The amount being withdrawn, denominated in the token's native decimal representation. Requirements: - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission. Emits a {Withdrawn} event.
 
-### getAccountCollateral
+#### getAccountCollateral
 
   ```solidity
   function getAccountCollateral(uint128 accountId, address collateralType) external view returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
@@ -623,7 +621,7 @@ other accounts would be left with no change to their debt, however.
 * `totalDeposited` (*uint256*) - The total collateral deposited in the account, denominated with 18 decimals of precision.
 * `totalAssigned` (*uint256*) - The amount of collateral in the account that is delegated to pools, denominated with 18 decimals of precision.
 * `totalLocked` (*uint256*) - The amount of collateral in the account that cannot currently be undelegated from a pool, denominated with 18 decimals of precision.
-### getAccountAvailableCollateral
+#### getAccountAvailableCollateral
 
   ```solidity
   function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint256 amountD18)
@@ -637,7 +635,7 @@ other accounts would be left with no change to their debt, however.
 
 **Returns**
 * `amountD18` (*uint256*) - The amount of collateral that is available for withdrawal or delegation, denominated with 18 decimals of precision.
-### cleanExpiredLocks
+#### cleanExpiredLocks
 
   ```solidity
   function cleanExpiredLocks(uint128 accountId, address collateralType, uint256 offset, uint256 count) external returns (uint256 cleared)
@@ -653,7 +651,7 @@ other accounts would be left with no change to their debt, however.
 
 **Returns**
 * `cleared` (*uint256*) - the number of locks that were actually expired (and therefore cleared)
-### getLocks
+#### getLocks
 
   ```solidity
   function getLocks(uint128 accountId, address collateralType, uint256 offset, uint256 count) external view returns (struct CollateralLock.Data[] locks)
@@ -667,7 +665,7 @@ other accounts would be left with no change to their debt, however.
 * `offset` (*uint256*) - The index of the first lock to read
 * `count` (*uint256*) - The number of slots to check for cleaning locks. Set to 0 to read all locks after offset
 
-### createLock
+#### createLock
 
   ```solidity
   function createLock(uint128 accountId, address collateralType, uint256 amount, uint64 expireTimestamp) external
@@ -684,7 +682,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `amount` (*uint256*) - The amount of collateral tokens to wrap in the lock being created, denominated with 18 decimals of precision.
 * `expireTimestamp` (*uint64*) - The date in which the lock will become clearable.
 
-### Deposited
+#### Deposited
 
   ```solidity
   event Deposited(uint128 accountId, address collateralType, uint256 tokenAmount, address sender)
@@ -698,7 +696,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `tokenAmount` (*uint256*) - The amount of collateral that was deposited, denominated in the token's native decimal representation.
 * `sender` (*address*) - The address of the account that triggered the deposit.
 
-### CollateralLockCreated
+#### CollateralLockCreated
 
   ```solidity
   event CollateralLockCreated(uint128 accountId, address collateralType, uint256 tokenAmount, uint64 expireTimestamp)
@@ -712,7 +710,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `tokenAmount` (*uint256*) - The amount of collateral that was locked, demoninated in system units (1e18)
 * `expireTimestamp` (*uint64*) - unix timestamp at which the lock is due to expire
 
-### CollateralLockExpired
+#### CollateralLockExpired
 
   ```solidity
   event CollateralLockExpired(uint128 accountId, address collateralType, uint256 tokenAmount, uint64 expireTimestamp)
@@ -726,7 +724,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `tokenAmount` (*uint256*) - The amount of collateral that was unlocked, demoninated in system units (1e18)
 * `expireTimestamp` (*uint64*) - unix timestamp at which the unlock is due to expire
 
-### Withdrawn
+#### Withdrawn
 
   ```solidity
   event Withdrawn(uint128 accountId, address collateralType, uint256 tokenAmount, address sender)
@@ -740,9 +738,32 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `tokenAmount` (*uint256*) - The amount of collateral that was withdrawn, denominated in the token's native decimal representation.
 * `sender` (*address*) - The address of the account that triggered the withdrawal.
 
-## IssueUSD Module
+### Cross ChainUSD Module
 
-### mintUsd
+#### transferCrossChain
+
+  ```solidity
+  function transferCrossChain(uint64 destChainId, uint256 amount) external payable returns (uint256 gasTokenUsed)
+  ```
+
+  Allows users to transfer tokens cross-chain using CCIP.
+
+**Parameters**
+* `destChainId` (*uint64*) - The id of the chain where tokens are to be transferred to.
+* `amount` (*uint256*) - The amount of tokens to be transferred, denominated with 18 decimals of precision.
+
+**Returns**
+* `gasTokenUsed` (*uint256*) - The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
+
+#### TransferCrossChainInitiated
+
+  ```solidity
+  event TransferCrossChainInitiated(uint64 destChainId, uint256 amount, address sender)
+  ```
+
+### IssueUSD Module
+
+#### mintUsd
 
   ```solidity
   function mintUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
@@ -756,7 +777,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `collateralType` (*address*) - The address of the collateral that will be used to back up the mint.
 * `amount` (*uint256*) - The amount of snxUSD to be minted, denominated with 18 decimals of precision. Requirements: - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission. - After minting, the collateralization ratio of the liquidity position must not be below the target collateralization ratio for the corresponding collateral type. Emits a {UsdMinted} event.
 
-### burnUsd
+#### burnUsd
 
   ```solidity
   function burnUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
@@ -770,7 +791,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `collateralType` (*address*) - The address of the collateral that was used to back up the snxUSD.
 * `amount` (*uint256*) - The amount of snxUSD to be burnt, denominated with 18 decimals of precision. Emits a {UsdMinted} event.
 
-### UsdMinted
+#### UsdMinted
 
   ```solidity
   event UsdMinted(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
@@ -785,7 +806,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `amount` (*uint256*) - The amount of snxUSD emitted, denominated with 18 decimals of precision.
 * `sender` (*address*) - The address that triggered the operation.
 
-### UsdBurned
+#### UsdBurned
 
   ```solidity
   event UsdBurned(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
@@ -800,15 +821,15 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 * `amount` (*uint256*) - The amount of snxUSD burned, denominated with 18 decimals of precision.
 * `sender` (*address*) - The address that triggered the operation.
 
-### IssuanceFeePaid
+#### IssuanceFeePaid
 
   ```solidity
   event IssuanceFeePaid(uint128 accountId, uint128 poolId, address collateralType, uint256 feeAmount)
   ```
 
-## Liquidation Module
+### Liquidation Module
 
-### liquidate
+#### liquidate
 
   ```solidity
   function liquidate(uint128 accountId, uint128 poolId, address collateralType, uint128 liquidateAsAccountId) external returns (struct ILiquidationModule.LiquidationData liquidationData)
@@ -824,7 +845,7 @@ Collateral locks are initially intended for the Synthetix v2 to v3 migration, bu
 
 **Returns**
 * `liquidationData` (*struct ILiquidationModule.LiquidationData*) - Information about the position that was liquidated.
-### liquidateVault
+#### liquidateVault
 
   ```solidity
   function liquidateVault(uint128 poolId, address collateralType, uint128 liquidateAsAccountId, uint256 maxUsd) external returns (struct ILiquidationModule.LiquidationData liquidationData)
@@ -844,7 +865,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 
 **Returns**
 * `liquidationData` (*struct ILiquidationModule.LiquidationData*) - Information about the vault that was liquidated.
-### isPositionLiquidatable
+#### isPositionLiquidatable
 
   ```solidity
   function isPositionLiquidatable(uint128 accountId, uint128 poolId, address collateralType) external returns (bool canLiquidate)
@@ -859,7 +880,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 
 **Returns**
 * `canLiquidate` (*bool*) - A boolean with the response to the query.
-### isVaultLiquidatable
+#### isVaultLiquidatable
 
   ```solidity
   function isVaultLiquidatable(uint128 poolId, address collateralType) external returns (bool canVaultLiquidate)
@@ -874,7 +895,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 **Returns**
 * `canVaultLiquidate` (*bool*) - A boolean with the response to the query.
 
-### Liquidation
+#### Liquidation
 
   ```solidity
   event Liquidation(uint128 accountId, uint128 poolId, address collateralType, struct ILiquidationModule.LiquidationData liquidationData, uint128 liquidateAsAccountId, address sender)
@@ -890,7 +911,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `liquidateAsAccountId` (*uint128*) - Account id that will receive the rewards from the liquidation.
 * `sender` (*address*) - The address of the account that is triggering the liquidation.
 
-### VaultLiquidation
+#### VaultLiquidation
 
   ```solidity
   event VaultLiquidation(uint128 poolId, address collateralType, struct ILiquidationModule.LiquidationData liquidationData, uint128 liquidateAsAccountId, address sender)
@@ -905,9 +926,9 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `liquidateAsAccountId` (*uint128*) - Account id that will receive the rewards from the liquidation.
 * `sender` (*address*) - The address of the account that is triggering the liquidation.
 
-## Market Collateral Module
+### Market Collateral Module
 
-### depositMarketCollateral
+#### depositMarketCollateral
 
   ```solidity
   function depositMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
@@ -920,7 +941,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `collateralType` (*address*) - The address of the collateral that was deposited in the market.
 * `amount` (*uint256*) - The amount of collateral that was deposited, denominated in the token's native decimal representation.
 
-### withdrawMarketCollateral
+#### withdrawMarketCollateral
 
   ```solidity
   function withdrawMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
@@ -933,7 +954,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `collateralType` (*address*) - The address of the collateral that was withdrawn from the market.
 * `amount` (*uint256*) - The amount of collateral that was withdrawn, denominated in the token's native decimal representation.
 
-### configureMaximumMarketCollateral
+#### configureMaximumMarketCollateral
 
   ```solidity
   function configureMaximumMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
@@ -946,7 +967,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `collateralType` (*address*) - The address of the collateral for which the maximum is to be applied.
 * `amount` (*uint256*) - The amount that is to be set as the new maximum, denominated with 18 decimals of precision.
 
-### getMaximumMarketCollateral
+#### getMaximumMarketCollateral
 
   ```solidity
   function getMaximumMarketCollateral(uint128 marketId, address collateralType) external returns (uint256 amountD18)
@@ -960,7 +981,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 
 **Returns**
 * `amountD18` (*uint256*) - The maximum amount of collateral set for the market, denominated with 18 decimals of precision.
-### getMarketCollateralAmount
+#### getMarketCollateralAmount
 
   ```solidity
   function getMarketCollateralAmount(uint128 marketId, address collateralType) external view returns (uint256 amountD18)
@@ -974,7 +995,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 
 **Returns**
 * `amountD18` (*uint256*) - The total amount of collateral of this type delegated to the market, denominated with 18 decimals of precision.
-### getMarketCollateralValue
+#### getMarketCollateralValue
 
   ```solidity
   function getMarketCollateralValue(uint128 marketId) external returns (uint256 valueD18)
@@ -988,7 +1009,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 **Returns**
 * `valueD18` (*uint256*) - The total value of collateral deposited by the market, denominated with 18 decimals of precision.
 
-### MarketCollateralDeposited
+#### MarketCollateralDeposited
 
   ```solidity
   event MarketCollateralDeposited(uint128 marketId, address collateralType, uint256 tokenAmount, address sender)
@@ -1002,7 +1023,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `tokenAmount` (*uint256*) - The amount of tokens that were deposited, denominated in the token's native decimal representation.
 * `sender` (*address*) - The address that triggered the deposit.
 
-### MarketCollateralWithdrawn
+#### MarketCollateralWithdrawn
 
   ```solidity
   event MarketCollateralWithdrawn(uint128 marketId, address collateralType, uint256 tokenAmount, address sender)
@@ -1016,7 +1037,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `tokenAmount` (*uint256*) - The amount of tokens that were withdrawn, denominated in the token's native decimal representation.
 * `sender` (*address*) - The address that triggered the withdrawal.
 
-### MaximumMarketCollateralConfigured
+#### MaximumMarketCollateralConfigured
 
   ```solidity
   event MaximumMarketCollateralConfigured(uint128 marketId, address collateralType, uint256 systemAmount, address owner)
@@ -1030,9 +1051,9 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 * `systemAmount` (*uint256*) - The amount to which the maximum was set, denominated with 18 decimals of precision.
 * `owner` (*address*) - The owner of the system, which triggered the configuration change.
 
-## Market Manager Module
+### Market Manager Module
 
-### registerMarket
+#### registerMarket
 
   ```solidity
   function registerMarket(address market) external returns (uint128 newMarketId)
@@ -1047,7 +1068,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
 
 **Returns**
 * `newMarketId` (*uint128*) - The id with which the market will be registered in the system.
-### depositMarketUsd
+#### depositMarketUsd
 
   ```solidity
   function depositMarketUsd(uint128 marketId, address target, uint256 amount) external returns (uint256 feeAmount)
@@ -1065,7 +1086,7 @@ See `IMarket`.
 
 **Returns**
 * `feeAmount` (*uint256*) - the amount of fees paid (billed as additional debt towards liquidity providers)
-### withdrawMarketUsd
+#### withdrawMarketUsd
 
   ```solidity
   function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external returns (uint256 feeAmount)
@@ -1083,7 +1104,7 @@ See `IMarket`.
 
 **Returns**
 * `feeAmount` (*uint256*) - the amount of fees paid (billed as additional debt towards liquidity providers)
-### getMarketFees
+#### getMarketFees
 
   ```solidity
   function getMarketFees(uint128 marketId, uint256 amount) external view returns (uint256 depositFeeAmount, uint256 withdrawFeeAmount)
@@ -1098,7 +1119,7 @@ See `IMarket`.
 **Returns**
 * `depositFeeAmount` (*uint256*) - the amount of USD paid for a call to `depositMarketUsd`
 * `withdrawFeeAmount` (*uint256*) - the amount of USD paid for a call to `withdrawMarketUsd`
-### getWithdrawableMarketUsd
+#### getWithdrawableMarketUsd
 
   ```solidity
   function getWithdrawableMarketUsd(uint128 marketId) external view returns (uint256 withdrawableD18)
@@ -1111,7 +1132,7 @@ See `IMarket`.
 
 **Returns**
 * `withdrawableD18` (*uint256*) - The total amount of snxUSD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
-### getMarketNetIssuance
+#### getMarketNetIssuance
 
   ```solidity
   function getMarketNetIssuance(uint128 marketId) external view returns (int128 issuanceD18)
@@ -1124,7 +1145,7 @@ See `IMarket`.
 
 **Returns**
 * `issuanceD18` (*int128*) - The net issuance of the market, denominated with 18 decimals of precision.
-### getMarketReportedDebt
+#### getMarketReportedDebt
 
   ```solidity
   function getMarketReportedDebt(uint128 marketId) external view returns (uint256 reportedDebtD18)
@@ -1137,7 +1158,7 @@ See `IMarket`.
 
 **Returns**
 * `reportedDebtD18` (*uint256*) - The market's reported debt, denominated with 18 decimals of precision.
-### getMarketTotalDebt
+#### getMarketTotalDebt
 
   ```solidity
   function getMarketTotalDebt(uint128 marketId) external view returns (int256 totalDebtD18)
@@ -1150,7 +1171,7 @@ See `IMarket`.
 
 **Returns**
 * `totalDebtD18` (*int256*) - The total debt of the market, denominated with 18 decimals of precision.
-### getMarketCollateral
+#### getMarketCollateral
 
   ```solidity
   function getMarketCollateral(uint128 marketId) external view returns (uint256 valueD18)
@@ -1163,7 +1184,7 @@ See `IMarket`.
 
 **Returns**
 * `valueD18` (*uint256*) - The market's total snxUSD value of collateral, denominated with 18 decimals of precision.
-### getMarketDebtPerShare
+#### getMarketDebtPerShare
 
   ```solidity
   function getMarketDebtPerShare(uint128 marketId) external returns (int256 debtPerShareD18)
@@ -1178,7 +1199,7 @@ See `IMarket`.
 
 **Returns**
 * `debtPerShareD18` (*int256*) - The market's debt per share value, denominated with 18 decimals of precision.
-### isMarketCapacityLocked
+#### isMarketCapacityLocked
 
   ```solidity
   function isMarketCapacityLocked(uint128 marketId) external view returns (bool isLocked)
@@ -1191,7 +1212,7 @@ See `IMarket`.
 
 **Returns**
 * `isLocked` (*bool*) - A boolean that is true if the market's capacity is locked at the time of the query.
-### getUsdToken
+#### getUsdToken
 
   ```solidity
   function getUsdToken() external view returns (contract IERC20)
@@ -1199,7 +1220,7 @@ See `IMarket`.
 
   Returns the USD token associated with this synthetix core system
 
-### getOracleManager
+#### getOracleManager
 
   ```solidity
   function getOracleManager() external view returns (contract IOracleManager)
@@ -1207,7 +1228,7 @@ See `IMarket`.
 
   Retrieve the systems' configured oracle manager address
 
-### distributeDebtToPools
+#### distributeDebtToPools
 
   ```solidity
   function distributeDebtToPools(uint128 marketId, uint256 maxIter) external returns (bool finishedDistributing)
@@ -1224,7 +1245,7 @@ costs to update an account.
 
 **Returns**
 * `finishedDistributing` (*bool*) - whether or not all bumpable pools have been bumped and target price has been reached
-### setMarketMinDelegateTime
+#### setMarketMinDelegateTime
 
   ```solidity
   function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external
@@ -1237,7 +1258,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `marketId` (*uint128*) - the id of the market that wants to set delegation time.
 * `minDelegateTime` (*uint32*) - the minimum number of seconds between delegation calls. Note: this value must be less than the globally defined maximum minDelegateTime
 
-### getMarketMinDelegateTime
+#### getMarketMinDelegateTime
 
   ```solidity
   function getMarketMinDelegateTime(uint128 marketId) external view returns (uint32)
@@ -1248,7 +1269,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Parameters**
 * `marketId` (*uint128*) - the id of the market
 
-### setMinLiquidityRatio
+#### setMinLiquidityRatio
 
   ```solidity
   function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external
@@ -1260,7 +1281,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `marketId` (*uint128*) - the id of the market
 * `minLiquidityRatio` (*uint256*) - The new market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
 
-### getMinLiquidityRatio
+#### getMinLiquidityRatio
 
   ```solidity
   function getMinLiquidityRatio(uint128 marketId) external view returns (uint256 minRatioD18)
@@ -1273,8 +1294,19 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 
 **Returns**
 * `minRatioD18` (*uint256*) - The current market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
+#### getMarketPools
 
-### MarketRegistered
+  ```solidity
+  function getMarketPools(uint128 marketId) external returns (uint128[] inRangePoolIds, uint128[] outRangePoolIds)
+  ```
+
+#### getMarketPoolDebtDistribution
+
+  ```solidity
+  function getMarketPoolDebtDistribution(uint128 marketId, uint128 poolId) external returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27)
+  ```
+
+#### MarketRegistered
 
   ```solidity
   event MarketRegistered(address market, uint128 marketId, address sender)
@@ -1287,7 +1319,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `marketId` (*uint128*) - The id with which the market was registered in the system.
 * `sender` (*address*) - The account that trigger the registration of the market.
 
-### MarketUsdDeposited
+#### MarketUsdDeposited
 
   ```solidity
   event MarketUsdDeposited(uint128 marketId, address target, uint256 amount, address market)
@@ -1301,7 +1333,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `amount` (*uint256*) - The amount of snxUSD deposited in the system, denominated with 18 decimals of precision.
 * `market` (*address*) - The address of the external market that is depositing.
 
-### MarketUsdWithdrawn
+#### MarketUsdWithdrawn
 
   ```solidity
   event MarketUsdWithdrawn(uint128 marketId, address target, uint256 amount, address market)
@@ -1315,13 +1347,13 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `amount` (*uint256*) - The amount of snxUSD withdrawn from the system, denominated with 18 decimals of precision.
 * `market` (*address*) - The address of the external market that is withdrawing.
 
-### MarketSystemFeePaid
+#### MarketSystemFeePaid
 
   ```solidity
   event MarketSystemFeePaid(uint128 marketId, uint256 feeAmount)
   ```
 
-### SetMinDelegateTime
+#### SetMinDelegateTime
 
   ```solidity
   event SetMinDelegateTime(uint128 marketId, uint32 minDelegateTime)
@@ -1333,7 +1365,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `marketId` (*uint128*) - The id of the market that the setting is applied to
 * `minDelegateTime` (*uint32*) - The minimum amount of time between delegation changes
 
-### SetMarketMinLiquidityRatio
+#### SetMarketMinLiquidityRatio
 
   ```solidity
   event SetMarketMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio)
@@ -1345,9 +1377,9 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `marketId` (*uint128*) - The id of the market that the setting is applied to
 * `minLiquidityRatio` (*uint256*) - The new market-specific minimum liquidity ratio
 
-## Multicall Module
+### Multicall Module
 
-### multicall
+#### multicall
 
   ```solidity
   function multicall(bytes[] data) external payable returns (bytes[] results)
@@ -1363,9 +1395,9 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Returns**
 * `results` (*bytes[]*) - Array of each `delegatecall`'s response corresponding to the incoming calldata array.
 
-## Pool Configuration Module
+### Pool Configuration Module
 
-### setPreferredPool
+#### setPreferredPool
 
   ```solidity
   function setPreferredPool(uint128 poolId) external
@@ -1378,7 +1410,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Parameters**
 * `poolId` (*uint128*) - The id of the pool that is to be set as preferred.
 
-### addApprovedPool
+#### addApprovedPool
 
   ```solidity
   function addApprovedPool(uint128 poolId) external
@@ -1391,7 +1423,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Parameters**
 * `poolId` (*uint128*) - The id of the pool that is to be approved.
 
-### removeApprovedPool
+#### removeApprovedPool
 
   ```solidity
   function removeApprovedPool(uint128 poolId) external
@@ -1402,7 +1434,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Parameters**
 * `poolId` (*uint128*) - The id of the pool that is to be no longer approved.
 
-### getPreferredPool
+#### getPreferredPool
 
   ```solidity
   function getPreferredPool() external view returns (uint128 poolId)
@@ -1412,7 +1444,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 
 **Returns**
 * `poolId` (*uint128*) - The id of the pool that is currently set as preferred in the system.
-### getApprovedPools
+#### getApprovedPools
 
   ```solidity
   function getApprovedPools() external view returns (uint256[] poolIds)
@@ -1423,7 +1455,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Returns**
 * `poolIds` (*uint256[]*) - An array with all of the pool ids that are approved in the system.
 
-### PreferredPoolSet
+#### PreferredPoolSet
 
   ```solidity
   event PreferredPoolSet(uint256 poolId)
@@ -1434,7 +1466,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Parameters**
 * `poolId` (*uint256*) - The id of the pool that was set as preferred.
 
-### PoolApprovedAdded
+#### PoolApprovedAdded
 
   ```solidity
   event PoolApprovedAdded(uint256 poolId)
@@ -1445,7 +1477,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Parameters**
 * `poolId` (*uint256*) - The id of the pool that was approved.
 
-### PoolApprovedRemoved
+#### PoolApprovedRemoved
 
   ```solidity
   event PoolApprovedRemoved(uint256 poolId)
@@ -1456,9 +1488,9 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 **Parameters**
 * `poolId` (*uint256*) - The id of the pool that is no longer approved.
 
-## Pool Module
+### Pool Module
 
-### createPool
+#### createPool
 
   ```solidity
   function createPool(uint128 requestedPoolId, address owner) external
@@ -1470,7 +1502,7 @@ by limiting the frequency of `delegateCollateral` (or `setPoolConfiguration`) ca
 * `requestedPoolId` (*uint128*) - The requested id for the new pool. Reverts if the id is not available.
 * `owner` (*address*) - The address that will own the newly created pool.
 
-### setPoolConfiguration
+#### setPoolConfiguration
 
   ```solidity
   function setPoolConfiguration(uint128 poolId, struct MarketConfiguration.Data[] marketDistribution) external
@@ -1485,7 +1517,7 @@ Incoming market ids need to be provided in ascending order.
 * `poolId` (*uint128*) - The id of the pool whose configuration is being set.
 * `marketDistribution` (*struct MarketConfiguration.Data[]*) - The array of market configuration objects that define the list of markets that are connected to the system.
 
-### getPoolConfiguration
+#### getPoolConfiguration
 
   ```solidity
   function getPoolConfiguration(uint128 poolId) external view returns (struct MarketConfiguration.Data[] markets)
@@ -1498,7 +1530,7 @@ Incoming market ids need to be provided in ascending order.
 
 **Returns**
 * `markets` (*struct MarketConfiguration.Data[]*) - The array of MarketConfiguration objects that describe the pool's configuration.
-### setPoolName
+#### setPoolName
 
   ```solidity
   function setPoolName(uint128 poolId, string name) external
@@ -1510,7 +1542,7 @@ Incoming market ids need to be provided in ascending order.
 * `poolId` (*uint128*) - The id of the pool whose name is being set.
 * `name` (*string*) - The new name to give to the pool.
 
-### getPoolName
+#### getPoolName
 
   ```solidity
   function getPoolName(uint128 poolId) external view returns (string poolName)
@@ -1523,7 +1555,7 @@ Incoming market ids need to be provided in ascending order.
 
 **Returns**
 * `poolName` (*string*) - The current name of the pool.
-### nominatePoolOwner
+#### nominatePoolOwner
 
   ```solidity
   function nominatePoolOwner(address nominatedOwner, uint128 poolId) external
@@ -1535,7 +1567,7 @@ Incoming market ids need to be provided in ascending order.
 * `nominatedOwner` (*address*) - The address to nominate os the new pool owner.
 * `poolId` (*uint128*) - The id whose ownership is being transferred.
 
-### acceptPoolOwnership
+#### acceptPoolOwnership
 
   ```solidity
   function acceptPoolOwnership(uint128 poolId) external
@@ -1546,7 +1578,7 @@ Incoming market ids need to be provided in ascending order.
 **Parameters**
 * `poolId` (*uint128*) - The id of the pool for which the caller is to accept ownership.
 
-### revokePoolNomination
+#### revokePoolNomination
 
   ```solidity
   function revokePoolNomination(uint128 poolId) external
@@ -1557,7 +1589,7 @@ Incoming market ids need to be provided in ascending order.
 **Parameters**
 * `poolId` (*uint128*) - The id of the pool for which the new owner nomination is to be revoked.
 
-### renouncePoolNomination
+#### renouncePoolNomination
 
   ```solidity
   function renouncePoolNomination(uint128 poolId) external
@@ -1568,7 +1600,7 @@ Incoming market ids need to be provided in ascending order.
 **Parameters**
 * `poolId` (*uint128*) - The id of the pool for which the caller is renouncing ownership nomination.
 
-### getPoolOwner
+#### getPoolOwner
 
   ```solidity
   function getPoolOwner(uint128 poolId) external view returns (address owner)
@@ -1581,7 +1613,7 @@ Incoming market ids need to be provided in ascending order.
 
 **Returns**
 * `owner` (*address*) - The current owner of the pool.
-### getNominatedPoolOwner
+#### getNominatedPoolOwner
 
   ```solidity
   function getNominatedPoolOwner(uint128 poolId) external view returns (address nominatedOwner)
@@ -1594,7 +1626,7 @@ Incoming market ids need to be provided in ascending order.
 
 **Returns**
 * `nominatedOwner` (*address*) - The current nominated owner of the pool.
-### setMinLiquidityRatio
+#### setMinLiquidityRatio
 
   ```solidity
   function setMinLiquidityRatio(uint256 minLiquidityRatio) external
@@ -1605,7 +1637,7 @@ Incoming market ids need to be provided in ascending order.
 **Parameters**
 * `minLiquidityRatio` (*uint256*) - The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
 
-### getMinLiquidityRatio
+#### getMinLiquidityRatio
 
   ```solidity
   function getMinLiquidityRatio() external view returns (uint256 minRatioD18)
@@ -1615,15 +1647,19 @@ Incoming market ids need to be provided in ascending order.
 
 **Returns**
 * `minRatioD18` (*uint256*) - The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
-### rebalancePool
+#### rebalancePool
 
   ```solidity
-  function rebalancePool(uint128 poolId) external
+  function rebalancePool(uint128 poolId, address optionalCollateralType) external
   ```
 
   Distributes cached debt in a pool to its vaults and updates market credit capacities.
 
-### PoolCreated
+**Parameters**
+* `poolId` (*uint128*) - the pool to rebalance
+* `optionalCollateralType` (*address*) - in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
+
+#### PoolCreated
 
   ```solidity
   event PoolCreated(uint128 poolId, address owner, address sender)
@@ -1636,7 +1672,7 @@ Incoming market ids need to be provided in ascending order.
 * `owner` (*address*) - The owner of the newly created pool.
 * `sender` (*address*) - The address that triggered the creation of the pool.
 
-### PoolOwnerNominated
+#### PoolOwnerNominated
 
   ```solidity
   event PoolOwnerNominated(uint128 poolId, address nominatedOwner, address owner)
@@ -1649,7 +1685,7 @@ Incoming market ids need to be provided in ascending order.
 * `nominatedOwner` (*address*) - The address that was nominated as the new owner of the pool.
 * `owner` (*address*) - The address of the current owner of the pool.
 
-### PoolOwnershipAccepted
+#### PoolOwnershipAccepted
 
   ```solidity
   event PoolOwnershipAccepted(uint128 poolId, address owner)
@@ -1661,7 +1697,7 @@ Incoming market ids need to be provided in ascending order.
 * `poolId` (*uint128*) - The id of the pool for which the owner nomination was accepted.
 * `owner` (*address*) - The address of the new owner of the pool, which accepted the nomination.
 
-### PoolNominationRevoked
+#### PoolNominationRevoked
 
   ```solidity
   event PoolNominationRevoked(uint128 poolId, address owner)
@@ -1673,7 +1709,7 @@ Incoming market ids need to be provided in ascending order.
 * `poolId` (*uint128*) - The id of the pool in which the nomination was revoked.
 * `owner` (*address*) - The current owner of the pool.
 
-### PoolNominationRenounced
+#### PoolNominationRenounced
 
   ```solidity
   event PoolNominationRenounced(uint128 poolId, address owner)
@@ -1685,7 +1721,7 @@ Incoming market ids need to be provided in ascending order.
 * `poolId` (*uint128*) - The id of the pool for which the owner nomination was renounced.
 * `owner` (*address*) - The current owner of the pool.
 
-### PoolNameUpdated
+#### PoolNameUpdated
 
   ```solidity
   event PoolNameUpdated(uint128 poolId, string name, address sender)
@@ -1698,7 +1734,7 @@ Incoming market ids need to be provided in ascending order.
 * `name` (*string*) - The new name of the pool.
 * `sender` (*address*) - The address that triggered the rename of the pool.
 
-### PoolConfigurationSet
+#### PoolConfigurationSet
 
   ```solidity
   event PoolConfigurationSet(uint128 poolId, struct MarketConfiguration.Data[] markets, address sender)
@@ -1711,7 +1747,7 @@ Incoming market ids need to be provided in ascending order.
 * `markets` (*struct MarketConfiguration.Data[]*) - Array of configuration data of the markets that were connected to the pool.
 * `sender` (*address*) - The address that triggered the pool configuration.
 
-### SetMinLiquidityRatio
+#### SetMinLiquidityRatio
 
   ```solidity
   event SetMinLiquidityRatio(uint256 minLiquidityRatio)
@@ -1722,9 +1758,9 @@ Incoming market ids need to be provided in ascending order.
 **Parameters**
 * `minLiquidityRatio` (*uint256*) - The new system-wide minimum liquidity ratio
 
-## Rewards Manager Module
+### Rewards Manager Module
 
-### registerRewardsDistributor
+#### registerRewardsDistributor
 
   ```solidity
   function registerRewardsDistributor(uint128 poolId, address collateralType, address distributor) external
@@ -1737,7 +1773,7 @@ Incoming market ids need to be provided in ascending order.
 * `collateralType` (*address*) - The address of the collateral used in the pool's rewards.
 * `distributor` (*address*) - The address of the reward distributor to be registered.
 
-### removeRewardsDistributor
+#### removeRewardsDistributor
 
   ```solidity
   function removeRewardsDistributor(uint128 poolId, address collateralType, address distributor) external
@@ -1758,7 +1794,7 @@ rewards-over-time will be halted)
 * `collateralType` (*address*) - The address of the collateral used in the pool's rewards.
 * `distributor` (*address*) - The address of the reward distributor to be registered.
 
-### distributeRewards
+#### distributeRewards
 
   ```solidity
   function distributeRewards(uint128 poolId, address collateralType, uint256 amount, uint64 start, uint32 duration) external
@@ -1775,7 +1811,7 @@ rewards-over-time will be halted)
 * `start` (*uint64*) - The date at which the rewards will begin to be claimable.
 * `duration` (*uint32*) - The period after which all distributed rewards will be claimable.
 
-### claimRewards
+#### claimRewards
 
   ```solidity
   function claimRewards(uint128 accountId, uint128 poolId, address collateralType, address distributor) external returns (uint256 amountClaimedD18)
@@ -1791,7 +1827,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `amountClaimedD18` (*uint256*) - The amount of rewards that were available for the account and thus claimed.
-### updateRewards
+#### updateRewards
 
   ```solidity
   function updateRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[] claimableD18, address[] distributors)
@@ -1807,7 +1843,7 @@ rewards-over-time will be halted)
 **Returns**
 * `claimableD18` (*uint256[]*) - An array of ids of the reward entries that are claimable by the position.
 * `distributors` (*address[]*) - An array with the addresses of the reward distributors associated with the claimable rewards.
-### getRewardRate
+#### getRewardRate
 
   ```solidity
   function getRewardRate(uint128 poolId, address collateralType, address distributor) external view returns (uint256 rateD18)
@@ -1823,7 +1859,7 @@ rewards-over-time will be halted)
 **Returns**
 * `rateD18` (*uint256*) - The queried rewards rate.
 
-### RewardsDistributed
+#### RewardsDistributed
 
   ```solidity
   event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 amount, uint256 start, uint256 duration)
@@ -1839,7 +1875,7 @@ rewards-over-time will be halted)
 * `start` (*uint256*) - The date one which the rewards will begin to be claimable.
 * `duration` (*uint256*) - The time in which all of the distributed rewards will be claimable.
 
-### RewardsClaimed
+#### RewardsClaimed
 
   ```solidity
   event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amount)
@@ -1854,7 +1890,7 @@ rewards-over-time will be halted)
 * `distributor` (*address*) - The address of the rewards distributor associated with these rewards.
 * `amount` (*uint256*) - The amount of rewards that were claimed.
 
-### RewardsDistributorRegistered
+#### RewardsDistributorRegistered
 
   ```solidity
   event RewardsDistributorRegistered(uint128 poolId, address collateralType, address distributor)
@@ -1867,7 +1903,7 @@ rewards-over-time will be halted)
 * `collateralType` (*address*) - The address of the collateral used in the pool's rewards.
 * `distributor` (*address*) - The address of the newly registered reward distributor.
 
-### RewardsDistributorRemoved
+#### RewardsDistributorRemoved
 
   ```solidity
   event RewardsDistributorRemoved(uint128 poolId, address collateralType, address distributor)
@@ -1880,9 +1916,9 @@ rewards-over-time will be halted)
 * `collateralType` (*address*) - The address of the collateral used in the pool's rewards.
 * `distributor` (*address*) - The address of the registered reward distributor.
 
-## USD Token Module
+### USD Token Module
 
-### burnWithAllowance
+#### burnWithAllowance
 
   ```solidity
   function burnWithAllowance(address from, address spender, uint256 amount) external
@@ -1895,22 +1931,18 @@ rewards-over-time will be halted)
 * `spender` (*address*) - The address to which the holder has given allowance to.
 * `amount` (*uint256*) - The amount of snxUSD to be burned, denominated with 18 decimals of precision.
 
-### transferCrossChain
+#### burn
 
   ```solidity
-  function transferCrossChain(uint256 destChainId, address to, uint256 amount) external returns (uint256 feesPaidD18)
+  function burn(uint256 amount) external
   ```
 
-  Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
+  Destroys `amount` of snxUSD tokens from the caller. This is derived from ERC20Burnable.sol and is currently included for testing purposes with CCIP token pools.
 
 **Parameters**
-* `destChainId` (*uint256*) - The id of the chain where tokens are to be transferred to.
-* `to` (*address*) - The destination address in the target chain.
-* `amount` (*uint256*) - The amount of tokens to be transferred, denominated with 18 decimals of precision.
+* `amount` (*uint256*) - The amount of snxUSD to be burned, denominated with 18 decimals of precision.
 
-**Returns**
-* `feesPaidD18` (*uint256*) - The amount of fees paid in the cross-chain transfer, denominated with 18 decimals of precision.
-### isInitialized
+#### isInitialized
 
   ```solidity
   function isInitialized() external returns (bool)
@@ -1920,7 +1952,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*bool*) - A boolean with the result of the query.
-### initialize
+#### initialize
 
   ```solidity
   function initialize(string tokenName, string tokenSymbol, uint8 tokenDecimals) external
@@ -1928,7 +1960,7 @@ rewards-over-time will be halted)
 
   Initializes the token with name, symbol, and decimals.
 
-### mint
+#### mint
 
   ```solidity
   function mint(address to, uint256 amount) external
@@ -1940,7 +1972,7 @@ rewards-over-time will be halted)
 * `to` (*address*) - The address to receive the newly minted tokens.
 * `amount` (*uint256*) - The amount of tokens to mint.
 
-### burn
+#### burn
 
   ```solidity
   function burn(address from, uint256 amount) external
@@ -1952,7 +1984,7 @@ rewards-over-time will be halted)
 * `from` (*address*) - The address whose tokens will be burnt.
 * `amount` (*uint256*) - The amount of tokens to burn.
 
-### setAllowance
+#### setAllowance
 
   ```solidity
   function setAllowance(address from, address spender, uint256 amount) external
@@ -1965,7 +1997,7 @@ rewards-over-time will be halted)
 * `spender` (*address*) - The address that is given allowance.
 * `amount` (*uint256*) - The amount of allowance being given.
 
-### name
+#### name
 
   ```solidity
   function name() external view returns (string)
@@ -1975,7 +2007,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*string*) - A string with the name of the token.
-### symbol
+#### symbol
 
   ```solidity
   function symbol() external view returns (string)
@@ -1985,7 +2017,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*string*) - A string with the symbol of the token.
-### decimals
+#### decimals
 
   ```solidity
   function decimals() external view returns (uint8)
@@ -1995,7 +2027,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*uint8*) - The number of decimals.
-### totalSupply
+#### totalSupply
 
   ```solidity
   function totalSupply() external view returns (uint256)
@@ -2005,7 +2037,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*uint256*) - The total number of tokens.
-### balanceOf
+#### balanceOf
 
   ```solidity
   function balanceOf(address owner) external view returns (uint256)
@@ -2018,7 +2050,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*uint256*) - The number of tokens owned by the user.
-### allowance
+#### allowance
 
   ```solidity
   function allowance(address owner, address spender) external view returns (uint256)
@@ -2032,7 +2064,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*uint256*) - The amount of tokens `spender` can transfer on `owner`'s behalf.
-### transfer
+#### transfer
 
   ```solidity
   function transfer(address to, uint256 amount) external returns (bool)
@@ -2046,7 +2078,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*bool*) - A boolean which is true if the operation succeeded.
-### approve
+#### approve
 
   ```solidity
   function approve(address spender, uint256 amount) external returns (bool)
@@ -2060,7 +2092,7 @@ rewards-over-time will be halted)
 
 **Returns**
 * `[0]` (*bool*) - A boolean which is true if the operation succeeded.
-### increaseAllowance
+#### increaseAllowance
 
   ```solidity
   function increaseAllowance(address spender, uint256 addedValue) external returns (bool)
@@ -2077,7 +2109,7 @@ Requirements:
 
 - `spender` cannot be the zero address.
 
-### decreaseAllowance
+#### decreaseAllowance
 
   ```solidity
   function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool)
@@ -2096,7 +2128,7 @@ Requirements:
 - `spender` must have allowance for the caller of at least
 `subtractedValue`.
 
-### transferFrom
+#### transferFrom
 
   ```solidity
   function transferFrom(address from, address to, uint256 amount) external returns (bool)
@@ -2112,7 +2144,7 @@ Requirements:
 **Returns**
 * `[0]` (*bool*) - A boolean which is true if the operation succeeded.
 
-### Transfer
+#### Transfer
 
   ```solidity
   event Transfer(address from, address to, uint256 amount)
@@ -2125,7 +2157,7 @@ Requirements:
 * `to` (*address*) - The address that received the tokens.
 * `amount` (*uint256*) - The number of tokens that were transferred.
 
-### Approval
+#### Approval
 
   ```solidity
   event Approval(address owner, address spender, uint256 amount)
@@ -2138,9 +2170,9 @@ Requirements:
 * `spender` (*address*) - The address that received the allowance.
 * `amount` (*uint256*) - The number of tokens that were added to `spender`'s allowance.
 
-## Vault Module
+### Vault Module
 
-### delegateCollateral
+#### delegateCollateral
 
   ```solidity
   function delegateCollateral(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage) external
@@ -2155,7 +2187,7 @@ Requirements:
 * `amount` (*uint256*) - The new amount of collateral delegated in the position, denominated with 18 decimals of precision.
 * `leverage` (*uint256*) - The new leverage amount used in the position, denominated with 18 decimals of precision. Requirements: - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission. - If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account. - If decreasing the amount delegated, the liquidity position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type. Emits a {DelegationUpdated} event.
 
-### getPositionCollateralRatio
+#### getPositionCollateralRatio
 
   ```solidity
   function getPositionCollateralRatio(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 ratioD18)
@@ -2173,7 +2205,7 @@ The return value is a percentage with 18 decimals places.
 
 **Returns**
 * `ratioD18` (*uint256*) - The collateralization ratio of the position (collateral / debt), denominated with 18 decimals of precision.
-### getPositionDebt
+#### getPositionDebt
 
   ```solidity
   function getPositionDebt(uint128 accountId, uint128 poolId, address collateralType) external returns (int256 debtD18)
@@ -2191,7 +2223,7 @@ Call this function using `callStatic` to treat it as a view function.
 
 **Returns**
 * `debtD18` (*int256*) - The amount of debt held by the position, denominated with 18 decimals of precision.
-### getPositionCollateral
+#### getPositionCollateral
 
   ```solidity
   function getPositionCollateral(uint128 accountId, uint128 poolId, address collateralType) external view returns (uint256 collateralAmountD18, uint256 collateralValueD18)
@@ -2211,7 +2243,7 @@ collateralValue is represented as an integer with the number of decimals specifi
 **Returns**
 * `collateralAmountD18` (*uint256*) - The amount of collateral used in the position, denominated with 18 decimals of precision.
 * `collateralValueD18` (*uint256*) - The value of collateral used in the position, denominated with 18 decimals of precision.
-### getPosition
+#### getPosition
 
   ```solidity
   function getPosition(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 collateralAmountD18, uint256 collateralValueD18, int256 debtD18, uint256 collateralizationRatioD18)
@@ -2229,7 +2261,7 @@ collateralValue is represented as an integer with the number of decimals specifi
 * `collateralValueD18` (*uint256*) - The value of the collateral used in the position, denominated with 18 decimals of precision.
 * `debtD18` (*int256*) - The amount of debt held in the position, denominated with 18 decimals of precision.
 * `collateralizationRatioD18` (*uint256*) - The collateralization ratio of the position (collateral / debt), denominated with 18 decimals of precision.
-### getVaultDebt
+#### getVaultDebt
 
   ```solidity
   function getVaultDebt(uint128 poolId, address collateralType) external returns (int256 debtD18)
@@ -2246,7 +2278,7 @@ Call this function using `callStatic` to treat it as a view function.
 
 **Returns**
 * `debtD18` (*int256*) - The overall debt of the vault, denominated with 18 decimals of precision.
-### getVaultCollateral
+#### getVaultCollateral
 
   ```solidity
   function getVaultCollateral(uint128 poolId, address collateralType) external returns (uint256 collateralAmountD18, uint256 collateralValueD18)
@@ -2265,7 +2297,7 @@ collateralValue is represented as an integer with the number of decimals specifi
 **Returns**
 * `collateralAmountD18` (*uint256*) - The collateral amount of the vault, denominated with 18 decimals of precision.
 * `collateralValueD18` (*uint256*) - The collateral value of the vault, denominated with 18 decimals of precision.
-### getVaultCollateralRatio
+#### getVaultCollateralRatio
 
   ```solidity
   function getVaultCollateralRatio(uint128 poolId, address collateralType) external returns (uint256 ratioD18)
@@ -2283,7 +2315,7 @@ The return value is a percentage with 18 decimals places.
 **Returns**
 * `ratioD18` (*uint256*) - The collateralization ratio of the vault, denominated with 18 decimals of precision.
 
-### DelegationUpdated
+#### DelegationUpdated
 
   ```solidity
   event DelegationUpdated(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)

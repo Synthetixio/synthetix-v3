@@ -13,6 +13,7 @@ export type OpenPositionData = {
   price: ethers.BigNumber;
   trackingCode?: string;
   keeper: ethers.Signer;
+  referrer?: string;
   systems: () => Systems;
   provider: () => ethers.providers.JsonRpcProvider;
 };
@@ -27,6 +28,7 @@ export const openPosition = async (data: OpenPositionData) => {
     sizeDelta,
     settlementStrategyId,
     price,
+    referrer,
     trackingCode,
     keeper,
   } = data;
@@ -45,8 +47,10 @@ export const openPosition = async (data: OpenPositionData) => {
       sizeDelta,
       settlementStrategyId,
       acceptablePrice: sizeDelta.gt(0) ? price.mul(2) : price.div(2),
+      referrer: referrer || ethers.constants.AddressZero,
       trackingCode: trackingCode ?? ethers.constants.HashZero,
     });
+
   const commitmentTime = await getTxTime(provider(), commitTx);
   const settlementTime = commitmentTime + delay + 1;
   await fastForwardTo(settlementTime, provider());
@@ -54,7 +58,6 @@ export const openPosition = async (data: OpenPositionData) => {
   const settleTx = await settleOrder({
     systems,
     keeper,
-    marketId,
     accountId,
     offChainPrice: toNum(price),
     settlementTime,

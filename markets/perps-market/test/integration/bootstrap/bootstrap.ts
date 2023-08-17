@@ -1,7 +1,7 @@
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
+import { FeeCollectorMock, PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
 import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
 import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 import { PerpsMarketData, bootstrapPerpsMarkets, bootstrapTraders } from '.';
@@ -9,6 +9,7 @@ import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
 import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
 import { CollateralMock } from '@synthetixio/main/typechain-types';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -20,6 +21,7 @@ type Proxies = {
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
   ['MockPyth']: MockPyth;
+  ['FeeCollectorMock']: FeeCollectorMock;
 };
 
 export type Systems = {
@@ -31,6 +33,7 @@ export type Systems = {
   OracleManager: OracleManagerProxy;
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
+  FeeCollectorMock: FeeCollectorMock;
   Synth: (address: string) => SynthRouter;
 };
 
@@ -54,6 +57,7 @@ export function bootstrap() {
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),
       MockPyth: getContract('MockPyth'),
+      FeeCollectorMock: getContract('FeeCollectorMock'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });
@@ -82,6 +86,8 @@ type BootstrapArgs = {
     minLiquidationReward: ethers.BigNumber;
     maxLiquidationReward: ethers.BigNumber;
   };
+  maxPositionsPerAccount?: ethers.BigNumber;
+  maxCollateralsPerAccount?: ethers.BigNumber;
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -89,9 +95,9 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { synthMarkets } = bootstrapSynthMarkets(data.synthMarkets, chainStateWithPerpsMarkets);
 
-  const { systems, signers, provider, owner, perpsMarkets, marketOwner, poolId } =
+  const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId } =
     chainStateWithPerpsMarkets;
-  const { trader1, trader2, keeper, restore } = bootstrapTraders({
+  const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
     signers,
     provider,
@@ -104,8 +110,30 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     for (const { marketId } of synthMarkets()) {
       await systems()
         .PerpsMarket.connect(owner())
-        .setMaxCollateralForSynthMarketId(marketId(), ethers.constants.MaxUint256);
+        .setMaxCollateralAmount(marketId(), ethers.constants.MaxUint256);
     }
+  });
+
+  before('set max market collateral allowed for all synths', async () => {
+    for (const { synthAddress } of synthMarkets()) {
+      await systems()
+        .Core.connect(owner())
+        .configureMaximumMarketCollateral(
+          chainStateWithPerpsMarkets.superMarketId(),
+          synthAddress(),
+          ethers.constants.MaxUint256
+        );
+    }
+  });
+
+  before('set max positions and colltaterals per account', async () => {
+    const { maxPositionsPerAccount, maxCollateralsPerAccount } = data;
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setPerAccountCaps(
+        maxPositionsPerAccount ? maxPositionsPerAccount : 100000,
+        maxCollateralsPerAccount ? maxCollateralsPerAccount : 100000
+      );
   });
 
   // auto add all synth markets in the row they were created for deduction priority
@@ -126,6 +154,8 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     });
   }
 
+  const restore = snapshotCheckpoint(provider);
+
   return {
     systems,
     signers,
@@ -133,11 +163,12 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     restore,
     trader1,
     trader2,
+    trader3,
     keeper,
     owner,
     perpsMarkets,
     synthMarkets,
-    marketOwner,
+    superMarketId,
     poolId,
   };
 }

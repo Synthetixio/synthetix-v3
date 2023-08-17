@@ -504,6 +504,32 @@ export class CollateralConfiguredConfigStruct extends ethereum.Tuple {
   }
 }
 
+export class TransferCrossChainInitiated extends ethereum.Event {
+  get params(): TransferCrossChainInitiated__Params {
+    return new TransferCrossChainInitiated__Params(this);
+  }
+}
+
+export class TransferCrossChainInitiated__Params {
+  _event: TransferCrossChainInitiated;
+
+  constructor(event: TransferCrossChainInitiated) {
+    this._event = event;
+  }
+
+  get destChainId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get amount(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get sender(): Address {
+    return this._event.parameters[2].value.toAddress();
+  }
+}
+
 export class IssuanceFeePaid extends ethereum.Event {
   get params(): IssuanceFeePaid__Params {
     return new IssuanceFeePaid__Params(this);
@@ -1326,6 +1352,24 @@ export class RewardsDistributorRemoved__Params {
   }
 }
 
+export class NewSupportedCrossChainNetwork extends ethereum.Event {
+  get params(): NewSupportedCrossChainNetwork__Params {
+    return new NewSupportedCrossChainNetwork__Params(this);
+  }
+}
+
+export class NewSupportedCrossChainNetwork__Params {
+  _event: NewSupportedCrossChainNetwork;
+
+  constructor(event: NewSupportedCrossChainNetwork) {
+    this._event = event;
+  }
+
+  get newChainId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+}
+
 export class DelegationUpdated extends ethereum.Event {
   get params(): DelegationUpdated__Params {
     return new DelegationUpdated__Params(this);
@@ -1550,6 +1594,63 @@ export class CoreProxy__getMarketFeesResult {
   }
 
   getWithdrawFeeAmount(): BigInt {
+    return this.value1;
+  }
+}
+
+export class CoreProxy__getMarketPoolDebtDistributionResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromSignedBigInt(this.value2));
+    return map;
+  }
+
+  getSharesD18(): BigInt {
+    return this.value0;
+  }
+
+  getTotalSharesD18(): BigInt {
+    return this.value1;
+  }
+
+  getValuePerShareD27(): BigInt {
+    return this.value2;
+  }
+}
+
+export class CoreProxy__getMarketPoolsResult {
+  value0: Array<BigInt>;
+  value1: Array<BigInt>;
+
+  constructor(value0: Array<BigInt>, value1: Array<BigInt>) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigIntArray(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigIntArray(this.value1));
+    return map;
+  }
+
+  getInRangePoolIds(): Array<BigInt> {
+    return this.value0;
+  }
+
+  getOutRangePoolIds(): Array<BigInt> {
     return this.value1;
   }
 }
@@ -2677,6 +2778,69 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  getMarketPoolDebtDistribution(
+    marketId: BigInt,
+    poolId: BigInt
+  ): CoreProxy__getMarketPoolDebtDistributionResult {
+    let result = super.call(
+      'getMarketPoolDebtDistribution',
+      'getMarketPoolDebtDistribution(uint128,uint128):(uint256,uint128,int128)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(poolId)]
+    );
+
+    return new CoreProxy__getMarketPoolDebtDistributionResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt()
+    );
+  }
+
+  try_getMarketPoolDebtDistribution(
+    marketId: BigInt,
+    poolId: BigInt
+  ): ethereum.CallResult<CoreProxy__getMarketPoolDebtDistributionResult> {
+    let result = super.tryCall(
+      'getMarketPoolDebtDistribution',
+      'getMarketPoolDebtDistribution(uint128,uint128):(uint256,uint128,int128)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(poolId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getMarketPoolDebtDistributionResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt()
+      )
+    );
+  }
+
+  getMarketPools(marketId: BigInt): CoreProxy__getMarketPoolsResult {
+    let result = super.call('getMarketPools', 'getMarketPools(uint128):(uint128[],uint128[])', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return new CoreProxy__getMarketPoolsResult(
+      result[0].toBigIntArray(),
+      result[1].toBigIntArray()
+    );
+  }
+
+  try_getMarketPools(marketId: BigInt): ethereum.CallResult<CoreProxy__getMarketPoolsResult> {
+    let result = super.tryCall('getMarketPools', 'getMarketPools(uint128):(uint128[],uint128[])', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new CoreProxy__getMarketPoolsResult(value[0].toBigIntArray(), value[1].toBigIntArray())
+    );
+  }
+
   getMarketReportedDebt(marketId: BigInt): BigInt {
     let result = super.call('getMarketReportedDebt', 'getMarketReportedDebt(uint128):(uint256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
@@ -3166,6 +3330,60 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  setSupportedCrossChainNetworks(
+    supportedNetworks: Array<BigInt>,
+    ccipSelectors: Array<BigInt>
+  ): BigInt {
+    let result = super.call(
+      'setSupportedCrossChainNetworks',
+      'setSupportedCrossChainNetworks(uint64[],uint64[]):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigIntArray(supportedNetworks),
+        ethereum.Value.fromUnsignedBigIntArray(ccipSelectors),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_setSupportedCrossChainNetworks(
+    supportedNetworks: Array<BigInt>,
+    ccipSelectors: Array<BigInt>
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'setSupportedCrossChainNetworks',
+      'setSupportedCrossChainNetworks(uint64[],uint64[]):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigIntArray(supportedNetworks),
+        ethereum.Value.fromUnsignedBigIntArray(ccipSelectors),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  supportsInterface(interfaceId: Bytes): boolean {
+    let result = super.call('supportsInterface', 'supportsInterface(bytes4):(bool)', [
+      ethereum.Value.fromFixedBytes(interfaceId),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_supportsInterface(interfaceId: Bytes): ethereum.CallResult<boolean> {
+    let result = super.tryCall('supportsInterface', 'supportsInterface(bytes4):(bool)', [
+      ethereum.Value.fromFixedBytes(interfaceId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
   getPosition(
@@ -4098,6 +4316,68 @@ export class RegisterUnmanagedSystemCall__Outputs {
   }
 }
 
+export class CcipReceiveCall extends ethereum.Call {
+  get inputs(): CcipReceiveCall__Inputs {
+    return new CcipReceiveCall__Inputs(this);
+  }
+
+  get outputs(): CcipReceiveCall__Outputs {
+    return new CcipReceiveCall__Outputs(this);
+  }
+}
+
+export class CcipReceiveCall__Inputs {
+  _call: CcipReceiveCall;
+
+  constructor(call: CcipReceiveCall) {
+    this._call = call;
+  }
+
+  get message(): CcipReceiveCallMessageStruct {
+    return changetype<CcipReceiveCallMessageStruct>(this._call.inputValues[0].value.toTuple());
+  }
+}
+
+export class CcipReceiveCall__Outputs {
+  _call: CcipReceiveCall;
+
+  constructor(call: CcipReceiveCall) {
+    this._call = call;
+  }
+}
+
+export class CcipReceiveCallMessageStruct extends ethereum.Tuple {
+  get messageId(): Bytes {
+    return this[0].toBytes();
+  }
+
+  get sourceChainSelector(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get sender(): Bytes {
+    return this[2].toBytes();
+  }
+
+  get data(): Bytes {
+    return this[3].toBytes();
+  }
+
+  get tokenAmounts(): Array<CcipReceiveCallMessageTokenAmountsStruct> {
+    return this[4].toTupleArray<CcipReceiveCallMessageTokenAmountsStruct>();
+  }
+}
+
+export class CcipReceiveCallMessageTokenAmountsStruct extends ethereum.Tuple {
+  get token(): Address {
+    return this[0].toAddress();
+  }
+
+  get amount(): BigInt {
+    return this[1].toBigInt();
+  }
+}
+
 export class CleanExpiredLocksCall extends ethereum.Call {
   get inputs(): CleanExpiredLocksCall__Inputs {
     return new CleanExpiredLocksCall__Inputs(this);
@@ -4321,6 +4601,44 @@ export class ConfigureCollateralCallConfigStruct extends ethereum.Tuple {
 
   get minDelegationD18(): BigInt {
     return this[6].toBigInt();
+  }
+}
+
+export class TransferCrossChainCall extends ethereum.Call {
+  get inputs(): TransferCrossChainCall__Inputs {
+    return new TransferCrossChainCall__Inputs(this);
+  }
+
+  get outputs(): TransferCrossChainCall__Outputs {
+    return new TransferCrossChainCall__Outputs(this);
+  }
+}
+
+export class TransferCrossChainCall__Inputs {
+  _call: TransferCrossChainCall;
+
+  constructor(call: TransferCrossChainCall) {
+    this._call = call;
+  }
+
+  get destChainId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get amount(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+}
+
+export class TransferCrossChainCall__Outputs {
+  _call: TransferCrossChainCall;
+
+  constructor(call: TransferCrossChainCall) {
+    this._call = call;
+  }
+
+  get gasTokenUsed(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
 
@@ -4840,6 +5158,90 @@ export class GetMarketDebtPerShareCall__Outputs {
   }
 }
 
+export class GetMarketPoolDebtDistributionCall extends ethereum.Call {
+  get inputs(): GetMarketPoolDebtDistributionCall__Inputs {
+    return new GetMarketPoolDebtDistributionCall__Inputs(this);
+  }
+
+  get outputs(): GetMarketPoolDebtDistributionCall__Outputs {
+    return new GetMarketPoolDebtDistributionCall__Outputs(this);
+  }
+}
+
+export class GetMarketPoolDebtDistributionCall__Inputs {
+  _call: GetMarketPoolDebtDistributionCall;
+
+  constructor(call: GetMarketPoolDebtDistributionCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+}
+
+export class GetMarketPoolDebtDistributionCall__Outputs {
+  _call: GetMarketPoolDebtDistributionCall;
+
+  constructor(call: GetMarketPoolDebtDistributionCall) {
+    this._call = call;
+  }
+
+  get sharesD18(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+
+  get totalSharesD18(): BigInt {
+    return this._call.outputValues[1].value.toBigInt();
+  }
+
+  get valuePerShareD27(): BigInt {
+    return this._call.outputValues[2].value.toBigInt();
+  }
+}
+
+export class GetMarketPoolsCall extends ethereum.Call {
+  get inputs(): GetMarketPoolsCall__Inputs {
+    return new GetMarketPoolsCall__Inputs(this);
+  }
+
+  get outputs(): GetMarketPoolsCall__Outputs {
+    return new GetMarketPoolsCall__Outputs(this);
+  }
+}
+
+export class GetMarketPoolsCall__Inputs {
+  _call: GetMarketPoolsCall;
+
+  constructor(call: GetMarketPoolsCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class GetMarketPoolsCall__Outputs {
+  _call: GetMarketPoolsCall;
+
+  constructor(call: GetMarketPoolsCall) {
+    this._call = call;
+  }
+
+  get inRangePoolIds(): Array<BigInt> {
+    return this._call.outputValues[0].value.toBigIntArray();
+  }
+
+  get outRangePoolIds(): Array<BigInt> {
+    return this._call.outputValues[1].value.toBigIntArray();
+  }
+}
+
 export class RegisterMarketCall extends ethereum.Call {
   get inputs(): RegisterMarketCall__Inputs {
     return new RegisterMarketCall__Inputs(this);
@@ -5225,6 +5627,10 @@ export class RebalancePoolCall__Inputs {
 
   get poolId(): BigInt {
     return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get optionalCollateralType(): Address {
+    return this._call.inputValues[1].value.toAddress();
   }
 }
 
@@ -5622,6 +6028,40 @@ export class UpdateRewardsCall__Outputs {
   }
 }
 
+export class ConfigureChainlinkCrossChainCall extends ethereum.Call {
+  get inputs(): ConfigureChainlinkCrossChainCall__Inputs {
+    return new ConfigureChainlinkCrossChainCall__Inputs(this);
+  }
+
+  get outputs(): ConfigureChainlinkCrossChainCall__Outputs {
+    return new ConfigureChainlinkCrossChainCall__Outputs(this);
+  }
+}
+
+export class ConfigureChainlinkCrossChainCall__Inputs {
+  _call: ConfigureChainlinkCrossChainCall;
+
+  constructor(call: ConfigureChainlinkCrossChainCall) {
+    this._call = call;
+  }
+
+  get ccipRouter(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get ccipTokenPool(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+}
+
+export class ConfigureChainlinkCrossChainCall__Outputs {
+  _call: ConfigureChainlinkCrossChainCall;
+
+  constructor(call: ConfigureChainlinkCrossChainCall) {
+    this._call = call;
+  }
+}
+
 export class ConfigureOracleManagerCall extends ethereum.Call {
   get inputs(): ConfigureOracleManagerCall__Inputs {
     return new ConfigureOracleManagerCall__Inputs(this);
@@ -5648,44 +6088,6 @@ export class ConfigureOracleManagerCall__Outputs {
   _call: ConfigureOracleManagerCall;
 
   constructor(call: ConfigureOracleManagerCall) {
-    this._call = call;
-  }
-}
-
-export class RegisterCcipCall extends ethereum.Call {
-  get inputs(): RegisterCcipCall__Inputs {
-    return new RegisterCcipCall__Inputs(this);
-  }
-
-  get outputs(): RegisterCcipCall__Outputs {
-    return new RegisterCcipCall__Outputs(this);
-  }
-}
-
-export class RegisterCcipCall__Inputs {
-  _call: RegisterCcipCall;
-
-  constructor(call: RegisterCcipCall) {
-    this._call = call;
-  }
-
-  get ccipSend(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get ccipReceive(): Address {
-    return this._call.inputValues[1].value.toAddress();
-  }
-
-  get ccipTokenPool(): Address {
-    return this._call.inputValues[2].value.toAddress();
-  }
-}
-
-export class RegisterCcipCall__Outputs {
-  _call: RegisterCcipCall;
-
-  constructor(call: RegisterCcipCall) {
     this._call = call;
   }
 }
@@ -5721,6 +6123,44 @@ export class SetConfigCall__Outputs {
 
   constructor(call: SetConfigCall) {
     this._call = call;
+  }
+}
+
+export class SetSupportedCrossChainNetworksCall extends ethereum.Call {
+  get inputs(): SetSupportedCrossChainNetworksCall__Inputs {
+    return new SetSupportedCrossChainNetworksCall__Inputs(this);
+  }
+
+  get outputs(): SetSupportedCrossChainNetworksCall__Outputs {
+    return new SetSupportedCrossChainNetworksCall__Outputs(this);
+  }
+}
+
+export class SetSupportedCrossChainNetworksCall__Inputs {
+  _call: SetSupportedCrossChainNetworksCall;
+
+  constructor(call: SetSupportedCrossChainNetworksCall) {
+    this._call = call;
+  }
+
+  get supportedNetworks(): Array<BigInt> {
+    return this._call.inputValues[0].value.toBigIntArray();
+  }
+
+  get ccipSelectors(): Array<BigInt> {
+    return this._call.inputValues[1].value.toBigIntArray();
+  }
+}
+
+export class SetSupportedCrossChainNetworksCall__Outputs {
+  _call: SetSupportedCrossChainNetworksCall;
+
+  constructor(call: SetSupportedCrossChainNetworksCall) {
+    this._call = call;
+  }
+
+  get numRegistered(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
 
@@ -5903,7 +6343,7 @@ export class GetPositionDebtCall__Outputs {
     this._call = call;
   }
 
-  get value0(): BigInt {
+  get debt(): BigInt {
     return this._call.outputValues[0].value.toBigInt();
   }
 }

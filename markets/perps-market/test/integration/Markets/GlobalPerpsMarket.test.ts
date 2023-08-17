@@ -6,17 +6,17 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 describe('GlobalPerpsMarket', () => {
   const { systems, perpsMarkets, trader1 } = bootstrapMarkets({
     synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
-    perpsMarkets: [{ name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    perpsMarkets: [
+      { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
+      { requestedMarketId: 50, name: 'Btc', token: 'snxBTC', price: bn(10000) },
+    ],
     traderAccountIds: [],
   });
 
   before(
     'set maxCollateralAmounts, synthDeductionPriority, minLiquidationRewardUsd, maxLiquidationRewardUsd',
     async () => {
-      await systems().PerpsMarket.setMaxCollateralForSynthMarketId(
-        perpsMarkets()[0].marketId(),
-        bn(10000)
-      );
+      await systems().PerpsMarket.setMaxCollateralAmount(perpsMarkets()[0].marketId(), bn(10000));
       await systems().PerpsMarket.setSynthDeductionPriority([1, 2]);
       await systems().PerpsMarket.setLiquidationRewardGuards(100, 500);
     }
@@ -24,9 +24,7 @@ describe('GlobalPerpsMarket', () => {
 
   it('returns maxCollateralAmounts for synth market id', async () => {
     assertBn.equal(
-      await systems().PerpsMarket.getMaxCollateralAmountsForSynthMarket(
-        perpsMarkets()[0].marketId()
-      ),
+      await systems().PerpsMarket.getMaxCollateralAmount(perpsMarkets()[0].marketId()),
       bn(10000)
     );
   });
@@ -52,12 +50,21 @@ describe('GlobalPerpsMarket', () => {
     await assertRevert(
       systems()
         .PerpsMarket.connect(trader1())
-        .setMaxCollateralForSynthMarketId(perpsMarkets()[0].marketId(), bn(10000)),
+        .setMaxCollateralAmount(perpsMarkets()[0].marketId(), bn(10000)),
       `Unauthorized("${await trader1().getAddress()}")`
     );
     await assertRevert(
       systems().PerpsMarket.connect(trader1()).setSynthDeductionPriority([1, 2]),
       `Unauthorized("${await trader1().getAddress()}")`
     );
+  });
+
+  describe('getMarkets()', () => {
+    it('returns all markets', async () => {
+      const markets = await systems().PerpsMarket.getMarkets();
+      assertBn.equal(markets.length, 2);
+      assertBn.equal(markets[0], perpsMarkets()[0].marketId());
+      assertBn.equal(markets[1], perpsMarkets()[1].marketId());
+    });
   });
 });

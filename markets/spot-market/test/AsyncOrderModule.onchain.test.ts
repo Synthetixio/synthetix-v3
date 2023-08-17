@@ -36,7 +36,7 @@ describe('AsyncOrderModule onchain', () => {
     strategyId: number;
 
   before('identify', async () => {
-    [, , marketOwner, trader1, , keeper] = signers();
+    [, , marketOwner, trader1, , , , keeper] = signers();
     const synthAddress = await systems().SpotMarket.getSynth(marketId());
     synth = systems().Synth(synthAddress);
   });

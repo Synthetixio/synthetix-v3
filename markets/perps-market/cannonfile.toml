@@ -32,23 +32,17 @@ source = "<%= settings.spotMarketPackage %>"
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
 
-[contract.CollateralModule]
-artifact = "CollateralModule"
-
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
-[contract.AtomicOrderModule]
-artifact = "AtomicOrderModule"
+[contract.AsyncOrderSettlementModule]
+artifact = "AsyncOrderSettlementModule"
 
 [contract.PerpsAccountModule]
 artifact = "PerpsAccountModule"
 
 [contract.PerpsMarketModule]
 artifact = "PerpsMarketModule"
-
-[contract.LimitOrderModule]
-artifact = "LimitOrderModule"
 
 [contract.LiquidationModule]
 artifact = "LiquidationModule"
@@ -81,11 +75,9 @@ contracts = [
   "PerpsMarketFactoryModule",
   "PerpsAccountModule",
   "PerpsMarketModule",
-  "AtomicOrderModule",
   "AsyncOrderModule",
-  "CollateralModule",
+  "AsyncOrderSettlementModule",
   "FeatureFlagModule",
-  "LimitOrderModule",
   "LiquidationModule",
   "MarketConfigurationModule",
   "GlobalPerpsMarketModule"
@@ -94,13 +86,11 @@ depends = [
   "import.synthetix",
   "contract.CoreModule",
   "contract.PerpsMarketFactoryModule",
-  "contract.AtomicOrderModule",
   "contract.AsyncOrderModule",
+  "contract.AsyncOrderSettlementModule",
   "contract.PerpsAccountModule",
   "contract.PerpsMarketModule",
-  "contract.CollateralModule",
   "contract.FeatureFlagModule",
-  "contract.LimitOrderModule",
   "contract.LiquidationModule",
   "contract.MarketConfigurationModule",
   "contract.GlobalPerpsMarketModule"
@@ -148,9 +138,9 @@ args = [
 depends = [
   "invoke.upgrade_proxy"
 ]
-factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
-factory.AccountProxy.event = "AssociatedSystemSet"
-factory.AccountProxy.arg = 2
+factory.PerpsAccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.PerpsAccountProxy.event = "AssociatedSystemSet"
+factory.PerpsAccountProxy.arg = 2
 
 # add pool owner to feature flag allow list
 [invoke.addPerpsMarketToFeatureFlag]
@@ -166,3 +156,12 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 depends = ['invoke.setSynthetix']
+
+[invoke.initializeFactory]
+target = ["PerpsMarketProxy"]
+func = "initializeFactory"
+from = "<%= settings.owner %>"
+depends = ['invoke.setSynthetix']
+
+extra.superMarketId.event = "FactoryInitialized"
+extra.superMarketId.arg = 0
