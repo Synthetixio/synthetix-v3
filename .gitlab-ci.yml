@@ -6,7 +6,7 @@ stages:
 - test
 
 before_script:
-- apk add nodejs npm
+- apk add nodejs yarn 
 - export CANNON_DIRECTORY="$(pwd)/.cannon"
 
 # This folder is cached between builds
