@@ -19,9 +19,9 @@ build:
   stage: build
   script: yarn install --immutable --immutable-cache && yarn build
 
-build-testable:
-  stage: build-testable
-  script: yarn workspaces foreach --topological-dev --recursive --verbose run build-testable
+    #build-testable:
+    #stage: build-testable
+    #script: yarn workspaces foreach --topological-dev --recursive --verbose run build-testable
 
 .test:
   stage: test
@@ -80,11 +80,14 @@ test-spot-market:
 test-perps-market:
   extends: .test
   before_script:
+    - apk add nodejs yarn 
+    - export CANNON_DIRECTORY="$(pwd)/.cannon"
+    - yarn workspaces foreach --topological-dev --recursive --verbose run build-testable
     - cd markets/perps-market
-  only:
-    changes:
-    - utils/core-contracts/*
-    - utils/core-modules/*
-    - markets/perps-market/*
+  #only:
+  #    changes:
+  #  - utils/core-contracts/*
+  #  - utils/core-modules/*
+  #  - markets/perps-market/*
 
 
