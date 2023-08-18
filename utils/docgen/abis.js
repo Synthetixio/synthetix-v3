@@ -55,7 +55,6 @@ function chainName(chain) {
 async function run() {
   await fs.mkdir(`${__dirname}/abis`, { recursive: true });
   await fs.mkdir(`${__dirname}/docs`, { recursive: true });
-  await fs.mkdir(`${__dirname}/deployments`, { recursive: true });
 
   const prettierOptions = JSON.parse(await fs.readFile(`${__dirname}/../../.prettierrc`, 'utf8'));
   const prettyJson = (obj) =>

@@ -6,7 +6,6 @@ echo "Docgen ABIs..."
 
 ROOT=$(yarn workspace synthetix-v3 exec pwd)
 OUT="$ROOT/docs/addresses-+-abis.md"
-mkdir -p $ROOT/deployments
 mkdir -p $ROOT/docs
 rm -rf $ROOT/docs/abis
 rm -rf $OUT
@@ -21,6 +20,7 @@ generate () {
   echo "Generating ABIs for $_chainId"
   echo "-----------------------------"
   echo "> cannon inspect synthetix-omnibus:latest --chain-id $_chainId --json > ./deployments/$_chainId.json"
+  mkdir -p ./deployments
   yarn cannon inspect synthetix-omnibus:latest --chain-id $_chainId --json > ./deployments/$_chainId.json
   node ./abis.js $_chainId ./deployments/$_chainId.json
   cat ./docs/$_chainId.md >> $OUT
