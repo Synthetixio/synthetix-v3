@@ -29,17 +29,34 @@ jobs:
 
       - checkout
       - yarn-install
-      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
-      - run: yarn docgen
+
+      - run:
+          name: "Build TS"
+          command: yarn workspaces foreach --topological-dev --verbose run build:ts
+      - run:
+          name: "Generate docs for each contract"
+          command: yarn workspaces foreach --verbose run docgen
+      - run:
+          name: "Generate combined smart-contracts.md"
+          command: yarn workspace @synthetixio/docgen run docgen:contracts
+      - run:
+          name: "Generate ABIs for each supported network"
+          command: yarn workspace @synthetixio/docgen run abis
+      - run:
+          name: "Generate combined addresses-+-abis.md"
+          command: yarn workspace @synthetixio/docgen run docgen:abis
+
       - store_artifacts:
-          path: "docs/smart-contracts.md"
-          destination: "smart-contracts.md"
+          path: "docs"
+          destination: "."
 
       - run:
           working_directory: ~/synthetix-gitbook-v3
           name: "Update docs and push to smart-contracts branch"
           command: |
             cp ~/synthetix-v3/docs/smart-contracts.md ./for-developers/smart-contracts.md
+            cp ~/synthetix-v3/docs/addresses-+-abis.md ./for-developers/addresses-+-abis.md
+            cp ~/synthetix-v3/docs/abis/*.json ./for-developers/abis/
 
             STATUS=$(git status)
             if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
@@ -54,6 +71,8 @@ jobs:
             git config --global user.name Noisekit
 
             git add ./for-developers/smart-contracts.md
+            git add ./for-developers/addresses-+-abis.md
+            git add ./for-developers/abis
             git commit -m "Update Smart Contracts"
             git push --set-upstream --force origin smart-contracts
 

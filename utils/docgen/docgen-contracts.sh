@@ -1,8 +1,11 @@
 #!/bin/bash
 
+echo "Docgen contracts..."
+
 ROOT=$(yarn workspace synthetix-v3 exec pwd)
 OUT="$ROOT/docs/smart-contracts.md"
 mkdir -p $ROOT/docs
+rm -rf $OUT
 touch $OUT
 
 echo "# Smart Contracts" > $OUT
@@ -49,3 +52,5 @@ echo "" >> $OUT
 echo "- [Back to TOC](#synthetix-core)" >> $OUT
 echo "" >> $OUT
 cat $ROOT/protocol/oracle-manager/docs/index.md >> $OUT
+
+echo "OK Docgen contracts"
