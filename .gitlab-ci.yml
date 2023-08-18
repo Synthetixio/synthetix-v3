@@ -2,7 +2,7 @@ image: ghcr.io/foundry-rs/foundry:latest
 
 stages:
 - build
-- build-testable
+  #- build-testable
 - test
 
 before_script:
