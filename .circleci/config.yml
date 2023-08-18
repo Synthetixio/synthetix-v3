@@ -119,8 +119,16 @@ jobs:
       - yarn-install
       - run: yarn workspaces foreach --topological-dev --verbose run build:ts
 
-      - version-testable-contracts
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
 
+      - version-contracts
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+
+      - version-testable-contracts
       - restore_cache:
           keys:
             - generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
@@ -138,12 +146,6 @@ jobs:
           paths:
             - "protocol/synthetix/contracts/generated"
             # Add more folders here if we generate more
-
-      - version-contracts
-
-      - restore_cache:
-          keys:
-            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
 
       - restore_cache:
           keys:
@@ -171,6 +173,10 @@ jobs:
           key: cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
           paths:
             - "~/.local/share/cannon"
+      - save_cache:
+          key: hardhat-{{ .Environment.SOLC_VERSION }}
+          paths:
+            - "~/.cache/hardhat-nodejs"
 
   test-contracts:
     parameters:
@@ -186,6 +192,10 @@ jobs:
       - install-foundry
       - yarn-install
 
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
       - version-contracts
       - restore_cache:
           keys:
@@ -199,7 +209,9 @@ jobs:
           keys:
             - generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
 
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -233,7 +245,9 @@ jobs:
       - checkout
       - yarn-install
 
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -266,7 +280,13 @@ jobs:
       - install-foundry
       - yarn-install
 
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run:
           name: "Run tests"
@@ -300,7 +320,13 @@ jobs:
       - checkout
       - yarn-install
 
-      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
 
       - run: yarn workspace "<< parameters.workspace >>" run compile-contracts
 
@@ -384,13 +410,17 @@ jobs:
       - run-ipfs-daemon
       - yarn-install
       - wait-for-ipfs
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
       - run:
           name: "Compile TS"
           command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
       - run:
-          name: "Compile TS"
+          name: "Simulate release and test for Proxy change"
           command: |
-            for CHAIN in "<< parameters.chains >>"; do
+            export CHAINS="<< parameters.chains >>" 
+            for CHAIN in $CHAINS; do
               echo
               echo
               echo
@@ -469,15 +499,15 @@ workflows:
           parallelism: 2
 
       - test-subgraph:
-          name: "test-core-subgraph"
+          name: "test-subgraph-core"
           workspace: "@synthetixio/core-subgraph"
 
       - test-subgraph:
-          name: "test-spot-market-subgraph"
+          name: "test-subgraph-spot-market"
           workspace: "@synthetixio/spot-market-subgraph"
 
       - test-subgraph:
-          name: "test-perps-market-subgraph"
+          name: "test-subgraph-perps-market"
           workspace: "@synthetixio/perps-market-subgraph"
 
       - simulate-release:
