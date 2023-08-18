@@ -6,20 +6,35 @@ import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil } from 'lodash';
 
+// --- Constants --- //
+
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 // --- Mutative helpers --- //
 
 type Bs = ReturnType<typeof bootstrap>;
+type GeneratedTrader = ReturnType<typeof genTrader> | Awaited<ReturnType<typeof genTrader>>;
 
-/** Returns a generated trader with collateral and market details. */
-export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) => {
-  const { trader, market, collateral, collateralDepositAmount } = await tr;
+/** Provision margin for this trader given the full `gTrader` context. */
+export const approveAndMintMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
+  const { trader, collateral, collateralDepositAmount } = await gTrader;
   const { PerpMarketProxy } = bs.systems();
 
   const collateralConnected = collateral.contract.connect(trader.signer);
   await collateralConnected.mint(trader.signer.getAddress(), collateralDepositAmount);
   await collateralConnected.approve(PerpMarketProxy.address, collateralDepositAmount);
 
-  // Perform the deposit
+  return gTrader;
+};
+
+/** Returns a generated trader with collateral and market details. */
+export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
+  const { PerpMarketProxy } = bs.systems();
+
+  // Provision collateral and approve for access.
+  const { market, trader, collateral, collateralDepositAmount } = await approveAndMintMargin(bs, gTrader);
+
+  // Perform the deposit.
   await PerpMarketProxy.connect(trader.signer).modifyCollateral(
     trader.accountId,
     market.marketId(),
@@ -27,7 +42,7 @@ export const depositMargin = async (bs: Bs, tr: ReturnType<typeof genTrader>) =>
     collateralDepositAmount
   );
 
-  return tr;
+  return gTrader;
 };
 
 /** Generic update on market specific params. */
@@ -77,6 +92,7 @@ export const getPythPriceData = async (
   return { updateData, updateFee };
 };
 
+/** Returns a reasonable timestamp and publishTime to fast forward to for settlements. */
 export const getFastForwardTimestamp = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
@@ -115,6 +131,7 @@ export const commitOrder = async (
     keeperFeeBufferUsd
   );
 };
+
 /** Commits a generated `order` for `trader` on `marketId` and settles successfully. */
 export const commitAndSettle = async (
   bs: ReturnType<typeof bootstrap>,

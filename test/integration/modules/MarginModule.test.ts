@@ -15,7 +15,7 @@ import {
   genTrader,
   genOrder,
 } from '../../generators';
-import { commitAndSettle, commitOrder, depositMargin } from '../../helpers';
+import { ZERO_ADDRESS, approveAndMintMargin, commitAndSettle, commitOrder, depositMargin } from '../../helpers';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -44,9 +44,60 @@ describe('MarginModule', async () => {
     });
 
     it('should emit all events in correct order');
+
     it('should recompute funding');
 
-    it('should revert transfers when an order is pending');
+    it('should revert transfers when an order is pending', async () => {
+      const { PerpMarketProxy } = systems();
+      const gTrader1 = await genTrader(bs);
+
+      await depositMargin(bs, gTrader1);
+      const order = await genOrder(bs, gTrader1.market, gTrader1.collateral, gTrader1.collateralDepositAmount);
+
+      // We are using the same trader/market for both deposit and withdraws.
+      const { trader, marketId } = gTrader1;
+
+      // Commit an order for this trader.
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      // Verify that an order exists.
+      const pendingOrder = await PerpMarketProxy.getOrder(trader.accountId, marketId);
+      assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+
+      // (deposit) Same trader in the same market but (possibly) different collateral.
+      const gTrader2 = await genTrader(bs, { desiredTrader: trader, desiredMarket: gTrader1.market });
+
+      // (deposit) Mint and give access.
+      await approveAndMintMargin(bs, gTrader2);
+
+      // (deposit) Perform deposit but expect failure.
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          marketId,
+          gTrader2.collateral.contract.address,
+          gTrader2.collateralDepositAmount
+        ),
+        `OrderFound("${trader.accountId}")`
+      );
+
+      // (withdraw) Attempt to withdraw previously deposted margin but expect fail.
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          marketId,
+          gTrader1.collateral.contract.address,
+          gTrader1.collateralDepositAmount.mul(-1)
+        ),
+        `OrderFound("${trader.accountId}")`
+      );
+    });
 
     describe('deposit', () => {
       it('should allow deposit of collateral to an existing accountId', async () => {
@@ -81,7 +132,34 @@ describe('MarginModule', async () => {
         assertBn.equal(await collateral.balanceOf(traderAddress), expectedBalanceAfter);
       });
 
-      it('should affect an existing position when depositing');
+      it('should affect an existing position when depositing', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const gTrader = genTrader(bs);
+        const { trader, marketId, market, collateral, collateralDepositAmount, marginUsdDepositAmount } =
+          await depositMargin(bs, gTrader);
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+        const { accountId } = trader;
+
+        // Create a new position.
+        await commitAndSettle(bs, marketId, trader, order);
+
+        // Verify this position has been created successfully.
+        const positionDigest = await PerpMarketProxy.getPositionDigest(accountId, marketId);
+        assertBn.equal(positionDigest.size, order.sizeDelta);
+
+        // Get pre deposit collateralUsd.
+        const collateralUsd1 = await PerpMarketProxy.getCollateralUsd(accountId, marketId);
+
+        // Deposit more margin and verify and get post deposit collateralUsd.
+        const deposit2 = await depositMargin(bs, gTrader);
+        const collateralUsd2 = await PerpMarketProxy.getCollateralUsd(accountId, marketId);
+
+        // Due to rounding this can be really close but not exact. For example, during testing I encountered
+        // a scenario where `getCollateralUsd` returned 9999999999999999999996, which is 9999.999999999999999996. So,
+        // extremely close but not exact. Sometimes the amounts would match exactly.
+        assertBn.near(collateralUsd2, collateralUsd1.add(deposit2.marginUsdDepositAmount.toBN()));
+      });
 
       it('should revert deposit to an account that does not exist', async () => {
         const { PerpMarketProxy } = systems();
@@ -145,7 +223,7 @@ describe('MarginModule', async () => {
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            '0x0000000000000000000000000000000000000000',
+            ZERO_ADDRESS,
             depositAmountDelta
           ),
           'ZeroAddress()',
@@ -270,7 +348,7 @@ describe('MarginModule', async () => {
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
-            '0x0000000000000000000000000000000000000000',
+            ZERO_ADDRESS,
             collateralDepositAmount.mul(-1)
           ),
           'ZeroAddress()',
@@ -359,11 +437,11 @@ describe('MarginModule', async () => {
 
       it('should revert when account is flagged for liquidation');
     });
+
     describe('withdrawAllCollateral', () => {
       it('should withdrawal of all account of collateral', async () => {
         const { PerpMarketProxy } = systems();
-        const traderObj = await genTrader(bs);
-        const { collaterals } = bs;
+        const gTrader = await genTrader(bs);
 
         // We want to make sure we have two different types of collateral
         const collateral = collaterals()[0];
@@ -372,12 +450,12 @@ describe('MarginModule', async () => {
         // Deposit margin with collateral 1
         const { trader, traderAddress, marketId, collateralDepositAmount } = await depositMargin(
           bs,
-          Promise.resolve({ ...traderObj, collateral })
+          Promise.resolve({ ...gTrader, collateral })
         );
         // Deposit margin with collateral 2
         const { collateralDepositAmount: collateralDepositAmount2 } = await depositMargin(
           bs,
-          Promise.resolve({ ...traderObj, collateral: collateral2 })
+          Promise.resolve({ ...gTrader, collateral: collateral2 })
         );
 
         // Assert deposit went thorough and  we have two different types of collateral
@@ -471,6 +549,7 @@ describe('MarginModule', async () => {
           PerpMarketProxy
         );
       });
+
       it('should revert when trader have open position', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
@@ -564,10 +643,9 @@ describe('MarginModule', async () => {
     it('should revert when type is address(0)', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
-      const zeroAddress = '0x0000000000000000000000000000000000000000';
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([zeroAddress], [genBytes32()], [bn(genNumber())]),
-        'ZeroAddress'
+        PerpMarketProxy.connect(from).setCollateralConfiguration([ZERO_ADDRESS], [genBytes32()], [bn(genNumber())]),
+        'ZeroAddress()'
       );
     });
 

@@ -111,19 +111,21 @@ export const genKeeperFeeBufferUsd = () => bn(genNumber(2, 10));
 
 // --- Higher level generators --- //
 
-type Bs = ReturnType<typeof bootstrap>;
-type Collateral = ReturnType<Bs['collaterals']>[number];
-type Market = ReturnType<Bs['markets']>[number];
+export type Bs = ReturnType<typeof bootstrap>;
+export type Collateral = ReturnType<Bs['collaterals']>[number];
+export type Market = ReturnType<Bs['markets']>[number];
+export type Trader = ReturnType<Bs['traders']>[number];
 
-export const genTrader = async (bs: Bs) => {
+export const genTrader = async (
+  bs: Bs,
+  options?: { desiredTrader?: Trader; desiredMarket?: Market; desiredCollateral?: Collateral }
+) => {
   const { traders, markets, collaterals } = bs;
 
-  // Randomly select a trader to operate on.
-  const trader = genOneOf(traders());
-
-  // Randomly select a market and collateral as margin to trade with.
-  const market = genOneOf(markets());
-  const collateral = genOneOf(collaterals());
+  // Randomly select trader, market, and collateral to operate on, overriding with desired options provided.
+  const trader = options?.desiredTrader ?? genOneOf(traders());
+  const market = options?.desiredMarket ?? genOneOf(markets());
+  const collateral = options?.desiredCollateral ?? genOneOf(collaterals());
 
   // Randomly provide test collateral to trader.
   const marginUsdDepositAmount = wei(genOneOf([1000, 5000, 10_000, 15_000]));
