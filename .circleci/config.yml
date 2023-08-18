@@ -449,7 +449,7 @@ workflows:
           name: "test-perps-market"
           requires: [build-testable]
           workspace: "@synthetixio/perps-market"
-          parallelism: 3
+          parallelism: 5
 
       #- test-contracts: TODO: enable when tests are fixed
       #    name: "test-legacy-market"
