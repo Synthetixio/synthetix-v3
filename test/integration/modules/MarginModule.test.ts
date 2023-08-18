@@ -840,7 +840,37 @@ describe('MarginModule', async () => {
       assertBn.equal(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN());
     });
 
-    it('should not consider a position in a different market for the same account');
+    it('should not consider a position in a different market for the same account', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { marketId, trader, collateralDepositAmount, collateralPrice } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: bs.markets()[0] })
+      );
+      // Deposit margin to another market
+      const otherDeposit = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: bs.markets()[1], desiredTrader: trader })
+      );
+      const marginBeforeTradeOnDiffMarket = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      assertBn.equal(marginBeforeTradeOnDiffMarket, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+
+      // Generate and execute an order for the other market
+      const order = await genOrder(
+        bs,
+        otherDeposit.market,
+        otherDeposit.collateral,
+        otherDeposit.collateralDepositAmount
+      );
+      await commitAndSettle(bs, otherDeposit.marketId, otherDeposit.trader, order);
+
+      // Assert that collateral is still the same
+      const marginAfterTradeOnDiffMarket = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      // Margin should stay unchanged
+      assertBn.equal(marginBeforeTradeOnDiffMarket, marginAfterTradeOnDiffMarket);
+    });
+
     it('should reflect collateral price changes', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
