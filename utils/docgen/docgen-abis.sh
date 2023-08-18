@@ -4,6 +4,7 @@ echo "Docgen ABIs..."
 
 ROOT=$(yarn workspace synthetix-v3 exec pwd)
 OUT="$ROOT/docs/addresses-+-abis.md"
+mkdir -p $ROOT/deployments
 mkdir -p $ROOT/docs
 rm -rf $ROOT/docs/abis
 rm -rf $OUT
@@ -11,27 +12,32 @@ touch $OUT
 
 cat "./addresses-+-abis.md" > $OUT
 
-cat ./docs/1.md >> $OUT
-echo "" >> $OUT
+generate () {
+  _chainId=$1
+  echo ""
+  echo "-----------------------------"
+  echo "Generating ABIs for $_chainId"
+  echo "-----------------------------"
+  echo "> cannon inspect synthetix-omnibus:latest --chain-id $_chainId --json > ./deployments/$_chainId.json"
+  yarn cannon inspect synthetix-omnibus:latest --chain-id $_chainId --json > ./deployments/$_chainId.json
+  node ./abis.js $_chainId ./deployments/$_chainId.json
+  cat ./docs/$_chainId.md >> $OUT
+  echo "" >> $OUT
+  echo "-----------------------------"
+  echo "OK Generating ABIs for $_chainId"
+  echo "-----------------------------"
+  echo ""
+  echo ""
+}
 
-cat ./docs/5.md >> $OUT
-echo "" >> $OUT
-
-cat ./docs/11155111.md >> $OUT
-echo "" >> $OUT
-
-cat ./docs/10.md >> $OUT
-echo "" >> $OUT
-
-cat ./docs/420.md >> $OUT
-echo "" >> $OUT
-
-cat ./docs/80001.md >> $OUT
-echo "" >> $OUT
-
-cat ./docs/84531.md >> $OUT
-echo "" >> $OUT
+generate 1
+generate 5
+generate 11155111
+generate 10
+generate 420
+generate 80001
+generate 84531
 
 cp -r ./abis $ROOT/docs/abis
 
-echo "OK Docgen ABIs"
+echo "OK Generating ABIs"

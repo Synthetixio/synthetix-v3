@@ -10,11 +10,59 @@ commands:
     steps:
       - run: yarn install --immutable --immutable-cache
 
+  install-ipfs:
+    steps:
+      - restore_cache:
+          keys:
+            - ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+
+      - run:
+          name: "Install IPFS"
+          working_directory: ~/
+          command: |
+            export PATH="$PATH:$HOME/go-ipfs"
+            echo 'export PATH=$PATH:$HOME/go-ipfs' >> $BASH_ENV
+
+            if command -v ipfs; then
+              echo "IPFS already installed"
+              ipfs version
+              ipfs id
+            else
+              LATEST_VERSION=$(curl -sSL https://dist.ipfs.tech/go-ipfs/versions | tail -n 1)
+              LATEST_VERSION_NUMBER=${LATEST_VERSION#*v}
+              DOWNLOAD_URL="https://dist.ipfs.tech/go-ipfs/${LATEST_VERSION}/go-ipfs_${LATEST_VERSION}_linux-amd64.tar.gz"
+              echo "DOWNLOAD_URL=$DOWNLOAD_URL"
+              curl -sSL -o ipfs.tar.gz $DOWNLOAD_URL
+              tar -xzf ipfs.tar.gz
+              rm -rf ~/.ipfs
+              ipfs init
+            fi
+
+      - save_cache:
+          key: ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+          paths:
+            - "~/go-ipfs"
+            - "~/.ipfs"
+
+  run-ipfs-daemon:
+    steps:
+      - run:
+          command: ipfs daemon
+          background: true
+
+  wait-for-ipfs:
+    steps:
+      - run:
+          name: "Wait for IPFS daemon to start"
+          command: wget --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
+
 jobs:
   docgen:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
+      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      - CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
       - GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
@@ -28,7 +76,11 @@ jobs:
             git clone git@github.com:Synthetixio/Synthetix-Gitbook-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-gitbook-v3
 
       - checkout
+
+      - install-ipfs
+      - run-ipfs-daemon
       - yarn-install
+      - wait-for-ipfs
 
       - run:
           name: "Build TS"
@@ -47,9 +99,6 @@ jobs:
       - run:
           name: "Generate combined smart-contracts.md"
           command: yarn workspace @synthetixio/docgen run docgen:contracts
-      - run:
-          name: "Generate ABIs for each supported network"
-          command: yarn workspace @synthetixio/docgen run abis
       - run:
           name: "Generate combined addresses-+-abis.md"
           command: yarn workspace @synthetixio/docgen run docgen:abis
