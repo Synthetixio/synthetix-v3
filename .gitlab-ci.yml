@@ -26,9 +26,9 @@ build:
 .test:
   stage: test
   script: yarn hardhat test
-  only:
-    refs:
-    - merge_requests
+    #only:
+    #refs:
+    #- merge_requests
 
 test-core-contracts:
   extends: .test
