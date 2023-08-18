@@ -10,6 +10,34 @@ commands:
     steps:
       - run: yarn install --immutable --immutable-cache
 
+  install-foundry:
+    steps:
+      - restore_cache:
+          keys:
+            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+
+      - run:
+          name: "Install Foundry"
+          working_directory: ~/
+          environment:
+            SHELL: /bin/bash
+          command: |-
+            export PATH="$PATH:$HOME/.foundry/bin"
+            echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+
+            if command -v anvil; then
+              echo "Anvil already installed"
+              anvil --version
+            else
+              curl -L https://foundry.paradigm.xyz | bash
+              foundryup
+            fi
+
+      - save_cache:
+          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          paths:
+            - "~/.foundry"
+
   install-ipfs:
     steps:
       - restore_cache:
@@ -79,6 +107,7 @@ jobs:
 
       - install-ipfs
       - run-ipfs-daemon
+      - install-foundry
       - yarn-install
       - wait-for-ipfs
 
