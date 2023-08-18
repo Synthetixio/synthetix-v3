@@ -64,6 +64,9 @@
     "solhint-plugin-numcast": "1.0.0",
     "typescript": "4.9.3"
   },
+  "resolutions": {
+    "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors"
+  },
   "pre-commit": [
     "lint:quick"
   ],
