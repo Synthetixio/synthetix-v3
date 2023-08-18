@@ -323,6 +323,17 @@ jobs:
       - store_test_results:
           path: "/tmp/junit"
 
+  test-subgraph:
+    parameters:
+      workspace:
+        type: string
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+      - run: yarn workspace "<< parameters.workspace >>" test
+
   size-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
@@ -352,6 +363,54 @@ jobs:
       - checkout
       - run: yarn install --immutable --immutable-cache --check-cache
 
+  simulate-release:
+    parameters:
+      workspace:
+        type: string
+      cannonPackage:
+        type: string
+      impersonate:
+        type: string
+      proxy:
+        type: string
+      chains:
+        type: string
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+      - install-ipfs
+      - run-ipfs-daemon
+      - yarn-install
+      - wait-for-ipfs
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+      - run:
+          name: "Compile TS"
+          command: |
+            for CHAIN in "<< parameters.chains >>"; do
+              echo
+              echo
+              echo
+              echo "...Checking << parameters.workspace >> on $CHAIN"
+
+              yarn workspace "<< parameters.workspace >>" exec \
+                hardhat cannon:build \
+                  --dry-run \
+                  --network $CHAIN \
+                  --upgrade-from << parameters.cannonPackage >>:latest \
+                  --impersonate << parameters.impersonate >> | tee deployment.log
+              
+              grep 'Successfully built package << parameters.cannonPackage >>' deployment.log
+              
+              if [ $(grep -c 'exec: contract.<< parameters.proxy >>' deployment.log) -gt 0 ]; then
+                echo "Proxy << parameters.proxy >> was modified"
+                exit 1
+              fi
+            done
+
 workflows:
   version: 2.1
 
@@ -375,7 +434,7 @@ workflows:
           workspace: "@synthetixio/oracle-manager"
           parallelism: 1
 
-      #- test-contracts: # TODO: enable when we have some tests
+      #- test-contracts: TODO: enable when we have some tests
       #    name: "test-governance"
       #    requires: [build-testable]
       #    workspace: "@synthetixio/governance"
@@ -392,7 +451,7 @@ workflows:
           workspace: "@synthetixio/perps-market"
           parallelism: 3
 
-      #- test-contracts: # TODO: enable when tests are fixed
+      #- test-contracts: TODO: enable when tests are fixed
       #    name: "test-legacy-market"
       #    requires: [build-testable]
       #    workspace: "@synthetixio/legacy-market"
@@ -408,3 +467,63 @@ workflows:
       - test-core-contracts:
           workspace: "@synthetixio/core-contracts"
           parallelism: 2
+
+      - test-subgraph:
+          name: "test-core-subgraph"
+          workspace: "@synthetixio/core-subgraph"
+
+      - test-subgraph:
+          name: "test-spot-market-subgraph"
+          workspace: "@synthetixio/spot-market-subgraph"
+
+      - test-subgraph:
+          name: "test-perps-market-subgraph"
+          workspace: "@synthetixio/perps-market-subgraph"
+
+      - simulate-release:
+          name: "simulate-release-main"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "InitialCoreProxy"
+          chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      - simulate-release:
+          name: "simulate-release-oracle-manager"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "InitialProxy"
+          chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable after deployed
+      #    name: "simulate-release-governance"
+      #    workspace: "@synthetixio/governance"
+      #    cannonPackage: "governance"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable after v2x is updated
+      #    name: "simulate-release-legacy-market"
+      #    workspace: "@synthetixio/legacy-market"
+      #    cannonPackage: "synthetix-legacy-market"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      - simulate-release:
+          name: "simulate-release-spot-market"
+          workspace: "@synthetixio/spot-market"
+          cannonPackage: "synthetix-spot-market"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "InitialProxy"
+          chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable after deployed
+      #    name: "simulate-release-perps-market"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
