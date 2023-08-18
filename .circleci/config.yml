@@ -127,6 +127,7 @@ jobs:
       - restore_cache:
           keys:
             - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+            - cannon-{{ .Environment.CACHE_VERSION }}-
 
       - version-testable-contracts
       - restore_cache:
@@ -200,6 +201,7 @@ jobs:
       - restore_cache:
           keys:
             - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+            - cannon-{{ .Environment.CACHE_VERSION }}-
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
