@@ -1,4 +1,4 @@
-import { ethers as Ethers, ethers } from 'ethers';
+import { ethers as Ethers, constants, ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
@@ -8,7 +8,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 import { ISynthTokenModule__factory } from '../typechain-types/index';
 
-describe('SpotMarketFactory', () => {
+describe.only('SpotMarketFactory', () => {
   const { systems, signers, marketId, aggregator, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -35,6 +35,24 @@ describe('SpotMarketFactory', () => {
           'InvalidMarketOwner'
         );
       });
+    });
+
+    it('renounce market ownership', async () => {
+      const tx = await systems()
+        .SpotMarket.connect(marketOwner)
+        .renounceMarketOwnership(marketId());
+      await assertEvent(
+        tx,
+        `MarketOwnerChanged(${marketId()}, "${await marketOwner.getAddress()}", "${
+          constants.AddressZero
+        }")`,
+        systems().SpotMarket
+      );
+
+      assert.deepEqual(
+        await systems().SpotMarket.getMarketOwner(marketId()),
+        constants.AddressZero
+      );
     });
 
     before('register synth', async () => {
@@ -113,7 +131,7 @@ describe('SpotMarketFactory', () => {
     });
   });
 
-  describe('transfering market ownership', () => {
+  describe('transferring market ownership', () => {
     it('nominateMarketOwner reverts if is not called by the market owner', async () => {
       await assertRevert(
         systems()

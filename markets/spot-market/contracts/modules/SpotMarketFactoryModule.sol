@@ -246,11 +246,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         }
 
         spotMarketFactory.marketOwners[synthMarketId] = address(0);
-        emit MarketOwnerChanged(
-            synthMarketId,
-            spotMarketFactory.marketOwners[synthMarketId],
-            address(0)
-        );
+        emit MarketOwnerChanged(synthMarketId, currentOwner, address(0));
     }
 
     /**
