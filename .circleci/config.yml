@@ -166,16 +166,6 @@ jobs:
             git commit -m "Update Smart Contracts"
             git push --set-upstream --force origin smart-contracts
 
-      - run:
-          working_directory: ~/synthetix-gitbook-v3
-          name: "Create Pull Request for smart-contracts branch"
-          command: |
-            STATUS=$(git status)
-            if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
-              echo "SKIP. Working tree is clean. No changes to Smart Contracts docs"
-              exit 0
-            fi
-
             PR_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
               https://api.github.com/repos/Synthetixio/Synthetix-Gitbook-v3/pulls?state=open | \
               jq -r '.[] | select(.head.ref=="smart-contracts") | .html_url')
