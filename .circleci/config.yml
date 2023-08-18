@@ -96,12 +96,16 @@ jobs:
           key: hardhat-{{ .Environment.SOLC_VERSION }}
           paths:
             - "~/.cache/hardhat-nodejs"
+
       - run:
           name: "Generate combined smart-contracts.md"
-          command: yarn workspace @synthetixio/docgen run docgen:contracts
+          working_directory: ~/synthetix-v3/utils/docgen
+          command: ./docgen-contracts.sh
+
       - run:
           name: "Generate combined addresses-+-abis.md"
-          command: yarn workspace @synthetixio/docgen run docgen:abis
+          working_directory: ~/synthetix-v3/utils/docgen
+          command: ./docgen-abis.sh
 
       - store_artifacts:
           path: "docs"

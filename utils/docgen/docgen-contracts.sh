@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euxo pipefail
+
 echo "Docgen contracts..."
 
 ROOT=$(yarn workspace synthetix-v3 exec pwd)
