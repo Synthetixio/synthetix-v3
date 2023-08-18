@@ -99,8 +99,8 @@ export const getFastForwardTimestamp = async (
   return { commitmentTime, settlementTime, publishTime };
 };
 
-/** Commits a generated `order` for `trader` on `marketId` and settles successfully. */
-export const commitAndSettle = async (
+/** Commits a generated `order` for `trader` on `marketId` */
+export const commitOrder = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
@@ -114,6 +114,17 @@ export const commitAndSettle = async (
     limitPrice,
     keeperFeeBufferUsd
   );
+};
+/** Commits a generated `order` for `trader` on `marketId` and settles successfully. */
+export const commitAndSettle = async (
+  bs: ReturnType<typeof bootstrap>,
+  marketId: BigNumber,
+  trader: ReturnType<Bs['traders']>[number],
+  order: Awaited<ReturnType<typeof genOrder>>
+) => {
+  const { PerpMarketProxy } = bs.systems();
+
+  await commitOrder(bs, marketId, trader, order);
 
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, bs.provider());

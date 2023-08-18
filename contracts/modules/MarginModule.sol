@@ -83,6 +83,46 @@ contract MarginModule is IMarginModule {
     /**
      * @inheritdoc IMarginModule
      */
+    function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        // Prevent collateral transfers when there's a pending order.
+        if (market.orders[accountId].sizeDelta != 0) {
+            revert ErrorUtil.OrderFound(accountId);
+        }
+
+        // Prevent collateral transfers when there's an open position.
+        Position.Data storage position = market.positions[accountId];
+        if (position.size != 0) {
+            revert ErrorUtil.PositionFound(accountId, marketId);
+        }
+
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        uint256 length = globalMarginConfig.supportedAddresses.length;
+        address collateralType;
+        uint256 available;
+
+        for (uint256 i = 0; i < length; i++) {
+            collateralType = globalMarginConfig.supportedAddresses[i];
+            available = accountMargin.collaterals[collateralType];
+
+            if (available == 0) {
+                continue;
+            }
+
+            accountMargin.collaterals[collateralType] -= available;
+            // withdraw all available collateral
+            withdrawAndTransfer(marketId, available, collateralType, globalConfig);
+        }
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
     function modifyCollateral(
         uint128 accountId,
         uint128 marketId,

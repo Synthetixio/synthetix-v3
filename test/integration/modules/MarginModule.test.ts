@@ -4,8 +4,18 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assert from 'assert';
 import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
-import { bn, genAddress, genBootstrap, genBytes32, genNumber, genListOf, genOneOf, genTrader } from '../../generators';
-import { depositMargin } from '../../helpers';
+import {
+  bn,
+  genAddress,
+  genBootstrap,
+  genBytes32,
+  genNumber,
+  genListOf,
+  genOneOf,
+  genTrader,
+  genOrder,
+} from '../../generators';
+import { commitAndSettle, commitOrder, depositMargin } from '../../helpers';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -53,6 +63,7 @@ describe('MarginModule', async () => {
         await collateral.approve(PerpMarketProxy.address, amountDelta);
 
         const balanceBefore = await collateral.balanceOf(traderAddress);
+
         const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           market.marketId(),
@@ -285,7 +296,23 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert withdraw to a market that does not exist');
+      it('should revert withdraw to a market that does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+        const invalidMarketId = bn(genNumber(42069, 50_000));
+
+        // Perform withdraw with zero address.
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            invalidMarketId,
+            collateral.contract.address,
+            collateralDepositAmount.mul(-1)
+          ),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
 
       it('should revert withdraw of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
@@ -331,6 +358,134 @@ describe('MarginModule', async () => {
       it('should revert withdraw if places position into liquidation');
 
       it('should revert when account is flagged for liquidation');
+    });
+    describe('withdrawAllCollateral', () => {
+      it('should withdrawal of all account of collateral', async () => {
+        const { PerpMarketProxy } = systems();
+        const traderObj = await genTrader(bs);
+        const { collaterals } = bs;
+
+        // We want to make sure we have two different types of collateral
+        const collateral = collaterals()[0];
+        const collateral2 = collaterals()[1];
+
+        // Deposit margin with collateral 1
+        const { trader, traderAddress, marketId, collateralDepositAmount } = await depositMargin(
+          bs,
+          Promise.resolve({ ...traderObj, collateral })
+        );
+        // Deposit margin with collateral 2
+        const { collateralDepositAmount: collateralDepositAmount2 } = await depositMargin(
+          bs,
+          Promise.resolve({ ...traderObj, collateral: collateral2 })
+        );
+
+        // Assert deposit went thorough and  we have two different types of collateral
+        const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        const { available: collateralBalance = bn(0) } =
+          accountDigest.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+        const { available: collateral2Balance = bn(0) } =
+          accountDigest.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+
+        assertBn.equal(collateralBalance, collateralDepositAmount);
+        assertBn.equal(collateral2Balance, collateralDepositAmount2);
+
+        // Store balances before withdrawal
+        const collateralWalletBalanceBeforeWithdrawal = await collateral.contract.balanceOf(traderAddress);
+        const collateralWalletBalanceBeforeWithdrawal2 = await collateral2.contract.balanceOf(traderAddress);
+
+        // Perform the withdrawAllCollateral
+        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
+        // Assert that events are triggered
+        await assertEvent(
+          tx,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
+          PerpMarketProxy
+        );
+        await assertEvent(
+          tx,
+          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount2}, "${collateral2.contract.address}")`,
+          PerpMarketProxy
+        );
+
+        // Assert that no collateral is left the market
+        const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        const { available: collateralBalanceAfter = bn(0) } =
+          accountDigestAfter.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+        const { available: collateral2BalanceAfter = bn(0) } =
+          accountDigestAfter.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+
+        assertBn.equal(collateralBalanceAfter, bn(0));
+        assertBn.equal(collateral2BalanceAfter, bn(0));
+
+        // Assert that we have the collateral back in the trader's wallet
+        assertBn.equal(
+          await collateral.contract.balanceOf(traderAddress),
+          collateralDepositAmount.add(collateralWalletBalanceBeforeWithdrawal)
+        );
+        assertBn.equal(
+          await collateral2.contract.balanceOf(traderAddress),
+          collateralDepositAmount2.add(collateralWalletBalanceBeforeWithdrawal2)
+        );
+      });
+
+      it('should revert when an account does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId } = await depositMargin(bs, genTrader(bs));
+        const invalidAccountId = bn(genNumber(42069, 50_000));
+
+        // Perform withdraw with invalid account
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(invalidAccountId, marketId),
+          `AccountNotFound("${invalidAccountId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when market does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader } = await depositMargin(bs, genTrader(bs));
+        const invalidMarketId = bn(genNumber(42069, 50_000));
+
+        // Perform withdraw with invalid market
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, invalidMarketId),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should revert when trader have open order', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        await commitOrder(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+
+        // Perform withdraw with invalid market
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `OrderFound("${trader.accountId}")`,
+          PerpMarketProxy
+        );
+      });
+      it('should revert when trader have open position', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        await commitAndSettle(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+
+        // Perform withdraw with invalid market
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `PositionFound("${trader.accountId}", "${marketId}")`,
+          PerpMarketProxy
+        );
+      });
     });
   });
 

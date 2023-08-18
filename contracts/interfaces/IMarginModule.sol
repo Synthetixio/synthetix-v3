@@ -29,6 +29,13 @@ interface IMarginModule is IBasePerpMarket {
     // --- Mutative --- //
 
     /**
+     * Withdraws all collateral for a account and market.
+     * This method reverts if the account has any open positions or orders
+     * There are no fees associated with the transfer of collateral.
+     */
+    function withdrawAllCollateral(uint128 accountId, uint128 marketId) external;
+
+    /**
      * @dev Transfers an accepted `collateral` as margin from sender to `accountId` on a specific `marketId`.
      *
      * A negative `amountDelta` is a withdrawal. A variety of errors are thrown if limits or collateral
