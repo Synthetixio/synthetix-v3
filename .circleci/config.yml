@@ -33,9 +33,17 @@ jobs:
       - run:
           name: "Build TS"
           command: yarn workspaces foreach --topological-dev --verbose run build:ts
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
       - run:
           name: "Generate docs for each contract"
           command: yarn workspaces foreach --verbose run docgen
+      - save_cache:
+          key: hardhat-{{ .Environment.SOLC_VERSION }}
+          paths:
+            - "~/.cache/hardhat-nodejs"
       - run:
           name: "Generate combined smart-contracts.md"
           command: yarn workspace @synthetixio/docgen run docgen:contracts
