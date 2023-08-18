@@ -100,7 +100,7 @@ describe('MarginModule', async () => {
     });
 
     describe('deposit', () => {
-      it('should allow deposit of collateral to an existing accountId', async () => {
+      it('should allow deposit of collateral', async () => {
         const { PerpMarketProxy } = systems();
 
         const trader = genOneOf(traders());
@@ -185,7 +185,25 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert depositing to a market that does not exist');
+      it('should revert depositing to a market that does not exist', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const gTrader = genTrader(bs);
+        const { trader, collateral, collateralDepositAmount } = await approveAndMintMargin(bs, gTrader);
+        const invalidMarketId = bn(genNumber(42069, 50_000));
+
+        // Perform deposit with invalid market id.
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            invalidMarketId,
+            collateral.contract.address,
+            collateralDepositAmount
+          ),
+          `MarketNotFound("${invalidMarketId}")`,
+          PerpMarketProxy
+        );
+      });
 
       it('should revert deposit of unsupported collateral', async () => {
         const { PerpMarketProxy } = systems();
@@ -287,7 +305,7 @@ describe('MarginModule', async () => {
     });
 
     describe('withdraw', () => {
-      it('should allow full withdraw of collateral to my account', async () => {
+      it('should allow full withdraw of collateral from my account', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, traderAddress, marketId, collateral, collateralDepositAmount } = await depositMargin(
           bs,
