@@ -33,7 +33,7 @@ describe('MarginModule', async () => {
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
-    it('should noop with a modify amount of 0', async () => {
+    it('should revert when a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
       const trader = genOneOf(traders());
@@ -41,15 +41,15 @@ describe('MarginModule', async () => {
       const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
       const amountDelta = bn(0);
 
-      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-        trader.accountId,
-        market.marketId(),
-        collateral.address,
-        amountDelta
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          market.marketId(),
+          collateral.address,
+          amountDelta
+        ),
+        `ZeroAmount()`
       );
-      const receipt = await tx.wait();
-
-      assert.equal(receipt.events?.length, 0);
     });
 
     it('should emit all events in correct order');
