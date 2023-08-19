@@ -10,7 +10,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
  * @dev This test is not meant to be run in CI, it is only used to profile gas consumption.
  * @dev To run this test, replace the `skip` for `only` and run `REPORT_GAS=true yarn test`.
  */
-describe.only('Gas profiling - Liquidation', async () => {
+describe.skip('Gas profiling - Liquidation', async () => {
   const PRICE = bn(1_000);
   const MARKETS_QUANTITY = 100;
   const TOTAL_POSITIONS_SIZE = 10;

@@ -8,7 +8,7 @@ import {IPerpsMarketFactoryModule} from "../interfaces/IPerpsMarketFactoryModule
  */
 contract MockGasProfiler {
     // PerpsV3 SuperMarket
-    IPerpsMarketFactoryModule perpsMarketFactory;
+    IPerpsMarketFactoryModule private perpsMarketFactory;
     uint256 public gasUsed;
 
     function setPerpsMarketFactory(IPerpsMarketFactoryModule _perpsMarketFactory) external {
