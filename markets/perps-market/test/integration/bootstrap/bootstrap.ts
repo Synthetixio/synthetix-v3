@@ -1,7 +1,12 @@
 import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { FeeCollectorMock, PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
+import {
+  FeeCollectorMock,
+  PerpsMarketProxy,
+  AccountProxy,
+  MockGasProfiler,
+} from '../../generated/typechain';
 import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
 import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
 import { PerpsMarketData, bootstrapPerpsMarkets, bootstrapTraders } from '.';
@@ -33,6 +38,7 @@ export type Systems = {
   PerpsMarket: PerpsMarketProxy;
   Account: AccountProxy;
   FeeCollectorMock: FeeCollectorMock;
+  MockGasProfiler: MockGasProfiler;
   Synth: (address: string) => SynthRouter;
 };
 
@@ -57,6 +63,7 @@ export function bootstrap() {
       Account: getContract('AccountProxy'),
       MockPyth: getContract('MockPyth'),
       FeeCollectorMock: getContract('FeeCollectorMock'),
+      MockGasProfiler: getContract('MockGasProfiler'),
       Synth: (address: string) => getContract('spotMarket.SynthRouter', address),
     };
   });

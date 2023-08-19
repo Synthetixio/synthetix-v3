@@ -10,7 +10,7 @@ import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot
  * @dev This test is not meant to be run in CI, it is only used to profile gas consumption.
  * @dev To run this test, replace the `skip` for `only` and run `REPORT_GAS=true yarn test`.
  */
-describe.skip('Gas profiling - Liquidation', async () => {
+describe.only('Gas profiling - Liquidation', async () => {
   const PRICE = bn(1_000);
   const MARKETS_QUANTITY = 100;
   const TOTAL_POSITIONS_SIZE = 10;
@@ -79,6 +79,12 @@ describe.skip('Gas profiling - Liquidation', async () => {
     ethSynth = synthMarkets()[1];
   });
 
+  before('get gas helper', async () => {
+    await systems()
+      .MockGasProfiler.connect(trader1())
+      .setPerpsMarketFactory(systems().PerpsMarket.address);
+  });
+
   before('add collateral to margin', async () => {
     await depositCollateral({
       systems,
@@ -143,13 +149,20 @@ describe.skip('Gas profiling - Liquidation', async () => {
       });
 
       it('should show market debt', async () => {
-        const reportedDebt = await systems().PerpsMarket.reportedDebt(superMarketId());
-        assertBn.gt(reportedDebt, 0);
+        await systems().MockGasProfiler.connect(trader1()).txReportedDebt(superMarketId());
+        const gasUsedByTx = await systems().MockGasProfiler.gasUsed();
+        console.log('Gas used by reportedDebt(): ', gasUsedByTx);
+        assertBn.gt(gasUsedByTx, 0);
       });
 
       it('should show minimum Credit', async () => {
-        const minimumCredit = await systems().PerpsMarket.minimumCredit(superMarketId());
-        assertBn.equal(minimumCredit, 0);
+        await systems().MockGasProfiler.connect(trader1()).txMinimumCredit(superMarketId());
+        const gasUsedByTx = await systems().MockGasProfiler.gasUsed();
+        console.log('Gas used by minimumCredit(): ', gasUsedByTx);
+        assertBn.gt(gasUsedByTx, 0);
+
+        // const minimumCredit = await systems().PerpsMarket.minimumCredit(superMarketId());
+        // assertBn.equal(minimumCredit, 0);
       });
 
       describe('liquidate', async () => {

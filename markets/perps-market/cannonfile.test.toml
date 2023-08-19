@@ -164,3 +164,6 @@ args = [100, 1]
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+
+[contract.MockGasProfiler]
+artifact = "contracts/mocks/MockGasProfiler.sol:MockGasProfiler"
