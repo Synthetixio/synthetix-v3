@@ -510,7 +510,6 @@ describe('IssueUSDModule', function () {
       await systems()
         .Core.connect(owner)
         .setPoolCollateralConfiguration(poolId, collateralAddress(), {
-          collateralTypeDisabled: false,
           maxDepositD18: bn(10),
           issuanceRatioD18: bn(6),
         });

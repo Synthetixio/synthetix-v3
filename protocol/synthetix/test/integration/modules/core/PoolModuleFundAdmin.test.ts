@@ -714,18 +714,10 @@ describe('PoolModule Admin', function () {
           .Core.connect(user2)
           .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
             maxDepositD18: bn(10),
-            collateralTypeDisabled: false,
             issuanceRatioD18: bn(0),
           }),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
-      );
-    });
-
-    it('collateral is enabled by default for the pool', async () => {
-      await assert.equal(
-        await systems().Core.isDelegationEnabledByPool(thirdPoolId, collateralAddress()),
-        true
       );
     });
 
@@ -734,16 +726,8 @@ describe('PoolModule Admin', function () {
         .Core.connect(user1)
         .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
           maxDepositD18: bn(10),
-          collateralTypeDisabled: true,
           issuanceRatioD18: bn(2),
         });
-    });
-
-    it('collateral is disabled for the pool', async () => {
-      await assert.equal(
-        await systems().Core.isDelegationEnabledByPool(thirdPoolId, collateralAddress()),
-        false
-      );
     });
   });
 
@@ -773,7 +757,6 @@ describe('PoolModule Admin', function () {
           .Core.connect(user2)
           .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
             maxDepositD18: bn(10),
-            collateralTypeDisabled: false,
             issuanceRatioD18: bn(2),
           }),
         `Unauthorized("${await user2.getAddress()}")`,
@@ -793,7 +776,6 @@ describe('PoolModule Admin', function () {
         .Core.connect(user1)
         .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
           maxDepositD18: bn(10),
-          collateralTypeDisabled: false,
           issuanceRatioD18: bn(2),
         });
 

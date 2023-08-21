@@ -88,6 +88,13 @@ interface IPoolModule {
     event SetMinLiquidityRatio(uint256 minLiquidityRatio);
 
     /**
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
+     * @param poolId The id of the pool.
+     * @param disabled Shows if new collateral's will be dsiabled by default for the pool
+     */
+    event PoolCollateralDisabledByDefaultSet(uint128 poolId, bool disabled);
+
+    /**
      * @notice Creates a pool with the requested pool id.
      * @param requestedPoolId The requested id for the new pool. Reverts if the id is not available.
      * @param owner The address that will own the newly created pool.
@@ -117,6 +124,13 @@ interface IPoolModule {
         address collateralType,
         PoolCollateralConfiguration.Data memory newConfig
     ) external;
+
+    /**
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
+     * @param poolId The id of the pool.
+     * @param disabled If set to true new collaterals will be disabled for the pool.
+     */
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
@@ -185,16 +199,6 @@ interface IPoolModule {
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
-
-    /**
-     @notice Shows if a given collateral type is enabled for deposits and delegation in a given pool.
-     * @param poolId The id of the pool for to check the collateral for.
-     * @param collateral The address of the collateral.
-     */
-    function isDelegationEnabledByPool(
-        uint128 poolId,
-        address collateral
-    ) external view returns (bool enabled);
 
     /**
      @notice returns a pool minimum issuance ratio

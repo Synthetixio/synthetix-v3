@@ -60,11 +60,6 @@ library Pool {
         uint256 maxCollateral
     );
 
-    /**
-     * @notice Thrown when attempting delegate a pool disabled collateral
-     */
-    error PoolCollateralIsDisabled(address collateral, uint128 poolId);
-
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
     struct Data {
@@ -131,6 +126,14 @@ library Pool {
         uint64 __reserved2;
         uint64 __reserved3;
         mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        /**
+         * @dev A switch to make the pool opt-in for new collateral
+         *
+         * By default it's set to false, which means any new collateral accepeted by the system will be accpeted by the pool.
+         *
+         * If the pool owner sets this value to true, then new collaterals will be disabled for the pool unless a maxDeposit is set for a that collateral.
+         */
+        bool collateralDisabledByDefault;
     }
 
     /**
@@ -534,8 +537,9 @@ library Pool {
         uint256 maxDeposit = self.collateralConfigurations[collateralType].maxDepositD18;
 
         if (
-            maxDeposit > 0 &&
-            self.vaults[collateralType].currentCollateral() + collateralAmountD18 > maxDeposit
+            (self.collateralDisabledByDefault && maxDeposit == 0) ||
+            (maxDeposit > 0 &&
+                self.vaults[collateralType].currentCollateral() + collateralAmountD18 > maxDeposit)
         ) {
             revert PoolCollateralLimitExceeded(
                 self.id,
@@ -543,16 +547,6 @@ library Pool {
                 self.vaults[collateralType].currentCollateral() + collateralAmountD18,
                 self.collateralConfigurations[collateralType].maxDepositD18
             );
-        }
-    }
-
-    /**
-     * @notice Shows if a given collateral type is enabled for deposits and delegation in given pool.
-     * @param collateralType The address of the collateral.
-     */
-    function checkDelegationEnabled(Data storage self, address collateralType) internal view {
-        if (self.collateralConfigurations[collateralType].collateralTypeDisabled) {
-            revert PoolCollateralIsDisabled(collateralType, self.id);
         }
     }
 }
