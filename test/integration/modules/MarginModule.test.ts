@@ -136,8 +136,7 @@ describe('MarginModule', async () => {
         const { PerpMarketProxy } = systems();
 
         const gTrader = genTrader(bs);
-        const { trader, marketId, market, collateral, collateralDepositAmount, marginUsdDepositAmount } =
-          await depositMargin(bs, gTrader);
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
         const order = await genOrder(bs, market, collateral, collateralDepositAmount);
         const { accountId } = trader;
 
@@ -158,7 +157,7 @@ describe('MarginModule', async () => {
         // Due to rounding this can be really close but not exact. For example, during testing I encountered
         // a scenario where `getCollateralUsd` returned 9999999999999999999996, which is 9999.999999999999999996. So,
         // extremely close but not exact. Sometimes the amounts would match exactly.
-        assertBn.near(collateralUsd2, collateralUsd1.add(deposit2.marginUsdDepositAmount.toBN()));
+        assertBn.near(collateralUsd2, collateralUsd1.add(deposit2.marginUsdDepositAmount));
       });
 
       it('should revert deposit to an account that does not exist', async () => {

@@ -1,9 +1,9 @@
 import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
+import { shuffle, isNil, random } from 'lodash';
 import { wei } from '@synthetixio/wei';
 import { MARKETS } from './data/markets.fixture';
-import { shuffle, isNil, random } from 'lodash';
-import type { bootstrap } from './bootstrap';
+import { Bs, Market, Trader, Collateral } from './typed';
 
 // --- Utils --- //
 
@@ -111,14 +111,15 @@ export const genKeeperFeeBufferUsd = () => bn(genNumber(2, 10));
 
 // --- Higher level generators --- //
 
-export type Bs = ReturnType<typeof bootstrap>;
-export type Collateral = ReturnType<Bs['collaterals']>[number];
-export type Market = ReturnType<Bs['markets']>[number];
-export type Trader = ReturnType<Bs['traders']>[number];
-
+/** Generates a trade context composed of a trader, market to operate on, and collateral as margin. */
 export const genTrader = async (
   bs: Bs,
-  options?: { desiredTrader?: Trader; desiredMarket?: Market; desiredCollateral?: Collateral }
+  options?: {
+    desiredTrader?: Trader;
+    desiredMarket?: Market;
+    desiredCollateral?: Collateral;
+    desiredMarginUsdDepositAmount?: number;
+  }
 ) => {
   const { traders, markets, collaterals } = bs;
 
@@ -128,7 +129,9 @@ export const genTrader = async (
   const collateral = options?.desiredCollateral ?? genOneOf(collaterals());
 
   // Randomly provide test collateral to trader.
-  const marginUsdDepositAmount = wei(genOneOf([1000, 5000, 10_000, 15_000]));
+  const marginUsdDepositAmount = !isNil(options?.desiredMarginUsdDepositAmount)
+    ? wei(options?.desiredMarginUsdDepositAmount)
+    : wei(genOneOf([1000, 5000, 10_000, 15_000]));
   const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
   const collateralDepositAmount = marginUsdDepositAmount.div(collateralPrice).toBN();
 
@@ -139,36 +142,42 @@ export const genTrader = async (
     marketId: market.marketId(),
     collateral,
     collateralDepositAmount,
-    marginUsdDepositAmount,
+    marginUsdDepositAmount: marginUsdDepositAmount.toBN(),
   };
 };
 
+/** Generates a valid order to settle on a specific market for a specific collateral type/amount. */
 export const genOrder = async (
-  bs: Bs,
+  { systems }: Bs,
   market: Market,
   collateral: Collateral,
   collateralDepositAmount: BigNumber,
-  options?: { desiredLeverage: number }
+  options?: { desiredLeverage?: number; desiredSide?: 1 | -1; desiredKeeperFeeBufferUsd?: number }
 ) => {
-  const { systems } = bs;
   const { PerpMarketProxy } = systems();
 
-  const keeperFeeBufferUsd = genKeeperFeeBufferUsd();
-  const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
-  const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperFeeBufferUsd);
-  const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
+  const keeperFeeBufferUsd = !isNil(options?.desiredKeeperFeeBufferUsd)
+    ? wei(options?.desiredKeeperFeeBufferUsd).toBN()
+    : genKeeperFeeBufferUsd();
 
   // Use a reasonble amount of leverage
   const leverage = options?.desiredLeverage ?? genOneOf([0.5, 1, 2, 3, 4, 5]);
 
-  // Randomly use long/short.
+  const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
+  const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperFeeBufferUsd);
+
+  // Randomly use long/short unless `desiredSide` is specified.
+  const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
   let sizeDelta = marginUsd.div(oraclePrice).mul(wei(leverage)).toBN();
-  sizeDelta = genOneOf([sizeDelta, sizeDelta.mul(-1)]);
+  if (options?.desiredSide) {
+    sizeDelta = sizeDelta.mul(options.desiredSide);
+  } else {
+    sizeDelta = genOneOf([sizeDelta, sizeDelta.mul(-1)]);
+  }
 
   const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice);
-
   const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
-  const fees = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
+  const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
 
   return {
     keeperFeeBufferUsd,
@@ -178,7 +187,7 @@ export const genOrder = async (
     limitPrice,
     fillPrice,
     oraclePrice,
-    orderFee: fees.orderFee,
-    keeperFee: fees.keeperFee,
+    orderFee,
+    keeperFee,
   };
 };

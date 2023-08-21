@@ -3,6 +3,7 @@ import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { wei } from '@synthetixio/wei';
+import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
 import {
@@ -12,10 +13,12 @@ import {
   getPythPriceData,
   setMarketConfigurationById,
 } from '../../helpers';
+import { BigNumber } from 'ethers';
+import { calcOrderFees } from '../../calculations';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper } = bs;
+  const { systems, restore, provider, keeper, collaterals, markets, traders } = bs;
 
   beforeEach(restore);
 
@@ -426,15 +429,167 @@ describe('OrderModule', () => {
 
   describe('getOrderFees', () => {
     describe('orderFee', () => {
-      it('should charge maker fees when reducing skew');
+      enum LiquidtyLeader {
+        MAKER = 'MAKER',
+        TAKER = 'TAKER',
+        BOTH = 'BOTH',
+      }
 
-      it('should charge taker fee when expanding skew');
+      forEach([
+        [LiquidtyLeader.MAKER, 'reducing'],
+        [LiquidtyLeader.TAKER, 'expanding'],
+        [LiquidtyLeader.BOTH, 'reducing then expanding'],
+      ]).it('should charge %s fees when %s skew', async (leader: LiquidtyLeader) => {
+        const { PerpMarketProxy } = systems();
 
-      it('should charge a combination of maker and taker when skew flips');
+        const marginUsdDepositAmount = genNumber(5000, 10_000);
+        const leverage = 1;
+
+        // TRADER 1:
+
+        // Deposit margin to trader1, create order, commit and settle the order.
+        const gTrader = await depositMargin(
+          bs,
+          genTrader(bs, { desiredMarginUsdDepositAmount: marginUsdDepositAmount })
+        );
+        const { marketId, market, collateral } = gTrader;
+        const order1 = await genOrder(bs, market, collateral, gTrader.collateralDepositAmount, {
+          desiredLeverage: leverage,
+        });
+        await commitAndSettle(bs, marketId, gTrader.trader, order1);
+
+        // TRADER 2:
+
+        const getDesiredMarginUsdDepositAmount = () => {
+          switch (leader) {
+            // Ensure the margin for the 2nd trade is LESS than the first order to ensure this is a _pure_
+            // maker or taker.
+            case LiquidtyLeader.MAKER:
+            case LiquidtyLeader.TAKER:
+              return marginUsdDepositAmount * 0.9;
+            // Give the 2nd order _more_ margin so it's able to reduce the skew and then expand other side.
+            case LiquidtyLeader.BOTH:
+              return marginUsdDepositAmount * 1.5;
+          }
+        };
+
+        // Deposit an appropraite amount of margin relative to the leader type we're testing against.
+        const gTrader2 = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredCollateral: collateral,
+            desiredMarginUsdDepositAmount: getDesiredMarginUsdDepositAmount(),
+          })
+        );
+
+        const getDesiredSize = () => {
+          switch (leader) {
+            // Maker means we're reducing skew so we wanted to invert the first order. `BOTH` is also the same
+            // side as maker because we're reducing skew to zero then expanding into the other direction.
+            case LiquidtyLeader.MAKER:
+            case LiquidtyLeader.BOTH:
+              return order1.sizeDelta.gt(0) ? -1 : 1;
+            // Taker means we're expanding skew so we want to keep riding up the same side of the first order.
+            case LiquidtyLeader.TAKER:
+              return order1.sizeDelta.gt(0) ? 1 : -1;
+          }
+        };
+
+        // Create an order, ensuring the size is relative to the leader we're testing.
+        const order2 = await genOrder(bs, market, collateral, gTrader2.collateralDepositAmount, {
+          desiredLeverage: leverage,
+          desiredSide: getDesiredSize(),
+        });
+
+        // Retrieve fees associated with this new order.
+        const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order2.sizeDelta, BigNumber.from(0));
+        const { orderFee: expectedOrderFee } = await calcOrderFees(bs, marketId, order2.sizeDelta);
+
+        assertBn.equal(orderFee, expectedOrderFee);
+      });
+
+      it('should charge the appropriate maker/taker fee (concrete)', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Use explicit values to test a concrete example.
+        const trader = traders()[0];
+        const collateral = collaterals()[0];
+        const market = markets()[0];
+        const marginUsdDepositAmount = wei(1000).toBN();
+        const leverage = 1;
+        const keeperFeeBufferUsd = 0;
+        const collateralDepositAmount = wei(10).toBN();
+        const collateralPrice = wei(100).toBN();
+        const marketOraclePrice = wei(1).toBN();
+        const makerFee = wei(0.01).toBN();
+        const takerFee = wei(0.02).toBN();
+
+        // Update state to reflect explicit values.
+        await collateral.aggregator().mockSetCurrentPrice(collateralPrice);
+        await market.aggregator().mockSetCurrentPrice(marketOraclePrice);
+        const marketId = market.marketId();
+        await setMarketConfigurationById(bs, marketId, { makerFee, takerFee });
+
+        await depositMargin(bs, {
+          trader,
+          traderAddress: await trader.signer.getAddress(),
+          market,
+          marketId,
+          collateral,
+          collateralDepositAmount,
+          marginUsdDepositAmount,
+        });
+
+        // sizeDelta = 10 * 100 / 1 / 1 = 1000
+        const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredLeverage: leverage,
+          desiredSide: 1, // 1 = long, -1 = short
+          desiredKeeperFeeBufferUsd: keeperFeeBufferUsd,
+        });
+        const { orderFee: orderFee1 } = await PerpMarketProxy.getOrderFees(
+          marketId,
+          order1.sizeDelta,
+          BigNumber.from(keeperFeeBufferUsd)
+        );
+        await commitAndSettle(bs, marketId, trader, order1);
+
+        // There are no other positions in market, this should be charging takerFees.
+        // sizeDelta * fillPrice * takerFee
+        assertBn.equal(wei(order1.sizeDelta).mul(order1.fillPrice).mul(takerFee).toBN(), orderFee1);
+
+        // Using twice as much margin, create an order.
+        //
+        // 10 * 2 = 20
+        //
+        // Then use that to infer marginUsd and then back to sizeDelta.
+        //
+        // 20 * 100 / 1 / 1 = 2000
+        const order2 = await genOrder(bs, market, collateral, collateralDepositAmount.mul(BigNumber.from(2)), {
+          desiredLeverage: leverage,
+          desiredSide: -1, // 1 = long, -1 = short
+          desiredKeeperFeeBufferUsd: keeperFeeBufferUsd,
+        });
+        const { orderFee: orderFee2 } = await PerpMarketProxy.getOrderFees(
+          marketId,
+          order2.sizeDelta,
+          BigNumber.from(keeperFeeBufferUsd)
+        );
+
+        // We know that half of the new order shrinks skew back to 0 (hence makerFee) and the other half increases.
+        const makerFeeUsd = wei(order1.sizeDelta.abs()).mul(order2.fillPrice).mul(makerFee);
+        const takerFeeUsd = wei(order1.sizeDelta.abs()).mul(order2.fillPrice).mul(takerFee);
+
+        assertBn.equal(orderFee2, makerFeeUsd.add(takerFeeUsd).toBN());
+      });
     });
 
     describe('keeperFee', () => {
       it('should calculate keeper fees proportional to block.baseFee and profit margin');
+
+      it('should cap the keeperFee by its max usd when exceeds');
+
+      it('should ceil the keeperFee by its min usd when under');
     });
   });
 

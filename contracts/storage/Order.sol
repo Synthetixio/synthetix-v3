@@ -69,7 +69,7 @@ library Order {
         // as a maker (reducing skew) as it's now taking (increasing skew) in the opposite direction. hence,
         // a different fee is applied on the proportion increasing the skew.
 
-        // Proportion of size that's on the other direction
+        // Proportion of size that's on the other direction.
         uint256 takerSize = MathUtil.abs((skew + sizeDelta).divDecimal(sizeDelta));
         uint256 makerSize = DecimalMath.UNIT - takerSize;
 

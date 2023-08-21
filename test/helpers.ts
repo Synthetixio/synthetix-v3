@@ -14,6 +14,7 @@ export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 type Bs = ReturnType<typeof bootstrap>;
 type GeneratedTrader = ReturnType<typeof genTrader> | Awaited<ReturnType<typeof genTrader>>;
+type GeneratedOrder = ReturnType<typeof genOrder> | Awaited<ReturnType<typeof genOrder>>;
 
 /** Provision margin for this trader given the full `gTrader` context. */
 export const approveAndMintMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
@@ -47,17 +48,14 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
 
 /** Generic update on market specific params. */
 export const setMarketConfigurationById = async (
-  bs: ReturnType<typeof bootstrap>,
+  { systems, owner }: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   params: Partial<PerpMarketConfiguration.DataStruct>
 ) => {
-  const { systems, owner } = bs;
   const { PerpMarketProxy } = systems();
-
   const data = await PerpMarketProxy.getMarketConfigurationById(marketId);
   await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, { ...data, ...params });
-
-  return await PerpMarketProxy.getMarketConfigurationById(marketId);
+  return PerpMarketProxy.getMarketConfigurationById(marketId);
 };
 
 /** Returns a Pyth updateData blob and the update fee in wei. */
@@ -137,11 +135,11 @@ export const commitAndSettle = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
-  order: Awaited<ReturnType<typeof genOrder>>
+  order: GeneratedOrder
 ) => {
   const { PerpMarketProxy } = bs.systems();
 
-  await commitOrder(bs, marketId, trader, order);
+  await commitOrder(bs, marketId, trader, await order);
 
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, bs.provider());
