@@ -88,6 +88,13 @@ interface IPoolModule {
     event SetMinLiquidityRatio(uint256 minLiquidityRatio);
 
     /**
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
+     * @param poolId The id of the pool.
+     * @param disabled Shows if new collateral's will be dsiabled by default for the pool
+     */
+    event PoolCollateralDisabledByDefaultSet(uint128 poolId, bool disabled);
+
+    /**
      * @notice Creates a pool with the requested pool id.
      * @param requestedPoolId The requested id for the new pool. Reverts if the id is not available.
      * @param owner The address that will own the newly created pool.
@@ -119,16 +126,11 @@ interface IPoolModule {
     ) external;
 
     /**
-     * @notice Allows collaterals accepeted by the system will be accpeted by the pool by default
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
      * @param poolId The id of the pool.
+     * @param disabled If set to true new collaterals will be disabled for the pool.
      */
-    function enablePoolCollateralByDefault(uint128 poolId) external;
-
-    /**
-     * @notice Prevents collaterals accepeted by the system will not be accpeted by the pool by default
-     * @param poolId The id of the pool.
-     */
-    function disablePoolCollateralByDefault(uint128 poolId) external;
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.

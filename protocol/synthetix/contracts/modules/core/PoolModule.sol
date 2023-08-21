@@ -200,19 +200,13 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function disablePoolCollateralByDefault(uint128 poolId) external override {
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
 
-        pool.collateralDisabledByDefault = true;
-    }
+        pool.collateralDisabledByDefault = disabled;
 
-    /**
-     * @inheritdoc IPoolModule
-     */
-    function enablePoolCollateralByDefault(uint128 poolId) external override {
-        Pool.Data storage pool = Pool.loadExisting(poolId);
-
-        pool.collateralDisabledByDefault = false;
+        emit PoolCollateralDisabledByDefaultSet(poolId, disabled);
     }
 
     /**
