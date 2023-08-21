@@ -123,7 +123,11 @@ describe.skip('Gas profiling - Liquidation', async () => {
   let positionSizes: () => ethers.BigNumber[];
 
   [1, 2, 5, 10, 50, 100].forEach((quantity) => {
+    if (quantity > MARKETS_QUANTITY) return;
+
     describe(`Liquidation of ${quantity} positions`, () => {
+      before(restoreToOpenPositions);
+
       before('open positions', async () => {
         positionSizes = () => getPositionSizes(quantity);
         for (const [i, perpsMarket] of perpsMarkets().entries()) {
@@ -138,6 +142,10 @@ describe.skip('Gas profiling - Liquidation', async () => {
         }
       });
 
+      it('control assert', async () => {
+        assertBn.equal((await systems().PerpsMarket.getMarkets()).length, MARKETS_QUANTITY);
+      });
+
       it('should have correct positions', async () => {
         for (const [i, perpsMarket] of perpsMarkets().entries()) {
           const [, , positionSize] = await systems().PerpsMarket.getOpenPosition(
@@ -148,30 +156,35 @@ describe.skip('Gas profiling - Liquidation', async () => {
         }
       });
 
-      it('should show market debt', async () => {
-        await systems().MockGasProfiler.connect(trader1()).txReportedDebt(superMarketId());
-        const gasUsedByTx = await systems().MockGasProfiler.gasUsed();
-        console.log('Gas used by reportedDebt(): ', gasUsedByTx);
-        assertBn.gt(gasUsedByTx, 0);
+      describe('Get info', async () => {
+        it('should show market debt', async () => {
+          await systems().MockGasProfiler.connect(trader1()).txReportedDebt(superMarketId());
+          const gasUsedByTx = await systems().MockGasProfiler.gasUsed();
+          console.log('Gas used by reportedDebt(): ', gasUsedByTx.toString());
+          assertBn.gt(gasUsedByTx, 0);
+        });
+
+        it('should show minimum Credit', async () => {
+          await systems().MockGasProfiler.connect(trader1()).txMinimumCredit(superMarketId());
+          const gasUsedByTx = await systems().MockGasProfiler.gasUsed();
+          console.log('Gas used by minimumCredit(): ', gasUsedByTx.toString());
+          assertBn.gt(gasUsedByTx, 0);
+        });
       });
 
-      it('should show minimum Credit', async () => {
-        await systems().MockGasProfiler.connect(trader1()).txMinimumCredit(superMarketId());
-        const gasUsedByTx = await systems().MockGasProfiler.gasUsed();
-        console.log('Gas used by minimumCredit(): ', gasUsedByTx);
-        assertBn.gt(gasUsedByTx, 0);
-
-        // const minimumCredit = await systems().PerpsMarket.minimumCredit(superMarketId());
-        // assertBn.equal(minimumCredit, 0);
-      });
-
-      describe('liquidate', async () => {
+      describe('Change Price (prepare liquidation)', async () => {
         before('change perps token price', async () => {
           for (const [, perpsMarket] of perpsMarkets().entries()) {
             await perpsMarket.aggregator().mockSetCurrentPrice(bn(200));
           }
         });
 
+        it('update gas used', async () => {
+          assertBn.equal(0, 0);
+        });
+      });
+
+      describe('liquidate', async () => {
         before('liquidate account', async () => {
           await systems().PerpsMarket.connect(keeper()).liquidate(2);
         });
@@ -184,8 +197,6 @@ describe.skip('Gas profiling - Liquidation', async () => {
           assertBn.equal(await systems().PerpsMarket.totalAccountOpenInterest(2), 0);
         });
       });
-
-      after(restoreToOpenPositions);
     });
   });
 });
