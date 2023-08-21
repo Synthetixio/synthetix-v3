@@ -8,7 +8,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 import { ISynthTokenModule__factory } from '../typechain-types/index';
 
-describe.only('SpotMarketFactory', () => {
+describe('SpotMarketFactory', () => {
   const { systems, signers, marketId, aggregator, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
