@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
-import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
-import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
-import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "../../storage/Council.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {AddressUtil} from "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
+import {ChangeError} from "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
+import {UUPSImplementation} from "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {ElectionSettings} from "../../storage/ElectionSettings.sol";
+import {Council} from "../../storage/Council.sol";
 
 contract UpgradeProposalModule is UUPSImplementation {
     using Council for Council.Data;

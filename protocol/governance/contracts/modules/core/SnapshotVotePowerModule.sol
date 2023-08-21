@@ -1,13 +1,14 @@
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-// SPDX-License-Identifier: MIT
 
-import "../../interfaces/ISnapshotVotePowerModule.sol";
-import "../../interfaces/external/ISnapshotRecord.sol";
-import "../../storage/Council.sol";
-import "../../storage/SnapshotVotePower.sol";
-import "../../storage/Election.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ISnapshotVotePowerModule} from "../../interfaces/ISnapshotVotePowerModule.sol";
+import {ISnapshotRecord} from "../../interfaces/external/ISnapshotRecord.sol";
+import {Council} from "../../storage/Council.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {SnapshotVotePower} from "../../storage/SnapshotVotePower.sol";
+import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
 
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
@@ -29,6 +30,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     function takeVotePowerSnapshot(
         address snapshotContract
     ) external override returns (uint128 snapshotId) {
+        // TODO: Another note, can remove only owner from takeVotePowerSnapshot,allow takeVotePowerSnapshot to be called in nomination period or election period
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
         SnapshotVotePowerEpoch.Data storage snapshotVotePowerEpoch = SnapshotVotePower
@@ -65,6 +67,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         address snapshotContract,
         address voter
     ) external override returns (uint256 power) {
+        // TODO: Let's add also a comment in the prepareBallotWithSnapshot that this is where we'd add quadratic voting support (if we don't plan to add it as an option prior to audit)
         Council.Data storage council = Council.load();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
         uint128 currentEpoch = council.currentElectionId.to128();

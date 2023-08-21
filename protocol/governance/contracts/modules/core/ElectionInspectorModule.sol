@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../interfaces/IElectionInspectorModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import "../../storage/Ballot.sol";
-import "../../storage/Election.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {IElectionInspectorModule} from "../../interfaces/IElectionInspectorModule.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {Election} from "../../storage/Election.sol";
 
 contract ElectionInspectorModule is IElectionInspectorModule {
     using SetUtil for SetUtil.AddressSet;

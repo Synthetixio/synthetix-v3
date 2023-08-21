@@ -17,42 +17,21 @@ describe('BaseElectionModule - Initialization', function () {
 
   let BaseElectionModule: BaseElectionModule;
 
-  const epochDuration = 90;
-  const votingPeriodDuration = 7;
-
-  async function _initOrUpgradeElectionModule({
+  async function _initOrUpdateElectionSettings({
     caller = owner,
-    epochSeatCount = 2,
     minimumActiveMembers = 1,
-    nominationPeriodStartDate = 0,
-    votingPeriodStartDate = 0,
-    epochEndDate = 0,
-    maxDateAdjustmentTolerance = daysToSeconds(2),
+    initialNominationPeriodStartDate = 0,
+    administrationPeriodDuration = daysToSeconds(14),
+    nominationPeriodDuration = daysToSeconds(7),
+    votingPeriodDuration = daysToSeconds(7),
   } = {}) {
-    const now = await getTime(getProvider());
-
-    if (nominationPeriodStartDate === 0) {
-      nominationPeriodStartDate =
-        now + daysToSeconds(epochDuration) - daysToSeconds(votingPeriodDuration) * 2;
-    }
-
-    if (votingPeriodStartDate === 0) {
-      votingPeriodStartDate =
-        now + daysToSeconds(epochDuration) - daysToSeconds(votingPeriodDuration);
-    }
-
-    if (epochEndDate === 0) {
-      epochEndDate = now + daysToSeconds(epochDuration);
-    }
-
-    return BaseElectionModule.connect(caller).initOrUpgradeElectionModule(
+    return BaseElectionModule.connect(caller).initOrUpdateElectionSettings(
       [await caller.getAddress()],
-      epochSeatCount,
       minimumActiveMembers,
-      nominationPeriodStartDate,
-      votingPeriodStartDate,
-      epochEndDate,
-      maxDateAdjustmentTolerance
+      initialNominationPeriodStartDate,
+      administrationPeriodDuration,
+      nominationPeriodDuration,
+      votingPeriodDuration
     );
   }
 
@@ -73,7 +52,7 @@ describe('BaseElectionModule - Initialization', function () {
   describe('when initializing the module', function () {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
-        await assertRevert(_initOrUpgradeElectionModule({ caller: user }), 'Unauthorized');
+        await assertRevert(_initOrUpdateElectionSettings({ caller: user }), 'Unauthorized');
       });
     });
 
@@ -82,14 +61,7 @@ describe('BaseElectionModule - Initialization', function () {
         describe('with invalid minimumActiveMembers', function () {
           it('reverts using 0', async function () {
             await assertRevert(
-              _initOrUpgradeElectionModule({ minimumActiveMembers: 0 }),
-              'InvalidElectionSettings'
-            );
-          });
-
-          it('reverts using more than epochSeatCount', async function () {
-            await assertRevert(
-              _initOrUpgradeElectionModule({ epochSeatCount: 2, minimumActiveMembers: 3 }),
+              _initOrUpdateElectionSettings({ minimumActiveMembers: 0 }),
               'InvalidElectionSettings'
             );
           });
@@ -106,16 +78,28 @@ describe('BaseElectionModule - Initialization', function () {
 
         before('initialize', async function () {
           epochStartDate = await getTime(getProvider());
+
+          const administrationPeriodDuration = 14;
+          const nominationPeriodDuration = 7;
+          const votingPeriodDuration = 7;
+
+          const epochDuration =
+            administrationPeriodDuration + nominationPeriodDuration + votingPeriodDuration;
+
           epochEndDate = epochStartDate + daysToSeconds(epochDuration);
-          nominationPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration) * 2;
+          nominationPeriodStartDate =
+            epochEndDate - daysToSeconds(votingPeriodDuration + nominationPeriodDuration);
           votingPeriodStartDate = epochEndDate - daysToSeconds(votingPeriodDuration);
 
-          const tx = await _initOrUpgradeElectionModule({
-            epochSeatCount: 2,
+          const initialNominationPeriodStartDate =
+            epochStartDate + daysToSeconds(administrationPeriodDuration);
+
+          const tx = await _initOrUpdateElectionSettings({
             minimumActiveMembers: 1,
-            nominationPeriodStartDate,
-            votingPeriodStartDate,
-            epochEndDate,
+            initialNominationPeriodStartDate,
+            administrationPeriodDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
           });
 
           rx = await tx.wait();
@@ -146,12 +130,6 @@ describe('BaseElectionModule - Initialization', function () {
 
         it('emitted a EpochStarted event', async function () {
           await assertEvent(rx, 'EpochStarted(0)', c.CoreProxy);
-        });
-
-        describe('when called for a second time', function () {
-          it('reverts', async function () {
-            await assertRevert(_initOrUpgradeElectionModule(), 'AlreadyInitialized');
-          });
         });
       });
     });

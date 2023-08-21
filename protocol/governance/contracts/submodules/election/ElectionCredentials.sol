@@ -1,13 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
-import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
-
-import "../../storage/Council.sol";
+import {UUPSProxy} from "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import {ArrayError} from "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {IERC721} from "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
+import {AssociatedSystem} from "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import {Council} from "../../storage/Council.sol";
 
 /// @dev Core functionality for keeping track of council members with an NFT token
 contract ElectionCredentials {

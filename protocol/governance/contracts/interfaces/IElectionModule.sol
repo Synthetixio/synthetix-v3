@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Epoch} from "../storage/Epoch.sol";
 import {ElectionSettings} from "../storage/ElectionSettings.sol";
+import {Epoch} from "../storage/Epoch.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
@@ -13,6 +13,7 @@ interface IElectionModule {
     error NotNominated();
     error NoCandidates();
     error DuplicateCandidates(address duplicatedCandidate);
+    error TooManyMembers();
 
     event ElectionModuleInitialized();
     event EpochStarted(uint256 indexed epochId);
@@ -38,15 +39,14 @@ interface IElectionModule {
     // Initialization
     // ---------------------------------------
 
-    /// @notice Initializes the module and immediately starts the first epoch
-    function initOrUpgradeElectionModule(
-        address[] memory firstCouncil,
-        uint8 epochSeatCount,
+    /// @notice Initialises the module and immediately starts the first epoch
+    function initOrUpdateElectionSettings(
+        address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
-        uint64 maxDateAdjustmentTolerance
+        uint64 initialNominationPeriodStartDate,
+        uint64 administrationPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
     ) external;
 
     /// @notice Shows whether the module has been initialized

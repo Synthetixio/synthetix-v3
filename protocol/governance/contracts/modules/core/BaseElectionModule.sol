@@ -1,17 +1,20 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
-import "../../interfaces/IElectionModule.sol";
-import "../../submodules/election/ElectionCredentials.sol";
-import "../../submodules/election/ElectionTally.sol";
-
-import "../../storage/Council.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import {InitializableMixin} from "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
+import {IElectionModule} from "../../interfaces/IElectionModule.sol";
+import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
+import {ElectionTally} from "../../submodules/election/ElectionTally.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {Council} from "../../storage/Council.sol";
+import {Election} from "../../storage/Election.sol";
+import {Epoch} from "../../storage/Epoch.sol";
+import {ElectionSettings} from "../../storage/ElectionSettings.sol";
 
 contract BaseElectionModule is
     IElectionModule,
@@ -38,62 +41,98 @@ contract BaseElectionModule is
         _;
     }
 
-    function initOrUpgradeElectionModule(
-        address[] memory firstCouncil,
-        uint8 epochSeatCount,
+    function initOrUpdateElectionSettings(
+        address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
-        uint64 maxDateAdjustmentTolerance
-    ) external virtual override onlyIfNotInitialized {
+        uint64 initialNominationPeriodStartDate,
+        uint64 administrationPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
+    ) external override {
         OwnableStorage.onlyOwner();
 
-        _initOrUpgradeElectionModule(
-            firstCouncil,
-            epochSeatCount,
+        _initOrUpdateElectionSettings(
+            initialCouncil,
             minimumActiveMembers,
-            nominationPeriodStartDate,
-            votingPeriodStartDate,
-            epochEndDate,
-            maxDateAdjustmentTolerance
+            initialNominationPeriodStartDate,
+            administrationPeriodDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
+            3 days
         );
     }
 
-    function _initOrUpgradeElectionModule(
-        address[] memory firstCouncil,
-        uint8 epochSeatCount,
+    function _initOrUpdateElectionSettings(
+        address[] memory initialCouncil,
         uint8 minimumActiveMembers,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
+        uint64 initialNominationPeriodStartDate,
+        uint64 administrationPeriodDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     ) internal {
         Council.Data storage store = Council.load();
 
-        uint64 epochStartDate = block.timestamp.to64();
+        if (initialCouncil.length > type(uint8).max) {
+            revert TooManyMembers();
+        }
+
+        // solhint-disable-next-line numcast/safe-cast
+        uint8 epochSeatCount = uint8(initialCouncil.length);
+
+        administrationPeriodDuration = administrationPeriodDuration * 1 days;
+        nominationPeriodDuration = nominationPeriodDuration * 1 days;
+        votingPeriodDuration = votingPeriodDuration * 1 days;
+
+        uint64 epochDuration = administrationPeriodDuration +
+            nominationPeriodDuration +
+            votingPeriodDuration;
+
+        // Set the expected epoch durations for next council
+        Council.load().getNextElectionSettings().setElectionSettings(
+            epochSeatCount,
+            minimumActiveMembers,
+            epochDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
+            maxDateAdjustmentTolerance
+        );
+
+        // If the contract is already initialized, don't initialize current epoch
+        if (_isInitialized()) {
+            return;
+        }
 
         ElectionSettings.Data storage settings = store.getCurrentElectionSettings();
         settings.setElectionSettings(
             epochSeatCount,
             minimumActiveMembers,
-            epochEndDate - epochStartDate, // epochDuration
-            votingPeriodStartDate - nominationPeriodStartDate, // nominationPeriodDuration
-            epochEndDate - votingPeriodStartDate, // votingPeriodDuration
+            epochDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration,
             maxDateAdjustmentTolerance
         );
 
-        Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
+        // calculate periods timestamps based on durations
+        uint64 epochStartDate = block.timestamp.to64();
+        uint64 epochEndDate = epochStartDate + epochDuration;
+        uint64 votingPeriodStartDate = epochEndDate - votingPeriodDuration;
 
+        // Allow to not set "initialNominationPeriodStartDate" and infer it from the durations
+        if (initialNominationPeriodStartDate == 0) {
+            initialNominationPeriodStartDate = votingPeriodStartDate - nominationPeriodDuration;
+        }
+
+        Epoch.Data storage firstEpoch = store.getCurrentElection().epoch;
         store.configureEpochSchedule(
             firstEpoch,
             epochStartDate,
-            nominationPeriodStartDate,
+            initialNominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
         );
 
-        _addCouncilMembers(firstCouncil, 0);
+        _addCouncilMembers(initialCouncil, 0);
 
         store.initialized = true;
 
@@ -117,6 +156,7 @@ contract BaseElectionModule is
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
+
         council.adjustEpochSchedule(
             council.getCurrentElection().epoch,
             newNominationPeriodStartDate,

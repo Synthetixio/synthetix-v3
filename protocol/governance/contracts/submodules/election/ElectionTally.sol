@@ -1,7 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../storage/Council.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {Ballot} from "../../storage/Ballot.sol";
+import {Council} from "../../storage/Council.sol";
+import {Election} from "../../storage/Election.sol";
+import {ElectionSettings} from "../../storage/ElectionSettings.sol";
 
 /// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
 contract ElectionTally {

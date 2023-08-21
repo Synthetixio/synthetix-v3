@@ -1,12 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
-import "./Ballot.sol";
-import "./Epoch.sol";
-
-import "./ElectionSettings.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import {Epoch} from "./Epoch.sol";
 
 library Election {
     struct Data {

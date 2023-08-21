@@ -18,23 +18,20 @@ defaultValue = "SNXGOV"
 [setting.init_council_member]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
 
-[setting.epoch_seat_count]
-defaultValue = "2"
-
 [setting.minimum_active_members]
 defaultValue = "1"
 
-[setting.nomination_period_start_date]
-defaultValue = "0" # defaults to "block.timestamp + epoch_duration - (voting_period_duration * 2)" when given "0"
+[setting.initial_nomination_period_start_date]
+defaultValue = "0" # defaults to "block.timestamp + administration_period_duration" when given "0"
+
+[setting.administration_period_duration]
+defaultValue = "60" # days
+
+[setting.nomination_period_duration]
+defaultValue = "15" # days
 
 [setting.voting_period_duration]
-defaultValue = "7" # days
-
-[setting.epoch_duration]
-defaultValue = "90" # days
-
-[setting.max_date_adjustment_tolerance]
-defaultValue = "3" # days
+defaultValue = "15" # days
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"
@@ -128,15 +125,14 @@ factory.CouncilToken.arg = 2
 
 [invoke.init_election_module]
 target = ["CoreProxy"]
-func = "initOrUpgradeElectionModule(address[],uint8,uint8,uint64,uint64,uint64,uint64)"
+func = "initOrUpdateElectionSettings(address[],uint8,uint64,uint64,uint64,uint64)"
 args = [
   ["<%= settings.init_council_member %>"],
-  "<%= settings.epoch_seat_count %>",
   "<%= settings.minimum_active_members %>",
-  "<%= settings.nomination_period_start_date %>",
+  "<%= settings.initial_nomination_period_start_date %>",
+  "<%= settings.administration_period_duration %>",
+  "<%= settings.nomination_period_duration %>",
   "<%= settings.voting_period_duration %>",
-  "<%= settings.epoch_duration %>",
-  "<%= settings.max_date_adjustment_tolerance %>",
 ]
 from = "<%= settings.owner %>"
 depends = ["invoke.init_council_token"]

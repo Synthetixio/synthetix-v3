@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/external/ISnapshotRecord.sol";
+import {ISnapshotRecord} from "../interfaces/external/ISnapshotRecord.sol";
 
 contract SnapshotRecordMock is ISnapshotRecord {
     struct Period {
@@ -27,6 +27,7 @@ contract SnapshotRecordMock is ISnapshotRecord {
         return period.balances[user];
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function takeSnapshot(uint128 snapshotId) external override {
         // do nothing
     }

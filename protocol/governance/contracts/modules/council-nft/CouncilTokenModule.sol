@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-modules/contracts/modules/NftModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "../../interfaces/ICouncilTokenModule.sol";
+import {NftModule} from "@synthetixio/core-modules/contracts/modules/NftModule.sol";
+import {ICouncilTokenModule} from "../../interfaces/ICouncilTokenModule.sol";
 
 /* solhint-disable no-empty-blocks */
 /**
