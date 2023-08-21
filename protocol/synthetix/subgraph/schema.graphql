@@ -10,6 +10,8 @@ type Pool @entity {
   "Only set when name of the pool got updated"
   name: String
   total_weight: BigInt
+  "Registered rewards distributors"
+  registered_distributors: [RewardsDistributor!] @derivedFrom(field: "pool")
   "This is an internal field, needed to keep configurations in sync. The reason for this is due to derived fields are no readable from event handlers. Consumers should look up markets by the configurations field"
   market_ids: [String!]
   configurations: [MarketConfiguration!] @derivedFrom(field: "pool")
@@ -21,7 +23,6 @@ type Market @entity {
   created_at: BigInt!
   created_at_block: BigInt!
   configurations: [MarketConfiguration!] @derivedFrom(field: "market")
-
   market_snapshots_by_day: [MarketSnapshotByDay!] @derivedFrom(field: "market")
   market_snapshots_by_week: [MarketSnapshotByWeek!]
     @derivedFrom(field: "market")
@@ -49,6 +50,7 @@ type MarketSnapshotByDay @entity {
   net_issuance: BigDecimal!
   reported_debt: BigDecimal!
 }
+
 type MarketSnapshotByWeek @entity {
   "marketId-YYYY-WeekNumber"
   id: ID!
@@ -160,6 +162,7 @@ type RewardsDistributor @entity {
   created_at_block: BigInt!
   updated_at: BigInt!
   updated_at_block: BigInt!
+  pool: Pool!
 }
 
 type RewardsDistribution @entity {

@@ -41,6 +41,15 @@ describe('RewardsManagerModule', function () {
     const factory = await hre.ethers.getContractFactory('RewardDistributorMock');
     RewardDistributor = await factory.connect(owner).deploy();
 
+    console.log('System core address', systems().Core.address);
+
+    console.log(
+      'Collateral address rewards collateral',
+      Collateral.address,
+      'Collateral address core system',
+      collateralAddress()
+    );
+
     await RewardDistributor.connect(owner).initialize(
       systems().Core.address,
       Collateral.address,

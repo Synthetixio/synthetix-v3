@@ -634,6 +634,9 @@ describe('core tests', () => {
   test('handleRewardsDistributed', () => {
     // Needs to be here because of Closures
     const now = new Date(1668448739566).getTime();
+    const newPoolEvent = createPoolCreatedEvent(1, address, now, now - 1000);
+    handlePoolCreated(newPoolEvent);
+
     const rewardsDistributedEvent = createRewardsDistributedEvent(
       BigInt.fromI32(1),
       Address.fromString(address),
@@ -651,14 +654,17 @@ describe('core tests', () => {
       now,
       now - 1000
     );
+
     handleRewardsDistributorRegistered(rewardsDistributorRegisteredEvent);
     handleRewardsDistributed(rewardsDistributedEvent);
+
     assert.fieldEquals(
       'RewardsDistribution',
       `${address2}-${now.toString()}-1`,
       'id',
       `${address2}-${now.toString()}-1`
     );
+
     assert.fieldEquals('RewardsDistribution', `${address2}-${now.toString()}-1`, 'amount', '200');
     assert.fieldEquals(
       'RewardsDistribution',
@@ -869,6 +875,9 @@ describe('core tests', () => {
   test('handleRewardsClaimed', () => {
     // Needs to be here because of Closures
     const now = new Date(1668448739566).getTime();
+    const newPoolEvent = createPoolCreatedEvent(1, address, now, now - 1000);
+    handlePoolCreated(newPoolEvent);
+
     const rewardsClaimed = createRewardsClaimedEvent(
       BigInt.fromI32(1),
       BigInt.fromI32(2),
@@ -878,6 +887,7 @@ describe('core tests', () => {
       now,
       now - 1000
     );
+
     const rewardsDistributedEvent = createRewardsDistributedEvent(
       BigInt.fromI32(2),
       Address.fromString(address),
@@ -888,6 +898,7 @@ describe('core tests', () => {
       now,
       now - 1000
     );
+
     const rewardsDistributorRegisteredEvent = createRewardsDistributorRegisteredEvent(
       BigInt.fromI32(1),
       Address.fromString(address),
@@ -895,8 +906,10 @@ describe('core tests', () => {
       now,
       now - 1000
     );
+
     handleRewardsDistributorRegistered(rewardsDistributorRegisteredEvent);
     handleRewardsDistributed(rewardsDistributedEvent);
+
     assert.assertNull(
       store.get('AccountRewardsDistributor', `2-${address}-${address2}`)!.get('total_claimed')
     );
@@ -909,6 +922,7 @@ describe('core tests', () => {
     assert.fieldEquals('RewardsDistributor', address2, 'updated_at_block', (now - 1000).toString());
 
     handleRewardsClaimed(rewardsClaimed);
+
     assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'id', `${address2}-${now}-1`);
     assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'created_at', now.toString());
     assert.fieldEquals(
@@ -917,6 +931,7 @@ describe('core tests', () => {
       'created_at_block',
       (now - 1000).toString()
     );
+
     assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'account', '1');
     assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'pool', '2');
     assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'collateral_type', address);
@@ -929,37 +944,44 @@ describe('core tests', () => {
       'updated_at_block',
       (now - 1000).toString()
     );
+
     assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'distributor', address2);
+
     assert.fieldEquals(
       'AccountRewardsDistributor',
       `2-${address}-${address2}`,
       'created_at',
       now.toString()
     );
+
     assert.fieldEquals(
       'AccountRewardsDistributor',
       `2-${address}-${address2}`,
       'created_at_block',
       (now - 1000).toString()
     );
+
     assert.fieldEquals(
       'AccountRewardsDistributor',
       `2-${address}-${address2}`,
       'updated_at',
       now.toString()
     );
+
     assert.fieldEquals(
       'AccountRewardsDistributor',
       `2-${address}-${address2}`,
       'updated_at_block',
       (now - 1000).toString()
     );
+
     assert.fieldEquals(
       'AccountRewardsDistributor',
       `2-${address}-${address2}`,
       'total_claimed',
       '500'
     );
+
     const rewardsClaimed2 = createRewardsClaimedEvent(
       BigInt.fromI32(1),
       BigInt.fromI32(2),
@@ -970,7 +992,9 @@ describe('core tests', () => {
       now,
       2
     );
+
     handleRewardsClaimed(rewardsClaimed2);
+
     assert.fieldEquals('RewardsDistributor', address2, 'total_distributed', '200');
     assert.fieldEquals('RewardsDistributor', address2, 'total_claimed', '1300');
     assert.fieldEquals('RewardsDistributor', address2, 'updated_at', (now + 1000).toString());
