@@ -145,6 +145,32 @@
 * `trackingCode` (*bytes32*) - Optional code for integrator tracking purposes.
 * `settler` (*address*) - address of the settler of the order.
 
+### Collateral Module
+
+#### setMaxCollateralAmount
+
+  ```solidity
+  function setMaxCollateralAmount(uint128 synthMarketId, uint256 collateralAmount) external
+  ```
+
+  Set the max collateral amoutn via this function
+
+**Parameters**
+* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
+* `collateralAmount` (*uint256*) - max amount that for the synth
+
+#### MaxCollateralSet
+
+  ```solidity
+  event MaxCollateralSet(uint128 synthMarketId, uint256 collateralAmount)
+  ```
+
+  Gets fired when max collateral amount for synth collateral for the system is set by owner.
+
+**Parameters**
+* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
+* `collateralAmount` (*uint256*) - max amount that was set for the synth
+
 ### Global Perps Market Module
 
 #### setMaxCollateralAmount
@@ -432,6 +458,311 @@
 * `accountId` (*uint128*) - Id of the account liquidated.
 * `reward` (*uint256*) - total reward sent to liquidator.
 * `fullLiquidation` (*bool*) - flag indicating if it was a partial or full liquidation.
+
+### Market Configuration Module
+
+#### addSettlementStrategy
+
+  ```solidity
+  function addSettlementStrategy(uint128 marketId, struct SettlementStrategy.Data strategy) external returns (uint256 strategyId)
+  ```
+
+  Add a new settlement strategy with this function.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market to add the settlement strategy.
+* `strategy` (*struct SettlementStrategy.Data*) - strategy details (see SettlementStrategy.Data struct).
+
+**Returns**
+* `strategyId` (*uint256*) - id of the new settlement strategy.
+#### setOrderFees
+
+  ```solidity
+  function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external
+  ```
+
+  Set order fees for a market with this function.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market to set order fees.
+* `makerFeeRatio` (*uint256*) - the maker fee ratio.
+* `takerFeeRatio` (*uint256*) - the taker fee ratio.
+
+#### updatePriceData
+
+  ```solidity
+  function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external
+  ```
+
+  Set node id for perps market
+
+**Parameters**
+* `perpsMarketId` (*uint128*) - id of the market to set price feed.
+* `feedId` (*bytes32*) - the node feed id
+
+#### setFundingParameters
+
+  ```solidity
+  function setFundingParameters(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity) external
+  ```
+
+  Set funding parameters for a market with this function.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market to set funding parameters.
+* `skewScale` (*uint256*) - the skew scale.
+* `maxFundingVelocity` (*uint256*) - the max funding velocity.
+
+#### setLiquidationParameters
+
+  ```solidity
+  function setLiquidationParameters(uint128 marketId, uint256 initialMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 maintenanceMarginScalarD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin) external
+  ```
+
+  Set liquidation parameters for a market with this function.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market to set liquidation parameters.
+* `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
+* `minimumInitialMarginRatioD18` (*uint256*) - the minimum initial margin ratio (as decimal with 18 digits precision).
+* `maintenanceMarginScalarD18` (*uint256*) - the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
+* `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
+* `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
+* `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
+* `minimumPositionMargin` (*uint256*) - the minimum position margin.
+
+#### setMaxMarketSize
+
+  ```solidity
+  function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external
+  ```
+
+  Set the max size of an specific market with this function.
+
+  This controls the maximum open interest a market can have on either side (Long | Short). So the total Open Interest (with zero skew) for a market can be up to max market size * 2.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market to set the max market value.
+* `maxMarketSize` (*uint256*) - the max market size in market asset units.
+
+#### setLockedOiRatio
+
+  ```solidity
+  function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external
+  ```
+
+  Set the locked OI Ratio for a market with this function.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market to set locked OI ratio.
+* `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
+
+#### setSettlementStrategyEnabled
+
+  ```solidity
+  function setSettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled) external
+  ```
+
+  Enable or disable a settlement strategy for a market with this function.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+* `strategyId` (*uint256*) - the specific strategy.
+* `enabled` (*bool*) - whether the strategy is enabled or disabled.
+
+#### getSettlementStrategy
+
+  ```solidity
+  function getSettlementStrategy(uint128 marketId, uint256 strategyId) external view returns (struct SettlementStrategy.Data settlementStrategy)
+  ```
+
+  Gets the settlement strategy details.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+* `strategyId` (*uint256*) - id of the settlement strategy.
+
+**Returns**
+* `settlementStrategy` (*struct SettlementStrategy.Data*) - strategy details (see SettlementStrategy.Data struct).
+#### getLiquidationParameters
+
+  ```solidity
+  function getLiquidationParameters(uint128 marketId) external view returns (uint256 initialMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 maintenanceMarginScalarD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin)
+  ```
+
+  Gets liquidation parameters details of a market.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+
+**Returns**
+* `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
+* `minimumInitialMarginRatioD18` (*uint256*) - the minimum initial margin ratio (as decimal with 18 digits precision).
+* `maintenanceMarginScalarD18` (*uint256*) - the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
+* `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
+* `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
+* `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
+* `minimumPositionMargin` (*uint256*) - the minimum position margin.
+#### getFundingParameters
+
+  ```solidity
+  function getFundingParameters(uint128 marketId) external view returns (uint256 skewScale, uint256 maxFundingVelocity)
+  ```
+
+  Gets funding parameters of a market.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+
+**Returns**
+* `skewScale` (*uint256*) - the skew scale.
+* `maxFundingVelocity` (*uint256*) - the max funding velocity.
+#### getMaxMarketSize
+
+  ```solidity
+  function getMaxMarketSize(uint128 marketId) external view returns (uint256 maxMarketSize)
+  ```
+
+  Gets the max size of an specific market.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+
+**Returns**
+* `maxMarketSize` (*uint256*) - the max market size in market asset units.
+#### getOrderFees
+
+  ```solidity
+  function getOrderFees(uint128 marketId) external view returns (uint256 makerFeeRatio, uint256 takerFeeRatio)
+  ```
+
+  Gets the order fees of a market.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+
+**Returns**
+* `makerFeeRatio` (*uint256*) - the maker fee ratio.
+* `takerFeeRatio` (*uint256*) - the taker fee ratio.
+#### getLockedOiRatio
+
+  ```solidity
+  function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18)
+  ```
+
+  Gets the locked OI ratio of a market.
+
+**Parameters**
+* `marketId` (*uint128*) - id of the market.
+
+**Returns**
+* `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
+
+#### SettlementStrategyAdded
+
+  ```solidity
+  event SettlementStrategyAdded(uint128 marketId, struct SettlementStrategy.Data strategy, uint256 strategyId)
+  ```
+
+  Gets fired when new settlement strategy is added.
+
+**Parameters**
+* `marketId` (*uint128*) - adds settlement strategy to this specific market.
+* `strategy` (*struct SettlementStrategy.Data*) - the strategy configuration.
+* `strategyId` (*uint256*) - the newly created settlement strategy id.
+
+#### MarketPriceDataUpdated
+
+  ```solidity
+  event MarketPriceDataUpdated(uint128 marketId, bytes32 feedId)
+  ```
+
+  Gets fired when feed id for perps market is updated.
+
+**Parameters**
+* `marketId` (*uint128*) - id of perps market
+* `feedId` (*bytes32*) - oracle node id
+
+#### OrderFeesSet
+
+  ```solidity
+  event OrderFeesSet(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio)
+  ```
+
+  Gets fired when order fees are updated.
+
+**Parameters**
+* `marketId` (*uint128*) - udpates fees to this specific market.
+* `makerFeeRatio` (*uint256*) - the maker fee ratio.
+* `takerFeeRatio` (*uint256*) - the taker fee ratio.
+
+#### FundingParametersSet
+
+  ```solidity
+  event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity)
+  ```
+
+  Gets fired when funding parameters are updated.
+
+**Parameters**
+* `marketId` (*uint128*) - udpates funding parameters to this specific market.
+* `skewScale` (*uint256*) - the skew scale.
+* `maxFundingVelocity` (*uint256*) - the max funding velocity.
+
+#### LiquidationParametersSet
+
+  ```solidity
+  event LiquidationParametersSet(uint128 marketId, uint256 initialMarginRatioD18, uint256 maintenanceMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin)
+  ```
+
+  Gets fired when liquidation parameters are updated.
+
+**Parameters**
+* `marketId` (*uint128*) - udpates funding parameters to this specific market.
+* `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
+* `maintenanceMarginRatioD18` (*uint256*) - the maintenance margin ratio (as decimal with 18 digits precision).
+* `minimumInitialMarginRatioD18` (*uint256*) - 
+* `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
+* `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
+* `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
+* `minimumPositionMargin` (*uint256*) - the minimum position margin.
+
+#### MaxMarketSizeSet
+
+  ```solidity
+  event MaxMarketSizeSet(uint128 marketId, uint256 maxMarketSize)
+  ```
+
+  Gets fired when max market value is updated.
+
+**Parameters**
+* `marketId` (*uint128*) - udpates funding parameters to this specific market.
+* `maxMarketSize` (*uint256*) - the max market value.
+
+#### LockedOiRatioSet
+
+  ```solidity
+  event LockedOiRatioSet(uint128 marketId, uint256 lockedOiRatioD18)
+  ```
+
+  Gets fired when locked oi ratio is updated.
+
+**Parameters**
+* `marketId` (*uint128*) - udpates funding parameters to this specific market.
+* `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
+
+#### SettlementStrategyEnabled
+
+  ```solidity
+  event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled)
+  ```
+
+  Gets fired when a settlement strategy is enabled or disabled.
+
+**Parameters**
+* `marketId` (*uint128*) - udpates funding parameters to this specific market.
+* `strategyId` (*uint256*) - the specific strategy.
+* `enabled` (*bool*) - whether the strategy is enabled or disabled.
 
 ### IMarketEvents
 
@@ -815,335 +1146,4 @@
 
 **Returns**
 * `summary` (*struct IPerpsMarketModule.MarketSummary*) - Market summary (see MarketSummary).
-
-### Collateral Module
-
-#### setMaxCollateralAmount
-
-  ```solidity
-  function setMaxCollateralAmount(uint128 synthMarketId, uint256 collateralAmount) external
-  ```
-
-  Set the max collateral amoutn via this function
-
-**Parameters**
-* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
-* `collateralAmount` (*uint256*) - max amount that for the synth
-
-#### MaxCollateralSet
-
-  ```solidity
-  event MaxCollateralSet(uint128 synthMarketId, uint256 collateralAmount)
-  ```
-
-  Gets fired when max collateral amount for synth collateral for the system is set by owner.
-
-**Parameters**
-* `synthMarketId` (*uint128*) - Synth market id, 0 for snxUSD.
-* `collateralAmount` (*uint256*) - max amount that was set for the synth
-
-### Market Configuration Module
-
-#### addSettlementStrategy
-
-  ```solidity
-  function addSettlementStrategy(uint128 marketId, struct SettlementStrategy.Data strategy) external returns (uint256 strategyId)
-  ```
-
-  Add a new settlement strategy with this function.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market to add the settlement strategy.
-* `strategy` (*struct SettlementStrategy.Data*) - strategy details (see SettlementStrategy.Data struct).
-
-**Returns**
-* `strategyId` (*uint256*) - id of the new settlement strategy.
-#### setOrderFees
-
-  ```solidity
-  function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external
-  ```
-
-  Set order fees for a market with this function.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market to set order fees.
-* `makerFeeRatio` (*uint256*) - the maker fee ratio.
-* `takerFeeRatio` (*uint256*) - the taker fee ratio.
-
-#### updatePriceData
-
-  ```solidity
-  function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external
-  ```
-
-  Set node id for perps market
-
-**Parameters**
-* `perpsMarketId` (*uint128*) - id of the market to set price feed.
-* `feedId` (*bytes32*) - the node feed id
-
-#### setFundingParameters
-
-  ```solidity
-  function setFundingParameters(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity) external
-  ```
-
-  Set funding parameters for a market with this function.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market to set funding parameters.
-* `skewScale` (*uint256*) - the skew scale.
-* `maxFundingVelocity` (*uint256*) - the max funding velocity.
-
-#### setLiquidationParameters
-
-  ```solidity
-  function setLiquidationParameters(uint128 marketId, uint256 initialMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 maintenanceMarginScalarD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin) external
-  ```
-
-  Set liquidation parameters for a market with this function.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market to set liquidation parameters.
-* `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
-* `minimumInitialMarginRatioD18` (*uint256*) - the minimum initial margin ratio (as decimal with 18 digits precision).
-* `maintenanceMarginScalarD18` (*uint256*) - the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
-* `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
-* `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
-* `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
-* `minimumPositionMargin` (*uint256*) - the minimum position margin.
-
-#### setMaxMarketSize
-
-  ```solidity
-  function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external
-  ```
-
-  Set the max size of an specific market with this function.
-
-  This controls the maximum open interest a market can have on either side (Long | Short). So the total Open Interest (with zero skew) for a market can be up to max market size * 2.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market to set the max market value.
-* `maxMarketSize` (*uint256*) - the max market size in market asset units.
-
-#### setLockedOiRatio
-
-  ```solidity
-  function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external
-  ```
-
-  Set the locked OI Ratio for a market with this function.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market to set locked OI ratio.
-* `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
-
-#### setSettlementStrategyEnabled
-
-  ```solidity
-  function setSettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled) external
-  ```
-
-  Enable or disable a settlement strategy for a market with this function.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-* `strategyId` (*uint256*) - the specific strategy.
-* `enabled` (*bool*) - whether the strategy is enabled or disabled.
-
-#### getSettlementStrategy
-
-  ```solidity
-  function getSettlementStrategy(uint128 marketId, uint256 strategyId) external view returns (struct SettlementStrategy.Data settlementStrategy)
-  ```
-
-  Gets the settlement strategy details.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-* `strategyId` (*uint256*) - id of the settlement strategy.
-
-**Returns**
-* `settlementStrategy` (*struct SettlementStrategy.Data*) - strategy details (see SettlementStrategy.Data struct).
-#### getLiquidationParameters
-
-  ```solidity
-  function getLiquidationParameters(uint128 marketId) external view returns (uint256 initialMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 maintenanceMarginScalarD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin)
-  ```
-
-  Gets liquidation parameters details of a market.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-
-**Returns**
-* `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
-* `minimumInitialMarginRatioD18` (*uint256*) - the minimum initial margin ratio (as decimal with 18 digits precision).
-* `maintenanceMarginScalarD18` (*uint256*) - the maintenance margin scalar relative to the initial margin ratio (as decimal with 18 digits precision).
-* `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
-* `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
-* `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
-* `minimumPositionMargin` (*uint256*) - the minimum position margin.
-#### getFundingParameters
-
-  ```solidity
-  function getFundingParameters(uint128 marketId) external view returns (uint256 skewScale, uint256 maxFundingVelocity)
-  ```
-
-  Gets funding parameters of a market.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-
-**Returns**
-* `skewScale` (*uint256*) - the skew scale.
-* `maxFundingVelocity` (*uint256*) - the max funding velocity.
-#### getMaxMarketSize
-
-  ```solidity
-  function getMaxMarketSize(uint128 marketId) external view returns (uint256 maxMarketSize)
-  ```
-
-  Gets the max size of an specific market.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-
-**Returns**
-* `maxMarketSize` (*uint256*) - the max market size in market asset units.
-#### getOrderFees
-
-  ```solidity
-  function getOrderFees(uint128 marketId) external view returns (uint256 makerFeeRatio, uint256 takerFeeRatio)
-  ```
-
-  Gets the order fees of a market.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-
-**Returns**
-* `makerFeeRatio` (*uint256*) - the maker fee ratio.
-* `takerFeeRatio` (*uint256*) - the taker fee ratio.
-#### getLockedOiRatio
-
-  ```solidity
-  function getLockedOiRatio(uint128 marketId) external view returns (uint256 lockedOiRatioD18)
-  ```
-
-  Gets the locked OI ratio of a market.
-
-**Parameters**
-* `marketId` (*uint128*) - id of the market.
-
-**Returns**
-* `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
-
-#### SettlementStrategyAdded
-
-  ```solidity
-  event SettlementStrategyAdded(uint128 marketId, struct SettlementStrategy.Data strategy, uint256 strategyId)
-  ```
-
-  Gets fired when new settlement strategy is added.
-
-**Parameters**
-* `marketId` (*uint128*) - adds settlement strategy to this specific market.
-* `strategy` (*struct SettlementStrategy.Data*) - the strategy configuration.
-* `strategyId` (*uint256*) - the newly created settlement strategy id.
-
-#### MarketPriceDataUpdated
-
-  ```solidity
-  event MarketPriceDataUpdated(uint128 marketId, bytes32 feedId)
-  ```
-
-  Gets fired when feed id for perps market is updated.
-
-**Parameters**
-* `marketId` (*uint128*) - id of perps market
-* `feedId` (*bytes32*) - oracle node id
-
-#### OrderFeesSet
-
-  ```solidity
-  event OrderFeesSet(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio)
-  ```
-
-  Gets fired when order fees are updated.
-
-**Parameters**
-* `marketId` (*uint128*) - udpates fees to this specific market.
-* `makerFeeRatio` (*uint256*) - the maker fee ratio.
-* `takerFeeRatio` (*uint256*) - the taker fee ratio.
-
-#### FundingParametersSet
-
-  ```solidity
-  event FundingParametersSet(uint128 marketId, uint256 skewScale, uint256 maxFundingVelocity)
-  ```
-
-  Gets fired when funding parameters are updated.
-
-**Parameters**
-* `marketId` (*uint128*) - udpates funding parameters to this specific market.
-* `skewScale` (*uint256*) - the skew scale.
-* `maxFundingVelocity` (*uint256*) - the max funding velocity.
-
-#### LiquidationParametersSet
-
-  ```solidity
-  event LiquidationParametersSet(uint128 marketId, uint256 initialMarginRatioD18, uint256 maintenanceMarginRatioD18, uint256 minimumInitialMarginRatioD18, uint256 liquidationRewardRatioD18, uint256 maxLiquidationLimitAccumulationMultiplier, uint256 maxSecondsInLiquidationWindow, uint256 minimumPositionMargin)
-  ```
-
-  Gets fired when liquidation parameters are updated.
-
-**Parameters**
-* `marketId` (*uint128*) - udpates funding parameters to this specific market.
-* `initialMarginRatioD18` (*uint256*) - the initial margin ratio (as decimal with 18 digits precision).
-* `maintenanceMarginRatioD18` (*uint256*) - the maintenance margin ratio (as decimal with 18 digits precision).
-* `minimumInitialMarginRatioD18` (*uint256*) - 
-* `liquidationRewardRatioD18` (*uint256*) - the liquidation reward ratio (as decimal with 18 digits precision).
-* `maxLiquidationLimitAccumulationMultiplier` (*uint256*) - the max liquidation limit accumulation multiplier.
-* `maxSecondsInLiquidationWindow` (*uint256*) - the max seconds in liquidation window (used together with the acc multiplier to get max liquidation per window).
-* `minimumPositionMargin` (*uint256*) - the minimum position margin.
-
-#### MaxMarketSizeSet
-
-  ```solidity
-  event MaxMarketSizeSet(uint128 marketId, uint256 maxMarketSize)
-  ```
-
-  Gets fired when max market value is updated.
-
-**Parameters**
-* `marketId` (*uint128*) - udpates funding parameters to this specific market.
-* `maxMarketSize` (*uint256*) - the max market value.
-
-#### LockedOiRatioSet
-
-  ```solidity
-  event LockedOiRatioSet(uint128 marketId, uint256 lockedOiRatioD18)
-  ```
-
-  Gets fired when locked oi ratio is updated.
-
-**Parameters**
-* `marketId` (*uint128*) - udpates funding parameters to this specific market.
-* `lockedOiRatioD18` (*uint256*) - the locked OI ratio skew scale (as decimal with 18 digits precision).
-
-#### SettlementStrategyEnabled
-
-  ```solidity
-  event SettlementStrategyEnabled(uint128 marketId, uint256 strategyId, bool enabled)
-  ```
-
-  Gets fired when a settlement strategy is enabled or disabled.
-
-**Parameters**
-* `marketId` (*uint128*) - udpates funding parameters to this specific market.
-* `strategyId` (*uint256*) - the specific strategy.
-* `enabled` (*bool*) - whether the strategy is enabled or disabled.
 
