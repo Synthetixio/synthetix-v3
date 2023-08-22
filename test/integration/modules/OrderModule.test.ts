@@ -5,7 +5,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
+import { genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
 import {
   commitAndSettle,
   depositMargin,
@@ -45,15 +45,17 @@ describe('OrderModule', () => {
       assertBn.equal(pendingOrder.keeperFeeBufferUsd, order.keeperFeeBufferUsd);
       assertBn.equal(pendingOrder.commitmentTime, block.timestamp);
 
-      // TODO: Add full event match to include all propertie when events are more finalsied.
+      const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFee);
+
       await assertEvent(
         tx,
-        `OrderSubmitted(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${block.timestamp}`,
+        `OrderSubmitted(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${block.timestamp}, ${orderFee}, ${keeperFee})`,
         PerpMarketProxy
       );
     });
 
     it('should emit all events in correct order');
+
     it('should recompute funding');
 
     it('should revert insufficient margin when margin is less than initial margin', async () => {
@@ -223,21 +225,60 @@ describe('OrderModule', () => {
 
       await fastForwardTo(settlementTime, provider());
 
+      const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFee);
       const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
         value: updateFee,
       });
 
-      // TODO: Add full event match to include all propertie when events are more finalsied.
-      await assertEvent(tx, `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}`, PerpMarketProxy);
+      await assertEvent(
+        tx,
+        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${keeperFee})`,
+        PerpMarketProxy
+      );
 
       // There should be no order.
       const pendingOrder2 = await PerpMarketProxy.getOrder(trader.accountId, marketId);
-      assertBn.equal(pendingOrder2.sizeDelta, 0);
+      assertBn.isZero(pendingOrder2.sizeDelta);
     });
 
-    it('should settle an order that completely closes existing position');
+    // Currently failing
+    it.skip('should settle an order that completely closes existing position', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: -1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+
+      console.log(order);
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+        desiredKeeperFeeBufferUsd: 1,
+      });
+
+      console.log(closeOrder);
+
+      await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      // There should be no order.
+      assertBn.isZero((await PerpMarketProxy.getOrder(trader.accountId, marketId)).sizeDelta);
+
+      console.log(await PerpMarketProxy.getPositionDigest(trader.accountId, marketId));
+
+      // There should be no order and no position.
+      assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
+    });
+
     it('should settle an order that partially closes existing');
+
     it('should settle an order that adds to an existing order');
+
     it('should settle an order that flips from one side to the other');
 
     it('should have a position opened after settlement', async () => {
@@ -473,7 +514,7 @@ describe('OrderModule', () => {
           }
         };
 
-        // Deposit an appropraite amount of margin relative to the leader type we're testing against.
+        // Deposit an appropriate amount of margin relative to the leader type we're testing against.
         const gTrader2 = await depositMargin(
           bs,
           genTrader(bs, {
@@ -587,9 +628,9 @@ describe('OrderModule', () => {
     describe('keeperFee', () => {
       it('should calculate keeper fees proportional to block.baseFee and profit margin');
 
-      it('should cap the keeperFee by its max usd when exceeds');
+      it('should cap the keeperFee by its max usd when exceeds ceiling');
 
-      it('should ceil the keeperFee by its min usd when under');
+      it('should ceil the keeperFee by its min usd when below floor');
     });
   });
 
