@@ -785,6 +785,37 @@ describe('MarginModule', async () => {
       assertBn.equal(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN());
     });
 
+    it('should return 0 for underwater position not yet flagged', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 2,
+        desiredSide: -1,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(pnl);
+      // Assert margin before price change
+      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
+      // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+      const newPrice = wei(order.oraclePrice).mul(2).toBN();
+      // Update price
+      await market.aggregator().mockSetCurrentPrice(newPrice);
+
+      // load margin again
+      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      // Assert marginUSD is 0 since price change made the position underwater
+      assertBn.equal(marginUsdAfterPriceChange, bn(0));
+    });
+
     it('should not consider a position in a different market for the same account', async () => {
       const { PerpMarketProxy } = systems();
 
