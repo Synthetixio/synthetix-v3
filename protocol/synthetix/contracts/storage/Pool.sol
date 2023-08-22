@@ -536,7 +536,7 @@ library Pool {
     ) internal view {
         uint256 maxDeposit = self.collateralConfigurations[collateralType].maxDepositD18;
         uint256 currentCollateral = self.vaults[collateralType].currentCollateral();
-        
+
         if (
             (self.collateralDisabledByDefault && maxDeposit == 0) ||
             (maxDeposit > 0 && currentCollateral + collateralAmountD18 > maxDeposit)
