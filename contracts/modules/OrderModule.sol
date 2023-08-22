@@ -137,11 +137,8 @@ contract OrderModule is IOrderModule {
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
 
-        // Update skew and market size upon successful settlement.
-        market.skew += newPosition.size - oldPosition.size;
-        market.size += (MathUtil.abs(newPosition.size).toInt() - MathUtil.abs(oldPosition.size).toInt())
-            .toUint()
-            .to128();
+        market.skew = market.skew + newPosition.size - oldPosition.size;
+        market.size = (market.size.to256() + MathUtil.abs(newPosition.size) - MathUtil.abs(oldPosition.size)).to128();
 
         market.updateDebtCorrection(oldPosition, newPosition, marginUsd, newMarginUsd);
 

@@ -241,8 +241,7 @@ describe('OrderModule', () => {
       assertBn.isZero(pendingOrder2.sizeDelta);
     });
 
-    // Currently failing
-    it.skip('should settle an order that completely closes existing position', async () => {
+    it('should settle an order that completely closes existing position', async () => {
       const { PerpMarketProxy } = systems();
 
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
@@ -252,9 +251,9 @@ describe('OrderModule', () => {
         desiredKeeperFeeBufferUsd: 1,
       });
 
-      console.log(order);
-
       await commitAndSettle(bs, marketId, trader, order);
+
+      assertBn.equal((await PerpMarketProxy.getMarketDigest(marketId)).size, order.sizeDelta.abs());
 
       const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredSide: 1,
@@ -262,14 +261,12 @@ describe('OrderModule', () => {
         desiredKeeperFeeBufferUsd: 1,
       });
 
-      console.log(closeOrder);
-
       await commitAndSettle(bs, marketId, trader, closeOrder);
+
+      assertBn.isZero((await PerpMarketProxy.getMarketDigest(marketId)).size);
 
       // There should be no order.
       assertBn.isZero((await PerpMarketProxy.getOrder(trader.accountId, marketId)).sizeDelta);
-
-      console.log(await PerpMarketProxy.getPositionDigest(trader.accountId, marketId));
 
       // There should be no order and no position.
       assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
