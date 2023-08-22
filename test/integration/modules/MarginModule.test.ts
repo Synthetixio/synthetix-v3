@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import { wei } from '@synthetixio/wei';
 import assert from 'assert';
 import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
@@ -16,7 +17,14 @@ import {
   genTrader,
   genOrder,
 } from '../../generators';
-import { ZERO_ADDRESS, approveAndMintMargin, commitAndSettle, commitOrder, depositMargin } from '../../helpers';
+import {
+  ZERO_ADDRESS,
+  approveAndMintMargin,
+  calcPnl,
+  commitAndSettle,
+  commitOrder,
+  depositMargin,
+} from '../../helpers';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -25,7 +33,7 @@ describe('MarginModule', async () => {
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
-    it('should noop with a modify amount of 0', async () => {
+    it('should revert when a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
       const trader = genOneOf(traders());
@@ -33,15 +41,15 @@ describe('MarginModule', async () => {
       const collateral = genOneOf(collaterals()).contract.connect(trader.signer);
       const amountDelta = bn(0);
 
-      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-        trader.accountId,
-        market.marketId(),
-        collateral.address,
-        amountDelta
+      await assertRevert(
+        PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          market.marketId(),
+          collateral.address,
+          amountDelta
+        ),
+        `ZeroAmount()`
       );
-      const receipt = await tx.wait();
-
-      assert.equal(receipt.events?.length, 0);
     });
 
     it('should emit all events in correct order');
@@ -146,7 +154,6 @@ describe('MarginModule', async () => {
           collateral.address,
           amountDelta
         );
-
         await assertEvent(
           tx,
           `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta}, "${collateral.address}")`,
@@ -652,7 +659,7 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should configure many collaterals', async () => {
+    it('should configure many collaterals, also tests getConfiguredCollaterals', async () => {
       const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
       const from = owner();
 
@@ -719,24 +726,172 @@ describe('MarginModule', async () => {
 
     it('should revoke/approve collateral with 0/maxAllowable');
   });
-
-  describe('getConfiguredCollaterals', () => {
-    it('should return all available configured collaterals');
+  describe('getCollateralUsd', () => {
+    it('should returns collateral without deducting fees');
+    it('more cases');
   });
 
-  describe('getCollateralUsd', () => {
-    it('should return marginUsd that reflects value of collateral when no positions opened');
+  describe('getMarginUsd', () => {
+    it('should return marginUsd that reflects value of collateral when no positions opened', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(bs, genTrader(bs));
 
-    it('should return zero marginUsd when no collateral has been depoisted');
+      const marginUsd = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
 
-    it('should return marginUsd + value of position when in profit');
+      assertBn.equal(marginUsd, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+    });
 
-    it('should return marginUsd - value of position when not in profit');
+    it('should return zero marginUsd when no collateral has been deposited', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId } = await genTrader(bs);
+      assertBn.equal(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId), bn(0));
+    });
 
-    it('should not consider a position in a different market for the same account');
+    it('should return marginUsd + pnl of position', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
-    it('should revert when accountId does not exist');
+      await commitAndSettle(bs, marketId, trader, order);
 
-    it('should revert when marketId does not exist');
+      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(pnl);
+      // Assert margin before price change
+      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
+      // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+      const newPrice = wei(order.oraclePrice).mul(1.5).toBN();
+      // Update price
+      await market.aggregator().mockSetCurrentPrice(newPrice);
+
+      // Collect some data for expected margin calculation
+      const { accruedFunding } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+      const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
+
+      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      // Calculate expected margin
+      const expectedMarginUsdAfterPriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(newPnl)
+        .add(accruedFunding);
+      // Assert marginUSD after price update
+      assertBn.equal(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN());
+    });
+
+    it('should return 0 for underwater position not yet flagged', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 2,
+        desiredSide: -1,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
+        .sub(order.orderFee)
+        .sub(order.keeperFee)
+        .add(order.keeperFeeBufferUsd)
+        .add(pnl);
+      // Assert margin before price change
+      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
+      // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+      const newPrice = wei(order.oraclePrice).mul(2).toBN();
+      // Update price
+      await market.aggregator().mockSetCurrentPrice(newPrice);
+
+      // load margin again
+      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      // Assert marginUSD is 0 since price change made the position underwater
+      assertBn.equal(marginUsdAfterPriceChange, bn(0));
+    });
+
+    it('should not consider a position in a different market for the same account', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { marketId, trader, collateralDepositAmount, collateralPrice } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: bs.markets()[0] })
+      );
+      // Deposit margin to another market
+      const otherDeposit = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarket: bs.markets()[1], desiredTrader: trader })
+      );
+      const marginBeforeTradeOnDiffMarket = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      assertBn.equal(marginBeforeTradeOnDiffMarket, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+
+      // Generate and execute an order for the other market
+      const order = await genOrder(
+        bs,
+        otherDeposit.market,
+        otherDeposit.collateral,
+        otherDeposit.collateralDepositAmount
+      );
+      await commitAndSettle(bs, otherDeposit.marketId, otherDeposit.trader, order);
+
+      // Assert that collateral is still the same
+      const marginAfterTradeOnDiffMarket = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+      // Margin should stay unchanged
+      assertBn.equal(marginBeforeTradeOnDiffMarket, marginAfterTradeOnDiffMarket);
+    });
+
+    it('should reflect collateral price changes', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+
+      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      assertBn.equal(marginUsdBeforePriceChange, wei(collateralDepositAmount).mul(collateralPrice).toBN());
+
+      const newPrice = wei(collateralPrice)
+        .mul(genOneOf([1.1, 0.9]))
+        .toBN();
+      await collateral.aggregator().mockSetCurrentPrice(newPrice);
+
+      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
+      assertBn.equal(marginUsdAfterPriceChange, wei(collateralDepositAmount).mul(newPrice).toBN());
+    });
+
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { marketId } = await genTrader(bs);
+      const invalidAccountId = bn(genNumber(42069, 50_000));
+
+      // Perform withdraw with invalid market
+      await assertRevert(
+        PerpMarketProxy.getMarginUsd(invalidAccountId, marketId),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader } = await genTrader(bs);
+      const invalidMarketId = bn(genNumber(42069, 50_000));
+
+      // Perform withdraw with invalid market
+      await assertRevert(
+        PerpMarketProxy.getMarginUsd(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 });

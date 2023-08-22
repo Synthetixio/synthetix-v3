@@ -215,7 +215,7 @@ library Margin {
     }
 
     /**
-     * @dev Returns the `collateralValueUsd - position.feesPaid` on an open position.
+     * @dev Returns the `collateralValueUsd  + position.funding + position.pnl - position.feesPaid` on an open position.
      */
     function getMarginUsd(
         uint128 accountId,

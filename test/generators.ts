@@ -143,6 +143,7 @@ export const genTrader = async (
     collateral,
     collateralDepositAmount,
     marginUsdDepositAmount: marginUsdDepositAmount.toBN(),
+    collateralPrice,
   };
 };
 

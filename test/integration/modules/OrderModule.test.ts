@@ -678,6 +678,7 @@ describe('OrderModule', () => {
           collateral,
           collateralDepositAmount,
           marginUsdDepositAmount,
+          collateralPrice,
         });
 
         // sizeDelta = 10 * 100 / 1 / 1 = 1000

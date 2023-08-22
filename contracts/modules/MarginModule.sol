@@ -161,6 +161,9 @@ contract MarginModule is IMarginModule {
         if (maxAllowable == 0) {
             revert ErrorUtil.UnsupportedCollateral(collateralType);
         }
+        if (amountDelta == 0) {
+            revert ErrorUtil.ZeroAmount();
+        }
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
@@ -188,9 +191,6 @@ contract MarginModule is IMarginModule {
             }
 
             withdrawAndTransfer(marketId, absAmountDelta, collateralType, globalConfig);
-        } else {
-            // A zero amount is a no-op.
-            return;
         }
     }
 
@@ -283,6 +283,17 @@ contract MarginModule is IMarginModule {
      * @inheritdoc IMarginModule
      */
     function getCollateralUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.exists(marketId);
         return Margin.getCollateralUsd(accountId, marketId);
+    }
+
+    /**
+     * @inheritdoc IMarginModule
+     */
+    function getMarginUsd(uint128 accountId, uint128 marketId) external view returns (uint256) {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        return Margin.getMarginUsd(accountId, market, market.getOraclePrice());
     }
 }

@@ -47,6 +47,9 @@ library ErrorUtil {
     // @dev Thrown when attempting to operate with an order with 0 size delta.
     error NilOrder();
 
+    // @dev Thrown when we expect amount to be non zero
+    error ZeroAmount();
+
     // @dev Thrown when an order pushes past a market's max allowable open interest (OI).
     error MaxMarketSizeExceeded();
 
