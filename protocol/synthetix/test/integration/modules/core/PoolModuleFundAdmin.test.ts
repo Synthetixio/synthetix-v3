@@ -720,15 +720,6 @@ describe('PoolModule Admin', function () {
         systems().Core
       );
     });
-
-    it('disable the collateral by pool owner', async () => {
-      await systems()
-        .Core.connect(user1)
-        .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
-          maxDepositD18: bn(10),
-          issuanceRatioD18: bn(2),
-        });
-    });
   });
 
   describe('set pool collateral issuance ratio', async () => {
