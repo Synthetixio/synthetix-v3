@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Order} from "../storage/Order.sol";
@@ -37,6 +38,8 @@ contract OrderModule is IOrderModule {
         uint256 keeperFeeBufferUsd
     ) external {
         Account.exists(accountId);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         // A new order cannot be submitted if one is already pending.

@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
+import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
@@ -85,6 +86,8 @@ contract MarginModule is IMarginModule {
      */
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         // Prevent collateral transfers when there's a pending order.
@@ -115,7 +118,8 @@ contract MarginModule is IMarginModule {
             }
 
             accountMargin.collaterals[collateralType] -= available;
-            // withdraw all available collateral
+
+            // Withdraw all available collateral for this `collateralType`.
             withdrawAndTransfer(marketId, available, collateralType, globalConfig);
         }
     }
@@ -129,12 +133,15 @@ contract MarginModule is IMarginModule {
         address collateralType,
         int256 amountDelta
     ) external {
+        Account.exists(accountId);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
+
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        // Fail fast if the collateralType is empty.
         if (collateralType == address(0)) {
             revert ErrorUtil.ZeroAddress();
         }
-
-        Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
         // Prevent collateral transfers when there's a pending order.
         Order.Data storage order = market.orders[accountId];

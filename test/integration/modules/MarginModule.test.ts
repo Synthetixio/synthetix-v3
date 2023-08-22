@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -24,7 +25,7 @@ describe('MarginModule', async () => {
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
-    it('should noop with a transfer amount of 0', async () => {
+    it('should noop with a modify amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
       const trader = genOneOf(traders());
@@ -47,7 +48,7 @@ describe('MarginModule', async () => {
 
     it('should recompute funding');
 
-    it('should revert transfers when an order is pending', async () => {
+    it('should revert on modify when an order is pending', async () => {
       const { PerpMarketProxy } = systems();
       const gTrader1 = await genTrader(bs);
 
@@ -96,6 +97,30 @@ describe('MarginModule', async () => {
           gTrader1.collateralDepositAmount.mul(-1)
         ),
         `OrderFound("${trader.accountId}")`
+      );
+    });
+
+    it('should revert when modifying collateral of another account', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader1 = traders()[0];
+      const trader2 = traders()[1];
+
+      const gTrader = await genTrader(bs, { desiredTrader: trader1 });
+      const { market, collateral, collateralDepositAmount } = gTrader;
+      await approveAndMintMargin(bs, gTrader);
+
+      // Connected using trader2 for an accountId that belongs to trader1.
+      const permission = ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL');
+      const signerAddress = await trader2.signer.getAddress();
+      await assertRevert(
+        PerpMarketProxy.connect(trader2.signer).modifyCollateral(
+          trader1.accountId,
+          market.marketId(),
+          collateral.contract.address,
+          collateralDepositAmount
+        ),
+        `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
       );
     });
 
@@ -456,7 +481,7 @@ describe('MarginModule', async () => {
     });
 
     describe('withdrawAllCollateral', () => {
-      it('should withdrawal of all account of collateral', async () => {
+      it('should withdrawal all account collateral', async () => {
         const { PerpMarketProxy } = systems();
         const gTrader = await genTrader(bs);
 
@@ -525,7 +550,9 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert when an account does not exist', async () => {
+      it('should noop when account has no collateral to withdraw');
+
+      it('should revert when account does not exist', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId } = await depositMargin(bs, genTrader(bs));
         const invalidAccountId = bn(genNumber(42069, 50_000));
@@ -567,7 +594,7 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert when trader have open position', async () => {
+      it('should revert when trader has an open position', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
           bs,
@@ -580,6 +607,30 @@ describe('MarginModule', async () => {
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
           `PositionFound("${trader.accountId}", "${marketId}")`,
           PerpMarketProxy
+        );
+      });
+
+      it('should revert when withdrawing all collateral of another account', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const trader1 = traders()[0];
+        const trader2 = traders()[1];
+        const market = markets()[0];
+
+        // Deposit many types of collateral for trader1.
+        for (const collateral of collaterals()) {
+          await depositMargin(
+            bs,
+            genTrader(bs, { desiredTrader: trader1, desiredCollateral: collateral, desiredMarket: market })
+          );
+        }
+
+        // Now attempt to withdraw everything using trader2.
+        const permission = ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL');
+        const signerAddress = await trader2.signer.getAddress();
+        await assertRevert(
+          PerpMarketProxy.connect(trader2.signer).withdrawAllCollateral(trader1.accountId, market.marketId()),
+          `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
         );
       });
     });

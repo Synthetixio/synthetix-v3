@@ -152,7 +152,11 @@ export const genOrder = async (
   market: Market,
   collateral: Collateral,
   collateralDepositAmount: BigNumber,
-  options?: { desiredLeverage?: number; desiredSide?: 1 | -1; desiredKeeperFeeBufferUsd?: number }
+  options?: {
+    desiredLeverage?: number;
+    desiredSide?: 1 | -1;
+    desiredKeeperFeeBufferUsd?: number;
+  }
 ) => {
   const { PerpMarketProxy } = systems();
 

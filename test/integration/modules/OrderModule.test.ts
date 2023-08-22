@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
@@ -5,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genNumber, genOneOf, genOrder, genTrader } from '../../generators';
+import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
 import {
   commitAndSettle,
   depositMargin,
@@ -199,6 +200,38 @@ describe('OrderModule', () => {
         ),
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
+      );
+    });
+
+    it('should revert when committing an order for another account', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const trader1 = traders()[0];
+      const trader2 = traders()[1];
+
+      const { market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredTrader: trader1 })
+      );
+      const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await genOrder(
+        bs,
+        market,
+        collateral,
+        collateralDepositAmount
+      );
+
+      // Connected using trader2 for an accountId that belongs to trader1.
+      const permission = ethers.utils.formatBytes32String('PERPS_COMMIT_ASYNC_ORDER');
+      const signerAddress = await trader2.signer.getAddress();
+      await assertRevert(
+        PerpMarketProxy.connect(trader2.signer).commitOrder(
+          trader1.accountId,
+          marketId,
+          sizeDelta,
+          limitPrice,
+          keeperFeeBufferUsd
+        ),
+        `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
       );
     });
   });
