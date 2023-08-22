@@ -29,6 +29,7 @@ export default function test(): void {
     now,
     now - 1000
   );
+
   const rewardsDistributedEvent = createRewardsDistributedEvent(
     BigInt.fromI32(2),
     Address.fromString(address),
@@ -39,6 +40,7 @@ export default function test(): void {
     now,
     now - 1000
   );
+
   const rewardsDistributorRegisteredEvent = createRewardsDistributorRegisteredEvent(
     BigInt.fromI32(1),
     Address.fromString(address),
@@ -46,7 +48,9 @@ export default function test(): void {
     now,
     now - 1000
   );
+
   handleRewardsDistributorRegistered(rewardsDistributorRegisteredEvent);
+
   handleRewardsDistributed(rewardsDistributedEvent);
   assert.assertNull(
     store.get('AccountRewardsDistributor', `2-${address}-${address2}`)!.get('total_claimed')
@@ -58,6 +62,7 @@ export default function test(): void {
   assert.fieldEquals('RewardsDistributor', address2, 'created_at_block', (now - 1000).toString());
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at', now.toString());
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at_block', (now - 1000).toString());
+  assert.fieldEquals('RewardsDistributor', address2, 'pool', '1');
 
   handleRewardsClaimed(rewardsClaimed);
   assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'id', `${address2}-${now}-1`);
