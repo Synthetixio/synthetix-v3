@@ -726,9 +726,47 @@ describe('MarginModule', async () => {
 
     it('should revoke/approve collateral with 0/maxAllowable');
   });
+
   describe('getCollateralUsd', () => {
-    it('should returns collateral without deducting fees');
-    it('more cases');
+    it('should return correct usd amount in collateral', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
+
+      assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
+    });
+
+    it('should return correct usd amount after price of collateral changes');
+
+    it('should return zero when collateral has not been deposited', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId } = await genTrader(bs);
+
+      assertBn.isZero(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId));
+    });
+
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { marketId } = await genTrader(bs);
+      const invalidAccountId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.getCollateralUsd(invalidAccountId, marketId),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader } = await genTrader(bs);
+      const invalidMarketId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.getCollateralUsd(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 
   describe('getMarginUsd', () => {
