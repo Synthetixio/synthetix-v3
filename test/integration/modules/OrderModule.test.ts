@@ -733,7 +733,7 @@ describe('OrderModule', () => {
     });
   });
 
-  describe('getFillPrice', () => {
+  describe.('getFillPrice', () => {
     it('should revert invalid market id', async () => {
       const { PerpMarketProxy } = systems();
       const invalidMarketId = wei(42069).toBN();
@@ -741,7 +741,80 @@ describe('OrderModule', () => {
       // Size to check fill price
       const size = wei(genNumber(-10, 10)).toBN();
 
-      assertRevert(PerpMarketProxy.getFillPrice(invalidMarketId, size), `MarketNotFound(${invalidMarketId})`);
+      assertRevert(PerpMarketProxy.getFillPrice(invalidMarketId, size), `MarketNotFound("${invalidMarketId}")`);
+    });
+
+    it('should give premium when increasing skew', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const gTrader = genTrader(bs);
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
+      // Creating a short skew for the market
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 1.1,
+        desiredSide: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Collect some data
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+
+      // Using size to simulate short which will reduce the skew
+      const size = wei(genNumber(1, 10)).toBN();
+
+      const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
+      // To get a "premium" to our long we expect the price to have a premium
+      assertBn.gt(actualFillPrice, oraclePrice);
+    });
+
+    it('should give discount when reducing skew', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const gTrader = genTrader(bs);
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
+      // Creating a long skew for the market
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: 1,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Collect some data
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+
+      // Using size to simulate short which will reduce the skew
+      const size = wei(genNumber(-10, -1)).toBN();
+
+      const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
+
+      // To get a "discount" to our short we expect the price to have a premium
+      assertBn.gt(actualFillPrice, oraclePrice);
+    });
+
+    it('should return correct fillPrice when size is 0', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const gTrader = genTrader(bs);
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Collect some data
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+      const { skewScale } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      const marketSkew = order.sizeDelta;
+
+      // Size to check fill price
+      const size = wei(0).toBN();
+
+      const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
+      const expectedFillPrice = wei(1).add(wei(marketSkew).div(skewScale)).mul(oraclePrice).toBN();
+      // Using near to avoid rounding errors
+      assertBn.near(expectedFillPrice, actualFillPrice);
     });
 
     it('should calculate fillPrice correctly', async () => {
