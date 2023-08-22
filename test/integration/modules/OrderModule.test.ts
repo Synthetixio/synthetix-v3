@@ -739,7 +739,7 @@ describe('OrderModule', () => {
       const invalidMarketId = wei(42069).toBN();
 
       // Size to check fill price
-      const size = wei(genNumber(0, 10)).toBN();
+      const size = wei(genNumber(-10, 10)).toBN();
 
       assertRevert(PerpMarketProxy.getFillPrice(invalidMarketId, size), `MarketNotFound(${invalidMarketId})`);
     });
@@ -760,7 +760,7 @@ describe('OrderModule', () => {
       const marketSkew = order.sizeDelta;
 
       // Size to check fill price
-      const size = wei(genNumber(0, 10)).toBN();
+      const size = wei(genNumber(-10, 10)).toBN();
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
       const expectedFillPrice = calculateFillPrice(marketSkew, skewScale, size, oraclePrice);
