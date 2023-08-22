@@ -10,29 +10,6 @@ import { isNil } from 'lodash';
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-// --- Calculation helpers --- //
-
-export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
-  wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
-
-// Calculates PD
-const calculatePD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
-// Calculates the price with pd applied
-const calculateAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
-
-export function calculateFillPrice(skew: BigNumber, skewScale: BigNumber, size: BigNumber, price: BigNumber) {
-  if (skewScale.eq(0)) {
-    return price;
-  }
-  const pdBefore = calculatePD(wei(skew), wei(skewScale));
-  const pdAfter = calculatePD(wei(skew).add(size), wei(skewScale));
-
-  const priceBefore = calculateAdjustedPrice(wei(price), pdBefore);
-  const priceAfter = calculateAdjustedPrice(wei(price), pdAfter);
-
-  return priceBefore.add(priceAfter).div(2).toBN();
-}
-
 // --- Mutative helpers --- //
 
 type Bs = ReturnType<typeof bootstrap>;

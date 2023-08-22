@@ -17,14 +17,8 @@ import {
   genTrader,
   genOrder,
 } from '../../generators';
-import {
-  ZERO_ADDRESS,
-  approveAndMintMargin,
-  calcPnl,
-  commitAndSettle,
-  commitOrder,
-  depositMargin,
-} from '../../helpers';
+import { ZERO_ADDRESS, approveAndMintMargin, commitAndSettle, commitOrder, depositMargin } from '../../helpers';
+import { calcPnl } from '../../calculations';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());

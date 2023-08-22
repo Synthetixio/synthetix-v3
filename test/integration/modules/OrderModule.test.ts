@@ -9,7 +9,6 @@ import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
 import {
-  calculateFillPrice,
   commitAndSettle,
   depositMargin,
   getFastForwardTimestamp,
@@ -17,7 +16,7 @@ import {
   setMarketConfigurationById,
 } from '../../helpers';
 import { BigNumber } from 'ethers';
-import { calcOrderFees } from '../../calculations';
+import { calcOrderFees, calculateFillPrice } from '../../calculations';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -735,7 +734,7 @@ describe('OrderModule', () => {
   });
 
   describe('getFillPrice', () => {
-    it('should handle invalid market id', async () => {
+    it('should revert invalid market id', async () => {
       const { PerpMarketProxy } = systems();
       const invalidMarketId = wei(42069).toBN();
 

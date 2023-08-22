@@ -2,6 +2,28 @@ import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
 
+// --- Calculate pnl --- //
+export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
+  wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
+
+// Calculates PD
+const calculatePD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
+// Calculates the price with pd applied
+const calculateAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
+// Calculates fillPrice
+export const calculateFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNumber, price: BigNumber) => {
+  if (skewScale.eq(0)) {
+    return price;
+  }
+  const pdBefore = calculatePD(wei(skew), wei(skewScale));
+  const pdAfter = calculatePD(wei(skew).add(size), wei(skewScale));
+
+  const priceBefore = calculateAdjustedPrice(wei(price), pdBefore);
+  const priceAfter = calculateAdjustedPrice(wei(price), pdAfter);
+
+  return priceBefore.add(priceAfter).div(2).toBN();
+};
+
 /** Calculates order fees and keeper fees associated to settle the order. */
 export const calcOrderFees = async (bs: Bs, marketId: BigNumber, sizeDelta: BigNumber) => {
   if (sizeDelta.eq(0)) {
