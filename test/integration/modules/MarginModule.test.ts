@@ -747,10 +747,10 @@ describe('MarginModule', async () => {
       assertBn.equal(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId), bn(0));
     });
 
-    it('should return marginUsd + value of position when in profit', async () => {
+    it('should return marginUsd + pnl of position', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
       await commitAndSettle(bs, marketId, trader, order);
 
@@ -764,53 +764,8 @@ describe('MarginModule', async () => {
         .add(pnl);
       // Assert margin before price change
       assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
-
-      // Make sure we're always in profit
-      const newPrice = order.sizeDelta.gt(0) ? order.oraclePrice.mul(2) : order.oraclePrice.div(2);
-      // Update price
-      await market.aggregator().mockSetCurrentPrice(newPrice);
-
-      // Collect some data for expected margin calculation
-      const { accruedFunding } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-      const newPnl = calcPnl(order.sizeDelta, newPrice, order.fillPrice);
-
-      const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      // Calculate expected margin
-      const expectedMarginUsdAfterPriceChange = wei(order.marginUsd)
-        .sub(order.orderFee)
-        .sub(order.keeperFee)
-        .add(order.keeperFeeBufferUsd)
-        .add(newPnl)
-        .add(accruedFunding);
-      // Assert marginUSD after price update
-      assertBn.equal(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN());
-    });
-
-    it('should return marginUsd - value of position when not in profit', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 }); // low leverage to avoid underwater
-
-      await commitAndSettle(bs, marketId, trader, order);
-
-      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
-      const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
-        .sub(order.orderFee)
-        .sub(order.keeperFee)
-        .add(order.keeperFeeBufferUsd)
-        .add(pnl);
-
-      // Assert margin before price change
-      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
-
-      // TODO: discuss
-      // Rather than having two very similar looking test we could rely on randomness to test profit vs loss situations?
-      // This test is exactly the same as the prev one expect this line
-      // Make sure we're always in loss
-      const newPrice = order.sizeDelta.gt(0)
-        ? wei(order.oraclePrice).div(1.1).toBN()
-        : wei(order.oraclePrice).mul(1.1).toBN();
+      // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+      const newPrice = wei(order.oraclePrice).mul(1.5).toBN();
       // Update price
       await market.aggregator().mockSetCurrentPrice(newPrice);
 
