@@ -2,7 +2,7 @@ import { BigNumber } from 'ethers';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
 import { type genTrader, type genOrder, genNumber } from './generators';
-import { wei } from '@synthetixio/wei';
+import Wei, { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil } from 'lodash';
 
@@ -14,6 +14,24 @@ export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
   wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
+
+// Calculates PD
+const calculatePD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
+// Calculates the price with pd applied
+const calculateAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
+
+export function calculateFillPrice(skew: BigNumber, skewScale: BigNumber, size: BigNumber, price: BigNumber) {
+  if (skewScale.eq(0)) {
+    return price;
+  }
+  const pdBefore = calculatePD(wei(skew), wei(skewScale));
+  const pdAfter = calculatePD(wei(skew).add(size), wei(skewScale));
+
+  const priceBefore = calculateAdjustedPrice(wei(price), pdBefore);
+  const priceAfter = calculateAdjustedPrice(wei(price), pdAfter);
+
+  return priceBefore.add(priceAfter).div(2).toBN();
+}
 
 // --- Mutative helpers --- //
 

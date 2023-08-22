@@ -9,6 +9,7 @@ import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
 import {
+  calculateFillPrice,
   commitAndSettle,
   depositMargin,
   getFastForwardTimestamp,
@@ -733,5 +734,39 @@ describe('OrderModule', () => {
     });
   });
 
-  describe('getFillPrice', () => {});
+  describe('getFillPrice', () => {
+    it('should handle invalid market id', async () => {
+      const { PerpMarketProxy } = systems();
+      const invalidMarketId = wei(42069).toBN();
+
+      // Size to check fill price
+      const size = wei(genNumber(0, 10)).toBN();
+
+      assertRevert(PerpMarketProxy.getFillPrice(invalidMarketId, size), `MarketNotFound(${invalidMarketId})`);
+    });
+
+    it('should calculate fillPrice correctly', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const gTrader = genTrader(bs);
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Collect some data
+      const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
+      const { skewScale } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+      const marketSkew = order.sizeDelta;
+
+      // Size to check fill price
+      const size = wei(genNumber(0, 10)).toBN();
+
+      const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
+      const expectedFillPrice = calculateFillPrice(marketSkew, skewScale, size, oraclePrice);
+
+      assertBn.equal(expectedFillPrice, actualFillPrice);
+    });
+  });
 });
