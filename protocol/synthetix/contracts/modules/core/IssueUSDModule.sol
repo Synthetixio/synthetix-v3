@@ -105,9 +105,7 @@ contract IssueUSDModule is IIssueUSDModule {
         // Mint stablecoins to the sender
         usdToken.asToken().mint(address(this), amount);
 
-        account.collaterals[usdToken.getAddress()].increaseAvailableCollateral(
-            CollateralConfiguration.load(usdToken.getAddress()).convertTokenToSystemAmount(amount)
-        );
+        account.collaterals[usdToken.getAddress()].increaseAvailableCollateral(amount);
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
