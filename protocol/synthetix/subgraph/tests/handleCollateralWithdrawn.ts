@@ -5,7 +5,7 @@ import {
   handleCollateralConfigured,
   handleCollateralDeposited,
   handleCollateralWithdrawn,
-} from '../src';
+} from '../mainnet';
 import {
   createCollateralConfiguredEvent,
   createDepositEvent,

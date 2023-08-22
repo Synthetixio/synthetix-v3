@@ -1,6 +1,6 @@
 import { assert } from 'matchstick-as';
 import { address } from './constants';
-import { handleAccountCreated } from '../src';
+import { handleAccountCreated } from '../mainnet';
 import { createAccountCreatedEvent } from './event-factories';
 
 export default function test(): void {

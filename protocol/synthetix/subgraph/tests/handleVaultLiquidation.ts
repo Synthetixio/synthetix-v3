@@ -1,7 +1,7 @@
 import { assert } from 'matchstick-as';
 import { Address, BigInt } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
-import { handleVaultLiquidation } from '../src';
+import { handleVaultLiquidation } from '../mainnet';
 import { createVaultLiquidationEvent } from './event-factories';
 
 export default function test(): void {
