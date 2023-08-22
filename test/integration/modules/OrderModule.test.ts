@@ -16,7 +16,7 @@ import {
   setMarketConfigurationById,
 } from '../../helpers';
 import { BigNumber } from 'ethers';
-import { calcOrderFees, calculateFillPrice } from '../../calculations';
+import { calcOrderFees, calcFillPrice } from '../../calculations';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -733,7 +733,7 @@ describe('OrderModule', () => {
     });
   });
 
-  describe.('getFillPrice', () => {
+  describe('getFillPrice', () => {
     it('should revert invalid market id', async () => {
       const { PerpMarketProxy } = systems();
       const invalidMarketId = wei(42069).toBN();
@@ -836,7 +836,7 @@ describe('OrderModule', () => {
       const size = wei(genNumber(-10, 10)).toBN();
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
-      const expectedFillPrice = calculateFillPrice(marketSkew, skewScale, size, oraclePrice);
+      const expectedFillPrice = calcFillPrice(marketSkew, skewScale, size, oraclePrice);
 
       assertBn.equal(expectedFillPrice, actualFillPrice);
     });

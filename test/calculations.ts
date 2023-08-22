@@ -7,19 +7,19 @@ export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice:
   wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
 
 // Calculates PD
-const calculatePD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
+const calcPD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
 // Calculates the price with pd applied
-const calculateAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
+const calcAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
 // Calculates fillPrice
-export const calculateFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNumber, price: BigNumber) => {
+export const calcFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNumber, price: BigNumber) => {
   if (skewScale.eq(0)) {
     return price;
   }
-  const pdBefore = calculatePD(wei(skew), wei(skewScale));
-  const pdAfter = calculatePD(wei(skew).add(size), wei(skewScale));
+  const pdBefore = calcPD(wei(skew), wei(skewScale));
+  const pdAfter = calcPD(wei(skew).add(size), wei(skewScale));
 
-  const priceBefore = calculateAdjustedPrice(wei(price), pdBefore);
-  const priceAfter = calculateAdjustedPrice(wei(price), pdAfter);
+  const priceBefore = calcAdjustedPrice(wei(price), pdBefore);
+  const priceAfter = calcAdjustedPrice(wei(price), pdAfter);
 
   return priceBefore.add(priceAfter).div(2).toBN();
 };
