@@ -37,7 +37,14 @@ describe('SpotMarketFactory', () => {
       });
     });
 
-    it('renounce market ownership', async () => {
+    it('renounce market ownership by non-owner', async () => {
+      await assertRevert(
+        systems().SpotMarket.connect(user1).renounceMarketOwnership(marketId()),
+        'OnlyMarketOwner'
+      );
+    });
+
+    it('renounce market ownership by owner', async () => {
       const tx = await systems()
         .SpotMarket.connect(marketOwner)
         .renounceMarketOwnership(marketId());
