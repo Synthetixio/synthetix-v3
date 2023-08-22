@@ -1675,6 +1675,19 @@ export class OrderSettled extends Entity {
     this.set('fillPrice', Value.fromBigInt(value));
   }
 
+  get accruedFunding(): BigInt {
+    let value = this.get('accruedFunding');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set accruedFunding(value: BigInt) {
+    this.set('accruedFunding', Value.fromBigInt(value));
+  }
+
   get sizeDelta(): BigInt {
     let value = this.get('sizeDelta');
     if (!value || value.kind == ValueKind.NULL) {
