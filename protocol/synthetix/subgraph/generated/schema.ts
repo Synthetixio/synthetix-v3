@@ -174,6 +174,15 @@ export class Pool extends Entity {
     }
   }
 
+  get registered_distributors(): Array<string> | null {
+    let value = this.get('registered_distributors');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toStringArray();
+    }
+  }
+
   get market_ids(): Array<string> | null {
     let value = this.get('market_ids');
     if (!value || value.kind == ValueKind.NULL) {
@@ -1765,6 +1774,19 @@ export class RewardsDistributor extends Entity {
 
   set updated_at_block(value: BigInt) {
     this.set('updated_at_block', Value.fromBigInt(value));
+  }
+
+  get pool(): string {
+    let value = this.get('pool');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toString();
+    }
+  }
+
+  set pool(value: string) {
+    this.set('pool', Value.fromString(value));
   }
 }
 

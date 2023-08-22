@@ -5,16 +5,21 @@ import {
   handleRewardsClaimed,
   handleRewardsDistributed,
   handleRewardsDistributorRegistered,
+  handlePoolCreated,
 } from '../src';
 import {
   createRewardsClaimedEvent,
   createRewardsDistributedEvent,
   createRewardsDistributorRegisteredEvent,
+  createPoolCreatedEvent,
 } from './event-factories';
 
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const newPoolEvent = createPoolCreatedEvent(1, address, now, now - 1000);
+  handlePoolCreated(newPoolEvent);
+
   const rewardsClaimed = createRewardsClaimedEvent(
     BigInt.fromI32(1),
     BigInt.fromI32(2),
@@ -24,6 +29,7 @@ export default function test(): void {
     now,
     now - 1000
   );
+
   const rewardsDistributedEvent = createRewardsDistributedEvent(
     BigInt.fromI32(2),
     Address.fromString(address),
@@ -34,6 +40,7 @@ export default function test(): void {
     now,
     now - 1000
   );
+
   const rewardsDistributorRegisteredEvent = createRewardsDistributorRegisteredEvent(
     BigInt.fromI32(1),
     Address.fromString(address),
@@ -41,7 +48,9 @@ export default function test(): void {
     now,
     now - 1000
   );
+
   handleRewardsDistributorRegistered(rewardsDistributorRegisteredEvent);
+
   handleRewardsDistributed(rewardsDistributedEvent);
   assert.assertNull(
     store.get('AccountRewardsDistributor', `2-${address}-${address2}`)!.get('total_claimed')
@@ -53,6 +62,7 @@ export default function test(): void {
   assert.fieldEquals('RewardsDistributor', address2, 'created_at_block', (now - 1000).toString());
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at', now.toString());
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at_block', (now - 1000).toString());
+  assert.fieldEquals('RewardsDistributor', address2, 'pool', '1');
 
   handleRewardsClaimed(rewardsClaimed);
   assert.fieldEquals('RewardsClaimed', `${address2}-${now}-1`, 'id', `${address2}-${now}-1`);
