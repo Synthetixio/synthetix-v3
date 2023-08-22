@@ -1,7 +1,7 @@
 import { assert } from 'matchstick-as';
 import { ethereum, store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
-import { handleMarketCreated, handlePoolConfigurationSet, handlePoolCreated } from '../src';
+import { handleMarketCreated, handlePoolConfigurationSet, handlePoolCreated } from '../mainnet';
 import {
   createMarketCreatedEvent,
   createPoolConfigurationSetEvent,

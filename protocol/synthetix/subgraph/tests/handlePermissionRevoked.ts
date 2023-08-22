@@ -1,7 +1,7 @@
 import { assert } from 'matchstick-as';
 import { Address, ByteArray, Bytes } from '@graphprotocol/graph-ts';
 import { address } from './constants';
-import { handleAccountCreated, handlePermissionGranted, handlePermissionRevoked } from '../src';
+import { handleAccountCreated, handlePermissionGranted, handlePermissionRevoked } from '../mainnet';
 import {
   createAccountCreatedEvent,
   createPermissionGrantedEvent,

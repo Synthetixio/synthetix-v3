@@ -5,7 +5,7 @@ import {
   handleRewardsDistributed,
   handleRewardsDistributorRegistered,
   handlePoolCreated,
-} from '../src';
+} from '../mainnet';
 import {
   createRewardsDistributedEvent,
   createRewardsDistributorRegisteredEvent,

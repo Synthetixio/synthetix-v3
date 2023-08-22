@@ -1,7 +1,11 @@
 import { assert } from 'matchstick-as';
 import { store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
-import { handlePoolCreated, handlePoolOwnerNominated, handlePoolOwnershipAccepted } from '../src';
+import {
+  handlePoolCreated,
+  handlePoolOwnerNominated,
+  handlePoolOwnershipAccepted,
+} from '../mainnet';
 import {
   createPoolCreatedEvent,
   createPoolOwnerNominatedEvent,

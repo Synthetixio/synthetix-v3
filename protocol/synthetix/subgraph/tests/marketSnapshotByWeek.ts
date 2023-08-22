@@ -1,7 +1,11 @@
 import { assert, createMockedFunction } from 'matchstick-as';
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { address, address2, defaultGraphContractAddress } from './constants';
-import { handleMarketCreated, handleMarketUsdDeposited, handleMarketUsdWithdrawn } from '../src';
+import {
+  handleMarketCreated,
+  handleMarketUsdDeposited,
+  handleMarketUsdWithdrawn,
+} from '../mainnet';
 import {
   createMarketCreatedEvent,
   createMarketUsdDepositedEvent,

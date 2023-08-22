@@ -1,7 +1,7 @@
 import { assert } from 'matchstick-as';
 import { Address, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
-import { handleCollateralConfigured } from '../src';
+import { handleCollateralConfigured } from '../mainnet';
 import { createCollateralConfiguredEvent } from './event-factories';
 
 export default function test(): void {
