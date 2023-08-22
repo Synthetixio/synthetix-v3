@@ -425,7 +425,7 @@ describe('OrderModule', () => {
 
       // Fast forward block.timestamp but make sure it's _just_ before readiness.
       const config = await PerpMarketProxy.getMarketConfiguration();
-      const settlementTime = commitmentTime + genNumber(0, config.minOrderAge.toNumber() - 1);
+      const settlementTime = commitmentTime + genNumber(1, config.minOrderAge.toNumber() - 1);
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
