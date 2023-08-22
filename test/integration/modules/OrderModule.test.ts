@@ -3,6 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
@@ -296,6 +297,7 @@ describe('OrderModule', () => {
 
       await commitAndSettle(bs, marketId, trader, closeOrder);
 
+      // Market should be empty.
       assertBn.isZero((await PerpMarketProxy.getMarketDigest(marketId)).size);
 
       // There should be no order.
@@ -307,9 +309,64 @@ describe('OrderModule', () => {
 
     it('should settle an order that partially closes existing');
 
-    it('should settle an order that adds to an existing order');
+    it('should settle an order that adds to an existing order', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should settle an order that flips from one side to the other');
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
+
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      const marketDigest1 = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.equal(marketDigest1.size, order1.sizeDelta.abs());
+      assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
+
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 2,
+        desiredSide: order1.sizeDelta.gt(0) ? 1 : -1, // ensure we are adding to the same side.
+      });
+      await commitAndSettle(bs, marketId, trader, order2);
+
+      const marketDigest2 = await PerpMarketProxy.getMarketDigest(marketId);
+
+      // There should be no order as it settled successfully.
+      assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
+
+      // Both size and skew should be the sum of order sizeDelta.
+      assertBn.equal(marketDigest2.skew.abs(), order1.sizeDelta.abs().add(order2.sizeDelta.abs()));
+      assertBn.equal(marketDigest2.size, order1.sizeDelta.abs().add(order2.sizeDelta.abs()));
+    });
+
+    it('should settle an order that flips from one side to the other', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
+
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      const marketDigest1 = await PerpMarketProxy.getMarketDigest(marketId);
+
+      assertBn.equal(marketDigest1.size, order1.sizeDelta.abs());
+      assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
+
+      const order2 = await genOrder(bs, market, collateral, collateralDepositAmount.mul(2), {
+        desiredLeverage: 1,
+        desiredSide: order1.sizeDelta.gt(0) ? -1 : 1, // inverse side of order1.
+      });
+      await commitAndSettle(bs, marketId, trader, order2);
+
+      const marketDigest2 = await PerpMarketProxy.getMarketDigest(marketId);
+
+      // There should be no order as it settled successfully.
+      assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
+
+      // Skew should be flipped.
+      assert(
+        (marketDigest1.skew.gt(0) && marketDigest2.skew.lt(0)) || (marketDigest1.skew.lt(0) && marketDigest2.skew.gt(0))
+      );
+    });
 
     it('should have a position opened after settlement', async () => {
       const { PerpMarketProxy } = systems();
@@ -337,9 +394,11 @@ describe('OrderModule', () => {
     });
 
     it('should commit order when price moves but new position still safe');
+
     it('should allow position reduction even if insufficient unless in liquidation');
 
     it('should emit all events in correct order');
+
     it('should recompute funding');
 
     it('should pay sUSD to trader when closing a profitable trade');
@@ -347,8 +406,11 @@ describe('OrderModule', () => {
     it('should pay a non-zero settlement fee to keeper');
 
     it('should revert when this order exceeds maxMarketSize (oi)');
+
     it('should revert when an existing position can be liquidated');
+
     it('should revert when an existing position is flagged for liquidation');
+
     it('should revert when margin falls below maintenance margin');
 
     it('should revert when accountId does not exist', async () => {
@@ -483,18 +545,24 @@ describe('OrderModule', () => {
     });
 
     it('should revert if long exceeds limit price');
+
     it('should revert if short exceeds limit price');
 
     it('should revert if collateral price slips into insufficient margin on between commit and settle');
+
     it('should revert if collateral price slips into maxMarketSize between commit and settle');
 
     // NOTE: This may not be necessary.
     it('should revert when price deviations exceed threshold');
 
     it('should revert when price is zero (i.e. invalid)');
+
     it('should revert when pyth price is stale');
+
     it('should revert if off-chain pyth publishTime is not within acceptance window');
+
     it('should revert if pyth vaa merkle/blob is invalid');
+
     it('should revert when not enough wei is available to pay pyth fee');
   });
 
