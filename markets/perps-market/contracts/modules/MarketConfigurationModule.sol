@@ -5,9 +5,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
-import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
-import {OrderFee} from "../storage/OrderFee.sol";
 
 /**
  * @title Module for updating configuration in relation to async order modules.

@@ -423,6 +423,7 @@ interface IAsyncOrderSettlementModule {
         int128 newPositionSize;
         int128 sizeDelta;
         int256 pnl;
+        int256 accruedFunding;
         uint256 pnlUint;
         uint256 amountToDeduct;
         uint256 settlementReward;
@@ -496,6 +497,8 @@ library AsyncOrder {
         uint orderFees;
         uint availableMargin;
         uint currentLiquidationMargin;
+        uint accumulatedLiquidationRewards;
+        uint currentLiquidationReward;
         int128 newPositionSize;
         uint newNotionalValue;
         int currentAvailableMargin;

@@ -3,13 +3,10 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import {PerpsAccount} from "./PerpsAccount.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import {OrderFee} from "./OrderFee.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 
 /**
@@ -312,5 +309,12 @@ library PerpsMarket {
         int unrealizedFunding = self.skew.mulDecimal(calculateNextFunding(self, price));
 
         return traderUnrealizedPnl + unrealizedFunding - self.debtCorrectionAccumulator;
+    }
+
+    function accountPosition(
+        uint128 marketId,
+        uint128 accountId
+    ) internal view returns (Position.Data storage position) {
+        position = load(marketId).positions[accountId];
     }
 }

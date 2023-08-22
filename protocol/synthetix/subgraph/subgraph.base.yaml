@@ -35,7 +35,7 @@ dataSources:
         - event: PoolNameUpdated(indexed uint128,string,indexed address)
           handler: handlePoolNameUpdated
         - event: PoolOwnershipAccepted(indexed uint128,indexed address)
-          handler: handleNewPoolOwner
+          handler: handlePoolOwnershipAccepted
         - event: PoolNominationRenounced(indexed uint128,indexed address)
           handler: handlePoolNominationRenounced
         - event: PoolNominationRevoked(indexed uint128,indexed address)
@@ -57,9 +57,9 @@ dataSources:
             address)
           handler: handleMarketUsdWithdrawn
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
-          handler: handleDeposited
+          handler: handleCollateralDeposited
         - event: Withdrawn(indexed uint128,indexed address,uint256,indexed address)
-          handler: handleWithdrawn
+          handler: handleCollateralWithdrawn
         - event: AccountCreated(indexed uint128,indexed address)
           handler: handleAccountCreated
         - event: PermissionGranted(indexed uint128,indexed bytes32,indexed
@@ -98,4 +98,4 @@ dataSources:
         - event: CollateralConfigured(indexed
             address,(bool,uint256,uint256,uint256,bytes32,address,uint256))
           handler: handleCollateralConfigured
-      file: ./src/core.ts
+      file: ./src/index.ts

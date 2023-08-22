@@ -7,7 +7,9 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "abis": "node ./abis.js"
+    "abis": "node ./abis.js",
+    "docgen:abis": "./docgen-abis.sh",
+    "docgen:contracts": "./docgen-contracts.sh"
   },
   "devDependencies": {
     "@usecannon/cli": "^2.4.21",
@@ -15,5 +17,10 @@
     "prettier": "^2.8.8",
     "solidity-ast": "0.4.46",
     "solidity-docgen": "0.6.0-beta.35"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@usecannon/cli"
+    ]
   }
 }

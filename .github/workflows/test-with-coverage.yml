@@ -1,0 +1,115 @@
+name: Coverage
+
+on:
+  #  pull_request: {}
+  push:
+    branches:
+      - "test"
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    env:
+      CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: [
+            "@synthetixio/main",
+            "@synthetixio/oracle-manager",
+            # "@synthetixio/governance", # no tests :/
+
+            "@synthetixio/core-contracts",
+            "@synthetixio/core-utils",
+            "@synthetixio/core-modules",
+            "@synthetixio/hardhat-storage",
+            "@synthetixio/sample-project",
+
+            # "@synthetixio/legacy-market", # tests fail
+            "@synthetixio/spot-market",
+            "@synthetixio/perps-market",
+
+            "@synthetixio/core-subgraph",
+            "@synthetixio/spot-market-subgraph",
+            "@synthetixio/perps-market-subgraph",
+          ]
+
+        include:
+          - workspace: "@synthetixio/main"
+            codecov-file: protocol/synthetix/coverage.json
+            codecov-flags: main
+
+          - workspace: "@synthetixio/oracle-manager"
+            codecov-file: protocol/oracle-manager/coverage.json
+            codecov-flags: oracle-manager
+
+          - workspace: "@synthetixio/core-contracts"
+            codecov-file: utils/core-contracts/coverage.json
+            codecov-flags: core-contracts
+
+          - workspace: "@synthetixio/core-utils"
+            codecov-file: utils/core-utils/coverage/lcov.info
+            codecov-flags: core-utils
+
+          - workspace: "@synthetixio/core-modules"
+            codecov-file: utils/core-modules/coverage.json
+            codecov-flags: core-modules
+
+          - workspace: "@synthetixio/hardhat-storage"
+            codecov-file: utils/hardhat-storage/coverage/lcov.info
+            codecov-flags: hardhat-storage
+
+          - workspace: "@synthetixio/sample-project"
+            codecov-file: utils/sample-project/coverage.json
+            codecov-flags: sample-project
+
+    steps:
+      - name: Install Foundry (Cannon)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - run: anvil -V
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16.20.1"
+          cache: "yarn"
+      - uses: ibnesayeed/setup-ipfs@92d412e0dad36c06ffab50733e9c624896a0964f
+        with:
+          run_daemon: true
+
+      - run: yarn install --immutable --immutable-cache
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build:ts
+      - run: yarn workspaces foreach --topological-dev --recursive --verbose --from "${{ matrix.workspace }}" run build-testable
+
+      - name: Execute size-contracts command
+        run: |
+          if yarn workspace ${{ matrix.workspace }} run | grep size-contracts; then
+            yarn workspace ${{ matrix.workspace }} run size-contracts
+          else
+            echo 'SKIP. No "size-contracts" script'
+          fi
+
+      - name: Check storage.dump.sol is up-to-date
+        run: |
+          if yarn workspace ${{ matrix.workspace }} run | grep check:storage; then
+            yarn workspace ${{ matrix.workspace }} run check:storage
+          else
+            echo 'SKIP. No "check:storage" script'
+          fi
+
+      - name: Execute tests with coverage
+        run: |
+          if yarn workspace ${{ matrix.workspace }} run | grep coverage; then
+            REPORT_GAS=true yarn workspace ${{ matrix.workspace }} run coverage
+          else
+            echo 'SKIP. No "coverage" script'
+          fi
+
+      - if: ${{ matrix.codecov-file }}
+        name: Upload ${{ matrix.workspace }} coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: ${{ matrix.codecov-file }}
+          flags: ${{ matrix.codecov-flags }}

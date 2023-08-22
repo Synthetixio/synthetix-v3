@@ -9,6 +9,7 @@ import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
 import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
 import { CollateralMock } from '@synthetixio/main/typechain-types';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -85,6 +86,8 @@ type BootstrapArgs = {
     minLiquidationReward: ethers.BigNumber;
     maxLiquidationReward: ethers.BigNumber;
   };
+  maxPositionsPerAccount?: ethers.BigNumber;
+  maxCollateralsPerAccount?: ethers.BigNumber;
 };
 
 export function bootstrapMarkets(data: BootstrapArgs) {
@@ -94,7 +97,7 @@ export function bootstrapMarkets(data: BootstrapArgs) {
 
   const { systems, signers, provider, owner, perpsMarkets, poolId, superMarketId } =
     chainStateWithPerpsMarkets;
-  const { trader1, trader2, trader3, keeper, restore } = bootstrapTraders({
+  const { trader1, trader2, trader3, keeper } = bootstrapTraders({
     systems,
     signers,
     provider,
@@ -123,6 +126,16 @@ export function bootstrapMarkets(data: BootstrapArgs) {
     }
   });
 
+  before('set max positions and colltaterals per account', async () => {
+    const { maxPositionsPerAccount, maxCollateralsPerAccount } = data;
+    await systems()
+      .PerpsMarket.connect(owner())
+      .setPerAccountCaps(
+        maxPositionsPerAccount ? maxPositionsPerAccount : 100000,
+        maxCollateralsPerAccount ? maxCollateralsPerAccount : 100000
+      );
+  });
+
   // auto add all synth markets in the row they were created for deduction priority
   before('set synth deduction priority', async () => {
     // first item is always snxUSD
@@ -140,6 +153,8 @@ export function bootstrapMarkets(data: BootstrapArgs) {
         );
     });
   }
+
+  const restore = snapshotCheckpoint(provider);
 
   return {
     systems,

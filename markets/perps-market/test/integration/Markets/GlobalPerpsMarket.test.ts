@@ -6,7 +6,10 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 describe('GlobalPerpsMarket', () => {
   const { systems, perpsMarkets, trader1 } = bootstrapMarkets({
     synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
-    perpsMarkets: [{ requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) }],
+    perpsMarkets: [
+      { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
+      { requestedMarketId: 50, name: 'Btc', token: 'snxBTC', price: bn(10000) },
+    ],
     traderAccountIds: [],
   });
 
@@ -54,5 +57,14 @@ describe('GlobalPerpsMarket', () => {
       systems().PerpsMarket.connect(trader1()).setSynthDeductionPriority([1, 2]),
       `Unauthorized("${await trader1().getAddress()}")`
     );
+  });
+
+  describe('getMarkets()', () => {
+    it('returns all markets', async () => {
+      const markets = await systems().PerpsMarket.getMarkets();
+      assertBn.equal(markets.length, 2);
+      assertBn.equal(markets[0], perpsMarkets()[0].marketId());
+      assertBn.equal(markets[1], perpsMarkets()[1].marketId());
+    });
   });
 });

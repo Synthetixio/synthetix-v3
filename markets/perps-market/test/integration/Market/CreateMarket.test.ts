@@ -64,95 +64,6 @@ describe('Create Market test', () => {
     });
   });
 
-  // TODO: move to proxy level test
-  // describe('change ownership', async () => {
-  //   before(restore);
-
-  //   let tx: ethers.providers.TransactionResponse;
-
-  //   before('create perps market', async () => {
-  //     marketId = await systems().PerpsMarket.callStatic.createMarket(
-  //       name,
-  //       token,
-  //       marketOwner.getAddress()
-  //     );
-  //     await systems().PerpsMarket.createMarket(name, token, marketOwner.getAddress());
-  //   });
-
-  //   describe('some account other than owner', () => {
-  //     it('reverts attempt to change ownership', async () => {
-  //       await assertRevert(
-  //         systems()
-  //           .PerpsMarket.connect(randomAccount)
-  //           .nominateMarketOwner(marketId, anotherOwner.getAddress()),
-  //         'Unauthorized'
-  //       );
-  //     });
-
-  //     it('reverts attempt to accept ownership', async () => {
-  //       await assertRevert(
-  //         systems().PerpsMarket.connect(randomAccount).acceptMarketOwnership(marketId),
-  //         'NotNominated'
-  //       );
-  //     });
-  //   });
-
-  //   describe('owner nominates address zero', () => {
-  //     it('reverts', async () => {
-  //       await assertRevert(
-  //         systems()
-  //           .PerpsMarket.connect(marketOwner)
-  //           .nominateMarketOwner(marketId, ethers.constants.AddressZero),
-  //         'ZeroAddress'
-  //       );
-  //     });
-  //   });
-
-  //   describe('owner nominates', () => {
-  //     before('nominate', async () => {
-  //       tx = await systems()
-  //         .PerpsMarket.connect(marketOwner)
-  //         .nominateMarketOwner(marketId, anotherOwner.getAddress());
-  //     });
-
-  //     it('emits event', async () => {
-  //       await assertEvent(
-  //         tx,
-  //         `MarketOwnerNominated(${marketId}, "${await anotherOwner.getAddress()}")`,
-  //         systems().PerpsMarket
-  //       );
-  //     });
-
-  //     it('reverts if accepted by other address', async () => {
-  //       await assertRevert(
-  //         systems().PerpsMarket.connect(randomAccount).acceptMarketOwnership(marketId),
-  //         'NotNominated'
-  //       );
-  //     });
-
-  //     describe('nominated address accepts', () => {
-  //       before('accept', async () => {
-  //         tx = await systems().PerpsMarket.connect(anotherOwner).acceptMarketOwnership(marketId);
-  //       });
-
-  //       it('emits event', async () => {
-  //         await assertEvent(
-  //           tx,
-  //           `MarketOwnerChanged(${marketId}, "${await marketOwner.getAddress()}", "${await anotherOwner.getAddress()}")`,
-  //           systems().PerpsMarket
-  //         );
-  //       });
-
-  //       it('changed owner', async () => {
-  //         assert.equal(
-  //           await systems().PerpsMarket.getMarketOwner(marketId),
-  //           await anotherOwner.getAddress()
-  //         );
-  //       });
-  //     });
-  //   });
-  // });
-
   describe('market operation and configuration', async () => {
     before(restore);
 
@@ -228,22 +139,62 @@ describe('Create Market test', () => {
           .setFundingParameters(marketId, bn(100_000), bn(0));
       });
 
-      before('add collateral', async () => {
-        await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
+      before('ensure per account max is set to zero', async () => {
+        await systems().PerpsMarket.connect(owner()).setPerAccountCaps(0, 0);
       });
 
-      it('should be able to use the market', async () => {
-        await systems()
-          .PerpsMarket.connect(trader1())
-          .commitOrder({
-            marketId: marketId,
-            accountId: 2,
-            sizeDelta: bn(1),
-            settlementStrategyId: 0,
-            acceptablePrice: bn(1050), // 5% slippage
-            referrer: ethers.constants.AddressZero,
-            trackingCode: ethers.constants.HashZero,
+      it('reverts when trying add collateral if max collaterals per account is zero', async () => {
+        await assertRevert(
+          systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000)),
+          'MaxCollateralsPerAccountReached("0")'
+        );
+      });
+
+      describe('when max collaterals per account is set to non-zero', () => {
+        before('set max collaterals per account', async () => {
+          await systems().PerpsMarket.connect(owner()).setPerAccountCaps(0, 1000);
+        });
+
+        before('add collateral', async () => {
+          await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(10_000));
+        });
+
+        it('reverts when trying to add position if max positions per account is zero', async () => {
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(trader1())
+              .commitOrder({
+                marketId: marketId,
+                accountId: 2,
+                sizeDelta: bn(1),
+                settlementStrategyId: 0,
+                acceptablePrice: bn(1050), // 5% slippage
+                referrer: ethers.constants.AddressZero,
+
+                trackingCode: ethers.constants.HashZero,
+              }),
+            'MaxPositionsPerAccountReached("0")'
+          );
+        });
+
+        describe('when max positions per account is set to non-zero', () => {
+          before('set max positions per account', async () => {
+            await systems().PerpsMarket.connect(owner()).setPerAccountCaps(1000, 1000);
           });
+          it('should be able to use the market', async () => {
+            await systems()
+              .PerpsMarket.connect(trader1())
+              .commitOrder({
+                marketId: marketId,
+                accountId: 2,
+                sizeDelta: bn(1),
+                settlementStrategyId: 0,
+                acceptablePrice: bn(1050), // 5% slippage
+                referrer: ethers.constants.AddressZero,
+                trackingCode: ethers.constants.HashZero,
+              });
+          });
+        });
       });
     });
   });

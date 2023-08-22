@@ -2,8 +2,6 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
-import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
-import {OrderFee} from "../storage/OrderFee.sol";
 
 /**
  * @title Module for updating configuration in relation to async order modules.

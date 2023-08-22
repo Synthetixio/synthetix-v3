@@ -14,6 +14,10 @@ import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol"
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
+/**
+ * @title Module for liquidating accounts.
+ * @dev See ILiquidationModule.
+ */
 contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
@@ -24,13 +28,16 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
 
+    /**
+     * @inheritdoc ILiquidationModule
+     */
     function liquidate(uint128 accountId) external override {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
         if (!liquidatableAccounts.contains(accountId)) {
-            (bool isEligible, , , ) = account.isEligibleForLiquidation();
+            (bool isEligible, , , , , ) = account.isEligibleForLiquidation();
 
             if (isEligible) {
                 account.flagForLiquidation();
@@ -43,6 +50,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         }
     }
 
+    /**
+     * @inheritdoc ILiquidationModule
+     */
     function liquidateFlagged() external override {
         uint256[] memory liquidatableAccounts = GlobalPerpsMarket
             .load()
@@ -55,6 +65,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         }
     }
 
+    /**
+     * @dev liquidates an account
+     */
     function _liquidateAccount(PerpsAccount.Data storage account) internal {
         uint128 accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
@@ -105,6 +118,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         emit AccountLiquidated(accountId, keeperLiquidationReward, accountFullyLiquidated);
     }
 
+    /**
+     * @dev process the accumulated liquidation rewards
+     */
     function _processLiquidationRewards(uint256 totalRewards) private returns (uint256 reward) {
         if (totalRewards == 0) {
             return 0;

@@ -4,10 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
-import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {IPythVerifier} from "../interfaces/external/IPythVerifier.sol";
-import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
 import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
@@ -15,12 +12,15 @@ import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
-import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
+/**
+ * @title Module for settling async orders.
+ * @dev See IAsyncOrderSettlementModule.
+ */
 contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvents {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -33,7 +33,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
-    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using Position for Position.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
@@ -129,6 +128,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         runtime.marketId = asyncOrder.request.marketId;
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
+
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
@@ -142,7 +142,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
         // use fill price to calculate realized pnl
-        (runtime.pnl, , , , ) = oldPosition.getPnl(runtime.fillPrice);
+        (runtime.pnl, , , runtime.accruedFunding, ) = oldPosition.getPnl(runtime.fillPrice);
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
         if (runtime.pnl > 0) {
@@ -197,6 +197,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.accountId,
             runtime.fillPrice,
             runtime.pnl,
+            runtime.accruedFunding,
             runtime.sizeDelta,
             runtime.newPositionSize,
             runtime.totalFees,
