@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity 0.8.19;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";

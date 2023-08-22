@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity 0.8.19;
 
 import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";

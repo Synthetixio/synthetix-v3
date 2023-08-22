@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity 0.8.19;
 
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";

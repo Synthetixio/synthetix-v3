@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity 0.8.19;
 
 // It's called `MockPyth` but we call it `PythMock` to be consistent with all other defined XXXMocks.
 import {MockPyth as BaseMockPyth} from "@synthetixio/oracle-manager/contracts/mocks/pyth/MockPyth.sol";

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity 0.8.19;
 
 library ErrorUtil {
     // @dev Thrown when an order is too old (stale) and can no longer be executed.

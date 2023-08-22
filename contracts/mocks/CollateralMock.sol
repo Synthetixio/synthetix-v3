@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity 0.8.19;
 
 import {CollateralMock as BaseCollateralMock} from "@synthetixio/main/contracts/mocks/CollateralMock.sol";
 
