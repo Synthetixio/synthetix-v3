@@ -60,7 +60,6 @@ module.exports = {
       ],
       env: {},
       globals: {
-        changetype: true,
         i32: true,
         i64: true,
         assert: true,
