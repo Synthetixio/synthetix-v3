@@ -18,7 +18,7 @@ interface IMarginModule is IBasePerpMarket {
     // --- Events --- //
 
     // @dev Emitted when margin is deposited from user to market.
-    event MarginDeposit(address indexed from, address indexed to, uint256 value, uint256 feeAmount, address collateral);
+    event MarginDeposit(address indexed from, address indexed to, uint256 value, address collateral);
 
     // @dev Emitted when margin is withdrawn from market to user.
     event MarginWithdraw(address indexed from, address indexed to, uint256 value, address collateral);

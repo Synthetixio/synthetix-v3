@@ -154,10 +154,9 @@ describe('MarginModule', async () => {
           collateral.address,
           amountDelta
         );
-        const feeAmount = 0; // fee amount for sUSD can be configured in core system MarketManager
         await assertEvent(
           tx,
-          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta}, ${feeAmount}, "${collateral.address}")`,
+          `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${amountDelta}, "${collateral.address}")`,
           PerpMarketProxy
         );
 
@@ -734,21 +733,12 @@ describe('MarginModule', async () => {
 
   describe('getMarginUsd', () => {
     it('should return marginUsd that reflects value of collateral when no positions opened', async () => {
-      const { PerpMarketProxy, Core } = systems();
-      const { trader, marketId, collateral, market, collateralDepositAmount, marginUsdDepositAmount, collateralPrice } =
-        await depositMargin(bs, genTrader(bs));
-      // TODO: discuss
-      // This will always be 0 in our mock, but the core system could turn on fees.
-      // These fees would only be turned on for sUSD.
-      // Currently getMarketFees ignores the passed marketId and always return fees for sUSD no matter what market id is passed
-      const { depositFeeAmount } =
-        'Synthetix Stablecoin' === (await collateral.contract.name())
-          ? await Core.getMarketFees(marketId, marginUsdDepositAmount.toBN())
-          : { depositFeeAmount: bn(0) };
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, collateralDepositAmount, collateralPrice } = await depositMargin(bs, genTrader(bs));
 
       const marginUsd = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
 
-      assertBn.equal(marginUsd, wei(collateralDepositAmount).mul(collateralPrice).add(depositFeeAmount).toBN());
+      assertBn.equal(marginUsd, wei(collateralDepositAmount).mul(collateralPrice).toBN());
     });
 
     it('should return zero marginUsd when no collateral has been deposited', async () => {
