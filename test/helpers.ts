@@ -98,7 +98,7 @@ export const getFastForwardTimestamp = async (
 ) => {
   const { PerpMarketProxy } = bs.systems();
 
-  const order = await PerpMarketProxy.getOrder(trader.accountId, marketId);
+  const order = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
   const commitmentTime = order.commitmentTime.toNumber();
   const config = await PerpMarketProxy.getMarketConfiguration();
   const minOrderAge = config.minOrderAge.toNumber();

@@ -40,7 +40,7 @@ describe('OrderModule', () => {
       const receipt = await tx.wait();
       const block = await provider().getBlock(receipt.blockNumber);
 
-      const pendingOrder = await PerpMarketProxy.getOrder(trader.accountId, marketId);
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
       assertBn.equal(pendingOrder.limitPrice, order.limitPrice);
       assertBn.equal(pendingOrder.keeperFeeBufferUsd, order.keeperFeeBufferUsd);
@@ -250,7 +250,7 @@ describe('OrderModule', () => {
         order.limitPrice,
         order.keeperFeeBufferUsd
       );
-      const pendingOrder = await PerpMarketProxy.getOrder(trader.accountId, marketId);
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
@@ -270,7 +270,7 @@ describe('OrderModule', () => {
       );
 
       // There should be no order.
-      const pendingOrder2 = await PerpMarketProxy.getOrder(trader.accountId, marketId);
+      const pendingOrder2 = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.isZero(pendingOrder2.sizeDelta);
     });
 
@@ -299,7 +299,7 @@ describe('OrderModule', () => {
       assertBn.isZero((await PerpMarketProxy.getMarketDigest(marketId)).size);
 
       // There should be no order.
-      assertBn.isZero((await PerpMarketProxy.getOrder(trader.accountId, marketId)).sizeDelta);
+      assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
 
       // There should be no order and no position.
       assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);

@@ -66,7 +66,7 @@ interface IOrderModule is IBasePerpMarket {
     /**
      * @dev Returns the order belonging to `accountId` in `marketId`.
      */
-    function getOrder(uint128 accountId, uint128 marketId) external view returns (Order.Data memory);
+    function getOrderDigest(uint128 accountId, uint128 marketId) external view returns (Order.Data memory);
 
     /**
      * @dev Given details about a trader, simulate a what would happen if the order were to be committed.

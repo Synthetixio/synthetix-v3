@@ -218,7 +218,7 @@ contract OrderModule is IOrderModule {
     /**
      * @inheritdoc IOrderModule
      */
-    function getOrder(uint128 accountId, uint128 marketId) external view returns (Order.Data memory) {
+    function getOrderDigest(uint128 accountId, uint128 marketId) external view returns (Order.Data memory) {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.orders[accountId];

@@ -68,7 +68,7 @@ describe('MarginModule', async () => {
       );
 
       // Verify that an order exists.
-      const pendingOrder = await PerpMarketProxy.getOrder(trader.accountId, marketId);
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
       // (deposit) Same trader in the same market but (possibly) different collateral.
