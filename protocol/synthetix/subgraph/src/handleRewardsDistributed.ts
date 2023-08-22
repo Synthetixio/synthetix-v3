@@ -23,14 +23,21 @@ export function handleRewardsDistributed(event: RewardsDistributed): void {
       .concat(event.params.distributor.toHex())
   );
   let rewardsDistributor = RewardsDistributor.load(event.params.distributor.toHex());
+
   if (rewardsDistributor !== null) {
     rewardsDistributor.total_distributed = rewardsDistributor.total_distributed.plus(
       event.params.amount.toBigDecimal()
     );
     rewardsDistributor.updated_at = event.block.timestamp;
     rewardsDistributor.updated_at_block = event.block.number;
+
+    if (rewardsDistributor.pool === null) {
+      rewardsDistributor.pool = event.params.poolId.toString();
+    }
+
     rewardsDistributor.save();
   }
+
   if (accountRewardsDistributor === null) {
     accountRewardsDistributor = new AccountRewardsDistributor(
       event.params.poolId

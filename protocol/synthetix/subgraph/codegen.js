@@ -10,7 +10,6 @@ const networkId = {
   'optimism-mainnet': 10,
   goerli: 5,
   'optimism-goerli': 420,
-  cannon: 13370,
 }[networkName];
 
 const graphNetworkName = {
@@ -18,7 +17,6 @@ const graphNetworkName = {
   'optimism-mainnet': 'optimism',
   goerli: 'goerli',
   'optimism-goerli': 'optimism-goerli',
-  cannon: 'cannon',
 }[networkName];
 
 async function run() {

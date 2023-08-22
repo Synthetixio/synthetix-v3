@@ -1,15 +1,23 @@
 import { assert } from 'matchstick-as';
 import { Address, BigInt, store } from '@graphprotocol/graph-ts';
 import { address, address2 } from './constants';
-import { handleRewardsDistributed, handleRewardsDistributorRegistered } from '../src';
+import {
+  handleRewardsDistributed,
+  handleRewardsDistributorRegistered,
+  handlePoolCreated,
+} from '../src';
 import {
   createRewardsDistributedEvent,
   createRewardsDistributorRegisteredEvent,
+  createPoolCreatedEvent,
 } from './event-factories';
 
 export default function test(): void {
   // Needs to be here because of Closures
   const now = new Date(1668448739566).getTime();
+  const newPoolEvent = createPoolCreatedEvent(1, address, now, now - 1000);
+  handlePoolCreated(newPoolEvent);
+
   const rewardsDistributedEvent = createRewardsDistributedEvent(
     BigInt.fromI32(1),
     Address.fromString(address),
