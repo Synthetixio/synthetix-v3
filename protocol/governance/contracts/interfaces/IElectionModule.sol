@@ -6,7 +6,6 @@ import {Epoch} from "../storage/Epoch.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
-    error NotMothership();
     error AlreadyNominated();
     error ElectionAlreadyEvaluated();
     error ElectionNotEvaluated();

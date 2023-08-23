@@ -19,6 +19,7 @@ library CrossChain {
 
     error NotCcipRouter(address);
     error UnsupportedNetwork(uint64);
+    error InvalidNetwork(uint64);
     error InsufficientCcipFee(uint256 requiredAmount, uint256 availableAmount);
     error InvalidMessage();
 
@@ -91,12 +92,22 @@ library CrossChain {
         }
     }
 
+    function onlyOnChainAt(uint64 chainIndex) internal view {
+        if (getChainIdAt(load(), chainIndex) != block.chainid.to64()) {
+            revert InvalidNetwork(block.chainid.to64());
+        }
+    }
+
+    function getChainIdAt(Data storage self, uint64 index) internal view returns (uint64) {
+        return self.supportedNetworks.valueAt(index + 1).to64();
+    }
+
     function getSupportedNetworks(Data storage self) internal view returns (uint64[] memory) {
         SetUtil.UintSet storage supportedNetworks = self.supportedNetworks;
-        uint256 supportedNetworksLength = supportedNetworks.length();
-        uint64[] memory chains = new uint64[](supportedNetworksLength);
-        for (uint i = 0; i < supportedNetworksLength; i++) {
-            uint64 chainId = supportedNetworks.values()[i].to64();
+        uint256[] memory supportedChains = supportedNetworks.values();
+        uint64[] memory chains = new uint64[](supportedChains.length);
+        for (uint i = 0; i < supportedChains.length; i++) {
+            uint64 chainId = supportedChains[i].to64();
             chains[i] = chainId;
         }
         return chains;

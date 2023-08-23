@@ -27,7 +27,7 @@ library Council {
         // Council token id's by council member address
         mapping(address => uint) councilTokenIds;
         // id of the current epoch
-        uint currentElectionId;
+        uint256 currentElectionId;
     }
 
     enum ElectionPeriod {
