@@ -605,6 +605,9 @@ workflows:
   version: 2.1
 
   tests:
+    unless:
+      equal: ["automatic-subgraphs-update", << pipeline.git.branch >>]
+
     jobs:
       - lint
       - size-contracts
