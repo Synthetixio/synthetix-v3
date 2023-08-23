@@ -476,15 +476,10 @@ describe('MarginModule', async () => {
 
       it('should revert withdraw when margin below im', async () => {
         const { PerpMarketProxy } = systems();
-        const {
-          trader,
-          marketId,
-          market,
-          collateral,
-          collateralDepositAmount,
-          collateralPrice,
-          marginUsdDepositAmount,
-        } = await depositMargin(bs, genTrader(bs));
+        const { trader, marketId, market, collateral, collateralDepositAmount, collateralPrice } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSide: -1,
           desiredLeverage: 5,
@@ -492,8 +487,11 @@ describe('MarginModule', async () => {
         // open leveraged position
         await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
 
-        const { initialMarginRequirement } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-        const maxWithdrawUsd = wei(marginUsdDepositAmount).sub(initialMarginRequirement);
+        const { initialMarginRequirement, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(
+          trader.accountId,
+          marketId
+        );
+        const maxWithdrawUsd = wei(remainingMarginUsd).sub(initialMarginRequirement);
         const maxWithdraw = maxWithdrawUsd.div(collateralPrice);
 
         await assertRevert(
@@ -508,8 +506,56 @@ describe('MarginModule', async () => {
         );
       });
 
+      it('should revert withdraw if places position into liquidation', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: -1,
+          desiredLeverage: 10,
+        });
+        // open leveraged position
+        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
 
-      it('should revert withdraw if places position into liquidation');
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            marketId,
+            collateral.contract.address,
+            collateralDepositAmount.mul(-1)
+          ),
+          `CanLiquidatePosition()`,
+          PerpMarketProxy
+        );
+      });
+      it('should revert withdraw if position is liquidatable due to price', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: -1,
+          desiredLeverage: 10,
+        });
+        // open leveraged position
+        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        // Change price to make position liquidatable
+        await collateral.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            marketId,
+            collateral.contract.address,
+            wei(-0.01).toBN()
+          ),
+          `CanLiquidatePosition()`,
+          PerpMarketProxy
+        );
+      });
 
       it('should revert when account is flagged for liquidation', async () => {
         const { PerpMarketProxy } = systems();
