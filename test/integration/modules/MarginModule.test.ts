@@ -474,7 +474,40 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert withdraw when margin below im');
+      it('should revert withdraw when margin below im', async () => {
+        const { PerpMarketProxy } = systems();
+        const {
+          trader,
+          marketId,
+          market,
+          collateral,
+          collateralDepositAmount,
+          collateralPrice,
+          marginUsdDepositAmount,
+        } = await depositMargin(bs, genTrader(bs));
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: -1,
+          desiredLeverage: 5,
+        });
+        // open leveraged position
+        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+
+        const { initialMarginRequirement } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+        const maxWithdrawUsd = wei(marginUsdDepositAmount).sub(initialMarginRequirement);
+        const maxWithdraw = maxWithdrawUsd.div(collateralPrice);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            marketId,
+            collateral.contract.address,
+            maxWithdraw.mul(-1).toBN()
+          ),
+          `InsufficientMargin()`,
+          PerpMarketProxy
+        );
+      });
+
 
       it('should revert withdraw if places position into liquidation');
 

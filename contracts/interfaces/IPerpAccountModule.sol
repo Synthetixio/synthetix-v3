@@ -48,6 +48,8 @@ interface IPerpAccountModule {
         uint256 oraclePrice;
         // @dev Position size
         int128 size;
+        // @dev Initial margin requirement
+        uint256 initialMarginRequirement;
     }
 
     // --- Views --- //
