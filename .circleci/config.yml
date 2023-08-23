@@ -741,3 +741,11 @@ workflows:
         - equal: ["Subgraphs Update", << pipeline.schedule.name >>]
     jobs:
       - update-subgraphs
+
+  # temporary for dev
+  test-subgraphs-update:
+    jobs:
+      - update-subgraphs:
+          filters:
+            branches:
+              only: /automatic-subgraphs-update/
