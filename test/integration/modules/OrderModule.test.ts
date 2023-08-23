@@ -750,7 +750,7 @@ describe('OrderModule', () => {
       const gTrader = genTrader(bs);
 
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
-      // Creating a short skew for the market
+      // Creating a long skew for the market
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 1.1,
         desiredSide: 1,
