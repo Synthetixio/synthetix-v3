@@ -552,7 +552,15 @@ jobs:
       - DEBUG: "cannon:*"
     working_directory: ~/synthetix-v3
     steps:
-      - checkout
+      #- add_ssh_keys:
+      #  fingerprints: "46:05:bf:bf:84:e8:af:09:35:05:89:09:62:45:84:7c"
+      - run:
+          working_directory: ~/
+          name: "Checkout synthetix-v3"
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git clone git@github.com:Synthetixio/synthetix-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-v3
 
       - install-ipfs
       - run-ipfs-daemon
