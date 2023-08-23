@@ -560,7 +560,7 @@ jobs:
 
       - run:
           name: "Generate updated subgraph code"
-          command: yarn workspaces foreach --verbose run subgraphgen
+          command: yarn subgraphgen
 
       - run:
           working_directory: ~/synthetix-gitbook-v3
