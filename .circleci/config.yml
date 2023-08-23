@@ -549,6 +549,7 @@ jobs:
       - CANNON_IPFS_URL: "http://127.0.0.1:5001"
       - CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
       - GIT_PAGER: cat
+      - DEBUG: "cannon:*"
     working_directory: ~/synthetix-v3
     steps:
       - checkout
