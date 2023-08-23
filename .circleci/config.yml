@@ -598,7 +598,7 @@ jobs:
                 -d '{
                   "title": "Update Subgraphs",
                   "head": "subgraph-updates", 
-                  "base": "en"
+                  "base": "main"
                 }'
             else
               echo "Pull Request already exists: $PR_URL"
