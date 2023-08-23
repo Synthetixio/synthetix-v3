@@ -568,7 +568,6 @@ jobs:
             yarn subgraphgen
 
       - run:
-          working_directory: ~/synthetix-gitbook-v3
           name: "Push changes to subgraph-updates branch and create PR"
           command: |
             STATUS=$(git status)
