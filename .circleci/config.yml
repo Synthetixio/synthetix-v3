@@ -84,7 +84,7 @@ commands:
     steps:
       - run:
           name: "Wait for IPFS daemon to start"
-          command: wget --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
+          command: wget --output-document - --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
 
   version-contracts:
     steps:
