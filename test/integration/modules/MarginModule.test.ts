@@ -378,9 +378,52 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should allow partial withdraw when margin req are still met');
+      it('should allow partial withdraw when initial margin req are still met', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, market, collateral, collateralDepositAmount, collateralPrice, traderAddress } =
+          await depositMargin(bs, genTrader(bs));
+        const collateralAddress = collateral.contract.address;
 
-      it('should allow affecting existing position when withdrawing');
+        // open leveraged position
+        await commitAndSettle(
+          bs,
+          marketId,
+          trader,
+          genOrder(bs, market, collateral, collateralDepositAmount, {
+            desiredSide: -1,
+            desiredLeverage: 5,
+          })
+        );
+
+        const { initialMarginRequirement, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(
+          trader.accountId,
+          marketId
+        );
+        // Figure out max withdraw
+        const maxWithdrawUsd = wei(remainingMarginUsd).sub(initialMarginRequirement);
+        const maxWithdraw = maxWithdrawUsd.div(collateralPrice);
+        // Withdraw 90% of max withdraw
+        const withdrawAmount = maxWithdraw.mul(0.9);
+        // Store balance to compare later
+        const balanceBefore = await collateral.contract.balanceOf(traderAddress);
+
+        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          marketId,
+          collateral.contract.address,
+          withdrawAmount.mul(-1).toBN()
+        );
+        await assertEvent(
+          tx,
+          `MarginWithdraw("${
+            PerpMarketProxy.address
+          }", "${traderAddress}", ${withdrawAmount.toBN()}, "${collateralAddress}")`,
+          PerpMarketProxy
+        );
+        const expectedBalanceAfter = wei(balanceBefore).add(withdrawAmount).toBN();
+        const balanceAfter = await collateral.contract.balanceOf(traderAddress);
+        assertBn.equal(expectedBalanceAfter, balanceAfter);
+      });
 
       it('should revert withdraw on address(0) collateral', async () => {
         const { PerpMarketProxy } = systems();

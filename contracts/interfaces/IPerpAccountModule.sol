@@ -33,7 +33,7 @@ interface IPerpAccountModule {
         // @dev id of the market that was queried.
         uint128 marketId;
         // @dev Total remaining margin for position in USD.
-        uint256 marginUsd;
+        uint256 remainingMarginUsd;
         // @dev Health factor for position in market if a position is open.
         uint256 healthFactor;
         // @dev Notional value of position in USD.
