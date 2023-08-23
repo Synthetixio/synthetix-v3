@@ -34,10 +34,6 @@ contract MarginModule is IMarginModule {
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(market.id);
 
-        // Position is frozen due to prior flagged for liquidation.
-        if (market.flaggedLiquidations[accountId] != address(0)) {
-            revert ErrorUtil.PositionFlagged();
-        }
         // Ensure does not lead to instant liquidation.
         if (position.isLiquidatable(market, marginUsd, oraclePrice, marketConfig)) {
             revert ErrorUtil.CanLiquidatePosition();
@@ -151,6 +147,10 @@ contract MarginModule is IMarginModule {
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
             revert ErrorUtil.OrderFound(accountId);
+        }
+        // Position is frozen due to prior flagged for liquidation.
+        if (market.flaggedLiquidations[accountId] != address(0)) {
+            revert ErrorUtil.PositionFlagged();
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
