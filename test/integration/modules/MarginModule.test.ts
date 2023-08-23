@@ -478,7 +478,34 @@ describe('MarginModule', async () => {
 
       it('should revert withdraw if places position into liquidation');
 
-      it('should revert when account is flagged for liquidation');
+      it('should revert when account is flagged for liquidation', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: -1,
+          desiredLeverage: 10,
+        });
+        // open leveraged position
+        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        // updating price, causing position to be liquidatable
+        await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
+        // flag position
+        await PerpMarketProxy.flagPosition(trader.accountId, marketId);
+
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            marketId,
+            collateral.contract.address,
+            collateralDepositAmount.mul(-1)
+          ),
+          `PositionFlagged()`,
+          PerpMarketProxy
+        );
+      });
     });
 
     describe('withdrawAllCollateral', () => {
