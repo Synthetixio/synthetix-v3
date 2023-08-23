@@ -556,7 +556,7 @@ jobs:
 
       - install-ipfs
       - run-ipfs-daemon
-      #      - install-foundry
+      - install-foundry
       - yarn-install
       - wait-for-ipfs
 
