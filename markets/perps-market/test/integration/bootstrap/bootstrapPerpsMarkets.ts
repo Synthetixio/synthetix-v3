@@ -149,9 +149,15 @@ export const bootstrapPerpsMarkets = (
             liquidationParams.minimumInitialMarginRatio,
             liquidationParams.maintenanceMarginScalar,
             liquidationParams.liquidationRewardRatio,
+            liquidationParams.minimumPositionMargin
+          );
+
+          await contracts.PerpsMarket.connect(r.owner()).setMaxLiquidationParameters(
+            marketId,
             liquidationParams.maxLiquidationLimitAccumulationMultiplier,
             liquidationParams.maxSecondsInLiquidationWindow,
-            liquidationParams.minimumPositionMargin
+            0, // max pd
+            ethers.constants.AddressZero // no endorsed liquidator
           );
         });
       }

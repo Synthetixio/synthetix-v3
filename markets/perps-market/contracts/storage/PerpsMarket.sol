@@ -100,6 +100,10 @@ library PerpsMarket {
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
+        if (msg.sender == marketConfig.endorsedLiquidator) {
+            return requestedLiquidationAmount.to128();
+        }
+
         uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
         // this would only be 0 if fees or skew scale are configured to be 0.
         // in that case, (very unlikely), allow full liquidation
@@ -125,6 +129,19 @@ library PerpsMarket {
                 )
                 .to128();
             self.lastUtilizedLiquidationCapacity += liquidatableAmount;
+        }
+
+        uint maxLiquidationPd = marketConfig.maxLiquidationPd;
+        if (liquidatableAmount == 0 && maxLiquidationPd != 0) {
+            uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
+            if (currentPd < maxLiquidationPd) {
+                liquidatableAmount = (
+                    requestedLiquidationAmount > maxAllowedLiquidationInWindow
+                        ? maxAllowedLiquidationInWindow
+                        : requestedLiquidationAmount
+                ).to128();
+                self.lastUtilizedLiquidationCapacity = liquidatableAmount;
+            }
         }
 
         // only update timestamp if there is something being liquidated
