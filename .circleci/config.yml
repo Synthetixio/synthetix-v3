@@ -617,7 +617,7 @@ workflows:
 
   tests:
     unless:
-      equal: ["automatic-subgraphs-update", << pipeline.git.branch >>]
+      equal: ["skip", << pipeline.git.branch >>]
 
     jobs:
       - lint
