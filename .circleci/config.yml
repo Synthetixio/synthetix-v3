@@ -556,12 +556,16 @@ jobs:
 
       - install-ipfs
       - run-ipfs-daemon
+      #      - install-foundry
       - yarn-install
       - wait-for-ipfs
 
       - run:
           name: "Generate updated subgraph code"
-          command: yarn subgraphgen
+          command: |
+            export CANNON_REGISTRY_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            yarn subgraphgen
 
       - run:
           working_directory: ~/synthetix-gitbook-v3
@@ -572,6 +576,8 @@ jobs:
               echo "SKIP. Working tree is clean. No changes to subgraphs"
               exit 0
             fi
+
+
 
             git branch subgraph-updates
             git checkout subgraph-updates
