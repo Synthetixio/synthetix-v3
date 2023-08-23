@@ -565,8 +565,9 @@ describe('MarginModule', async () => {
           marketId
         );
         const maxWithdrawUsd = wei(remainingMarginUsd).sub(initialMarginRequirement);
-        // Try withdrawing $10 more than max withdraw
-        const amountToWithdrawUsd = maxWithdrawUsd.add(10);
+
+        // Try withdrawing $1 more than max withdraw
+        const amountToWithdrawUsd = maxWithdrawUsd.add(1);
         // Convert to native units
         const amountToWithdraw = amountToWithdrawUsd.div(collateralPrice);
 
