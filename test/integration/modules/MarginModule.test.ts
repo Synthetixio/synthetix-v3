@@ -535,14 +535,17 @@ describe('MarginModule', async () => {
           marketId
         );
         const maxWithdrawUsd = wei(remainingMarginUsd).sub(initialMarginRequirement);
-        const maxWithdraw = maxWithdrawUsd.div(collateralPrice);
+        // Try withdrawing $10 more than max withdraw
+        const amountToWithdrawUsd = maxWithdrawUsd.add(10);
+        // Convert to native units
+        const amountToWithdraw = amountToWithdrawUsd.div(collateralPrice);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             marketId,
             collateral.contract.address,
-            maxWithdraw.mul(-1).toBN()
+            amountToWithdraw.mul(-1).toBN()
           ),
           `InsufficientMargin()`,
           PerpMarketProxy
@@ -585,8 +588,8 @@ describe('MarginModule', async () => {
         });
         // open leveraged position
         await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
-        // Change price to make position liquidatable
-        await collateral.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
+        // Change market price to make position liquidatable
+        await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
