@@ -94,6 +94,10 @@ contract MarginModule is IMarginModule {
         if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound(accountId);
         }
+        // Position is frozen due to prior flagged for liquidation.
+        if (market.flaggedLiquidations[accountId] != address(0)) {
+            revert ErrorUtil.PositionFlagged();
+        }
 
         // Prevent collateral transfers when there's an open position.
         Position.Data storage position = market.positions[accountId];

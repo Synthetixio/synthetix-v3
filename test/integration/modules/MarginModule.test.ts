@@ -664,7 +664,7 @@ describe('MarginModule', async () => {
     });
 
     describe('withdrawAllCollateral', () => {
-      it('should withdrawal all account collateral', async () => {
+      it('should withdraw all account collateral', async () => {
         const { PerpMarketProxy } = systems();
         const gTrader = await genTrader(bs);
 
@@ -814,6 +814,28 @@ describe('MarginModule', async () => {
         await assertRevert(
           PerpMarketProxy.connect(trader2.signer).withdrawAllCollateral(trader1.accountId, market.marketId()),
           `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
+        );
+      });
+      it('should revert when flagged', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSide: -1,
+          desiredLeverage: 10,
+        });
+        // open leveraged position
+        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        // updating price, causing position to be liquidatable
+        await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
+        // flag position
+        await PerpMarketProxy.flagPosition(trader.accountId, marketId);
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `PositionFlagged()`,
+          PerpMarketProxy
         );
       });
     });
