@@ -115,6 +115,17 @@ library Council {
         }
     }
 
+    /// @dev Used to allow certain functions to only operate within a given periods
+    function onlyInPeriods(
+        Council.ElectionPeriod period1,
+        Council.ElectionPeriod period2
+    ) internal view {
+        Council.ElectionPeriod currentPeriod = Council.getCurrentPeriod(load());
+        if (currentPeriod != period1 && currentPeriod != period2) {
+            revert NotCallableInCurrentPeriod();
+        }
+    }
+
     /// @dev Ensures epoch dates are in the correct order, durations are above minimums, etc
     function validateEpochSchedule(
         Data storage self,

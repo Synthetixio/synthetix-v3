@@ -218,7 +218,7 @@ contract BaseElectionModule is
     function nominate() public virtual override {
         // TODO: onlyOnMothership?
 
-        Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
+        Council.onlyInPeriods(Council.ElectionPeriod.Nomination, Council.ElectionPeriod.Vote);
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
