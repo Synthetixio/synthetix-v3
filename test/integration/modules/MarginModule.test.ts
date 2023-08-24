@@ -834,21 +834,10 @@ describe('MarginModule', async () => {
           genTrader(bs)
         );
 
-        // Create a new position.
-        await commitAndSettle(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
-
-        // Provision collateral and approve for access.
-        const { collateralDepositAmount: collateralDepositAmount2 } = await approveAndMintMargin(
-          bs,
-          genTrader(bs, { desiredMarket: market, desiredTrader: trader, desiredCollateral: collateral })
-        );
-
         // Perform the deposit.
-        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
           trader.accountId,
-          market.marketId(),
-          collateral.contract.address,
-          collateralDepositAmount2
+          market.marketId()
         );
         await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
       });

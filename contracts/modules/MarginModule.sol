@@ -104,8 +104,8 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
-        // (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        // emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+        (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
