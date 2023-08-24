@@ -2,7 +2,7 @@ import { BigNumber, Contract, utils } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
-import { type genOrder, type genTrader, genNumber } from './generators';
+import { type genTrader, type genOrder, genNumber } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';

@@ -2,16 +2,15 @@ import { BigNumber } from 'ethers';
 import Wei, { wei } from '@synthetixio/wei';
 import type { Bs } from './typed';
 
-// --- Calculate pnl --- //
+/** Calculates a position's unrealised PnL (no funding or fees) given the current and previous price. */
 export const calcPnl = (size: BigNumber, currentPrice: BigNumber, previousPrice: BigNumber) =>
   wei(size).mul(wei(currentPrice).sub(previousPrice)).toBN();
 
-// Calculates PD
-const calcPD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
-// Calculates the price with pd applied
-const calcAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
-// Calculates fillPrice
+/** Calculates the fillPrice (pd adjusted market price) given market params and the size of next order. */
 export const calcFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNumber, price: BigNumber) => {
+  const calcPD = (skew: Wei, skewScale: Wei) => skew.div(skewScale);
+  const calcAdjustedPrice = (price: Wei, pd: Wei) => price.add(price.mul(pd));
+
   if (skewScale.eq(0)) {
     return price;
   }
