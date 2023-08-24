@@ -1,0 +1,26 @@
+Nothing to compile
+No need to generate any newer typings.
+
+No existing package found.
+
+Generating new package...
+Name: synthetix-perps-market
+Version: 3.2.0-testable
+Preset: main (default)
+Source code will be included in the package
+
+Building the chain (ID 13370) into the state defined in cannonfile.test.toml...
+exec: contract.FeeCollectorMock
+exec: contract.MockPyth
+exec: import.spotMarket
+not ok 1 "before all" hook: prepareNode in "{root}"
+  deployment not found: synthetix-spot-market:3.2.0-testable. please make sure it exists for the cannon network and main preset.
+  Error: deployment not found: synthetix-spot-market:3.2.0-testable. please make sure it exists for the cannon network and main preset.
+      at Object.<anonymous> (/Users/nkbt/syn/synthetix-v3/node_modules/@usecannon/builder/src/steps/import.ts:78:13)
+      at Generator.next (<anonymous>)
+      at fulfilled (/Users/nkbt/syn/synthetix-v3/node_modules/@usecannon/builder/dist/steps/import.js:5:58)
+      at processTicksAndRejections (node:internal/process/task_queues:95:5)
+# tests 1
+# pass 0
+# fail 1
+1..1

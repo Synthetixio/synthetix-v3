@@ -2296,6 +2296,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oozcitak/dom@npm:1.15.8":
+  version: 1.15.8
+  resolution: "@oozcitak/dom@npm:1.15.8"
+  dependencies:
+    "@oozcitak/infra": 1.0.8
+    "@oozcitak/url": 1.0.4
+    "@oozcitak/util": 8.3.8
+  checksum: 01725ee17b9e1f618971f2190d57bf90a866b7af8e4e41f3f6dfb24201767a9843da4a63b4225d92bcdb0394b95a56dac67049eb6b074119fe97df83728ab04d
+  languageName: node
+  linkType: hard
+
+"@oozcitak/infra@npm:1.0.8":
+  version: 1.0.8
+  resolution: "@oozcitak/infra@npm:1.0.8"
+  dependencies:
+    "@oozcitak/util": 8.3.8
+  checksum: fc76a17187d67df39cf38ae8138ce1757d6b86e5d2ff3c90f5db12194380005b4e22fb6caec4bd40dce363fb8c89f6f945bb0577e6ecee59755773b7ff793164
+  languageName: node
+  linkType: hard
+
+"@oozcitak/url@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@oozcitak/url@npm:1.0.4"
+  dependencies:
+    "@oozcitak/infra": 1.0.8
+    "@oozcitak/util": 8.3.8
+  checksum: ab4a9726b447910e093c0efcb92c4486e1bc314e0c9375f1a4082d1f0b2cc80bbfd433cc6953641b1ddaf73df21bd7002bb5cf581d8ff104a9eac5d21633b781
+  languageName: node
+  linkType: hard
+
+"@oozcitak/util@npm:8.3.8":
+  version: 8.3.8
+  resolution: "@oozcitak/util@npm:8.3.8"
+  checksum: 3aaa936fb3ba5a8561b54f41ef55cbba633b52f7f95c74e9c4a8068e3cbe893dc30865a24483d3887a0d8a201ee4584daf51f0a177fb8e5997c0bdd289c4f559
+  languageName: node
+  linkType: hard
+
 "@peculiar/asn1-schema@npm:^2.3.6":
   version: 2.3.6
   resolution: "@peculiar/asn1-schema@npm:2.3.6"
@@ -5055,7 +5092,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"charenc@npm:0.0.2, charenc@npm:>= 0.0.1":
+"charenc@npm:>= 0.0.1":
   version: 0.0.2
   resolution: "charenc@npm:0.0.2"
   checksum: 81dcadbe57e861d527faf6dd3855dc857395a1c4d6781f4847288ab23cffb7b3ee80d57c15bba7252ffe3e5e8019db767757ee7975663ad2ca0939bb8fcaf2e5
@@ -5824,7 +5861,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crypt@npm:0.0.2, crypt@npm:>= 0.0.1":
+"crypt@npm:>= 0.0.1":
   version: 0.0.2
   resolution: "crypt@npm:0.0.2"
   checksum: baf4c7bbe05df656ec230018af8cf7dbe8c14b36b98726939cef008d473f6fe7a4fad906cfea4062c93af516f1550a3f43ceb4d6615329612c6511378ed9fe34
@@ -7074,6 +7111,13 @@ __metadata:
   version: 4.0.7
   resolution: "eventemitter3@npm:4.0.7"
   checksum: 1875311c42fcfe9c707b2712c32664a245629b42bb0a5a84439762dd0fd637fc54d078155ea83c2af9e0323c9ac13687e03cfba79b03af9f40c89b4960099374
+  languageName: node
+  linkType: hard
+
+"events-to-array@npm:^1.0.1":
+  version: 1.1.2
+  resolution: "events-to-array@npm:1.1.2"
+  checksum: c4f5f0f6d0c8658b96f940f703ac9c8c99effca1dd7b1f8eb030be7a940725b42a72fa5eb405961c171c2e9e1d5b7efa9a75be5cdaba88f3fc0fcce59d0e6a0f
   languageName: node
   linkType: hard
 
@@ -9185,13 +9229,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-buffer@npm:~1.1.6":
-  version: 1.1.6
-  resolution: "is-buffer@npm:1.1.6"
-  checksum: 4a186d995d8bbf9153b4bd9ff9fd04ae75068fe695d29025d25e592d9488911eeece84eefbd8fa41b8ddcc0711058a71d4c466dcf6f1f6e1d83830052d8ca707
-  languageName: node
-  linkType: hard
-
 "is-callable@npm:^1.1.3, is-callable@npm:^1.1.4, is-callable@npm:^1.2.7":
   version: 1.2.7
   resolution: "is-callable@npm:1.2.7"
@@ -10234,6 +10271,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"js-yaml@npm:3.14.0":
+  version: 3.14.0
+  resolution: "js-yaml@npm:3.14.0"
+  dependencies:
+    argparse: ^1.0.7
+    esprima: ^4.0.0
+  bin:
+    js-yaml: bin/js-yaml.js
+  checksum: a1a47c912ba20956f96cb0998dea2e74c7f7129d831fe33d3c5a16f3f83712ce405172a8dd1c26bf2b3ad74b54016d432ff727928670ae5a50a57a677c387949
+  languageName: node
+  linkType: hard
+
 "js-yaml@npm:3.14.1, js-yaml@npm:3.x, js-yaml@npm:^3.12.0, js-yaml@npm:^3.13.0, js-yaml@npm:^3.13.1, js-yaml@npm:^3.14.0, js-yaml@npm:^3.14.1":
   version: 3.14.1
   resolution: "js-yaml@npm:3.14.1"
@@ -11074,17 +11123,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"md5@npm:^2.3.0":
-  version: 2.3.0
-  resolution: "md5@npm:2.3.0"
-  dependencies:
-    charenc: 0.0.2
-    crypt: 0.0.2
-    is-buffer: ~1.1.6
-  checksum: a63cacf4018dc9dee08c36e6f924a64ced735b37826116c905717c41cebeb41a522f7a526ba6ad578f9c80f02cb365033ccd67fe186ffbcc1a1faeb75daa9b6e
-  languageName: node
-  linkType: hard
-
 "memdown@npm:^5.0.0":
   version: 5.1.0
   resolution: "memdown@npm:5.1.0"
@@ -11308,6 +11346,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimist@npm:1.2.6":
+  version: 1.2.6
+  resolution: "minimist@npm:1.2.6"
+  checksum: d15428cd1e11eb14e1233bcfb88ae07ed7a147de251441d61158619dfb32c4d7e9061d09cab4825fdee18ecd6fce323228c8c47b5ba7cd20af378ca4048fb3fb
+  languageName: node
+  linkType: hard
+
 "minimist@npm:^1.2.0, minimist@npm:^1.2.5, minimist@npm:^1.2.6":
   version: 1.2.8
   resolution: "minimist@npm:1.2.8"
@@ -11447,36 +11492,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mkdirp@npm:^3.0.0":
-  version: 3.0.1
-  resolution: "mkdirp@npm:3.0.1"
-  bin:
-    mkdirp: dist/cjs/src/bin.js
-  checksum: 972deb188e8fb55547f1e58d66bd6b4a3623bf0c7137802582602d73e6480c1c2268dcbafbfb1be466e00cc7e56ac514d7fd9334b7cf33e3e2ab547c16f83a8d
-  languageName: node
-  linkType: hard
-
 "mnemonist@npm:^0.38.0":
   version: 0.38.5
   resolution: "mnemonist@npm:0.38.5"
   dependencies:
     obliterator: ^2.0.0
   checksum: 66080afc1616866beb164e230c432964d6eed467cf37ad00e9c10161b8267928124ca8f1d0ecfea86c85568acfa62d54faaf646a86968d1135189a0fdfdd6b78
-  languageName: node
-  linkType: hard
-
-"mocha-junit-reporter@npm:2.2.1":
-  version: 2.2.1
-  resolution: "mocha-junit-reporter@npm:2.2.1"
-  dependencies:
-    debug: ^4.3.4
-    md5: ^2.3.0
-    mkdirp: ^3.0.0
-    strip-ansi: ^6.0.1
-    xml: ^1.0.1
-  peerDependencies:
-    mocha: ">=2.2.5"
-  checksum: 752c30b1ef7c99eff6d82104f1b7a8179a21f3afefa3df38edb4e2478986a7c74d28b6c4525da5109cba8a4bf31cf697f4cff7584a3784fb9fc40be804fd7351
   languageName: node
   linkType: hard
 
@@ -15054,13 +15075,13 @@ __metadata:
     eslint-config-prettier: 8.5.0
     eslint-plugin-no-only-tests: 3.1.0
     mocha: 10.2.0
-    mocha-junit-reporter: 2.2.1
     pre-commit: 1.2.2
     prettier: ^2.8.8
     prettier-plugin-solidity: 1.0.0
     pretty-quick: 3.1.3
     solhint: 3.3.7
     solhint-plugin-numcast: 1.0.0
+    tap-junit: 5.0.2
     typescript: 4.9.3
   languageName: unknown
   linkType: soft
@@ -15099,6 +15120,41 @@ __metadata:
     string-width: ^4.2.3
     strip-ansi: ^6.0.1
   checksum: 08249c7046125d9d0a944a6e96cfe9ec66908d6b8a9db125531be6eb05fa0de047fd5542e9d43b4f987057f00a093b276b8d3e19af162a9c40db2681058fd306
+  languageName: node
+  linkType: hard
+
+"tap-junit@npm:5.0.2":
+  version: 5.0.2
+  resolution: "tap-junit@npm:5.0.2"
+  dependencies:
+    minimist: 1.2.6
+    tap-parser: 10.1.0
+    xmlbuilder2: 2.4.1
+  bin:
+    tap-junit: bin/tap-junit
+  checksum: e1518cb34feda45ae098d5de553069128bf4f044c2265851bdd78f26c40d98672fd2f3a75ad84f2bfabd512325a3e1d9a047298442fde8f1b264ddd01298b974
+  languageName: node
+  linkType: hard
+
+"tap-parser@npm:10.1.0":
+  version: 10.1.0
+  resolution: "tap-parser@npm:10.1.0"
+  dependencies:
+    events-to-array: ^1.0.1
+    minipass: ^3.0.0
+    tap-yaml: ^1.0.0
+  bin:
+    tap-parser: bin/cmd.js
+  checksum: 3f625f6dded72187584602d5de6ecba6628acb382e9c0f7a6909c4cbe0c98362b6d6895ae567b02f4bfc0f3abdba8851d11a9f868b68449da81b3c126afc7ecb
+  languageName: node
+  linkType: hard
+
+"tap-yaml@npm:^1.0.0":
+  version: 1.0.2
+  resolution: "tap-yaml@npm:1.0.2"
+  dependencies:
+    yaml: ^1.10.2
+  checksum: 842024ca2aee6a3016182b1c06d69807b859e2da09639ad17b16bd31370d3cc54e6b083a67629c0680c7180628115b768ac9803cfea13fc13455ff57737a8964
   languageName: node
   linkType: hard
 
@@ -16365,10 +16421,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xml@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "xml@npm:1.0.1"
-  checksum: 11b5545ef3f8fec3fa29ce251f50ad7b6c97c103ed4d851306ec23366f5fa4699dd6a942262df52313a0cd1840ab26256da253c023bad3309d8ce46fe6020ca0
+"xmlbuilder2@npm:2.4.1":
+  version: 2.4.1
+  resolution: "xmlbuilder2@npm:2.4.1"
+  dependencies:
+    "@oozcitak/dom": 1.15.8
+    "@oozcitak/infra": 1.0.8
+    "@oozcitak/util": 8.3.8
+    "@types/node": "*"
+    js-yaml: 3.14.0
+  checksum: 1e00a96ac49e462f4d1a3790b63554b9421363bfdef971f5d54c8b34bfd7d00cd26fffbf8ff47cad85bb826dcb9bd0ed4714f5e59607b02878717dab3ca399f4
   languageName: node
   linkType: hard
 
