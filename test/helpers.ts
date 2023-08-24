@@ -1,10 +1,11 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, Contract, utils } from 'ethers';
+import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
 import { type genTrader, type genOrder, genNumber } from './generators';
-import Wei, { wei } from '@synthetixio/wei';
+import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { isNil } from 'lodash';
+import { isNil, uniq } from 'lodash';
 
 // --- Constants --- //
 
@@ -148,4 +149,16 @@ export const commitAndSettle = async (
   return PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
     value: updateFee,
   });
+};
+
+export const extendContractAbi = (contract: Contract, abi: string[]) => {
+  utils.Logger.setLogLevel(LogLevel.OFF); // Silence ethers duplicated event warnings
+  const contractAbi = contract.interface.format(utils.FormatTypes.full) as string[];
+  const newContract = new Contract(
+    contract.address,
+    uniq(contractAbi.concat(abi)),
+    contract.provider || contract.signer
+  );
+  utils.Logger.setLogLevel(LogLevel.WARNING); // enable default logging again
+  return newContract;
 };

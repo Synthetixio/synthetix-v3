@@ -1,4 +1,4 @@
-import { Contract, ethers } from 'ethers';
+import { Contract, ethers, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -17,9 +17,17 @@ import {
   genTrader,
   genOrder,
 } from '../../generators';
-import { ZERO_ADDRESS, approveAndMintMargin, commitAndSettle, commitOrder, depositMargin } from '../../helpers';
+import {
+  ZERO_ADDRESS,
+  approveAndMintMargin,
+  commitAndSettle,
+  commitOrder,
+  depositMargin,
+  extendContractAbi,
+} from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { CollateralMock } from '../../../typechain-types';
+import { parseLogs } from '@synthetixio/core-utils/utils/ethers/events';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -46,8 +54,6 @@ describe('MarginModule', async () => {
         `ZeroAmount()`
       );
     });
-
-    it('should emit all events in correct order');
 
     it('should recompute funding', async () => {
       const { PerpMarketProxy } = systems();
@@ -178,6 +184,39 @@ describe('MarginModule', async () => {
 
         const expectedBalanceAfter = balanceBefore.sub(amountDelta);
         assertBn.equal(await collateral.balanceOf(traderAddress), expectedBalanceAfter);
+      });
+
+      it('should emit depositMarketUsd when using sUSD as collateral'); // To write this test we need to configure `globalConfig.usdToken` as collateral in bootstrap.
+
+      it('should emit all events in correct order', async () => {
+        const { PerpMarketProxy, Core } = systems();
+        const traderObj = await genTrader(bs);
+        await approveAndMintMargin(bs, traderObj);
+        // Perform the deposit.
+        const tx = await PerpMarketProxy.connect(traderObj.trader.signer).modifyCollateral(
+          traderObj.trader.accountId,
+          traderObj.market.marketId(),
+          traderObj.collateral.contract.address,
+          traderObj.collateralDepositAmount
+        );
+        const { logs } = await tx.wait();
+        const contractWithTransfer = extendContractAbi(PerpMarketProxy, [
+          'event Transfer(address indexed from, address indexed to, uint256 value)',
+        ]);
+        // Create a contract that can parse all events emitted
+        const contractsWithAllEvents = extendContractAbi(
+          contractWithTransfer,
+          Core.interface.format(utils.FormatTypes.full)
+        );
+        // Prase the logs
+        const parsedLogs = parseLogs({ contract: contractsWithAllEvents, logs });
+
+        assert.equal(logs.length, 5);
+        assert.match(parsedLogs[0].event || '', /FundingRecomputed/);
+        assert.match(parsedLogs[1].event || '', /Transfer/);
+        assert.match(parsedLogs[2].event || '', /Transfer/);
+        assert.match(parsedLogs[3].event || '', /MarketCollateralDeposited/);
+        assert.match(parsedLogs[4].event || '', /MarginDeposit/);
       });
 
       it('should affect an existing position when depositing', async () => {
@@ -400,6 +439,41 @@ describe('MarginModule', async () => {
           `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
           PerpMarketProxy
         );
+      });
+
+      it('should emit withdrawMarketUsd when using sUSD as collateral'); // To write this test we need to configure `globalConfig.usdToken` as collateral in bootstrap.
+
+      it('should emit all events in correct order', async () => {
+        const { PerpMarketProxy, Core } = systems();
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredCollateral: bs.collaterals()[0] })
+        );
+        // Perform the deposit.
+        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          marketId,
+          collateral.contract.address,
+          wei(collateralDepositAmount).mul(-0.5).toBN()
+        );
+        const { logs } = await tx.wait();
+        // Create a contract that can parse all events emitted
+        const contractWithTransfer = extendContractAbi(PerpMarketProxy, [
+          'event Transfer(address indexed from, address indexed to, uint256 value)',
+        ]);
+        const contractsWithAllEvents = extendContractAbi(
+          contractWithTransfer,
+          Core.interface.format(utils.FormatTypes.full)
+        );
+        // Parse the logs
+        const parsedLogs = parseLogs({ contract: contractsWithAllEvents, logs });
+
+        assert.equal(logs.length, 5);
+        assert.match(parsedLogs[0].event || '', /FundingRecomputed/);
+        assert.match(parsedLogs[1].event || '', /Transfer/);
+        assert.match(parsedLogs[2].event || '', /MarketCollateralWithdrawn/);
+        assert.match(parsedLogs[3].event || '', /Transfer/);
+        assert.match(parsedLogs[4].event || '', /MarginWithdraw/);
       });
 
       it('should allow partial withdraw of collateral to my account', async () => {
