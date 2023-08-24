@@ -58,6 +58,7 @@ export function handleCollateralModified(event: CollateralModifiedEvent): void {
     event.params.accountId.toString() +
     '-' +
     event.block.number.toString() +
+    '-' +
     event.logIndex.toString();
 
   const collateralModified = new CollateralModified(id);
