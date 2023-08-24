@@ -42,4 +42,4 @@ dataSources:
           handler: handleSettlementStrategyUpdated
         - event: SynthPriceDataUpdated(indexed uint256,indexed bytes32,indexed bytes32)
           handler: handleSynthPriceDataUpdated
-      file: ./src/core.ts
+      file: ./src/index.ts
