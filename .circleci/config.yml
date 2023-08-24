@@ -617,7 +617,9 @@ workflows:
 
   tests:
     unless:
-      equal: ["skip", << pipeline.git.branch >>]
+      or:
+        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
       - lint
@@ -759,6 +761,9 @@ workflows:
 
   # temporary for dev
   test-subgraphs-update:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
     jobs:
       - update-subgraphs:
           filters:
