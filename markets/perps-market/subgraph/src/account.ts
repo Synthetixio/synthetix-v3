@@ -1,10 +1,16 @@
 import {
   AccountCreated,
-  AccountLiquidated,
-  PositionLiquidated,
+  AccountLiquidated as AccountLiquidatedEvent,
+  PositionLiquidated as PositionLiquidatedEvent,
+  CollateralModified as CollateralModifiedEvent,
 } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 
-import { Account, LiquidatedAccount, LiquidatedPosition } from '../generated/schema';
+import {
+  Account,
+  AccountLiquidated,
+  PositionLiquidated,
+  CollateralModified,
+} from '../generated/schema';
 
 export function handleAccountCreated(event: AccountCreated): void {
   const id = event.params.accountId.toString();
@@ -16,26 +22,52 @@ export function handleAccountCreated(event: AccountCreated): void {
   account.save();
 }
 
-export function handleAccountLiquidated(event: AccountLiquidated): void {
-  const id = event.transaction.hash.toHexString();
+export function handleAccountLiquidated(event: AccountLiquidatedEvent): void {
+  const id = event.params.accountId.toString() + '-' + event.block.number.toString();
 
-  const account = new LiquidatedAccount(id);
+  const accountLiquidated = new AccountLiquidated(id);
 
-  account.accountId = event.params.accountId;
-  account.accountFullyLiquidated = event.params.fullLiquidation;
-  account.keeperLiquidationReward = event.params.reward;
-  account.save();
+  accountLiquidated.accountId = event.params.accountId;
+  accountLiquidated.timestamp = event.block.timestamp;
+  accountLiquidated.fullyLiquidated = event.params.fullLiquidation;
+  accountLiquidated.liquidationReward = event.params.reward;
+  accountLiquidated.save();
 }
 
-export function handlePositionLiquidated(event: PositionLiquidated): void {
-  const id = event.transaction.hash.toHexString();
+export function handlePositionLiquidated(event: PositionLiquidatedEvent): void {
+  const id =
+    event.params.marketId.toString() +
+    '-' +
+    event.params.accountId.toString() +
+    '-' +
+    event.block.number.toString();
 
-  const account = new LiquidatedPosition(id);
+  const positionLiquidated = new PositionLiquidated(id);
 
-  account.accountId = event.params.accountId;
-  account.marketId = event.params.marketId;
-  account.amountLiquidated = event.params.amountLiquidated;
-  account.currentPositionSize = event.params.currentPositionSize;
+  positionLiquidated.accountId = event.params.accountId;
+  positionLiquidated.timestamp = event.block.timestamp;
+  positionLiquidated.marketId = event.params.marketId;
+  positionLiquidated.amountLiquidated = event.params.amountLiquidated;
+  positionLiquidated.currentPositionSize = event.params.currentPositionSize;
 
-  account.save();
+  positionLiquidated.save();
+}
+
+export function handleCollateralModified(event: CollateralModifiedEvent): void {
+  const id =
+    event.params.accountId.toString() +
+    '-' +
+    event.block.number.toString() +
+    '-' +
+    event.logIndex.toString();
+
+  const collateralModified = new CollateralModified(id);
+
+  collateralModified.accountId = event.params.accountId;
+  collateralModified.timestamp = event.block.timestamp;
+  collateralModified.synthMarketId = event.params.synthMarketId;
+  collateralModified.amount = event.params.amountDelta;
+  collateralModified.sender = event.params.sender;
+
+  collateralModified.save();
 }

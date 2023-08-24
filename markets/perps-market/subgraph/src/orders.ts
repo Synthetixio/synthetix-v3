@@ -1,11 +1,10 @@
 import {
   OrderCommitted as OrderCommittedEvent,
   OrderSettled as OrderSettledEvent,
-  MarketUpdated as MarketUpdatedEvent,
+  PreviousOrderExpired as PreviousOrderExpiredEvent,
 } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { BigInt } from '@graphprotocol/graph-ts';
 import { ZERO_BI } from './helpers';
-import { Order, OrderCommitted, OrderSettled, MarketUpdated } from '../generated/schema';
+import { Order, OrderCommitted, OrderSettled, PreviousOrderExpired } from '../generated/schema';
 
 export function handleOrderCommitted(event: OrderCommittedEvent): void {
   const orderId = event.params.marketId.toString() + '-' + event.params.accountId.toString();
@@ -104,4 +103,26 @@ export function handleOrderSettled(event: OrderSettledEvent): void {
   orderSettled.settler = event.params.settler;
 
   orderSettled.save();
+}
+
+export function handlePreviousOrderExpired(event: PreviousOrderExpiredEvent): void {
+  const orderExpiredId =
+    event.params.marketId.toString() +
+    '-' +
+    event.params.accountId.toString() +
+    '-' +
+    event.block.number.toString();
+
+  // create OrderSettled entity
+  let orderExpired = new PreviousOrderExpired(orderExpiredId);
+  orderExpired.timestamp = event.block.timestamp;
+
+  orderExpired.marketId = event.params.marketId;
+  orderExpired.accountId = event.params.accountId;
+  orderExpired.sizeDelta = event.params.sizeDelta;
+  orderExpired.acceptablePrice = event.params.acceptablePrice;
+  orderExpired.settlementTime = event.params.settlementTime;
+  orderExpired.trackingCode = event.params.trackingCode;
+
+  orderExpired.save();
 }
