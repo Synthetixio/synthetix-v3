@@ -150,6 +150,10 @@ contract PerpsAccountModule is IPerpsAccountModule {
             totalAccumulatedLiquidationRewards,
             maxLiquidationReward
         ) = PerpsAccount.load(accountId).getAccountRequiredMargins();
+
+        // Include liquidation rewards to required initial margin and required maintenance margin
+        requiredInitialMargin += maxLiquidationReward;
+        requiredMaintenanceMargin += maxLiquidationReward;
     }
 
     /**
