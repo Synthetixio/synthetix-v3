@@ -1,8 +1,8 @@
 import {
   SettlementStrategyUpdated,
   SpotMarketProxy,
-} from '../generated/SpotMarketProxy/SpotMarketProxy';
-import { SettlementStrategy } from '../generated/schema';
+} from './generated/SpotMarketProxy/SpotMarketProxy';
+import { SettlementStrategy } from './generated/schema';
 
 export function handleSettlementStrategyUpdated(event: SettlementStrategyUpdated): void {
   let id = event.params.strategyId.toString();

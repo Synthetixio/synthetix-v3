@@ -1,6 +1,6 @@
 import { Address, BigInt } from '@graphprotocol/graph-ts';
-import { SpotMarketProxy } from '../generated/SpotMarketProxy/SpotMarketProxy';
-import { Order } from '../generated/schema';
+import { SpotMarketProxy } from './generated/SpotMarketProxy/SpotMarketProxy';
+import { Order } from './generated/schema';
 
 export function addClaimToOrder(
   order: Order,

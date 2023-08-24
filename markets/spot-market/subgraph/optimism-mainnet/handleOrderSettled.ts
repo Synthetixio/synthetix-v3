@@ -1,5 +1,5 @@
-import { OrderSettled } from '../generated/SpotMarketProxy/SpotMarketProxy';
-import { Order } from '../generated/schema';
+import { OrderSettled } from './generated/SpotMarketProxy/SpotMarketProxy';
+import { Order } from './generated/schema';
 import { addClaimToOrder } from './addClaimToOrder';
 
 export function handleOrderSettled(event: OrderSettled): void {

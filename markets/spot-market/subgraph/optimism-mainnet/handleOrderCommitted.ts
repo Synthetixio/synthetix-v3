@@ -1,5 +1,5 @@
-import { OrderCommitted } from '../generated/SpotMarketProxy/SpotMarketProxy';
-import { Order } from '../generated/schema';
+import { OrderCommitted } from './generated/SpotMarketProxy/SpotMarketProxy';
+import { Order } from './generated/schema';
 import { addClaimToOrder } from './addClaimToOrder';
 
 export function handleOrderCommitted(event: OrderCommitted): void {

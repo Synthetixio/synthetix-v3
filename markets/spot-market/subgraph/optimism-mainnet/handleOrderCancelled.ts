@@ -1,5 +1,5 @@
-import { OrderCancelled } from '../generated/SpotMarketProxy/SpotMarketProxy';
-import { Order } from '../generated/schema';
+import { OrderCancelled } from './generated/SpotMarketProxy/SpotMarketProxy';
+import { Order } from './generated/schema';
 import { addClaimToOrder } from './addClaimToOrder';
 
 export function handleOrderCancelled(event: OrderCancelled): void {

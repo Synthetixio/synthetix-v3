@@ -1,5 +1,5 @@
-import { WrapperSet } from '../generated/SpotMarketProxy/SpotMarketProxy';
-import { Wrapper } from '../generated/schema';
+import { WrapperSet } from './generated/SpotMarketProxy/SpotMarketProxy';
+import { Wrapper } from './generated/schema';
 
 export function handleWrapperSet(event: WrapperSet): void {
   let id = event.params.synthMarketId.toString();

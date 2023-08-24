@@ -1,5 +1,5 @@
-import { SynthWrapped } from '../generated/SpotMarketProxy/SpotMarketProxy';
-import { WrappSynth } from '../generated/schema';
+import { SynthWrapped } from './generated/SpotMarketProxy/SpotMarketProxy';
+import { WrappSynth } from './generated/schema';
 
 export function handleSynthWrapped(event: SynthWrapped): void {
   let id = event.transaction.hash.toHexString() + '/' + event.logIndex.toString();
