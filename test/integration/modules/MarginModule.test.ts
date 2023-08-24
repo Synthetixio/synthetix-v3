@@ -48,7 +48,28 @@ describe('MarginModule', async () => {
 
     it('should emit all events in correct order');
 
-    it('should recompute funding');
+    it('should recompute funding', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+
+      // Create a new position.
+      await commitAndSettle(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+
+      // Provision collateral and approve for access.
+      const { collateralDepositAmount: collateralDepositAmount2 } = await approveAndMintMargin(
+        bs,
+        genTrader(bs, { desiredMarket: market, desiredTrader: trader, desiredCollateral: collateral })
+      );
+
+      // Perform the deposit.
+      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+        trader.accountId,
+        market.marketId(),
+        collateral.contract.address,
+        collateralDepositAmount2
+      );
+      await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
+    });
 
     it('should revert on modify when an order is pending', async () => {
       const { PerpMarketProxy } = systems();
@@ -732,6 +753,31 @@ describe('MarginModule', async () => {
           await collateral2.contract.balanceOf(traderAddress),
           collateralDepositAmount2.add(collateralWalletBalanceBeforeWithdrawal2)
         );
+      });
+      it('should recompute funding', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+
+        // Create a new position.
+        await commitAndSettle(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+
+        // Provision collateral and approve for access.
+        const { collateralDepositAmount: collateralDepositAmount2 } = await approveAndMintMargin(
+          bs,
+          genTrader(bs, { desiredMarket: market, desiredTrader: trader, desiredCollateral: collateral })
+        );
+
+        // Perform the deposit.
+        const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+          trader.accountId,
+          market.marketId(),
+          collateral.contract.address,
+          collateralDepositAmount2
+        );
+        await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
       });
 
       it('should noop when account has no collateral to withdraw');

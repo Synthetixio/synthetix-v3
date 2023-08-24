@@ -104,6 +104,8 @@ contract MarginModule is IMarginModule {
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+        // (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        // emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -165,19 +167,20 @@ contract MarginModule is IMarginModule {
         uint256 availableAmount = accountMargin.collaterals[collateralType];
 
         Margin.CollateralType storage collateral = globalMarginConfig.supported[collateralType];
-        uint256 maxAllowable = collateral.maxAllowable;
-        if (maxAllowable == 0) {
+        if (collateral.maxAllowable == 0) {
             revert ErrorUtil.UnsupportedCollateral(collateralType);
         }
         if (amountDelta == 0) {
             revert ErrorUtil.ZeroAmount();
         }
+        (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
             // Verify whether this will exceed the maximum allowable collateral amount.
-            if (availableAmount + absAmountDelta > maxAllowable) {
-                revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
+            if (availableAmount + absAmountDelta > collateral.maxAllowable) {
+                revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, collateral.maxAllowable);
             }
             accountMargin.collaterals[collateralType] += absAmountDelta;
             transferAndDeposit(marketId, absAmountDelta, collateralType, globalConfig);
