@@ -1,18 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./schema.graphql
+  file: ./optimism-goerli/schema.graphql
 dataSources:
   - kind: ethereum
+    network: optimism-goerli
     name: SpotMarketProxy
     source:
       abi: SpotMarketProxy
+      address: "0x5FF4b3aacdeC86782d8c757FAa638d8790799E83"
+      startBlock: 8482768
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
+      file: ./optimism-goerli/index.ts
       abis:
         - name: SpotMarketProxy
-          file: ./deployments/optimism-goerli/SpotMarketProxy.json
+          file: ./optimism-goerli/deployments/SpotMarketProxy.json
       entities:
         - Wrapper
         - Order
@@ -42,4 +46,3 @@ dataSources:
           handler: handleSettlementStrategyUpdated
         - event: SynthPriceDataUpdated(indexed uint256,indexed bytes32,indexed bytes32)
           handler: handleSynthPriceDataUpdated
-      file: ./src/index.ts
