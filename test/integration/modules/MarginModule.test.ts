@@ -998,7 +998,23 @@ describe('MarginModule', async () => {
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
     });
 
-    it('should return correct usd amount after price of collateral changes');
+    it('should return correct usd amount after price of collateral changes', async () => {
+      const { PerpMarketProxy } = systems();
+      const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+
+      assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
+
+      // Change price
+      await collateral.aggregator().mockSetCurrentPrice(wei(2).mul(collateralPrice).toBN());
+
+      assertBn.near(
+        await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId),
+        wei(marginUsdDepositAmount).mul(2).toBN()
+      );
+    });
 
     it('should return zero when collateral has not been deposited', async () => {
       const { PerpMarketProxy } = systems();
