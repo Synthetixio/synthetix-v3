@@ -19,6 +19,7 @@ import {
 } from '../../generators';
 import { ZERO_ADDRESS, approveAndMintMargin, commitAndSettle, commitOrder, depositMargin } from '../../helpers';
 import { calcPnl } from '../../calculations';
+import assert from 'assert';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -780,7 +781,14 @@ describe('MarginModule', async () => {
         await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
       });
 
-      it('should noop when account has no collateral to withdraw');
+      it('should noop when account has no collateral to withdraw', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, collateral, market, collateralDepositAmount } = await genTrader(bs);
+
+        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+        const { logs } = await tx.wait();
+        assert.equal(logs.length, 0);
+      });
 
       it('should revert when account does not exist', async () => {
         const { PerpMarketProxy } = systems();
