@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { Contract, ethers } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -19,7 +19,7 @@ import {
 } from '../../generators';
 import { ZERO_ADDRESS, approveAndMintMargin, commitAndSettle, commitOrder, depositMargin } from '../../helpers';
 import { calcPnl } from '../../calculations';
-import assert from 'assert';
+import { CollateralMock } from '../../../typechain-types';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -320,8 +320,6 @@ describe('MarginModule', async () => {
           `MaxCollateralExceeded("${depositAmountDelta}", "${maxAllowable}")`
         );
       });
-
-      it('should revert deposit of perp market approved collateral but not system approved');
 
       it('should revert when insufficient amount of collateral in msg.sender', async () => {
         const { PerpMarketProxy } = systems();
@@ -930,12 +928,24 @@ describe('MarginModule', async () => {
       const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
 
       assert.equal(collaterals.length, n);
-      collaterals.forEach((collateral, i) => {
+      let i = 0;
+      for (const collateral of collaterals) {
         const { maxAllowable, collateralType, oracleNodeId } = collateral;
+        const collateralContract = new Contract(
+          collateralType,
+          ['function allowance(address, address) view returns (uint256)'],
+          bs.provider()
+        ) as CollateralMock;
+        const perpsAllowance = await collateralContract.allowance(PerpMarketProxy.address, PerpMarketProxy.address);
+        const coreAllowance = await collateralContract.allowance(PerpMarketProxy.address, bs.systems().Core.address);
+
+        assertBn.equal(ethers.constants.MaxUint256, perpsAllowance);
+        assertBn.equal(ethers.constants.MaxUint256, coreAllowance);
         assertBn.equal(maxAllowable, maxAllowables[i]);
         assert.equal(collateralType, collateralTypes[i]);
         assert.equal(oracleNodeId, oracleNodeIds[i]);
-      });
+        i++;
+      }
 
       await assertEvent(tx, `CollateralConfigured("${await from.getAddress()}", ${n})`, PerpMarketProxy);
     });
@@ -977,7 +987,7 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should revoke/approve collateral with 0/maxAllowable');
+    it('should revoke/approve collateral with 0/maxUnit');
   });
 
   describe('getCollateralUsd', () => {

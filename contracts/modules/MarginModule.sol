@@ -251,8 +251,10 @@ contract MarginModule is IMarginModule {
 
             // Perform this operation _once_ when this collateral is added as a supported collateral.
             uint128 maxAllowable = maxAllowables[i];
-            IERC20(collateralType).approve(address(globalMarketConfig.synthetix), maxAllowable);
-            IERC20(collateralType).approve(address(this), maxAllowable);
+            uint256 maxUint = type(uint256).max;
+
+            IERC20(collateralType).approve(address(globalMarketConfig.synthetix), maxUint);
+            IERC20(collateralType).approve(address(this), maxUint);
             globalMarginConfig.supported[collateralType] = Margin.CollateralType(oracleNodeIds[i], maxAllowable);
             newSupportedAddresses[i] = collateralType;
 
