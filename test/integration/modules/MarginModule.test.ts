@@ -20,6 +20,7 @@ import {
 import {
   ZERO_ADDRESS,
   approveAndMintMargin,
+  assertEvents,
   commitAndSettle,
   commitOrder,
   depositMargin,
@@ -27,7 +28,6 @@ import {
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { CollateralMock } from '../../../typechain-types';
-import { parseLogs } from '@synthetixio/core-utils/utils/ethers/events';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -192,31 +192,34 @@ describe('MarginModule', async () => {
         const { PerpMarketProxy, Core } = systems();
         const traderObj = await genTrader(bs);
         await approveAndMintMargin(bs, traderObj);
+        const { collateral, trader, traderAddress, collateralDepositAmount, marketId } = traderObj;
+        const { accountId, signer } = trader;
         // Perform the deposit.
-        const tx = await PerpMarketProxy.connect(traderObj.trader.signer).modifyCollateral(
-          traderObj.trader.accountId,
-          traderObj.market.marketId(),
-          traderObj.collateral.contract.address,
-          traderObj.collateralDepositAmount
+        const tx = await PerpMarketProxy.connect(signer).modifyCollateral(
+          accountId,
+          marketId,
+          collateral.contract.address,
+          collateralDepositAmount
         );
-        const { logs } = await tx.wait();
-        const contractWithTransfer = extendContractAbi(PerpMarketProxy, [
-          'event Transfer(address indexed from, address indexed to, uint256 value)',
-        ]);
         // Create a contract that can parse all events emitted
         const contractsWithAllEvents = extendContractAbi(
-          contractWithTransfer,
-          Core.interface.format(utils.FormatTypes.full)
+          PerpMarketProxy,
+          Core.interface
+            .format(utils.FormatTypes.full)
+            .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
         );
-        // Prase the logs
-        const parsedLogs = parseLogs({ contract: contractsWithAllEvents, logs });
 
-        assert.equal(logs.length, 5);
-        assert.match(parsedLogs[0].event || '', /FundingRecomputed/);
-        assert.match(parsedLogs[1].event || '', /Transfer/);
-        assert.match(parsedLogs[2].event || '', /Transfer/);
-        assert.match(parsedLogs[3].event || '', /MarketCollateralDeposited/);
-        assert.match(parsedLogs[4].event || '', /MarginDeposit/);
+        await assertEvents(
+          tx,
+          [
+            /FundingRecomputed/,
+            `Transfer(["${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount}])`, // from collateral ERC20 contract
+            `Transfer(["${PerpMarketProxy.address}", "${Core.address}", ${collateralDepositAmount}])`, // from collateral ERC20 contract
+            `MarketCollateralDeposited([${marketId}, "${collateral.contract.address}", ${collateralDepositAmount}, "${PerpMarketProxy.address}"])`, // from core
+            `MarginDeposit(["${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount}, "${collateral.contract.address}"])`,
+          ],
+          contractsWithAllEvents
+        );
       });
 
       it('should affect an existing position when depositing', async () => {
@@ -445,35 +448,36 @@ describe('MarginModule', async () => {
 
       it('should emit all events in correct order', async () => {
         const { PerpMarketProxy, Core } = systems();
-        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        const { trader, marketId, collateral, collateralDepositAmount, traderAddress } = await depositMargin(
           bs,
           genTrader(bs, { desiredCollateral: bs.collaterals()[0] })
         );
+        const withdrawAmount = wei(collateralDepositAmount).mul(0.5).toBN();
         // Perform the deposit.
         const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
           collateral.contract.address,
-          wei(collateralDepositAmount).mul(-0.5).toBN()
+          withdrawAmount.mul(-1)
         );
-        const { logs } = await tx.wait();
         // Create a contract that can parse all events emitted
-        const contractWithTransfer = extendContractAbi(PerpMarketProxy, [
-          'event Transfer(address indexed from, address indexed to, uint256 value)',
-        ]);
         const contractsWithAllEvents = extendContractAbi(
-          contractWithTransfer,
-          Core.interface.format(utils.FormatTypes.full)
+          PerpMarketProxy,
+          Core.interface
+            .format(utils.FormatTypes.full)
+            .concat(['event Transfer(address indexed from, address indexed to, uint256 value)'])
         );
-        // Parse the logs
-        const parsedLogs = parseLogs({ contract: contractsWithAllEvents, logs });
-
-        assert.equal(logs.length, 5);
-        assert.match(parsedLogs[0].event || '', /FundingRecomputed/);
-        assert.match(parsedLogs[1].event || '', /Transfer/);
-        assert.match(parsedLogs[2].event || '', /MarketCollateralWithdrawn/);
-        assert.match(parsedLogs[3].event || '', /Transfer/);
-        assert.match(parsedLogs[4].event || '', /MarginWithdraw/);
+        await assertEvents(
+          tx,
+          [
+            /FundingRecomputed/,
+            `Transfer(["${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount}])`, // from collateral ERC20 contract
+            `MarketCollateralWithdrawn([${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}"])`, // from core
+            `Transfer(["${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount}])`, // from collateral ERC20 contract
+            `MarginWithdraw(["${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount}, "${collateral.contract.address}"])`,
+          ],
+          contractsWithAllEvents
+        );
       });
 
       it('should allow partial withdraw of collateral to my account', async () => {
