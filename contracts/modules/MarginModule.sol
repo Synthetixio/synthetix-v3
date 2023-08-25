@@ -94,12 +94,18 @@ contract MarginModule is IMarginModule {
         if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound(accountId);
         }
+        // Position is frozen due to prior flagged for liquidation.
+        if (market.flaggedLiquidations[accountId] != address(0)) {
+            revert ErrorUtil.PositionFlagged();
+        }
 
         // Prevent collateral transfers when there's an open position.
         Position.Data storage position = market.positions[accountId];
         if (position.size != 0) {
             revert ErrorUtil.PositionFound(accountId, marketId);
         }
+        (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -108,11 +114,12 @@ contract MarginModule is IMarginModule {
         uint256 length = globalMarginConfig.supportedAddresses.length;
         address collateralType;
         uint256 available;
+        uint256 total;
 
         for (uint256 i = 0; i < length; i++) {
             collateralType = globalMarginConfig.supportedAddresses[i];
             available = accountMargin.collaterals[collateralType];
-
+            total += available;
             if (available == 0) {
                 continue;
             }
@@ -121,6 +128,9 @@ contract MarginModule is IMarginModule {
 
             // Withdraw all available collateral for this `collateralType`.
             withdrawAndTransfer(marketId, available, collateralType, globalConfig);
+        }
+        if (total == 0) {
+            revert ErrorUtil.NilCollateral();
         }
     }
 
@@ -148,6 +158,10 @@ contract MarginModule is IMarginModule {
         if (order.sizeDelta != 0) {
             revert ErrorUtil.OrderFound(accountId);
         }
+        // Position is frozen due to prior flagged for liquidation.
+        if (market.flaggedLiquidations[accountId] != address(0)) {
+            revert ErrorUtil.PositionFlagged();
+        }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
@@ -157,19 +171,20 @@ contract MarginModule is IMarginModule {
         uint256 availableAmount = accountMargin.collaterals[collateralType];
 
         Margin.CollateralType storage collateral = globalMarginConfig.supported[collateralType];
-        uint256 maxAllowable = collateral.maxAllowable;
-        if (maxAllowable == 0) {
+        if (collateral.maxAllowable == 0) {
             revert ErrorUtil.UnsupportedCollateral(collateralType);
         }
         if (amountDelta == 0) {
             revert ErrorUtil.ZeroAmount();
         }
+        (int256 fundingRate, ) = market.recomputeFunding(market.getOraclePrice());
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
             // Verify whether this will exceed the maximum allowable collateral amount.
-            if (availableAmount + absAmountDelta > maxAllowable) {
-                revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
+            if (availableAmount + absAmountDelta > collateral.maxAllowable) {
+                revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, collateral.maxAllowable);
             }
             accountMargin.collaterals[collateralType] += absAmountDelta;
             transferAndDeposit(marketId, absAmountDelta, collateralType, globalConfig);
@@ -240,8 +255,10 @@ contract MarginModule is IMarginModule {
 
             // Perform this operation _once_ when this collateral is added as a supported collateral.
             uint128 maxAllowable = maxAllowables[i];
-            IERC20(collateralType).approve(address(globalMarketConfig.synthetix), maxAllowable);
-            IERC20(collateralType).approve(address(this), maxAllowable);
+            uint256 maxUint = type(uint256).max;
+
+            IERC20(collateralType).approve(address(globalMarketConfig.synthetix), maxUint);
+            IERC20(collateralType).approve(address(this), maxUint);
             globalMarginConfig.supported[collateralType] = Margin.CollateralType(oracleNodeIds[i], maxAllowable);
             newSupportedAddresses[i] = collateralType;
 

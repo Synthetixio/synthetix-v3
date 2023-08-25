@@ -345,7 +345,8 @@ library Position {
         // Ensure we also deduct the realized losses in fees to open trade.
         //
         // The remaining margin is defined as sum(collateral * price) + PnL + funding in USD.
-        remainingMarginUsd = MathUtil.max(marginUsd.toInt() + pnl + accruedFunding, 0).toUint();
+        // We expect caller to have gotten this from Margin.getMarginUsd
+        remainingMarginUsd = marginUsd;
 
         // margin / mm <= 1 means liquidation.
         (, uint256 mm, ) = getLiquidationMarginUsd(positionSize, price, marketConfig);

@@ -784,8 +784,9 @@ describe('OrderModule', () => {
       // Collect some data
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
-      // Using size to simulate short which will reduce the skew
-      const size = wei(genNumber(-10, -1)).toBN();
+      const prevPositionSizeNeg = wei(order.sizeDelta).mul(-1).toNumber();
+      // Using size to simulate short which will reduce the skew. The smallest negative size is the size of the current skew
+      const size = wei(genNumber(prevPositionSizeNeg, -1)).toBN();
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
 

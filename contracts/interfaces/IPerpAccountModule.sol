@@ -33,7 +33,7 @@ interface IPerpAccountModule {
         // @dev id of the market that was queried.
         uint128 marketId;
         // @dev Total remaining margin for position in USD.
-        uint256 marginUsd;
+        uint256 remainingMarginUsd;
         // @dev Health factor for position in market if a position is open.
         uint256 healthFactor;
         // @dev Notional value of position in USD.
@@ -48,6 +48,10 @@ interface IPerpAccountModule {
         uint256 oraclePrice;
         // @dev Position size
         int128 size;
+        // @dev Initial margin requirement
+        uint256 im;
+        // @dev Maintenance margin requirement
+        uint256 mm;
     }
 
     // --- Views --- //
