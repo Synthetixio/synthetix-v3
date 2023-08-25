@@ -100,6 +100,7 @@ library PerpsMarket {
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
+        // if endorsedLiquidator is configured and is the sender, allow full liquidation
         if (msg.sender == marketConfig.endorsedLiquidator) {
             return requestedLiquidationAmount.to128();
         }
@@ -131,6 +132,9 @@ library PerpsMarket {
             self.lastUtilizedLiquidationCapacity += liquidatableAmount;
         }
 
+        // liquidatable amount is 0 only if there's no more capacity in the window
+        // but if maxLiquidationPd is set, and the current market p/d is less than that,
+        // then allow for an extra block of liquidation
         uint maxLiquidationPd = marketConfig.maxLiquidationPd;
         if (liquidatableAmount == 0 && maxLiquidationPd != 0) {
             uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
@@ -140,6 +144,8 @@ library PerpsMarket {
                         ? maxAllowedLiquidationInWindow
                         : requestedLiquidationAmount
                 ).to128();
+                // track how much was utilized in this block to ensure any subsequent
+                // liquidations don't combine for larger than what's allotted in the window
                 self.lastUtilizedLiquidationCapacity = liquidatableAmount;
             }
         }
