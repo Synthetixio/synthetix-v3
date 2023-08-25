@@ -1,6 +1,5 @@
-import { SynthPriceDataUpdated } from '../generated/SpotMarketProxy/SpotMarketProxy';
-
-import { MarketInfo } from '../generated/schema';
+import { SynthPriceDataUpdated } from './generated/SpotMarketProxy/SpotMarketProxy';
+import { MarketInfo } from './generated/schema';
 
 export function handleSynthPriceDataUpdated(event: SynthPriceDataUpdated): void {
   let id = event.params.synthMarketId.toString();
