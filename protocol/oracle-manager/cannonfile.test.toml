@@ -1,4 +1,5 @@
-version = "<%= package.version %>-testable"
+name = "oracle-manager-testable"
+version = "<%= package.version %>"
 
 include = [
   "cannonfile.toml"

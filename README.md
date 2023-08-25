@@ -70,9 +70,9 @@ To prepare for system upgrades, this repository is used to release new versions 
 
 - Ensure you have the latest version of [Cannon](https://usecannon.com) installed: `@usecannon/cli` and `hardhat-cannon` are upgraded to the latest through the repository (use `yarn upgrade-interactive` command).
 - After installing for the first time, run `yarn cannon:setup` to configure IPFS and a reliable RPC endpoint to communicate with the Cannon package registry.
-- Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm an `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file.
+- Unless `npm whoami` returns an npm account with publishing permissions for the `@synthetixio` organization, confirm a `@synthetixio` npm publishing key is set as `$NPM_TOKEN` in the `.env` file.
 - Confirm you are on the `main` branch and there are no git changes `git diff --exit-code .`
 - Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
   - If you aren't using [Frame](https://frame.sh/), prepend `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the commands above.
-  - In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately.
-- In all of the package.json files, revert dependencies' version changes back to "workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.
+  - In case Cannon publish fails you can run `yarn publish-contracts` (and/or `yarn publish-testable`) in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` (and/or `yarn publish-testable`) in each failed package separately.
+- In all package.json files, revert dependencies' version changes back to "workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.

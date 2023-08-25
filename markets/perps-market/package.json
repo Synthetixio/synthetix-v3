@@ -15,8 +15,9 @@
     "coverage1": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "publish-contracts": "yarn build && cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --quiet",
+    "publish-testable": "yarn build-testable && cannon publish synthetix-perps-market-testable:$(node -p 'require(`./package.json`).version') --quiet",
     "size-contracts": "hardhat compile && hardhat size-contracts",
-    "postpack": "yarn publish-contracts",
+    "postpack": "yarn publish-contracts && yarn publish-testable",
     "docgen": "hardhat docgen"
   },
   "keywords": [],

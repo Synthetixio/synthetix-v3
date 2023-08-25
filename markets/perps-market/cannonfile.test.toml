@@ -1,5 +1,5 @@
-name = "synthetix-perps-market"
-version = "<%= package.version %>-testable"
+name = "synthetix-perps-market-testable"
+version = "<%= package.version %>"
 description = "Perps market implementation"
 
 [setting.coreProxyOwner]
@@ -11,10 +11,10 @@ description = "perps market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.version %>-testable"
+defaultValue = "synthetix-testable:<%= package.version %>"
 
 [setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:<%= package.version %>-testable"
+defaultValue = "synthetix-spot-market-testable:<%= package.version %>"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
