@@ -846,13 +846,15 @@ describe('MarginModule', async () => {
         await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
       });
 
-      it('should noop when account has no collateral to withdraw', async () => {
+      it('should revert when account has no collateral to withdraw', async () => {
         const { PerpMarketProxy } = systems();
-        const { trader, marketId, collateral, market, collateralDepositAmount } = await genTrader(bs);
+        const { trader, marketId } = await genTrader(bs);
 
-        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
-        const { logs } = await tx.wait();
-        assert.equal(logs.length, 0);
+        await assertRevert(
+          PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
+          `NilCollateral()`,
+          PerpMarketProxy
+        );
       });
 
       it('should revert when account does not exist', async () => {
