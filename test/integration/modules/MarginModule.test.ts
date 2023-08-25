@@ -75,7 +75,7 @@ describe('MarginModule', async () => {
         collateral.contract.address,
         collateralDepositAmount2
       );
-      await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
+      await assertEvent(tx, `FundingRecomputed`, PerpMarketProxy);
     });
 
     it('should revert on modify when an order is pending', async () => {
@@ -997,8 +997,9 @@ describe('MarginModule', async () => {
       const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
 
       assert.equal(collaterals.length, n);
-      let i = 0;
-      for (const collateral of collaterals) {
+
+      for (const [i, collateral] of Object.entries(collaterals)) {
+        const index = parseInt(i);
         const { maxAllowable, collateralType, oracleNodeId } = collateral;
         const collateralContract = new Contract(
           collateralType,
@@ -1010,10 +1011,9 @@ describe('MarginModule', async () => {
 
         assertBn.equal(ethers.constants.MaxUint256, perpsAllowance);
         assertBn.equal(ethers.constants.MaxUint256, coreAllowance);
-        assertBn.equal(maxAllowable, maxAllowables[i]);
-        assert.equal(collateralType, collateralTypes[i]);
-        assert.equal(oracleNodeId, oracleNodeIds[i]);
-        i++;
+        assertBn.equal(maxAllowable, maxAllowables[index]);
+        assert.equal(collateralType, collateralTypes[index]);
+        assert.equal(oracleNodeId, oracleNodeIds[index]);
       }
 
       await assertEvent(tx, `CollateralConfigured("${await from.getAddress()}", ${n})`, PerpMarketProxy);
@@ -1056,7 +1056,7 @@ describe('MarginModule', async () => {
       );
     });
 
-    it('should revoke/approve collateral with 0/maxUnit');
+    it('should revoke/approve collateral with 0/maxUint');
   });
 
   describe('getCollateralUsd', () => {
