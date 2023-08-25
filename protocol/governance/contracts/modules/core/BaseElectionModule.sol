@@ -284,7 +284,7 @@ contract BaseElectionModule is
         );
     }
 
-    function _recvCast(address voter, uint256 precinct, Ballot.Data calldata ballot) external {
+    function _recvCast(address voter, uint256 chainId, Ballot.Data calldata ballot) external {
         CrossChain.onlyOnChainAt(0);
         CrossChain.onlyCrossChain();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
@@ -295,7 +295,7 @@ contract BaseElectionModule is
         Election.Data storage election = council.getCurrentElection();
         uint256 currentElectionId = council.currentElectionId;
 
-        Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, precinct);
+        Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, chainId);
 
         storedBallot.copy(ballot);
         storedBallot.validate();
@@ -307,7 +307,7 @@ contract BaseElectionModule is
 
         election.ballotPtrs.push(ballotPtr);
 
-        emit VoteRecorded(voter, precinct, currentElectionId, ballot.votingPower);
+        emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
@@ -360,7 +360,7 @@ contract BaseElectionModule is
         // TODO: Broadcast message to distribute the new NFTs on all chains
     }
 
-    function _recvResolve(address voter, uint256 precinct, Ballot.Data calldata ballot) external {
+    function _recvResolve(address voter, uint256 chainId, Ballot.Data calldata ballot) external {
         CrossChain.onlyOnChainAt(0);
         CrossChain.onlyCrossChain();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
@@ -407,27 +407,27 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().nominees.values();
     }
 
-    function hasVoted(address user, uint256 precinct) public view override returns (bool) {
+    function hasVoted(address user, uint256 chainId) public view override returns (bool) {
         Council.Data storage council = Council.load();
-        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, user, precinct);
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, user, chainId);
         return ballot.votingPower > 0 && ballot.votedCandidates.length > 0;
     }
 
     function getVotePower(
         address user,
-        uint256 precinct,
+        uint256 chainId,
         uint256 electionId
     ) external view override returns (uint) {
-        Ballot.Data storage ballot = Ballot.load(electionId, user, precinct);
+        Ballot.Data storage ballot = Ballot.load(electionId, user, chainId);
         return ballot.votingPower;
     }
 
     function getBallotCandidates(
         address voter,
-        uint256 precinct,
+        uint256 chainId,
         uint256 electionId
     ) external view override returns (address[] memory) {
-        return Ballot.load(electionId, voter, precinct).votedCandidates;
+        return Ballot.load(electionId, voter, chainId).votedCandidates;
     }
 
     function isElectionEvaluated() public view override returns (bool) {

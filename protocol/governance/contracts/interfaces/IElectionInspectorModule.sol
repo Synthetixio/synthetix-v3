@@ -29,7 +29,7 @@ interface IElectionInspectorModule {
     /// @notice Returns if user has voted in the given election
     function hasVotedInEpoch(
         address user,
-        uint precinct,
+        uint chainId,
         uint epochIndex
     ) external view returns (bool);
 

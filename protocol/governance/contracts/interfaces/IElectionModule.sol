@@ -23,7 +23,7 @@ interface IElectionModule {
     event NominationWithdrawn(address indexed candidate, uint256 indexed epochId);
     event VoteRecorded(
         address indexed voter,
-        uint256 indexed precinct,
+        uint256 indexed chainId,
         uint256 indexed epochId,
         uint256 votingPower
     );
@@ -123,19 +123,19 @@ interface IElectionModule {
     function getNominees() external view returns (address[] memory);
 
     /// @notice Returns if user has voted in the current election
-    function hasVoted(address user, uint256 precinct) external view returns (bool);
+    function hasVoted(address user, uint256 chainId) external view returns (bool);
 
     /// @notice Returns the vote power of user in the current election
     function getVotePower(
         address user,
-        uint256 precinct,
+        uint256 chainId,
         uint256 electionId
     ) external view returns (uint);
 
     /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(
         address voter,
-        uint256 precinct,
+        uint256 chainId,
         uint256 electionId
     ) external view returns (address[] memory);
 
