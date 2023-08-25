@@ -49,7 +49,9 @@ interface IPerpAccountModule {
         // @dev Position size
         int128 size;
         // @dev Initial margin requirement
-        uint256 initialMarginRequirement;
+        uint256 im;
+        // @dev Maintenance margin requirement
+        uint256 mm;
     }
 
     // --- Views --- //

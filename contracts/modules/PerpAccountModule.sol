@@ -70,7 +70,7 @@ contract PerpAccountModule is IPerpAccountModule {
         (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd) = position
             .getHealthData(market, Margin.getMarginUsd(accountId, market, oraclePrice), oraclePrice, marketConfig);
         uint256 notionalValueUsd = MathUtil.abs(position.size).mulDecimal(oraclePrice);
-        (uint256 im, , ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
+        (uint256 im, uint256 mm, ) = Position.getLiquidationMarginUsd(position.size, oraclePrice, marketConfig);
 
         return
             IPerpAccountModule.PositionDigest(
@@ -84,7 +84,8 @@ contract PerpAccountModule is IPerpAccountModule {
                 position.entryPrice,
                 oraclePrice,
                 position.size,
-                im
+                im,
+                mm
             );
     }
 }

@@ -523,12 +523,9 @@ describe('MarginModule', async () => {
           })
         );
 
-        const { initialMarginRequirement, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(
-          trader.accountId,
-          marketId
-        );
+        const { im, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
         // Figure out max withdraw
-        const maxWithdrawUsd = wei(remainingMarginUsd).sub(initialMarginRequirement);
+        const maxWithdrawUsd = wei(remainingMarginUsd).sub(im);
         const maxWithdraw = maxWithdrawUsd.div(collateralPrice);
         // Withdraw 90% of max withdraw
         const withdrawAmount = maxWithdraw.mul(0.9);
@@ -658,11 +655,8 @@ describe('MarginModule', async () => {
         // open leveraged position
         await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
 
-        const { initialMarginRequirement, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(
-          trader.accountId,
-          marketId
-        );
-        const maxWithdrawUsd = wei(remainingMarginUsd).sub(initialMarginRequirement);
+        const { im, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
+        const maxWithdrawUsd = wei(remainingMarginUsd).sub(im);
 
         // Try withdrawing $1 more than max withdraw
         const amountToWithdrawUsd = maxWithdrawUsd.add(1);
