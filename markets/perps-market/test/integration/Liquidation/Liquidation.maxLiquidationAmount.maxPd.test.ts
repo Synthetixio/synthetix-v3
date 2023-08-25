@@ -1,11 +1,10 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
 import { openPosition } from '../helpers';
-import { fastForwardTo, getTxTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 
-describe('Liquidation - max liquidatable amount with multiple continuing liquidations', async () => {
-  const { systems, provider, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
+describe('Liquidation - max pd', async () => {
+  const { systems, provider, owner, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
       {
@@ -22,10 +21,10 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
           initialMarginFraction: bn(3),
           minimumInitialMarginRatio: bn(0),
           maintenanceMarginScalar: bn(0.66),
-          maxLiquidationLimitAccumulationMultiplier: bn(1),
+          maxLiquidationLimitAccumulationMultiplier: bn(0.25),
           liquidationRewardRatio: bn(0.05),
-          // time window 30 seconds
-          maxSecondsInLiquidationWindow: BigNumber.from(30),
+          // time window 10 seconds
+          maxSecondsInLiquidationWindow: BigNumber.from(10),
           minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
@@ -42,8 +41,8 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
   });
 
   before('add collateral to margin', async () => {
-    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(900));
-    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(3400));
+    await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(500));
+    await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, bn(500));
   });
 
   before('open position', async () => {
@@ -54,18 +53,7 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
       accountId: 2,
       keeper: keeper(),
       marketId: perpsMarket.marketId(),
-      sizeDelta: bn(100),
-      settlementStrategyId: perpsMarket.strategyId(),
-      price: bn(10),
-    });
-    await openPosition({
-      systems,
-      provider,
-      trader: trader2(),
-      accountId: 3,
-      keeper: keeper(),
-      marketId: perpsMarket.marketId(),
-      sizeDelta: bn(300),
+      sizeDelta: bn(90),
       settlementStrategyId: perpsMarket.strategyId(),
       price: bn(10),
     });
@@ -76,155 +64,97 @@ describe('Liquidation - max liquidatable amount with multiple continuing liquida
   });
 
   /**
-   * Based on the above configuration, the max liquidation amount for window == 300
+   * Based on the above configuration, the max liquidation amount for window == 25
    * * (maker + taker) * skewScale * secondsInWindow * multiplier
    */
-
-  let initialLiquidationTime: number;
-
-  describe('1st liquidation amount', () => {
+  describe('without max pd set', () => {
     before('call liquidate', async () => {
-      const tx = await systems().PerpsMarket.connect(keeper()).liquidate(2);
-      initialLiquidationTime = await getTxTime(provider(), tx);
+      await systems().PerpsMarket.connect(keeper()).liquidate(2);
     });
 
-    it('liquidated all 100 OP', async () => {
+    it('liquidated 25 OP', async () => {
       const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      assertBn.equal(size, bn(0));
+      assertBn.equal(size, bn(65));
+    });
+
+    describe('call liquidate again', () => {
+      before('call liquidate', async () => {
+        await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      });
+      it('liquidates no more OP', async () => {
+        const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
+        assertBn.equal(size, bn(65));
+      });
     });
   });
 
-  describe('after 29 seconds', () => {
-    let timeSetupCompletes: number;
+  /**
+   * Scenario
+   * Trader 1 position left to be liquidated = 75
+   * maxPD set to 0.06 so under 60 OP skew is required for more liquidation otherwise trader has to wait for window to be liquidated
+   * Trader 2 opens position which moves skew under 60 OP
+   * Trader 1 can now be liquidated again by 25 OP
+   */
+  describe('with max pd', () => {
+    before('set max pd', async () => {
+      await systems().PerpsMarket.connect(owner()).setMaxLiquidationParameters(
+        perpsMarket.marketId(),
+        bn(0.25),
+        BigNumber.from(10),
+        bn(0.06), // 60 OP maxPD
+        ethers.constants.AddressZero
+      );
+    });
 
-    before('setup previous position', async () => {
-      await perpsMarket.aggregator().mockSetCurrentPrice(bn(10));
-      await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(90));
+    before('trader 2 arbs', async () => {
       await openPosition({
         systems,
         provider,
-        trader: trader1(),
-        accountId: 2,
+        trader: trader2(),
+        accountId: 3,
         keeper: keeper(),
         marketId: perpsMarket.marketId(),
-        // make size delta smaller
-        sizeDelta: bn(10),
+        sizeDelta: bn(-25),
         settlementStrategyId: perpsMarket.strategyId(),
-        price: bn(10),
+        price: bn(1),
       });
-      const tx = await perpsMarket.aggregator().mockSetCurrentPrice(bn(1));
-      timeSetupCompletes = await getTxTime(provider(), tx);
     });
 
-    before('fastforward', async () => {
-      await fastForwardTo(
-        initialLiquidationTime + (29 - (timeSetupCompletes - initialLiquidationTime)),
-        provider()
-      );
-    });
-    // liquidate call liquidates trader again, now 20 has been liquidated within the window
     before('call liquidate', async () => {
-      const tx = await systems().PerpsMarket.connect(keeper()).liquidate(2);
-      initialLiquidationTime = await getTxTime(provider(), tx);
+      await systems().PerpsMarket.connect(keeper()).liquidate(2);
     });
 
-    it('liquidated 10', async () => {
+    it('liquidated 25 OP more', async () => {
+      const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
+      assertBn.equal(size, bn(40));
+    });
+  });
+
+  describe('more liquidation of trader 1 since under max pd', () => {
+    before('call liquidate twice more since under max pd', async () => {
+      await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    });
+
+    it('liquidated 25 OP more', async () => {
       const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
       assertBn.equal(size, bn(0));
     });
   });
 
-  describe('after another 29 seconds', () => {
-    let timeSetupCompletes: number;
-
-    before('setup previous position', async () => {
-      await perpsMarket.aggregator().mockSetCurrentPrice(bn(10));
-      await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(90));
-      await openPosition({
-        systems,
-        provider,
-        trader: trader1(),
-        accountId: 2,
-        keeper: keeper(),
-        marketId: perpsMarket.marketId(),
-        // make size delta smaller
-        sizeDelta: bn(10),
-        settlementStrategyId: perpsMarket.strategyId(),
-        price: bn(10),
-      });
-      const tx = await perpsMarket.aggregator().mockSetCurrentPrice(bn(1));
-      timeSetupCompletes = await getTxTime(provider(), tx);
+  describe('liquidate trader 2', () => {
+    before('change price of OP', async () => {
+      await perpsMarket.aggregator().mockSetCurrentPrice(bn(30));
     });
 
-    before('fastforward', async () => {
-      await fastForwardTo(
-        initialLiquidationTime + (29 - (timeSetupCompletes - initialLiquidationTime)),
-        provider()
-      );
-    });
-    // liquidate call liquidates trader again, now 20 has been liquidated within the window, but 30 has in the last 58 seconds
-    before('call liquidate', async () => {
-      const tx = await systems().PerpsMarket.connect(keeper()).liquidate(2);
-      initialLiquidationTime = await getTxTime(provider(), tx);
-    });
-
-    it('liquidated 10 again', async () => {
-      const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      assertBn.equal(size, bn(0));
-    });
-  });
-
-  describe('after another 29 seconds', () => {
-    let timeSetupCompletes: number;
-
-    before('setup previous position', async () => {
-      await perpsMarket.aggregator().mockSetCurrentPrice(bn(10));
-      await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(90));
-      await openPosition({
-        systems,
-        provider,
-        trader: trader1(),
-        accountId: 2,
-        keeper: keeper(),
-        marketId: perpsMarket.marketId(),
-        // make size delta smaller
-        sizeDelta: bn(10),
-        settlementStrategyId: perpsMarket.strategyId(),
-        price: bn(10),
-      });
-      const tx = await perpsMarket.aggregator().mockSetCurrentPrice(bn(1));
-      timeSetupCompletes = await getTxTime(provider(), tx);
-    });
-
-    before('fastforward', async () => {
-      await fastForwardTo(
-        initialLiquidationTime + (29 - (timeSetupCompletes - initialLiquidationTime)),
-        provider()
-      );
-    });
-    // liquidate call liquidates trader again, now 20 has been liquidated within the window, but 130 has in the last ~87 seconds
-    before('call liquidate', async () => {
-      const tx = await systems().PerpsMarket.connect(keeper()).liquidate(2);
-      initialLiquidationTime = await getTxTime(provider(), tx);
-    });
-
-    it('liquidated 10 again', async () => {
-      const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      assertBn.equal(size, bn(0));
-    });
-  });
-
-  describe('liquidate second trader', () => {
     before('call liquidate', async () => {
       await systems().PerpsMarket.connect(keeper()).liquidate(3);
     });
 
-    it('liquidated only 270, 20 left', async () => {
+    // because the previous liquidation of trader 1 was of 15 OP, the remaining amount that can be liquidated is 10 OP
+    it('liquidated 10 OP', async () => {
       const [, , size] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      // 300 original size - 280 (300 - 20 (amount liquidated in within last 30 seconds window))
-      assertBn.equal(size, bn(20));
-      // this reverts as the 100 op liquidated ~87 seconds ago is still counted as well as 10 liquidated ~58 seconds ago
-      // actual size remaining is 130
+      assertBn.equal(size, bn(-15));
     });
   });
 });
