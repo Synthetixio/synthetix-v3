@@ -20,7 +20,6 @@ import {
 import {
   ZERO_ADDRESS,
   approveAndMintMargin,
-  assertEvents,
   commitAndSettle,
   commitOrder,
   depositMargin,
@@ -28,6 +27,7 @@ import {
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { CollateralMock } from '../../../typechain-types';
+import { assertEvents } from '../../assert';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
@@ -213,10 +213,10 @@ describe('MarginModule', async () => {
           tx,
           [
             /FundingRecomputed/,
-            `Transfer(["${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount}])`, // from collateral ERC20 contract
-            `Transfer(["${PerpMarketProxy.address}", "${Core.address}", ${collateralDepositAmount}])`, // from collateral ERC20 contract
-            `MarketCollateralDeposited([${marketId}, "${collateral.contract.address}", ${collateralDepositAmount}, "${PerpMarketProxy.address}"])`, // from core
-            `MarginDeposit(["${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount}, "${collateral.contract.address}"])`,
+            `Transfer("${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount})`, // from collateral ERC20 contract
+            `Transfer("${PerpMarketProxy.address}", "${Core.address}", ${collateralDepositAmount})`, // from collateral ERC20 contract
+            `MarketCollateralDeposited(${marketId}, "${collateral.contract.address}", ${collateralDepositAmount}, "${PerpMarketProxy.address}")`, // from core
+            `MarginDeposit("${traderAddress}", "${PerpMarketProxy.address}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
           ],
           contractsWithAllEvents
         );
@@ -471,10 +471,10 @@ describe('MarginModule', async () => {
           tx,
           [
             /FundingRecomputed/,
-            `Transfer(["${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount}])`, // from collateral ERC20 contract
-            `MarketCollateralWithdrawn([${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}"])`, // from core
-            `Transfer(["${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount}])`, // from collateral ERC20 contract
-            `MarginWithdraw(["${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount}, "${collateral.contract.address}"])`,
+            `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${withdrawAmount})`, // from collateral ERC20 contract
+            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${withdrawAmount}, "${PerpMarketProxy.address}")`, // from core
+            `Transfer("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount})`, // from collateral ERC20 contract
+            `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${withdrawAmount}, "${collateral.contract.address}")`,
           ],
           contractsWithAllEvents
         );
