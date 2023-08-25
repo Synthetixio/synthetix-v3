@@ -22,12 +22,12 @@ describe('ScalableMapping', () => {
   const actor2 = distUtils.getActor('2');
   const actor3 = distUtils.getActor('3');
 
-  before('initialize fake distribution', async () => {
+  beforeEach('initialize fake distribution', async () => {
     FakeScalableMapping = systems().Core.connect(signers()[0]);
   });
 
   describe('set()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     describe('scale (with no shares)', function () {
       it('reverts', async function () {
@@ -39,7 +39,7 @@ describe('ScalableMapping', () => {
     });
 
     describe('actors enter', async () => {
-      before('add value', async () => {
+      beforeEach('add value', async () => {
         await FakeScalableMapping.ScalableMapping_set(actor1, bn(50));
         await FakeScalableMapping.ScalableMapping_set(actor2, bn(150));
         await FakeScalableMapping.ScalableMapping_set(actor3, bn(300));
@@ -64,7 +64,7 @@ describe('ScalableMapping', () => {
 
     describe('scale()', async () => {
       const addedValue = wei(1000);
-      before('distribute value', async () => {
+      beforeEach('distribute value', async () => {
         await FakeScalableMapping.ScalableMapping_scale(addedValue.toBN());
       });
 
@@ -94,7 +94,7 @@ describe('ScalableMapping', () => {
     describe('another actor enters with value', async () => {
       const actor4 = distUtils.getActor('4');
       const actor4Value = wei(500);
-      before('add value', async () => {
+      beforeEach('add value', async () => {
         await FakeScalableMapping.ScalableMapping_set(actor4, actor4Value.toBN());
       });
 
@@ -105,7 +105,7 @@ describe('ScalableMapping', () => {
     });
 
     describe('actor exits', async () => {
-      before('remove value', async () => {
+      beforeEach('remove value', async () => {
         await FakeScalableMapping.ScalableMapping_set(actor1, 0);
       });
 
@@ -130,7 +130,7 @@ describe('ScalableMapping', () => {
     });
 
     describe('large value add', async () => {
-      before('add one actor with normal value', async () => {
+      beforeEach('add one actor with normal value', async () => {
         await FakeScalableMapping.ScalableMapping_set(actor1, bn(10));
       });
 
@@ -145,15 +145,15 @@ describe('ScalableMapping', () => {
 
   // some edge cases tested above.
   describe('edge case scenarios', async () => {
-    before(restore);
+    beforeEach(restore);
 
     describe('when actor gets set with large value', async () => {
-      before('add value', async () => {
+      beforeEach('add value', async () => {
         await FakeScalableMapping.ScalableMapping_set(actor1, bn(5));
         await FakeScalableMapping.ScalableMapping_set(actor2, bn(5e18));
       });
 
-      before('scale value', async () => {
+      beforeEach('scale value', async () => {
         await FakeScalableMapping.ScalableMapping_scale(bn(500));
       });
 

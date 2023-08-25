@@ -13,12 +13,12 @@ describe('USDTokenModule', function () {
 
   let ownerAddress: string, stakerAddress: string;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     ownerAddress = await owner().getAddress();
     stakerAddress = await staker().getAddress();
   });
 
-  before('get some snxUSD', async () => {
+  beforeEach('get some snxUSD', async () => {
     await systems()
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
@@ -42,7 +42,7 @@ describe('USDTokenModule', function () {
   });
 
   describe('burn(uint256)', () => {
-    before('configure CCIP', async () => {
+    beforeEach('configure CCIP', async () => {
       await systems().Core.connect(owner()).configureChainlinkCrossChain(
         ethers.constants.AddressZero,
         stakerAddress // fake CCIP token pool address
@@ -60,11 +60,11 @@ describe('USDTokenModule', function () {
     describe('successful call', () => {
       let usdBalanceBefore: ethers.BigNumber;
 
-      before('record balances', async () => {
+      beforeEach('record balances', async () => {
         usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
       });
 
-      before('burn 50 snxUSD', async () => {
+      beforeEach('burn 50 snxUSD', async () => {
         await systems().USD.connect(staker())['burn(uint256)'](fiftyUSD);
       });
 

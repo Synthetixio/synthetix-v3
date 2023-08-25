@@ -25,7 +25,7 @@ describe('BumpPools', function () {
     ONE.mul(6989),
   ];
 
-  before('init', async () => {
+  beforeEach('init', async () => {
     FakeMarket = await (await hre.ethers.getContractFactory('MockMarket')).deploy();
     await FakeMarket.deployed();
 
@@ -50,7 +50,7 @@ describe('BumpPools', function () {
   const restore = snapshotCheckpoint(provider);
 
   describe('zero debt', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('all pools should be in-range', async () => {
       assertBn.equal(
@@ -61,7 +61,7 @@ describe('BumpPools', function () {
   });
 
   describe('max', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('distribute massive debt', async () => {
       await FakeMarket.setReportedDebt(ONE.mul(10000000000000));

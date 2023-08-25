@@ -2,7 +2,6 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import assert from 'assert/strict';
 import { ContractTransaction, Signer } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
@@ -14,14 +13,11 @@ describe('CollateralModule', function () {
   let user1: Signer;
   let user2: Signer;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [, user1, user2] = signers();
   });
 
-  const restore = snapshotCheckpoint(provider);
-
   describe('createLock()', function () {
-    before(restore);
     it('can only be called by owner or user', async () => {
       await assertRevert(
         systems()
@@ -73,7 +69,7 @@ describe('CollateralModule', function () {
 
     describe('successful invoke', async () => {
       let txn: ContractTransaction;
-      before('invoked', async () => {
+      beforeEach('invoked', async () => {
         txn = await systems()
           .Core.connect(user1)
           .createLock(1, collateralAddress(), depositAmount.div(10), 1234123412341);
@@ -113,11 +109,11 @@ describe('CollateralModule', function () {
   });
 
   describe('cleanExpiredLocks()', function () {
-    before(restore);
+    beforeEach(restore);
 
     let ts: number;
 
-    before('create locks', async () => {
+    beforeEach('create locks', async () => {
       ts = await getTime(provider());
       await systems()
         .Core.connect(user1)
@@ -135,17 +131,8 @@ describe('CollateralModule', function () {
       await fastForwardTo(ts + 300, provider());
     });
 
-    const cleanRestore = snapshotCheckpoint(provider);
-
     describe('invoke on the whole thing', async () => {
       let txn: ContractTransaction;
-      before(cleanRestore);
-      before('clean', async () => {
-        txn = await systems()
-          .Core.connect(user1)
-          .cleanExpiredLocks(accountId, collateralAddress(), 0, 0);
-      });
-
       it('only has the one unexpired lock remaining', async () => {
         const locks = await systems().Core.getLocks(accountId, collateralAddress(), 0, 0);
         assert(locks.length === 1);
@@ -163,23 +150,12 @@ describe('CollateralModule', function () {
     });
 
     describe('invoke on a portion', async () => {
-      before(cleanRestore);
-      before('clean', async () => {
-        await systems().Core.connect(user1).cleanExpiredLocks(accountId, collateralAddress(), 1, 2);
-      });
-
       it('only one expired lock could be removed', async () => {
         const locks = await systems().Core.getLocks(accountId, collateralAddress(), 0, 0);
         assert(locks.length === 3);
       });
 
       describe('partial remove from off the end', async () => {
-        before('clean', async () => {
-          await systems()
-            .Core.connect(user1)
-            .cleanExpiredLocks(accountId, collateralAddress(), 1, 10000);
-        });
-
         it('only one additional expired lock could be removed', async () => {
           const locks = await systems().Core.getLocks(accountId, collateralAddress(), 0, 0);
           assert(locks.length === 2);

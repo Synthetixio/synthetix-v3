@@ -34,12 +34,12 @@ describe('MarketManagerModule', function () {
 
   let txn: Parameters<typeof assertEvent>[0];
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
 
   describe('registerMarket()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     verifyUsesFeatureFlag(
       () => systems().Core,
@@ -60,7 +60,7 @@ describe('MarketManagerModule', function () {
       let expectedMarketId: ethers.BigNumber;
       let deployedMarket: ethers.Contract;
 
-      before('register', async () => {
+      beforeEach('register', async () => {
         expectedMarketId = marketId().add(1);
 
         // deploy the mock market (it will register itself)
@@ -89,9 +89,9 @@ describe('MarketManagerModule', function () {
   });
 
   describe('depositMarketUsd()', async () => {
-    before(restore);
+    beforeEach(restore);
 
-    before('acquire USD', async () => {
+    beforeEach('acquire USD', async () => {
       await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
     });
 
@@ -104,7 +104,7 @@ describe('MarketManagerModule', function () {
     });
 
     describe('when funds have been approved', async () => {
-      before('approve usd', async () => {
+      beforeEach('approve usd', async () => {
         await systems().USD.connect(user1).approve(MockMarket().address, One);
       });
 
@@ -117,8 +117,8 @@ describe('MarketManagerModule', function () {
       );
 
       describe('success', async () => {
-        before(restoreDeposit);
-        before('deposit', async () => {
+        beforeEach(restoreDeposit);
+        beforeEach('deposit', async () => {
           txn = await MockMarket().connect(user1).buySynth(One);
         });
 
@@ -147,8 +147,8 @@ describe('MarketManagerModule', function () {
       });
 
       describe('when fee is levied', async () => {
-        before(restoreDeposit);
-        before('set fee', async () => {
+        beforeEach(restoreDeposit);
+        beforeEach('set fee', async () => {
           await systems()
             .Core.connect(owner)
             .setConfig(
@@ -166,7 +166,7 @@ describe('MarketManagerModule', function () {
         let quotedFee: BigNumber;
         let returnValue: BigNumber;
 
-        before('deposit', async () => {
+        beforeEach('deposit', async () => {
           quotedFee = (await systems().Core.getMarketFees(marketId(), One))[0];
           returnValue = await MockMarket().connect(user1).callStatic.buySynth(One);
           txn = await MockMarket().connect(user1).buySynth(One);
@@ -219,10 +219,10 @@ describe('MarketManagerModule', function () {
   });
 
   describe('withdrawMarketUsd()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     describe('deposit into the pool', async () => {
-      before('mint USD to use market', async () => {
+      beforeEach('mint USD to use market', async () => {
         await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), One);
         await systems().USD.connect(user1).approve(MockMarket().address, One);
         txn = await MockMarket().connect(user1).buySynth(One);
@@ -250,8 +250,8 @@ describe('MarketManagerModule', function () {
       );
 
       describe('withdraw some from the market', async () => {
-        before(withdrawRestore);
-        before('mint USD to use market', async () => {
+        beforeEach(withdrawRestore);
+        beforeEach('mint USD to use market', async () => {
           txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
         });
 
@@ -269,7 +269,7 @@ describe('MarketManagerModule', function () {
         });
 
         describe('withdraw the rest', async () => {
-          before('mint USD to use market', async () => {
+          beforeEach('mint USD to use market', async () => {
             txn = await MockMarket().connect(user1).sellSynth(One.div(2));
           });
 
@@ -289,8 +289,8 @@ describe('MarketManagerModule', function () {
       });
 
       describe('when fee is levied', async () => {
-        before(withdrawRestore);
-        before('set fee', async () => {
+        beforeEach(withdrawRestore);
+        beforeEach('set fee', async () => {
           await systems()
             .Core.connect(owner)
             .setConfig(
@@ -308,7 +308,7 @@ describe('MarketManagerModule', function () {
         let quotedFee: BigNumber;
         let returnValue: BigNumber;
 
-        before('mint USD to use market', async () => {
+        beforeEach('mint USD to use market', async () => {
           quotedFee = (await systems().Core.getMarketFees(marketId(), One.div(2)))[1];
           returnValue = await MockMarket().connect(user1).callStatic.sellSynth(One.div(2));
           txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
@@ -352,8 +352,8 @@ describe('MarketManagerModule', function () {
   });
 
   describe('distributeDebtToPools()', async () => {
-    before(restore);
-    before('add more staked pools', async () => {
+    beforeEach(restore);
+    beforeEach('add more staked pools', async () => {
       // want a total of 3 staked pools
       // create
       await systems()
@@ -414,7 +414,7 @@ describe('MarketManagerModule', function () {
         );
     });
 
-    before('accumulate debt', async () => {
+    beforeEach('accumulate debt', async () => {
       await MockMarket().setReportedDebt(ethers.utils.parseEther('12341234123412341234'));
     });
 
@@ -423,7 +423,7 @@ describe('MarketManagerModule', function () {
     });
 
     describe('call first time', async () => {
-      before('first time called', async () => {
+      beforeEach('first time called', async () => {
         await systems().Core.distributeDebtToPools(marketId(), 2);
       });
 
@@ -439,7 +439,7 @@ describe('MarketManagerModule', function () {
       });
 
       describe('call second time', async () => {
-        before('second time called', async () => {
+        beforeEach('second time called', async () => {
           await systems().Core.distributeDebtToPools(marketId(), 2);
         });
 
@@ -455,7 +455,7 @@ describe('MarketManagerModule', function () {
   });
 
   describe('setMarketMinDelegateTime()', () => {
-    before(restore);
+    beforeEach(restore);
 
     it('only works for market', async () => {
       await assertRevert(
@@ -475,7 +475,7 @@ describe('MarketManagerModule', function () {
 
     describe('success', () => {
       let tx: ethers.providers.TransactionResponse;
-      before('exec', async () => {
+      beforeEach('exec', async () => {
         tx = await MockMarket().setMinDelegationTime(86400);
       });
 
@@ -496,7 +496,7 @@ describe('MarketManagerModule', function () {
   });
 
   describe('setMinLiquidityRatio()', () => {
-    before(restore);
+    beforeEach(restore);
 
     it('only works for owner', async () => {
       await assertRevert(
@@ -510,7 +510,7 @@ describe('MarketManagerModule', function () {
 
     describe('success', () => {
       let tx: ethers.providers.TransactionResponse;
-      before('exec', async () => {
+      beforeEach('exec', async () => {
         tx = await systems()
           .Core.connect(owner)
           ['setMinLiquidityRatio(uint128,uint256)'](marketId(), ethers.utils.parseEther('1.5'));
@@ -575,9 +575,9 @@ describe('MarketManagerModule', function () {
   });
 
   describe('getMarketPools()', () => {
-    before(restore);
+    beforeEach(restore);
 
-    before('add more staked pools', async () => {
+    beforeEach('add more staked pools', async () => {
       // want a total of 3 staked pools
       // create
       await systems()
@@ -657,7 +657,7 @@ describe('MarketManagerModule', function () {
   });
 
   describe('getMarketPoolDebtDistribution()', () => {
-    before(restore);
+    beforeEach(restore);
 
     it('getMarketPoolDebtDistribution returns expected result', async () => {
       const result = await systems().Core.callStatic.getMarketPoolDebtDistribution(

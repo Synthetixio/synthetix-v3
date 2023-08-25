@@ -10,7 +10,7 @@ describe('MulticallModule', function () {
 
   let user1: ethers.Signer;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [, user1] = signers();
   });
 
@@ -30,7 +30,7 @@ describe('MulticallModule', function () {
     });
 
     describe('on success', async () => {
-      before('call', async () => {
+      beforeEach('call', async () => {
         await systems()
           .Core.connect(user1)
           .multicall([
@@ -70,7 +70,7 @@ describe('MulticallModule', function () {
     });
 
     describe('on success', async () => {
-      before('call', async () => {
+      beforeEach('call', async () => {
         await systems()
           .Core.connect(user1)
           //@ts-ignore tests is skipped, fixe type when enabled

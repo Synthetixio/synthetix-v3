@@ -1,5 +1,4 @@
 import { ethers } from 'ethers';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { wei } from '@synthetixio/wei';
 import { stake } from './stakers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
@@ -20,13 +19,13 @@ export const createStakedPool = (
   const accountId = 1;
   const poolId = 1;
 
-  before('give owner permission to create pools', async () => {
+  beforeEach('give owner permission to create pools', async () => {
     await r
       .systems()
       .Core.addToFeatureFlagAllowlist(POOL_FEATURE_FLAG, await r.owner().getAddress());
   });
 
-  before('setup oracle manager node', async () => {
+  beforeEach('setup oracle manager node', async () => {
     const results = await createOracleNode(
       r.signers()[0],
       stakedCollateralPrice,
@@ -36,7 +35,7 @@ export const createStakedPool = (
     aggregator = results.aggregator;
   });
 
-  before('configure collateral', async () => {
+  beforeEach('configure collateral', async () => {
     // add collateral
     await (
       await r.systems().Core.connect(r.owner()).configureCollateral({
@@ -51,7 +50,7 @@ export const createStakedPool = (
     ).wait();
   });
 
-  before('create pool', async () => {
+  beforeEach('create pool', async () => {
     // create pool
     await r
       .systems()
@@ -59,7 +58,7 @@ export const createStakedPool = (
       .createPool(poolId, await r.owner().getAddress());
   });
 
-  before('stake', async function () {
+  beforeEach('stake', async function () {
     const [, staker] = r.signers();
     await stake(
       { Core: r.systems().Core, CollateralMock: r.systems().CollateralMock },
@@ -70,8 +69,6 @@ export const createStakedPool = (
     );
   });
 
-  const restore = snapshotCheckpoint(r.provider);
-
   return {
     ...r,
     aggregator: () => aggregator,
@@ -80,7 +77,6 @@ export const createStakedPool = (
     collateralContract: () => r.systems().CollateralMock,
     collateralAddress: () => r.systems().CollateralMock.address,
     depositAmount: stakedAmount,
-    restore,
     staker: () => r.signers()[1],
     oracleNodeId: () => oracleNodeId,
   };

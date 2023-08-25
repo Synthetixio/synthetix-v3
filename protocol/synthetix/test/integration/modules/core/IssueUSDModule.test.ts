@@ -21,11 +21,11 @@ describe('IssueUSDModule', function () {
 
   const feeAddress = '0x1234567890123456789012345678901234567890';
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
 
-  before('deploy and connect fake market', async () => {
+  beforeEach('deploy and connect fake market', async () => {
     const factory = await hre.ethers.getContractFactory('MockMarket');
 
     MockMarket = await factory.connect(owner).deploy();
@@ -77,7 +77,7 @@ describe('IssueUSDModule', function () {
   }
 
   describe('mintUsd()', async () => {
-    before(restore);
+    beforeEach(restore);
     it('verifies permission for account', async () => {
       await assertRevert(
         systems()
@@ -138,7 +138,7 @@ describe('IssueUSDModule', function () {
     );
 
     describe('successful mint', () => {
-      before('mint', async () => {
+      beforeEach('mint', async () => {
         await systems().Core.connect(user1).mintUsd(
           accountId,
           poolId,
@@ -167,7 +167,7 @@ describe('IssueUSDModule', function () {
       });
 
       describe('subsequent mint', () => {
-        before('mint again', async () => {
+        beforeEach('mint again', async () => {
           await systems().Core.connect(user1).mintUsd(
             accountId,
             poolId,
@@ -191,8 +191,8 @@ describe('IssueUSDModule', function () {
     });
 
     describe('successful mint when fee is levied', async () => {
-      before(restore);
-      before('set fee', async () => {
+      beforeEach(restore);
+      beforeEach('set fee', async () => {
         await systems()
           .Core.connect(owner)
           .setConfig(
@@ -209,7 +209,7 @@ describe('IssueUSDModule', function () {
 
       let tx: ethers.providers.TransactionResponse;
 
-      before('mint', async () => {
+      beforeEach('mint', async () => {
         tx = await systems().Core.connect(user1).mintUsd(
           accountId,
           poolId,
@@ -252,8 +252,8 @@ describe('IssueUSDModule', function () {
   });
 
   describe('burnUSD()', () => {
-    before(restore);
-    before('mint', async () => {
+    beforeEach(restore);
+    beforeEach('mint', async () => {
       await systems()
         .Core.connect(user1)
         .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
@@ -271,15 +271,15 @@ describe('IssueUSDModule', function () {
     );
 
     describe('burn from other account', async () => {
-      before(restoreBurn);
-      before('transfer burn collateral', async () => {
+      beforeEach(restoreBurn);
+      beforeEach('transfer burn collateral', async () => {
         // send the collateral to account 2 so it can burn on behalf
         await systems()
           .USD.connect(user1)
           .transfer(await user2.getAddress(), depositAmount.div(10));
       });
 
-      before('other account burn', async () => {
+      beforeEach('other account burn', async () => {
         await systems()
           .Core.connect(user2)
           .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
@@ -293,8 +293,8 @@ describe('IssueUSDModule', function () {
     });
 
     describe('successful partial burn when fee is levied', async () => {
-      before(restoreBurn);
-      before('set fee', async () => {
+      beforeEach(restoreBurn);
+      beforeEach('set fee', async () => {
         await systems()
           .Core.connect(owner)
           .setConfig(
@@ -309,7 +309,7 @@ describe('IssueUSDModule', function () {
           );
       });
 
-      before('account partial burn debt', async () => {
+      beforeEach('account partial burn debt', async () => {
         // in order to burn all with the fee we need a bit more
         await systems()
           .Core.connect(user1)
@@ -339,15 +339,15 @@ describe('IssueUSDModule', function () {
     });
 
     describe('successful max burn when fee is levied', async () => {
-      before(restoreBurn);
+      beforeEach(restoreBurn);
 
-      before('acquire additional balance to pay off fee', async () => {
+      beforeEach('acquire additional balance to pay off fee', async () => {
         await systems()
           .Core.connect(user1)
           .mintUsd(accountId, 0, collateralAddress(), depositAmount.div(1000));
       });
 
-      before('set fee', async () => {
+      beforeEach('set fee', async () => {
         await systems()
           .Core.connect(owner)
           .setConfig(
@@ -364,7 +364,7 @@ describe('IssueUSDModule', function () {
 
       let tx: ethers.providers.TransactionResponse;
 
-      before('account partial burn debt', async () => {
+      beforeEach('account partial burn debt', async () => {
         // in order to burn all with the fee we need a bit more
         tx = await systems()
           .Core.connect(user1)
@@ -394,7 +394,7 @@ describe('IssueUSDModule', function () {
   });
 
   describe('edge case: verify debt is excluded from available mint', async () => {
-    before(restore);
+    beforeEach(restore);
     afterEach(restore);
 
     function exploit(ratio: number) {
@@ -436,7 +436,7 @@ describe('IssueUSDModule', function () {
     it('try to create unbacked debt', exploit(1));
 
     describe('adjust system max c ratio', async () => {
-      before('adjust max liquidity ratio', async () => {
+      beforeEach('adjust max liquidity ratio', async () => {
         await systems().Core['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 

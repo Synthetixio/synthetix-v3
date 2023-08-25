@@ -17,11 +17,11 @@ describe('CcipReceiverModule', function () {
 
   const abiCoder = new ethers.utils.AbiCoder();
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [FakeCcip] = signers();
   });
 
-  before('set ccip settings', async () => {
+  beforeEach('set ccip settings', async () => {
     await systems()
       .Core.connect(owner())
       .configureChainlinkCrossChain(await FakeCcip.getAddress(), ethers.constants.AddressZero);
@@ -31,7 +31,7 @@ describe('CcipReceiverModule', function () {
       .setSupportedCrossChainNetworks([1234, 2192], [1234, 2192]);
   });
 
-  before('get some snxUSD', async () => {
+  beforeEach('get some snxUSD', async () => {
     await systems()
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), twoHundredUSD);
@@ -39,7 +39,7 @@ describe('CcipReceiverModule', function () {
     await systems().USD.connect(staker()).transfer(systems().Core.address, fiftyUSD);
   });
 
-  before('record balances', async () => {
+  beforeEach('record balances', async () => {
     stakerBalanceBefore = await systems()
       .USD.connect(staker())
       .balanceOf(await staker().getAddress());
@@ -124,7 +124,7 @@ describe('CcipReceiverModule', function () {
       let receivedTxn: ethers.providers.TransactionResponse;
       let receipt: ethers.providers.TransactionReceipt;
 
-      before('calls ccip receive', async () => {
+      beforeEach('calls ccip receive', async () => {
         receivedTxn = await systems()
           .Core.connect(FakeCcip)
           .ccipReceive({

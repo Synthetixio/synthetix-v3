@@ -19,7 +19,7 @@ describe('AccountModule', function () {
   let receipt: ethers.providers.TransactionReceipt;
 
   describe('AccountModule - Account creation', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [, user1, user2] = signers();
     });
 
@@ -30,7 +30,7 @@ describe('AccountModule', function () {
     );
 
     describe('when user creates an account via the core system', function () {
-      before('create the account', async function () {
+      beforeEach('create the account', async function () {
         const tx = await systems().Core.connect(user1)['createAccount(uint128)'](1);
         receipt = await tx.wait();
       });

@@ -17,7 +17,7 @@ describe('Market', function () {
 
   const fakeMarketId = 2929292;
 
-  before('init', async () => {
+  beforeEach('init', async () => {
     FakeMarket = await (await hre.ethers.getContractFactory('MockMarket')).deploy();
     await FakeMarket.deployed();
 
@@ -29,7 +29,7 @@ describe('Market', function () {
   const restore = snapshotCheckpoint(provider);
 
   describe('getReportedDebt()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('returns whatever the market sends', async () => {
       await FakeMarket.setReportedDebt(9876);
@@ -39,7 +39,7 @@ describe('Market', function () {
   });
 
   describe('getLockedCreditCapacity()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('returns whatever the market sends', async () => {
       await FakeMarket.setLocked(1234);
@@ -49,7 +49,7 @@ describe('Market', function () {
   });
 
   describe('totalDebt()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('returns market debt when no issuance', async () => {
       await FakeMarket.setReportedDebt(1000);
@@ -73,7 +73,7 @@ describe('Market', function () {
   describe.skip('getDepositedCollateralValue()', async () => {});
 
   describe('isCapacityLocked()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('unlocked when no locking', async () => {
       await FakeMarket.setLocked(0);
@@ -84,7 +84,7 @@ describe('Market', function () {
   });
 
   describe('adjustPoolShares()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('shows market is empty capacity before anyone adjusts in', async () => {
       assertBn.equal(await systems().Core.Market_get_creditCapacityD18(fakeMarketId), 0);
@@ -94,7 +94,7 @@ describe('Market', function () {
       const fakePool1 = 82739;
       const fakePool2 = 68937;
 
-      before('adjust', async () => {
+      beforeEach('adjust', async () => {
         await systems()
           .Core.connect(owner)
           .Market_adjustPoolShares(fakeMarketId, fakePool1, 100, One.mul(2));
@@ -122,7 +122,7 @@ describe('Market', function () {
       });
 
       describe('when debt goes up a little bit', async () => {
-        before('debt increase', async () => {
+        beforeEach('debt increase', async () => {
           await FakeMarket.setReportedDebt(10);
           await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
         });
@@ -142,7 +142,7 @@ describe('Market', function () {
       });
 
       describe('another pool enters', () => {
-        before('adjust 2', async () => {
+        beforeEach('adjust 2', async () => {
           await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 9999999);
 
           await systems()
@@ -194,7 +194,7 @@ describe('Market', function () {
         });
 
         describe('debt is assigned', () => {
-          before('debt increase', async () => {
+          beforeEach('debt increase', async () => {
             await FakeMarket.setReportedDebt(40);
             await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
           });
@@ -223,7 +223,7 @@ describe('Market', function () {
           });
 
           describe('both pools leave', () => {
-            before('adjusted to leave', async () => {
+            beforeEach('adjusted to leave', async () => {
               await systems()
                 .Core.connect(owner)
                 .Market_distributeDebtToPools(fakeMarketId, 9999999);
@@ -240,7 +240,7 @@ describe('Market', function () {
             });
 
             describe('increase debt again', () => {
-              before('debt increase', async () => {
+              beforeEach('debt increase', async () => {
                 await FakeMarket.setReportedDebt(40);
                 await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
               });
@@ -281,8 +281,8 @@ describe('Market', function () {
 
     describe('maxIter', async () => {
       describe('moving out of range', async () => {
-        before(restore);
-        before('move out of range with three pools, limit 1', async () => {
+        beforeEach(restore);
+        beforeEach('move out of range with three pools, limit 1', async () => {
           // adding them here in a random order
           await systems()
             .Core.connect(owner)
@@ -338,7 +338,7 @@ describe('Market', function () {
         });
 
         describe('call again', async () => {
-          before('move out of range with three pools, limit 1', async () => {
+          beforeEach('move out of range with three pools, limit 1', async () => {
             await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
           });
 
@@ -376,7 +376,7 @@ describe('Market', function () {
           });
 
           describe('last pool removed', async () => {
-            before('move out of range with three pools, limit 1', async () => {
+            beforeEach('move out of range with three pools, limit 1', async () => {
               await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
             });
 
@@ -409,9 +409,9 @@ describe('Market', function () {
       });
 
       describe('moving into range', async () => {
-        before(restore);
+        beforeEach(restore);
 
-        before('move into range with three pools, limit 1', async () => {
+        beforeEach('move into range with three pools, limit 1', async () => {
           // adding them here in a random order
           await systems()
             .Core.connect(owner)
@@ -432,7 +432,7 @@ describe('Market', function () {
           );
         });
 
-        before('distribute down', async () => {
+        beforeEach('distribute down', async () => {
           await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
         });
 
@@ -470,7 +470,7 @@ describe('Market', function () {
         });
 
         describe('call again', async () => {
-          before('move into range with limit 1', async () => {
+          beforeEach('move into range with limit 1', async () => {
             await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
           });
 
@@ -506,7 +506,7 @@ describe('Market', function () {
           });
 
           describe('call again', async () => {
-            before('move into range with limit 1', async () => {
+            beforeEach('move into range with limit 1', async () => {
               await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 1);
             });
 
@@ -546,9 +546,9 @@ describe('Market', function () {
     });
 
     describe('two pools join starting in range', () => {
-      before(restore);
+      beforeEach(restore);
 
-      before('setup', async () => {
+      beforeEach('setup', async () => {
         // adding them here in a random order
         await systems()
           .Core.connect(owner)
@@ -559,7 +559,7 @@ describe('Market', function () {
       });
 
       describe('market debt increases within range', async () => {
-        before('debt increases', async () => {
+        beforeEach('debt increases', async () => {
           await systems().Core.connect(owner).Market_set_netIssuanceD18(fakeMarketId, 20);
           await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
         });
@@ -589,7 +589,7 @@ describe('Market', function () {
       });
 
       describe('market debt increases to out of range', async () => {
-        before('debt increases', async () => {
+        beforeEach('debt increases', async () => {
           await systems().Core.connect(owner).Market_set_netIssuanceD18(fakeMarketId, 10000000);
           await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
         });
@@ -620,9 +620,9 @@ describe('Market', function () {
     });
 
     describe('two pools connect starting out of range', async () => {
-      before(restore);
+      beforeEach(restore);
 
-      before('setup', async () => {
+      beforeEach('setup', async () => {
         // add an extra pool to absorb liquidity
         await systems()
           .Core.connect(owner)
@@ -640,7 +640,7 @@ describe('Market', function () {
       });
 
       describe('market debt decreases still out of range', async () => {
-        before('debt increases', async () => {
+        beforeEach('debt increases', async () => {
           await systems().Core.connect(owner).Market_set_netIssuanceD18(fakeMarketId, 500);
           await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
         });
@@ -670,7 +670,7 @@ describe('Market', function () {
       });
 
       describe('market debt increases to in range for both', async () => {
-        before('debt increases', async () => {
+        beforeEach('debt increases', async () => {
           await systems().Core.connect(owner).Market_set_netIssuanceD18(fakeMarketId, 0);
           await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
         });

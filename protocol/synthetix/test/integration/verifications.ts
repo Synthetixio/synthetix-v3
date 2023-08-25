@@ -8,7 +8,7 @@ export function verifyUsesFeatureFlag(
   txn: () => Promise<unknown>
 ) {
   describe(`when ${flagName} feature disabled`, () => {
-    before('disable feature', async () => {
+    beforeEach('disable feature', async () => {
       await c().setFeatureFlagDenyAll(ethers.utils.formatBytes32String(flagName), true);
     });
 
@@ -35,7 +35,7 @@ export function verifyChecksCollateralEnabled(
     const restore = snapshotCheckpoint(
       () => c().signer.provider as ethers.providers.JsonRpcProvider
     );
-    before('disable collateral', async () => {
+    beforeEach('disable collateral', async () => {
       await c().configureCollateral({
         depositingEnabled: false,
         issuanceRatioD18: 0,

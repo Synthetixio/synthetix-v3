@@ -37,7 +37,7 @@ const restoreSnapshot = createSnapshot();
 export function bootstrap() {
   let systems: Systems;
 
-  before('load system proxies', function () {
+  beforeEach('load system proxies', function () {
     systems = {
       Account: getContract('AccountProxy'),
       Core: getContract('CoreProxy'),
@@ -48,7 +48,7 @@ export function bootstrap() {
     } as Systems;
   });
 
-  before(restoreSnapshot);
+  beforeEach(restoreSnapshot);
 
   return {
     provider: () => getProvider(),
@@ -68,13 +68,13 @@ export function bootstrapWithMockMarketAndPool() {
   let MockMarket: MockMarket;
   let marketId: ethers.BigNumber;
 
-  before('give owner permission to create markets', async () => {
+  beforeEach('give owner permission to create markets', async () => {
     await r
       .systems()
       .Core.addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, await r.owner().getAddress());
   });
 
-  before('deploy and connect fake market', async () => {
+  beforeEach('deploy and connect fake market', async () => {
     const [owner, user1] = r.signers();
 
     const factory = await hre.ethers.getContractFactory('MockMarket');

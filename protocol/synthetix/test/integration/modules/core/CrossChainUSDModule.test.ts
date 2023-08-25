@@ -17,22 +17,22 @@ describe('CrossChainUSDModule', function () {
   let proxyBalanceBefore: ethers.BigNumber, stakerBalanceBefore: ethers.BigNumber;
   let CcipRouterMock: ethers.Contract;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     stakerAddress = await staker().getAddress();
   });
 
-  before('deploy ccip router mock', async () => {
+  beforeEach('deploy ccip router mock', async () => {
     const factory = await hre.ethers.getContractFactory('CcipRouterMock');
     CcipRouterMock = await factory.connect(owner()).deploy();
   });
 
-  before('configure CCIP', async () => {
+  beforeEach('configure CCIP', async () => {
     await systems()
       .Core.connect(owner())
       .configureChainlinkCrossChain(CcipRouterMock.address, ethers.constants.AddressZero);
   });
 
-  before('get some snxUSD', async () => {
+  beforeEach('get some snxUSD', async () => {
     await systems()
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
@@ -42,7 +42,7 @@ describe('CrossChainUSDModule', function () {
     //   .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
-  before('record balances', async () => {
+  beforeEach('record balances', async () => {
     stakerBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
     proxyBalanceBefore = await systems().USD.connect(staker()).balanceOf(systems().Core.address);
   });
@@ -54,7 +54,7 @@ describe('CrossChainUSDModule', function () {
       () => systems().Core.connect(staker()).transferCrossChain(1, fiftyUSD)
     );
 
-    before('ensure access to feature', async () => {
+    beforeEach('ensure access to feature', async () => {
       await systems()
         .Core.connect(owner())
         .addToFeatureFlagAllowlist(
@@ -92,7 +92,7 @@ describe('CrossChainUSDModule', function () {
     describe('successful call', () => {
       let transferCrossChainTxn: ethers.providers.TransactionResponse;
 
-      before('invokes transferCrossChain', async () => {
+      beforeEach('invokes transferCrossChain', async () => {
         transferCrossChainTxn = await systems()
           .Core.connect(staker())
           .transferCrossChain(1, fiftyUSD);

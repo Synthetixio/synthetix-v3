@@ -22,15 +22,15 @@ describe('LiquidationModule', function () {
 
   let user1: ethers.Signer, user2: ethers.Signer;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [, user1, user2] = signers();
   });
 
   describe('liquidate()', () => {
-    before(restore);
+    beforeEach(restore);
     const liquidatorAccountId = 384572397362836;
 
-    before('create liquidator account', async () => {
+    beforeEach('create liquidator account', async () => {
       await systems().Core.connect(user2)['createAccount(uint128)'](liquidatorAccountId);
     });
 
@@ -50,13 +50,13 @@ describe('LiquidationModule', function () {
         .mul(ethers.utils.parseEther('1'))
         .div(ethers.utils.parseEther('1.1'));
 
-      before('take out a loan', async () => {
+      beforeEach('take out a loan', async () => {
         await systems()
           .Core.connect(user1)
           .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
       });
 
-      before('going into debt', async () => {
+      beforeEach('going into debt', async () => {
         await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
 
         // sanity
@@ -92,7 +92,7 @@ describe('LiquidationModule', function () {
         // this is just the default from elsewhere
         const liquidationReward = ethers.utils.parseEther('20');
 
-        before('add another account', async () => {
+        beforeEach('add another account', async () => {
           await collateralContract()
             .connect(user1)
             .transfer(await user2.getAddress(), depositAmount.mul(10));
@@ -117,7 +117,7 @@ describe('LiquidationModule', function () {
         });
 
         let txn: ethers.providers.TransactionResponse;
-        before('liquidate', async () => {
+        beforeEach('liquidate', async () => {
           txn = await systems()
             .Core.connect(user2)
             .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId);
@@ -186,7 +186,7 @@ describe('LiquidationModule', function () {
   });
 
   describe('liquidateVault()', () => {
-    before(restore);
+    beforeEach(restore);
 
     it('does not allow liquidation with 0 max usd', async () => {
       await assertRevert(
@@ -222,13 +222,13 @@ describe('LiquidationModule', function () {
         .mul(ethers.utils.parseEther('1'))
         .div(ethers.utils.parseEther('1.1'));
 
-      before('take out a loan', async () => {
+      beforeEach('take out a loan', async () => {
         await systems()
           .Core.connect(user1)
           .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
       });
 
-      before('going into debt', async () => {
+      beforeEach('going into debt', async () => {
         await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
 
         // sanity
@@ -254,11 +254,11 @@ describe('LiquidationModule', function () {
 
         let preCollateralRatio: ethers.BigNumber;
 
-        before('create liquidator account', async () => {
+        beforeEach('create liquidator account', async () => {
           await systems().Core.connect(user2)['createAccount(uint128)'](liquidatorAccountId);
         });
 
-        before('pool liquidator account', async () => {
+        beforeEach('pool liquidator account', async () => {
           await collateralContract()
             .connect(user1)
             .transfer(await user2.getAddress(), depositAmount.mul(50));
@@ -285,7 +285,7 @@ describe('LiquidationModule', function () {
             .mintUsd(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
         });
 
-        before('record collateral ratio', async () => {
+        beforeEach('record collateral ratio', async () => {
           preCollateralRatio = await systems().Core.callStatic.getVaultCollateralRatio(
             poolId,
             collateralAddress()
@@ -293,7 +293,7 @@ describe('LiquidationModule', function () {
         });
 
         let txn: ethers.providers.TransactionResponse;
-        before('liquidate', async () => {
+        beforeEach('liquidate', async () => {
           txn = await systems()
             .Core.connect(user2)
             .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount.div(4));
@@ -345,7 +345,7 @@ describe('LiquidationModule', function () {
         describe('succesful full liquidation', () => {
           let txn: ethers.providers.TransactionResponse;
 
-          before('liquidate', async () => {
+          beforeEach('liquidate', async () => {
             txn = await systems()
               .Core.connect(user2)
               .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount);

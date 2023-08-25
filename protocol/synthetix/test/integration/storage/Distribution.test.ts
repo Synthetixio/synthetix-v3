@@ -16,7 +16,7 @@ describe('Distribution', async () => {
   const restore = snapshotCheckpoint(provider);
   let FakeDistributionModule: Contract;
 
-  before('initialize fake distribution', async () => {
+  beforeEach('initialize fake distribution', async () => {
     FakeDistributionModule = systems().Core.connect(signers()[0]);
   });
 
@@ -25,7 +25,7 @@ describe('Distribution', async () => {
   const actor3 = distUtils.getActor('3');
 
   describe('setActorShares()', async () => {
-    before('add shares', async () => {
+    beforeEach('add shares', async () => {
       await FakeDistributionModule.Distribution_setActorShares(actor1, 0);
       await FakeDistributionModule.Distribution_setActorShares(actor2, 10);
       await FakeDistributionModule.Distribution_setActorShares(actor3, 25);
@@ -38,17 +38,17 @@ describe('Distribution', async () => {
     });
 
     describe('distributeValue()', async () => {
-      before(restore);
+      beforeEach(restore);
 
       describe('when actors enter using shares and no value', async () => {
         let pricePerShare: BigNumber;
 
         describe('actor enters', async () => {
-          before('add shares', async () => {
+          beforeEach('add shares', async () => {
             await FakeDistributionModule.Distribution_setActorShares(actor1, bn(1));
           });
 
-          before('distribute', async () => {
+          beforeEach('distribute', async () => {
             await FakeDistributionModule.Distribution_distributeValue(bn(10));
           });
 
@@ -62,7 +62,7 @@ describe('Distribution', async () => {
         });
 
         describe('2 actors enter', async () => {
-          before('add shares', async () => {
+          beforeEach('add shares', async () => {
             await FakeDistributionModule.Distribution_setActorShares(actor2, bn(2));
             await FakeDistributionModule.Distribution_setActorShares(actor3, bn(5));
           });
@@ -81,7 +81,7 @@ describe('Distribution', async () => {
         });
 
         describe('distribute more value', async () => {
-          before('distribute', async () => {
+          beforeEach('distribute', async () => {
             await FakeDistributionModule.Distribution_distributeValue(bn(10));
           });
 
@@ -131,7 +131,7 @@ describe('Distribution', async () => {
         });
 
         describe('actor2 leaves', async () => {
-          before('remove actor2 shares', async () => {
+          beforeEach('remove actor2 shares', async () => {
             await FakeDistributionModule.Distribution_setActorShares(actor2, 0);
           });
 
@@ -150,7 +150,7 @@ describe('Distribution', async () => {
         });
 
         describe('distribute negative value', async () => {
-          before('distribute', async () => {
+          beforeEach('distribute', async () => {
             await FakeDistributionModule.Distribution_distributeValue(bn(-60));
           });
 
@@ -179,7 +179,7 @@ describe('Distribution', async () => {
         });
 
         describe('distribute very low value', async () => {
-          before(async () => {
+          beforeEach(async () => {
             await FakeDistributionModule.Distribution_distributeValue(10); // Note: not bn(10) so super low
           });
 
@@ -194,11 +194,11 @@ describe('Distribution', async () => {
         });
 
         describe('set very low number of shares to new actor', async () => {
-          before('add new actor with low shares', async () => {
+          beforeEach('add new actor with low shares', async () => {
             await FakeDistributionModule.Distribution_setActorShares(actor2, 5); // welcome back actor2
           });
 
-          before('distribute value', async () => {
+          beforeEach('distribute value', async () => {
             await FakeDistributionModule.Distribution_distributeValue(bn(10));
           });
 
@@ -220,7 +220,7 @@ describe('Distribution', async () => {
   });
 
   describe('distributeValue()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('fails when no shares', async () => {
       await assertRevert(

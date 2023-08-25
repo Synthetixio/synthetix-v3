@@ -13,7 +13,7 @@ describe('PoolModule Create / Ownership', function () {
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
 
@@ -26,7 +26,7 @@ describe('PoolModule Create / Ownership', function () {
   describe('When creating a Pool', async () => {
     let receipt: ethers.providers.TransactionReceipt;
 
-    before('give user1 permission', async () => {
+    beforeEach('give user1 permission', async () => {
       await systems()
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
@@ -35,7 +35,7 @@ describe('PoolModule Create / Ownership', function () {
         );
     });
 
-    before('create a pool', async () => {
+    beforeEach('create a pool', async () => {
       const tx = await systems()
         .Core.connect(user1)
         .createPool(2, await user1.getAddress());
@@ -55,7 +55,7 @@ describe('PoolModule Create / Ownership', function () {
     });
 
     describe('when trying to create the same systems().CoreId', () => {
-      before('give user2 permission', async () => {
+      beforeEach('give user2 permission', async () => {
         await systems()
           .Core.connect(owner)
           .addToFeatureFlagAllowlist(
@@ -88,7 +88,7 @@ describe('PoolModule Create / Ownership', function () {
 
       describe('when nominating a new owner', async () => {
         let receipt: ethers.providers.TransactionReceipt;
-        before('', async () => {
+        beforeEach('', async () => {
           const tx = await systems()
             .Core.connect(user1)
             .nominatePoolOwner(await user2.getAddress(), 2);
@@ -128,7 +128,7 @@ describe('PoolModule Create / Ownership', function () {
         });
 
         describe('when accepting the ownership', async () => {
-          before('accept ownership', async () => {
+          beforeEach('accept ownership', async () => {
             const tx = await systems()
               .Core.connect(user1)
               .nominatePoolOwner(await user2.getAddress(), 2);
@@ -162,14 +162,14 @@ describe('PoolModule Create / Ownership', function () {
 
       describe('when renouncing the ownership', async () => {
         let receipt: ethers.providers.TransactionReceipt;
-        before('nominate the new owner', async () => {
+        beforeEach('nominate the new owner', async () => {
           const tx = await systems()
             .Core.connect(user1)
             .nominatePoolOwner(await user2.getAddress(), 2);
           receipt = await tx.wait();
         });
 
-        before('renounce nomination', async () => {
+        beforeEach('renounce nomination', async () => {
           const tx = await systems().Core.connect(user2).renouncePoolNomination(2);
           receipt = await tx.wait();
         });
@@ -201,11 +201,11 @@ describe('PoolModule Create / Ownership', function () {
 
   describe('rebalancePool()', () => {
     let initialMarketCapacity: ethers.BigNumber;
-    before('save market capacity', async () => {
+    beforeEach('save market capacity', async () => {
       initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
     });
     describe('market debt goes up', async () => {
-      before('increase market debt and rebalances the markets inside of pool', async () => {
+      beforeEach('increase market debt and rebalances the markets inside of pool', async () => {
         await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
 
         await systems().Core.connect(owner).Market_distributeDebtToPools(poolId, 999999999);

@@ -2,7 +2,6 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
 import { bootstrap } from '../../../bootstrap';
@@ -19,17 +18,17 @@ describe('CollateralModule', function () {
   let receipt: Ethers.providers.TransactionReceipt;
 
   describe('CollateralModule - Depositing and withdrawing collateral', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [owner, user1, user2] = signers();
     });
 
-    before('create some accounts', async () => {
+    beforeEach('create some accounts', async () => {
       await (await systems().Core.connect(user1)['createAccount(uint128)'](1)).wait();
       await (await systems().Core.connect(user2)['createAccount(uint128)'](2)).wait();
     });
 
     describe('when a collateral is added', function () {
-      before('add collateral type', async () => {
+      beforeEach('add collateral type', async () => {
         ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
           'SNX',
@@ -48,7 +47,7 @@ describe('CollateralModule', function () {
       describe('when accounts have tokens', function () {
         const mintAmount = ethers.utils.parseUnits('1000', 6);
 
-        before('mint some tokens', async () => {
+        beforeEach('mint some tokens', async () => {
           await (await Collateral.mint(await user1.getAddress(), mintAmount)).wait();
           await (await Collateral.mint(await user2.getAddress(), mintAmount)).wait();
         });
@@ -62,7 +61,7 @@ describe('CollateralModule', function () {
         describe('when accounts provide allowance', function () {
           const depositAmount = ethers.utils.parseUnits('1', 6);
           const systemDepositAmount = ethers.utils.parseEther('1');
-          before('approve', async () => {
+          beforeEach('approve', async () => {
             await (
               await Collateral.connect(user1).approve(
                 systems().Core.address,
@@ -106,7 +105,7 @@ describe('CollateralModule', function () {
           });
 
           describe('when depositing collateral', () => {
-            before('deposit some collateral', async () => {
+            beforeEach('deposit some collateral', async () => {
               const tx = await systems()
                 .Core.connect(user1)
                 .deposit(1, Collateral.address, depositAmount);
@@ -169,10 +168,8 @@ describe('CollateralModule', function () {
             );
 
             describe('when there is a account withdraw timeout set', async () => {
-              const restore = snapshotCheckpoint(provider);
-
               const expireTime = 180;
-              before('set timeout', async () => {
+              beforeEach('set timeout', async () => {
                 // make sure the account has an interaction
                 await systems()
                   .Core.connect(owner)
@@ -186,8 +183,6 @@ describe('CollateralModule', function () {
                   );
               });
 
-              after(restore);
-
               it('should not allow withdrawal because of account interaction', async () => {
                 console.log('last interaction', await systems().Core.getAccountLastInteraction(1));
                 await assertRevert(
@@ -198,7 +193,7 @@ describe('CollateralModule', function () {
               });
 
               describe('time passes', () => {
-                before('fast forward', async () => {
+                beforeEach('fast forward', async () => {
                   await fastForwardTo(
                     (await systems().Core.getAccountLastInteraction(1)).toNumber() + expireTime,
                     provider()
@@ -214,7 +209,7 @@ describe('CollateralModule', function () {
             });
 
             describe('when withdrawing collateral', () => {
-              before('withdraw some collateral', async () => {
+              beforeEach('withdraw some collateral', async () => {
                 const tx = await systems()
                   .Core.connect(user1)
                   .withdraw(1, Collateral.address, depositAmount);
@@ -256,7 +251,7 @@ describe('CollateralModule', function () {
               const secondsInMonth = 60 * 60 * 24 * 30;
               let lockedUntil: number;
 
-              before('deposit and lock some collateral', async () => {
+              beforeEach('deposit and lock some collateral', async () => {
                 const tx = await systems()
                   .Core.connect(user2)
                   .deposit(2, Collateral.address, depositAmount);
@@ -286,7 +281,7 @@ describe('CollateralModule', function () {
               });
 
               describe('when withdrawing unlocked collateral', () => {
-                before('fastforward and withdraw unlocked collateral', async () => {
+                beforeEach('fastforward and withdraw unlocked collateral', async () => {
                   await fastForwardTo(lockedUntil, provider());
                   const tx = await systems()
                     .Core.connect(user2)

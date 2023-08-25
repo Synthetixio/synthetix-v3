@@ -39,7 +39,7 @@ describe('CollateralConfiguration', function () {
   };
 
   describe('verifyIssuanceRatio()', async () => {
-    before('initialize fake collateral config', async () => {
+    beforeEach('initialize fake collateral config', async () => {
       await initFakeCollateralConfig(18);
     });
 
@@ -100,7 +100,7 @@ describe('CollateralConfiguration', function () {
     describe('scaling tokens with 6 decimals to system amount', async () => {
       const DECIMALS = 6;
 
-      before('initialize fake collateral config', async () => {
+      beforeEach('initialize fake collateral config', async () => {
         await initFakeCollateralConfig(DECIMALS);
       });
 
@@ -122,7 +122,7 @@ describe('CollateralConfiguration', function () {
     describe('scaling tokens with 18 decimals to system amount', async () => {
       const DECIMALS = 18;
 
-      before('initialize fake collateral config', async () => {
+      beforeEach('initialize fake collateral config', async () => {
         await initFakeCollateralConfig(DECIMALS);
       });
 
@@ -144,7 +144,7 @@ describe('CollateralConfiguration', function () {
     describe('scaling tokens with greater than 18 decimals to system amount', async () => {
       const DECIMALS = 20;
 
-      before('initialize fake collateral config', async () => {
+      beforeEach('initialize fake collateral config', async () => {
         await initFakeCollateralConfig(DECIMALS);
       });
 
@@ -190,7 +190,7 @@ describe('CollateralConfiguration', function () {
     describe('scaling tokens that do not define decimals to system amount', async () => {
       const DECIMALS = 18; // assumed decimals when ERC20 token does not define decimals()
 
-      before('initialize fake collateral config', async () => {
+      beforeEach('initialize fake collateral config', async () => {
         const CollateralMockWithoutDecimals = await hre.ethers.getContractFactory(
           'CollateralMockWithoutDecimals'
         );

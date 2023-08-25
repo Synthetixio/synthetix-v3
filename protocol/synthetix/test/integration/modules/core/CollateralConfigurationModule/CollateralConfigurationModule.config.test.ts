@@ -17,12 +17,12 @@ describe('CollateralModule', function () {
   let oracleNodeId: string, oracleNodeId2: string;
 
   describe('CollateralModule - Collateral configuration', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [systemOwner, user1] = signers();
     });
 
     describe('when the first collateral is added', function () {
-      before('add collateral', async () => {
+      beforeEach('add collateral', async () => {
         ({ Collateral, oracleNodeId, collateralPrice } = await addCollateral(
           'Synthetix Token',
           'SNX',
@@ -43,7 +43,7 @@ describe('CollateralModule', function () {
       });
 
       describe('when a second collateral is added', () => {
-        before('add collateral', async () => {
+        beforeEach('add collateral', async () => {
           ({ Collateral: AnotherCollateral, oracleNodeId: oracleNodeId2 } = await addCollateral(
             'Another Token',
             'ANT',
@@ -90,7 +90,7 @@ describe('CollateralModule', function () {
         });
 
         describe('when the second collateral is updated', () => {
-          before('update the collateral', async () => {
+          beforeEach('update the collateral', async () => {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
               oracleNodeId: oracleNodeId2,
@@ -121,7 +121,7 @@ describe('CollateralModule', function () {
         });
 
         describe('when the second collateral is disabled', () => {
-          before('disable the collateral', async () => {
+          beforeEach('disable the collateral', async () => {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
               oracleNodeId: oracleNodeId2,

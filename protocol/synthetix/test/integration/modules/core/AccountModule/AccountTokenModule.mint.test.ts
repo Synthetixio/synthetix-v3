@@ -8,7 +8,7 @@ describe('AccountTokenModule', function () {
 
   let user1: ethers.Signer;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [, user1] = signers();
   });
 

@@ -22,12 +22,12 @@ describe('PoolConfigurationModule', function () {
   }
 
   describe('PoolConfigurationModule', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [owner, user1] = signers();
     });
 
     describe('when some pools are created', function () {
-      before('give user1 permission to create pools', async () => {
+      beforeEach('give user1 permission to create pools', async () => {
         await systems()
           .Core.connect(owner)
           .addToFeatureFlagAllowlist(
@@ -36,7 +36,7 @@ describe('PoolConfigurationModule', function () {
           );
       });
 
-      before('create', async () => {
+      beforeEach('create', async () => {
         await createPool(1, user1);
         await createPool(2, user1);
         await createPool(3, user1);
@@ -99,7 +99,7 @@ describe('PoolConfigurationModule', function () {
         });
 
         describe('when the owner sets the preferred pool', async () => {
-          before('set the preferred pool', async () => {
+          beforeEach('set the preferred pool', async () => {
             const tx = await systems().Core.connect(owner).setPreferredPool(2);
             receipt = await tx.wait();
           });
@@ -124,7 +124,7 @@ describe('PoolConfigurationModule', function () {
         });
 
         describe('when the owner approves a pool', async () => {
-          before('approve pool', async () => {
+          beforeEach('approve pool', async () => {
             const tx = await systems().Core.connect(owner).addApprovedPool(3);
             receipt = await tx.wait();
           });
@@ -163,7 +163,7 @@ describe('PoolConfigurationModule', function () {
           });
 
           describe('when the owner removes an approved pool', async () => {
-            before('remove pool', async () => {
+            beforeEach('remove pool', async () => {
               const tx = await systems().Core.connect(owner).removeApprovedPool(3);
               receipt = await tx.wait();
             });

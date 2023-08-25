@@ -22,7 +22,7 @@ describe('Pool', function () {
 
   const secondaryPoolId = 9877;
 
-  before('init', async () => {
+  beforeEach('init', async () => {
     [owner, user1] = signers();
 
     // create a secondary pool for testing cases of having multiple pools for one market
@@ -65,11 +65,11 @@ describe('Pool', function () {
   });
 
   describe('recalculateVaultCollateral()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     let initialMarketCapacity: ethers.BigNumber;
 
-    before('save market capacity', async () => {
+    beforeEach('save market capacity', async () => {
       initialMarketCapacity = await systems().Core.Market_get_creditCapacityD18(marketId());
     });
 
@@ -80,7 +80,7 @@ describe('Pool', function () {
     });
 
     describe('market debt goes up', async () => {
-      before('increase market debt', async () => {
+      beforeEach('increase market debt', async () => {
         await MockMarket().connect(owner).setReportedDebt(depositAmount.div(10));
 
         // call this function to trigger downstream debts
@@ -102,7 +102,7 @@ describe('Pool', function () {
       });
 
       describe('when more collateral is added', async () => {
-        before('increase collateral', async () => {
+        beforeEach('increase collateral', async () => {
           await systems()
             .Core.connect(user1)
             .delegateCollateral(

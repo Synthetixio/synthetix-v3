@@ -30,11 +30,11 @@ describe('VaultModule', function () {
   let MockMarket: ethers.Contract;
   let marketId: BigNumber;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
 
-  before('give user1 permission to register market', async () => {
+  beforeEach('give user1 permission to register market', async () => {
     await systems()
       .Core.connect(owner)
       .addToFeatureFlagAllowlist(
@@ -43,7 +43,7 @@ describe('VaultModule', function () {
       );
   });
 
-  before('deploy and connect fake market', async () => {
+  beforeEach('deploy and connect fake market', async () => {
     const factory = await hre.ethers.getContractFactory('MockMarket');
 
     MockMarket = await factory.connect(owner).deploy();
@@ -69,7 +69,7 @@ describe('VaultModule', function () {
       ]);
   });
 
-  before('add second collateral type', async () => {
+  beforeEach('add second collateral type', async () => {
     // add collateral
     await (
       await systems().Core.connect(owner).configureCollateral({
@@ -131,7 +131,7 @@ describe('VaultModule', function () {
   describe('fresh vault', async () => {
     const fakeFreshVaultId = 209372;
 
-    before('create empty vault', async () => {
+    beforeEach('create empty vault', async () => {
       await systems().Core.createPool(fakeFreshVaultId, await user1.getAddress());
     });
 
@@ -283,11 +283,11 @@ describe('VaultModule', function () {
 
       const fakeVaultId = 93729028;
 
-      before('create empty vault', async () => {
+      beforeEach('create empty vault', async () => {
         await systems().Core.createPool(fakeVaultId, await user1.getAddress());
       });
 
-      before('disable collateral', async () => {
+      beforeEach('disable collateral', async () => {
         const beforeConfiguration = await systems().Core.getCollateralConfiguration(
           collateralAddress()
         );
@@ -322,7 +322,7 @@ describe('VaultModule', function () {
     describe('market debt accumulation', () => {
       const startingDebt = ethers.utils.parseEther('100');
 
-      before('user1 goes into debt', async () => {
+      beforeEach('user1 goes into debt', async () => {
         await MockMarket.connect(user1).setReportedDebt(startingDebt);
       });
 
@@ -348,7 +348,7 @@ describe('VaultModule', function () {
       describe('second user delegates', async () => {
         const user2AccountId = 283847;
 
-        before('second user delegates and mints', async () => {
+        beforeEach('second user delegates and mints', async () => {
           // user1 has extra collateral available
           await collateralContract()
             .connect(user1)
@@ -389,7 +389,7 @@ describe('VaultModule', function () {
         // when position is increased, it should not be affected by locking
         // when a position is decreased, it should only be allowed if the capacity does
         // not become locked
-        before('market locks some capacity', async () => {
+        beforeEach('market locks some capacity', async () => {
           await MockMarket.setLocked(locked);
         });
 
@@ -405,7 +405,7 @@ describe('VaultModule', function () {
         describe('if one of the markets has a min delegation time', () => {
           const restore = snapshotCheckpoint(provider);
 
-          before('set market min delegation time to something high', async () => {
+          beforeEach('set market min delegation time to something high', async () => {
             await MockMarket.setMinDelegationTime(86400);
           });
 
@@ -440,7 +440,7 @@ describe('VaultModule', function () {
           });
 
           describe('after time passes', () => {
-            before('fast forward', async () => {
+            beforeEach('fast forward', async () => {
               // for some reason `fastForward` doesn't seem to work with anvil
               await fastForwardTo((await getTime(provider())) + 86400, provider());
             });
@@ -464,7 +464,7 @@ describe('VaultModule', function () {
         // these exposure tests should be enabled when exposures other
         // than 1 are allowed (which might be something we want to do)
         describe.skip('increase exposure', async () => {
-          before('delegate', async () => {
+          beforeEach('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               poolId,
@@ -485,7 +485,7 @@ describe('VaultModule', function () {
         });
 
         describe.skip('reduce exposure', async () => {
-          before('delegate', async () => {
+          beforeEach('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               poolId,
@@ -506,7 +506,7 @@ describe('VaultModule', function () {
         });
 
         describe('remove exposure', async () => {
-          before('delegate', async () => {
+          beforeEach('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               poolId,
@@ -541,7 +541,7 @@ describe('VaultModule', function () {
             const restore = snapshotCheckpoint(provider);
             after(restore);
 
-            before('disable collatearal', async () => {
+            beforeEach('disable collatearal', async () => {
               const beforeConfiguration = await systems().Core.getCollateralConfiguration(
                 collateralAddress()
               );
@@ -567,7 +567,7 @@ describe('VaultModule', function () {
           });
 
           describe('success', () => {
-            before('delegate', async () => {
+            beforeEach('delegate', async () => {
               await systems().Core.connect(user2).delegateCollateral(
                 user2AccountId,
                 poolId,
@@ -658,7 +658,7 @@ describe('VaultModule', function () {
             const restore = snapshotCheckpoint(provider);
             after(restore);
 
-            before('disable collateral', async () => {
+            beforeEach('disable collateral', async () => {
               const beforeConfiguration = await systems().Core.getCollateralConfiguration(
                 collateralAddress()
               );
@@ -669,7 +669,7 @@ describe('VaultModule', function () {
             });
 
             describe('success', () => {
-              before('delegate', async () => {
+              beforeEach('delegate', async () => {
                 await systems()
                   .Core.connect(user2)
                   .delegateCollateral(
@@ -699,13 +699,13 @@ describe('VaultModule', function () {
         });
 
         describe('remove collateral', async () => {
-          before('repay debt', async () => {
+          beforeEach('repay debt', async () => {
             await systems()
               .Core.connect(user2)
               .burnUsd(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));
           });
 
-          before('delegate', async () => {
+          beforeEach('delegate', async () => {
             await systems()
               .Core.connect(user2)
               .delegateCollateral(
@@ -737,12 +737,12 @@ describe('VaultModule', function () {
     });
 
     describe('first user leaves', async () => {
-      before(restore);
-      before('erase debt', async () => {
+      beforeEach(restore);
+      beforeEach('erase debt', async () => {
         await MockMarket.connect(user1).setReportedDebt(0);
       });
 
-      before('undelegate', async () => {
+      beforeEach('undelegate', async () => {
         await systems()
           .Core.connect(user1)
           .delegateCollateral(

@@ -16,17 +16,17 @@ describe('CollateralModule', function () {
   let user3: Signer;
 
   describe('CollateralModule - Access control', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [owner, user1, user2, user3] = signers();
     });
 
-    before('create some accounts', async () => {
+    beforeEach('create some accounts', async () => {
       await (await systems().Core.connect(user1)['createAccount(uint128)'](1)).wait();
       await (await systems().Core.connect(user2)['createAccount(uint128)'](2)).wait();
     });
 
     describe('when a collateral is added', function () {
-      before('add collateral type', async () => {
+      beforeEach('add collateral type', async () => {
         ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
           'SNX',
@@ -45,7 +45,7 @@ describe('CollateralModule', function () {
       describe('when accounts have tokens', function () {
         const mintAmount = ethers.utils.parseUnits('1000', 6);
 
-        before('mint some tokens', async () => {
+        beforeEach('mint some tokens', async () => {
           await (await Collateral.mint(await user1.getAddress(), mintAmount)).wait();
           await (await Collateral.mint(await user2.getAddress(), mintAmount)).wait();
         });
@@ -57,7 +57,7 @@ describe('CollateralModule', function () {
         });
 
         describe('when accounts provide allowance', function () {
-          before('approve', async () => {
+          beforeEach('approve', async () => {
             await (
               await Collateral.connect(user1).approve(
                 systems().Core.address,
@@ -83,7 +83,7 @@ describe('CollateralModule', function () {
           });
 
           describe('when an account authorizes other users to operate', function () {
-            before('grant WITHDRAW permissions', async () => {
+            beforeEach('grant WITHDRAW permissions', async () => {
               await (
                 await systems()
                   .Core.connect(user1)
@@ -99,7 +99,7 @@ describe('CollateralModule', function () {
               const depositAmount = ethers.utils.parseUnits('1', 6);
               const systemDepositAmount = ethers.utils.parseEther('1');
 
-              before('deposit some collateral', async () => {
+              beforeEach('deposit some collateral', async () => {
                 await (
                   await systems().Core.connect(user2).deposit(1, Collateral.address, depositAmount)
                 ).wait();
@@ -129,7 +129,7 @@ describe('CollateralModule', function () {
               });
 
               describe('when the authorized account withdraws collateral', function () {
-                before('withdraw some collateral', async () => {
+                beforeEach('withdraw some collateral', async () => {
                   await (
                     await systems()
                       .Core.connect(user3)

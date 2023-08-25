@@ -20,11 +20,11 @@ describe('AssociateDebtModule', function () {
   let owner: ethers.Signer;
   let user1: ethers.Signer, user2: ethers.Signer;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
 
-  before('clear feature flags', async function () {
+  beforeEach('clear feature flags', async function () {
     await systems()
       .Core.connect(owner)
       .setFeatureFlagAllowAll(ethers.utils.formatBytes32String('associateDebt'), true);
@@ -83,7 +83,7 @@ describe('AssociateDebtModule', function () {
       const user2AccountId = 28374737562;
 
       // TODO: refactor this `before` into its own helper function, its so common
-      before('new staker', async () => {
+      beforeEach('new staker', async () => {
         // user1 has extra collateral available
         await collateralContract()
           .connect(user1)
@@ -109,7 +109,7 @@ describe('AssociateDebtModule', function () {
       });
 
       describe('when the market reported debt is 100', function () {
-        before('set reported debt to 100', async function () {
+        beforeEach('set reported debt to 100', async function () {
           await MockMarket().connect(owner).setReportedDebt(amount);
         });
 
@@ -129,7 +129,7 @@ describe('AssociateDebtModule', function () {
         });
 
         describe('when the market reported debt is 200', function () {
-          before('set reported debt to 100', async function () {
+          beforeEach('set reported debt to 100', async function () {
             await MockMarket().connect(owner).setReportedDebt(amount.mul(2));
           });
 
@@ -153,7 +153,7 @@ describe('AssociateDebtModule', function () {
           });
 
           describe('when associateDebt is invoked', async () => {
-            before('invoke', async () => {
+            beforeEach('invoke', async () => {
               await MockMarket()
                 .connect(user2)
                 .callAssociateDebt(poolId, collateralAddress(), accountId, amount);

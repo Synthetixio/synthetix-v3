@@ -29,18 +29,18 @@ describe('PoolModule Admin', function () {
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
 
   describe('createPool()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('fails when pool already exists', async () => {});
 
     describe('success', async () => {});
 
-    before('give user1 permission to create pool', async () => {
+    beforeEach('give user1 permission to create pool', async () => {
       await systems()
         .Core.connect(owner)
         .addToFeatureFlagAllowlist(
@@ -49,7 +49,7 @@ describe('PoolModule Admin', function () {
         );
     });
 
-    before('create a pool', async () => {
+    beforeEach('create a pool', async () => {
       await (
         await systems()
           .Core.connect(user1)
@@ -65,7 +65,7 @@ describe('PoolModule Admin', function () {
   describe('setPoolConfiguration()', async () => {
     const marketId2 = 2;
 
-    before('set dummy markets', async () => {
+    beforeEach('set dummy markets', async () => {
       const factory = await hre.ethers.getContractFactory('MockMarket');
       const MockMarket2 = await factory.connect(owner).deploy();
       const MockMarket3 = await factory.connect(owner).deploy();
@@ -149,9 +149,9 @@ describe('PoolModule Admin', function () {
     });
 
     describe('repeat pool sets position', async () => {
-      before(restore);
+      beforeEach(restore);
 
-      before('set pool position', async () => {
+      beforeEach('set pool position', async () => {
         await systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
@@ -169,7 +169,7 @@ describe('PoolModule Admin', function () {
       describe('if one of the markets has a min delegation time', () => {
         const restore = snapshotCheckpoint(provider);
 
-        before('set market min delegation time to something high', async () => {
+        beforeEach('set market min delegation time to something high', async () => {
           await MockMarket().setMinDelegationTime(86400);
         });
 
@@ -187,7 +187,7 @@ describe('PoolModule Admin', function () {
         });
 
         describe('after time passes', () => {
-          before('fast forward', async () => {
+          beforeEach('fast forward', async () => {
             // for some reason `fastForward` doesn't seem to work with anvil
             await fastForwardTo((await getTime(provider())) + 86400, provider());
           });
@@ -206,7 +206,7 @@ describe('PoolModule Admin', function () {
       });
 
       describe('pool changes staking position to add another market', async () => {
-        before('set pool position', async () => {
+        beforeEach('set pool position', async () => {
           await systems()
             .Core.connect(owner)
             .setPoolConfiguration(poolId, [
@@ -240,7 +240,7 @@ describe('PoolModule Admin', function () {
         describe('market a little debt (below pool max)', () => {
           const debtAmount = Hundred.div(10);
 
-          before('set market debt', async () => {
+          beforeEach('set market debt', async () => {
             await (await MockMarket().connect(owner).setReportedDebt(debtAmount)).wait();
           });
 
@@ -303,7 +303,7 @@ describe('PoolModule Admin', function () {
           describe('exit first market', () => {
             const restore = snapshotCheckpoint(provider);
 
-            before('set pool position', async () => {
+            beforeEach('set pool position', async () => {
               await systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
@@ -339,7 +339,7 @@ describe('PoolModule Admin', function () {
           describe('exit second market', () => {
             const restore = snapshotCheckpoint(provider);
 
-            before('set pool position', async () => {
+            beforeEach('set pool position', async () => {
               await systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
@@ -364,7 +364,7 @@ describe('PoolModule Admin', function () {
           });
 
           describe('exit both market', () => {
-            before('set pool position', async () => {
+            beforeEach('set pool position', async () => {
               await systems().Core.connect(owner).setPoolConfiguration(poolId, []);
             });
 
@@ -396,16 +396,16 @@ describe('PoolModule Admin', function () {
     });
 
     describe('sets max debt below current debt share', async () => {
-      before(restore);
+      beforeEach(restore);
 
-      before('raise maxLiquidityRatio', async () => {
+      beforeEach('raise maxLiquidityRatio', async () => {
         // need to do this for the below test to work
         await systems()
           .Core.connect(owner)
           ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('0.2'));
       });
 
-      before('set pool position', async () => {
+      beforeEach('set pool position', async () => {
         await systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
@@ -419,7 +419,7 @@ describe('PoolModule Admin', function () {
 
       // the second pool is here to test the calculation weighted average
       // and to test pool entering/joining after debt shifts
-      before('set second pool position position', async () => {
+      beforeEach('set second pool position position', async () => {
         await systems().Core.connect(user1).delegateCollateral(
           accountId,
           secondPoolId,
@@ -456,7 +456,7 @@ describe('PoolModule Admin', function () {
       });
 
       describe('and then the market goes below max debt and the pool is bumped', async () => {
-        before('buy into the market', async () => {
+        beforeEach('buy into the market', async () => {
           // to go below max debt, we have to get user to invest
           // in the market, and then reset the market
 
@@ -486,7 +486,7 @@ describe('PoolModule Admin', function () {
         });
 
         describe('and then the market reports 0 balance', () => {
-          before('set market', async () => {
+          beforeEach('set market', async () => {
             await MockMarket().connect(user1).setReportedDebt(0);
             await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
           });
@@ -509,7 +509,7 @@ describe('PoolModule Admin', function () {
           });
 
           describe('and then the market reports 50 balance', () => {
-            before('', async () => {
+            beforeEach('', async () => {
               await MockMarket().connect(user1).setReportedDebt(Hundred.div(2));
             });
 
@@ -530,9 +530,9 @@ describe('PoolModule Admin', function () {
             const restore = snapshotCheckpoint(provider);
 
             describe('and then the market reports balance above limit again', () => {
-              before(restore);
+              beforeEach(restore);
               // testing the "soft" limit
-              before('set market', async () => {
+              beforeEach('set market', async () => {
                 await MockMarket().connect(user1).setReportedDebt(Hundred.add(One));
               });
 
@@ -569,9 +569,9 @@ describe('PoolModule Admin', function () {
             });
 
             describe('and then the market reports balance above both pools limits', () => {
-              before(restore);
+              beforeEach(restore);
               // testing the "soft" limit
-              before('set market', async () => {
+              beforeEach('set market', async () => {
                 await MockMarket().connect(user1).setReportedDebt(Hundred.mul(1234));
               });
 
@@ -610,16 +610,16 @@ describe('PoolModule Admin', function () {
     });
 
     describe('when limit is higher than minLiquidityRatio', async () => {
-      before(restore);
+      beforeEach(restore);
 
-      before('set minLiquidityRatio', async () => {
+      beforeEach('set minLiquidityRatio', async () => {
         // need to do this for the below test to work
         await systems()
           .Core.connect(owner)
           ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));
       });
 
-      before('set pool position', async () => {
+      beforeEach('set pool position', async () => {
         await systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
@@ -636,7 +636,7 @@ describe('PoolModule Admin', function () {
       });
 
       describe('when minLiquidityRatio is decreased', async () => {
-        before('set minLiquidityRatio', async () => {
+        beforeEach('set minLiquidityRatio', async () => {
           await systems()
             .Core.connect(owner)
             ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('1'));
@@ -656,7 +656,7 @@ describe('PoolModule Admin', function () {
   });
 
   describe('setMinLiquidityRatio()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('only works for owner', async () => {
       await assertRevert(
@@ -669,7 +669,7 @@ describe('PoolModule Admin', function () {
     });
 
     describe('when invoked successfully', async () => {
-      before('set', async () => {
+      beforeEach('set', async () => {
         await systems()
           .Core.connect(owner)
           ['setMinLiquidityRatio(uint256)'](ethers.utils.parseEther('2'));

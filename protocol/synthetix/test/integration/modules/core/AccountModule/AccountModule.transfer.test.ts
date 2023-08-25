@@ -12,15 +12,15 @@ describe('AccountModule', function () {
   let user3: ethers.Signer;
 
   describe('AccountModule - Account transfering', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [, user1, user2, user3] = signers();
     });
 
-    before('create the account', async function () {
+    beforeEach('create the account', async function () {
       await systems().Core.connect(user1)['createAccount(uint128)'](1);
     });
 
-    before('grant some permissions', async () => {
+    beforeEach('grant some permissions', async () => {
       await systems()
         .Core.connect(user1)
         .grantPermission(1, Permissions.REWARDS, await user1.getAddress());
@@ -33,7 +33,7 @@ describe('AccountModule', function () {
     });
 
     describe('when an account NFT is transferred', function () {
-      before('transfer the account', async function () {
+      beforeEach('transfer the account', async function () {
         const tx = await systems()
           .Core.connect(user1)
           .grantPermission(1, Permissions.DELEGATE, await user1.getAddress());

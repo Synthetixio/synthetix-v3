@@ -8,7 +8,7 @@ describe('UtilsModule', function () {
 
   let owner: ethers.Signer, user1: ethers.Signer;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1] = signers();
   });
 
@@ -24,7 +24,7 @@ describe('UtilsModule', function () {
     });
 
     describe('on success', () => {
-      before('call', async () => {
+      beforeEach('call', async () => {
         await systems()
           .Core.connect(owner)
           .configureChainlinkCrossChain(user1.getAddress(), user1.getAddress());
@@ -69,7 +69,7 @@ describe('UtilsModule', function () {
     });
 
     describe('on success', () => {
-      before('call', async () => {
+      beforeEach('call', async () => {
         await systems().Core.connect(owner).configureOracleManager(user1.getAddress());
       });
 
@@ -91,7 +91,7 @@ describe('UtilsModule', function () {
     });
 
     describe('on success', () => {
-      before('call', async () => {
+      beforeEach('call', async () => {
         await systems()
           .Core.connect(owner)
           .setConfig(

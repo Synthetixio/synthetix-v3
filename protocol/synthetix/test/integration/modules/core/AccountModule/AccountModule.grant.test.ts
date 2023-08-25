@@ -20,11 +20,11 @@ describe('AccountModule', function () {
   let snapshotId: string;
 
   describe('AccountModule - Granting, revoking, and renouncing permissions', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [, user1, user2, user3] = signers();
     });
 
-    before('create the account', async function () {
+    beforeEach('create the account', async function () {
       const tx = await systems().Core.connect(user1)['createAccount(uint128)'](1);
       receipt = await tx.wait();
     });
@@ -84,7 +84,7 @@ describe('AccountModule', function () {
     });
 
     describe('when a permission is granted by the owner', function () {
-      before('grant the permission', async function () {
+      beforeEach('grant the permission', async function () {
         const tx = await systems()
           .Core.connect(user1)
           .grantPermission(1, Permissions.WITHDRAW, await user2.getAddress());
@@ -121,11 +121,11 @@ describe('AccountModule', function () {
       });
 
       describe('when a permission is renounced', function () {
-        before('take snapshot', async function () {
+        beforeEach('take snapshot', async function () {
           snapshotId = await takeSnapshot(provider());
         });
 
-        before('renounce the permission', async () => {
+        beforeEach('renounce the permission', async () => {
           const tx = await systems()
             .Core.connect(user2)
             .renouncePermission(1, Permissions.WITHDRAW);
@@ -154,11 +154,11 @@ describe('AccountModule', function () {
       });
 
       describe('when a permission is revoked', function () {
-        before('take snapshot', async function () {
+        beforeEach('take snapshot', async function () {
           snapshotId = await takeSnapshot(provider());
         });
 
-        before('revoke the permission', async () => {
+        beforeEach('revoke the permission', async () => {
           const tx = await systems()
             .Core.connect(user1)
             .revokePermission(1, Permissions.WITHDRAW, await user2.getAddress());
@@ -188,7 +188,7 @@ describe('AccountModule', function () {
     });
 
     describe('when an Admin permission is granted by the owner', function () {
-      before('owner grants the admin permission', async function () {
+      beforeEach('owner grants the admin permission', async function () {
         const tx = await systems()
           .Core.connect(user1)
           .grantPermission(1, Permissions.ADMIN, await user2.getAddress());
@@ -222,7 +222,7 @@ describe('AccountModule', function () {
       });
 
       describe('admin is able to grant permission', async () => {
-        before('admin grants a permission', async function () {
+        beforeEach('admin grants a permission', async function () {
           const tx = await systems()
             .Core.connect(user2)
             .grantPermission(1, Permissions.WITHDRAW, await user3.getAddress());
@@ -238,7 +238,7 @@ describe('AccountModule', function () {
       });
 
       describe('admin is able to revoke a permission', async () => {
-        before('grant permission', async function () {
+        beforeEach('grant permission', async function () {
           const tx = await systems()
             .Core.connect(user1)
             .grantPermission(1, Permissions.ADMIN, await user3.getAddress());

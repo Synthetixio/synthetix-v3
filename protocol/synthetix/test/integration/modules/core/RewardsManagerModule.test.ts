@@ -27,18 +27,18 @@ describe('RewardsManagerModule', function () {
 
   let startTime: number;
 
-  before('identify signers', async () => {
+  beforeEach('identify signers', async () => {
     [owner, user1, user2] = signers();
   });
 
-  before('deploy fake reward token', async () => {
+  beforeEach('deploy fake reward token', async () => {
     const factory = await hre.ethers.getContractFactory('CollateralMock');
     Collateral = await factory.connect(owner).deploy();
 
     await (await Collateral.connect(owner).initialize('Fake Reward', 'FAKE', 6)).wait();
   });
 
-  before('deploy fake reward distributor', async () => {
+  beforeEach('deploy fake reward distributor', async () => {
     const factory = await hre.ethers.getContractFactory('RewardDistributorMock');
     RewardDistributor = await factory.connect(owner).deploy();
 
@@ -49,11 +49,11 @@ describe('RewardsManagerModule', function () {
     );
   });
 
-  before('mint token for the reward distributor', async () => {
+  beforeEach('mint token for the reward distributor', async () => {
     await Collateral.mint(RewardDistributor.address, rewardAmount.mul(1000));
   });
 
-  before(async () => {
+  beforeEach(async () => {
     //register reward distribution
     await systems()
       .Core.connect(owner)
@@ -63,7 +63,7 @@ describe('RewardsManagerModule', function () {
   const restore = snapshotCheckpoint(provider);
 
   describe('registerRewardsDistributor()', () => {
-    before(restore);
+    beforeEach(restore);
 
     it('only works with owner', async () => {
       await assertRevert(
@@ -86,7 +86,7 @@ describe('RewardsManagerModule', function () {
 
     describe('distributeRewards', () => {
       describe('only rewards distributor can call distributeRewards', () => {
-        before(restore);
+        beforeEach(restore);
 
         it('system distributeRewards reverts if is called from other than the distributor', async () => {
           await assertRevert(
@@ -113,8 +113,8 @@ describe('RewardsManagerModule', function () {
 
       describe('instantaneous', () => {
         describe('in the past', () => {
-          before(restore);
-          before(async () => {
+          beforeEach(restore);
+          beforeEach(async () => {
             startTime = await getTime(provider());
 
             // distribute rewards multiple times to see what happens
@@ -170,8 +170,8 @@ describe('RewardsManagerModule', function () {
         });
 
         describe('in the future', () => {
-          before(restore);
-          before(async () => {
+          beforeEach(restore);
+          beforeEach(async () => {
             startTime = await getTime(provider());
 
             await RewardDistributor.connect(owner).distributeRewards(
@@ -224,7 +224,7 @@ describe('RewardsManagerModule', function () {
           });
 
           describe('after time passes', () => {
-            before(async () => {
+            beforeEach(async () => {
               await fastForwardTo(startTime + 30, provider());
             });
 
@@ -253,8 +253,8 @@ describe('RewardsManagerModule', function () {
 
       describe('over time', () => {
         describe('in the past', () => {
-          before(restore);
-          before(async () => {
+          beforeEach(restore);
+          beforeEach(async () => {
             await RewardDistributor.connect(owner).distributeRewards(
               poolId,
               collateralAddress(),
@@ -293,8 +293,8 @@ describe('RewardsManagerModule', function () {
         });
 
         describe('in the future', () => {
-          before(restore);
-          before(async () => {
+          beforeEach(restore);
+          beforeEach(async () => {
             startTime = await getTime(provider());
 
             // this first one should never be received
@@ -340,7 +340,7 @@ describe('RewardsManagerModule', function () {
           });
 
           describe('after time passes', () => {
-            before(async () => {
+            beforeEach(async () => {
               await fastForwardTo(startTime + 200, provider());
             });
 
@@ -357,8 +357,8 @@ describe('RewardsManagerModule', function () {
         });
 
         describe('within duration', () => {
-          before(restore);
-          before(async () => {
+          beforeEach(restore);
+          beforeEach(async () => {
             startTime = await getTime(provider());
 
             await RewardDistributor.connect(owner).distributeRewards(
@@ -392,7 +392,7 @@ describe('RewardsManagerModule', function () {
           });
 
           describe('after time passes', () => {
-            before(async () => {
+            beforeEach(async () => {
               await fastForwardTo(startTime + 25, provider());
             });
 
@@ -407,7 +407,7 @@ describe('RewardsManagerModule', function () {
             });
 
             describe('new distribution', () => {
-              before(async () => {
+              beforeEach(async () => {
                 startTime = await getTime(provider());
 
                 await RewardDistributor.connect(owner).distributeRewards(
@@ -435,7 +435,7 @@ describe('RewardsManagerModule', function () {
               });
 
               describe('after more time', () => {
-                before(async () => {
+                beforeEach(async () => {
                   await fastForwardTo(startTime + 100, provider());
                 });
 
@@ -463,7 +463,7 @@ describe('RewardsManagerModule', function () {
   });
 
   describe('updateRewards()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('only works with existing account', async () => {
       await assertRevert(
@@ -477,9 +477,9 @@ describe('RewardsManagerModule', function () {
   });
 
   describe('claimRewards()', async () => {
-    before(restore);
+    beforeEach(restore);
 
-    before('distribute some reward', async () => {
+    beforeEach('distribute some reward', async () => {
       await RewardDistributor.connect(owner).distributeRewards(
         poolId,
         collateralAddress(),
@@ -509,7 +509,7 @@ describe('RewardsManagerModule', function () {
     );
 
     describe('when distributor payout returns false', async () => {
-      before('set fail', async () => {
+      beforeEach('set fail', async () => {
         await RewardDistributor.connect(owner).setShouldFailPayout(true);
       });
 
@@ -529,7 +529,7 @@ describe('RewardsManagerModule', function () {
     });
 
     describe('successful claim', () => {
-      before('claim', async () => {
+      beforeEach('claim', async () => {
         await systems()
           .Core.connect(user1)
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
@@ -564,7 +564,7 @@ describe('RewardsManagerModule', function () {
       });
 
       describe('second payout', async () => {
-        before('distribute some reward', async () => {
+        beforeEach('distribute some reward', async () => {
           await RewardDistributor.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
@@ -574,7 +574,7 @@ describe('RewardsManagerModule', function () {
           );
         });
 
-        before('claim', async () => {
+        beforeEach('claim', async () => {
           await systems()
             .Core.connect(user1)
             .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
@@ -618,7 +618,7 @@ describe('RewardsManagerModule', function () {
   });
 
   describe('removeRewardsDistributor()', async () => {
-    before(restore);
+    beforeEach(restore);
 
     it('only works with owner', async () => {
       await assertRevert(
@@ -630,7 +630,7 @@ describe('RewardsManagerModule', function () {
       );
     });
 
-    before('distribute some rewards before removal', async function () {
+    beforeEach('distribute some rewards before removal', async function () {
       await RewardDistributor.connect(owner).distributeRewards(
         poolId,
         collateralAddress(),
@@ -641,7 +641,7 @@ describe('RewardsManagerModule', function () {
     });
 
     describe('successful invoke', async () => {
-      before('distribute some reward', async () => {
+      beforeEach('distribute some reward', async () => {
         const time = await getTime(provider());
         await RewardDistributor.connect(owner).distributeRewards(
           poolId,
@@ -652,7 +652,7 @@ describe('RewardsManagerModule', function () {
         );
       });
 
-      before('remove', async () => {
+      beforeEach('remove', async () => {
         await systems()
           .Core.connect(owner)
           .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);

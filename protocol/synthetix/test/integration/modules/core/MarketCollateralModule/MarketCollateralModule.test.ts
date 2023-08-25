@@ -12,7 +12,7 @@ describe('MarketCollateralModule', function () {
   let owner: Signer, user1: Signer;
 
   describe('MarketCollateralModule', function () {
-    before('identify signers', async () => {
+    beforeEach('identify signers', async () => {
       [owner, user1] = signers();
 
       // The owner assigns a maximum of 1,000
@@ -24,7 +24,7 @@ describe('MarketCollateralModule', function () {
     const configuredMaxAmount = ethers.utils.parseEther('1234');
 
     describe('configureMaximumMarketCollateral()', () => {
-      before(restore);
+      beforeEach(restore);
 
       it('is only owner', async () => {
         await assertRevert(
@@ -38,7 +38,7 @@ describe('MarketCollateralModule', function () {
 
       describe('successful invoke', () => {
         let tx: ContractTransaction;
-        before('configure', async () => {
+        beforeEach('configure', async () => {
           tx = await systems()
             .Core.connect(owner)
             .configureMaximumMarketCollateral(marketId(), collateralAddress(), configuredMaxAmount);
@@ -71,22 +71,22 @@ describe('MarketCollateralModule', function () {
     });
 
     describe('depositMarketCollateral()', async () => {
-      before(restore);
+      beforeEach(restore);
 
-      before('configure max', async () => {
+      beforeEach('configure max', async () => {
         await systems()
           .Core.connect(owner)
           .configureMaximumMarketCollateral(marketId(), collateralAddress(), configuredMaxAmount);
       });
 
-      before('user approves', async () => {
+      beforeEach('user approves', async () => {
         await collateralContract()
           .connect(user1)
           .approve(MockMarket().address, ethers.constants.MaxUint256);
       });
 
       let beforeCollateralBalance: ethers.BigNumber;
-      before('record user collateral balance', async () => {
+      beforeEach('record user collateral balance', async () => {
         beforeCollateralBalance = await collateralContract().balanceOf(await user1.getAddress());
       });
 
@@ -119,7 +119,7 @@ describe('MarketCollateralModule', function () {
 
       describe('invoked successfully', () => {
         let tx: ContractTransaction;
-        before('deposit', async () => {
+        beforeEach('deposit', async () => {
           tx = await MockMarket()
             .connect(user1)
             .depositCollateral(collateralAddress(), configuredMaxAmount);
@@ -161,7 +161,7 @@ describe('MarketCollateralModule', function () {
 
         describe('when withdrawing all usd', async () => {
           let withdrawable: ethers.BigNumber;
-          before('do it', async () => {
+          beforeEach('do it', async () => {
             withdrawable = await systems().Core.getWithdrawableMarketUsd(marketId());
             // because of the way the mock market works we must first increase reported debt
             await MockMarket().connect(user1).setReportedDebt(withdrawable);
@@ -176,15 +176,15 @@ describe('MarketCollateralModule', function () {
     });
 
     describe('WithdrawMarketCollateral()', async () => {
-      before(restore);
+      beforeEach(restore);
 
-      before('configure max', async () => {
+      beforeEach('configure max', async () => {
         await systems()
           .Core.connect(owner)
           .configureMaximumMarketCollateral(marketId(), collateralAddress(), configuredMaxAmount);
       });
 
-      before('deposit', async () => {
+      beforeEach('deposit', async () => {
         await collateralContract()
           .connect(user1)
           .approve(MockMarket().address, ethers.constants.MaxUint256);
@@ -194,7 +194,7 @@ describe('MarketCollateralModule', function () {
       });
 
       let beforeCollateralBalance: ethers.BigNumber;
-      before('record user collateral balance', async () => {
+      beforeEach('record user collateral balance', async () => {
         beforeCollateralBalance = await collateralContract().balanceOf(await user1.getAddress());
       });
 
@@ -232,7 +232,7 @@ describe('MarketCollateralModule', function () {
 
       describe('successful withdraw partial', async () => {
         let tx: ethers.providers.TransactionReceipt;
-        before('withdraw', async () => {
+        beforeEach('withdraw', async () => {
           tx = await (
             await MockMarket()
               .connect(user1)
@@ -278,7 +278,7 @@ describe('MarketCollateralModule', function () {
         });
 
         describe('successful withdraw full', async () => {
-          before('withdraw', async () => {
+          beforeEach('withdraw', async () => {
             // this should be the amount remaining
             await MockMarket()
               .connect(user1)
@@ -300,7 +300,7 @@ describe('MarketCollateralModule', function () {
       });
 
       describe('cannot withdraw collateral when credit capacity is over-utilized', async () => {
-        before('deposit collateral and withdraw maximum amount of USD', async () => {
+        beforeEach('deposit collateral and withdraw maximum amount of USD', async () => {
           await MockMarket()
             .connect(user1)
             .depositCollateral(collateralAddress(), configuredMaxAmount);
