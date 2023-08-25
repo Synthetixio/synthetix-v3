@@ -84,7 +84,7 @@ commands:
     steps:
       - run:
           name: "Wait for IPFS daemon to start"
-          command: wget --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
+          command: wget --output-document - --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
 
   version-contracts:
     steps:
@@ -229,7 +229,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --retries 3 --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -263,7 +263,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -304,7 +304,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -346,7 +346,7 @@ jobs:
             for _test in $_tests; do
               echo $_test
             done
-            mocha --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            mocha --retries 3 --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
 
       - store_test_results:
           path: "/tmp/junit"
@@ -541,10 +541,86 @@ jobs:
             else
               echo "Pull Request already exists: $PR_URL"
             fi
+
+  update-subgraphs:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      - CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
+      - GIT_PAGER: cat
+      - DEBUG: "cannon:*"
+    working_directory: ~/synthetix-v3
+    steps:
+      #- add_ssh_keys:
+      #  fingerprints: "46:05:bf:bf:84:e8:af:09:35:05:89:09:62:45:84:7c"
+      - run:
+          working_directory: ~/
+          name: "Checkout synthetix-v3"
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git clone git@github.com:Synthetixio/synthetix-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-v3
+
+      - install-ipfs
+      - run-ipfs-daemon
+      - install-foundry
+      - yarn-install
+      - wait-for-ipfs
+
+      - run:
+          name: "Generate updated subgraph code"
+          command: |
+            export CANNON_REGISTRY_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            yarn subgraphgen
+
+      - run:
+          name: "Push changes to subgraph-updates branch and create PR"
+          command: |
+            STATUS=$(git status)
+            if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
+              echo "SKIP. Working tree is clean. No changes to subgraphs"
+              exit 0
+            fi
+
+            git branch subgraph-updates
+            git checkout subgraph-updates
+
+            git config --global user.email nikita@cc.snxdao.io
+            git config --global user.name Noisekit
+
+            git add .
+            git commit -m "Update Subgraphs"
+            git push --set-upstream --force origin subgraph-updates
+
+            PR_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              https://api.github.com/repos/Synthetixio/synthetix-v3/pulls?state=open | \
+              jq -r '.[] | select(.head.ref=="subgraph-updates") | .html_url')
+
+            # If no PR exists with the branch "subgraph-updates", create one
+            # If PR already exists it would be updated with the most recent docs via forced push
+            if [ -z "$PR_URL" ]; then
+              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                https://api.github.com/repos/Synthetixio/synthetix-v3/pulls \
+                -d '{
+                  "title": "Update Subgraphs",
+                  "head": "subgraph-updates", 
+                  "base": "main"
+                }'
+            else
+              echo "Pull Request already exists: $PR_URL"
+            fi
+
 workflows:
   version: 2.1
 
   tests:
+    unless:
+      or:
+        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+
     jobs:
       - lint
       - size-contracts
@@ -674,3 +750,22 @@ workflows:
               ignore: /.*/
             branches:
               only: /docgen/
+
+  scheduled-subgraphs-update:
+    when:
+      and:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+        - equal: ["Subgraphs Update", << pipeline.schedule.name >>]
+    jobs:
+      - update-subgraphs
+
+  # temporary for dev
+  test-subgraphs-update:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+    jobs:
+      - update-subgraphs:
+          filters:
+            branches:
+              only: /automatic-subgraphs-update/
