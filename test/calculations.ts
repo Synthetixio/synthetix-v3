@@ -24,12 +24,17 @@ export const calcFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNu
 };
 
 /** Calculates order fees and keeper fees associated to settle the order. */
-export const calcOrderFees = async (bs: Bs, marketId: BigNumber, sizeDelta: BigNumber) => {
+export const calcOrderFees = async (
+  bs: Bs,
+  marketId: BigNumber,
+  sizeDelta: BigNumber,
+  keeperFeeBufferUsd: BigNumber
+) => {
   if (sizeDelta.eq(0)) {
     throw new Error('A sizeDelta of 0 will result in a NilOrder revert');
   }
 
-  const { systems } = bs;
+  const { systems, ethOracleNode } = bs;
   const { PerpMarketProxy } = systems();
 
   const fillPrice = await PerpMarketProxy.getFillPrice(marketId, sizeDelta);
@@ -58,7 +63,28 @@ export const calcOrderFees = async (bs: Bs, marketId: BigNumber, sizeDelta: BigN
 
   const notional = wei(sizeDelta).abs().mul(fillPrice);
   const orderFee = notional.mul(takerSizeRatio).mul(takerFee).add(notional.mul(makerSizeRatio).mul(makerFee)).toBN();
-  const keeperFee = wei(0).toBN(); // TODO
 
-  return { notional, orderFee, keeperFee };
+  // Get the current ETH price.
+  const { answer: ethPrice } = await ethOracleNode().agg.latestRoundData();
+  // Grab market configuration to infer price.
+  const { keeperSettlementGasUnits, keeperProfitMarginPercent, minKeeperFeeUsd, maxKeeperFeeUsd } =
+    await PerpMarketProxy.getMarketConfiguration();
+
+  const calcKeeperOrderSettlementFee = (blockBaseFeePerGas: BigNumber) => {
+    // Perform calc bounding by min/max to prevent going over/under.
+    const baseKeeperFeeUsd = wei(keeperSettlementGasUnits.mul(blockBaseFeePerGas)).mul(1e9).mul(ethPrice);
+
+    // Base keeperFee + profit margin and asmall user specified buffer.
+    const baseKeeperFeePlusProfit = baseKeeperFeeUsd.mul(wei(1).add(keeperProfitMarginPercent).add(keeperFeeBufferUsd));
+
+    // Ensure keeper fee doesn't exceed min/max bounds.
+    const boundedKeeperFeeUsd = Wei.min(
+      Wei.max(wei(minKeeperFeeUsd), baseKeeperFeePlusProfit),
+      wei(maxKeeperFeeUsd)
+    ).toBN();
+
+    return boundedKeeperFeeUsd;
+  };
+
+  return { notional, orderFee, calcKeeperOrderSettlementFee };
 };

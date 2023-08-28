@@ -13,6 +13,7 @@ import {
   depositMargin,
   getFastForwardTimestamp,
   getPythPriceData,
+  setMarketConfiguration,
   setMarketConfigurationById,
 } from '../../helpers';
 import { BigNumber } from 'ethers';
@@ -20,7 +21,7 @@ import { calcOrderFees, calcFillPrice } from '../../calculations';
 
 describe('OrderModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { systems, restore, provider, keeper, collaterals, markets, traders } = bs;
+  const { systems, restore, provider, keeper, ethOracleNode, collaterals, markets, traders } = bs;
 
   beforeEach(restore);
 
@@ -643,7 +644,12 @@ describe('OrderModule', () => {
 
         // Retrieve fees associated with this new order.
         const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order2.sizeDelta, BigNumber.from(0));
-        const { orderFee: expectedOrderFee } = await calcOrderFees(bs, marketId, order2.sizeDelta);
+        const { orderFee: expectedOrderFee } = await calcOrderFees(
+          bs,
+          marketId,
+          order2.sizeDelta,
+          order2.keeperFeeBufferUsd
+        );
 
         assertBn.equal(orderFee, expectedOrderFee);
       });
@@ -724,12 +730,119 @@ describe('OrderModule', () => {
       });
     });
 
-    describe('keeperFee', () => {
-      it('should calculate keeper fees proportional to block.baseFee and profit margin');
+    // Due to a bug with hardhat_setNextBlockBaseFeePerGas, block.basefee is 0 on views. This means, it's very
+    // difficult to test that keeperFees are correctly working. Will revisit this to test a different way, eg
+    // to parse out the event logs that contain the keeperFee.
+    //
+    // @see: https://github.com/NomicFoundation/hardhat/issues/3028
+    describe.skip('keeperFee', () => {
+      it('should calculate keeper fees proportional to block.baseFee and profit margin', async () => {
+        const { PerpMarketProxy } = systems();
 
-      it('should cap the keeperFee by its max usd when exceeds ceiling');
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+        const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(
+          marketId,
+          order.sizeDelta,
+          order.keeperFeeBufferUsd
+        );
+        const { calcKeeperOrderSettlementFee } = await calcOrderFees(
+          bs,
+          marketId,
+          order.sizeDelta,
+          order.keeperFeeBufferUsd
+        );
+        const tx = await commitAndSettle(bs, marketId, trader, order);
 
-      it('should ceil the keeperFee by its min usd when below floor');
+        // block.basefee on the block which settled the commitment.
+        const { lastBaseFeePerGas } = await provider().getFeeData();
+
+        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas as BigNumber);
+
+        assertBn.equal(expectedKeeperFee, keeperFee);
+        assertEvent(
+          tx,
+          `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee})`,
+          PerpMarketProxy
+        );
+      });
+
+      it('should cap the keeperFee by its max usd when exceeds ceiling', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const BLOCK_BASE_FEE_PER_GAS = 10;
+
+        // Set a really high ETH price of 10k USD.
+        await ethOracleNode().agg.mockSetCurrentPrice(wei(4850).toBN());
+
+        // Cap the max keeperFee to $50 USD
+        const maxKeeperFeeUsd = wei(50).toBN();
+        await setMarketConfiguration(bs, { maxKeeperFeeUsd, minKeeperFeeUsd: wei(10).toBN() });
+
+        // Explicitly set the block.basefee here (and set again before commit etc.)
+        //
+        // This block.basefee _may_ move but _should_ be close enough.
+        await provider().send('hardhat_setNextBlockBaseFeePerGas', [BLOCK_BASE_FEE_PER_GAS]);
+
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredKeeperFeeBufferUsd: 0 });
+        const { keeperFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFeeBufferUsd);
+        const { calcKeeperOrderSettlementFee } = await calcOrderFees(
+          bs,
+          marketId,
+          order.sizeDelta,
+          order.keeperFeeBufferUsd
+        );
+
+        await commitAndSettle(bs, marketId, trader, order, BLOCK_BASE_FEE_PER_GAS);
+
+        const { lastBaseFeePerGas } = await provider().getFeeData();
+        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas as BigNumber);
+
+        assertBn.equal(keeperFee, expectedKeeperFee);
+        assertBn.equal(expectedKeeperFee, maxKeeperFeeUsd);
+      });
+
+      it('should cap the keeperFee by its min usd when below floor', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Set a low ETH price of $800 USD.
+        await ethOracleNode().agg.mockSetCurrentPrice(wei(800).toBN());
+
+        // Set a reasonably high minKeeperFee to payout $30. More importantly, don't give an additional buffer as profit either.
+        const minKeeperFeeUsd = wei(30).toBN();
+        await setMarketConfiguration(bs, {
+          maxKeeperFeeUsd: wei(50).toBN(),
+          minKeeperFeeUsd,
+          keeperProfitMarginPercent: wei(0).toBN(),
+        });
+
+        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs)
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredKeeperFeeBufferUsd: 0 });
+        const { keeperFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFeeBufferUsd);
+        const { calcKeeperOrderSettlementFee } = await calcOrderFees(
+          bs,
+          marketId,
+          order.sizeDelta,
+          order.keeperFeeBufferUsd
+        );
+        await commitAndSettle(bs, marketId, trader, order);
+
+        const { lastBaseFeePerGas } = await provider().getFeeData();
+        const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas as BigNumber);
+
+        assertBn.equal(keeperFee, expectedKeeperFee);
+        assertBn.equal(keeperFee, minKeeperFeeUsd);
+      });
     });
   });
 
@@ -794,7 +907,7 @@ describe('OrderModule', () => {
       assertBn.gt(actualFillPrice, oraclePrice);
     });
 
-    it('should return correct fillPrice when size is 0', async () => {
+    it('should return mark price as fillPrice when size is 0', async () => {
       const { PerpMarketProxy } = systems();
 
       const gTrader = genTrader(bs);
@@ -818,7 +931,7 @@ describe('OrderModule', () => {
       assertBn.near(expectedFillPrice, actualFillPrice);
     });
 
-    it('should calculate fillPrice correctly', async () => {
+    it('should calculate fillPrice (exhaustive)', async () => {
       const { PerpMarketProxy } = systems();
 
       const gTrader = genTrader(bs);

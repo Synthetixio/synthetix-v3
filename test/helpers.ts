@@ -59,6 +59,17 @@ export const setMarketConfigurationById = async (
   return PerpMarketProxy.getMarketConfigurationById(marketId);
 };
 
+/** Generic update on global market data (similar to setMarketConfigurationById). */
+export const setMarketConfiguration = async (
+  { systems, owner }: ReturnType<typeof bootstrap>,
+  params: Partial<PerpMarketConfiguration.GlobalDataStruct>
+) => {
+  const { PerpMarketProxy } = systems();
+  const data = await PerpMarketProxy.getMarketConfiguration();
+  await PerpMarketProxy.connect(owner()).setMarketConfiguration({ ...data, ...params });
+  return PerpMarketProxy.getMarketConfiguration();
+};
+
 /** Returns a Pyth updateData blob and the update fee in wei. */
 export const getPythPriceData = async (
   bs: ReturnType<typeof bootstrap>,
@@ -119,9 +130,15 @@ export const commitOrder = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
-  { sizeDelta, limitPrice, keeperFeeBufferUsd }: Awaited<ReturnType<typeof genOrder>>
+  { sizeDelta, limitPrice, keeperFeeBufferUsd }: Awaited<ReturnType<typeof genOrder>>,
+  blockBaseFeePerGas?: number
 ) => {
   const { PerpMarketProxy } = bs.systems();
+
+  if (blockBaseFeePerGas) {
+    await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
+  }
+
   await PerpMarketProxy.connect(trader.signer).commitOrder(
     trader.accountId,
     marketId,
@@ -136,17 +153,24 @@ export const commitAndSettle = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
-  order: GeneratedOrder
+  order: GeneratedOrder,
+  blockBaseFeePerGas?: number
 ) => {
-  const { PerpMarketProxy } = bs.systems();
+  const { systems, provider, keeper } = bs;
+  const { PerpMarketProxy } = systems();
 
-  await commitOrder(bs, marketId, trader, await order);
+  await commitOrder(bs, marketId, trader, await order, blockBaseFeePerGas);
 
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-  await fastForwardTo(settlementTime, bs.provider());
+  await fastForwardTo(settlementTime, provider());
 
   const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
-  return PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+
+  if (blockBaseFeePerGas) {
+    await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
+  }
+
+  return PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
     value: updateFee,
   });
 };
