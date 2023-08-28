@@ -1054,14 +1054,14 @@ describe('MarginModule', async () => {
   });
 
   describe('getCollateralUsd', () => {
-    it('should return correct usd amount in collateral', async () => {
+    it('should return the usd amount in collateral', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
     });
 
-    it('should return correct usd amount after price of collateral changes', async () => {
+    it('should return usd amount after price of collateral changes', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice } = await depositMargin(
         bs,
