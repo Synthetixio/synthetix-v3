@@ -90,7 +90,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             return 0;
         }
         uint256 oraclePrice = market.getOraclePrice();
-        int256 priceWithFunding = int(oraclePrice) + market.getNextFunding(oraclePrice);
+        int256 priceWithFunding = int(oraclePrice) + market.getNextFundingAccrued(oraclePrice);
         int256 totalDebt = market.skew.mulDecimal(priceWithFunding) + market.debtCorrection;
         return MathUtil.max(totalDebt, 0).toUint();
     }

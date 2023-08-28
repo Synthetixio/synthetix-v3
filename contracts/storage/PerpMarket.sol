@@ -150,7 +150,7 @@ library PerpMarket {
         uint256 price
     ) internal returns (int256 fundingRate, int256 fundingAccrued) {
         fundingRate = getCurrentFundingRate(self);
-        fundingAccrued = getNextFunding(self, price);
+        fundingAccrued = getNextFundingAccrued(self, price);
 
         self.currentFundingRateComputed = fundingRate;
         self.currentFundingAccruedComputed = fundingAccrued;
@@ -258,7 +258,7 @@ library PerpMarket {
     /**
      * @dev Returns the next market funding accrued value.
      */
-    function getNextFunding(PerpMarket.Data storage self, uint256 price) internal view returns (int256) {
+    function getNextFundingAccrued(PerpMarket.Data storage self, uint256 price) internal view returns (int256) {
         int256 fundingRate = getCurrentFundingRate(self);
         // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(

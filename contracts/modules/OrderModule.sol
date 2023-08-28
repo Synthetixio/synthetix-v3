@@ -48,6 +48,8 @@ contract OrderModule is IOrderModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice();
+
+        // TODO: Consider removing and only recomputing funding at the settlement.
         recomputeFunding(market, oraclePrice);
 
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
