@@ -88,6 +88,7 @@ interface IPerpsAccountModule {
 
     /**
      * @notice Gets the initial/maintenance margins across all positions that an account has open.
+     * @dev Note that requiredInitialMargin and requiredMaintenanceMargin includes the liquidation rewards, in case you want the value without it you need to substract maxLiquidationReward.
      * @param accountId Id of the account.
      * @return requiredInitialMargin initial margin req (used when withdrawing collateral).
      * @return requiredMaintenanceMargin maintenance margin req (used to determine liquidation threshold).
