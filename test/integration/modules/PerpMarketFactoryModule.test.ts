@@ -1,5 +1,6 @@
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
 import { genAddress, genBootstrap, genBytes32 } from '../../generators';
 
@@ -72,6 +73,26 @@ describe('PerpMarketFactoryModule', () => {
         PerpMarketProxy.connect(from).setEthOracleNodeId(nodeId),
         `Unauthorized("${await from.getAddress()}")`
       );
+    });
+  });
+
+  describe('getMarketDigest', () => {
+    describe('{currentFundingRate,fundingVelocity}', () => {
+      it('should compute current funding rate relative to time (concrete)');
+
+      it('should demonstrate a balance market not having zero funding');
+
+      it('should have zero funding when market is new and empty');
+
+      it('should continue to increase funding in same direction so long as market is skewed');
+
+      it('should stop increasing funding when market perfectly balanced');
+
+      it('should change funding direction when skew flips');
+
+      it('should cap velocity by maxFundingVelocity');
+
+      // forEach([1, -1]).it('should result in max funding velocity when skew is 100% ({0})', async (side: number) => {});
     });
   });
 });
