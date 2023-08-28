@@ -13,8 +13,8 @@
     "codegen:optimism-goerli": "node ./codegen optimism-goerli && graph codegen subgraph.optimism-goerli.yaml --output-dir=optimism-goerli/generated && prettier --write optimism-goerli/generated",
     "build:optimism-goerli": "graph build subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --network optimism-goerli",
     "deploy:optimism-goerli": "graph deploy snx-v3/v3-perps-opt-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service",
-    "test": "echo 'SKIP: No tests' || graph test",
-    "coverage": "echo 'SKIP: No tests'",
+    "test": "graph test",
+    "coverage": "yarn deployments:optimism-goerli && yarn codegen:optimism-goerli && git diff --exit-code && yarn test --coverage",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/v3-perps-opt-goerli",
     "remove-local": "graph remove --node http://localhost:8020/ snx-v3/v3-perps-opt-goerli",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/v3-perps-opt-goerli"
