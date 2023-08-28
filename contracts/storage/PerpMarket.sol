@@ -198,10 +198,7 @@ library PerpMarket {
      */
     function getCurrentFundingVelocity(PerpMarket.Data storage self) internal view returns (int256) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-
-        int128 maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int128 skewScale = marketConfig.skewScale.toInt();
-        int128 skew = self.skew;
 
         // Avoid a panic due to div by zero. Return 0 immediately.
         if (skewScale == 0) {
@@ -209,12 +206,13 @@ library PerpMarket {
         }
 
         // Ensures the proportionalSkew is between -1 and 1.
-        int256 pSkew = skew.divDecimal(skewScale);
+        int256 pSkew = self.skew.divDecimal(skewScale);
         int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
-        return pSkewBounded.mulDecimal(maxFundingVelocity);
+
+        return pSkewBounded.mulDecimal(marketConfig.maxFundingVelocity.toInt());
     }
 
     /**
