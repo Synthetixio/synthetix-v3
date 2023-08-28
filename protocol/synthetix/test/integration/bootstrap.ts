@@ -112,7 +112,7 @@ export function bootstrapWithMockMarketAndPool() {
       .systems()
       .Core.connect(owner)
       .setPoolCollateralConfiguration(r.poolId, r.collateralAddress(), {
-        maxDepositD18: bn(1000000000),
+        collateralLimitD18: bn(1000000000),
         issuanceRatioD18: bn(1),
       });
   });

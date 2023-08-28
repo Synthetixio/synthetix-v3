@@ -534,18 +534,20 @@ library Pool {
         address collateralType,
         uint256 collateralAmountD18
     ) internal view {
-        uint256 maxDeposit = self.collateralConfigurations[collateralType].maxDepositD18;
+        uint256 collateralLimitD18 = self
+            .collateralConfigurations[collateralType]
+            .collateralLimitD18;
         uint256 currentCollateral = self.vaults[collateralType].currentCollateral();
 
         if (
-            (self.collateralDisabledByDefault && maxDeposit == 0) ||
-            (maxDeposit > 0 && currentCollateral + collateralAmountD18 > maxDeposit)
+            (self.collateralDisabledByDefault && collateralLimitD18 == 0) ||
+            (collateralLimitD18 > 0 && currentCollateral + collateralAmountD18 > collateralLimitD18)
         ) {
             revert PoolCollateralLimitExceeded(
                 self.id,
                 collateralType,
                 currentCollateral + collateralAmountD18,
-                self.collateralConfigurations[collateralType].maxDepositD18
+                collateralLimitD18
             );
         }
     }

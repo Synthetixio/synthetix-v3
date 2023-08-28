@@ -713,7 +713,7 @@ describe('PoolModule Admin', function () {
         systems()
           .Core.connect(user2)
           .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
-            maxDepositD18: bn(10),
+            collateralLimitD18: bn(10),
             issuanceRatioD18: bn(0),
           }),
         `Unauthorized("${await user2.getAddress()}")`,
@@ -747,7 +747,7 @@ describe('PoolModule Admin', function () {
         systems()
           .Core.connect(user2)
           .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
-            maxDepositD18: bn(10),
+            collateralLimitD18: bn(10),
             issuanceRatioD18: bn(2),
           }),
         `Unauthorized("${await user2.getAddress()}")`,
@@ -766,7 +766,7 @@ describe('PoolModule Admin', function () {
       await systems()
         .Core.connect(user1)
         .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
-          maxDepositD18: bn(10),
+          collateralLimitD18: bn(10),
           issuanceRatioD18: bn(2),
         });
 

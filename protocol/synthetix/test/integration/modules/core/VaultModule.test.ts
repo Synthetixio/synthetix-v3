@@ -351,7 +351,7 @@ describe('VaultModule', function () {
         await systems()
           .Core.connect(user1)
           .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
-            maxDepositD18: bn(10),
+            collateralLimitD18: bn(10),
             issuanceRatioD18: bn(0),
           });
       });
@@ -379,7 +379,7 @@ describe('VaultModule', function () {
         await systems()
           .Core.connect(user1)
           .setPoolCollateralConfiguration(fakeVaultId, collateralAddress(), {
-            maxDepositD18: bn(1000000),
+            collateralLimitD18: bn(1000000),
             issuanceRatioD18: bn(0),
           });
       });
@@ -402,7 +402,7 @@ describe('VaultModule', function () {
         await systems()
           .Core.connect(owner)
           .setPoolCollateralConfiguration(poolId, collateralAddress(), {
-            maxDepositD18: depositAmount.div(2),
+            collateralLimitD18: depositAmount.div(2),
             issuanceRatioD18: bn(0),
           });
       });
@@ -464,7 +464,7 @@ describe('VaultModule', function () {
           await systems()
             .Core.connect(owner)
             .setPoolCollateralConfiguration(poolId, collateralAddress(), {
-              maxDepositD18: depositAmount.mul(10),
+              collateralLimitD18: depositAmount.mul(10),
               issuanceRatioD18: bn(0),
             });
         });
