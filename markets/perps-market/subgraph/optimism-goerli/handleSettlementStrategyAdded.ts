@@ -1,5 +1,5 @@
-import { SettlementStrategyAdded } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { SettlementStrategy } from '../generated/schema';
+import { SettlementStrategyAdded } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { SettlementStrategy } from './generated/schema';
 
 export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): void {
   const id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();

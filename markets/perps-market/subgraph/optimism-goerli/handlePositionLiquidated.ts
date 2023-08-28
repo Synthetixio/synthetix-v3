@@ -1,5 +1,5 @@
-import { PositionLiquidated as PositionLiquidatedEvent } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { PositionLiquidated } from '../generated/schema';
+import { PositionLiquidated as PositionLiquidatedEvent } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { PositionLiquidated } from './generated/schema';
 
 export function handlePositionLiquidated(event: PositionLiquidatedEvent): void {
   const id =

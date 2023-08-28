@@ -1,5 +1,5 @@
-import { AccountLiquidated as AccountLiquidatedEvent } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { AccountLiquidated } from '../generated/schema';
+import { AccountLiquidated as AccountLiquidatedEvent } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { AccountLiquidated } from './generated/schema';
 
 export function handleAccountLiquidated(event: AccountLiquidatedEvent): void {
   const id = event.params.accountId.toString() + '-' + event.block.number.toString();

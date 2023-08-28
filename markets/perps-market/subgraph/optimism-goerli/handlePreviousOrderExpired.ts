@@ -1,5 +1,5 @@
-import { PreviousOrderExpired as PreviousOrderExpiredEvent } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { PreviousOrderExpired } from '../generated/schema';
+import { PreviousOrderExpired as PreviousOrderExpiredEvent } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { PreviousOrderExpired } from './generated/schema';
 
 export function handlePreviousOrderExpired(event: PreviousOrderExpiredEvent): void {
   const orderExpiredId =

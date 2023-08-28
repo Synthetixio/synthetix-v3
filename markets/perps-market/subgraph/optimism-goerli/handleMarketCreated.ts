@@ -1,5 +1,5 @@
-import { MarketCreated } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { Market } from '../generated/schema';
+import { MarketCreated } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { Market } from './generated/schema';
 
 export function handleMarketCreated(event: MarketCreated): void {
   const id = event.params.perpsMarketId.toString();

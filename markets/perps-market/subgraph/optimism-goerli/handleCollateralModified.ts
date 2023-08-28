@@ -1,5 +1,5 @@
-import { CollateralModified as CollateralModifiedEvent } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { CollateralModified } from '../generated/schema';
+import { CollateralModified as CollateralModifiedEvent } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { CollateralModified } from './generated/schema';
 
 export function handleCollateralModified(event: CollateralModifiedEvent): void {
   const id =

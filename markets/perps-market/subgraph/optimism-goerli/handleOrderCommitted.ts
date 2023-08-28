@@ -1,6 +1,6 @@
 import { BigInt } from '@graphprotocol/graph-ts';
-import { OrderCommitted as OrderCommittedEvent } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { Order, OrderCommitted } from '../generated/schema';
+import { OrderCommitted as OrderCommittedEvent } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { Order, OrderCommitted } from './generated/schema';
 
 export function handleOrderCommitted(event: OrderCommittedEvent): void {
   const orderId = event.params.marketId.toString() + '-' + event.params.accountId.toString();

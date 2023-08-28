@@ -1,5 +1,5 @@
-import { FundingParametersSet } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { Market } from '../generated/schema';
+import { FundingParametersSet } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { Market } from './generated/schema';
 
 export function handleFundingParametersSet(event: FundingParametersSet): void {
   const id = event.params.marketId.toString();

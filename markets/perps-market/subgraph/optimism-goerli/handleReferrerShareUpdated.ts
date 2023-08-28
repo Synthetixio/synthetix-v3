@@ -1,5 +1,5 @@
-import { ReferrerShareUpdated } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { ReferrerShare } from '../generated/schema';
+import { ReferrerShareUpdated } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { ReferrerShare } from './generated/schema';
 
 export function handleReferrerShareUpdated(event: ReferrerShareUpdated): void {
   const id = event.params.referrer.toHexString();

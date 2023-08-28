@@ -1,5 +1,5 @@
-import { LiquidationParametersSet } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { Market } from '../generated/schema';
+import { LiquidationParametersSet } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { Market } from './generated/schema';
 
 export function handleLiquidationParametersSet(event: LiquidationParametersSet): void {
   const id = event.params.marketId.toString();

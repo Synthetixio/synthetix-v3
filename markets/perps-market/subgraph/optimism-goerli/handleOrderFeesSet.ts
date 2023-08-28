@@ -1,5 +1,5 @@
-import { OrderFeesSet } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-import { Market } from '../generated/schema';
+import { OrderFeesSet } from './generated/PerpsMarketProxy/PerpsMarketProxy';
+import { Market } from './generated/schema';
 
 export function handleOrderFeesSet(event: OrderFeesSet): void {
   const id = event.params.marketId.toString();
