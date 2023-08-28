@@ -15,7 +15,7 @@ export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 type Bs = ReturnType<typeof bootstrap>;
 type GeneratedTrader = ReturnType<typeof genTrader> | Awaited<ReturnType<typeof genTrader>>;
-type GeneratedOrder = ReturnType<typeof genOrder> | Awaited<ReturnType<typeof genOrder>>;
+type CommitableOrder = Pick<Awaited<ReturnType<typeof genOrder>>, 'sizeDelta' | 'limitPrice' | 'keeperFeeBufferUsd'>;
 
 /** Provision margin for this trader given the full `gTrader` context. */
 export const approveAndMintMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
@@ -130,7 +130,7 @@ export const commitOrder = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
-  { sizeDelta, limitPrice, keeperFeeBufferUsd }: Awaited<ReturnType<typeof genOrder>>,
+  order: CommitableOrder | Promise<CommitableOrder>,
   blockBaseFeePerGas?: number
 ) => {
   const { PerpMarketProxy } = bs.systems();
@@ -139,6 +139,7 @@ export const commitOrder = async (
     await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
   }
 
+  const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await order;
   await PerpMarketProxy.connect(trader.signer).commitOrder(
     trader.accountId,
     marketId,
@@ -153,13 +154,13 @@ export const commitAndSettle = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
-  order: GeneratedOrder,
+  order: CommitableOrder | Promise<CommitableOrder>,
   blockBaseFeePerGas?: number
 ) => {
   const { systems, provider, keeper } = bs;
   const { PerpMarketProxy } = systems();
 
-  await commitOrder(bs, marketId, trader, await order, blockBaseFeePerGas);
+  await commitOrder(bs, marketId, trader, order, blockBaseFeePerGas);
 
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, provider());
