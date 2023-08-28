@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity ^0.8.4;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -545,6 +545,7 @@ library Pool {
         uint64 __reserved2;
         uint64 __reserved3;
         mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
@@ -559,7 +560,6 @@ library PoolCollateralConfiguration {
     bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
     struct Data {
         uint256 maxDepositD18;
-        bool collateralTypeDisabled;
         uint256 issuanceRatioD18;
     }
 }
@@ -675,9 +675,4 @@ library CcipClient {
         uint256 gasLimit;
         bool strict;
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }
