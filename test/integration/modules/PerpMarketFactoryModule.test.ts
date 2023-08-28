@@ -1,7 +1,7 @@
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForward, fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
@@ -14,7 +14,7 @@ import {
   genOrderFromSizeDelta,
   genTrader,
 } from '../../generators';
-import { commitAndSettle, depositMargin, setMarketConfigurationById } from '../../helpers';
+import { ONE_DAY_IN_SEC, commitAndSettle, depositMargin, setMarketConfigurationById } from '../../helpers';
 import { BigNumber } from 'ethers';
 
 describe('PerpMarketFactoryModule', () => {
@@ -91,7 +91,7 @@ describe('PerpMarketFactoryModule', () => {
 
   describe.only('getMarketDigest', () => {
     describe('{currentFundingRate,fundingVelocity}', () => {
-      it('should compute current funding rate relative to time (concrete)', async () => {
+      it.only('should compute current funding rate relative to time (concrete)', async () => {
         // This test is pulled directly from a conrete example developed for PerpsV2.
         //
         // @see: https://github.com/davidvuong/perpsv2-funding/blob/master/main.ipynb
@@ -99,7 +99,7 @@ describe('PerpMarketFactoryModule', () => {
         const { PerpMarketProxy } = systems();
 
         // Use static market and traders for concrete example.
-        const market = markets()[0]; // OP
+        const market = markets()[0];
         const collateral = collaterals()[0];
         const trader1 = traders()[0];
         const trader2 = traders()[1];
@@ -107,9 +107,9 @@ describe('PerpMarketFactoryModule', () => {
 
         // Configure funding and velocity specific parameters so we get deterministic results.
         await setMarketConfigurationById(bs, market.marketId(), {
-          skewScale: BigNumber.from(10_000_000),
+          skewScale: wei(100_000).toBN(),
           maxFundingVelocity: wei(0.25).toBN(),
-          maxMarketSize: BigNumber.from(500_000_000),
+          maxMarketSize: wei(500_000).toBN(),
         });
 
         // Set the market price as funding is denominated in USD.
@@ -120,36 +120,34 @@ describe('PerpMarketFactoryModule', () => {
         const trades = [
           // skew = long, r = (t 1000, s 100)
           {
-            sizeDelta: wei(100).toBN(),
+            sizeDelta: wei(1000).toBN(),
             account: trader1,
-            fastForwardBySec: 1000,
+            fastForwardInSec: 1000,
             expectedFundingRate: BigNumber.from(0),
-            expectedFundingVelocity: wei(0.025).toBN(),
+            expectedFundingVelocity: wei(0.0025).toBN(),
           },
           // skew = even more long, r = (t 30000, s 300)
           {
-            sizeDelta: wei(200).toBN(),
+            sizeDelta: wei(2000).toBN(),
             account: trader2,
-            fastForwardBySec: 29_000,
+            fastForwardInSec: 29_000,
             expectedFundingRate: wei(0.0083912).toBN(),
-            expectedFundingVelocity: wei(0.075).toBN(),
+            expectedFundingVelocity: wei(0.0075).toBN(),
           },
           // skew = balanced but funding rate sticks, r (t 50000, s 0)
           {
-            sizeDelta: wei(-300).toBN(),
+            sizeDelta: wei(-3000).toBN(),
             account: trader3,
-            fastForwardBySec: 20_000,
+            fastForwardInSec: 20_000,
             expectedFundingRate: wei(0.02575231),
             expectedFundingVelocity: BigNumber.from(0),
           },
           // See below for one final fundingRate observation without a trade (no change in rate).
         ];
 
-        const marginUsdDepositAmount = 1_500_000; // 1.5M margin.
-
-        for (const trade of trades) {
-          const { sizeDelta, account, fastForwardBySec, expectedFundingRate, expectedFundingVelocity } = trade;
-
+        // Deposit margin into each trader's account before opening trades.
+        const marginUsdDepositAmount = 1_500_000; // 1.5M USD margin.
+        for (const { account } of trades) {
           await depositMargin(
             bs,
             genTrader(bs, {
@@ -159,19 +157,23 @@ describe('PerpMarketFactoryModule', () => {
               desiredMarginUsdDepositAmount: marginUsdDepositAmount,
             })
           );
+        }
 
-          await fastForward(fastForwardBySec, provider());
+        for (const trade of trades) {
+          const { sizeDelta, account, fastForwardInSec, expectedFundingRate, expectedFundingVelocity } = trade;
+
+          // fastward time, commit/settle order, get market digest for comparison.
+          console.log((await provider().getBlock('latest')).timestamp);
+          // console.log('fastForwardInSec', fastForwardInSec);
+          await fastForwardTo((await provider().getBlock('latest')).timestamp + fastForwardInSec - 12, provider());
+          console.log((await provider().getBlock('latest')).timestamp);
 
           const order = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
-          console.log(order);
-
           await commitAndSettle(bs, market.marketId(), account, order);
 
           const { fundingVelocity, currentFundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
-          // console.log(currentFundingRate);
-          // console.log(fundingVelocity);
+          console.log(currentFundingRate);
 
-          // TODO: currentFundingRate not matching but velocity works.
           assertBn.equal(fundingVelocity, expectedFundingVelocity);
 
           // const fundingRate = await perpsV2Market.currentFundingRate();
@@ -183,7 +185,7 @@ describe('PerpMarketFactoryModule', () => {
         }
 
         // No change in skew, funding rate/velocity should remain the same.
-        await fastForward(60 * 60 * 24, provider()); // 1 day
+        await fastForward(ONE_DAY_IN_SEC, provider()); // 1 day
         const { fundingVelocity, currentFundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
         assertBn.equal(fundingVelocity, BigNumber.from(0));
 
