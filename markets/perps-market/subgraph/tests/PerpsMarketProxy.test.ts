@@ -2,6 +2,7 @@ import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'mat
 
 import handleAccountCreated from './handleAccountCreated';
 import handleAccountLiquidated from './handleAccountLiquidated';
+import handleCollateralModified from './handleCollateralModified';
 
 describe('PerpsMarketProxy', () => {
   beforeEach(() => {
@@ -14,4 +15,5 @@ describe('PerpsMarketProxy', () => {
 
   test('handleAccountCreated', handleAccountCreated);
   test('handleAccountLiquidated', handleAccountLiquidated);
+  test('handleCollateralModified', handleCollateralModified);
 });
