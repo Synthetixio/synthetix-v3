@@ -136,7 +136,12 @@ library PerpsMarket {
         // but if maxLiquidationPd is set, and the current market p/d is less than that,
         // then allow for an extra block of liquidation
         uint maxLiquidationPd = marketConfig.maxLiquidationPd;
-        if (liquidatableAmount == 0 && maxLiquidationPd != 0) {
+        if (
+            liquidatableAmount == 0 &&
+            maxLiquidationPd != 0 &&
+            // only allow this if the last update was not in the current block
+            self.lastTimeLiquidationCapacityUpdated != block.timestamp.to128()
+        ) {
             uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
             if (currentPd < maxLiquidationPd) {
                 liquidatableAmount = (

@@ -131,14 +131,31 @@ describe('Liquidation - max pd', async () => {
   });
 
   describe('more liquidation of trader 1 since under max pd', () => {
-    before('call liquidate twice more since under max pd', async () => {
-      await systems().PerpsMarket.connect(keeper()).liquidate(2);
-      await systems().PerpsMarket.connect(keeper()).liquidate(2);
+    describe('same block', () => {
+      before('call liquidate twice more since under max pd', async () => {
+        await systems()
+          .PerpsMarket.connect(keeper())
+          .multicall([
+            systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+            systems().PerpsMarket.interface.encodeFunctionData('liquidate', [2]),
+          ]);
+      });
+
+      it('liquidated 25 OP more', async () => {
+        const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
+        assertBn.equal(size, bn(15));
+      });
     });
 
-    it('liquidated 25 OP more', async () => {
-      const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
-      assertBn.equal(size, bn(0));
+    describe('next block', () => {
+      before('call liquidate twice more since under max pd', async () => {
+        await systems().PerpsMarket.connect(keeper()).liquidate(2);
+      });
+
+      it('liquidated 25 OP more', async () => {
+        const [, , size] = await systems().PerpsMarket.getOpenPosition(2, perpsMarket.marketId());
+        assertBn.equal(size, bn(0));
+      });
     });
   });
 
