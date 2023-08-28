@@ -10,6 +10,7 @@ import { isNil, uniq } from 'lodash';
 // --- Constants --- //
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+export const ONE_DAY_IN_SEC = 60 * 60 * 24;
 
 // --- Mutative helpers --- //
 
