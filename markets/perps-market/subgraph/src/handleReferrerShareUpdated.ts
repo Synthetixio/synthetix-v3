@@ -1,5 +1,4 @@
 import { ReferrerShareUpdated } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-
 import { ReferrerShare } from '../generated/schema';
 
 export function handleReferrerShareUpdated(event: ReferrerShareUpdated): void {

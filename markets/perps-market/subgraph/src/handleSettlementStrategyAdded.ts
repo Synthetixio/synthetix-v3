@@ -1,8 +1,4 @@
-import {
-  SettlementStrategyAdded,
-  SettlementStrategyEnabled,
-} from '../generated/PerpsMarketProxy/PerpsMarketProxy';
-
+import { SettlementStrategyAdded } from '../generated/PerpsMarketProxy/PerpsMarketProxy';
 import { SettlementStrategy } from '../generated/schema';
 
 export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): void {
@@ -23,17 +19,5 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
   strategy.priceDeviationTolerance = event.params.strategy.priceDeviationTolerance;
   strategy.enabled = !event.params.strategy.disabled;
 
-  strategy.save();
-}
-
-export function handleSettlementStrategyEnabled(event: SettlementStrategyEnabled): void {
-  const id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();
-  const strategy = SettlementStrategy.load(id);
-
-  if (!strategy) {
-    return;
-  }
-
-  strategy.enabled = event.params.enabled;
   strategy.save();
 }
