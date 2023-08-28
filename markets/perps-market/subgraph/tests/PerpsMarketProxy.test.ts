@@ -1,11 +1,17 @@
-import { beforeEach, clearStore, describe, test } from 'matchstick-as';
+import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'matchstick-as';
 
-import handleAccountCreatedTest from './handleAccountCreated';
+import handleAccountCreated from './handleAccountCreated';
+import handleAccountLiquidated from './handleAccountLiquidated';
 
 describe('PerpsMarketProxy', () => {
   beforeEach(() => {
     clearStore();
   });
 
-  test('handleAccountCreated', handleAccountCreatedTest);
+  afterEach(() => {
+    logStore();
+  });
+
+  test('handleAccountCreated', handleAccountCreated);
+  test('handleAccountLiquidated', handleAccountLiquidated);
 });
