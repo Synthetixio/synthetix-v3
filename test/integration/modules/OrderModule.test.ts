@@ -860,23 +860,23 @@ describe('OrderModule', () => {
     it('should give premium when increasing skew', async () => {
       const { PerpMarketProxy } = systems();
 
-      const gTrader = genTrader(bs);
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
-      // Creating a long skew for the market
+      // Creating a long skew for the market.
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 1.1,
         desiredSide: 1,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Collect some data
+      // Collect some data.
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
-      // Using size to simulate short which will reduce the skew
+      // Using size to simulate short which will reduce the skew.
       const size = wei(genNumber(1, 10)).toBN();
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
+
       // To get a "premium" to our long we expect the price to have a premium
       assertBn.gt(actualFillPrice, oraclePrice);
     });
@@ -884,20 +884,20 @@ describe('OrderModule', () => {
     it('should give discount when reducing skew', async () => {
       const { PerpMarketProxy } = systems();
 
-      const gTrader = genTrader(bs);
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
-      // Creating a long skew for the market
+      // Creating a long skew for the market.
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
         desiredSide: 1,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Collect some data
+      // Collect some data.
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
       const prevPositionSizeNeg = wei(order.sizeDelta).mul(-1).toNumber();
+
       // Using size to simulate short which will reduce the skew. The smallest negative size is the size of the current skew
       const size = wei(genNumber(prevPositionSizeNeg, -1)).toBN();
 
@@ -910,43 +910,40 @@ describe('OrderModule', () => {
     it('should return mark price as fillPrice when size is 0', async () => {
       const { PerpMarketProxy } = systems();
 
-      const gTrader = genTrader(bs);
-
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Collect some data
+      // Collect some data.
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
       const { skewScale } = await PerpMarketProxy.getMarketConfigurationById(marketId);
       const marketSkew = order.sizeDelta;
 
-      // Size to check fill price
+      // Size to check fill price.
       const size = wei(0).toBN();
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
       const expectedFillPrice = wei(1).add(wei(marketSkew).div(skewScale)).mul(oraclePrice).toBN();
-      // Using near to avoid rounding errors
+
+      // Using near to avoid rounding errors.
       assertBn.near(expectedFillPrice, actualFillPrice);
     });
 
     it('should calculate fillPrice (exhaustive)', async () => {
       const { PerpMarketProxy } = systems();
 
-      const gTrader = genTrader(bs);
-
-      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, gTrader);
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Collect some data
+      // Collect some data.
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
       const { skewScale } = await PerpMarketProxy.getMarketConfigurationById(marketId);
       const marketSkew = order.sizeDelta;
 
-      // Size to check fill price
+      // Size to check fill price.
       const size = wei(genNumber(-10, 10)).toBN();
 
       const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
