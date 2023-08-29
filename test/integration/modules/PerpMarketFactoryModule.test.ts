@@ -342,7 +342,7 @@ describe('PerpMarketFactoryModule', () => {
       });
 
       forEach(['long', 'short']).it(
-        'should continue to increase funding in same direction so long as market is skewed',
+        'should continue to increase (%s) funding in same direction insofar as market is skewed',
         async (side: string) => {
           const { PerpMarketProxy } = systems();
 
