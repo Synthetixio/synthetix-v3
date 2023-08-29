@@ -10,7 +10,8 @@ import { isNil, uniq } from 'lodash';
 // --- Constants --- //
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-export const ONE_DAY_IN_SEC = 60 * 60 * 24;
+export const SECONDS_ONE_HR = 60 * 60;
+export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
 
 // --- Mutative helpers --- //
 
