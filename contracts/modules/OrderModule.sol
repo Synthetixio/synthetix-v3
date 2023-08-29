@@ -137,7 +137,7 @@ contract OrderModule is IOrderModule {
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
-        uint256 marginUsd,
+        uint256 collateralUsd,
         uint256 newMarginUsd
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
@@ -145,11 +145,11 @@ contract OrderModule is IOrderModule {
         market.skew = market.skew + newPosition.size - oldPosition.size;
         market.size = (market.size.to256() + MathUtil.abs(newPosition.size) - MathUtil.abs(oldPosition.size)).to128();
 
-        market.updateDebtCorrection(oldPosition, newPosition, marginUsd, newMarginUsd);
+        market.updateDebtCorrection(oldPosition, newPosition, collateralUsd, newMarginUsd);
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
-            Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - marginUsd.toInt());
+            Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - collateralUsd.toInt());
         }
 
         if (newPosition.size == 0) {
@@ -200,8 +200,9 @@ contract OrderModule is IOrderModule {
         recomputeFunding(market, pythPrice);
 
         Position.ValidatedTrade memory trade = Position.validateTrade(accountId, market, params);
-
-        updateMarketPostSettlement(accountId, market, trade.newPosition, trade.marginUsd, trade.newMarginUsd);
+        // @dev not that we're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
+        uint256 collateralUsd = Margin.getCollateralUsd(accountId, marketId);
+        updateMarketPostSettlement(accountId, market, trade.newPosition, collateralUsd, trade.newMarginUsd);
 
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, trade.keeperFee);
 
