@@ -37,11 +37,19 @@ interface ILiquidationModule {
      * @notice Liquidates an account.
      * @dev according to the current situation and account size it can be a partial or full liquidation.
      * @param accountId Id of the account to liquidate.
+     * @return liquidationReward total reward sent to liquidator.
      */
-    function liquidate(uint128 accountId) external;
+    function liquidate(uint128 accountId) external returns (uint256 liquidationReward);
 
     /**
      * @notice Liquidates all flagged accounts.
+     * @return liquidationReward total reward sent to liquidator.
      */
-    function liquidateFlagged() external;
+    function liquidateFlagged() external returns (uint256 liquidationReward);
+
+    /**
+     * @notice Returns if an account is eligible for liquidation.
+     * @return isEligible
+     */
+    function canLiquidate(uint128 accountId) external view returns (bool isEligible);
 }
