@@ -10,10 +10,8 @@ import "../storage/PoolCrossChainInfo.sol";
 /**
  * @title Module for management of pools which are cross chain capable
  */
-interface ICrossChainUpkeepModule is FunctionsClientInterface, AutomationCompatibleInterface {
+interface ICrossChainUpkeepModule is AutomationCompatibleInterface {
     event PoolHeartbeat(uint128 poolId, PoolCrossChainSync.Data syncData);
-
-    function getSubscriptionId(uint128 poolId) external view returns (uint64);
 
     function _recvPoolHeartbeat(
         uint128 poolId,

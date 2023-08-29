@@ -9,14 +9,14 @@ import "../../interfaces/ICrossChainPoolModule.sol";
 import "../../interfaces/IPoolModule.sol";
 import "../../interfaces/IMulticallModule.sol";
 import "../../storage/Config.sol";
-import "../../storage/CrossChain.sol";
 import "../../storage/Pool.sol";
+
+import "../../utils/CrossChain.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 contract CrossChainPoolModule is ICrossChainPoolModule {
     using Functions for Functions.Request;
-    using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using SafeCastU128 for uint128;
@@ -53,7 +53,8 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
 
         uint64[] memory targetChainIds = new uint64[](1);
         targetChainIds[0] = targetChainId;
-        gasTokenUsed = CrossChain.load().broadcast(
+        (bool success, bytes memory result) = address(this).call(abi.encodeWithSelector(
+						pool.crossChain[0].broadcastSelector, 
             targetChainIds,
             abi.encodeWithSelector(
                 this._recvCreateCrossChainPool.selector,
@@ -61,7 +62,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
                 sourcePoolId
             ),
             200000
-        );
+        ));
 
         CrossChain.refundLeftoverGas(gasTokenUsed);
     }
@@ -107,11 +108,11 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         // TODO: use internal function
         //address(this).call(abi.encodeWithSelector(IPoolModule.setPoolConfiguration, poolId, newMarketConfigurations[0]));
 
-        CrossChain.Data storage crossChain = CrossChain.load();
         for (uint i = 1; i < pool.crossChain[0].pairedChains.length; i++) {
             uint64[] memory targetChainIds = new uint64[](1);
             targetChainIds[0] = pool.crossChain[0].pairedChains[i];
-            gasTokenUsed += crossChain.broadcast(
+            (bool success, bytes memory result) = address(this).call(abi.encodeWithSelector(
+								pool.crossChain[0].broadcastSelector,
                 targetChainIds,
                 abi.encodeWithSelector(
                     this._recvSetCrossChainPoolConfiguration.selector,
@@ -121,7 +122,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
                     uint64(block.timestamp)
                 ),
                 100000
-            );
+            ));
         }
 
         CrossChain.refundLeftoverGas(gasTokenUsed);

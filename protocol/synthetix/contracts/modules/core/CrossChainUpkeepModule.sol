@@ -10,7 +10,7 @@ import "../../interfaces/ICrossChainUpkeepModule.sol";
 import "../../interfaces/IPoolModule.sol";
 import "../../interfaces/IMulticallModule.sol";
 import "../../storage/Config.sol";
-import "../../storage/CrossChain.sol";
+import "../../utils/CrossChain.sol";
 import "../../storage/Pool.sol";
 
 import "hardhat/console.sol";
@@ -19,7 +19,6 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
     using Functions for Functions.Request;
-    using CrossChain for CrossChain.Data;
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
     using SafeCastU128 for uint128;
@@ -36,98 +35,6 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
 
     bytes32 internal constant _CONFIG_SYNC_POOL_CODE_ADDRESS = "performUpkeep_syncPool";
     bytes32 internal constant _CONFIG_SYNC_POOL_SECRETS_ADDRESS = "performUpkeep_syncPoolSecrets";
-
-
-    function getSubscriptionId(uint128 poolId) external override view returns (uint64) {
-        return Pool.loadExisting(poolId).crossChain[0].chainlinkSubscriptionId;
-    }
-
-    /**
-     * @notice Callback that is invoked once the DON has resolved the request or hit an error
-     *
-     * @param requestId The request ID, returned by sendRequest()
-     * @param response Aggregated response from the user code
-     * @param err Aggregated error from the user code or from the execution pipeline
-     * Either response or error parameter will be set, but never both
-     */
-    function handleOracleFulfillment(
-        bytes32 requestId,
-        bytes memory response,
-        bytes memory err
-    ) external override {
-        CrossChain.Data storage crossChain = CrossChain.load();
-        if (msg.sender != address(crossChain.chainlinkFunctionsOracle)) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-
-        if (err.length > 0) {
-            return;
-        }
-
-        Pool.Data storage pool = Pool.loadExisting(
-            uint128(uint256(crossChain.chainlinkFunctionsRequestInfo[requestId]))
-        );
-
-        uint256 chainsCount = pool.crossChain[0].pairedChains.length;
-
-        uint256[] memory liquidityAmounts = new uint256[](chainsCount);
-
-        PoolCrossChainSync.Data memory sync;
-
-        sync.dataTimestamp = uint64(block.timestamp);
-
-        for (uint i = 0; i < chainsCount; i++) {
-            (
-                uint256 chainLiquidity,
-                int256 chainCumulativeMarketDebt,
-                int256 chainTotalDebt,
-                uint256 chainSyncTime,
-                uint256 chainLastPoolConfigTime
-            ) = abi.decode(response, (uint256, int256, int256, uint256, uint256));
-
-            liquidityAmounts[i] = chainLiquidity;
-            sync.liquidity += chainLiquidity.to128();
-            sync.cumulativeMarketDebt += chainCumulativeMarketDebt.to128();
-            sync.totalDebt += chainTotalDebt.to128();
-
-            sync.oldestDataTimestamp = sync.oldestDataTimestamp < chainSyncTime
-                ? sync.oldestDataTimestamp
-                : uint64(chainSyncTime);
-            sync.oldestPoolConfigTimestamp = sync.oldestPoolConfigTimestamp <
-                chainLastPoolConfigTime
-                ? sync.oldestPoolConfigTimestamp
-                : uint64(chainLastPoolConfigTime);
-        }
-
-        int256 marketDebtChange = sync.cumulativeMarketDebt -
-            pool.crossChain[0].latestSync.cumulativeMarketDebt;
-        int256 remainingDebt = marketDebtChange;
-
-        // send sync message
-        for (uint i = 1; i < chainsCount; i++) {
-            uint64[] memory targetChainIds = new uint64[](1);
-            targetChainIds[0] = pool.crossChain[0].pairedChains[i];
-
-            int256 chainAssignedDebt = (marketDebtChange * liquidityAmounts[i].toInt()) /
-                sync.liquidity.toInt();
-            remainingDebt -= chainAssignedDebt;
-
-            // TODO: gas limit should be based on number of markets assigned to pool
-            // TODO: broadcast will be paid in LINK
-            CrossChain.load().broadcast(
-                targetChainIds,
-                abi.encodeWithSelector(
-                    this._recvPoolHeartbeat.selector,
-                    pool.crossChain[0].pairedPoolIds[targetChainIds[0]],
-                    sync,
-                    chainAssignedDebt
-                ),
-                500000
-            );
-        }
-
-        _receivePoolHeartbeat(pool.id, sync, remainingDebt);
-    }
 
     function _recvPoolHeartbeat(
         uint128 poolId,
@@ -173,7 +80,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
 
         upkeepNeeded =
             (block.timestamp - pool.crossChain[0].latestSync.dataTimestamp) >
-            pool.crossChain[0].chainlinkSubscriptionInterval;
+            pool.crossChain[0].subscriptionInterval;
 
 				performData = data;
     }
@@ -191,56 +98,21 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         uint128 poolId = abi.decode(data, (uint128));
         Pool.Data storage pool = Pool.loadExisting(poolId);
 
-        console.log("loaded pool", poolId, pool.crossChain[0].pairedChains.length);
-
         // take this opporitunity to rebalance the markets in this pool
         // we do it here instead of fulfill because there is no reason for this to fail if for some reason the function fails
 
-        string[] memory args = new string[](pool.crossChain[0].pairedChains.length * 3 + 1);
-        // max fail param
-        args[0] = _bytesToHexString(abi.encode(1));
+				bytes[] memory calls = new bytes[](pool.crossChain[0].pairedChains.length);
+				for (uint i = 0;i < calls.length;i++) {
+						calls[i] = _encodeCrossChainPoolCall(pool.crossChain[0].pairedPoolIds[pool.crossChain[0].pairedChains[i]]);
+				}
 
-        // first pool is ourself
-        /*args[0] = _bytesToHexString(abi.encode(block.chainid));
-        args[1] = _bytesToHexString();
-        args[2] = _bytesToHexString(_encodeCrossChainPoolCall(poolId));*/
-
-        console.log("loaded initial args");
-
-        for (uint i = 0; i < args.length / 3; i++) {
-            uint64 chainId = pool.crossChain[0].pairedChains[i / 2];
-            args[i * 3 + 1] = _bytesToHexString(abi.encode(chainId));
-
-            args[i * 3 + 2] = _bytesToHexString(abi.encode(address(this)));
-
-            args[i * 3 + 3] = _bytesToHexString(
-                _encodeCrossChainPoolCall(pool.crossChain[0].pairedPoolIds[chainId])
-            );
-        }
-
-        string memory source = string(
-            _codeAt(Config.readAddress(_CONFIG_SYNC_POOL_CODE_ADDRESS, address(0)))
-        );
-        //bytes memory secrets = _codeAt(Config.readAddress(_CONFIG_SYNC_POOL_SECRETS_ADDRESS, address(0)));
-
-        console.log("loaded source", source);
-
-        Functions.Request memory req = Functions.Request({
-            codeLocation: Functions.Location.Inline,
-            secretsLocation: Functions.Location.Remote,
-            language: Functions.CodeLanguage.JavaScript,
-            source: source,
-            // hardcoded for now--this is just temporary and unlikely to change
-            secrets: "https://gist.githubusercontent.com/dbeal-eth/1d989d3af81bdd1d5c48cf22b81263a8/raw/05b3e06ae2671a5f53792cff6ad8fb8ea6004676/offchain-secrets.json",
-            args: args
-        });
-        bytes32 requestId = CrossChain.load().chainlinkFunctionsOracle.sendRequest(
-            pool.crossChain[0].chainlinkSubscriptionId,
-            Functions.encodeCBOR(req),
+        address(this).call(abi.encodeWithSelector(
+						pool.crossChain[0].offchainReadSelector,
+            pool.crossChain[0].subscriptionId,
+						pool.crossChain[0].pairedChains,
+						calls,
             300000
-        );
-
-        CrossChain.load().chainlinkFunctionsRequestInfo[requestId] = bytes32(uint256(pool.id));
+        ));
     }
 
     function _encodeCrossChainPoolCall(uint128 poolId) internal pure returns (bytes memory) {
@@ -304,9 +176,5 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         }
 
         return string(abi.encodePacked("0x", converted));
-    }
-
-    function getDONPublicKey() external view override returns (bytes memory) {
-        return CrossChain.load().chainlinkFunctionsOracle.getDONPublicKey();
     }
 }

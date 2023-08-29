@@ -12,7 +12,7 @@ import "../interfaces/external/FunctionsBillingRegistryInterface.sol";
 /**
  * @title System wide configuration for anything
  */
-library CrossChain {
+library CrossChainChainlink {
     using SetUtil for SetUtil.UintSet;
 
     event ProcessedCcipMessage(bytes payload, bytes result);

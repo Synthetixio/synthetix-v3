@@ -2,7 +2,6 @@
 pragma solidity ^0.8.7;
 
 import "../../interfaces/IUSDTokenModule.sol";
-import "../../storage/CrossChain.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
