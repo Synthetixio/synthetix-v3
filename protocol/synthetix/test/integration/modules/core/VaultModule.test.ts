@@ -88,8 +88,8 @@ describe('VaultModule', function () {
       .configureCollateral({
         tokenAddress: await systems().Core.getUsdToken(),
         oracleNodeId: ethers.utils.formatBytes32String(''),
-        issuanceRatioD18: 150,
-        liquidationRatioD18: 100,
+        issuanceRatioD18: bn(1.5),
+        liquidationRatioD18: bn(1.1),
         liquidationRewardD18: 0,
         minDelegationD18: 0,
         depositingEnabled: true,

@@ -1,6 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers as Ethers } from 'ethers';
-import { bootstrap } from '../../../bootstrap';
+import { bn, bootstrap } from '../../../bootstrap';
 import {
   addCollateral,
   verifyCollateral,
@@ -29,8 +29,8 @@ describe('CollateralModule', function () {
         ({ Collateral, oracleNodeId, collateralPrice } = await addCollateral(
           'Synthetix Token',
           'SNX',
-          400,
-          200,
+          bn(4),
+          bn(2),
           systemOwner,
           systems().Core,
           systems().OracleManager
@@ -38,7 +38,7 @@ describe('CollateralModule', function () {
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(1, Collateral, oracleNodeId, 400, 200, true, systems().Core);
+        await verifyCollateral(1, Collateral, oracleNodeId, bn(4), bn(2), true, systems().Core);
       });
 
       it('shows in the collateral list', async function () {
@@ -50,8 +50,8 @@ describe('CollateralModule', function () {
           ({ Collateral: AnotherCollateral, oracleNodeId: oracleNodeId2 } = await addCollateral(
             'Another Token',
             'ANT',
-            400,
-            200,
+            bn(4),
+            bn(2),
             systemOwner,
             systems().Core,
             systems().OracleManager
@@ -63,8 +63,8 @@ describe('CollateralModule', function () {
             2,
             AnotherCollateral,
             oracleNodeId2,
-            400,
-            200,
+            bn(4),
+            bn(2),
             true,
             systems().Core
           );
@@ -77,15 +77,17 @@ describe('CollateralModule', function () {
         describe('when a regular user attempts to update the second collateral', function () {
           it('reverts', async () => {
             await assertRevert(
-              systems().Core.connect(user1).configureCollateral({
-                tokenAddress: AnotherCollateral.address,
-                oracleNodeId: oracleNodeId2,
-                issuanceRatioD18: 200,
-                liquidationRatioD18: 100,
-                liquidationRewardD18: 0,
-                minDelegationD18: 0,
-                depositingEnabled: false,
-              }),
+              systems()
+                .Core.connect(user1)
+                .configureCollateral({
+                  tokenAddress: AnotherCollateral.address,
+                  oracleNodeId: oracleNodeId2,
+                  issuanceRatioD18: bn(2),
+                  liquidationRatioD18: bn(1),
+                  liquidationRewardD18: 0,
+                  minDelegationD18: 0,
+                  depositingEnabled: false,
+                }),
               `Unauthorized("${await user1.getAddress()}")`,
               systems().Core
             );
@@ -94,15 +96,17 @@ describe('CollateralModule', function () {
 
         describe('when the second collateral is updated', () => {
           before('update the collateral', async () => {
-            const tx = await systems().Core.connect(systemOwner).configureCollateral({
-              tokenAddress: AnotherCollateral.address,
-              oracleNodeId: oracleNodeId2,
-              issuanceRatioD18: 300,
-              liquidationRatioD18: 250,
-              liquidationRewardD18: 0,
-              minDelegationD18: 0,
-              depositingEnabled: true,
-            });
+            const tx = await systems()
+              .Core.connect(systemOwner)
+              .configureCollateral({
+                tokenAddress: AnotherCollateral.address,
+                oracleNodeId: oracleNodeId2,
+                issuanceRatioD18: bn(3),
+                liquidationRatioD18: bn(2.5),
+                liquidationRewardD18: 0,
+                minDelegationD18: 0,
+                depositingEnabled: true,
+              });
             await tx.wait();
           });
 
@@ -111,8 +115,8 @@ describe('CollateralModule', function () {
               2,
               AnotherCollateral,
               oracleNodeId2,
-              300,
-              250,
+              bn(3),
+              bn(2.5),
               true,
               systems().Core
             );
@@ -125,15 +129,17 @@ describe('CollateralModule', function () {
 
         describe('when the second collateral is disabled', () => {
           before('disable the collateral', async () => {
-            const tx = await systems().Core.connect(systemOwner).configureCollateral({
-              tokenAddress: AnotherCollateral.address,
-              oracleNodeId: oracleNodeId2,
-              issuanceRatioD18: 300,
-              liquidationRatioD18: 250,
-              liquidationRewardD18: 0,
-              minDelegationD18: 0,
-              depositingEnabled: false,
-            });
+            const tx = await systems()
+              .Core.connect(systemOwner)
+              .configureCollateral({
+                tokenAddress: AnotherCollateral.address,
+                oracleNodeId: oracleNodeId2,
+                issuanceRatioD18: bn(3),
+                liquidationRatioD18: bn(2.5),
+                liquidationRewardD18: 0,
+                minDelegationD18: 0,
+                depositingEnabled: false,
+              });
             await tx.wait();
           });
 
@@ -142,8 +148,8 @@ describe('CollateralModule', function () {
               2,
               AnotherCollateral,
               oracleNodeId2,
-              300,
-              250,
+              bn(3),
+              bn(2.5),
               false,
               systems().Core
             );
@@ -169,15 +175,17 @@ describe('CollateralModule', function () {
         const dummyAddress = await user1.getAddress();
 
         await assertRevert(
-          systems().Core.connect(user1).configureCollateral({
-            tokenAddress: dummyAddress,
-            oracleNodeId: oracleNodeId2,
-            issuanceRatioD18: 400,
-            liquidationRatioD18: 200,
-            liquidationRewardD18: 0,
-            minDelegationD18: 0,
-            depositingEnabled: false,
-          }),
+          systems()
+            .Core.connect(user1)
+            .configureCollateral({
+              tokenAddress: dummyAddress,
+              oracleNodeId: oracleNodeId2,
+              issuanceRatioD18: bn(4),
+              liquidationRatioD18: bn(2),
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
+              depositingEnabled: false,
+            }),
           `Unauthorized("${await user1.getAddress()}")`,
           systems().Core
         );
@@ -189,45 +197,51 @@ describe('CollateralModule', function () {
 
       it('issuanceRatioD18 is below 100%', async () => {
         await assertRevert(
-          systems().Core.connect(systemOwner).configureCollateral({
-            tokenAddress: AnotherCollateral.address,
-            oracleNodeId: oracleNodeId2,
-            issuanceRatioD18: 99,
-            liquidationRatioD18: 250,
-            liquidationRewardD18: 0,
-            minDelegationD18: 0,
-            depositingEnabled: false,
-          }),
+          systems()
+            .Core.connect(systemOwner)
+            .configureCollateral({
+              tokenAddress: AnotherCollateral.address,
+              oracleNodeId: oracleNodeId2,
+              issuanceRatioD18: bn(0.99),
+              liquidationRatioD18: bn(2.5),
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
+              depositingEnabled: false,
+            }),
           'InvalidParameter("issuanceRatioD18", "must be greater than 100%")'
         );
       });
 
       it('liquidationRatioD18 is below 100%', async () => {
         await assertRevert(
-          systems().Core.connect(systemOwner).configureCollateral({
-            tokenAddress: AnotherCollateral.address,
-            oracleNodeId: oracleNodeId2,
-            issuanceRatioD18: 100,
-            liquidationRatioD18: 99,
-            liquidationRewardD18: 0,
-            minDelegationD18: 0,
-            depositingEnabled: false,
-          }),
+          systems()
+            .Core.connect(systemOwner)
+            .configureCollateral({
+              tokenAddress: AnotherCollateral.address,
+              oracleNodeId: oracleNodeId2,
+              issuanceRatioD18: bn(2),
+              liquidationRatioD18: bn(0.99),
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
+              depositingEnabled: false,
+            }),
           'InvalidParameter("liquidationRatioD18", "must be greater than 100%")'
         );
       });
 
       it('issuanceRatioD18 is smaller than liquidationRatioD18', async () => {
         await assertRevert(
-          systems().Core.connect(systemOwner).configureCollateral({
-            tokenAddress: AnotherCollateral.address,
-            oracleNodeId: oracleNodeId2,
-            issuanceRatioD18: 100,
-            liquidationRatioD18: 250,
-            liquidationRewardD18: 0,
-            minDelegationD18: 0,
-            depositingEnabled: false,
-          }),
+          systems()
+            .Core.connect(systemOwner)
+            .configureCollateral({
+              tokenAddress: AnotherCollateral.address,
+              oracleNodeId: oracleNodeId2,
+              issuanceRatioD18: bn(2),
+              liquidationRatioD18: bn(2.5),
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
+              depositingEnabled: false,
+            }),
           'InvalidParameter("issuanceRatioD18", "must be greater than liquidationRatioD18")'
         );
       });

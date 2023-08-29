@@ -142,11 +142,11 @@ library CollateralConfiguration {
             );
         }
 
-        if (config.issuanceRatioD18 < 100) {
+        if (config.issuanceRatioD18 <= 1e18) {
             revert ParameterError.InvalidParameter("issuanceRatioD18", "must be greater than 100%");
         }
 
-        if (config.liquidationRatioD18 < 100) {
+        if (config.liquidationRatioD18 <= 1e18) {
             revert ParameterError.InvalidParameter(
                 "liquidationRatioD18",
                 "must be greater than 100%"

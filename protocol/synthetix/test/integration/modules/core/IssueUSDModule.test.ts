@@ -59,8 +59,8 @@ describe('IssueUSDModule', function () {
       .configureCollateral({
         tokenAddress: await systems().Core.getUsdToken(),
         oracleNodeId: ethers.utils.formatBytes32String(''),
-        issuanceRatioD18: 150,
-        liquidationRatioD18: 100,
+        issuanceRatioD18: bn(150),
+        liquidationRatioD18: bn(100),
         liquidationRewardD18: 0,
         minDelegationD18: 0,
         depositingEnabled: true,
