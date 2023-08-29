@@ -14,6 +14,14 @@ import "./CollateralLock.sol";
 library Collateral {
     using SafeCastU256 for uint256;
 
+    /**
+     * @dev Thrown when a specified market is not found.
+     */
+    error AmountExceedAvailableCollateral(
+        uint256 amountAvailableForDelegationD18,
+        uint256 amountD18
+    );
+
     struct Data {
         /**
          * @dev The amount that can be withdrawn or delegated in this collateral.
@@ -44,6 +52,9 @@ library Collateral {
      * @dev Decrements the entry's availableCollateral.
      */
     function decreaseAvailableCollateral(Data storage self, uint256 amountD18) internal {
+        if (self.amountAvailableForDelegationD18 < amountD18) {
+            revert AmountExceedAvailableCollateral(self.amountAvailableForDelegationD18, amountD18);
+        }
         self.amountAvailableForDelegationD18 -= amountD18;
     }
 
