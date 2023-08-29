@@ -58,6 +58,15 @@ library PerpsMarketConfiguration {
          * @dev This value gets applied to the initial margin ratio to ensure there's a cap on the max leverage regardless of position size
          */
         uint256 minimumInitialMarginRatioD18;
+        /**
+         * @dev Threshold for allowing further liquidations when max liquidation amount is reached
+         */
+        uint256 maxLiquidationPd;
+        /**
+         * @dev if the msg.sender is this endorsed liquidator during an account liquidation, the max liquidation amount doesn't apply.
+         * @dev this address is allowed to fully liquidate any account eligible for liquidation.
+         */
+        address endorsedLiquidator;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {

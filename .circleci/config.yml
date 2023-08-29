@@ -1,0 +1,771 @@
+version: 2.1
+
+parameters:
+  node-version:
+    type: string
+    default: "16.20.1"
+    # TODO: update to Node 18 when we get fresh hardhat
+    # default: "18.17.1"
+
+commands:
+  yarn-install:
+    steps:
+      - run: yarn install --immutable --immutable-cache
+
+  install-foundry:
+    steps:
+      - restore_cache:
+          keys:
+            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+
+      - run:
+          name: "Install Foundry"
+          working_directory: ~/
+          environment:
+            SHELL: /bin/bash
+          command: |-
+            export PATH="$PATH:$HOME/.foundry/bin"
+            echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
+
+            if command -v anvil; then
+              echo "Anvil already installed"
+              anvil --version
+            else
+              curl -L https://foundry.paradigm.xyz | bash
+              foundryup
+            fi
+
+      - save_cache:
+          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          paths:
+            - "~/.foundry"
+
+  install-ipfs:
+    steps:
+      - restore_cache:
+          keys:
+            - ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+
+      - run:
+          name: "Install IPFS"
+          working_directory: ~/
+          command: |
+            export PATH="$PATH:$HOME/go-ipfs"
+            echo 'export PATH=$PATH:$HOME/go-ipfs' >> $BASH_ENV
+
+            if command -v ipfs; then
+              echo "IPFS already installed"
+              ipfs version
+              ipfs id
+            else
+              LATEST_VERSION=$(curl -sSL https://dist.ipfs.tech/go-ipfs/versions | tail -n 1)
+              LATEST_VERSION_NUMBER=${LATEST_VERSION#*v}
+              DOWNLOAD_URL="https://dist.ipfs.tech/go-ipfs/${LATEST_VERSION}/go-ipfs_${LATEST_VERSION}_linux-amd64.tar.gz"
+              echo "DOWNLOAD_URL=$DOWNLOAD_URL"
+              curl -sSL -o ipfs.tar.gz $DOWNLOAD_URL
+              tar -xzf ipfs.tar.gz
+              rm -rf ~/.ipfs
+              ipfs init
+            fi
+
+      - save_cache:
+          key: ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
+          paths:
+            - "~/go-ipfs"
+            - "~/.ipfs"
+
+  run-ipfs-daemon:
+    steps:
+      - run:
+          command: ipfs daemon
+          background: true
+
+  wait-for-ipfs:
+    steps:
+      - run:
+          name: "Wait for IPFS daemon to start"
+          command: wget --output-document - --retry-connrefused --waitretry=20 --read-timeout=20 --timeout=15 -t 10 --post-data '' "http://localhost:5001/api/v0/version"
+
+  version-contracts:
+    steps:
+      # Find the last update of any contract
+      - run: |
+          git log -1 -- \
+            utils/core-modules/contracts \
+            utils/core-contracts/contracts \
+            protocol/synthetix/contracts \
+            protocol/governance/contracts \
+            protocol/oracle-manager/contracts \
+            markets/spot-market/contracts \
+            markets/perps-market/contracts \
+            markets/legacy-market/contracts \
+            > /tmp/version--contracts.txt
+      - run: cat /tmp/version--contracts.txt
+
+  version-testable-contracts:
+    steps:
+      # Currently we only have testable contracts generated for @synthetixio/main
+      # Add more folders to version calc (space separated)
+      - run: git log -1 -- protocol/synthetix/contracts > /tmp/version--testable-contracts.txt
+      - run: cat /tmp/version--testable-contracts.txt
+
+jobs:
+  build-testable:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+      - yarn-install
+      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - version-contracts
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+            - cannon-{{ .Environment.CACHE_VERSION }}-
+
+      - version-testable-contracts
+      - restore_cache:
+          keys:
+            - generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
+
+      - run:
+          name: "@synthetixio/main: generate-testable"
+          command: |-
+            if test -d "protocol/synthetix/contracts/generated/test" && [ $(ls protocol/synthetix/contracts/generated/test | wc -l) -gt 1  ]; then
+              echo "SKIP, no changes detected"
+            else
+              yarn workspace "@synthetixio/main" run generate-testable
+            fi
+      - save_cache:
+          key: generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
+          paths:
+            - "protocol/synthetix/contracts/generated"
+            # Add more folders here if we generate more
+
+      - restore_cache:
+          keys:
+            - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+      - run: yarn workspaces foreach --topological-dev --verbose run build-testable
+      - save_cache:
+          key: testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+          paths:
+            - "protocol/synthetix/artifacts"
+            - "protocol/synthetix/cache"
+            - "protocol/synthetix/typechain-types"
+            - "protocol/oracle-manager/artifacts"
+            - "protocol/oracle-manager/cache"
+            - "protocol/oracle-manager/typechain-types"
+            - "markets/perps-market/artifacts"
+            - "markets/perps-market/cache"
+            - "markets/perps-market/typechain-types"
+            - "markets/spot-market/artifacts"
+            - "markets/spot-market/cache"
+            - "markets/spot-market/typechain-types"
+
+      - run: yarn workspaces foreach --verbose run check:storage
+
+      - save_cache:
+          key: cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+          paths:
+            - "~/.local/share/cannon"
+      - save_cache:
+          key: hardhat-{{ .Environment.SOLC_VERSION }}
+          paths:
+            - "~/.cache/hardhat-nodejs"
+
+  test-contracts:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    parallelism: << parameters.parallelism >>
+    steps:
+      - checkout
+      - install-foundry
+      - yarn-install
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - version-contracts
+      - restore_cache:
+          keys:
+            - cannon-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+            - cannon-{{ .Environment.CACHE_VERSION }}-
+      - restore_cache:
+          keys:
+            - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
+
+      - version-testable-contracts
+      - restore_cache:
+          keys:
+            - generated-testable-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--testable-contracts.txt" }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --retries 3 --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-utils:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run:
+          name: "Run tests"
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-modules:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+      - yarn-install
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-core-contracts:
+    parameters:
+      workspace:
+        type: string
+      parallelism:
+        type: integer
+    parallelism: << parameters.parallelism >>
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+
+      - run: yarn workspace "<< parameters.workspace >>" run compile-contracts
+
+      - run:
+          name: "Run tests"
+          environment:
+            REPORT_GAS: true
+          command: |
+            export PATH=$PATH:$PWD/node_modules/.bin
+            _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
+            echo "Workspace: $_dir"
+            cd $_dir
+            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
+            echo "Tests:"
+            for _test in $_tests; do
+              echo $_test
+            done
+            mocha --retries 3 --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+
+      - store_test_results:
+          path: "/tmp/junit"
+
+  test-subgraph:
+    parameters:
+      workspace:
+        type: string
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+      - run: yarn workspace "<< parameters.workspace >>" test
+
+  size-contracts:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+      - run: yarn workspaces foreach --topological-dev --verbose run build:ts
+      - run: yarn workspaces foreach --verbose run size-contracts
+
+  lint:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - yarn-install
+
+      - run: yarn dedupe --check
+      - run: yarn deps
+      - run: yarn deps:mismatched
+      - run: yarn deps:circular
+      - run: yarn lint
+
+  check-packages:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - run: yarn install --immutable --immutable-cache --check-cache
+
+  simulate-release:
+    parameters:
+      workspace:
+        type: string
+      cannonPackage:
+        type: string
+      impersonate:
+        type: string
+      proxy:
+        type: string
+      chains:
+        type: string
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    steps:
+      - checkout
+      - install-foundry
+      - install-ipfs
+      - run-ipfs-daemon
+      - yarn-install
+      - wait-for-ipfs
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+      - run:
+          name: "Compile TS"
+          command: yarn workspaces foreach --topological-dev --recursive --verbose --from "<< parameters.workspace >>" run build:ts
+      - run:
+          name: "Simulate release and test for Proxy change"
+          command: |
+            export CHAINS="<< parameters.chains >>" 
+            for CHAIN in $CHAINS; do
+              echo
+              echo
+              echo
+              echo "...Checking << parameters.workspace >> on $CHAIN"
+
+              yarn workspace "<< parameters.workspace >>" exec \
+                hardhat cannon:build \
+                  --dry-run \
+                  --network $CHAIN \
+                  --upgrade-from << parameters.cannonPackage >>:latest \
+                  --impersonate << parameters.impersonate >> | tee deployment.log
+              
+              grep 'Successfully built package << parameters.cannonPackage >>' deployment.log
+              
+              if [ $(grep -c 'exec: contract.<< parameters.proxy >>' deployment.log) -gt 0 ]; then
+                echo "Proxy << parameters.proxy >> was modified"
+                exit 1
+              fi
+            done
+
+  docgen:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      - CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
+      - GIT_PAGER: cat
+    working_directory: ~/synthetix-v3
+    steps:
+      - add_ssh_keys:
+          fingerprints: "46:05:bf:bf:84:e8:af:09:35:05:89:09:62:45:84:7c"
+      - run:
+          working_directory: ~/
+          name: "Checkout docs"
+          command: |
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git clone git@github.com:Synthetixio/Synthetix-Gitbook-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-gitbook-v3
+
+      - checkout
+
+      - install-ipfs
+      - run-ipfs-daemon
+      - install-foundry
+      - yarn-install
+      - wait-for-ipfs
+
+      - run:
+          name: "Build TS"
+          command: yarn workspaces foreach --topological-dev --verbose run build:ts
+
+      - restore_cache:
+          keys:
+            - hardhat-{{ .Environment.SOLC_VERSION }}
+      - run:
+          name: "Generate docs for each contract"
+          command: yarn workspaces foreach --verbose run docgen
+      - save_cache:
+          key: hardhat-{{ .Environment.SOLC_VERSION }}
+          paths:
+            - "~/.cache/hardhat-nodejs"
+
+      - run:
+          name: "Generate combined smart-contracts.md"
+          working_directory: ~/synthetix-v3/utils/docgen
+          command: ./docgen-contracts.sh
+
+      - run:
+          name: "Generate combined addresses-+-abis.md"
+          working_directory: ~/synthetix-v3/utils/docgen
+          command: ./docgen-abis.sh
+
+      - store_artifacts:
+          path: "docs"
+          destination: "."
+
+      - run:
+          working_directory: ~/synthetix-gitbook-v3
+          name: "Update docs and push to smart-contracts branch"
+          command: |
+            cp ~/synthetix-v3/docs/smart-contracts.md ./for-developers/smart-contracts.md
+            cp ~/synthetix-v3/docs/addresses-+-abis.md ./for-developers/addresses-+-abis.md
+            cp ~/synthetix-v3/docs/abis/*.json ./for-developers/abis/
+
+            STATUS=$(git status)
+            if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
+              echo "SKIP. Working tree is clean. No changes to Smart Contracts docs"
+              exit 0
+            fi
+
+            git branch smart-contracts
+            git checkout smart-contracts
+
+            git config --global user.email nikita@cc.snxdao.io
+            git config --global user.name Noisekit
+
+            git add ./for-developers/smart-contracts.md
+            git add ./for-developers/addresses-+-abis.md
+            git add ./for-developers/abis
+            git commit -m "Update Smart Contracts"
+            git push --set-upstream --force origin smart-contracts
+
+            PR_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              https://api.github.com/repos/Synthetixio/Synthetix-Gitbook-v3/pulls?state=open | \
+              jq -r '.[] | select(.head.ref=="smart-contracts") | .html_url')
+
+            # If no PR exists with the branch "smart-contracts", create one
+            # If PR already exists it would be updated with the most recent docs via forced push
+            if [ -z "$PR_URL" ]; then
+              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                https://api.github.com/repos/Synthetixio/Synthetix-Gitbook-v3/pulls \
+                -d '{
+                  "title": "Update Smart Contracts",
+                  "head": "smart-contracts", 
+                  "base": "en"
+                }'
+            else
+              echo "Pull Request already exists: $PR_URL"
+            fi
+
+  update-subgraphs:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
+      - CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
+      - GIT_PAGER: cat
+      - DEBUG: "cannon:*"
+    working_directory: ~/synthetix-v3
+    steps:
+      #- add_ssh_keys:
+      #  fingerprints: "46:05:bf:bf:84:e8:af:09:35:05:89:09:62:45:84:7c"
+      - run:
+          working_directory: ~/
+          name: "Checkout synthetix-v3"
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git clone git@github.com:Synthetixio/synthetix-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-v3
+
+      - install-ipfs
+      - run-ipfs-daemon
+      - install-foundry
+      - yarn-install
+      - wait-for-ipfs
+
+      - run:
+          name: "Generate updated subgraph code"
+          command: |
+            export CANNON_REGISTRY_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
+            yarn subgraphgen
+
+      - run:
+          name: "Push changes to subgraph-updates branch and create PR"
+          command: |
+            STATUS=$(git status)
+            if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
+              echo "SKIP. Working tree is clean. No changes to subgraphs"
+              exit 0
+            fi
+
+            git branch subgraph-updates
+            git checkout subgraph-updates
+
+            git config --global user.email nikita@cc.snxdao.io
+            git config --global user.name Noisekit
+
+            git add .
+            git commit -m "Update Subgraphs"
+            git push --set-upstream --force origin subgraph-updates
+
+            PR_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              https://api.github.com/repos/Synthetixio/synthetix-v3/pulls?state=open | \
+              jq -r '.[] | select(.head.ref=="subgraph-updates") | .html_url')
+
+            # If no PR exists with the branch "subgraph-updates", create one
+            # If PR already exists it would be updated with the most recent docs via forced push
+            if [ -z "$PR_URL" ]; then
+              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                https://api.github.com/repos/Synthetixio/synthetix-v3/pulls \
+                -d '{
+                  "title": "Update Subgraphs",
+                  "head": "subgraph-updates", 
+                  "base": "main"
+                }'
+            else
+              echo "Pull Request already exists: $PR_URL"
+            fi
+
+workflows:
+  version: 2.1
+
+  tests:
+    unless:
+      or:
+        - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+
+    jobs:
+      - lint
+      - size-contracts
+      - check-packages
+
+      - build-testable
+
+      - test-contracts:
+          name: "test-main"
+          requires: [build-testable]
+          workspace: "@synthetixio/main"
+          parallelism: 2
+
+      - test-contracts:
+          name: "test-oracle-manager"
+          requires: [build-testable]
+          workspace: "@synthetixio/oracle-manager"
+          parallelism: 1
+
+      #- test-contracts: TODO: enable when we have some tests
+      #    name: "test-governance"
+      #    requires: [build-testable]
+      #    workspace: "@synthetixio/governance"
+
+      - test-contracts:
+          name: "test-spot-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/spot-market"
+          parallelism: 1
+
+      - test-contracts:
+          name: "test-perps-market"
+          requires: [build-testable]
+          workspace: "@synthetixio/perps-market"
+          parallelism: 5
+
+      #- test-contracts: TODO: enable when tests are fixed
+      #    name: "test-legacy-market"
+      #    requires: [build-testable]
+      #    workspace: "@synthetixio/legacy-market"
+
+      - test-core-utils:
+          workspace: "@synthetixio/core-utils"
+          parallelism: 2
+
+      - test-core-modules:
+          workspace: "@synthetixio/core-modules"
+          parallelism: 1
+
+      - test-core-contracts:
+          workspace: "@synthetixio/core-contracts"
+          parallelism: 2
+
+      - test-subgraph:
+          name: "test-subgraph-core"
+          workspace: "@synthetixio/core-subgraph"
+
+      - test-subgraph:
+          name: "test-subgraph-spot-market"
+          workspace: "@synthetixio/spot-market-subgraph"
+
+      - test-subgraph:
+          name: "test-subgraph-perps-market"
+          workspace: "@synthetixio/perps-market-subgraph"
+
+      #- simulate-release: TODO: enable when cannon has fixed RPC proxy
+      #    name: "simulate-release-main"
+      #    workspace: "@synthetixio/main"
+      #    cannonPackage: "synthetix"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialCoreProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable when cannon has fixed RPC proxy
+      #    name: "simulate-release-oracle-manager"
+      #    workspace: "@synthetixio/oracle-manager"
+      #    cannonPackage: "oracle-manager"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable after deployed
+      #    name: "simulate-release-governance"
+      #    workspace: "@synthetixio/governance"
+      #    cannonPackage: "governance"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable after v2x is updated
+      #    name: "simulate-release-legacy-market"
+      #    workspace: "@synthetixio/legacy-market"
+      #    cannonPackage: "synthetix-legacy-market"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable when cannon has fixed RPC proxy
+      #    name: "simulate-release-spot-market"
+      #    workspace: "@synthetixio/spot-market"
+      #    cannonPackage: "synthetix-spot-market"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+      #- simulate-release: TODO: enable after deployed
+      #    name: "simulate-release-perps-market"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+  docgen:
+    jobs:
+      - docgen:
+          name: "docgen-release"
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - docgen:
+          name: "docgen-dev"
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /docgen/
+
+  scheduled-subgraphs-update:
+    when:
+      and:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+        - equal: ["Subgraphs Update", << pipeline.schedule.name >>]
+    jobs:
+      - update-subgraphs
+
+  # temporary for dev
+  test-subgraphs-update:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+    jobs:
+      - update-subgraphs:
+          filters:
+            branches:
+              only: /automatic-subgraphs-update/

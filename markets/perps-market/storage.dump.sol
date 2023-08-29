@@ -324,7 +324,6 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        uint128 totalCapacityD18;
         int128 cumulativeDebtD18;
         mapping(uint256 => uint256) heldMarketConfigurationWeights;
         mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
@@ -423,12 +422,8 @@ library Vault {
     struct Data {
         uint256 epoch;
         bytes32 __slotAvailableForFutureUse;
-<<<<<<< HEAD
         uint128 prevCapacityD18;
-        int128 prevTotalDebtD18;
-=======
         int128 _unused_prevTotalDebtD18;
->>>>>>> origin/main
         mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
@@ -459,7 +454,7 @@ library CcipClient {
     }
     struct Any2EVMMessage {
         bytes32 messageId;
-        uint64 sourceChainId;
+        uint64 sourceChainSelector;
         bytes sender;
         bytes data;
         EVMTokenAmount[] tokenAmounts;
@@ -651,6 +646,8 @@ library GlobalPerpsMarketConfiguration {
         uint128[] synthDeductionPriority;
         uint minLiquidationRewardUsd;
         uint maxLiquidationRewardUsd;
+        uint128 maxPositionsPerAccount;
+        uint128 maxCollateralsPerAccount;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -732,6 +729,8 @@ library PerpsMarketConfiguration {
         uint256 liquidationRewardRatioD18;
         uint256 minimumPositionMargin;
         uint256 minimumInitialMarginRatioD18;
+        uint256 maxLiquidationPd;
+        address endorsedLiquidator;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));
