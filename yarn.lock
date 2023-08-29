@@ -2840,6 +2840,7 @@ __metadata:
     "@graphprotocol/graph-ts": ^0.30.0
     "@usecannon/cli": ^2.5.1
     ethers: ^5.7.2
+    matchstick-as: ^0.5.2
     prettier: ^2.8.8
   languageName: unknown
   linkType: soft
