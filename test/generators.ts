@@ -99,8 +99,12 @@ export const genMarket = () => ({
 /**
  * Generate a limit price 5 - 10% within the oracle price. The limit will be higher (long) or lower (short).
  */
-export const genLimitPrice = (isLong: boolean, oraclePrice: BigNumber) => {
-  const priceImpactPercentage = genNumber(0.05, 0.1);
+export const genLimitPrice = (
+  isLong: boolean,
+  oraclePrice: BigNumber,
+  options?: { desiredPriceImpactPercentage?: number }
+) => {
+  const priceImpactPercentage = options?.desiredPriceImpactPercentage ?? genNumber(0.05, 0.1);
   const limitPrice = isLong
     ? wei(oraclePrice).mul(1 + priceImpactPercentage)
     : wei(oraclePrice).mul(1 - priceImpactPercentage);
@@ -204,6 +208,7 @@ export const genOrderFromSizeDelta = async (
   sizeDelta: BigNumber,
   options?: {
     desiredKeeperFeeBufferUsd?: number;
+    desiredPriceImpactPercentage?: number;
   }
 ): ReturnType<typeof genOrder> => {
   const { PerpMarketProxy } = systems();
@@ -213,7 +218,9 @@ export const genOrderFromSizeDelta = async (
     : genKeeperFeeBufferUsd();
 
   const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
-  const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice);
+  const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice, {
+    desiredPriceImpactPercentage: options?.desiredPriceImpactPercentage,
+  });
   const fillPrice = await PerpMarketProxy.getFillPrice(market.marketId(), sizeDelta);
   const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(market.marketId(), sizeDelta, keeperFeeBufferUsd);
 
