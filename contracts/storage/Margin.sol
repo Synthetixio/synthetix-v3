@@ -63,13 +63,17 @@ library Margin {
     // --- Mutative --- //
 
     /**
-     * @dev Reevaluates the collateral in `market` for `accountId` with `amountUsd`. When amount is negative,
+     * @dev Reevaluates the collateral in `market` for `accountId` with `amountDeltaUsd`. When amount is negative,
      * portion of their collateral is deducted. If positive, an equivalent amount of sUSD is credited to the
      * account.
      */
-    function updateAccountCollateral(uint128 accountId, PerpMarket.Data storage market, int256 amountUsd) internal {
+    function updateAccountCollateral(
+        uint128 accountId,
+        PerpMarket.Data storage market,
+        int256 amountDeltaUsd
+    ) internal {
         // Nothing to update, this is a no-op.
-        if (amountUsd == 0) {
+        if (amountDeltaUsd == 0) {
             return;
         }
 
@@ -93,12 +97,12 @@ library Margin {
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
         address usdToken = address(globalConfig.usdToken);
 
-        if (amountUsd > 0) {
-            accountMargin.collaterals[usdToken] += amountUsd.toUint();
+        if (amountDeltaUsd > 0) {
+            accountMargin.collaterals[usdToken] += amountDeltaUsd.toUint();
         } else {
             Margin.GlobalData storage globalMarginConfig = Margin.load();
             uint256 length = globalMarginConfig.supportedAddresses.length;
-            uint256 amountToDeductUsd = MathUtil.abs(amountUsd);
+            uint256 amountToDeductUsd = MathUtil.abs(amountDeltaUsd);
 
             // Variable declaration outside of loop to be more gas efficient.
             Margin.CollateralType memory collateral;
@@ -227,11 +231,12 @@ library Margin {
         if (position.size == 0) {
             return collateralValueUsd;
         }
+        int256 pnl = position.getPnl(price);
         return
             MathUtil
                 .max(
                     collateralValueUsd.toInt() +
-                        position.getPnl(price) +
+                        pnl +
                         position.getAccruedFunding(market, price) -
                         position.accruedFeesUsd.toInt(),
                     0
