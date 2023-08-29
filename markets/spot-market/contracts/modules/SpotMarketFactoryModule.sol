@@ -240,11 +240,9 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
      */
     function renounceMarketOwnership(uint128 synthMarketId) external override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        address currentOwner = spotMarketFactory.marketOwners[synthMarketId];
-        if (msg.sender != currentOwner) {
-            revert SpotMarketFactory.OnlyMarketOwner(currentOwner, msg.sender);
-        }
+        spotMarketFactory.onlyMarketOwner(synthMarketId);
 
+        address currentOwner = spotMarketFactory.marketOwners[synthMarketId];
         spotMarketFactory.marketOwners[synthMarketId] = address(0);
         emit MarketOwnerChanged(synthMarketId, currentOwner, address(0));
     }
