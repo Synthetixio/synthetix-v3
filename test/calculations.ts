@@ -23,6 +23,9 @@ export const calcFillPrice = (skew: BigNumber, skewScale: BigNumber, size: BigNu
   return priceBefore.add(priceAfter).div(2).toBN();
 };
 
+/** Calculates whether two numbers are the same sign. */
+export const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) => a.eq(0) || b.eq(0) || a.gt(0) == b.gt(0);
+
 /** Calculates order fees and keeper fees associated to settle the order. */
 export const calcOrderFees = async (
   bs: Bs,
@@ -40,8 +43,6 @@ export const calcOrderFees = async (
   const fillPrice = await PerpMarketProxy.getFillPrice(marketId, sizeDelta);
   const { skew } = await PerpMarketProxy.getMarketDigest(marketId);
   const { makerFee, takerFee } = await PerpMarketProxy.getMarketConfigurationById(marketId);
-
-  const isSameSide = (a: Wei | BigNumber, b: Wei | BigNumber) => a.eq(0) || b.eq(0) || a.gt(0) == b.gt(0);
 
   let [makerSizeRatio, takerSizeRatio] = [wei(0), wei(0)];
   const marketSkewBefore = wei(skew);
