@@ -34,8 +34,9 @@ interface ISpotMarketFactoryModule is IMarket {
     /**
      * @notice Gets fired when the synth is registered as a market.
      * @param synthMarketId Id of the synth market that was created
+     * @param synthTokenAddress address of the newly created synth token
      */
-    event SynthRegistered(uint256 indexed synthMarketId);
+    event SynthRegistered(uint256 indexed synthMarketId, address synthTokenAddress);
     /**
      * @notice Gets fired when the synth's implementation is updated on the corresponding proxy.
      * @param proxy the synth proxy servicing the latest implementation

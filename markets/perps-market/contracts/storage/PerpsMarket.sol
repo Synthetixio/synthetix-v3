@@ -100,6 +100,11 @@ library PerpsMarket {
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
+        // if endorsedLiquidator is configured and is the sender, allow full liquidation
+        if (msg.sender == marketConfig.endorsedLiquidator) {
+            return requestedLiquidationAmount.to128();
+        }
+
         uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
         // this would only be 0 if fees or skew scale are configured to be 0.
         // in that case, (very unlikely), allow full liquidation
@@ -125,6 +130,29 @@ library PerpsMarket {
                 )
                 .to128();
             self.lastUtilizedLiquidationCapacity += liquidatableAmount;
+        }
+
+        // liquidatable amount is 0 only if there's no more capacity in the window
+        // but if maxLiquidationPd is set, and the current market p/d is less than that,
+        // then allow for an extra block of liquidation
+        uint maxLiquidationPd = marketConfig.maxLiquidationPd;
+        if (
+            liquidatableAmount == 0 &&
+            maxLiquidationPd != 0 &&
+            // only allow this if the last update was not in the current block
+            self.lastTimeLiquidationCapacityUpdated != block.timestamp.to128()
+        ) {
+            uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
+            if (currentPd < maxLiquidationPd) {
+                liquidatableAmount = (
+                    requestedLiquidationAmount > maxAllowedLiquidationInWindow
+                        ? maxAllowedLiquidationInWindow
+                        : requestedLiquidationAmount
+                ).to128();
+                // track how much was utilized in this block to ensure any subsequent
+                // liquidations don't combine for larger than what's allotted in the window
+                self.lastUtilizedLiquidationCapacity = liquidatableAmount;
+            }
         }
 
         // only update timestamp if there is something being liquidated
