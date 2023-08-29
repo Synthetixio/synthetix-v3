@@ -25,10 +25,10 @@ async function run() {
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
   networks[graphNetworkName].SpotMarketProxy.address =
-    require(`./deployments/${networkName}/SpotMarketProxy.json`).address;
+    require(`./${networkName}/deployments/SpotMarketProxy.json`).address;
 
   const deployTx =
-    require(`./deployments/${networkName}/InitialSpotMarketProxy.json`).deployTxnHash;
+    require(`./${networkName}/deployments/InitialSpotMarketProxy.json`).deployTxnHash;
   const tx = await provider.getTransactionReceipt(deployTx);
   networks[graphNetworkName].SpotMarketProxy.startBlock = tx.blockNumber;
 

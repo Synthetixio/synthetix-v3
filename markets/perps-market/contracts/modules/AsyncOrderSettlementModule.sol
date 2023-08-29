@@ -17,6 +17,10 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
+/**
+ * @title Module for settling async orders.
+ * @dev See IAsyncOrderSettlementModule.
+ */
 contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvents {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -124,6 +128,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         runtime.marketId = asyncOrder.request.marketId;
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
+
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);

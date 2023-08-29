@@ -1,6 +1,10 @@
 name: "Validate yarn.lock and cache"
 
-on: [pull_request]
+on:
+  #  pull_request: {}
+  push:
+    branches:
+      - "test"
 
 jobs:
   check:

@@ -1,12 +1,19 @@
 import { bn } from '@synthetixio/main/test/common';
 import { bootstrapMarkets } from '../bootstrap';
-import { Signer, utils } from 'ethers';
+import { Signer, ethers, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/src/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/src/utils/assertions/assert-event';
 import assert from 'assert';
 
 describe('MarketConfiguration', async () => {
+  const { systems, signers, owner } = bootstrapMarkets({
+    synthMarkets: [],
+    perpsMarkets: [],
+    traderAccountIds: [],
+  });
+  let randomUser: Signer;
+
   const marketId = 25;
   const fixture = {
     token: 'snxETH',
@@ -36,14 +43,8 @@ describe('MarketConfiguration', async () => {
     minimumPositionMargin: bn(50),
     liquidationRewardRatioD18: bn(10e9),
     maxSecondsInLiquidationWindow: bn(10),
+    maxLiquidationPd: bn(0),
   };
-
-  const { systems, signers, owner } = bootstrapMarkets({
-    synthMarkets: [],
-    perpsMarkets: [],
-    traderAccountIds: [],
-  });
-  let randomUser: Signer;
 
   before('identify actors', async () => {
     const [, , randomAccount] = signers();
@@ -152,12 +153,26 @@ describe('MarketConfiguration', async () => {
           fixture.minimumInitialMarginRatio,
           fixture.maintenanceMarginScalar,
           fixture.liquidationRewardRatioD18,
-          fixture.maxLiquidationLimitAccumulationMultiplier,
-          fixture.maxSecondsInLiquidationWindow,
           fixture.minimumPositionMargin
         ),
-      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginScalar.toString()}, ${fixture.minimumInitialMarginRatio.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()}, ${fixture.maxSecondsInLiquidationWindow.toString()}, ${fixture.minimumPositionMargin.toString()})`,
+      `LiquidationParametersSet(${marketId.toString()}, ${fixture.initialMarginFraction.toString()}, ${fixture.maintenanceMarginScalar.toString()}, ${fixture.minimumInitialMarginRatio.toString()}, ${fixture.liquidationRewardRatioD18.toString()}, ${fixture.minimumPositionMargin.toString()})`,
+      systems().PerpsMarket
+    );
+  });
 
+  it('owner can set max liquidation parameters and events are emitted', async () => {
+    const randomUserAddress = await randomUser.getAddress();
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setMaxLiquidationParameters(
+          marketId,
+          fixture.maxLiquidationLimitAccumulationMultiplier,
+          fixture.maxSecondsInLiquidationWindow,
+          fixture.maxLiquidationPd,
+          randomUserAddress
+        ),
+      `MaxLiquidationParametersSet(${marketId.toString()}, ${fixture.maxLiquidationLimitAccumulationMultiplier.toString()}, ${fixture.maxSecondsInLiquidationWindow.toString()}, ${fixture.maxLiquidationPd.toString()}, "${randomUserAddress}")`,
       systems().PerpsMarket
     );
   });
@@ -212,9 +227,19 @@ describe('MarketConfiguration', async () => {
           fixture.minimumInitialMarginRatio,
           fixture.maintenanceMarginScalar,
           fixture.liquidationRewardRatioD18,
+          fixture.minimumPositionMargin
+        ),
+      'Unauthorized'
+    );
+    await assertRevert(
+      systems()
+        .PerpsMarket.connect(randomUser)
+        .setMaxLiquidationParameters(
+          marketId,
           fixture.maxLiquidationLimitAccumulationMultiplier,
           fixture.maxSecondsInLiquidationWindow,
-          fixture.minimumPositionMargin
+          fixture.maxLiquidationPd,
+          ethers.constants.AddressZero
         ),
       'Unauthorized'
     );
@@ -275,13 +300,22 @@ describe('MarketConfiguration', async () => {
       minimumInitialMarginRatio,
       maintenanceMarginScalar,
       liquidationRewardRatioD18,
-      maxLiquidationLimitAccumulationMultiplier,
-      maxSecondsInLiquidationWindow,
     ] = await systems().PerpsMarket.getLiquidationParameters(marketId);
     assertBn.equal(initialMarginFraction, fixture.initialMarginFraction);
     assertBn.equal(minimumInitialMarginRatio, fixture.minimumInitialMarginRatio);
     assertBn.equal(maintenanceMarginScalar, fixture.maintenanceMarginScalar);
     assertBn.equal(liquidationRewardRatioD18, fixture.liquidationRewardRatioD18);
+  });
+
+  it('get maxLiquidationParameters', async () => {
+    const [
+      maxLiquidationLimitAccumulationMultiplier,
+      maxSecondsInLiquidationWindow,
+      maxLiquidationPd,
+      endorsedLiquidator,
+    ] = await systems().PerpsMarket.getMaxLiquidationParameters(marketId);
+    assertBn.equal(maxLiquidationPd, fixture.maxLiquidationPd);
+    assert.equal(endorsedLiquidator, await randomUser.getAddress());
     assertBn.equal(
       maxLiquidationLimitAccumulationMultiplier,
       fixture.maxLiquidationLimitAccumulationMultiplier

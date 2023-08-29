@@ -82,7 +82,7 @@ describe('Orders - margin validation', () => {
   describe('openPosition 1 failure', () => {
     let orderFees: ethers.BigNumber;
     before('get order fees', async () => {
-      orderFees = await systems().PerpsMarket.computeOrderFees(51, 3);
+      [orderFees] = await systems().PerpsMarket.computeOrderFees(51, 3);
     });
 
     it('reverts if not enough margin', async () => {
@@ -98,6 +98,15 @@ describe('Orders - margin validation', () => {
         wei(10_000)
       );
 
+      const totalRequiredMargin = initialMargin
+        .add(getMaxLiquidationReward(liquidationMargin, wei(100), wei(500)))
+        .add(orderFees);
+
+      assertBn.equal(
+        await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(3)),
+        totalRequiredMargin.toBN()
+      );
+
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
@@ -110,10 +119,7 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${bn(100)}", "${initialMargin
-          .add(getMaxLiquidationReward(liquidationMargin, wei(100), wei(500)))
-          .add(orderFees)
-          .toString(18, true)}")`
+        `InsufficientMargin("${bn(100)}", "${totalRequiredMargin.toString(18, true)}")`
       );
     });
   });
@@ -149,7 +155,7 @@ describe('Orders - margin validation', () => {
   describe('openPosition 2 failure', () => {
     let orderFees: ethers.BigNumber;
     before('get order fees', async () => {
-      orderFees = await systems().PerpsMarket.computeOrderFees(50, 5);
+      [orderFees] = await systems().PerpsMarket.computeOrderFees(50, 5);
     });
 
     it('reverts if not enough margin', async () => {
@@ -185,6 +191,11 @@ describe('Orders - margin validation', () => {
         .add(btcInitialMargin)
         .add(liqReward)
         .add(orderFees);
+
+      assertBn.equal(
+        await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
+        totalRequiredMargin.toBN()
+      );
 
       await assertRevert(
         systems()
@@ -233,7 +244,7 @@ describe('Orders - margin validation', () => {
   describe('modify position', () => {
     let orderFees: ethers.BigNumber;
     before('get order fees', async () => {
-      orderFees = await systems().PerpsMarket.computeOrderFees(50, 5);
+      [orderFees] = await systems().PerpsMarket.computeOrderFees(50, 5);
     });
 
     it('reverts if not enough margin', async () => {
@@ -269,6 +280,11 @@ describe('Orders - margin validation', () => {
         .add(btcInitialMargin)
         .add(liqReward)
         .add(orderFees);
+
+      assertBn.equal(
+        await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
+        totalRequiredMargin.toBN()
+      );
 
       await assertRevert(
         systems()

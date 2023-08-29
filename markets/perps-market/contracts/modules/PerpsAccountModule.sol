@@ -53,6 +53,8 @@ contract PerpsAccountModule is IPerpsAccountModule {
         PerpsAccount.Data storage account = PerpsAccount.create(accountId);
         uint128 perpsMarketId = perpsMarketFactory.perpsMarketId;
 
+        PerpsAccount.validateMaxCollaterals(accountId, synthMarketId);
+
         AsyncOrder.checkPendingOrder(account.id);
 
         if (amountDelta > 0) {
@@ -148,6 +150,10 @@ contract PerpsAccountModule is IPerpsAccountModule {
             totalAccumulatedLiquidationRewards,
             maxLiquidationReward
         ) = PerpsAccount.load(accountId).getAccountRequiredMargins();
+
+        // Include liquidation rewards to required initial margin and required maintenance margin
+        requiredInitialMargin += maxLiquidationReward;
+        requiredMaintenanceMargin += maxLiquidationReward;
     }
 
     /**
