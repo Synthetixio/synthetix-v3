@@ -775,8 +775,8 @@ describe('OrderModule', () => {
 
         const BLOCK_BASE_FEE_PER_GAS = 10;
 
-        // Set a really high ETH price of 10k USD.
-        await ethOracleNode().agg.mockSetCurrentPrice(wei(4850).toBN());
+        // Set a really high ETH price of 4.9k USD (Dec 21' ATH).
+        await ethOracleNode().agg.mockSetCurrentPrice(wei(4900).toBN());
 
         // Cap the max keeperFee to $50 USD
         const maxKeeperFeeUsd = wei(50).toBN();

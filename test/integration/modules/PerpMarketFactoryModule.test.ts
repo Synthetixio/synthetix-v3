@@ -121,7 +121,7 @@ describe('PerpMarketFactoryModule', () => {
         await fastForwardTo((await provider().getBlock('latest')).timestamp + seconds, provider());
 
       it('should compute current funding rate relative to time (concrete)', async () => {
-        // This test is pulled directly from a conrete example developed for PerpsV2.
+        // This test is pulled directly from a concrete example developed for PerpsV2.
         //
         // @see: https://github.com/davidvuong/perpsv2-funding/blob/master/main.ipynb
         // @see: https://github.com/Synthetixio/synthetix/blob/develop/test/contracts/PerpsV2Market.js#L3631

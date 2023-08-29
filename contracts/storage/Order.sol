@@ -100,9 +100,7 @@ library Order {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
-        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
-            (globalConfig.keeperSettlementGasUnits * block.basefee * 1e18) / 1e9
-        );
+        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal((globalConfig.keeperSettlementGasUnits * block.basefee * 1e9));
         uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
             DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
         ) + keeperFeeBufferUsd;
