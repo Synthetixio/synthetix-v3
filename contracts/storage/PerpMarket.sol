@@ -150,7 +150,7 @@ library PerpMarket {
         uint256 price
     ) internal returns (int256 fundingRate, int256 fundingAccrued) {
         fundingRate = getCurrentFundingRate(self);
-        fundingAccrued = getNextFunding(self, price);
+        fundingAccrued = getNextFundingAccrued(self, price);
 
         self.currentFundingRateComputed = fundingRate;
         self.currentFundingAccruedComputed = fundingAccrued;
@@ -198,10 +198,7 @@ library PerpMarket {
      */
     function getCurrentFundingVelocity(PerpMarket.Data storage self) internal view returns (int256) {
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
-
-        int128 maxFundingVelocity = marketConfig.maxFundingVelocity.toInt();
         int128 skewScale = marketConfig.skewScale.toInt();
-        int128 skew = self.skew;
 
         // Avoid a panic due to div by zero. Return 0 immediately.
         if (skewScale == 0) {
@@ -209,12 +206,13 @@ library PerpMarket {
         }
 
         // Ensures the proportionalSkew is between -1 and 1.
-        int256 pSkew = skew.divDecimal(skewScale);
+        int256 pSkew = self.skew.divDecimal(skewScale);
         int256 pSkewBounded = MathUtil.min(
             MathUtil.max(-(DecimalMath.UNIT).toInt(), pSkew),
             (DecimalMath.UNIT).toInt()
         );
-        return pSkewBounded.mulDecimal(maxFundingVelocity);
+
+        return pSkewBounded.mulDecimal(marketConfig.maxFundingVelocity.toInt());
     }
 
     /**
@@ -260,7 +258,7 @@ library PerpMarket {
     /**
      * @dev Returns the next market funding accrued value.
      */
-    function getNextFunding(PerpMarket.Data storage self, uint256 price) internal view returns (int256) {
+    function getNextFundingAccrued(PerpMarket.Data storage self, uint256 price) internal view returns (int256) {
         int256 fundingRate = getCurrentFundingRate(self);
         // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(

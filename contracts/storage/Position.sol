@@ -336,7 +336,7 @@ library Position {
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
-        int256 netFundingPerUnit = market.getNextFunding(price) - positionEntryFundingAccrued;
+        int256 netFundingPerUnit = market.getNextFundingAccrued(price) - positionEntryFundingAccrued;
         accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
 
         // Calculate this position's PnL
@@ -428,7 +428,7 @@ library Position {
         if (self.size == 0) {
             return 0;
         }
-        return self.size.mulDecimal(market.getNextFunding(price) - self.entryFundingAccrued);
+        return self.size.mulDecimal(market.getNextFundingAccrued(price) - self.entryFundingAccrued);
     }
 
     // --- Member (mutative) --- //

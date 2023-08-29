@@ -2,7 +2,7 @@ import { BigNumber, Contract, utils } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
-import { type genOrder, type genTrader, genNumber } from './generators';
+import { type genTrader, type genOrder, genNumber } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';
@@ -10,12 +10,14 @@ import { isNil, uniq } from 'lodash';
 // --- Constants --- //
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+export const SECONDS_ONE_HR = 60 * 60;
+export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
 
 // --- Mutative helpers --- //
 
 type Bs = ReturnType<typeof bootstrap>;
 type GeneratedTrader = ReturnType<typeof genTrader> | Awaited<ReturnType<typeof genTrader>>;
-type GeneratedOrder = ReturnType<typeof genOrder> | Awaited<ReturnType<typeof genOrder>>;
+type CommitableOrder = Pick<Awaited<ReturnType<typeof genOrder>>, 'sizeDelta' | 'limitPrice' | 'keeperFeeBufferUsd'>;
 
 /** Provision margin for this trader given the full `gTrader` context. */
 export const approveAndMintMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
@@ -57,6 +59,17 @@ export const setMarketConfigurationById = async (
   const data = await PerpMarketProxy.getMarketConfigurationById(marketId);
   await PerpMarketProxy.connect(owner()).setMarketConfigurationById(marketId, { ...data, ...params });
   return PerpMarketProxy.getMarketConfigurationById(marketId);
+};
+
+/** Generic update on global market data (similar to setMarketConfigurationById). */
+export const setMarketConfiguration = async (
+  { systems, owner }: ReturnType<typeof bootstrap>,
+  params: Partial<PerpMarketConfiguration.GlobalDataStruct>
+) => {
+  const { PerpMarketProxy } = systems();
+  const data = await PerpMarketProxy.getMarketConfiguration();
+  await PerpMarketProxy.connect(owner()).setMarketConfiguration({ ...data, ...params });
+  return PerpMarketProxy.getMarketConfiguration();
 };
 
 /** Returns a Pyth updateData blob and the update fee in wei. */
@@ -119,9 +132,16 @@ export const commitOrder = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
-  { sizeDelta, limitPrice, keeperFeeBufferUsd }: Awaited<ReturnType<typeof genOrder>>
+  order: CommitableOrder | Promise<CommitableOrder>,
+  blockBaseFeePerGas?: number
 ) => {
   const { PerpMarketProxy } = bs.systems();
+
+  if (blockBaseFeePerGas) {
+    await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
+  }
+
+  const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await order;
   await PerpMarketProxy.connect(trader.signer).commitOrder(
     trader.accountId,
     marketId,
@@ -136,17 +156,24 @@ export const commitAndSettle = async (
   bs: ReturnType<typeof bootstrap>,
   marketId: BigNumber,
   trader: ReturnType<Bs['traders']>[number],
-  order: GeneratedOrder
+  order: CommitableOrder | Promise<CommitableOrder>,
+  blockBaseFeePerGas?: number
 ) => {
-  const { PerpMarketProxy } = bs.systems();
+  const { systems, provider, keeper } = bs;
+  const { PerpMarketProxy } = systems();
 
-  await commitOrder(bs, marketId, trader, await order);
+  await commitOrder(bs, marketId, trader, order, blockBaseFeePerGas);
 
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
-  await fastForwardTo(settlementTime, bs.provider());
+  await fastForwardTo(settlementTime, provider());
 
   const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
-  return PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+
+  if (blockBaseFeePerGas) {
+    await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
+  }
+
+  return PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
     value: updateFee,
   });
 };

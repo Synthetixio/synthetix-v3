@@ -60,7 +60,7 @@ describe('MarginModule', async () => {
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
       // Create a new position.
-      await commitAndSettle(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+      await commitAndSettle(bs, marketId, trader, genOrder(bs, market, collateral, collateralDepositAmount));
 
       // Provision collateral and approve for access.
       const { collateralDepositAmount: collateralDepositAmount2 } = await approveAndMintMargin(
@@ -399,7 +399,7 @@ describe('MarginModule', async () => {
           desiredLeverage: 10,
         });
         // open leveraged position
-        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        await commitAndSettle(bs, marketId, trader, order);
         // updating price, causing position to be liquidatable
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
         // flag position
@@ -653,7 +653,7 @@ describe('MarginModule', async () => {
           desiredLeverage: 5,
         });
         // open leveraged position
-        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        await commitAndSettle(bs, marketId, trader, order);
 
         const { im, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
         const maxWithdrawUsd = wei(remainingMarginUsd).sub(im);
@@ -686,7 +686,7 @@ describe('MarginModule', async () => {
           desiredLeverage: 10,
         });
         // open leveraged position
-        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        await commitAndSettle(bs, marketId, trader, order);
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
@@ -710,7 +710,7 @@ describe('MarginModule', async () => {
           desiredLeverage: 10,
         });
         // open leveraged position
-        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        await commitAndSettle(bs, marketId, trader, order);
         // Change market price to make position liquidatable
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
 
@@ -737,7 +737,7 @@ describe('MarginModule', async () => {
           desiredLeverage: 10,
         });
         // open leveraged position
-        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        await commitAndSettle(bs, marketId, trader, order);
         // updating price, causing position to be liquidatable
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
         // flag position
@@ -899,7 +899,7 @@ describe('MarginModule', async () => {
           bs,
           genTrader(bs)
         );
-        await commitAndSettle(bs, marketId, trader, await genOrder(bs, market, collateral, collateralDepositAmount));
+        await commitAndSettle(bs, marketId, trader, genOrder(bs, market, collateral, collateralDepositAmount));
 
         // Perform withdraw with invalid market
         await assertRevert(
@@ -943,7 +943,7 @@ describe('MarginModule', async () => {
           desiredLeverage: 10,
         });
         // open leveraged position
-        await commitAndSettle(bs, marketId, trader, Promise.resolve(order));
+        await commitAndSettle(bs, marketId, trader, order);
         // updating price, causing position to be liquidatable
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
         // flag position
@@ -1054,14 +1054,14 @@ describe('MarginModule', async () => {
   });
 
   describe('getCollateralUsd', () => {
-    it('should return correct usd amount in collateral', async () => {
+    it('should return the usd amount in collateral', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, marginUsdDepositAmount } = await depositMargin(bs, genTrader(bs));
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
     });
 
-    it('should return correct usd amount after price of collateral changes', async () => {
+    it('should return usd amount after price of collateral changes', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice } = await depositMargin(
         bs,

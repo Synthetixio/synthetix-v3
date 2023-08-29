@@ -29,16 +29,19 @@ library Order {
      * @dev See IOrderModule.fillPrice
      */
     function getFillPrice(int128 skew, uint128 skewScale, int128 size, uint256 price) internal pure returns (uint256) {
-        // Calculate pd (premium/discount) before and after trade
-        int256 pdBefore = skew.divDecimal(skewScale.toInt());
-        int256 pdAfter = (skew + size).divDecimal(skewScale.toInt());
+        int256 ss = skewScale.toInt();
+        int256 p = price.toInt();
 
-        // Calculate price before and after trade with pd applied
-        int256 priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int256 priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+        // Calculate pd (premium/discount) before and after trade.
+        int256 pdBefore = skew.divDecimal(ss);
+        int256 pdAfter = (skew + size).divDecimal(ss);
 
-        // fillPrice is the average of those prices.
-        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+        // Calculate price before and after trade with pd applied.
+        int256 pBefore = p + p.mulDecimal(pdBefore);
+        int256 pAfter = p + p.mulDecimal(pdAfter);
+
+        // `fillPrice` is the average of those prices.
+        return (pBefore + pAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
     }
 
     /**
@@ -97,12 +100,12 @@ library Order {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 ethPrice = globalConfig.oracleManager.process(globalConfig.ethOracleNodeId).price.toUint();
-        uint256 baseKeeperFeeUsd = globalConfig.keeperSettlementGasUnits * block.basefee * ethPrice;
-        uint256 boundedKeeperFeeUsd = MathUtil.max(
-            MathUtil.min(
-                globalConfig.minKeeperFeeUsd,
-                baseKeeperFeeUsd * (DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent) + keeperFeeBufferUsd
-            ),
+        uint256 baseKeeperFeeUsd = ethPrice.mulDecimal((globalConfig.keeperSettlementGasUnits * block.basefee * 1e9));
+        uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
+            DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+        ) + keeperFeeBufferUsd;
+        uint256 boundedKeeperFeeUsd = MathUtil.min(
+            MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
             globalConfig.maxKeeperFeeUsd
         );
         return boundedKeeperFeeUsd;
