@@ -88,7 +88,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         // default collateral leverage to 1
         MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
-        emit SynthRegistered(synthMarketId);
+        emit SynthRegistered(synthMarketId, address(SynthUtil.getToken(synthMarketId)));
     }
 
     /**
