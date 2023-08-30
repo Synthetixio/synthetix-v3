@@ -54,12 +54,6 @@ artifact = "contracts/modules/core/ElectionInspectorModule.sol:ElectionInspector
 [contract.ElectionModule]
 artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
 
-[contract.OwnerModule]
-artifact = "contracts/modules/core/OwnerModule.sol:OwnerModule"
-
-[contract.UpgradeProposalModule]
-artifact = "contracts/modules/core/UpgradeProposalModule.sol:UpgradeProposalModule"
-
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
@@ -71,17 +65,15 @@ contracts = [
   "AssociatedSystemsModule",
   "ElectionInspectorModule",
   "ElectionModule",
-	"SnapshotVotePowerModule",
-  "OwnerModule",
-  "UpgradeProposalModule",
+  "SnapshotVotePowerModule",
+  "InitialModuleBundle",
 ]
 depends = [
   "contract.AssociatedSystemsModule",
   "contract.ElectionInspectorModule",
   "contract.ElectionModule",
-	"contract.SnapshotVotePowerModule",
-  "contract.OwnerModule",
-  "contract.UpgradeProposalModule",
+  "contract.SnapshotVotePowerModule",
+  "contract.InitialModuleBundle",
 ]
 
 [invoke.upgrade_core_proxy]
