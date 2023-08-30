@@ -15,7 +15,9 @@ markets/*/test/generated
 .yarnrc.yml
 lerna.json
 *.hbs
-**/subgraph/deployments/
+**/subgraph/**/deployments
+**/subgraph/build
+**/subgraph/.bin
 **/artifacts/
 **/cache/
 **/docs/

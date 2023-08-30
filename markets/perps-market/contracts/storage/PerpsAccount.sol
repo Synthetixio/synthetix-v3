@@ -51,6 +51,10 @@ library PerpsAccount {
 
     error AccountLiquidatable(uint128 accountId);
 
+    error MaxPositionsPerAccountReached(uint128 maxPositionsPerAccount);
+
+    error MaxCollateralsPerAccountReached(uint128 maxCollateralsPerAccount);
+
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
 
@@ -69,6 +73,30 @@ library PerpsAccount {
         }
     }
 
+    function validateMaxPositions(uint128 accountId, uint128 marketId) internal view {
+        if (PerpsMarket.accountPosition(marketId, accountId).size == 0) {
+            uint128 maxPositionsPerAccount = GlobalPerpsMarketConfiguration
+                .load()
+                .maxPositionsPerAccount;
+            if (maxPositionsPerAccount <= load(accountId).openPositionMarketIds.length()) {
+                revert MaxPositionsPerAccountReached(maxPositionsPerAccount);
+            }
+        }
+    }
+
+    function validateMaxCollaterals(uint128 accountId, uint128 synthMarketId) internal view {
+        Data storage account = load(accountId);
+
+        if (account.collateralAmounts[synthMarketId] == 0) {
+            uint128 maxCollateralsPerAccount = GlobalPerpsMarketConfiguration
+                .load()
+                .maxCollateralsPerAccount;
+            if (maxCollateralsPerAccount <= account.activeCollateralTypes.length()) {
+                revert MaxCollateralsPerAccountReached(maxCollateralsPerAccount);
+            }
+        }
+    }
+
     function isEligibleForLiquidation(
         Data storage self
     )
@@ -78,15 +106,22 @@ library PerpsAccount {
             bool isEligible,
             int256 availableMargin,
             uint256 requiredInitialMargin,
-            uint256 requiredMaintenanceMargin
+            uint256 requiredMaintenanceMargin,
+            uint256 accumulatedLiquidationRewards,
+            uint256 liquidationReward
         )
     {
         availableMargin = getAvailableMargin(self);
         if (self.openPositionMarketIds.length() == 0) {
-            return (false, availableMargin, 0, 0);
+            return (false, availableMargin, 0, 0, 0, 0);
         }
-        (requiredInitialMargin, requiredMaintenanceMargin) = getAccountRequiredMargins(self);
-        isEligible = requiredMaintenanceMargin.toInt() > availableMargin;
+        (
+            requiredInitialMargin,
+            requiredMaintenanceMargin,
+            accumulatedLiquidationRewards,
+            liquidationReward
+        ) = getAccountRequiredMargins(self);
+        isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
     }
 
     function flagForLiquidation(Data storage self) internal {
@@ -139,15 +174,18 @@ library PerpsAccount {
             bool isEligible,
             int256 availableMargin,
             uint256 initialRequiredMargin,
-
+            ,
+            ,
+            uint256 liquidationReward
         ) = isEligibleForLiquidation(self);
 
         if (isEligible) {
             revert AccountLiquidatable(self.id);
         }
 
+        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - initialRequiredMargin;
+        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
 
         if (amountToWithdraw > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
@@ -212,9 +250,17 @@ library PerpsAccount {
      */
     function getAccountRequiredMargins(
         Data storage self
-    ) internal view returns (uint initialMargin, uint maintenanceMargin) {
+    )
+        internal
+        view
+        returns (
+            uint initialMargin,
+            uint maintenanceMargin,
+            uint accumulatedLiquidationRewards,
+            uint liquidationReward
+        )
+    {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
-        uint256 accumulatedLiquidationRewards;
         for (uint i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
@@ -243,8 +289,10 @@ library PerpsAccount {
         );
 
         return (
-            initialMargin + possibleLiquidationReward,
-            maintenanceMargin + possibleLiquidationReward
+            initialMargin,
+            maintenanceMargin,
+            accumulatedLiquidationRewards,
+            possibleLiquidationReward
         );
     }
 

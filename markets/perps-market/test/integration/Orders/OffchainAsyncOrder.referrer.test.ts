@@ -73,9 +73,11 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
     before('identify data', async () => {
       beforeWithdrawableUsd = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
       // NOTE: expected fees here does not include settlement reward
-      expectedFees = wei(
-        await systems().PerpsMarket.computeOrderFees(perpsMarkets()[0].marketId(), sizeDelta)
+      const [fees] = await systems().PerpsMarket.computeOrderFees(
+        perpsMarkets()[0].marketId(),
+        sizeDelta
       );
+      expectedFees = wei(fees);
       expectedToReferrer = expectedFees.mul(referrerRatio);
       expectedToFeeCollector = expectedFees.sub(expectedToReferrer).mul(feeCollectorRatio);
     });
@@ -135,9 +137,11 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
     before('identify data', async () => {
       previousReferrerBalance = wei(await systems().USD.balanceOf(await referrer.getAddress()));
       // NOTE: expected fees here does not include settlement reward
-      const expectedFees = wei(
-        await systems().PerpsMarket.computeOrderFees(perpsMarkets()[0].marketId(), sizeDelta)
+      const [fees] = await systems().PerpsMarket.computeOrderFees(
+        perpsMarkets()[0].marketId(),
+        sizeDelta
       );
+      const expectedFees = wei(fees);
       const currentFeeCollectorBalance = wei(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
       );
@@ -185,10 +189,12 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
       previousFeeCollectorBalance = wei(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
       );
-      // NOTE: expected fees here does not include settlement reward
-      const expectedFees = wei(
-        await systems().PerpsMarket.computeOrderFees(perpsMarkets()[0].marketId(), sizeDelta)
+      const [orderFees] = await systems().PerpsMarket.computeOrderFees(
+        perpsMarkets()[0].marketId(),
+        sizeDelta
       );
+      // NOTE: expected fees here does not include settlement reward
+      const expectedFees = wei(orderFees);
       const currentReferrerBalance = wei(
         await systems().USD.balanceOf(await referrer.getAddress())
       );
@@ -233,10 +239,12 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
     let expectedToReferrer: Wei, expectedToFeeCollector: Wei;
     const sizeDelta = bn(25);
     before('identify data', async () => {
-      // NOTE: expected fees here does not include settlement reward
-      const expectedFees = wei(
-        await systems().PerpsMarket.computeOrderFees(perpsMarkets()[0].marketId(), sizeDelta)
+      const [orderFees] = await systems().PerpsMarket.computeOrderFees(
+        perpsMarkets()[0].marketId(),
+        sizeDelta
       );
+      // NOTE: expected fees here does not include settlement reward
+      const expectedFees = wei(orderFees);
       const currentFeeCollectorBalance = wei(
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
       );
@@ -292,9 +300,11 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
         await systems().USD.balanceOf(systems().FeeCollectorMock.address)
       );
       // NOTE: expected fees here does not include settlement reward
-      const expectedFees = wei(
-        await systems().PerpsMarket.computeOrderFees(perpsMarkets()[0].marketId(), sizeDelta)
+      const [fees] = await systems().PerpsMarket.computeOrderFees(
+        perpsMarkets()[0].marketId(),
+        sizeDelta
       );
+      const expectedFees = wei(fees);
       const currentReferrerBalance = wei(
         await systems().USD.balanceOf(await referrer.getAddress())
       );
