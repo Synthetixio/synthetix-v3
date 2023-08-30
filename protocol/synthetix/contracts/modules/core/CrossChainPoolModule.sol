@@ -14,6 +14,7 @@ import "../../storage/Pool.sol";
 import "../../utils/CrossChain.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import "@synthetixio/core-contracts/contracts/utils/CallUtil.sol";
 
 contract CrossChainPoolModule is ICrossChainPoolModule {
     using Functions for Functions.Request;
@@ -22,6 +23,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     using SafeCastU128 for uint128;
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
+		using CallUtil for address;
 
     error PoolAlreadyExists(uint128, uint256);
 
@@ -53,7 +55,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
 
         uint64[] memory targetChainIds = new uint64[](1);
         targetChainIds[0] = targetChainId;
-        (bool success, bytes memory result) = address(this).call(abi.encodeWithSelector(
+        bytes memory res = address(this).tryCall(abi.encodeWithSelector(
 						pool.crossChain[0].broadcastSelector, 
             targetChainIds,
             abi.encodeWithSelector(
@@ -64,7 +66,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
             200000
         ));
 
-        CrossChain.refundLeftoverGas(gasTokenUsed);
+        CrossChain.refundLeftoverGas(abi.decode(res, (uint256)));
     }
 
     function _recvCreateCrossChainPool(uint64 srcChainId, uint128 srcPoolId) external override {
@@ -111,7 +113,8 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
         for (uint i = 1; i < pool.crossChain[0].pairedChains.length; i++) {
             uint64[] memory targetChainIds = new uint64[](1);
             targetChainIds[0] = pool.crossChain[0].pairedChains[i];
-            (bool success, bytes memory result) = address(this).call(abi.encodeWithSelector(
+
+            bytes memory res = address(this).tryCall(abi.encodeWithSelector(
 								pool.crossChain[0].broadcastSelector,
                 targetChainIds,
                 abi.encodeWithSelector(
@@ -123,6 +126,8 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
                 ),
                 100000
             ));
+
+						gasTokenUsed += abi.decode(res, (uint256));
         }
 
         CrossChain.refundLeftoverGas(gasTokenUsed);

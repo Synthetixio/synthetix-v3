@@ -16,6 +16,7 @@ import "../../storage/Pool.sol";
 import "hardhat/console.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import "@synthetixio/core-contracts/contracts/utils/CallUtil.sol";
 
 contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
     using Functions for Functions.Request;
@@ -24,6 +25,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
     using SafeCastU128 for uint128;
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
+		using CallUtil for address;
 
     error PoolAlreadyExists(uint128, uint256);
 
@@ -106,7 +108,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
 						calls[i] = _encodeCrossChainPoolCall(pool.crossChain[0].pairedPoolIds[pool.crossChain[0].pairedChains[i]]);
 				}
 
-        address(this).call(abi.encodeWithSelector(
+        address(this).tryCall(abi.encodeWithSelector(
 						pool.crossChain[0].offchainReadSelector,
             pool.crossChain[0].subscriptionId,
 						pool.crossChain[0].pairedChains,
