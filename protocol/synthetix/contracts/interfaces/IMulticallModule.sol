@@ -5,6 +5,9 @@ pragma solidity >=0.8.11 <0.9.0;
  * @title Module that enables calling multiple methods of the system in a single transaction.
  */
 interface IMulticallModule {
+    error RecursiveMulticall(address);
+		error DeniedMulticallTarget(address);
+
     /**
      * @notice Executes multiple transaction payloads in a single transaction.
      * @dev Each transaction is executed using `delegatecall`, and targets the system address.
@@ -26,5 +29,16 @@ interface IMulticallModule {
         bytes[] calldata data
     ) external payable returns (bytes[] memory results);
 
+		/**
+		 * @notice Permit the given target to be called through `multicallThrough`.
+		 * @dev This function can only be called by the system owner.
+		 * @param target The address of the contract to alter permissions
+		 * @param allowlisted Whether or not the target is allowlisted
+		 */
+		function setAllowlistedMulticallTarget(address target, bool allowlisted) external;
+
+		/**
+		 * @notice When receiving a call from this contract through `multicallThrough`, the receiver can use this function to get the original caller.
+		 */
     function getMessageSender() external view returns (address);
 }
