@@ -26,10 +26,16 @@ contract LiquidationModule is ILiquidationModule {
     function flagPosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        uint256 oraclePrice = market.getOraclePrice();
+        Position.Data storage position = market.positions[accountId];
+
+        // Cannot flag a position that does not exist.
+        if (position.size == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
 
         // Cannot flag for liquidation unless they are liquidatable.
-        bool isLiquidatable = market.positions[accountId].isLiquidatable(
+        uint256 oraclePrice = market.getOraclePrice();
+        bool isLiquidatable = position.isLiquidatable(
             market,
             Margin.getMarginUsd(accountId, market, oraclePrice),
             oraclePrice,
@@ -47,6 +53,7 @@ contract LiquidationModule is ILiquidationModule {
         // Remove any pending orders that may exist.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
+            emit OrderCanceled(accountId, marketId);
             delete market.orders[accountId];
         }
 

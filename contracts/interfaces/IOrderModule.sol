@@ -11,7 +11,7 @@ interface IOrderModule is IBasePerpMarket {
     event OrderSubmitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        int256 sizeDelta,
+        int128 sizeDelta,
         uint256 commitmentTime,
         uint256 estimatedOrderFee,
         uint256 estimatedKeeperFee
@@ -21,16 +21,7 @@ interface IOrderModule is IBasePerpMarket {
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        int256 sizeDelta,
-        uint256 orderFee,
-        uint256 keeperFee
-    );
-
-    // @dev Emitted when a stale order was canceled.
-    event OrderCanceled(
-        uint128 indexed accountId,
-        uint128 indexed marketId,
-        int256 sizeDelta,
+        int128 sizeDelta,
         uint256 orderFee,
         uint256 keeperFee
     );
@@ -74,7 +65,7 @@ interface IOrderModule is IBasePerpMarket {
     function simulateOrder(
         uint128 accountId,
         uint128 marketId,
-        uint128 sizeDelta,
+        int128 sizeDelta,
         uint256 limitPrice,
         uint256 keeperFeeBufferUsd,
         uint256 oraclePrice
