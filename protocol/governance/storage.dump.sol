@@ -238,7 +238,6 @@ library Election {
 library ElectionSettings {
     uint64 private constant _MIN_ELECTION_PERIOD_DURATION = 1;
     struct Data {
-        address proposedImplementation;
         uint8 epochSeatCount;
         uint8 minimumActiveMembers;
         uint64 epochDuration;
@@ -261,23 +260,6 @@ library Epoch {
         uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
-    }
-}
-
-// @custom:artifact contracts/storage/Guardian.sol:Guardian
-library Guardian {
-    bytes32 private constant _STORAGE_SLOT = keccak256(abi.encode("io.synthetix.governance.Guardian"));
-    uint64 public constant ACCEPT_OWNERSHIP_DELAY = 7;
-    struct Data {
-        address guardian;
-        address nominatedGuardian;
-        uint64 ownershipRequestedAt;
-    }
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = _STORAGE_SLOT;
-        assembly {
-            store.slot := s
-        }
     }
 }
 
