@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { ethers as Ethers } from 'ethers';
+import { BigNumberish, ethers as Ethers } from 'ethers';
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
@@ -7,8 +7,8 @@ import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.
 export async function addCollateral(
   tokenName: string,
   tokenSymbol: string,
-  issuanceRatio: number,
-  liquidationRatio: number,
+  issuanceRatio: BigNumberish,
+  liquidationRatio: BigNumberish,
   owner: Ethers.Signer,
   core: Ethers.Contract,
   oracleManager: Ethers.Contract
@@ -53,8 +53,8 @@ export async function verifyCollateral(
   collateralIdx: number,
   Collateral: Ethers.Contract,
   oracleNodeId: string,
-  expectedIssuanceRatio: number,
-  expectedLiquidationRatio: number,
+  expectedIssuanceRatio: BigNumberish,
+  expectedLiquidationRatio: BigNumberish,
   expectedToBeEnabled: boolean,
   core: Ethers.Contract
 ) {

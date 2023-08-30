@@ -61,7 +61,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     // solc-ignore-next-line func-mutability
     function getCollateralConfiguration(
         address collateralType
-    ) external view override returns (CollateralConfiguration.Data memory) {
+    ) external pure override returns (CollateralConfiguration.Data memory) {
         return CollateralConfiguration.load(collateralType);
     }
 

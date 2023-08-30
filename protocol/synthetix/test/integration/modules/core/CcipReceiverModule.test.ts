@@ -36,7 +36,7 @@ describe('CcipReceiverModule', function () {
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), twoHundredUSD);
 
-    await systems().USD.connect(staker()).transfer(systems().Core.address, fiftyUSD);
+    await systems().Core.connect(staker()).withdraw(accountId, collateralAddress(), fiftyUSD);
   });
 
   before('record balances', async () => {
