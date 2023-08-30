@@ -17,7 +17,7 @@ library Collateral {
     /**
      * @dev Thrown when a specified market is not found.
      */
-    error AmountExceedAvailableCollateral(
+    error InsufficentAvailableCollateral(
         uint256 amountAvailableForDelegationD18,
         uint256 amountD18
     );
@@ -53,7 +53,7 @@ library Collateral {
      */
     function decreaseAvailableCollateral(Data storage self, uint256 amountD18) internal {
         if (self.amountAvailableForDelegationD18 < amountD18) {
-            revert AmountExceedAvailableCollateral(self.amountAvailableForDelegationD18, amountD18);
+            revert InsufficentAvailableCollateral(self.amountAvailableForDelegationD18, amountD18);
         }
         self.amountAvailableForDelegationD18 -= amountD18;
     }
