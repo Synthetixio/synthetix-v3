@@ -14,7 +14,8 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
  */
 contract MulticallModule is IMulticallModule {
     bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
-		bytes32 internal constant _CONFIG_ALLOWLISTED_MULTICALL_TARGETS = "_allowlistedMulticallTargets";
+    bytes32 internal constant _CONFIG_ALLOWLISTED_MULTICALL_TARGETS =
+        "_allowlistedMulticallTargets";
 
     /**
      * @inheritdoc IMulticallModule
@@ -57,11 +58,16 @@ contract MulticallModule is IMulticallModule {
             bytes memory result;
             if (to[i] == address(this)) {
                 (success, result) = address(this).delegatecall(data[i]);
-            } else if (Config.read(keccak256(abi.encodePacked(_CONFIG_ALLOWLISTED_MULTICALL_TARGETS, to[i])), 0) != 0) {
+            } else if (
+                Config.read(
+                    keccak256(abi.encodePacked(_CONFIG_ALLOWLISTED_MULTICALL_TARGETS, to[i])),
+                    0
+                ) != 0
+            ) {
                 (success, result) = address(to[i]).call(data[i]);
-						} else {
-								revert DeniedMulticallTarget(to[i]);
-						}
+            } else {
+                revert DeniedMulticallTarget(to[i]);
+            }
 
             if (!success) {
                 uint len = result.length;
@@ -76,13 +82,17 @@ contract MulticallModule is IMulticallModule {
         Config.put(_CONFIG_MESSAGE_SENDER, 0);
     }
 
-		/**
-		 * @inheritdoc IMulticallModule
-		 */
-		function setAllowlistedMulticallTarget(address target, bool allowlisted) external {
-				OwnableStorage.onlyOwner();
-				Config.put(keccak256(abi.encodePacked(_CONFIG_ALLOWLISTED_MULTICALL_TARGETS, target)), allowlisted ? bytes32(uint256(1)) : bytes32(uint256(0)));
-		}
+    /**
+     * @inheritdoc IMulticallModule
+     */
+    function setAllowlistedMulticallTarget(address target, bool allowlisted) external {
+        OwnableStorage.onlyOwner();
+        Config.put(
+            keccak256(abi.encodePacked(_CONFIG_ALLOWLISTED_MULTICALL_TARGETS, target)),
+            // solhint-disable-next-line numcast/safe-cast
+            allowlisted ? bytes32(uint256(1)) : bytes32(uint256(0))
+        );
+    }
 
     /**
      * @inheritdoc IMulticallModule
