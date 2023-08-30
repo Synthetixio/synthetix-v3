@@ -227,8 +227,6 @@ contract BaseElectionModule is
         nominees.add(msg.sender);
 
         emit CandidateNominated(msg.sender, Council.load().currentElectionId);
-
-        // TODO: add ballot id to emitted event
     }
 
     function withdrawNomination() external override {
@@ -348,24 +346,32 @@ contract BaseElectionModule is
 
         uint newEpochIndex = store.currentElectionId + 1;
 
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvResolve.selector,
+                election.winners.values(),
+                newEpochIndex
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
+    }
+
+    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
+        CrossChain.onlyOnChainAt(0);
+        CrossChain.onlyCrossChain();
+
+        Council.Data storage store = Council.load();
+        Election.Data storage election = store.getCurrentElection();
+
         _removeAllCouncilMembers(newEpochIndex);
-        _addCouncilMembers(election.winners.values(), newEpochIndex);
+        _addCouncilMembers(winners, newEpochIndex);
 
         election.resolved = true;
-
         store.newElection();
 
         emit EpochStarted(newEpochIndex);
-
-        // TODO: Broadcast message to distribute the new NFTs on all chains
-    }
-
-    function _recvResolve(address voter, uint256 chainId, Ballot.Data calldata ballot) external {
-        CrossChain.onlyOnChainAt(0);
-        CrossChain.onlyCrossChain();
-        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
-
-        // TODO: update voting store, distribute nfts
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
