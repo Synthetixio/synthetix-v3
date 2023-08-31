@@ -45,7 +45,10 @@ library PerpsAccount {
         SetUtil.UintSet openPositionMarketIds;
     }
 
-    error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
+    error InsufficientCollateralAvailableForWithdraw(
+        uint availableUsdDenominated,
+        uint requiredUsdDenominated
+    );
 
     error InsufficientSynthCollateral(
         uint128 synthMarketId,
@@ -205,7 +208,7 @@ library PerpsAccount {
         if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
-                amountToWithdraw
+                amountToWithdrawUsd
             );
         }
     }
