@@ -231,12 +231,11 @@ library Margin {
         if (position.size == 0) {
             return collateralValueUsd;
         }
-        int256 pnl = position.getPnl(price);
         return
             MathUtil
                 .max(
                     collateralValueUsd.toInt() +
-                        pnl +
+                        position.getPnl(price) +
                         position.getAccruedFunding(market, price) -
                         position.accruedFeesUsd.toInt(),
                     0
