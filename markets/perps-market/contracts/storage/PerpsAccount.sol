@@ -47,6 +47,12 @@ library PerpsAccount {
 
     error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
 
+    error InsufficientSynthCollateral(
+        uint128 synthMarketId,
+        uint collateralAmount,
+        uint withdrawAmount
+    );
+
     error InsufficientMarginError(uint leftover);
 
     error AccountLiquidatable(uint128 accountId);
@@ -165,9 +171,11 @@ library PerpsAccount {
     /**
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your initial maintenance value.
+     * @dev    It also checks the synth collateral for this account is enough to cover the withdrawal amount.
      */
     function validateWithdrawableAmount(
         Data storage self,
+        uint128 synthMarketId,
         uint256 amountToWithdraw
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
         (
@@ -192,6 +200,11 @@ library PerpsAccount {
                 availableWithdrawableCollateralUsd,
                 amountToWithdraw
             );
+        }
+
+        uint collateralAmount = self.collateralAmounts[synthMarketId];
+        if (collateralAmount < amountToWithdraw) {
+            revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
         }
     }
 

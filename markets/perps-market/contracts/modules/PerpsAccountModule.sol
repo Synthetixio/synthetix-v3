@@ -62,7 +62,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         } else {
             uint256 amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            account.validateWithdrawableAmount(amountAbs);
+            account.validateWithdrawableAmount(synthMarketId, amountAbs);
             _withdrawMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountAbs);
         }
 
