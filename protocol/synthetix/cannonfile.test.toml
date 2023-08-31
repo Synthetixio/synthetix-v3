@@ -22,8 +22,11 @@ artifact = "contracts/generated/test/TestableCollateralConfigurationStorage.sol:
 [contract.TestableCollateralLockStorage]
 artifact = "contracts/generated/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
 
-[contract.TestableCrossChainStorage]
-artifact = "contracts/generated/test/TestableCrossChainStorage.sol:TestableCrossChainStorage"
+[contract.TestableCrossChainChainlinkStorage]
+artifact = "contracts/generated/test/TestableCrossChainChainlinkStorage.sol:TestableCrossChainChainlinkStorage"
+
+[contract.TestableCrossChainWormholeStorage]
+artifact = "contracts/generated/test/TestableCrossChainWormholeStorage.sol:TestableCrossChainWormholeStorage"
 
 [contract.TestableDistributionStorage]
 artifact = "contracts/generated/test/TestableDistributionStorage.sol:TestableDistributionStorage"
@@ -69,7 +72,8 @@ contracts = [
     "AccountModule",
     "AssociateDebtModule",
     "AssociatedSystemsModule",
-    "CcipReceiverModule",
+    "OffchainChainlinkModule",
+    "OffchainWormholeModule",
     "CollateralModule",
     "CollateralConfigurationModule",
     "CrossChainPoolModule",
@@ -90,7 +94,8 @@ contracts = [
     "TestableCollateralStorage",
     "TestableCollateralConfigurationStorage",
     "TestableCollateralLockStorage",
-    "TestableCrossChainStorage",
+    "TestableCrossChainChainlinkStorage",
+    "TestableCrossChainWormholeStorage",
     "TestableDistributionStorage",
     "TestableDistributionActorStorage",
     "TestableMarketStorage",
@@ -110,7 +115,8 @@ depends = [
   "contract.AccountModule",
   "contract.AssociateDebtModule",
   "contract.AssociatedSystemsModule",
-  "contract.CcipReceiverModule",
+  "contract.OffchainChainlinkModule",
+	"contract.OffchainWormholeModule",
   "contract.CollateralModule",
   "contract.CollateralConfigurationModule",
   "contract.CrossChainPoolModule",
@@ -131,7 +137,8 @@ depends = [
   "contract.TestableCollateralStorage",
   "contract.TestableCollateralConfigurationStorage",
   "contract.TestableCollateralLockStorage",
-  "contract.TestableCrossChainStorage",
+  "contract.TestableCrossChainChainlinkStorage",
+  "contract.TestableCrossChainWormholeStorage",
   "contract.TestableDistributionStorage",
   "contract.TestableDistributionActorStorage",
   "contract.TestableMarketStorage",

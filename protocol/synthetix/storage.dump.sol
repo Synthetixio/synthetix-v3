@@ -298,6 +298,23 @@ interface FunctionsBillingRegistryInterface {
     }
 }
 
+// @custom:artifact contracts/interfaces/external/IWormholeRelayer.sol:IWormholeRelayerDelivery
+interface IWormholeRelayerDelivery {
+    enum DeliveryStatus {
+        SUCCESS,
+        RECEIVER_FAILURE,
+        FORWARD_REQUEST_FAILURE,
+        FORWARD_REQUEST_SUCCESS
+    }
+    enum RefundStatus {
+        REFUND_SENT,
+        REFUND_FAIL,
+        CROSS_CHAIN_REFUND_SENT,
+        CROSS_CHAIN_REFUND_FAIL_PROVIDER_NOT_SUPPORTED,
+        CROSS_CHAIN_REFUND_FAIL_NOT_ENOUGH
+    }
+}
+
 // @custom:artifact contracts/modules/core/AccountModule.sol:AccountModule
 contract AccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
@@ -496,8 +513,8 @@ library Config {
     }
 }
 
-// @custom:artifact contracts/storage/CrossChain.sol:CrossChain
-library CrossChain {
+// @custom:artifact contracts/storage/CrossChainChainlink.sol:CrossChainChainlink
+library CrossChainChainlink {
     bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
     struct Data {
         address ccipRouter;
@@ -506,6 +523,25 @@ library CrossChain {
         mapping(uint64 => uint64) ccipChainIdToSelector;
         mapping(uint64 => uint64) ccipSelectorToChainId;
         mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
+    }
+    function load() internal pure returns (Data storage crossChain) {
+        bytes32 s = _SLOT_CROSS_CHAIN;
+        assembly {
+            crossChain.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/CrossChainWormhole.sol:CrossChainWormhole
+library CrossChainWormhole {
+    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChainWormhole"));
+    struct Data {
+        address crossChainRead;
+        address sender;
+        address recv;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint16) chainIdToSelector;
+        mapping(uint16 => uint64) selectorToChainId;
     }
     function load() internal pure returns (Data storage crossChain) {
         bytes32 s = _SLOT_CROSS_CHAIN;
@@ -654,9 +690,10 @@ library PoolCrossChainInfo {
         uint128 latestTotalWeights;
         uint64[] pairedChains;
         mapping(uint64 => uint128) pairedPoolIds;
-        uint64 chainlinkSubscriptionId;
-        uint32 chainlinkSubscriptionInterval;
-        bytes32 latestRequestId;
+        bytes32 subscriptionId;
+        uint256 subscriptionInterval;
+        bytes4 broadcastSelector;
+        bytes4 offchainReadSelector;
     }
 }
 
