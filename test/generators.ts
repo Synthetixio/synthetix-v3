@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
 import { shuffle, isNil, random } from 'lodash';
-import { wei } from '@synthetixio/wei';
+import Wei, { wei } from '@synthetixio/wei';
 import { MARKETS } from './data/markets.fixture';
 import { Bs, Market, Trader, Collateral } from './typed';
 
@@ -165,6 +165,7 @@ export const genOrder = async (
     desiredLeverage?: number;
     desiredSide?: 1 | -1;
     desiredKeeperFeeBufferUsd?: number;
+    desiredSize?: Wei; // Not is desiredSize is specified, desiredSide and leverage will be ignored.
   }
 ) => {
   const { PerpMarketProxy } = systems();
@@ -173,16 +174,19 @@ export const genOrder = async (
     ? wei(options?.desiredKeeperFeeBufferUsd).toBN()
     : genKeeperFeeBufferUsd();
 
-  // Use a reasonble amount of leverage
+  // Use a reasonable amount of leverage.
   const leverage = options?.desiredLeverage ?? genOneOf([0.5, 1, 2, 3, 4, 5]);
 
   const { answer: collateralPrice } = await collateral.aggregator().latestRoundData();
   const marginUsd = wei(collateralDepositAmount).mul(collateralPrice).sub(keeperFeeBufferUsd);
 
-  // Randomly use long/short unless `desiredSide` is specified.
   const oraclePrice = await PerpMarketProxy.getOraclePrice(market.marketId());
   let sizeDelta = marginUsd.div(oraclePrice).mul(wei(leverage)).toBN();
-  if (options?.desiredSide) {
+
+  // `desiredSide` is specified, just use that.
+  if (options?.desiredSize) {
+    sizeDelta = options.desiredSize.toBN();
+  } else if (options?.desiredSide) {
     sizeDelta = sizeDelta.mul(options.desiredSide);
   } else {
     sizeDelta = sizeDelta.mul(genSide());
