@@ -176,8 +176,14 @@ library PerpsAccount {
     function validateWithdrawableAmount(
         Data storage self,
         uint128 synthMarketId,
-        uint256 amountToWithdraw
+        uint256 amountToWithdraw,
+        ISpotMarketSystem spotMarket
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
+        uint collateralAmount = self.collateralAmounts[synthMarketId];
+        if (collateralAmount < amountToWithdraw) {
+            revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
+        }
+
         (
             bool isEligible,
             int256 availableMargin,
@@ -195,16 +201,12 @@ library PerpsAccount {
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
         availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
 
-        if (amountToWithdraw > availableWithdrawableCollateralUsd) {
+        (uint amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(synthMarketId, amountToWithdraw);
+        if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
                 amountToWithdraw
             );
-        }
-
-        uint collateralAmount = self.collateralAmounts[synthMarketId];
-        if (collateralAmount < amountToWithdraw) {
-            revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
         }
     }
 
