@@ -264,10 +264,13 @@ describe('OrderModule', () => {
       const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
         value: updateFee,
       });
+      // This is an open order, so no funding or pnl
+      const accruedFunding = 0;
+      const pnl = 0;
 
       await assertEvent(
         tx,
-        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${keeperFee})`,
+        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${keeperFee}, 0, 0, ${order.fillPrice})`,
         PerpMarketProxy
       );
 
@@ -304,7 +307,7 @@ describe('OrderModule', () => {
       // There should be no order.
       assertBn.isZero((await PerpMarketProxy.getOrderDigest(trader.accountId, marketId)).sizeDelta);
 
-      // There should be no order and no position.
+      // There should no position.
       assertBn.isZero((await PerpMarketProxy.getPositionDigest(trader.accountId, marketId)).size);
     });
 
