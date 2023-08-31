@@ -1,5 +1,4 @@
 import { assert, log } from 'matchstick-as';
-import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { handleCollateralModified } from '../optimism-goerli';
 import { createCollateralModifiedEvent } from './event-factories/createCollateralModifiedEvent';
 

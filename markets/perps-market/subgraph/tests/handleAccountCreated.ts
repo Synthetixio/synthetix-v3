@@ -12,13 +12,4 @@ export default function test(): void {
   assert.fieldEquals('Account', '1', 'id', '1');
   assert.fieldEquals('Account', '1', 'accountId', '1');
   assert.fieldEquals('Account', '1', 'owner', owner1);
-
-  // TODO: This is most likely not how it supposed to work!
-  log.info('Should update a record for another account', []);
-  const owner2 = '0x6900000000000000000000000000000000000000';
-  handleAccountCreated(createAccountCreatedEvent(1, owner2, 20_000, 20));
-  assert.entityCount('Account', 1);
-  assert.fieldEquals('Account', '1', 'id', '1');
-  assert.fieldEquals('Account', '1', 'accountId', '1');
-  assert.fieldEquals('Account', '1', 'owner', owner2);
 }
