@@ -165,7 +165,7 @@ export const genOrder = async (
     desiredLeverage?: number;
     desiredSide?: 1 | -1;
     desiredKeeperFeeBufferUsd?: number;
-    desiredSize?: Wei; // Not is desiredSize is specified, desiredSide and leverage will be ignored.
+    desiredSize?: Wei; // Note if desiredSize is specified, desiredSide and leverage will be ignored.
   }
 ) => {
   const { PerpMarketProxy } = systems();
