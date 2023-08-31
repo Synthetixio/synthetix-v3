@@ -1,4 +1,4 @@
-import { BigNumber, Contract, utils } from 'ethers';
+import { BigNumber, Contract, ContractReceipt, utils } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
@@ -6,6 +6,7 @@ import { type genTrader, type genOrder, genNumber } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';
+import { LogDescription } from 'ethers/lib/utils';
 
 // --- Constants --- //
 
@@ -189,4 +190,31 @@ export const extendContractAbi = (contract: Contract, abi: string[]) => {
   );
   utils.Logger.setLogLevel(LogLevel.WARNING); // enable default logging again
   return newContract;
+};
+
+export const findEventSafe = ({
+  receipt,
+  eventName,
+  contract,
+}: {
+  receipt: ContractReceipt;
+  eventName: string;
+  contract: Contract;
+}) => {
+  if (!receipt.logs) {
+    throw new Error(
+      `no logs found when searching for event ${eventName}. Did you actually pass a transaction receipt into findEvent?`
+    );
+  }
+  const foundEvent = receipt.logs
+    .map((log) => {
+      try {
+        return contract.interface.parseLog(log);
+      } catch (error) {
+        return undefined;
+      }
+    })
+    .find((parsedEvent) => parsedEvent?.name === eventName);
+  if (!foundEvent) return;
+  return foundEvent;
 };
