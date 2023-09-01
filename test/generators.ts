@@ -151,6 +151,8 @@ export const genTrader = async (
   };
 };
 
+export const genSide = (): 1 | -1 => genOneOf([1, -1]);
+
 /** Generates a valid order to settle on a specific market for a specific collateral type/amount. */
 export const genOrder = async (
   { systems }: Bs,
@@ -181,7 +183,7 @@ export const genOrder = async (
   if (options?.desiredSide) {
     sizeDelta = sizeDelta.mul(options.desiredSide);
   } else {
-    sizeDelta = genOneOf([sizeDelta, sizeDelta.mul(-1)]);
+    sizeDelta = sizeDelta.mul(genSide());
   }
 
   const limitPrice = genLimitPrice(sizeDelta.gt(0), oraclePrice);

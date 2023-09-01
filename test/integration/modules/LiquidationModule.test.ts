@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genOneOf, genOrder, genTrader } from '../../generators';
+import { genBootstrap, genOneOf, genOrder, genSide, genTrader } from '../../generators';
 import { depositMargin, commitAndSettle, commitOrder } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
@@ -50,18 +50,18 @@ describe('LiquidationModule', () => {
     it('should remove any pending orders when present', async () => {
       const { PerpMarketProxy } = systems();
 
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order1);
 
       // Commit a new order but don't settle.
       const order2 = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 0.5,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
       await commitOrder(bs, marketId, trader, order2);
 
@@ -69,7 +69,7 @@ describe('LiquidationModule', () => {
       const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
@@ -84,16 +84,14 @@ describe('LiquidationModule', () => {
 
     it('should emit all events in correct order');
 
-    it('should recompute funding');
-
     it('should revert when position already flagged', async () => {
       const { PerpMarketProxy } = systems();
 
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
 
       await commitAndSettle(bs, marketId, trader, order);
@@ -101,7 +99,7 @@ describe('LiquidationModule', () => {
       const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
 
@@ -119,11 +117,11 @@ describe('LiquidationModule', () => {
     it('should revert when position health factor > 1', async () => {
       const { PerpMarketProxy } = systems();
 
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
 
       await commitAndSettle(bs, marketId, trader, order);
@@ -148,9 +146,31 @@ describe('LiquidationModule', () => {
       );
     });
 
-    it('should revert when accountId does not exist');
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when marketId does not exist');
+      const { marketId } = await depositMargin(bs, genTrader(bs));
+      const invalidAccountId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).flagPosition(invalidAccountId, marketId),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader } = await depositMargin(bs, genTrader(bs));
+      const invalidMarketId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 
   describe('liquidatePosition', () => {
@@ -176,7 +196,32 @@ describe('LiquidationModule', () => {
 
     it('should emit all events in correct order');
 
-    it('should recompute funding');
+    it.skip('should recompute funding', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSize,
+      });
+
+      await commitAndSettle(bs, marketId, trader, order);
+
+      // Price falls/pumps between 15% and 8.25% should results in a healthFactor of < 1.
+      //
+      // Whether it goes up or down depends on the side of the order.
+      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
+      await market.aggregator().mockSetCurrentPrice(
+        wei(marketOraclePrice)
+          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .toBN()
+      );
+
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+      await assertEvent(tx, `FundingRecomputed`, PerpMarketProxy);
+    });
 
     it('should revert when liq cap has been met');
 
