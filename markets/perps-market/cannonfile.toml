@@ -71,6 +71,7 @@ artifact = "GlobalPerpsMarketModule"
 contracts = [
   "synthetix.AccountModule",
   "synthetix.AssociatedSystemsModule",
+	"synthetix.MulticallModule",
   "CoreModule",
   "PerpsMarketFactoryModule",
   "PerpsAccountModule",
