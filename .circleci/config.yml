@@ -117,7 +117,7 @@ jobs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_REGISTRY_PRIORITY: "local"
+      CANNON_REGISTRY_PRIORITY: "local"
     steps:
       - checkout
       - install-foundry
@@ -186,7 +186,7 @@ jobs:
 
   test-contracts:
     environment:
-      - CANNON_REGISTRY_PRIORITY: "local"
+      CANNON_REGISTRY_PRIORITY: "local"
     parameters:
       workspace:
         type: string
