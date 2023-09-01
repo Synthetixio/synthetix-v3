@@ -228,8 +228,12 @@ jobs:
             REPORT_GAS: true
           command: |
             export PATH=$PATH:$PWD/node_modules/.bin
+            export CANNON_REGISTRY_PRIORITY="local"
+            echo "CANNON_REGISTRY_PRIORITY: $CANNON_REGISTRY_PRIORITY"
+            
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
+
             cd $_dir
             _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
             echo "Tests:"
