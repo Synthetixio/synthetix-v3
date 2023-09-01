@@ -19,6 +19,7 @@ library Election {
         SetUtil.AddressSet winners;
         // List of all ballot ids in this election
         bytes32[] ballotPtrs;
+        // Total votes count for a given candidate
         mapping(address => uint256) candidateVoteTotals;
     }
 

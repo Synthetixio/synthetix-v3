@@ -182,8 +182,8 @@ library Ballot {
         address[] votedCandidates;
         uint256[] amounts;
     }
-    function load(uint electionId, address voter, uint256 precinct) internal pure returns (Data storage self) {
-        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Ballot", electionId, voter, precinct));
+    function load(uint256 electionId, address voter, uint256 chainId) internal pure returns (Data storage self) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.governance.Ballot", electionId, voter, chainId));
         assembly {
             self.slot := s
         }
@@ -204,7 +204,7 @@ library Council {
         address councilToken;
         SetUtil.AddressSet councilMembers;
         mapping(address => uint) councilTokenIds;
-        uint currentElectionId;
+        uint256 currentElectionId;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_COUNCIL_STORAGE;

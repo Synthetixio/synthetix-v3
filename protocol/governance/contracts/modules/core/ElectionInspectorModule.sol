@@ -10,54 +10,56 @@ contract ElectionInspectorModule is IElectionInspectorModule {
     using SetUtil for SetUtil.AddressSet;
     using Ballot for Ballot.Data;
 
-    function getEpochStartDateForIndex(uint epochIndex) external view override returns (uint64) {
+    function getEpochStartDateForIndex(uint256 epochIndex) external view override returns (uint64) {
         return Election.load(epochIndex).epoch.startDate;
     }
 
-    function getEpochEndDateForIndex(uint epochIndex) external view override returns (uint64) {
+    function getEpochEndDateForIndex(uint256 epochIndex) external view override returns (uint64) {
         return Election.load(epochIndex).epoch.endDate;
     }
 
     function getNominationPeriodStartDateForIndex(
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (uint64) {
         return Election.load(epochIndex).epoch.nominationPeriodStartDate;
     }
 
     function getVotingPeriodStartDateForIndex(
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (uint64) {
         return Election.load(epochIndex).epoch.votingPeriodStartDate;
     }
 
     function wasNominated(
         address candidate,
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (bool) {
         return Election.load(epochIndex).nominees.contains(candidate);
     }
 
-    function getNomineesAtEpoch(uint epochIndex) external view override returns (address[] memory) {
+    function getNomineesAtEpoch(
+        uint256 epochIndex
+    ) external view override returns (address[] memory) {
         return Election.load(epochIndex).nominees.values();
     }
 
     function hasVotedInEpoch(
         address user,
-        uint precinct,
-        uint epochIndex
+        uint256 chainId,
+        uint256 epochIndex
     ) external view override returns (bool) {
-        return Ballot.load(epochIndex, user, precinct).hasVoted();
+        return Ballot.load(epochIndex, user, chainId).hasVoted();
     }
 
     function getCandidateVotesInEpoch(
         address candidate,
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (uint) {
         return Election.load(epochIndex).candidateVoteTotals[candidate];
     }
 
     function getElectionWinnersInEpoch(
-        uint epochIndex
+        uint256 epochIndex
     ) external view override returns (address[] memory) {
         return Election.load(epochIndex).winners.values();
     }

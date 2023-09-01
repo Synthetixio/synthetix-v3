@@ -27,7 +27,7 @@ library Council {
         // Council token id's by council member address
         mapping(address => uint) councilTokenIds;
         // id of the current epoch
-        uint currentElectionId;
+        uint256 currentElectionId;
     }
 
     enum ElectionPeriod {
@@ -111,6 +111,17 @@ library Council {
     /// @dev Used to allow certain functions to only operate within a given period
     function onlyInPeriod(Council.ElectionPeriod period) internal view {
         if (getCurrentPeriod(load()) != period) {
+            revert NotCallableInCurrentPeriod();
+        }
+    }
+
+    /// @dev Used to allow certain functions to only operate within a given periods
+    function onlyInPeriods(
+        Council.ElectionPeriod period1,
+        Council.ElectionPeriod period2
+    ) internal view {
+        Council.ElectionPeriod currentPeriod = Council.getCurrentPeriod(load());
+        if (currentPeriod != period1 && currentPeriod != period2) {
             revert NotCallableInCurrentPeriod();
         }
     }

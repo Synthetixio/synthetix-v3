@@ -31,16 +31,6 @@ contract BaseElectionModule is
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
-    /// @dev Used to allow certain functions to only be executed on the "mothership" chain.
-    /// The mothership is considered to be the first chain id in the supported networks list.
-    modifier onlyMothership() {
-        if (CrossChain.load().getSupportedNetworks()[0] != block.chainid.to64()) {
-            revert NotMothership();
-        }
-
-        _;
-    }
-
     function initOrUpdateElectionSettings(
         address[] memory initialCouncil,
         uint8 minimumActiveMembers,
@@ -49,6 +39,7 @@ contract BaseElectionModule is
         uint64 nominationPeriodDuration,
         uint64 votingPeriodDuration
     ) external override {
+        // TODO: initialization should be called only on mothership and broadcasted?
         OwnableStorage.onlyOwner();
 
         _initOrUpdateElectionSettings(
@@ -153,6 +144,8 @@ contract BaseElectionModule is
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
     ) external override {
+        // TODO: onlyOnMothership?
+
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
@@ -180,6 +173,8 @@ contract BaseElectionModule is
         uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     ) external override {
+        // TODO: onlyOnMothership?
+
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
@@ -194,6 +189,8 @@ contract BaseElectionModule is
     }
 
     function dismissMembers(address[] calldata membersToDismiss) external override {
+        // TODO: onlyOnMothership?
+
         OwnableStorage.onlyOwner();
 
         Council.Data storage store = Council.load();
@@ -219,19 +216,22 @@ contract BaseElectionModule is
     }
 
     function nominate() public virtual override {
+        // TODO: onlyOnMothership?
+
+        Council.onlyInPeriods(Council.ElectionPeriod.Nomination, Council.ElectionPeriod.Vote);
+
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
-        Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
 
         nominees.add(msg.sender);
 
         emit CandidateNominated(msg.sender, Council.load().currentElectionId);
-
-        // TODO: add ballot id to emitted event
     }
 
     function withdrawNomination() external override {
+        // TODO: onlyOnMothership?
+
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
         Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
@@ -276,17 +276,15 @@ contract BaseElectionModule is
 
         CrossChain.Data storage cc = CrossChain.load();
         cc.transmit(
-            cc.getSupportedNetworks()[0],
+            cc.getChainIdAt(0),
             abi.encodeWithSelector(this._recvCast.selector, msg.sender, block.chainid, ballot),
             _CROSSCHAIN_GAS_LIMIT
         );
     }
 
-    function _recvCast(
-        address voter,
-        uint256 precinct,
-        Ballot.Data calldata ballot
-    ) external onlyMothership {
+    function _recvCast(address voter, uint256 chainId, Ballot.Data calldata ballot) external {
+        CrossChain.onlyOnChainAt(0);
+        CrossChain.onlyCrossChain();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
         _validateCandidates(ballot.votedCandidates);
@@ -295,7 +293,7 @@ contract BaseElectionModule is
         Election.Data storage election = council.getCurrentElection();
         uint256 currentElectionId = council.currentElectionId;
 
-        Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, precinct);
+        Ballot.Data storage storedBallot = Ballot.load(currentElectionId, voter, chainId);
 
         storedBallot.copy(ballot);
         storedBallot.validate();
@@ -307,11 +305,12 @@ contract BaseElectionModule is
 
         election.ballotPtrs.push(ballotPtr);
 
-        emit VoteRecorded(msg.sender, precinct, currentElectionId, ballot.votingPower);
+        emit VoteRecorded(voter, chainId, currentElectionId, ballot.votingPower);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
-    function evaluate(uint numBallots) external override onlyMothership {
+    function evaluate(uint numBallots) external override {
+        CrossChain.onlyOnChainAt(0);
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         Election.Data storage election = Council.load().getCurrentElection();
@@ -336,7 +335,8 @@ contract BaseElectionModule is
     }
 
     /// @dev Burns previous NFTs and mints new ones
-    function resolve() public virtual override onlyMothership {
+    function resolve() public virtual override {
+        CrossChain.onlyOnChainAt(0);
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         Council.Data storage store = Council.load();
@@ -346,16 +346,32 @@ contract BaseElectionModule is
 
         uint newEpochIndex = store.currentElectionId + 1;
 
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                this._recvResolve.selector,
+                election.winners.values(),
+                newEpochIndex
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
+    }
+
+    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
+        CrossChain.onlyOnChainAt(0);
+        CrossChain.onlyCrossChain();
+
+        Council.Data storage store = Council.load();
+        Election.Data storage election = store.getCurrentElection();
+
         _removeAllCouncilMembers(newEpochIndex);
-        _addCouncilMembers(election.winners.values(), newEpochIndex);
+        _addCouncilMembers(winners, newEpochIndex);
 
         election.resolved = true;
-
         store.newElection();
 
         emit EpochStarted(newEpochIndex);
-
-        // TODO: Broadcast message to distribute the new NFTs on all chains
     }
 
     function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
@@ -397,27 +413,27 @@ contract BaseElectionModule is
         return Council.load().getCurrentElection().nominees.values();
     }
 
-    function hasVoted(address user, uint256 precinct) public view override returns (bool) {
+    function hasVoted(address user, uint256 chainId) public view override returns (bool) {
         Council.Data storage council = Council.load();
-        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, user, precinct);
+        Ballot.Data storage ballot = Ballot.load(council.currentElectionId, user, chainId);
         return ballot.votingPower > 0 && ballot.votedCandidates.length > 0;
     }
 
     function getVotePower(
         address user,
-        uint256 precinct,
+        uint256 chainId,
         uint256 electionId
     ) external view override returns (uint) {
-        Ballot.Data storage ballot = Ballot.load(electionId, user, precinct);
+        Ballot.Data storage ballot = Ballot.load(electionId, user, chainId);
         return ballot.votingPower;
     }
 
     function getBallotCandidates(
         address voter,
-        uint256 precinct,
+        uint256 chainId,
         uint256 electionId
     ) external view override returns (address[] memory) {
-        return Ballot.load(electionId, voter, precinct).votedCandidates;
+        return Ballot.load(electionId, voter, chainId).votedCandidates;
     }
 
     function isElectionEvaluated() public view override returns (bool) {

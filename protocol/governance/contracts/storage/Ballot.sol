@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Ballot
- * @dev A single vote cast by a address/precinct combination.
+ * @dev A single vote cast by a address/chainId combination.
  *
  * A ballot goes through a few stages:
  * 1. The ballot is empty and all values are 0
@@ -20,12 +20,12 @@ library Ballot {
     }
 
     function load(
-        uint electionId,
+        uint256 electionId,
         address voter,
-        uint256 precinct
+        uint256 chainId
     ) internal pure returns (Data storage self) {
         bytes32 s = keccak256(
-            abi.encode("io.synthetix.governance.Ballot", electionId, voter, precinct)
+            abi.encode("io.synthetix.governance.Ballot", electionId, voter, chainId)
         );
 
         assembly {
