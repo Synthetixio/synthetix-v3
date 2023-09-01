@@ -68,7 +68,7 @@ commands:
               ipfs init
             fi
       - run:
-          name: "Setup custom environment variables"
+          name: "Setup cannon registry priority"
           command: echo 'export CANNON_REGISTRY_PRIORITY=local"' >> "$CANNON_REGISTRY_PRIORITY"
 
       - save_cache:
@@ -116,6 +116,8 @@ jobs:
   build-testable:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      - CANNON_REGISTRY_PRIORITY: "local"
     steps:
       - checkout
       - install-foundry
@@ -183,6 +185,8 @@ jobs:
             - "~/.cache/hardhat-nodejs"
 
   test-contracts:
+    environment:
+      - CANNON_REGISTRY_PRIORITY: "local"
     parameters:
       workspace:
         type: string
