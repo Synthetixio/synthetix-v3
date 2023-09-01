@@ -45,7 +45,16 @@ library PerpsAccount {
         SetUtil.UintSet openPositionMarketIds;
     }
 
-    error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
+    error InsufficientCollateralAvailableForWithdraw(
+        uint availableUsdDenominated,
+        uint requiredUsdDenominated
+    );
+
+    error InsufficientSynthCollateral(
+        uint128 synthMarketId,
+        uint collateralAmount,
+        uint withdrawAmount
+    );
 
     error InsufficientMarginError(uint leftover);
 
@@ -165,11 +174,19 @@ library PerpsAccount {
     /**
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your initial maintenance value.
+     * @dev    It also checks the synth collateral for this account is enough to cover the withdrawal amount.
      */
     function validateWithdrawableAmount(
         Data storage self,
-        uint256 amountToWithdraw
+        uint128 synthMarketId,
+        uint256 amountToWithdraw,
+        ISpotMarketSystem spotMarket
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
+        uint collateralAmount = self.collateralAmounts[synthMarketId];
+        if (collateralAmount < amountToWithdraw) {
+            revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
+        }
+
         (
             bool isEligible,
             int256 availableMargin,
@@ -187,10 +204,17 @@ library PerpsAccount {
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
         availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
 
-        if (amountToWithdraw > availableWithdrawableCollateralUsd) {
+        uint amountToWithdrawUsd;
+        if (synthMarketId == SNX_USD_MARKET_ID) {
+            amountToWithdrawUsd = amountToWithdraw;
+        } else {
+            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(synthMarketId, amountToWithdraw);
+        }
+
+        if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
-                amountToWithdraw
+                amountToWithdrawUsd
             );
         }
     }
