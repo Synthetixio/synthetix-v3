@@ -17,27 +17,90 @@ describe('ModifyCollateral Withdraw', () => {
   const withdrawAmount = wei(0.1);
   const BTC_PRICE = wei(10_000);
 
-  const { systems, owner, synthMarkets, superMarketId, trader1 } = bootstrapMarkets({
-    synthMarkets: [
-      {
-        name: 'Bitcoin',
-        token: 'snxBTC',
-        buyPrice: BTC_PRICE.toBN(),
-        sellPrice: BTC_PRICE.toBN(),
-      },
-    ],
-    perpsMarkets: [],
-    traderAccountIds: accountIds,
-  });
+  const { systems, owner, synthMarkets, provider, superMarketId, trader1, trader2 } =
+    bootstrapMarkets({
+      synthMarkets: [
+        {
+          name: 'Bitcoin',
+          token: 'snxBTC',
+          buyPrice: BTC_PRICE.toBN(),
+          sellPrice: BTC_PRICE.toBN(),
+        },
+      ],
+      perpsMarkets: [],
+      traderAccountIds: accountIds,
+    });
   let synthBTCMarketId: ethers.BigNumber;
 
   before('identify actors', () => {
     synthBTCMarketId = synthMarkets()[0].marketId();
   });
 
+  const restoreToSetup = snapshotCheckpoint(provider);
+
+  describe('withdraw without open position modifyCollateral() from another account', async () => {
+    let spotBalanceBefore: ethers.BigNumber;
+
+    before(restoreToSetup);
+
+    before('owner sets limits to max', async () => {
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setMaxCollateralAmount(synthBTCMarketId, ethers.constants.MaxUint256);
+    });
+
+    before('trader1 buys 1 snxBTC', async () => {
+      await systems()
+        .SpotMarket.connect(trader1())
+        .buy(synthBTCMarketId, marginAmount.toBN(), oneBTC.toBN(), ethers.constants.AddressZero);
+    });
+
+    before('record balances', async () => {
+      spotBalanceBefore = await synthMarkets()[0]
+        .synth()
+        .connect(trader1())
+        .balanceOf(await trader1().getAddress());
+    });
+
+    before('trader1 approves the perps market', async () => {
+      await synthMarkets()[0]
+        .synth()
+        .connect(trader1())
+        .approve(systems().PerpsMarket.address, depositAmount.toBN());
+    });
+
+    before('trader1 deposits collateral', async () => {
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .modifyCollateral(accountIds[0], synthBTCMarketId, depositAmount.toBN());
+    });
+    before('trader2 deposits snxUSD as collateral', async () => {
+      await systems()
+        .PerpsMarket.connect(trader2())
+        .modifyCollateral(accountIds[1], 0, depositAmount.toBN());
+    });
+    it('reverts when trader1 tries to withdraw snxUSD', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountIds[0], 0, withdrawAmount.mul(-1).toBN()),
+        `InsufficientSynthCollateral("0", "0", "${withdrawAmount.toBN()}")`
+      );
+    });
+    it('reverts when trader2 tries to withdraw snxBTC', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader2())
+          .modifyCollateral(accountIds[1], synthBTCMarketId, withdrawAmount.mul(-1).toBN()),
+        `InsufficientSynthCollateral("${synthBTCMarketId}", "0", "${withdrawAmount.toBN()}")`
+      );
+    });
+  });
   describe('withdraw without open position modifyCollateral()', async () => {
     let spotBalanceBefore: ethers.BigNumber;
     let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
+
+    before(restoreToSetup);
 
     before('owner sets limits to max', async () => {
       await systems()
