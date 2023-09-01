@@ -13,8 +13,6 @@ library ElectionSettings {
     error InvalidElectionSettings();
 
     struct Data {
-        // Implementation proposed by previous Council to which can be upgraded to (see UpgradeProposalModule)
-        address proposedImplementation;
         // Number of council members in the current epoch
         uint8 epochSeatCount;
         // Minimum active council members. If too many are dismissed an emergency election is triggered
@@ -90,9 +88,6 @@ library ElectionSettings {
     }
 
     function copyMissingFrom(Data storage to, Data storage from) internal {
-        if (to.proposedImplementation == address(0)) {
-            to.proposedImplementation = from.proposedImplementation;
-        }
         if (to.epochSeatCount == 0) {
             to.epochSeatCount = from.epochSeatCount;
         }
