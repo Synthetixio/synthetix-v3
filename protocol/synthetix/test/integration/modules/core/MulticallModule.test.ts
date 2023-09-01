@@ -64,7 +64,8 @@ describe('MulticallModule', function () {
               systems().Core.interface.encodeFunctionData('createAccount(uint128)', [
                 '170141183460469231731687303715884105727',
               ]),
-            ]
+            ],
+            [0]
           ),
         `InvalidAccountId("170141183460469231731687303715884105727")`,
         systems().Core
@@ -85,7 +86,8 @@ describe('MulticallModule', function () {
                 ethers.utils.defaultAbiCoder.encode(['uint256'], [429]),
                 [],
               ]),
-            ]
+            ],
+            [0, 0]
           ),
         `DeniedMulticallTarget("${systems().OracleManager.address}")`,
         systems().Core
@@ -111,7 +113,8 @@ describe('MulticallModule', function () {
                 ethers.utils.defaultAbiCoder.encode(['uint256'], [429]),
                 [],
               ]),
-            ]
+            ],
+            [0, 0]
           );
       });
 
@@ -141,7 +144,8 @@ describe('MulticallModule', function () {
           .Core.connect(user1)
           .multicallThrough(
             [receiverContract.address],
-            [receiverContract.interface.encodeFunctionData('testMessageSender')]
+            [receiverContract.interface.encodeFunctionData('testMessageSender')],
+            [0]
           );
       });
 
