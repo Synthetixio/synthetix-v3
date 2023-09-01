@@ -204,7 +204,13 @@ library PerpsAccount {
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
         availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
 
-        (uint amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(synthMarketId, amountToWithdraw);
+        uint amountToWithdrawUsd;
+        if (synthMarketId == SNX_USD_MARKET_ID) {
+            amountToWithdrawUsd = amountToWithdraw;
+        } else {
+            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(synthMarketId, amountToWithdraw);
+        }
+
         if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
