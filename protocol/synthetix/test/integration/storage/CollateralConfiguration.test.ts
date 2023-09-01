@@ -48,9 +48,34 @@ describe('CollateralConfiguration', function () {
         systems().Core.CollateralConfiguration_verifyIssuanceRatio(
           fakeCollateral.address,
           100,
-          499
+          499,
+          0
         ),
         'InsufficientCollateralRatio("499", "100", "4990000000000000000", "5000000000000000000")',
+        systems().Core
+      );
+
+      // default to system issuanceRatioD18
+      await assertRevert(
+        systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+          fakeCollateral.address,
+          100,
+          499,
+          ONE.mul(3)
+        ),
+        'InsufficientCollateralRatio("499", "100", "4990000000000000000", "5000000000000000000")',
+        systems().Core
+      );
+
+      // override with minIssuanceRatioD18
+      await assertRevert(
+        systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+          fakeCollateral.address,
+          100,
+          500,
+          ONE.mul(6)
+        ),
+        'InsufficientCollateralRatio("500", "100", "5000000000000000000", "6000000000000000000")',
         systems().Core
       );
     });
@@ -59,23 +84,31 @@ describe('CollateralConfiguration', function () {
       await systems().Core.CollateralConfiguration_verifyIssuanceRatio(
         fakeCollateral.address,
         100,
-        500
+        500,
+        0
       );
       await systems().Core.CollateralConfiguration_verifyIssuanceRatio(
         fakeCollateral.address,
         100,
-        1000
+        1000,
+        0
       );
       await systems().Core.CollateralConfiguration_verifyIssuanceRatio(
         fakeCollateral.address,
         0,
-        1000
+        1000,
+        0
       );
     });
 
     it('edge case: fails if positive debt with no collateral', async () => {
       await assertRevert(
-        systems().Core.CollateralConfiguration_verifyIssuanceRatio(fakeCollateral.address, 100, 0),
+        systems().Core.CollateralConfiguration_verifyIssuanceRatio(
+          fakeCollateral.address,
+          100,
+          0,
+          0
+        ),
         'InsufficientCollateralRatio("0", "100", "0", "5000000000000000000")',
         systems().Core
       );

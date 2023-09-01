@@ -142,6 +142,24 @@ library CollateralConfiguration {
             );
         }
 
+        if (config.issuanceRatioD18 <= 1e18) {
+            revert ParameterError.InvalidParameter("issuanceRatioD18", "must be greater than 100%");
+        }
+
+        if (config.liquidationRatioD18 <= 1e18) {
+            revert ParameterError.InvalidParameter(
+                "liquidationRatioD18",
+                "must be greater than 100%"
+            );
+        }
+
+        if (config.issuanceRatioD18 < config.liquidationRatioD18) {
+            revert ParameterError.InvalidParameter(
+                "issuanceRatioD18",
+                "must be greater than liquidationRatioD18"
+            );
+        }
+
         Data storage storedConfig = load(config.tokenAddress);
 
         storedConfig.tokenAddress = config.tokenAddress;
@@ -205,18 +223,22 @@ library CollateralConfiguration {
     function verifyIssuanceRatio(
         Data storage self,
         uint256 debtD18,
-        uint256 collateralValueD18
+        uint256 collateralValueD18,
+        uint256 minIssuanceRatioD18
     ) internal view {
+        uint256 issuanceRatioD18 = self.issuanceRatioD18 > minIssuanceRatioD18
+            ? self.issuanceRatioD18
+            : minIssuanceRatioD18;
+
         if (
             debtD18 != 0 &&
-            (collateralValueD18 == 0 ||
-                collateralValueD18.divDecimal(debtD18) < self.issuanceRatioD18)
+            (collateralValueD18 == 0 || collateralValueD18.divDecimal(debtD18) < issuanceRatioD18)
         ) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,
                 debtD18,
                 collateralValueD18.divDecimal(debtD18),
-                self.issuanceRatioD18
+                issuanceRatioD18
             );
         }
     }

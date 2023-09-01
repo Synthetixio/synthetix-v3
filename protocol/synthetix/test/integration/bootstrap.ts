@@ -107,6 +107,14 @@ export function bootstrapWithMockMarketAndPool() {
           maxDebtShareValueD18: ethers.utils.parseEther('1'),
         },
       ]);
+
+    await r
+      .systems()
+      .Core.connect(owner)
+      .setPoolCollateralConfiguration(r.poolId, r.collateralAddress(), {
+        collateralLimitD18: bn(1000000000),
+        issuanceRatioD18: bn(1),
+      });
   });
 
   const restore = snapshotCheckpoint(r.provider);

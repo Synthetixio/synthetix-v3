@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "../storage/MarketConfiguration.sol";
+import "../storage/PoolCollateralConfiguration.sol";
 
 /**
  * @title Module for the creation and management of pools.
@@ -74,11 +75,24 @@ interface IPoolModule {
         address indexed sender
     );
 
+    event PoolCollateralConfigurationUpdated(
+        uint128 indexed poolId,
+        address collateralType,
+        PoolCollateralConfiguration.Data config
+    );
+
     /**
      * @notice Emitted when a system-wide minimum liquidity ratio is set
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio
      */
     event SetMinLiquidityRatio(uint256 minLiquidityRatio);
+
+    /**
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
+     * @param poolId The id of the pool.
+     * @param disabled Shows if new collateral's will be dsiabled by default for the pool
+     */
+    event PoolCollateralDisabledByDefaultSet(uint128 poolId, bool disabled);
 
     /**
      * @notice Creates a pool with the requested pool id.
@@ -98,6 +112,25 @@ interface IPoolModule {
         uint128 poolId,
         MarketConfiguration.Data[] memory marketDistribution
     ) external;
+
+    /**
+     * @notice Allows the pool owner to set the configuration of a specific collateral type for their pool.
+     * @param poolId The id of the pool whose configuration is being set.
+     * @param collateralType The collate
+     * @param newConfig The config to set
+     */
+    function setPoolCollateralConfiguration(
+        uint128 poolId,
+        address collateralType,
+        PoolCollateralConfiguration.Data memory newConfig
+    ) external;
+
+    /**
+     * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
+     * @param poolId The id of the pool.
+     * @param disabled If set to true new collaterals will be disabled for the pool.
+     */
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
@@ -166,6 +199,16 @@ interface IPoolModule {
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
+
+    /**
+     @notice returns a pool minimum issuance ratio
+     * @param poolId The id of the pool for to check the collateral for.
+     * @param collateral The address of the collateral.
+     */
+    function getPoolCollateralIssuanceRatio(
+        uint128 poolId,
+        address collateral
+    ) external returns (uint256 issuanceRatioD18);
 
     /**
      * @notice Retrieves the system-wide minimum liquidity ratio.

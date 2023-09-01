@@ -14,6 +14,7 @@ interface IMulticallModule {
      * @param data Array of calldata objects, one for each function that is to be called in the system.
      * @return results Array of each `delegatecall`'s response corresponding to the incoming calldata array.
      */
+<<<<<<< HEAD
     function multicall(bytes[] calldata data) external payable returns (bytes[] memory results);
 
     /**
@@ -41,4 +42,7 @@ interface IMulticallModule {
      * @notice When receiving a call from this contract through `multicallThrough`, the receiver can use this function to get the original caller.
      */
     function getMessageSender() external view returns (address);
+=======
+    function multicall(bytes[] calldata data) external returns (bytes[] memory results);
+>>>>>>> origin/main
 }

@@ -178,6 +178,13 @@ interface ISpotMarketFactoryModule is IMarket {
     function renounceMarketNomination(uint128 synthMarketId) external;
 
     /**
+     * @notice Allows the market owner to renounce his ownership.
+     * @dev Reverts if the caller is not the owner.
+     * @param synthMarketId synth market id value
+     */
+    function renounceMarketOwnership(uint128 synthMarketId) external;
+
+    /**
      * @notice Returns market owner.
      * @param synthMarketId synth market id value
      */
