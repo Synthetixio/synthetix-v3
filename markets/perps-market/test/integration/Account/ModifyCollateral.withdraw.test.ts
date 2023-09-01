@@ -39,8 +39,6 @@ describe('ModifyCollateral Withdraw', () => {
   const restoreToSetup = snapshotCheckpoint(provider);
 
   describe('withdraw without open position modifyCollateral() from another account', async () => {
-    let spotBalanceBefore: ethers.BigNumber;
-
     before(restoreToSetup);
 
     before('owner sets limits to max', async () => {
@@ -53,13 +51,6 @@ describe('ModifyCollateral Withdraw', () => {
       await systems()
         .SpotMarket.connect(trader1())
         .buy(synthBTCMarketId, marginAmount.toBN(), oneBTC.toBN(), ethers.constants.AddressZero);
-    });
-
-    before('record balances', async () => {
-      spotBalanceBefore = await synthMarkets()[0]
-        .synth()
-        .connect(trader1())
-        .balanceOf(await trader1().getAddress());
     });
 
     before('trader1 approves the perps market', async () => {
@@ -96,6 +87,7 @@ describe('ModifyCollateral Withdraw', () => {
       );
     });
   });
+
   describe('withdraw without open position modifyCollateral()', async () => {
     let spotBalanceBefore: ethers.BigNumber;
     let modifyCollateralWithdrawTxn: ethers.providers.TransactionResponse;
