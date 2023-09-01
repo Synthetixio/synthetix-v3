@@ -69,7 +69,7 @@ commands:
             fi
       - run:
           name: "Setup cannon registry priority"
-          command: echo 'export CANNON_REGISTRY_PRIORITY=local"' >> "$CANNON_REGISTRY_PRIORITY"
+          command: echo 'export CANNON_REGISTRY_PRIORITY="local"' >> "$CANNON_REGISTRY_PRIORITY"
 
       - save_cache:
           key: ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
