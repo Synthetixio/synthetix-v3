@@ -67,9 +67,6 @@ commands:
               rm -rf ~/.ipfs
               ipfs init
             fi
-      - run:
-          name: "Setup cannon registry priority"
-          command: echo 'export CANNON_REGISTRY_PRIORITY="local"' >> "$CANNON_REGISTRY_PRIORITY"
 
       - save_cache:
           key: ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
@@ -116,8 +113,6 @@ jobs:
   build-testable:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    environment:
-      CANNON_REGISTRY_PRIORITY: "local"
     steps:
       - checkout
       - install-foundry
@@ -156,7 +151,7 @@ jobs:
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
-      - run: yarn workspaces foreach --topological-dev --verbose run build-testable
+      - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --topological-dev --verbose run build-testable
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
           paths:
@@ -185,8 +180,6 @@ jobs:
             - "~/.cache/hardhat-nodejs"
 
   test-contracts:
-    environment:
-      CANNON_REGISTRY_PRIORITY: "local"
     parameters:
       workspace:
         type: string
@@ -228,12 +221,8 @@ jobs:
             REPORT_GAS: true
           command: |
             export PATH=$PATH:$PWD/node_modules/.bin
-            export CANNON_REGISTRY_PRIORITY="local"
-            echo "CANNON_REGISTRY_PRIORITY: $CANNON_REGISTRY_PRIORITY"
-            
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
-
             cd $_dir
             _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
             echo "Tests:"
