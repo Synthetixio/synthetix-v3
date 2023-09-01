@@ -14,6 +14,8 @@ import "../nodes/ConstantNode.sol";
 import "../storage/NodeOutput.sol";
 import "../storage/NodeDefinition.sol";
 
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+
 /**
  * @title Module for managing nodes
  * @dev See INodeModule.
@@ -64,7 +66,18 @@ contract NodeModule is INodeModule {
      * @inheritdoc INodeModule
      */
     function process(bytes32 nodeId) external view returns (NodeOutput.Data memory node) {
-        return _process(nodeId);
+        return _process(nodeId, new bytes32[](0), new bytes32[](0));
+    }
+
+    /**
+     * @inheritdoc INodeModule
+     */
+    function processWithRuntime(
+        bytes32 nodeId,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) external view returns (NodeOutput.Data memory node) {
+        return _process(nodeId, runtimeKeys, runtimeValues);
     }
 
     /**
@@ -135,7 +148,18 @@ contract NodeModule is INodeModule {
     /**
      * @dev Returns the output of a specified node.
      */
-    function _process(bytes32 nodeId) internal view returns (NodeOutput.Data memory price) {
+    function _process(
+        bytes32 nodeId,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) internal view returns (NodeOutput.Data memory price) {
+        if (runtimeKeys.length != runtimeValues.length) {
+            revert ParameterError.InvalidParameter(
+                "runtimeValues",
+                "must be same length as runtimeKeys"
+            );
+        }
+
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.load(nodeId);
 
         if (nodeDefinition.nodeType == NodeDefinition.NodeType.REDUCER) {
@@ -148,7 +172,9 @@ contract NodeModule is INodeModule {
             return
                 ExternalNode.process(
                     _processParentNodeOutputs(nodeDefinition),
-                    nodeDefinition.parameters
+                    nodeDefinition.parameters,
+                    runtimeKeys,
+                    runtimeValues
                 );
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
             return ChainlinkNode.process(nodeDefinition.parameters);

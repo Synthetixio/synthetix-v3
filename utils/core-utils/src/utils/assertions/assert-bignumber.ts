@@ -97,4 +97,19 @@ export = {
       });
     }
   },
+
+  /**
+   * Assert that `a` is not equal to `b`
+   */
+  notEqual(a: BigNumberish, b: BigNumberish) {
+    const abn = BigNumber.from(a);
+    const bbn = BigNumber.from(b);
+    if (abn.eq(bbn)) {
+      throw new BigNumberAssertionError({
+        actual: abn,
+        expected: bbn,
+        operator: 'neq',
+      });
+    }
+  },
 };

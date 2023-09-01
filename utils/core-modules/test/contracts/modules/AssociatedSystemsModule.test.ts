@@ -156,6 +156,23 @@ describe('AssociatedSystemsModule', function () {
         assert.equal(await TokenModule.isInitialized(), false);
       });
 
+      it('upgrade token with new name and symbol', async () => {
+        await AssociatedSystemsModule.initOrUpgradeToken(
+          registeredName,
+          'A Token 2',
+          'TOK2',
+          18,
+          TokenModule.address
+        );
+      });
+
+      it('the token has been successfully reinitlized', async function () {
+        assert.equal(await TokenModuleAssociated.isInitialized(), true);
+        assert.equal(await TokenModuleAssociated.name(), 'A Token 2');
+        assert.equal(await TokenModuleAssociated.symbol(), 'TOK2');
+        assert.equal(await TokenModuleAssociated.decimals(), 18);
+      });
+
       describe('when attempting to register a different kind', function () {
         before('prepare modules', async function () {
           await AssociatedSystemsModule.initOrUpgradeNft(

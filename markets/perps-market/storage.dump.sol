@@ -288,12 +288,23 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
     }
     function load(uint128 id) internal pure returns (Data storage pool) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Pool", id));
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact @synthetixio/main/contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 collateralLimitD18;
+        uint256 issuanceRatioD18;
     }
 }
 
@@ -423,6 +434,7 @@ interface IAsyncOrderSettlementModule {
         int128 newPositionSize;
         int128 sizeDelta;
         int256 pnl;
+        int256 accruedFunding;
         uint256 pnlUint;
         uint256 amountToDeduct;
         uint256 settlementReward;
@@ -496,6 +508,8 @@ library AsyncOrder {
         uint orderFees;
         uint availableMargin;
         uint currentLiquidationMargin;
+        uint accumulatedLiquidationRewards;
+        uint currentLiquidationReward;
         int128 newPositionSize;
         uint newNotionalValue;
         int currentAvailableMargin;
@@ -540,6 +554,8 @@ library GlobalPerpsMarketConfiguration {
         uint128[] synthDeductionPriority;
         uint minLiquidationRewardUsd;
         uint maxLiquidationRewardUsd;
+        uint128 maxPositionsPerAccount;
+        uint128 maxCollateralsPerAccount;
     }
     function load() internal pure returns (Data storage globalMarketConfig) {
         bytes32 s = _SLOT_GLOBAL_PERPS_MARKET_CONFIGURATION;
@@ -614,12 +630,13 @@ library PerpsMarketConfiguration {
         uint256 maxFundingVelocity;
         uint256 skewScale;
         uint256 initialMarginRatioD18;
-        uint256 maintenanceMarginRatioD18;
+        uint256 maintenanceMarginScalarD18;
         uint256 lockedOiRatioD18;
         uint256 maxLiquidationLimitAccumulationMultiplier;
         uint256 maxSecondsInLiquidationWindow;
         uint256 liquidationRewardRatioD18;
         uint256 minimumPositionMargin;
+        uint256 minimumInitialMarginRatioD18;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketConfiguration", marketId));

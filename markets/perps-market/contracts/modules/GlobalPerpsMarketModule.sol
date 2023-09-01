@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ERC165Helper} from "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
@@ -14,6 +15,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
  * @dev See IGlobalPerpsMarketModule.
  */
 contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
+    using SetUtil for SetUtil.UintSet;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
 
@@ -146,5 +148,41 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         address referrer
     ) external view override returns (uint256 shareRatioD18) {
         return GlobalPerpsMarketConfiguration.load().referrerShare[referrer];
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getMarkets() external view override returns (uint256[] memory marketIds) {
+        marketIds = GlobalPerpsMarket.load().activeMarkets.values();
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function setPerAccountCaps(
+        uint128 maxPositionsPerAccount,
+        uint128 maxCollateralsPerAccount
+    ) external override {
+        OwnableStorage.onlyOwner();
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        store.maxPositionsPerAccount = maxPositionsPerAccount;
+        store.maxCollateralsPerAccount = maxCollateralsPerAccount;
+
+        emit PerAccountCapsSet(maxPositionsPerAccount, maxCollateralsPerAccount);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function getPerAccountCaps()
+        external
+        view
+        override
+        returns (uint128 maxPositionsPerAccount, uint128 maxCollateralsPerAccount)
+    {
+        GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
+        maxPositionsPerAccount = store.maxPositionsPerAccount;
+        maxCollateralsPerAccount = store.maxCollateralsPerAccount;
     }
 }

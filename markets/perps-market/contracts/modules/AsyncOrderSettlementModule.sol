@@ -17,6 +17,10 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
+/**
+ * @title Module for settling async orders.
+ * @dev See IAsyncOrderSettlementModule.
+ */
 contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvents {
     using DecimalMath for int256;
     using DecimalMath for uint256;
@@ -124,6 +128,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         runtime.marketId = asyncOrder.request.marketId;
         // check if account is flagged
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
+
         Position.Data storage oldPosition;
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
@@ -137,7 +142,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
 
         // use fill price to calculate realized pnl
-        (runtime.pnl, , , , ) = oldPosition.getPnl(runtime.fillPrice);
+        (runtime.pnl, , , runtime.accruedFunding, ) = oldPosition.getPnl(runtime.fillPrice);
         runtime.pnlUint = MathUtil.abs(runtime.pnl);
 
         if (runtime.pnl > 0) {
@@ -192,6 +197,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.accountId,
             runtime.fillPrice,
             runtime.pnl,
+            runtime.accruedFunding,
             runtime.sizeDelta,
             runtime.newPositionSize,
             runtime.totalFees,

@@ -88,11 +88,22 @@ interface IPerpsAccountModule {
 
     /**
      * @notice Gets the initial/maintenance margins across all positions that an account has open.
+     * @dev Note that requiredInitialMargin and requiredMaintenanceMargin includes the liquidation rewards, in case you want the value without it you need to substract maxLiquidationReward.
      * @param accountId Id of the account.
      * @return requiredInitialMargin initial margin req (used when withdrawing collateral).
      * @return requiredMaintenanceMargin maintenance margin req (used to determine liquidation threshold).
+     * @return totalAccumulatedLiquidationRewards sum of all liquidation rewards of if all account open positions were to be liquidated fully.
+     * @return maxLiquidationReward max liquidation reward the keeper would receive if account was fully liquidated. Note here that the accumulated rewards are checked against the global max/min configured liquidation rewards.
      */
     function getRequiredMargins(
         uint128 accountId
-    ) external view returns (uint256 requiredInitialMargin, uint256 requiredMaintenanceMargin);
+    )
+        external
+        view
+        returns (
+            uint256 requiredInitialMargin,
+            uint256 requiredMaintenanceMargin,
+            uint256 totalAccumulatedLiquidationRewards,
+            uint256 maxLiquidationReward
+        );
 }

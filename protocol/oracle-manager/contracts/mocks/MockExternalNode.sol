@@ -13,9 +13,19 @@ contract MockExternalNode is IExternalNode {
 
     function process(
         NodeOutput.Data[] memory,
-        bytes memory
+        bytes memory,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
     ) external view override returns (NodeOutput.Data memory) {
-        return output;
+        NodeOutput.Data memory theOutput = output;
+
+        for (uint256 i = 0; i < runtimeKeys.length; i++) {
+            if (runtimeKeys[i] == "overridePrice") {
+                // solhint-disable-next-line numcast/safe-cast
+                theOutput.price = int256(uint256(runtimeValues[i]));
+            }
+        }
+        return theOutput;
     }
 
     function isValid(
@@ -24,11 +34,7 @@ contract MockExternalNode is IExternalNode {
         return nodeDefinition.nodeType == NodeDefinition.NodeType.EXTERNAL;
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165) returns (bool) {
-        return
-            interfaceId == type(IExternalNode).interfaceId ||
-            interfaceId == this.supportsInterface.selector;
+    function supportsInterface(bytes4) public view virtual override(IERC165) returns (bool) {
+        return true;
     }
 }

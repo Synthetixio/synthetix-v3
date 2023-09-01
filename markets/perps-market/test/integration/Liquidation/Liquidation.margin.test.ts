@@ -3,6 +3,8 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { OpenPositionData, openPosition } from '../helpers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { ethers } from 'ethers';
+import assert from 'assert/strict';
 
 describe('Liquidation - margin', async () => {
   const perpsMarketConfigs = [
@@ -236,6 +238,8 @@ describe('Liquidation - margin', async () => {
         systems().PerpsMarket.connect(keeper()).liquidate(2),
         'NotEligibleForLiquidation'
       );
+
+      assert.equal(await systems().PerpsMarket.canLiquidate(2), false);
     });
   });
   describe('price change - available margin 0 ', () => {
@@ -289,10 +293,17 @@ describe('Liquidation - margin', async () => {
           initialMarginFraction,
           maintenanceMarginScalar,
           minimumInitialMarginRatio,
-          maxLiquidationLimitAccumulationMultiplier,
           liquidationRewardRatio,
-          maxSecondsInLiquidationWindow,
           minimumPositionMargin
+        );
+      await systems()
+        .PerpsMarket.connect(owner())
+        .setMaxLiquidationParameters(
+          opMarketId,
+          maxLiquidationLimitAccumulationMultiplier,
+          maxSecondsInLiquidationWindow,
+          0,
+          ethers.constants.AddressZero
         );
     });
     // Changing minimumPositionMargin does not have an affect on available margin
@@ -306,6 +317,11 @@ describe('Liquidation - margin', async () => {
         systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(-100)),
         'AccountLiquidatable(2)'
       );
+    });
+
+    // sanity check
+    it('is eligible for liquidation', async () => {
+      assert.equal(await systems().PerpsMarket.canLiquidate(2), true);
     });
     // reset minimumPositionMargin to 0
     after(restoreMinimumPositionMargin);
