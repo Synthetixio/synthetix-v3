@@ -68,14 +68,14 @@ describe('ModifyCollateral Withdraw', () => {
     before('trader2 deposits snxUSD as collateral', async () => {
       await systems()
         .PerpsMarket.connect(trader2())
-        .modifyCollateral(accountIds[1], 0, depositAmount.toBN());
+        .modifyCollateral(accountIds[1], sUSDSynthId, depositAmount.toBN());
     });
     it('reverts when trader1 tries to withdraw snxUSD', async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
-          .modifyCollateral(accountIds[0], 0, withdrawAmount.mul(-1).toBN()),
-        `InsufficientSynthCollateral("0", "0", "${withdrawAmount.toBN()}")`
+          .modifyCollateral(accountIds[0], sUSDSynthId, withdrawAmount.mul(-1).toBN()),
+        `InsufficientSynthCollateral("${sUSDSynthId}", "0", "${withdrawAmount.toBN()}")`
       );
     });
     it('reverts when trader2 tries to withdraw snxBTC', async () => {
