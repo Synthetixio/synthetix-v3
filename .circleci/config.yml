@@ -67,6 +67,9 @@ commands:
               rm -rf ~/.ipfs
               ipfs init
             fi
+      - run:
+          name: "Setup custom environment variables"
+          command: echo 'export CANNON_REGISTRY_PRIORITY=local"' >> "$CANNON_REGISTRY_PRIORITY"
 
       - save_cache:
           key: ipfs-{{ .Environment.IPFS_CACHE_VERSION }}
