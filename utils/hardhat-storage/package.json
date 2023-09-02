@@ -31,7 +31,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/core-utils": "3.3.0",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.46"
   },
@@ -43,5 +43,5 @@
     "ts-jest": "29.0.5",
     "typescript": "4.9.3"
   },
-  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862"
+  "gitHead": "eefdfaf1eeaa67dc421c209fa8ff1b598a861cba"
 }

@@ -14,7 +14,7 @@
     "coverage": "hardhat test",
     "coverage1": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
-    "publish-contracts": "yarn build && cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --quiet",
+    "publish-contracts": "yarn build && cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "postpack": "yarn publish-contracts",
     "docgen": "hardhat docgen"
@@ -23,15 +23,15 @@
   "author": "Synthetix",
   "license": "MIT",
   "devDependencies": {
-    "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-contracts": "workspace:*",
-    "@synthetixio/core-modules": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/main": "workspace:*",
-    "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/common-config": "3.3.0",
+    "@synthetixio/core-contracts": "3.3.0",
+    "@synthetixio/core-modules": "3.3.0",
+    "@synthetixio/core-utils": "3.3.0",
+    "@synthetixio/docgen": "1.0.0",
+    "@synthetixio/main": "3.3.0",
+    "@synthetixio/oracle-manager": "3.3.0",
     "@synthetixio/router": "^3.1.3",
-    "@synthetixio/spot-market": "workspace:*",
+    "@synthetixio/spot-market": "3.3.0",
     "@synthetixio/wei": "2.74.4",
     "@usecannon/cli": "^2.5.4",
     "ethers": "^5.7.2",
@@ -40,5 +40,5 @@
     "ts-node": "10.9.1",
     "typescript": "4.9.3"
   },
-  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862"
+  "gitHead": "eefdfaf1eeaa67dc421c209fa8ff1b598a861cba"
 }
