@@ -1,5 +1,5 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { MarketCreated as MarketCreatedEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createMarketCreatedEvent(
@@ -10,7 +10,7 @@ export function createMarketCreatedEvent(
   blockNumber: i64,
   logIndex: i64
 ): MarketCreatedEvent {
-  const event = changetype<MarketCreatedEvent>(newMockEvent());
+  const event = newTypedMockEvent<MarketCreatedEvent>();
 
   event.parameters = [];
   event.parameters.push(

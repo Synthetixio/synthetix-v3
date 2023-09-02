@@ -19,13 +19,13 @@ describe('PerpsMarketProxy', () => {
     logStore();
   });
 
-  // test('handleOrderCancelled', handleOrderCancelled);
-  // test('handleOrderCommitted', handleOrderCommitted);
-  // test('handleOrderSettled', handleOrderSettled);
-  // test('handleSettlementStrategyAdded', handleSettlementStrategyAdded);
-  // test('handleSettlementStrategyUpdated', handleSettlementStrategyUpdated);
+  test('handleOrderCancelled', handleOrderCancelled);
+  test('handleOrderCommitted', handleOrderCommitted);
+  test('handleOrderSettled', handleOrderSettled);
+  test('handleSettlementStrategyAdded', handleSettlementStrategyAdded);
+  test('handleSettlementStrategyUpdated', handleSettlementStrategyUpdated);
   test('handleSynthPriceDataUpdated', handleSynthPriceDataUpdated);
-  // test('handleSynthUnWrapped', handleSynthUnWrapped);
-  // test('handleSynthWrapped', handleSynthWrapped);
-  // test('handleWrapperSet', handleWrapperSet);
+  test('handleSynthUnWrapped', handleSynthUnWrapped);
+  test('handleSynthWrapped', handleSynthWrapped);
+  test('handleWrapperSet', handleWrapperSet);
 });

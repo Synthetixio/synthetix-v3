@@ -1,5 +1,5 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { CollateralModified as CollateralModifiedEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createCollateralModifiedEvent(
@@ -11,7 +11,7 @@ export function createCollateralModifiedEvent(
   blockNumber: i64,
   logIndex: i64
 ): CollateralModifiedEvent {
-  const event = changetype<CollateralModifiedEvent>(newMockEvent());
+  const event = newTypedMockEvent<CollateralModifiedEvent>();
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('accountId', ethereum.Value.fromI32(id)));
   event.parameters.push(

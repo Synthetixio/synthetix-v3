@@ -1,4 +1,4 @@
-import { beforeEach, clearStore, describe, test } from 'matchstick-as';
+import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'matchstick-as';
 
 import handleAccountCreatedTest from './handleAccountCreated';
 import handleCollateralConfiguredTest from './handleCollateralConfigured';
@@ -30,6 +30,10 @@ import handleVaultLiquidationTest from './handleVaultLiquidation';
 describe('CoreProxy', () => {
   beforeEach(() => {
     clearStore();
+  });
+
+  afterEach(() => {
+    logStore();
   });
 
   test('handleAccountCreated', handleAccountCreatedTest);

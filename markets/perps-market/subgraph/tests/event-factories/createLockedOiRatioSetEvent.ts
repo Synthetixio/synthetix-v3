@@ -1,5 +1,5 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { LockedOiRatioSet as LockedOiRatioSetEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createLockedOiRatioSetEvent(
@@ -9,7 +9,7 @@ export function createLockedOiRatioSetEvent(
   blockNumber: i64,
   logIndex: i64
 ): LockedOiRatioSetEvent {
-  const event = changetype<LockedOiRatioSetEvent>(newMockEvent());
+  const event = newTypedMockEvent<LockedOiRatioSetEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(id)));

@@ -1,5 +1,5 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { SettlementStrategyAdded as SettlementStrategyAddedEvent } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
 export function createSettlementStrategyAddedEvent(
@@ -9,7 +9,7 @@ export function createSettlementStrategyAddedEvent(
   blockNumber: i64,
   logIndex: i64
 ): SettlementStrategyAddedEvent {
-  const event = changetype<SettlementStrategyAddedEvent>(newMockEvent());
+  const event = newTypedMockEvent<SettlementStrategyAddedEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('synthMarketId', ethereum.Value.fromI32(id)));

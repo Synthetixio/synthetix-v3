@@ -1,5 +1,5 @@
 import { BigInt, ethereum, Address } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { ReferrerShareUpdated as ReferrerShareUpdatedEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createReferrerShareUpdatedEvent(
@@ -9,7 +9,7 @@ export function createReferrerShareUpdatedEvent(
   blockNumber: i64,
   logIndex: i64
 ): ReferrerShareUpdatedEvent {
-  const event = changetype<ReferrerShareUpdatedEvent>(newMockEvent());
+  const event = newTypedMockEvent<ReferrerShareUpdatedEvent>();
 
   event.parameters = [];
   event.parameters.push(

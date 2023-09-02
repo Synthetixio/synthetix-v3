@@ -1,5 +1,5 @@
 import { BigInt, ethereum, Bytes } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { PreviousOrderExpired as PreviousOrderExpiredEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createPreviousOrderExpiredEvent(
@@ -13,7 +13,7 @@ export function createPreviousOrderExpiredEvent(
   blockNumber: i64,
   logIndex: i64
 ): PreviousOrderExpiredEvent {
-  const event = changetype<PreviousOrderExpiredEvent>(newMockEvent());
+  const event = newTypedMockEvent<PreviousOrderExpiredEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));

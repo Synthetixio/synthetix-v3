@@ -1,5 +1,5 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import {
   OrderCancelled as OrderCancelledEvent,
   OrderCancelledAsyncOrderClaimStruct,
@@ -24,7 +24,7 @@ export function createOrderCancelledEvent(
   blockNumber: i64,
   logIndex: i64
 ): OrderCancelledEvent {
-  const event = changetype<OrderCancelledEvent>(newMockEvent());
+  const event = newTypedMockEvent<OrderCancelledEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(id)));

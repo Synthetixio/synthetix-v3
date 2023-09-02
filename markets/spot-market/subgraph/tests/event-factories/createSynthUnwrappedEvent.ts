@@ -1,5 +1,5 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import {
   SynthUnwrapped as SynthUnWrappedEvent,
   SynthUnwrappedFeesStruct,
@@ -19,7 +19,7 @@ export function createSynthUnWrappedEvent(
   blockNumber: i64,
   logIndex: i64
 ): SynthUnWrappedEvent {
-  const event = changetype<SynthUnWrappedEvent>(newMockEvent());
+  const event = newTypedMockEvent<SynthUnWrappedEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('synthMarketId', ethereum.Value.fromI32(id)));

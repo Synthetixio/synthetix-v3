@@ -1,5 +1,5 @@
 import { BigInt, ethereum, Address, Bytes } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { OrderCommitted as OrderCommittedEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createOrderCommittedEvent(
@@ -16,7 +16,7 @@ export function createOrderCommittedEvent(
   blockNumber: i64,
   logIndex: i64
 ): OrderCommittedEvent {
-  const event = changetype<OrderCommittedEvent>(newMockEvent());
+  const event = newTypedMockEvent<OrderCommittedEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));

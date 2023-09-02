@@ -1,5 +1,5 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { SettlementStrategyEnabled as SettlementStrategyEnabledEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createSettlementStrategyEnabledEvent(
@@ -10,7 +10,7 @@ export function createSettlementStrategyEnabledEvent(
   blockNumber: i64,
   logIndex: i64
 ): SettlementStrategyEnabledEvent {
-  const event = changetype<SettlementStrategyEnabledEvent>(newMockEvent());
+  const event = newTypedMockEvent<SettlementStrategyEnabledEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));

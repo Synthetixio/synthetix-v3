@@ -1,5 +1,5 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import {
   OrderSettled as OrderSettledEvent,
   OrderSettledFeesStruct,
@@ -22,7 +22,7 @@ export function createOrderSettledEvent(
   blockNumber: i64,
   logIndex: i64
 ): OrderSettledEvent {
-  const event = changetype<OrderSettledEvent>(newMockEvent());
+  const event = newTypedMockEvent<OrderSettledEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(id)));

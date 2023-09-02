@@ -1,5 +1,5 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { FundingParametersSet as FundingParametersSetEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createFundingParametersSetEvent(
@@ -10,7 +10,7 @@ export function createFundingParametersSetEvent(
   blockNumber: i64,
   logIndex: i64
 ): FundingParametersSetEvent {
-  const event = changetype<FundingParametersSetEvent>(newMockEvent());
+  const event = newTypedMockEvent<FundingParametersSetEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(id)));

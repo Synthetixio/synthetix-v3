@@ -1,5 +1,5 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { WrapperSet as WrapperSetEvent } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
 export function createWrapperSetEvent(
@@ -9,7 +9,7 @@ export function createWrapperSetEvent(
   timestamp: i64,
   blockNumber: i64
 ): WrapperSetEvent {
-  const event = changetype<WrapperSetEvent>(newMockEvent());
+  const event = newTypedMockEvent<WrapperSetEvent>();
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('synthMarketId', ethereum.Value.fromI32(id)));
   event.parameters.push(

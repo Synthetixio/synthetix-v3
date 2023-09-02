@@ -1,5 +1,5 @@
 import { BigInt, ethereum, Bytes } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { SynthPriceDataUpdated as SynthPriceDataUpdatedEvent } from '../../optimism-mainnet/generated/SpotMarketProxy/SpotMarketProxy';
 
 export function createSynthPriceDataUpdatedEvent(
@@ -10,7 +10,7 @@ export function createSynthPriceDataUpdatedEvent(
   blockNumber: i64,
   logIndex: i64
 ): SynthPriceDataUpdatedEvent {
-  const event = changetype<SynthPriceDataUpdatedEvent>(newMockEvent());
+  const event = newTypedMockEvent<SynthPriceDataUpdatedEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('synthMarketId', ethereum.Value.fromI32(id)));
