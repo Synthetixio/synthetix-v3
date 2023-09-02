@@ -17,8 +17,8 @@
     "codegen:optimism-goerli": "node ./codegen optimism-goerli && graph codegen subgraph.optimism-goerli.yaml --output-dir=optimism-goerli/generated && prettier --write optimism-goerli/generated",
     "build:optimism-goerli": "graph build subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --network optimism-goerli",
     "deploy:optimism-goerli": "graph deploy snx-v3/spot-market-optimism-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service",
-    "test": "echo 'SKIP: No tests' || graph test",
-    "coverage": "echo 'SKIP: No tests'",
+    "test": "graph test",
+    "coverage": "yarn deployments:optimism-mainnet && yarn codegen:optimism-mainnet && git diff --exit-code && yarn test --coverage",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/spot-market-optimism-goerli",
     "remove-local": "graph remove --node http://localhost:8020/ snx-v3/spot-market-optimism-goerli",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/spot-market-optimism-goerli"
@@ -28,6 +28,7 @@
     "@graphprotocol/graph-ts": "^0.30.0",
     "@usecannon/cli": "^2.5.4",
     "ethers": "^5.7.2",
+    "matchstick-as": "^0.5.2",
     "prettier": "^2.8.8"
   }
 }
