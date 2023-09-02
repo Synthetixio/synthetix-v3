@@ -2623,13 +2623,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@synthetixio/common-config@workspace:*, @synthetixio/common-config@workspace:utils/common-config":
+"@synthetixio/common-config@3.3.1, @synthetixio/common-config@workspace:*, @synthetixio/common-config@workspace:utils/common-config":
   version: 0.0.0-use.local
   resolution: "@synthetixio/common-config@workspace:utils/common-config"
   dependencies:
     "@nomiclabs/hardhat-ethers": ^2.2.3
     "@nomiclabs/hardhat-etherscan": 3.1.7
-    "@synthetixio/hardhat-storage": "workspace:*"
+    "@synthetixio/hardhat-storage": 3.3.1
     "@typechain/ethers-v5": 10.1.0
     "@typechain/hardhat": 6.1.3
     "@usecannon/builder": ^2.5.4
@@ -2645,26 +2645,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/core-contracts@workspace:*, @synthetixio/core-contracts@workspace:utils/core-contracts":
+"@synthetixio/core-contracts@3.3.1, @synthetixio/core-contracts@workspace:*, @synthetixio/core-contracts@workspace:utils/core-contracts":
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-contracts@workspace:utils/core-contracts"
   dependencies:
     "@ethersproject/abstract-provider": ^5.7.0
     "@ethersproject/bignumber": ^5.7.0
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/common-config": 3.3.1
+    "@synthetixio/core-utils": 3.3.1
     "@synthetixio/router": ^3.1.3
     ethers: ^5.7.2
     hardhat: 2.17.2
   languageName: unknown
   linkType: soft
 
-"@synthetixio/core-modules@workspace:*, @synthetixio/core-modules@workspace:utils/core-modules":
+"@synthetixio/core-modules@3.3.1, @synthetixio/core-modules@workspace:*, @synthetixio/core-modules@workspace:utils/core-modules":
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-modules@workspace:utils/core-modules"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/common-config": 3.3.1
+    "@synthetixio/core-utils": 3.3.1
     "@synthetixio/router": ^3.1.3
     ethers: ^5.7.2
     hardhat: 2.17.2
@@ -2684,7 +2684,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/core-utils@workspace:*, @synthetixio/core-utils@workspace:utils/core-utils":
+"@synthetixio/core-utils@3.3.1, @synthetixio/core-utils@workspace:*, @synthetixio/core-utils@workspace:utils/core-utils":
   version: 0.0.0-use.local
   resolution: "@synthetixio/core-utils@workspace:utils/core-utils"
   dependencies:
@@ -2733,7 +2733,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/docgen@workspace:*, @synthetixio/docgen@workspace:utils/docgen":
+"@synthetixio/docgen@1.0.0, @synthetixio/docgen@workspace:*, @synthetixio/docgen@workspace:utils/docgen":
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
@@ -2760,11 +2760,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/hardhat-storage@workspace:*, @synthetixio/hardhat-storage@workspace:utils/hardhat-storage":
+"@synthetixio/hardhat-storage@3.3.1, @synthetixio/hardhat-storage@workspace:*, @synthetixio/hardhat-storage@workspace:utils/hardhat-storage":
   version: 0.0.0-use.local
   resolution: "@synthetixio/hardhat-storage@workspace:utils/hardhat-storage"
   dependencies:
-    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/core-utils": 3.3.1
     "@types/jest": 29.2.3
     "@types/mustache": 4.2.2
     hardhat: 2.17.2
@@ -2791,16 +2791,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/main@workspace:*, @synthetixio/main@workspace:protocol/synthetix":
+"@synthetixio/main@3.3.1, @synthetixio/main@workspace:protocol/synthetix":
   version: 0.0.0-use.local
   resolution: "@synthetixio/main@workspace:protocol/synthetix"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/common-config": 3.3.1
+    "@synthetixio/core-contracts": 3.3.1
+    "@synthetixio/core-modules": 3.3.1
+    "@synthetixio/core-utils": 3.3.1
+    "@synthetixio/docgen": 1.0.0
+    "@synthetixio/oracle-manager": 3.3.1
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
     "@usecannon/builder": ^2.5.4
@@ -2812,15 +2812,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/oracle-manager@workspace:*, @synthetixio/oracle-manager@workspace:protocol/oracle-manager":
+"@synthetixio/oracle-manager@3.3.1, @synthetixio/oracle-manager@workspace:protocol/oracle-manager":
   version: 0.0.0-use.local
   resolution: "@synthetixio/oracle-manager@workspace:protocol/oracle-manager"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/common-config": 3.3.1
+    "@synthetixio/core-contracts": 3.3.1
+    "@synthetixio/core-modules": 3.3.1
+    "@synthetixio/core-utils": 3.3.1
+    "@synthetixio/docgen": 1.0.0
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
     "@types/node": 18.11.10
@@ -2849,15 +2849,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market@workspace:markets/perps-market"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/main": "workspace:*"
-    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/common-config": 3.3.1
+    "@synthetixio/core-contracts": 3.3.1
+    "@synthetixio/core-modules": 3.3.1
+    "@synthetixio/core-utils": 3.3.1
+    "@synthetixio/docgen": 1.0.0
+    "@synthetixio/main": 3.3.1
+    "@synthetixio/oracle-manager": 3.3.1
     "@synthetixio/router": ^3.1.3
-    "@synthetixio/spot-market": "workspace:*"
+    "@synthetixio/spot-market": 3.3.1
     "@synthetixio/wei": 2.74.4
     "@usecannon/cli": ^2.5.4
     ethers: ^5.7.2
@@ -2923,17 +2923,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@synthetixio/spot-market@workspace:*, @synthetixio/spot-market@workspace:markets/spot-market":
+"@synthetixio/spot-market@3.3.1, @synthetixio/spot-market@workspace:markets/spot-market":
   version: 0.0.0-use.local
   resolution: "@synthetixio/spot-market@workspace:markets/spot-market"
   dependencies:
-    "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-contracts": "workspace:*"
-    "@synthetixio/core-modules": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/main": "workspace:*"
-    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/common-config": 3.3.1
+    "@synthetixio/core-contracts": 3.3.1
+    "@synthetixio/core-modules": 3.3.1
+    "@synthetixio/core-utils": 3.3.1
+    "@synthetixio/docgen": 1.0.0
+    "@synthetixio/main": 3.3.1
+    "@synthetixio/oracle-manager": 3.3.1
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
     "@types/node-fetch": 2.6.4

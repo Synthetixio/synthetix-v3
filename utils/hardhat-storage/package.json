@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/hardhat-storage",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "publishConfig": {
     "access": "public"
   },
@@ -31,7 +31,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@synthetixio/core-utils": "3.3.0",
+    "@synthetixio/core-utils": "3.3.1",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.46"
   },
