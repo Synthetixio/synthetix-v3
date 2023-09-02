@@ -679,16 +679,8 @@ export class LiquidationParametersSet__Params {
     return this._event.parameters[4].value.toBigInt();
   }
 
-  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
-    return this._event.parameters[5].value.toBigInt();
-  }
-
-  get maxSecondsInLiquidationWindow(): BigInt {
-    return this._event.parameters[6].value.toBigInt();
-  }
-
   get minimumPositionMargin(): BigInt {
-    return this._event.parameters[7].value.toBigInt();
+    return this._event.parameters[5].value.toBigInt();
   }
 }
 
@@ -733,6 +725,40 @@ export class MarketPriceDataUpdated__Params {
 
   get feedId(): Bytes {
     return this._event.parameters[1].value.toBytes();
+  }
+}
+
+export class MaxLiquidationParametersSet extends ethereum.Event {
+  get params(): MaxLiquidationParametersSet__Params {
+    return new MaxLiquidationParametersSet__Params(this);
+  }
+}
+
+export class MaxLiquidationParametersSet__Params {
+  _event: MaxLiquidationParametersSet;
+
+  constructor(event: MaxLiquidationParametersSet) {
+    this._event = event;
+  }
+
+  get marketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get maxSecondsInLiquidationWindow(): BigInt {
+    return this._event.parameters[2].value.toBigInt();
+  }
+
+  get maxLiquidationPd(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+
+  get endorsedLiquidator(): Address {
+    return this._event.parameters[4].value.toAddress();
   }
 }
 
@@ -938,6 +964,28 @@ export class MaxCollateralAmountSet__Params {
   }
 
   get collateralAmount(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
+export class PerAccountCapsSet extends ethereum.Event {
+  get params(): PerAccountCapsSet__Params {
+    return new PerAccountCapsSet__Params(this);
+  }
+}
+
+export class PerAccountCapsSet__Params {
+  _event: PerAccountCapsSet;
+
+  constructor(event: PerAccountCapsSet) {
+    this._event = event;
+  }
+
+  get maxPositionsPerAccount(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get maxCollateralsPerAccount(): BigInt {
     return this._event.parameters[1].value.toBigInt();
   }
 }
@@ -1372,25 +1420,13 @@ export class PerpsMarketProxy__getLiquidationParametersResult {
   value2: BigInt;
   value3: BigInt;
   value4: BigInt;
-  value5: BigInt;
-  value6: BigInt;
 
-  constructor(
-    value0: BigInt,
-    value1: BigInt,
-    value2: BigInt,
-    value3: BigInt,
-    value4: BigInt,
-    value5: BigInt,
-    value6: BigInt
-  ) {
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt, value3: BigInt, value4: BigInt) {
     this.value0 = value0;
     this.value1 = value1;
     this.value2 = value2;
     this.value3 = value3;
     this.value4 = value4;
-    this.value5 = value5;
-    this.value6 = value6;
   }
 
   toMap(): TypedMap<string, ethereum.Value> {
@@ -1400,8 +1436,6 @@ export class PerpsMarketProxy__getLiquidationParametersResult {
     map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
     map.set('value3', ethereum.Value.fromUnsignedBigInt(this.value3));
     map.set('value4', ethereum.Value.fromUnsignedBigInt(this.value4));
-    map.set('value5', ethereum.Value.fromUnsignedBigInt(this.value5));
-    map.set('value6', ethereum.Value.fromUnsignedBigInt(this.value6));
     return map;
   }
 
@@ -1421,16 +1455,47 @@ export class PerpsMarketProxy__getLiquidationParametersResult {
     return this.value3;
   }
 
-  getMaxLiquidationLimitAccumulationMultiplier(): BigInt {
+  getMinimumPositionMargin(): BigInt {
     return this.value4;
+  }
+}
+
+export class PerpsMarketProxy__getMaxLiquidationParametersResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+  value3: Address;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt, value3: Address) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+    this.value3 = value3;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
+    map.set('value3', ethereum.Value.fromAddress(this.value3));
+    return map;
+  }
+
+  getMaxLiquidationLimitAccumulationMultiplier(): BigInt {
+    return this.value0;
   }
 
   getMaxSecondsInLiquidationWindow(): BigInt {
-    return this.value5;
+    return this.value1;
   }
 
-  getMinimumPositionMargin(): BigInt {
-    return this.value6;
+  getMaxLiquidationPd(): BigInt {
+    return this.value2;
+  }
+
+  getEndorsedLiquidator(): Address {
+    return this.value3;
   }
 }
 
@@ -1522,6 +1587,31 @@ export class PerpsMarketProxy__getLiquidationRewardGuardsResult {
   }
 
   getMaxLiquidationRewardUsd(): BigInt {
+    return this.value1;
+  }
+}
+
+export class PerpsMarketProxy__getPerAccountCapsResult {
+  value0: BigInt;
+  value1: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    return map;
+  }
+
+  getMaxPositionsPerAccount(): BigInt {
+    return this.value0;
+  }
+
+  getMaxCollateralsPerAccount(): BigInt {
     return this.value1;
   }
 }
@@ -2493,6 +2583,59 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
+  canLiquidate(accountId: BigInt): boolean {
+    let result = super.call('canLiquidate', 'canLiquidate(uint128):(bool)', [
+      ethereum.Value.fromUnsignedBigInt(accountId),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_canLiquidate(accountId: BigInt): ethereum.CallResult<boolean> {
+    let result = super.tryCall('canLiquidate', 'canLiquidate(uint128):(bool)', [
+      ethereum.Value.fromUnsignedBigInt(accountId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  liquidate(accountId: BigInt): BigInt {
+    let result = super.call('liquidate', 'liquidate(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(accountId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_liquidate(accountId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('liquidate', 'liquidate(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(accountId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  liquidateFlagged(): BigInt {
+    let result = super.call('liquidateFlagged', 'liquidateFlagged():(uint256)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_liquidateFlagged(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('liquidateFlagged', 'liquidateFlagged():(uint256)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   addSettlementStrategy(
     marketId: BigInt,
     strategy: PerpsMarketProxy__addSettlementStrategyInputStrategyStruct
@@ -2555,7 +2698,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   getLiquidationParameters(marketId: BigInt): PerpsMarketProxy__getLiquidationParametersResult {
     let result = super.call(
       'getLiquidationParameters',
-      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256,uint256,uint256)',
+      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256)',
       [ethereum.Value.fromUnsignedBigInt(marketId)]
     );
 
@@ -2564,9 +2707,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
       result[1].toBigInt(),
       result[2].toBigInt(),
       result[3].toBigInt(),
-      result[4].toBigInt(),
-      result[5].toBigInt(),
-      result[6].toBigInt()
+      result[4].toBigInt()
     );
   }
 
@@ -2575,7 +2716,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   ): ethereum.CallResult<PerpsMarketProxy__getLiquidationParametersResult> {
     let result = super.tryCall(
       'getLiquidationParameters',
-      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256,uint256,uint256)',
+      'getLiquidationParameters(uint128):(uint256,uint256,uint256,uint256,uint256)',
       [ethereum.Value.fromUnsignedBigInt(marketId)]
     );
     if (result.reverted) {
@@ -2588,9 +2729,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
         value[1].toBigInt(),
         value[2].toBigInt(),
         value[3].toBigInt(),
-        value[4].toBigInt(),
-        value[5].toBigInt(),
-        value[6].toBigInt()
+        value[4].toBigInt()
       )
     );
   }
@@ -2612,6 +2751,45 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getMaxLiquidationParameters(
+    marketId: BigInt
+  ): PerpsMarketProxy__getMaxLiquidationParametersResult {
+    let result = super.call(
+      'getMaxLiquidationParameters',
+      'getMaxLiquidationParameters(uint128):(uint256,uint256,uint256,address)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+
+    return new PerpsMarketProxy__getMaxLiquidationParametersResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt(),
+      result[3].toAddress()
+    );
+  }
+
+  try_getMaxLiquidationParameters(
+    marketId: BigInt
+  ): ethereum.CallResult<PerpsMarketProxy__getMaxLiquidationParametersResult> {
+    let result = super.tryCall(
+      'getMaxLiquidationParameters',
+      'getMaxLiquidationParameters(uint128):(uint256,uint256,uint256,address)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new PerpsMarketProxy__getMaxLiquidationParametersResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt(),
+        value[3].toAddress()
+      )
+    );
   }
 
   getMaxMarketSize(marketId: BigInt): BigInt {
@@ -2769,6 +2947,26 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getPerAccountCaps(): PerpsMarketProxy__getPerAccountCapsResult {
+    let result = super.call('getPerAccountCaps', 'getPerAccountCaps():(uint128,uint128)', []);
+
+    return new PerpsMarketProxy__getPerAccountCapsResult(
+      result[0].toBigInt(),
+      result[1].toBigInt()
+    );
+  }
+
+  try_getPerAccountCaps(): ethereum.CallResult<PerpsMarketProxy__getPerAccountCapsResult> {
+    let result = super.tryCall('getPerAccountCaps', 'getPerAccountCaps():(uint128,uint128)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new PerpsMarketProxy__getPerAccountCapsResult(value[0].toBigInt(), value[1].toBigInt())
+    );
   }
 
   getReferrerShare(referrer: Address): BigInt {
@@ -3819,6 +4017,10 @@ export class LiquidateCall__Outputs {
   constructor(call: LiquidateCall) {
     this._call = call;
   }
+
+  get liquidationReward(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
 }
 
 export class LiquidateFlaggedCall extends ethereum.Call {
@@ -3844,6 +4046,10 @@ export class LiquidateFlaggedCall__Outputs {
 
   constructor(call: LiquidateFlaggedCall) {
     this._call = call;
+  }
+
+  get liquidationReward(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
 
@@ -4004,16 +4210,8 @@ export class SetLiquidationParametersCall__Inputs {
     return this._call.inputValues[4].value.toBigInt();
   }
 
-  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
-    return this._call.inputValues[5].value.toBigInt();
-  }
-
-  get maxSecondsInLiquidationWindow(): BigInt {
-    return this._call.inputValues[6].value.toBigInt();
-  }
-
   get minimumPositionMargin(): BigInt {
-    return this._call.inputValues[7].value.toBigInt();
+    return this._call.inputValues[5].value.toBigInt();
   }
 }
 
@@ -4055,6 +4253,52 @@ export class SetLockedOiRatioCall__Outputs {
   _call: SetLockedOiRatioCall;
 
   constructor(call: SetLockedOiRatioCall) {
+    this._call = call;
+  }
+}
+
+export class SetMaxLiquidationParametersCall extends ethereum.Call {
+  get inputs(): SetMaxLiquidationParametersCall__Inputs {
+    return new SetMaxLiquidationParametersCall__Inputs(this);
+  }
+
+  get outputs(): SetMaxLiquidationParametersCall__Outputs {
+    return new SetMaxLiquidationParametersCall__Outputs(this);
+  }
+}
+
+export class SetMaxLiquidationParametersCall__Inputs {
+  _call: SetMaxLiquidationParametersCall;
+
+  constructor(call: SetMaxLiquidationParametersCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get maxLiquidationLimitAccumulationMultiplier(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get maxSecondsInLiquidationWindow(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
+
+  get maxLiquidationPd(): BigInt {
+    return this._call.inputValues[3].value.toBigInt();
+  }
+
+  get endorsedLiquidator(): Address {
+    return this._call.inputValues[4].value.toAddress();
+  }
+}
+
+export class SetMaxLiquidationParametersCall__Outputs {
+  _call: SetMaxLiquidationParametersCall;
+
+  constructor(call: SetMaxLiquidationParametersCall) {
     this._call = call;
   }
 }
@@ -4297,6 +4541,40 @@ export class SetMaxCollateralAmountCall__Outputs {
   _call: SetMaxCollateralAmountCall;
 
   constructor(call: SetMaxCollateralAmountCall) {
+    this._call = call;
+  }
+}
+
+export class SetPerAccountCapsCall extends ethereum.Call {
+  get inputs(): SetPerAccountCapsCall__Inputs {
+    return new SetPerAccountCapsCall__Inputs(this);
+  }
+
+  get outputs(): SetPerAccountCapsCall__Outputs {
+    return new SetPerAccountCapsCall__Outputs(this);
+  }
+}
+
+export class SetPerAccountCapsCall__Inputs {
+  _call: SetPerAccountCapsCall;
+
+  constructor(call: SetPerAccountCapsCall) {
+    this._call = call;
+  }
+
+  get maxPositionsPerAccount(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get maxCollateralsPerAccount(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+}
+
+export class SetPerAccountCapsCall__Outputs {
+  _call: SetPerAccountCapsCall;
+
+  constructor(call: SetPerAccountCapsCall) {
     this._call = call;
   }
 }
