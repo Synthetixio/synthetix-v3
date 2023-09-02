@@ -151,7 +151,7 @@ jobs:
       - restore_cache:
           keys:
             - testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
-      - run: yarn workspaces foreach --topological-dev --verbose run build-testable
+      - run: CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --topological-dev --verbose run build-testable
       - save_cache:
           key: testable-hardhat-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "/tmp/version--contracts.txt" }}
           paths:

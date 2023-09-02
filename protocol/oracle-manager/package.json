@@ -6,12 +6,12 @@
     "access": "public"
   },
   "scripts": {
-    "test": "hardhat test",
+    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "build": "yarn build:contracts",
     "build:contracts": "hardhat storage:verify && hardhat cannon:build",
-    "build-testable": "hardhat cannon:build cannonfile.test.toml",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.sol",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
@@ -32,7 +32,7 @@
     "@synthetixio/wei": "2.74.4",
     "@types/node": "18.11.10",
     "ethers": "^5.7.2",
-    "hardhat": "2.15.0",
+    "hardhat": "2.17.2",
     "solidity-docgen": "0.6.0-beta.35",
     "ts-node": "10.9.1",
     "typescript": "4.9.3"

@@ -6,6 +6,11 @@ include = [
   "cannonfile.toml"
 ]
 
+# use the testable oracle manager
+[setting.oracle_manager_source]
+defaultValue = "oracle-manager:<%= package.version %>-testable"
+
+
 # Test Modules
 [contract.TestableAccountStorage]
 artifact = "contracts/generated/test/TestableAccountStorage.sol:TestableAccountStorage"
