@@ -8,8 +8,6 @@ export function createLiquidationParametersSetEvent(
   maintenanceMarginRatioD18: i64,
   minimumInitialMarginRatioD18: i64,
   liquidationRewardRatioD18: i64,
-  maxLiquidationLimitAccumulationMultiplier: i64,
-  maxSecondsInLiquidationWindow: i64,
   minimumPositionMargin: i64,
   timestamp: i64,
   blockNumber: i64,
@@ -41,18 +39,6 @@ export function createLiquidationParametersSetEvent(
     new ethereum.EventParam(
       'liquidationRewardRatioD18',
       ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(liquidationRewardRatioD18))
-    )
-  );
-  event.parameters.push(
-    new ethereum.EventParam(
-      'maxLiquidationLimitAccumulationMultiplier',
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(maxLiquidationLimitAccumulationMultiplier))
-    )
-  );
-  event.parameters.push(
-    new ethereum.EventParam(
-      'maxSecondsInLiquidationWindow',
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(maxSecondsInLiquidationWindow))
     )
   );
   event.parameters.push(
