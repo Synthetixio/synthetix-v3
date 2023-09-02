@@ -38,17 +38,15 @@ export const createStakedPool = (
 
   before('configure collateral', async () => {
     // add collateral
-    await (
-      await r.systems().Core.connect(r.owner()).configureCollateral({
-        tokenAddress: r.systems().CollateralMock.address,
-        oracleNodeId,
-        issuanceRatioD18: '5000000000000000000',
-        liquidationRatioD18: '1500000000000000000',
-        liquidationRewardD18: '20000000000000000000',
-        minDelegationD18: '20000000000000000000',
-        depositingEnabled: true,
-      })
-    ).wait();
+    await r.systems().Core.connect(r.owner()).configureCollateral({
+      tokenAddress: r.systems().CollateralMock.address,
+      oracleNodeId,
+      issuanceRatioD18: '5000000000000000000',
+      liquidationRatioD18: '1500000000000000000',
+      liquidationRewardD18: '20000000000000000000',
+      minDelegationD18: '20000000000000000000',
+      depositingEnabled: true,
+    });
   });
 
   before('create pool', async () => {
