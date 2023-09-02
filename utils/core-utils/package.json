@@ -40,7 +40,7 @@
     "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/prompts": "2.0.14",
     "ethers": "^5.7.2",
-    "hardhat": "2.15.0",
+    "hardhat": "2.17.2",
     "mocha": "10.2.0",
     "multimatch": "6.0.0",
     "nyc": "15.1.0",

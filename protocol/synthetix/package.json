@@ -34,7 +34,7 @@
     "@synthetixio/wei": "2.74.4",
     "@usecannon/builder": "^2.5.4",
     "ethers": "^5.7.2",
-    "hardhat": "2.15.0",
+    "hardhat": "2.17.2",
     "solidity-ast": "0.4.46",
     "solidity-docgen": "0.6.0-beta.35",
     "ts-node": "10.9.1"
