@@ -280,6 +280,10 @@ export class SynthRegistered__Params {
   get synthMarketId(): BigInt {
     return this._event.parameters[0].value.toBigInt();
   }
+
+  get synthTokenAddress(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
 }
 
 export class SynthetixSystemSet extends ethereum.Event {
