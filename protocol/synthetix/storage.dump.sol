@@ -299,6 +299,9 @@ contract MarketManagerModule {
 // @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
 contract MulticallModule {
     bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
+    bytes32 internal constant _CONFIG_ALLOWLISTED_MULTICALL_TARGETS = "_allowlistedMulticallTargets";
+    bytes32 internal constant ALLOWED = bytes32(uint256(1));
+    bytes32 internal constant DISALLOWED = bytes32(uint256(0));
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
