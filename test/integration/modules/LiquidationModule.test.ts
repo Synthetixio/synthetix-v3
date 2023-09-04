@@ -174,7 +174,37 @@ describe('LiquidationModule', () => {
   });
 
   describe('liquidatePosition', () => {
-    it('should liquidate a flagged position');
+    it('should liquidate a flagged position', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Commit, settle, place position into liquidation, flag for liquidation.
+      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSize,
+      });
+      await commitAndSettle(bs, marketId, trader, order);
+
+      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
+      await market.aggregator().mockSetCurrentPrice(
+        wei(marketOraclePrice)
+          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .toBN()
+      );
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      // Attempt the liquidate. This should complete successfully.
+      const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+      const keeperAddress = await keeper().getAddress();
+
+      // NOTE: Missing the last two values (liqReward and keeperFee).
+      await assertEvent(
+        tx,
+        `PositionLiquidated(${trader.accountId}, ${marketId}, "${keeperAddress}", "${keeperAddress}"`,
+        PerpMarketProxy
+      );
+    });
 
     it('should liquidate a flagged position even if health > 1');
 
@@ -196,7 +226,7 @@ describe('LiquidationModule', () => {
 
     it('should emit all events in correct order');
 
-    it.skip('should recompute funding', async () => {
+    it('should recompute funding', async () => {
       const { PerpMarketProxy } = systems();
 
       const orderSize: 1 | -1 = genOneOf([1, -1]);
@@ -229,8 +259,30 @@ describe('LiquidationModule', () => {
 
     it('should revert when no open position or already liquidated');
 
-    it('should revert when accountId does not exist');
+    it('should revert when accountId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
 
-    it('should revert when marketId does not exist');
+      const { marketId } = await depositMargin(bs, genTrader(bs));
+      const invalidAccountId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).liquidatePosition(invalidAccountId, marketId),
+        `AccountNotFound("${invalidAccountId}")`,
+        PerpMarketProxy
+      );
+    });
+
+    it('should revert when marketId does not exist', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader } = await depositMargin(bs, genTrader(bs));
+      const invalidMarketId = 42069;
+
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, invalidMarketId),
+        `MarketNotFound("${invalidMarketId}")`,
+        PerpMarketProxy
+      );
+    });
   });
 });

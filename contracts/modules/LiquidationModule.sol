@@ -63,23 +63,32 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @inheritdoc ILiquidationModule
+     * @dev Before liquidation (not flag) peform validation and market updates.
      */
-    function liquidatePosition(uint128 accountId, uint128 marketId) external {
-        Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
+    function updateMarketPreLiquidation(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market
+    )
+        private
+        returns (
+            Position.Data storage oldPosition,
+            Position.Data memory newPosition,
+            uint256 liqReward,
+            uint256 keeperFee
+        )
+    {
         uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
-        (
-            Position.Data storage oldPosition,
-            Position.Data memory newPosition,
-            uint128 liqSize,
-            uint256 liqReward,
-            uint256 keeperFee
-        ) = Position.validateLiquidation(accountId, market, PerpMarketConfiguration.load(marketId), oraclePrice);
+        uint128 liqSize;
+        (oldPosition, newPosition, liqSize, liqReward, keeperFee) = Position.validateLiquidation(
+            accountId,
+            market,
+            PerpMarketConfiguration.load(marketId),
+            oraclePrice
+        );
 
         // Update market to reflect a successful full or partial liquidation.
         market.lastLiquidationTime = block.timestamp;
@@ -91,6 +100,23 @@ contract LiquidationModule is ILiquidationModule {
         uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
         uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
         market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidatePosition(uint128 accountId, uint128 marketId) external {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
+        (, Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = updateMarketPreLiquidation(
+            accountId,
+            marketId,
+            market
+        );
+
+        address flagger = market.flaggedLiquidations[accountId];
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
@@ -101,8 +127,6 @@ contract LiquidationModule is ILiquidationModule {
             market.positions[accountId].update(newPosition);
         }
 
-        address flagger = market.flaggedLiquidations[accountId];
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         if (flagger == msg.sender) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
         } else {
