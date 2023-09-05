@@ -27,7 +27,7 @@ contract ElectionModule is
         uint64,
         uint64,
         uint64
-    ) external view override(BaseElectionModule, IElectionModule) {
+    ) external payable override(BaseElectionModule, IElectionModule) {
         OwnableStorage.onlyOwner();
         revert WrongInitializer();
     }
