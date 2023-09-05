@@ -85,7 +85,6 @@ contract MarginModule is IMarginModule {
      * @inheritdoc IMarginModule
      */
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
-        Account.exists(accountId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
@@ -143,7 +142,6 @@ contract MarginModule is IMarginModule {
         address collateralType,
         int256 amountDelta
     ) external {
-        Account.exists(accountId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
