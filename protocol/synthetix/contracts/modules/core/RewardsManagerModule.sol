@@ -44,7 +44,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external override {
+    ) external payable override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
@@ -90,7 +90,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external override {
+    ) external payable override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
@@ -125,7 +125,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external override returns (uint256[] memory, address[] memory) {
+    ) external payable override returns (uint256[] memory, address[] memory) {
         Account.exists(accountId);
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         return vault.updateRewards(accountId, poolId, collateralType);
@@ -150,7 +150,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external override returns (uint256) {
+    ) external payable override returns (uint256) {
         FeatureFlag.ensureAccessToFeature(_CLAIM_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
@@ -235,7 +235,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external override {
+    ) external payable override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 

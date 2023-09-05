@@ -17,7 +17,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
-    function configureCollateral(CollateralConfiguration.Data memory config) external override {
+    function configureCollateral(CollateralConfiguration.Data memory config) external payable override {
         OwnableStorage.onlyOwner();
 
         CollateralConfiguration.set(config);

@@ -14,7 +14,7 @@ contract RewardDistributorMock is IRewardDistributor {
 
     bool public shouldFailPayout;
 
-    function initialize(address rewardManager, address token_, string memory name_) public {
+    function initialize(address rewardManager, address token_, string memory name_) public payable {
         _rewardManager = rewardManager;
         _token = token_;
         _name = name_;
@@ -28,7 +28,7 @@ contract RewardDistributorMock is IRewardDistributor {
         return _token;
     }
 
-    function setShouldFailPayout(bool fail) external {
+    function setShouldFailPayout(bool fail) external payable {
         shouldFailPayout = fail;
     }
 
@@ -38,7 +38,7 @@ contract RewardDistributorMock is IRewardDistributor {
         address,
         address sender,
         uint256 amount
-    ) external returns (bool) {
+    ) external payable returns (bool) {
         // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         if (msg.sender != _rewardManager) {
             revert AccessError.Unauthorized(msg.sender);
@@ -53,7 +53,7 @@ contract RewardDistributorMock is IRewardDistributor {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) public {
+    ) public payable {
         IRewardsManagerModule(_rewardManager).distributeRewards(
             poolId,
             collateralType,

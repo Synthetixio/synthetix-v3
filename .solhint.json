@@ -1,6 +1,6 @@
 {
   "extends": ["solhint:recommended"],
-  "plugins": ["numcast"],
+  "plugins": ["payable"],
   "rules": {
     "not-rely-on-time": "off",
     "avoid-low-level-calls": "off",
@@ -21,7 +21,7 @@
         "maxLength": 32
       }
     ],
-    "numcast/safe-cast": "error",
+    "payable/only-payable": "error",
     "no-global-import": "off"
   }
 }

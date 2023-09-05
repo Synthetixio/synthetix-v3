@@ -12,7 +12,7 @@ contract ERC721Owned is ERC721, Ownable {
         address from,
         address to,
         uint256 tokenId
-    ) public virtual override onlyOwner {
+    ) public payable virtual override onlyOwner {
         super.transferFrom(from, to, tokenId);
     }
 
@@ -20,7 +20,7 @@ contract ERC721Owned is ERC721, Ownable {
         address from,
         address to,
         uint256 tokenId
-    ) public virtual override onlyOwner {
+    ) public payable virtual override onlyOwner {
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -29,7 +29,7 @@ contract ERC721Owned is ERC721, Ownable {
         address to,
         uint256 tokenId,
         bytes memory data
-    ) public virtual override onlyOwner {
+    ) public payable virtual override onlyOwner {
         super.safeTransferFrom(from, to, tokenId, data);
     }
 

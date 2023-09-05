@@ -18,7 +18,7 @@ contract MockMarket is IMarket {
     address private _proxy;
     uint128 private _marketId;
 
-    function initialize(address proxy, uint128 marketId, uint256 initialPrice) external {
+    function initialize(address proxy, uint128 marketId, uint256 initialPrice) external payable {
         _proxy = proxy;
         _marketId = marketId;
         _price = initialPrice;
@@ -29,7 +29,7 @@ contract MockMarket is IMarket {
         address collateralType,
         uint128 accountId,
         uint256 amount
-    ) external {
+    ) external payable {
         IAssociateDebtModule(_proxy).associateDebt(
             _marketId,
             poolId,
@@ -39,31 +39,31 @@ contract MockMarket is IMarket {
         );
     }
 
-    function buySynth(uint256 amount) external returns (uint256 feesPaid) {
+    function buySynth(uint256 amount) external payable returns (uint256 feesPaid) {
         _reportedDebt += amount;
         uint256 toDeposit = amount.divDecimal(_price);
         return IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
-    function sellSynth(uint256 amount) external returns (uint256 feesPaid) {
+    function sellSynth(uint256 amount) external payable returns (uint256 feesPaid) {
         _reportedDebt -= amount;
         uint256 toDeposit = amount.divDecimal(_price);
         return IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, toDeposit);
     }
 
-    function depositUsd(uint256 amount) external {
+    function depositUsd(uint256 amount) external payable {
         IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, amount);
     }
 
-    function withdrawUsd(uint256 amount) external {
+    function withdrawUsd(uint256 amount) external payable {
         IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, amount);
     }
 
-    function setReportedDebt(uint256 newReportedDebt) external {
+    function setReportedDebt(uint256 newReportedDebt) external payable {
         _reportedDebt = newReportedDebt;
     }
 
-    function setLocked(uint256 newLocked) external {
+    function setLocked(uint256 newLocked) external payable {
         _locked = newLocked;
     }
 
@@ -79,11 +79,11 @@ contract MockMarket is IMarket {
         return _locked;
     }
 
-    function setPrice(uint256 newPrice) external {
+    function setPrice(uint256 newPrice) external payable {
         _price = newPrice;
     }
 
-    function setMinDelegationTime(uint32 minDelegationTime) external {
+    function setMinDelegationTime(uint32 minDelegationTime) external payable {
         IMarketManagerModule(_proxy).setMarketMinDelegateTime(_marketId, minDelegationTime);
     }
 
@@ -91,13 +91,13 @@ contract MockMarket is IMarket {
         return _price;
     }
 
-    function depositCollateral(address collateralType, uint256 amount) external {
+    function depositCollateral(address collateralType, uint256 amount) external payable {
         IERC20(collateralType).transferFrom(msg.sender, address(this), amount);
         IERC20(collateralType).approve(_proxy, amount);
         IMarketCollateralModule(_proxy).depositMarketCollateral(_marketId, collateralType, amount);
     }
 
-    function withdrawCollateral(address collateralType, uint256 amount) external {
+    function withdrawCollateral(address collateralType, uint256 amount) external payable {
         IMarketCollateralModule(_proxy).withdrawMarketCollateral(_marketId, collateralType, amount);
         IERC20(collateralType).transfer(msg.sender, amount);
     }

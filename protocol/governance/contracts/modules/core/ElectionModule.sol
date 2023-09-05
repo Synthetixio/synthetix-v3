@@ -40,7 +40,7 @@ contract ElectionModule is
         uint64 votingPeriodStartDate,
         uint64 epochEndDate,
         address debtShareContract
-    ) external override {
+    ) external payable override {
         OwnableStorage.onlyOwner();
         if (Council.load().initialized) {
             return;
@@ -60,7 +60,7 @@ contract ElectionModule is
     function cast(
         address[] calldata candidates
     )
-        public
+        public payable
         override(BaseElectionModule, IElectionModule)
         onlyInPeriod(Council.ElectionPeriod.Vote)
     {
@@ -77,7 +77,7 @@ contract ElectionModule is
 
     function setDebtShareContract(
         address debtShareContract
-    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    ) external payable override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
 
         _setDebtShareContract(debtShareContract);
@@ -91,7 +91,7 @@ contract ElectionModule is
 
     function setDebtShareSnapshotId(
         uint snapshotId
-    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    ) external payable override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setDebtShareSnapshotId(snapshotId);
     }
@@ -111,7 +111,7 @@ contract ElectionModule is
     function setCrossChainDebtShareMerkleRoot(
         bytes32 merkleRoot,
         uint blocknumber
-    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    ) external payable override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
 
@@ -134,7 +134,7 @@ contract ElectionModule is
         address user,
         uint256 debtShare,
         bytes32[] calldata merkleProof
-    ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
+    ) public payable override onlyInPeriod(Council.ElectionPeriod.Vote) {
         _declareCrossChainDebtShare(user, debtShare, merkleProof);
 
         emit CrossChainDebtShareDeclared(user, debtShare);
@@ -148,7 +148,7 @@ contract ElectionModule is
         uint256 debtShare,
         bytes32[] calldata merkleProof,
         address[] calldata candidates
-    ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
+    ) public payable override onlyInPeriod(Council.ElectionPeriod.Vote) {
         declareCrossChainDebtShare(msg.sender, debtShare, merkleProof);
 
         cast(candidates);

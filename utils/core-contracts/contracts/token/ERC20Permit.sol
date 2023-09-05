@@ -37,7 +37,7 @@ contract ERC20Permit is ERC20, IERC20Permit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public virtual {
+    ) public payable virtual {
         if (deadline < block.timestamp) {
             revert PermitDeadlineExpired();
         }

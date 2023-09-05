@@ -35,7 +35,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId,
         uint128 synthMarketId,
         int amountDelta
-    ) external override {
+    ) external payable override {
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(
             accountId,

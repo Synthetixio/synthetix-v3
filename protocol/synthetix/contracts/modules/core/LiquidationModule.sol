@@ -46,7 +46,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId
-    ) external override returns (LiquidationData memory liquidationData) {
+    ) external payable override returns (LiquidationData memory liquidationData) {
         FeatureFlag.ensureAccessToFeature(_LIQUIDATE_FEATURE_FLAG);
         // Ensure the account receiving rewards exists
         Account.exists(liquidateAsAccountId);
@@ -131,7 +131,7 @@ contract LiquidationModule is ILiquidationModule {
         address collateralType,
         uint128 liquidateAsAccountId,
         uint256 maxUsd
-    ) external override returns (LiquidationData memory liquidationData) {
+    ) external payable override returns (LiquidationData memory liquidationData) {
         FeatureFlag.ensureAccessToFeature(_LIQUIDATE_VAULT_FEATURE_FLAG);
         // Ensure the account receiving collateral exists
         Account.exists(liquidateAsAccountId);
@@ -237,7 +237,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external override returns (bool) {
+    ) external payable override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int256 rawDebt = pool.updateAccountDebt(collateralType, accountId);
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
@@ -250,7 +250,7 @@ contract LiquidationModule is ILiquidationModule {
     function isVaultLiquidatable(
         uint128 poolId,
         address collateralType
-    ) external override returns (bool) {
+    ) external payable override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
         (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);

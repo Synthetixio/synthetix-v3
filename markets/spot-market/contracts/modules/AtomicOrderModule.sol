@@ -26,7 +26,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint256 maxUsdAmount,
         address referrer
-    ) external override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
+    ) external payable override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -76,7 +76,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 usdAmount,
         uint256 minAmountReceived,
         address referrer
-    ) external override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+    ) external payable override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         return buyExactIn(marketId, usdAmount, minAmountReceived, referrer);
     }
 
@@ -88,7 +88,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 usdAmount,
         uint256 minAmountReceived,
         address referrer
-    ) public override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+    ) public payable override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -211,7 +211,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint256 minUsdAmount,
         address referrer
-    ) external override returns (uint256 usdAmountReceived, OrderFees.Data memory fees) {
+    ) external payable override returns (uint256 usdAmountReceived, OrderFees.Data memory fees) {
         return sellExactIn(marketId, synthAmount, minUsdAmount, referrer);
     }
 
@@ -223,7 +223,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint256 minAmountReceived,
         address referrer
-    ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
+    ) public payable override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -272,7 +272,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 usdAmount,
         uint256 maxSynthAmount,
         address referrer
-    ) external override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
+    ) external payable override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 

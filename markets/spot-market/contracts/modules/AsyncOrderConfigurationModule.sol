@@ -19,7 +19,7 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
-    ) external override returns (uint256 strategyId) {
+    ) external payable override returns (uint256 strategyId) {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
@@ -39,7 +39,7 @@ contract AsyncOrderConfigurationModule is IAsyncOrderConfigurationModule {
         uint128 marketId,
         uint256 strategyId,
         bool enabled
-    ) external override {
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
         AsyncOrderConfiguration.load(marketId).settlementStrategies[strategyId].disabled = !enabled;
 

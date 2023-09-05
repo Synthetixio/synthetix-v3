@@ -29,7 +29,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public override(TokenModule, ITokenModule) {
+    ) public payable override(TokenModule, ITokenModule) {
         OwnableStorage.onlyOwner();
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
@@ -52,7 +52,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     function burn(
         address from,
         uint256 amount
-    ) external override(TokenModule, ITokenModule) _advanceEpoch {
+    ) external payable override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -68,7 +68,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     function mint(
         address to,
         uint256 amount
-    ) external override(TokenModule, ITokenModule) _advanceEpoch {
+    ) external payable override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -81,7 +81,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     /**
      * @inheritdoc IDecayTokenModule
      */
-    function setDecayRate(uint256 _rate) external _advanceEpoch {
+    function setDecayRate(uint256 _rate) external payable _advanceEpoch {
         if ((10 ** 18) * SECONDS_PER_YEAR < _rate) {
             revert InvalidDecayRate();
         }
@@ -94,7 +94,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     /**
      * @inheritdoc IDecayTokenModule
      */
-    function advanceEpoch() external _advanceEpoch returns (uint256) {
+    function advanceEpoch() external payable _advanceEpoch returns (uint256) {
         DecayToken.Data storage store = DecayToken.load();
         store.totalSupplyAtEpochStart = totalSupply();
         return _tokensPerShare();
@@ -124,7 +124,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         address from,
         address to,
         uint256 amount
-    ) external virtual override(ERC20, IERC20) returns (bool) {
+    ) external payable virtual override(ERC20, IERC20) returns (bool) {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 currentAllowance = store.allowance[from][msg.sender];
@@ -144,7 +144,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     function transfer(
         address to,
         uint256 amount
-    ) public virtual override(ERC20, IERC20) returns (bool) {
+    ) public payable virtual override(ERC20, IERC20) returns (bool) {
         return super.transfer(to, _tokenToShare(amount));
     }
 

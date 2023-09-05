@@ -7,7 +7,7 @@ import "../interfaces/external/IFeeCollector.sol";
 contract FeeCollectorMock is IFeeCollector {
     ITokenModule public usdToken;
 
-    function setUsdToken(ITokenModule _usdToken) external {
+    function setUsdToken(ITokenModule _usdToken) external payable {
         usdToken = _usdToken;
     }
 
@@ -16,7 +16,7 @@ contract FeeCollectorMock is IFeeCollector {
         uint256 feeAmount,
         address sender,
         uint8 tradeType
-    ) external override returns (uint256) {
+    ) external payable override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
         sender;

@@ -35,7 +35,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function setSynthetix(ISynthetixSystem synthetix) external override {
+    function setSynthetix(ISynthetixSystem synthetix) external payable override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
@@ -50,7 +50,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function setSynthImplementation(address synthImplementation) external override {
+    function setSynthImplementation(address synthImplementation) external payable override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.load().synthImplementation = synthImplementation;
 
@@ -64,7 +64,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
-    ) external override returns (uint128 synthMarketId) {
+    ) external payable override returns (uint128 synthMarketId) {
         FeatureFlag.ensureAccessToFeature(_CREATE_SYNTH_FEATURE_FLAG);
 
         if (synthOwner == address(0)) {
@@ -144,7 +144,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function upgradeSynthImpl(uint128 marketId) external override {
+    function upgradeSynthImpl(uint128 marketId) external payable override {
         address newImpl = SpotMarketFactory.load().synthImplementation;
         bytes32 synthId = SynthUtil.getSystemId(marketId);
 
@@ -153,7 +153,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         emit SynthImplementationUpgraded(marketId, address(associatedSystem.asToken()), newImpl);
     }
 
-    function setDecayRate(uint128 marketId, uint256 rate) external override {
+    function setDecayRate(uint128 marketId, uint256 rate) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
         SynthUtil.getToken(marketId).setDecayRate(rate);
 
@@ -167,7 +167,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         uint128 synthMarketId,
         bytes32 buyFeedId,
         bytes32 sellFeedId
-    ) external override {
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         Price.load(synthMarketId).update(buyFeedId, sellFeedId);
@@ -178,7 +178,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) public override {
+    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) public payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         if (newNominatedOwner == address(0)) {
@@ -192,7 +192,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function renounceMarketNomination(uint128 synthMarketId) external override {
+    function renounceMarketNomination(uint128 synthMarketId) external payable override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         address nominee = spotMarketFactory.nominatedMarketOwners[synthMarketId];
 
@@ -208,7 +208,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function acceptMarketOwnership(uint128 synthMarketId) public override {
+    function acceptMarketOwnership(uint128 synthMarketId) public payable override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         address currentNominatedOwner = spotMarketFactory.nominatedMarketOwners[synthMarketId];
         if (msg.sender != currentNominatedOwner) {
@@ -238,7 +238,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function renounceMarketOwnership(uint128 synthMarketId) external override {
+    function renounceMarketOwnership(uint128 synthMarketId) external payable override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.onlyMarketOwner(synthMarketId);
 

@@ -8,19 +8,19 @@ contract ERC721Mock is ERC721 {
         string memory tokenName,
         string memory tokenSymbol,
         string memory baseURL
-    ) public {
+    ) public payable {
         _initialize(tokenName, tokenSymbol, baseURL);
     }
 
-    function mint(uint256 tokenId) external {
+    function mint(uint256 tokenId) external payable {
         _mint(msg.sender, tokenId);
     }
 
-    function mintTo(address to, uint256 tokenId) external {
+    function mintTo(address to, uint256 tokenId) external payable {
         _mint(to, tokenId);
     }
 
-    function burn(uint256 tokenId) external {
+    function burn(uint256 tokenId) external payable {
         _burn(tokenId);
     }
 }

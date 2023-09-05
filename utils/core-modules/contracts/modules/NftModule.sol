@@ -32,7 +32,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
         string memory tokenName,
         string memory tokenSymbol,
         string memory uri
-    ) external {
+    ) external payable {
         OwnableStorage.onlyOwner();
 
         _initialize(tokenName, tokenSymbol, uri);
@@ -42,7 +42,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
     /**
      * @inheritdoc INftModule
      */
-    function burn(uint256 tokenId) external override {
+    function burn(uint256 tokenId) external payable override {
         OwnableStorage.onlyOwner();
         _burn(tokenId);
     }
@@ -50,7 +50,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
     /**
      * @inheritdoc INftModule
      */
-    function mint(address to, uint256 tokenId) external override {
+    function mint(address to, uint256 tokenId) external payable override {
         OwnableStorage.onlyOwner();
         _mint(to, tokenId);
     }
@@ -58,7 +58,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
     /**
      * @inheritdoc INftModule
      */
-    function safeMint(address to, uint256 tokenId, bytes memory data) external override {
+    function safeMint(address to, uint256 tokenId, bytes memory data) external payable override {
         OwnableStorage.onlyOwner();
         _mint(to, tokenId);
 
@@ -70,7 +70,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
     /**
      * @inheritdoc INftModule
      */
-    function setBaseTokenURI(string memory uri) external override {
+    function setBaseTokenURI(string memory uri) external payable override {
         OwnableStorage.onlyOwner();
         ERC721Storage.load().baseTokenURI = uri;
     }
@@ -78,7 +78,7 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
     /**
      * @inheritdoc INftModule
      */
-    function setAllowance(uint tokenId, address spender) external override {
+    function setAllowance(uint tokenId, address spender) external payable override {
         OwnableStorage.onlyOwner();
         ERC721Storage.load().tokenApprovals[tokenId] = spender;
     }

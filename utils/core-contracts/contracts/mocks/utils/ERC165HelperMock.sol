@@ -6,7 +6,7 @@ import "../../interfaces/IERC721.sol";
 import "../../utils/ERC165Helper.sol";
 
 contract ERC165HelperMock {
-    function supportsInterface(address candidate, bytes4 interfaceId) external returns (bool) {
+    function supportsInterface(address candidate, bytes4 interfaceId) external payable returns (bool) {
         return ERC165Helper.safeSupportsInterface(candidate, interfaceId);
     }
 

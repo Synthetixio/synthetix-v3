@@ -8,23 +8,23 @@ contract ERC20Mock is ERC20 {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public {
+    ) public payable {
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
 
-    function mintFor(address target, uint256 amount) external {
+    function mintFor(address target, uint256 amount) external payable {
         _mint(target, amount);
     }
 
-    function burnFor(address target, uint256 amount) external {
+    function burnFor(address target, uint256 amount) external payable {
         _burn(target, amount);
     }
 
-    function mint(uint256 amount) external {
+    function mint(uint256 amount) external payable {
         _mint(msg.sender, amount);
     }
 
-    function burn(uint256 amount) external {
+    function burn(uint256 amount) external payable {
         _burn(msg.sender, amount);
     }
 }

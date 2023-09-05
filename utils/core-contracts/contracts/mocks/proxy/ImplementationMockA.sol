@@ -6,7 +6,7 @@ import "./UUPSImplementationMock.sol";
 contract ImplementationMockA is UUPSImplementationMock {
     uint private _a;
 
-    function setA(uint newA) external {
+    function setA(uint newA) external payable {
         _a = newA;
     }
 

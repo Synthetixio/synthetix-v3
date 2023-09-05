@@ -43,7 +43,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         address collateralType,
         uint128 accountId,
         uint256 amount
-    ) external returns (int256) {
+    ) external payable returns (int256) {
         FeatureFlag.ensureAccessToFeature(_ASSOCIATE_DEBT_FEATURE_FLAG);
         Account.exists(accountId);
 

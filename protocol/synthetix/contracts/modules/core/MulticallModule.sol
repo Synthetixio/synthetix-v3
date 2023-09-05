@@ -26,7 +26,7 @@ contract MulticallModule is IMulticallModule {
     /**
      * @inheritdoc IMulticallModule
      */
-    function multicall(bytes[] calldata data) public override returns (bytes[] memory results) {
+    function multicall(bytes[] calldata data) public payable override returns (bytes[] memory results) {
         results = new bytes[](data.length);
         for (uint256 i = 0; i < data.length; i++) {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
@@ -99,7 +99,7 @@ contract MulticallModule is IMulticallModule {
     /**
      * @inheritdoc IMulticallModule
      */
-    function setAllowlistedMulticallTarget(address target, bool allowlisted) external override {
+    function setAllowlistedMulticallTarget(address target, bool allowlisted) external payable override {
         OwnableStorage.onlyOwner();
         Config.put(
             keccak256(abi.encodePacked(_CONFIG_ALLOWLISTED_MULTICALL_TARGETS, target)),

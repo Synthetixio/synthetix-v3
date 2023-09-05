@@ -47,7 +47,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     function setSystemAddresses(
         IAddressResolver v2xResolverAddress,
         IV3CoreProxy v3SystemAddress
-    ) external onlyOwner returns (bool didInitialize) {
+    ) external payable onlyOwner returns (bool didInitialize) {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
 
@@ -62,7 +62,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc ILegacyMarket
      */
-    function registerMarket() external onlyOwner returns (uint128 newMarketId) {
+    function registerMarket() external payable onlyOwner returns (uint128 newMarketId) {
         if (marketId != 0) {
             revert MarketAlreadyRegistered(marketId);
         }
@@ -111,7 +111,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc ILegacyMarket
      */
-    function convertUSD(uint256 amount) external {
+    function convertUSD(uint256 amount) external payable {
         if (pauseStablecoinConversion) {
             revert Paused();
         }
@@ -148,7 +148,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc ILegacyMarket
      */
-    function migrate(uint128 accountId) external {
+    function migrate(uint128 accountId) external payable {
         if (pauseMigration) {
             revert Paused();
         }
@@ -159,7 +159,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc ILegacyMarket
      */
-    function migrateOnBehalf(address staker, uint128 accountId) external onlyOwner {
+    function migrateOnBehalf(address staker, uint128 accountId) external payable onlyOwner {
         _migrate(staker, accountId);
     }
 
@@ -279,7 +279,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc ILegacyMarket
      */
-    function setPauseStablecoinConversion(bool paused) external onlyOwner {
+    function setPauseStablecoinConversion(bool paused) external payable onlyOwner {
         pauseStablecoinConversion = paused;
 
         emit PauseStablecoinConversionSet(msg.sender, paused);
@@ -288,7 +288,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     /**
      * @inheritdoc ILegacyMarket
      */
-    function setPauseMigration(bool paused) external onlyOwner {
+    function setPauseMigration(bool paused) external payable onlyOwner {
         pauseMigration = paused;
 
         emit PauseMigrationSet(msg.sender, paused);
@@ -318,7 +318,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
             interfaceId == this.supportsInterface.selector;
     }
 
-    function upgradeTo(address to) external onlyOwner {
+    function upgradeTo(address to) external payable onlyOwner {
         _upgradeTo(to);
     }
 }

@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 // solhint-disable-next-line no-empty-blocks
 contract ImplementationDestroyer {
-    function upgradeTo(address) public {
+    function upgradeTo(address) public payable {
         selfdestruct(payable(0));
     }
 }

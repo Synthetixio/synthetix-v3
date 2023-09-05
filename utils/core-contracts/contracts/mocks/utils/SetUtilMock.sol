@@ -8,15 +8,15 @@ contract Bytes32SetMock {
 
     SetUtil.Bytes32Set private _set;
 
-    function add(bytes32 value) external {
+    function add(bytes32 value) external payable {
         _set.add(value);
     }
 
-    function remove(bytes32 value) external {
+    function remove(bytes32 value) external payable {
         _set.remove(value);
     }
 
-    function replace(bytes32 value, bytes32 newValue) external {
+    function replace(bytes32 value, bytes32 newValue) external payable {
         _set.replace(value, newValue);
     }
 
@@ -46,15 +46,15 @@ contract AddressSetMock {
 
     SetUtil.AddressSet private _set;
 
-    function add(address value) external {
+    function add(address value) external payable {
         _set.add(value);
     }
 
-    function remove(address value) external {
+    function remove(address value) external payable {
         _set.remove(value);
     }
 
-    function replace(address value, address newValue) external {
+    function replace(address value, address newValue) external payable {
         _set.replace(value, newValue);
     }
 
@@ -84,15 +84,15 @@ contract UintSetMock {
 
     SetUtil.UintSet private _set;
 
-    function add(uint value) external {
+    function add(uint value) external payable {
         _set.add(value);
     }
 
-    function remove(uint value) external {
+    function remove(uint value) external payable {
         _set.remove(value);
     }
 
-    function replace(uint value, uint newValue) external {
+    function replace(uint value, uint newValue) external payable {
         _set.replace(value, newValue);
     }
 
