@@ -52,7 +52,7 @@ interface IERC20Permit is IERC20 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable;
+    ) external;
 
     /**
      * @notice Returns the current nonce for `owner`. This value must be

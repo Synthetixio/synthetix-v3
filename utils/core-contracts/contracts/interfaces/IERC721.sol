@@ -85,7 +85,7 @@ interface IERC721 {
         address to,
         uint256 tokenId,
         bytes calldata data
-    ) external payable;
+    ) external;
 
     /**
      * @notice Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
@@ -101,7 +101,7 @@ interface IERC721 {
      *
      * Emits a {Transfer} event.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId) external payable;
+    function safeTransferFrom(address from, address to, uint256 tokenId) external;
 
     /**
      * @notice Transfers `tokenId` token from `from` to `to`.
@@ -117,7 +117,7 @@ interface IERC721 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address from, address to, uint256 tokenId) external payable;
+    function transferFrom(address from, address to, uint256 tokenId) external;
 
     /**
      * @notice Gives permission to `to` to transfer `tokenId` token to another account.
@@ -132,7 +132,7 @@ interface IERC721 {
      *
      * Emits an {Approval} event.
      */
-    function approve(address to, uint256 tokenId) external payable;
+    function approve(address to, uint256 tokenId) external;
 
     /**
      * @notice Approve or remove `operator` as an operator for the caller.
@@ -144,7 +144,7 @@ interface IERC721 {
      *
      * Emits an {ApprovalForAll} event.
      */
-    function setApprovalForAll(address operator, bool approved) external payable;
+    function setApprovalForAll(address operator, bool approved) external;
 
     /**
      * @notice Returns the account approved for `tokenId` token.

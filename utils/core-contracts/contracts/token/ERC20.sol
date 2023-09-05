@@ -63,10 +63,8 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function approve(
-        address spender,
-        uint256 amount
-    ) public payable virtual override returns (bool) {
+		// solhint-disable-next-line payable/only-payable
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
         _approve(msg.sender, spender, amount);
         return true;
     }
@@ -74,10 +72,11 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
+		// solhint-disable-next-line payable/only-payable
     function increaseAllowance(
         address spender,
         uint256 addedValue
-    ) public payable virtual override returns (bool) {
+    ) public virtual override returns (bool) {
         uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
         _approve(msg.sender, spender, currentAllowance + addedValue);
 
@@ -87,10 +86,11 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
+		// solhint-disable-next-line payable/only-payable
     function decreaseAllowance(
         address spender,
         uint256 subtractedValue
-    ) public payable virtual override returns (bool) {
+    ) public virtual override returns (bool) {
         uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
         _approve(msg.sender, spender, currentAllowance - subtractedValue);
 
@@ -100,7 +100,8 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function transfer(address to, uint256 amount) public payable virtual override returns (bool) {
+		// solhint-disable-next-line payable/only-payable
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
         _transfer(msg.sender, to, amount);
 
         return true;
@@ -109,11 +110,12 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
+		// solhint-disable-next-line payable/only-payable
     function transferFrom(
         address from,
         address to,
         uint256 amount
-    ) external payable virtual override returns (bool) {
+    ) external virtual override returns (bool) {
         return _transferFrom(from, to, amount);
     }
 
