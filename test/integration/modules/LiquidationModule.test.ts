@@ -3,12 +3,12 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genOneOf, genOrder, genSide, genTrader } from '../../generators';
-import { depositMargin, commitAndSettle, commitOrder } from '../../helpers';
+import { depositMargin, commitAndSettle, commitOrder, setMarketConfigurationById } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe.only('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { keeper, systems, restore } = bs;
+  const { markets, collaterals, traders, keeper, systems, restore } = bs;
 
   beforeEach(restore);
 
@@ -174,7 +174,7 @@ describe.only('LiquidationModule', () => {
   });
 
   describe('liquidatePosition', () => {
-    it('should liquidate a flagged position', async () => {
+    it('should fully liquidate a flagged position', async () => {
       const { PerpMarketProxy } = systems();
 
       // Commit, settle, place position into liquidation, flag for liquidation.
@@ -185,6 +185,9 @@ describe.only('LiquidationModule', () => {
         desiredSide: orderSize,
       });
       await commitAndSettle(bs, marketId, trader, order);
+
+      // Set a large enough liqCap to ensure a full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: wei(100).toBN() });
 
       const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
@@ -201,7 +204,7 @@ describe.only('LiquidationModule', () => {
       // NOTE: Missing the last two values (liqReward and keeperFee).
       await assertEvent(
         tx,
-        `PositionLiquidated(${trader.accountId}, ${marketId}, "${keeperAddress}", "${keeperAddress}"`,
+        `PositionLiquidated(${trader.accountId}, ${marketId}, 0, "${keeperAddress}", "${keeperAddress}"`,
         PerpMarketProxy
       );
     });
@@ -241,7 +244,7 @@ describe.only('LiquidationModule', () => {
       // NOTE: Missing the last two values (liqReward and keeperFee).
       await assertEvent(
         tx,
-        `PositionLiquidated(${trader.accountId}, ${marketId}, "${keeperAddress}", "${keeperAddress}"`,
+        `PositionLiquidated(${trader.accountId}, ${marketId}, 0, "${keeperAddress}", "${keeperAddress}"`,
         PerpMarketProxy
       );
     });
@@ -316,7 +319,62 @@ describe.only('LiquidationModule', () => {
 
     it('should send send both fees to flagger if same keeper');
 
-    it('should remove flagger on full liquidation');
+    it('should remove flagger on full liquidation', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Commit, settle, place position into liquidation, flag for liquidation, liquidate.
+      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const trader = genOneOf(traders());
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      const collateral = genOneOf(collaterals());
+
+      // Set a large enough liqCap to ensure a full liquidation.
+      await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: wei(100).toBN() });
+
+      const gTrader1 = await depositMargin(
+        bs,
+        genTrader(bs, { desiredTrader: trader, desiredMarket: market, desiredCollateral: collateral })
+      );
+      const order1 = await genOrder(bs, market, collateral, gTrader1.collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSize,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      const { answer: marketOraclePrice1 } = await market.aggregator().latestRoundData();
+      await market.aggregator().mockSetCurrentPrice(
+        wei(marketOraclePrice1)
+          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .toBN()
+      );
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+
+      const gTrader2 = await depositMargin(
+        bs,
+        genTrader(bs, { desiredTrader: trader, desiredMarket: market, desiredCollateral: collateral })
+      );
+      const order2 = await genOrder(bs, market, collateral, gTrader2.collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSize,
+      });
+      await commitAndSettle(bs, marketId, trader, order2);
+
+      const { answer: marketOraclePrice2 } = await market.aggregator().latestRoundData();
+      await market.aggregator().mockSetCurrentPrice(
+        wei(marketOraclePrice2)
+          .mul(orderSize === 1 ? 0.9 : 1.1)
+          .toBN()
+      );
+
+      // Liquidation should fail because the flagger was previously removed for this trader.
+      await assertRevert(
+        PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        `PositionNotFlagged()`,
+        PerpMarketProxy
+      );
+    });
 
     it('should not remove flagger on partial liquidation');
 

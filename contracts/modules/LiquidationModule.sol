@@ -140,7 +140,7 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
-        emit PositionLiquidated(accountId, marketId, msg.sender, flagger, liqReward, keeperFee);
+        emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqReward, keeperFee);
     }
 
     // --- Views --- //
