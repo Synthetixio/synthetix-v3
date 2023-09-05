@@ -318,7 +318,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
             interfaceId == this.supportsInterface.selector;
     }
 
-    function upgradeTo(address to) external payable onlyOwner {
+    function upgradeTo(address to) external onlyOwner {
         _upgradeTo(to);
     }
 }

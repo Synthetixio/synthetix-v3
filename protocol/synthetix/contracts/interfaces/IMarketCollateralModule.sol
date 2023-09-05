@@ -75,7 +75,7 @@ interface IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 amount
-    ) external;
+    ) external payable;
 
     /**
      * @notice Allows a market to withdraw collateral that it has previously deposited.
@@ -87,7 +87,7 @@ interface IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 amount
-    ) external;
+    ) external payable;
 
     /**
      * @notice Allow the system owner to configure the maximum amount of a given collateral type that a specified market is allowed to deposit.
@@ -99,7 +99,7 @@ interface IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 amount
-    ) external;
+    ) external payable;
 
     /**
      * @notice Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.
@@ -110,7 +110,7 @@ interface IMarketCollateralModule {
     function getMaximumMarketCollateral(
         uint128 marketId,
         address collateralType
-    ) external returns (uint256 amountD18);
+    ) external view returns (uint256 amountD18);
 
     /**
      * @notice Return the total amount of a given collateral type that a specified market has deposited.
@@ -128,5 +128,5 @@ interface IMarketCollateralModule {
      * @param marketId The id of the market for which the directly deposited collateral amount is being queried.
      * @return valueD18 The total value of collateral deposited by the market, denominated with 18 decimals of precision.
      */
-    function getMarketCollateralValue(uint128 marketId) external returns (uint256 valueD18);
+    function getMarketCollateralValue(uint128 marketId) external view returns (uint256 valueD18);
 }

@@ -11,7 +11,7 @@ interface INftModule is IERC721Enumerable {
      * @notice Returns whether the token has been initialized.
      * @return A boolean with the result of the query.
      */
-    function isInitialized() external returns (bool);
+    function isInitialized() external view returns (bool);
 
     /**
      * @notice Initializes the token with name, symbol, and uri.
@@ -20,14 +20,14 @@ interface INftModule is IERC721Enumerable {
         string memory tokenName,
         string memory tokenSymbol,
         string memory uri
-    ) external;
+    ) external payable;
 
     /**
      * @notice Allows the owner to mint tokens.
      * @param to The address to receive the newly minted tokens.
      * @param tokenId The ID of the newly minted token
      */
-    function mint(address to, uint tokenId) external;
+    function mint(address to, uint tokenId) external payable;
 
     /**
      * @notice Allows the owner to mint tokens. Verifies that the receiver can receive the token
@@ -35,24 +35,24 @@ interface INftModule is IERC721Enumerable {
      * @param tokenId The ID of the newly minted token
      * @param data any data which should be sent to the receiver
      */
-    function safeMint(address to, uint256 tokenId, bytes memory data) external;
+    function safeMint(address to, uint256 tokenId, bytes memory data) external payable;
 
     /**
      * @notice Allows the owner to burn tokens.
      * @param tokenId The token to burn
      */
-    function burn(uint tokenId) external;
+    function burn(uint tokenId) external payable;
 
     /**
      * @notice Allows an address that holds tokens to provide allowance to another.
      * @param tokenId The token which should be allowed to spender
      * @param spender The address that is given allowance.
      */
-    function setAllowance(uint tokenId, address spender) external;
+    function setAllowance(uint tokenId, address spender) external payable;
 
     /**
      * @notice Allows the owner to update the base token URI.
      * @param uri The new base token uri
      */
-    function setBaseTokenURI(string memory uri) external;
+    function setBaseTokenURI(string memory uri) external payable;
 }

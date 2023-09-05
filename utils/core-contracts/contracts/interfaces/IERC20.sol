@@ -80,7 +80,7 @@ interface IERC20 {
      * @param amount The amount of tokens to be transferred.
      * @return A boolean which is true if the operation succeeded.
      */
-    function transfer(address to, uint amount) external returns (bool);
+    function transfer(address to, uint amount) external payable returns (bool);
 
     /**
      * @notice Allows users to provide allowance to other users so that they can transfer tokens on their behalf.
@@ -88,7 +88,7 @@ interface IERC20 {
      * @param amount The amount of tokens that are being added to the allowance.
      * @return A boolean which is true if the operation succeeded.
      */
-    function approve(address spender, uint amount) external returns (bool);
+    function approve(address spender, uint amount) external payable returns (bool);
 
     /**
      * @notice Atomically increases the allowance granted to `spender` by the caller.
@@ -102,7 +102,7 @@ interface IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
+    function increaseAllowance(address spender, uint256 addedValue) external payable returns (bool);
 
     /**
      * @notice Atomically decreases the allowance granted to `spender` by the caller.
@@ -118,7 +118,7 @@ interface IERC20 {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
+    function decreaseAllowance(address spender, uint256 subtractedValue) external payable returns (bool);
 
     /**
      * @notice Allows a user who has been given allowance to transfer tokens on another user's behalf.
@@ -127,5 +127,5 @@ interface IERC20 {
      * @param amount The number of tokens to transfer.
      * @return A boolean which is true if the operation succeeded.
      */
-    function transferFrom(address from, address to, uint amount) external returns (bool);
+    function transferFrom(address from, address to, uint amount) external payable returns (bool);
 }

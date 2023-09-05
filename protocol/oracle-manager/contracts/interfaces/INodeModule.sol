@@ -46,7 +46,7 @@ interface INodeModule {
         NodeDefinition.NodeType nodeType,
         bytes memory parameters,
         bytes32[] memory parents
-    ) external returns (bytes32 nodeId);
+    ) external payable returns (bytes32 nodeId);
 
     /**
      * @notice Returns the ID of a node, whether or not it has been registered.
@@ -59,7 +59,7 @@ interface INodeModule {
         NodeDefinition.NodeType nodeType,
         bytes memory parameters,
         bytes32[] memory parents
-    ) external returns (bytes32 nodeId);
+    ) external pure returns (bytes32 nodeId);
 
     /**
      * @notice Returns a node's definition (type, parameters, and parents)

@@ -6,7 +6,7 @@ interface ISomeModule {
 
     function getSomeValue() external view returns (uint);
 
-    function setValue(uint newValue) external;
+    function setValue(uint newValue) external payable;
 
-    function setSomeValue(uint newSomeValue) external;
+    function setSomeValue(uint newSomeValue) external payable;
 }

@@ -26,7 +26,7 @@ interface ICollateralConfigurationModule {
      * Emits a {CollateralConfigured} event.
      *
      */
-    function configureCollateral(CollateralConfiguration.Data memory config) external;
+    function configureCollateral(CollateralConfiguration.Data memory config) external payable;
 
     /**
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.

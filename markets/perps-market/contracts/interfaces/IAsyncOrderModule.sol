@@ -58,14 +58,14 @@ interface IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external returns (AsyncOrder.Data memory retOrder, uint fees);
+    ) external payable returns (AsyncOrder.Data memory retOrder, uint fees);
 
     /**
      * @notice Get async order claim details
      * @param accountId id of the account.
      * @return order async order claim details (see AsyncOrder.Data struct).
      */
-    function getOrder(uint128 accountId) external returns (AsyncOrder.Data memory order);
+    function getOrder(uint128 accountId) external view returns (AsyncOrder.Data memory order);
 
     /**
      * @notice Simulates what the order fee would be for the given market with the specified size.

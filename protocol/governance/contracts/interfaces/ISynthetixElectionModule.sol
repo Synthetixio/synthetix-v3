@@ -12,20 +12,20 @@ interface ISynthetixElectionModule is IBaseElectionModule {
         uint64 votingPeriodStartDate,
         uint64 epochEndDate,
         address debtShareContract
-    ) external;
+    ) external payable;
 
     // ---------------------------------------
     // Debt shares
     // ---------------------------------------
 
     /// @notice Sets the Synthetix v2 DebtShare contract that determines vote power
-    function setDebtShareContract(address newDebtShareContractAddress) external;
+    function setDebtShareContract(address newDebtShareContractAddress) external payable;
 
     /// @notice Returns the Synthetix v2 DebtShare contract that determines vote power
     function getDebtShareContract() external view returns (address);
 
     /// @notice Sets the Synthetix v2 DebtShare snapshot that determines vote power for this epoch
-    function setDebtShareSnapshotId(uint snapshotId) external;
+    function setDebtShareSnapshotId(uint snapshotId) external payable;
 
     /// @notice Returns the Synthetix v2 DebtShare snapshot id set for this epoch
     function getDebtShareSnapshotId() external view returns (uint);
@@ -38,7 +38,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     // ---------------------------------------
 
     /// @notice Allows the system owner to declare a merkle root for user debt shares on other chains for this epoch
-    function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;
+    function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external payable;
 
     /// @notice Returns the current epoch's merkle root for user debt shares on other chains
     function getCrossChainDebtShareMerkleRoot() external view returns (bytes32);
@@ -51,7 +51,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
         address account,
         uint256 debtShare,
         bytes32[] calldata merkleProof
-    ) external;
+    ) external payable;
 
     /// @notice Returns the Synthetix v2 debt shares for the provided address, at this epoch's snapshot, in other chains
     function getDeclaredCrossChainDebtShare(address account) external view returns (uint);
@@ -61,5 +61,5 @@ interface ISynthetixElectionModule is IBaseElectionModule {
         uint256 debtShare,
         bytes32[] calldata merkleProof,
         address[] calldata candidates
-    ) external;
+    ) external payable;
 }

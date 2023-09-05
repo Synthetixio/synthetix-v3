@@ -50,7 +50,7 @@ interface IAssociatedSystemsModule {
         string memory symbol,
         uint8 decimals,
         address impl
-    ) external;
+    ) external payable;
 
     /**
      * @notice Creates or initializes a managed associated ERC721 token.
@@ -66,7 +66,7 @@ interface IAssociatedSystemsModule {
         string memory symbol,
         string memory uri,
         address impl
-    ) external;
+    ) external payable;
 
     /**
      * @notice Registers an unmanaged external contract in the system.
@@ -75,7 +75,7 @@ interface IAssociatedSystemsModule {
      *
      * Note: The system will not be able to control or upgrade the associated system, only communicate with it.
      */
-    function registerUnmanagedSystem(bytes32 id, address endpoint) external;
+    function registerUnmanagedSystem(bytes32 id, address endpoint) external payable;
 
     /**
      * @notice Retrieves an associated system.

@@ -81,7 +81,7 @@ interface IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external;
+    ) external payable;
 
     /**
      * @notice Called by pool owner to remove a registered rewards distributor for vault participants.
@@ -101,7 +101,7 @@ interface IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external;
+    ) external payable;
 
     /**
      * @notice Called by a registered distributor to set up rewards for vault participants.
@@ -118,7 +118,7 @@ interface IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external;
+    ) external payable;
 
     /**
      * @notice Allows a user with appropriate permissions to claim rewards associated with a position.
@@ -133,7 +133,7 @@ interface IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external returns (uint256 amountClaimedD18);
+    ) external payable returns (uint256 amountClaimedD18);
 
     /**
      * @notice For a given position, return the rewards that can currently be claimed.
@@ -147,7 +147,7 @@ interface IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external returns (uint256[] memory claimableD18, address[] memory distributors);
+    ) external payable returns (uint256[] memory claimableD18, address[] memory distributors);
 
     /**
      * @notice Returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault.

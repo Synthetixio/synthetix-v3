@@ -78,7 +78,7 @@ interface ICollateralModule {
      *
      * Emits a {Deposited} event.
      */
-    function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external;
+    function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external payable;
 
     /**
      * @notice Withdraws `tokenAmount` of collateral of type `collateralType` from account `accountId`.
@@ -93,7 +93,7 @@ interface ICollateralModule {
      * Emits a {Withdrawn} event.
      *
      */
-    function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external;
+    function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external payable;
 
     /**
      * @notice Returns the total values pertaining to account `accountId` for `collateralType`.
@@ -132,7 +132,7 @@ interface ICollateralModule {
         address collateralType,
         uint256 offset,
         uint256 count
-    ) external returns (uint256 cleared);
+    ) external payable returns (uint256 cleared);
 
     /**
      * @notice Get a list of locks existing in account. Lists all locks in storage, even if they are expired
@@ -162,5 +162,5 @@ interface ICollateralModule {
         address collateralType,
         uint256 amount,
         uint64 expireTimestamp
-    ) external;
+    ) external payable;
 }

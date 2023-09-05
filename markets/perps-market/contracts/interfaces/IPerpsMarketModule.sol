@@ -82,7 +82,7 @@ interface IPerpsMarketModule {
      * @param price Index price.
      * @return price Fill price.
      */
-    function fillPrice(uint128 marketId, int128 orderSize, uint price) external returns (uint);
+    function fillPrice(uint128 marketId, int128 orderSize, uint price) external view returns (uint);
 
     /**
      * @notice Given a marketId return a market's summary details in one call.

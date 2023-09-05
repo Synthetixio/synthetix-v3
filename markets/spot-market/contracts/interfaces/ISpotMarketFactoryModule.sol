@@ -91,13 +91,13 @@ interface ISpotMarketFactoryModule is IMarket {
      * @dev Pulls in the USDToken and oracle manager from the synthetix core system and sets those appropriately.
      * @param synthetix synthetix v3 core system address
      */
-    function setSynthetix(ISynthetixSystem synthetix) external;
+    function setSynthetix(ISynthetixSystem synthetix) external payable;
 
     /**
      * @notice When a new synth is created, this is the erc20 implementation that is used.
      * @param synthImplementation erc20 implementation address
      */
-    function setSynthImplementation(address synthImplementation) external;
+    function setSynthImplementation(address synthImplementation) external payable;
 
     /**
      * @notice Creates a new synth market with synthetix v3 core system via market manager
@@ -112,7 +112,7 @@ interface ISpotMarketFactoryModule is IMarket {
         string memory tokenName,
         string memory tokenSymbol,
         address synthOwner
-    ) external returns (uint128 synthMarketId);
+    ) external payable returns (uint128 synthMarketId);
 
     /**
      * @notice Get the proxy address of the synth for the provided marketId
@@ -138,7 +138,7 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param buyFeedId the oracle manager buy feed node id
      * @param sellFeedId the oracle manager sell feed node id
      */
-    function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
+    function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external payable;
 
     /**
      * @notice upgrades the synth implementation to the current implementation for the specified market.
@@ -146,14 +146,14 @@ interface ISpotMarketFactoryModule is IMarket {
      * @dev The synth implementation is upgraded via the proxy.
      * @param marketId id of the market
      */
-    function upgradeSynthImpl(uint128 marketId) external;
+    function upgradeSynthImpl(uint128 marketId) external payable;
 
     /**
      * @notice Allows market to adjust decay rate of the synth
      * @param marketId the market to update the synth decay rate for
      * @param rate APY to decay of the synth to decay by, as a 18 decimal ratio
      */
-    function setDecayRate(uint128 marketId, uint256 rate) external;
+    function setDecayRate(uint128 marketId, uint256 rate) external payable;
 
     /**
      * @notice Allows the current market owner to nominate a new owner.
@@ -161,28 +161,28 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param synthMarketId synth market id value
      * @param newNominatedOwner The address that is to become nominated.
      */
-    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) external;
+    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) external payable;
 
     /**
      * @notice Allows a nominated address to accept ownership of the market.
      * @dev Reverts if the caller is not nominated.
      * @param synthMarketId synth market id value
      */
-    function acceptMarketOwnership(uint128 synthMarketId) external;
+    function acceptMarketOwnership(uint128 synthMarketId) external payable;
 
     /**
      * @notice Allows a nominated address to renounce ownership of the market.
      * @dev Reverts if the caller is not nominated.
      * @param synthMarketId synth market id value
      */
-    function renounceMarketNomination(uint128 synthMarketId) external;
+    function renounceMarketNomination(uint128 synthMarketId) external payable;
 
     /**
      * @notice Allows the market owner to renounce his ownership.
      * @dev Reverts if the caller is not the owner.
      * @param synthMarketId synth market id value
      */
-    function renounceMarketOwnership(uint128 synthMarketId) external;
+    function renounceMarketOwnership(uint128 synthMarketId) external payable;
 
     /**
      * @notice Returns market owner.

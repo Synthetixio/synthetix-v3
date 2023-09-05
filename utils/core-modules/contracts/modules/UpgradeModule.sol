@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 contract UpgradeModule is UUPSImplementation {
-    function upgradeTo(address newImplementation) public payable override {
+    function upgradeTo(address newImplementation) public override {
         OwnableStorage.onlyOwner();
         _upgradeTo(newImplementation);
     }
