@@ -19,5 +19,5 @@ interface IERC721Receiver {
         address from,
         uint256 tokenId,
         bytes memory data
-    ) external payable returns (bytes4);
+    ) external returns (bytes4);
 }
