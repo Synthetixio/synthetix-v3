@@ -1,19 +1,19 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {Margin} from "../storage/Margin.sol";
-import {Order} from "../storage/Order.sol";
-import {Position} from "../storage/Position.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import "../interfaces/IMarginModule.sol";
+import {IMarginModule} from "../interfaces/IMarginModule.sol";
+import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {Order} from "../storage/Order.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {Position} from "../storage/Position.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {Margin} from "../storage/Margin.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -188,7 +188,7 @@ contract MarginModule is IMarginModule {
             }
             accountMargin.collaterals[collateralType] += absAmountDelta;
             transferAndDeposit(marketId, absAmountDelta, collateralType, globalConfig);
-        } else if (amountDelta < 0) {
+        } else {
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
             if (availableAmount < absAmountDelta) {
                 revert ErrorUtil.InsufficientCollateral(collateralType, availableAmount, absAmountDelta);
@@ -233,10 +233,8 @@ contract MarginModule is IMarginModule {
             delete globalMarginConfig.supported[collateralType];
 
             // Revoke access after wiping collateral from supported market collateral.
-            //
-            // TODO: Add this back later. Synthetix IERC20.approve contracts throw InvalidParameter when amount = 0.
-            //
-            // IERC20(collateralType).approve(address(this), 0);
+            uint256 allowance = IERC20(collateralType).allowance(msg.sender, address(this));
+            IERC20(collateralType).decreaseAllowance(address(this), allowance);
 
             unchecked {
                 i++;
