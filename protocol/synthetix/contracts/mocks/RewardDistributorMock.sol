@@ -32,13 +32,13 @@ contract RewardDistributorMock is IRewardDistributor {
         shouldFailPayout = fail;
     }
 
+		// solhint-disable-next-line payable/only-payable
     function payout(
         uint128,
         uint128,
         address,
         address sender,
         uint256 amount
-				// solhint-disable-next-line payable/only-payable
     ) external returns (bool) {
         // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         if (msg.sender != _rewardManager) {

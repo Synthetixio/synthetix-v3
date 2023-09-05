@@ -5,3 +5,7 @@ node_modules/
 **/contracts/routers
 **/typechain-types
 utils/core-contracts/contracts/utils/SafeCast
+
+# files that we cannot change due to immutable proxies
+**/contracts/Proxy.sol
+utils/core-modules/contracts/modules/UpgradeModule.sol

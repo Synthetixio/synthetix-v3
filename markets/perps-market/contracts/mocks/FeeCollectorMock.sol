@@ -13,11 +13,11 @@ contract FeeCollectorMock is IFeeCollector {
         feeRatioD18 = _feeRatio;
     }
 
+		// solhint-disable-next-line payable/only-payable
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,
         address sender
-// solhint-disable-next-line payable/only-payable
     ) external override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
