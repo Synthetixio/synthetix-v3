@@ -108,6 +108,12 @@ contract LiquidationModule is ILiquidationModule {
     function liquidatePosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage position = market.positions[accountId];
+
+        // Cannot liquidate a position that does not exist.
+        if (position.size == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
 
         (, Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = updateMarketPreLiquidation(
             accountId,
