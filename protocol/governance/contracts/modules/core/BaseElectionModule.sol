@@ -154,7 +154,9 @@ contract BaseElectionModule is
         );
     }
 
-    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external payable override {
+    function setMaxDateAdjustmentTolerance(
+        uint64 newMaxDateAdjustmentTolerance
+    ) external payable override {
         OwnableStorage.onlyOwner();
         if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
 
@@ -221,7 +223,13 @@ contract BaseElectionModule is
         emit EmergencyElectionStarted(epochIndex);
     }
 
-    function nominate() public payable virtual override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    function nominate()
+        public
+        payable
+        virtual
+        override
+        onlyInPeriod(Council.ElectionPeriod.Nomination)
+    {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
@@ -232,7 +240,8 @@ contract BaseElectionModule is
     }
 
     function withdrawNomination()
-        external payable
+        external
+        payable
         override
         onlyInPeriod(Council.ElectionPeriod.Nomination)
     {

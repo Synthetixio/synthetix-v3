@@ -116,7 +116,11 @@ interface IMarketConfigurationModule {
      * @param makerFeeRatio the maker fee ratio.
      * @param takerFeeRatio the taker fee ratio.
      */
-    function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external payable;
+    function setOrderFees(
+        uint128 marketId,
+        uint256 makerFeeRatio,
+        uint256 takerFeeRatio
+    ) external payable;
 
     /**
      * @notice Set node id for perps market

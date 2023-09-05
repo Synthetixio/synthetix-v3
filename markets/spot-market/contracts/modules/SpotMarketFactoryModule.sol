@@ -178,7 +178,10 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     /**
      * @inheritdoc ISpotMarketFactoryModule
      */
-    function nominateMarketOwner(uint128 synthMarketId, address newNominatedOwner) public payable override {
+    function nominateMarketOwner(
+        uint128 synthMarketId,
+        address newNominatedOwner
+    ) public payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         if (newNominatedOwner == address(0)) {

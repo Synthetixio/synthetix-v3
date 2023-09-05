@@ -129,7 +129,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function updateReferrerShare(address referrer, uint256 shareRatioD18) external payable override {
+    function updateReferrerShare(
+        address referrer,
+        uint256 shareRatioD18
+    ) external payable override {
         OwnableStorage.onlyOwner();
 
         if (shareRatioD18 > DecimalMath.UNIT) {

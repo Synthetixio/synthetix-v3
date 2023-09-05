@@ -11,7 +11,7 @@ contract FeeCollectorMock is IFeeCollector {
         usdToken = _usdToken;
     }
 
-		// solhint-disable-next-line payable/only-payable
+    // solhint-disable-next-line payable/only-payable
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,

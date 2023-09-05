@@ -192,7 +192,8 @@ contract VaultModule is IVaultModule {
         uint128 poolId,
         address collateralType
     )
-        external payable
+        external
+        payable
         override
         returns (
             uint256 collateralAmount,
@@ -238,7 +239,10 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
-    function getVaultDebt(uint128 poolId, address collateralType) public payable override returns (int256) {
+    function getVaultDebt(
+        uint128 poolId,
+        address collateralType
+    ) public payable override returns (int256) {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
     }
 

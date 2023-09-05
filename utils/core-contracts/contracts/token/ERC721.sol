@@ -137,7 +137,11 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function transferFrom(address from, address to, uint256 tokenId) public payable virtual override {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public payable virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert AccessError.Unauthorized(msg.sender);
         }
@@ -148,7 +152,11 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId) public payable virtual override {
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public payable virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
 

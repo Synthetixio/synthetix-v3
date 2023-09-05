@@ -63,7 +63,10 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function approve(address spender, uint256 amount) public payable virtual override returns (bool) {
+    function approve(
+        address spender,
+        uint256 amount
+    ) public payable virtual override returns (bool) {
         _approve(msg.sender, spender, amount);
         return true;
     }

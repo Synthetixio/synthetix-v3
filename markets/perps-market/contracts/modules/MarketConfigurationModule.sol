@@ -162,7 +162,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external payable override {
+    function setLockedOiRatio(
+        uint128 marketId,
+        uint256 lockedOiRatioD18
+    ) external payable override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.lockedOiRatioD18 = lockedOiRatioD18;

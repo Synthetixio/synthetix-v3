@@ -128,7 +128,8 @@ contract MarketManagerModule is IMarketManagerModule {
     function getMarketPools(
         uint128 marketId
     )
-        external payable
+        external
+        payable
         override
         returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds)
     {
@@ -157,7 +158,8 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         uint128 poolId
     )
-        external payable
+        external
+        payable
         override
         returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27)
     {
@@ -295,7 +297,10 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external payable override {
+    function setMarketMinDelegateTime(
+        uint128 marketId,
+        uint32 minDelegateTime
+    ) external payable override {
         Market.Data storage market = Market.load(marketId);
 
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
@@ -331,7 +336,10 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external payable override {
+    function setMinLiquidityRatio(
+        uint128 marketId,
+        uint256 minLiquidityRatio
+    ) external payable override {
         OwnableStorage.onlyOwner();
         Market.Data storage market = Market.load(marketId);
 

@@ -126,7 +126,8 @@ interface IVaultModule {
         uint128 poolId,
         address collateralType
     )
-        external payable
+        external
+        payable
         returns (
             uint256 collateralAmountD18,
             uint256 collateralValueD18,
@@ -142,7 +143,10 @@ interface IVaultModule {
      * @param collateralType The address of the collateral of the associated vault.
      * @return debtD18 The overall debt of the vault, denominated with 18 decimals of precision.
      **/
-    function getVaultDebt(uint128 poolId, address collateralType) external payable returns (int256 debtD18);
+    function getVaultDebt(
+        uint128 poolId,
+        address collateralType
+    ) external payable returns (int256 debtD18);
 
     /**
      * @notice Returns the amount and value of the collateral held by the vault.

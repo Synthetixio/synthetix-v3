@@ -78,7 +78,11 @@ interface ICollateralModule {
      *
      * Emits a {Deposited} event.
      */
-    function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external payable;
+    function deposit(
+        uint128 accountId,
+        address collateralType,
+        uint256 tokenAmount
+    ) external payable;
 
     /**
      * @notice Withdraws `tokenAmount` of collateral of type `collateralType` from account `accountId`.
@@ -93,7 +97,11 @@ interface ICollateralModule {
      * Emits a {Withdrawn} event.
      *
      */
-    function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external payable;
+    function withdraw(
+        uint128 accountId,
+        address collateralType,
+        uint256 tokenAmount
+    ) external payable;
 
     /**
      * @notice Returns the total values pertaining to account `accountId` for `collateralType`.

@@ -78,7 +78,10 @@ contract CollateralMockWithoutDecimals {
         return true;
     }
 
-    function decreaseAllowance(address spender, uint256 subtractedValue) public payable returns (bool) {
+    function decreaseAllowance(
+        address spender,
+        uint256 subtractedValue
+    ) public payable returns (bool) {
         uint256 currentAllowance = load().allowance[msg.sender][spender];
         _approve(msg.sender, spender, currentAllowance - subtractedValue);
 
@@ -91,7 +94,11 @@ contract CollateralMockWithoutDecimals {
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 amount) external payable returns (bool) {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external payable returns (bool) {
         return _transferFrom(from, to, amount);
     }
 

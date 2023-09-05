@@ -118,7 +118,10 @@ interface IERC20 {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) external payable returns (bool);
+    function decreaseAllowance(
+        address spender,
+        uint256 subtractedValue
+    ) external payable returns (bool);
 
     /**
      * @notice Allows a user who has been given allowance to transfer tokens on another user's behalf.

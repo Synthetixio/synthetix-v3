@@ -60,7 +60,8 @@ contract ElectionModule is
     function cast(
         address[] calldata candidates
     )
-        public payable
+        public
+        payable
         override(BaseElectionModule, IElectionModule)
         onlyInPeriod(Council.ElectionPeriod.Vote)
     {

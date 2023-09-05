@@ -33,7 +33,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidate(uint128 accountId) external payable override returns (uint256 liquidationReward) {
+    function liquidate(
+        uint128 accountId
+    ) external payable override returns (uint256 liquidationReward) {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;

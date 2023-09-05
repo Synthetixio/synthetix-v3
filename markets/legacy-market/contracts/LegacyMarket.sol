@@ -318,7 +318,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
             interfaceId == this.supportsInterface.selector;
     }
 
-		// solhint-disable-next-line payable/only-payable
+    // solhint-disable-next-line payable/only-payable
     function upgradeTo(address to) external onlyOwner {
         _upgradeTo(to);
     }
