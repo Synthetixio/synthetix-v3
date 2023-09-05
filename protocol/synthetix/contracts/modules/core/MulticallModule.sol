@@ -19,9 +19,9 @@ contract MulticallModule is IMulticallModule {
         "_allowlistedMulticallTargets";
 
     // solhint-disable-next-line numcast/safe-cast
-    bytes32 constant ALLOWED = bytes32(uint256(1));
+    bytes32 internal constant ALLOWED = bytes32(uint256(1));
     // solhint-disable-next-line numcast/safe-cast
-    bytes32 constant DISALLOWED = bytes32(uint256(0));
+    bytes32 internal constant DISALLOWED = bytes32(uint256(0));
 
     /**
      * @inheritdoc IMulticallModule
