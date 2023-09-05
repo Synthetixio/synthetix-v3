@@ -31,7 +31,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@synthetixio/core-utils": "3.3.2",
+    "@synthetixio/core-utils": "workspace:*",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.46"
   },
