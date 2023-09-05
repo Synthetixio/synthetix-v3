@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 
-describe.only('Atomic Order Module buy()', () => {
+describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
@@ -273,7 +273,7 @@ describe.only('Atomic Order Module buy()', () => {
     });
   });
 
-  describe.only('price protection guardrails', () => {
+  describe('price protection guardrails', () => {
     before(restore);
 
     before('set sell price higher than buy price', async () => {
