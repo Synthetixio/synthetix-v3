@@ -20,7 +20,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
      */
     function metadata(
         uint128 marketId
-    ) external view override returns (string memory name, string memory symbol) {
+    ) external view override returns (string memory, string memory) {
         PerpsMarket.Data storage market = PerpsMarket.load(marketId);
         return (market.name, market.symbol);
     }
@@ -89,7 +89,7 @@ contract PerpsMarketModule is IPerpsMarketModule {
      */
     function getMarketSummary(
         uint128 marketId
-    ) external view override returns (MarketSummary memory summary) {
+    ) external view override returns (MarketSummary memory) {
         PerpsMarket.Data storage market = PerpsMarket.load(marketId);
         return
             MarketSummary({
