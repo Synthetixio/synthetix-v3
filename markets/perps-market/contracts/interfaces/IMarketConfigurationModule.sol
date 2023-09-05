@@ -108,7 +108,7 @@ interface IMarketConfigurationModule {
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
-    ) external returns (uint256 strategyId);
+    ) external payable returns (uint256 strategyId);
 
     /**
      * @notice Set order fees for a market with this function.
@@ -116,14 +116,14 @@ interface IMarketConfigurationModule {
      * @param makerFeeRatio the maker fee ratio.
      * @param takerFeeRatio the taker fee ratio.
      */
-    function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external;
+    function setOrderFees(uint128 marketId, uint256 makerFeeRatio, uint256 takerFeeRatio) external payable;
 
     /**
      * @notice Set node id for perps market
      * @param perpsMarketId id of the market to set price feed.
      * @param feedId the node feed id
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external;
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external payable;
 
     /**
      * @notice Set funding parameters for a market with this function.
@@ -135,7 +135,7 @@ interface IMarketConfigurationModule {
         uint128 marketId,
         uint256 skewScale,
         uint256 maxFundingVelocity
-    ) external;
+    ) external payable;
 
     /**
      * @notice Set liquidation parameters for a market with this function.
@@ -151,7 +151,7 @@ interface IMarketConfigurationModule {
         uint256 maxSecondsInLiquidationWindow,
         uint256 maxLiquidationPd,
         address endorsedLiquidator
-    ) external;
+    ) external payable;
 
     /**
      * @notice Set liquidation parameters for a market with this function.
@@ -169,7 +169,7 @@ interface IMarketConfigurationModule {
         uint256 maintenanceMarginScalarD18,
         uint256 liquidationRewardRatioD18,
         uint256 minimumPositionMargin
-    ) external;
+    ) external payable;
 
     /**
      * @notice Set the max size of an specific market with this function.
@@ -177,14 +177,14 @@ interface IMarketConfigurationModule {
      * @param marketId id of the market to set the max market value.
      * @param maxMarketSize the max market size in market asset units.
      */
-    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external;
+    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external payable;
 
     /**
      * @notice Set the locked OI Ratio for a market with this function.
      * @param marketId id of the market to set locked OI ratio.
      * @param lockedOiRatioD18 the locked OI ratio skew scale (as decimal with 18 digits precision).
      */
-    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external;
+    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external payable;
 
     /**
      * @notice Enable or disable a settlement strategy for a market with this function.
@@ -196,7 +196,7 @@ interface IMarketConfigurationModule {
         uint128 marketId,
         uint256 strategyId,
         bool enabled
-    ) external;
+    ) external payable;
 
     /**
      * @notice Gets the settlement strategy details.

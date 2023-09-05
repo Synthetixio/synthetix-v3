@@ -99,7 +99,7 @@ interface IPoolModule {
      * @param requestedPoolId The requested id for the new pool. Reverts if the id is not available.
      * @param owner The address that will own the newly created pool.
      */
-    function createPool(uint128 requestedPoolId, address owner) external;
+    function createPool(uint128 requestedPoolId, address owner) external payable;
 
     /**
      * @notice Allows the pool owner to configure the pool.
@@ -111,7 +111,7 @@ interface IPoolModule {
     function setPoolConfiguration(
         uint128 poolId,
         MarketConfiguration.Data[] memory marketDistribution
-    ) external;
+    ) external payable;
 
     /**
      * @notice Allows the pool owner to set the configuration of a specific collateral type for their pool.
@@ -123,14 +123,14 @@ interface IPoolModule {
         uint128 poolId,
         address collateralType,
         PoolCollateralConfiguration.Data memory newConfig
-    ) external;
+    ) external payable;
 
     /**
      * @notice Allows collaterals accepeted by the system to be accepeted by the pool by default
      * @param poolId The id of the pool.
      * @param disabled If set to true new collaterals will be disabled for the pool.
      */
-    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external;
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external payable;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
@@ -146,7 +146,7 @@ interface IPoolModule {
      * @param poolId The id of the pool whose name is being set.
      * @param name The new name to give to the pool.
      */
-    function setPoolName(uint128 poolId, string memory name) external;
+    function setPoolName(uint128 poolId, string memory name) external payable;
 
     /**
      * @notice Returns the pool's name.
@@ -160,25 +160,25 @@ interface IPoolModule {
      * @param nominatedOwner The address to nominate os the new pool owner.
      * @param poolId The id whose ownership is being transferred.
      */
-    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external;
+    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external payable;
 
     /**
      * @notice After a new pool owner has been nominated, allows it to accept the nomination and thus ownership of the pool.
      * @param poolId The id of the pool for which the caller is to accept ownership.
      */
-    function acceptPoolOwnership(uint128 poolId) external;
+    function acceptPoolOwnership(uint128 poolId) external payable;
 
     /**
      * @notice After a new pool owner has been nominated, allows it to reject the nomination.
      * @param poolId The id of the pool for which the new owner nomination is to be revoked.
      */
-    function revokePoolNomination(uint128 poolId) external;
+    function revokePoolNomination(uint128 poolId) external payable;
 
     /**
      * @notice Allows the current nominated owner to renounce the nomination.
      * @param poolId The id of the pool for which the caller is renouncing ownership nomination.
      */
-    function renouncePoolNomination(uint128 poolId) external;
+    function renouncePoolNomination(uint128 poolId) external payable;
 
     /**
      * @notice Returns the current pool owner.
@@ -198,7 +198,7 @@ interface IPoolModule {
      * @notice Allows the system owner (not the pool owner) to set the system-wide minimum liquidity ratio.
      * @param minLiquidityRatio The new system-wide minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
-    function setMinLiquidityRatio(uint256 minLiquidityRatio) external;
+    function setMinLiquidityRatio(uint256 minLiquidityRatio) external payable;
 
     /**
      @notice returns a pool minimum issuance ratio
@@ -208,7 +208,7 @@ interface IPoolModule {
     function getPoolCollateralIssuanceRatio(
         uint128 poolId,
         address collateral
-    ) external returns (uint256 issuanceRatioD18);
+    ) external view returns (uint256 issuanceRatioD18);
 
     /**
      * @notice Retrieves the system-wide minimum liquidity ratio.
@@ -221,5 +221,5 @@ interface IPoolModule {
      * @param poolId the pool to rebalance
      * @param optionalCollateralType in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
      */
-    function rebalancePool(uint128 poolId, address optionalCollateralType) external;
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external payable;
 }

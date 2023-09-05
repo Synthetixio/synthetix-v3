@@ -38,7 +38,8 @@ contract RewardDistributorMock is IRewardDistributor {
         address,
         address sender,
         uint256 amount
-    ) external payable returns (bool) {
+				// solhint-disable-next-line payable/only-payable
+    ) external returns (bool) {
         // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         if (msg.sender != _rewardManager) {
             revert AccessError.Unauthorized(msg.sender);

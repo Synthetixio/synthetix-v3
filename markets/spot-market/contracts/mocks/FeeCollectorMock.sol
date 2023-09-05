@@ -11,12 +11,13 @@ contract FeeCollectorMock is IFeeCollector {
         usdToken = _usdToken;
     }
 
+		// solhint-disable-next-line payable/only-payable
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,
         address sender,
         uint8 tradeType
-    ) external payable override returns (uint256) {
+    ) external override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
         sender;

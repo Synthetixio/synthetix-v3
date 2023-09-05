@@ -68,7 +68,7 @@ interface IIssueUSDModule {
         uint128 poolId,
         address collateralType,
         uint256 amount
-    ) external;
+    ) external payable;
 
     /**
      * @notice Burns {amount} of snxUSD with the specified liquidity position.
@@ -84,5 +84,5 @@ interface IIssueUSDModule {
         uint128 poolId,
         address collateralType,
         uint256 amount
-    ) external;
+    ) external payable;
 }

@@ -63,7 +63,7 @@ interface IGlobalPerpsMarketModule {
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param collateralAmount Max collateral amount to set for the synth market id.
      */
-    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
+    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external payable;
 
     /**
      * @notice Gets the max collateral amount for a specific synth market.
@@ -77,7 +77,7 @@ interface IGlobalPerpsMarketModule {
      * @dev The synth deduction priority is used to determine the order in which synths are deducted from an account. Id 0 is snxUSD and should be first in the list.
      * @param newSynthDeductionPriority Ordered array of synth market ids for deduction priority.
      */
-    function setSynthDeductionPriority(uint128[] memory newSynthDeductionPriority) external;
+    function setSynthDeductionPriority(uint128[] memory newSynthDeductionPriority) external payable;
 
     /**
      * @notice Gets the synth deduction priority ordered list.
@@ -94,7 +94,7 @@ interface IGlobalPerpsMarketModule {
     function setLiquidationRewardGuards(
         uint256 minLiquidationRewardUsd,
         uint256 maxLiquidationRewardUsd
-    ) external;
+    ) external payable;
 
     /**
      * @notice Gets the liquidation reward guard (min and max).
@@ -117,7 +117,7 @@ interface IGlobalPerpsMarketModule {
      * @dev must conform to the IFeeCollector interface
      * @param feeCollector address of the fee collector contract
      */
-    function setFeeCollector(address feeCollector) external;
+    function setFeeCollector(address feeCollector) external payable;
 
     /**
      * @notice Gets the configured feeCollector contract
@@ -133,7 +133,7 @@ interface IGlobalPerpsMarketModule {
     function setPerAccountCaps(
         uint128 maxPositionsPerAccount,
         uint128 maxCollateralsPerAccount
-    ) external;
+    ) external payable;
 
     /**
      * @notice get the max number of Positions and Collaterals per Account
@@ -149,18 +149,18 @@ interface IGlobalPerpsMarketModule {
      * @param referrer The address of the referrer
      * @param shareRatioD18 The new share percentage for the referrer
      */
-    function updateReferrerShare(address referrer, uint256 shareRatioD18) external;
+    function updateReferrerShare(address referrer, uint256 shareRatioD18) external payable;
 
     /**
      * @notice get the referral share percentage for the specified referrer
      * @param referrer The address of the referrer
      * @return shareRatioD18 The configured share percentage for the referrer
      */
-    function getReferrerShare(address referrer) external returns (uint256 shareRatioD18);
+    function getReferrerShare(address referrer) external view returns (uint256 shareRatioD18);
 
     /**
      * @notice get all existing market ids
      * @return marketIds an array of existing market ids
      */
-    function getMarkets() external returns (uint256[] memory marketIds);
+    function getMarkets() external view returns (uint256[] memory marketIds);
 }

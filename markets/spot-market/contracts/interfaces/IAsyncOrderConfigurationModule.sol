@@ -36,7 +36,7 @@ interface IAsyncOrderConfigurationModule {
     function addSettlementStrategy(
         uint128 synthMarketId,
         SettlementStrategy.Data memory strategy
-    ) external returns (uint256 strategyId);
+    ) external payable returns (uint256 strategyId);
 
     /**
      * @notice Sets the strategy to enabled or disabled.
@@ -49,7 +49,7 @@ interface IAsyncOrderConfigurationModule {
         uint128 synthMarketId,
         uint256 strategyId,
         bool enabled
-    ) external;
+    ) external payable;
 
     /**
      * @notice Returns the settlement strategy data for given market/strategy id.

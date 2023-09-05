@@ -52,14 +52,14 @@ interface IFeatureFlagModule {
      * @param feature The bytes32 id of the feature.
      * @param allowAll True to allow anyone to use the feature, false to fallback to the allowlist.
      */
-    function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external;
+    function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external payable;
 
     /**
      * @notice Enables or disables free access to a feature.
      * @param feature The bytes32 id of the feature.
      * @param denyAll True to allow noone to use the feature, false to fallback to the allowlist.
      */
-    function setFeatureFlagDenyAll(bytes32 feature, bool denyAll) external;
+    function setFeatureFlagDenyAll(bytes32 feature, bool denyAll) external payable;
 
     /**
      * @notice Allows an address to use a feature.
@@ -67,7 +67,7 @@ interface IFeatureFlagModule {
      * @param feature The bytes32 id of the feature.
      * @param account The address that is allowed to use the feature.
      */
-    function addToFeatureFlagAllowlist(bytes32 feature, address account) external;
+    function addToFeatureFlagAllowlist(bytes32 feature, address account) external payable;
 
     /**
      * @notice Disallows an address from using a feature.
@@ -75,20 +75,20 @@ interface IFeatureFlagModule {
      * @param feature The bytes32 id of the feature.
      * @param account The address that is disallowed from using the feature.
      */
-    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external;
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external payable;
 
     /**
      * @notice Sets addresses which can disable a feature (but not enable it). Overwrites any preexisting data.
      * @param feature The bytes32 id of the feature.
      * @param deniers The addresses which should have the ability to unilaterally disable the feature
      */
-    function setDeniers(bytes32 feature, address[] memory deniers) external;
+    function setDeniers(bytes32 feature, address[] memory deniers) external payable;
 
     /**
      * @notice Gets the list of address which can block a feature
      * @param feature The bytes32 id of the feature.
      */
-    function getDeniers(bytes32 feature) external returns (address[] memory);
+    function getDeniers(bytes32 feature) external view returns (address[] memory);
 
     /**
      * @notice Determines if the given feature is freely allowed to all users.

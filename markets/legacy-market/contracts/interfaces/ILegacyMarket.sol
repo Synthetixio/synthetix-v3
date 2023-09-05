@@ -54,7 +54,7 @@ interface ILegacyMarket {
      * * LegacyMarket must have already sufficient migrated collateral
      * @param amount the quantity to convert
      */
-    function convertUSD(uint256 amount) external;
+    function convertUSD(uint256 amount) external payable;
 
     /**
      * @notice Called by an SNX staker on v2x to convert their position to the equivalent on v3. This entails the following broad steps:
@@ -64,18 +64,18 @@ interface ILegacyMarket {
      * 4. send the created staking account to the msg.sender.
      * @param accountId the new account id that the user wants to have. can be any non-zero integer that is not already occupied.
      */
-    function migrate(uint128 accountId) external;
+    function migrate(uint128 accountId) external payable;
 
     /**
      * @notice Same as `migrate`, but allows for the owner to forcefully migrate any v2x staker
      * @param accountId the new account id that the user wants to have. can be any non-zero integer that is not already occupied.
      */
-    function migrateOnBehalf(address staker, uint128 accountId) external;
+    function migrateOnBehalf(address staker, uint128 accountId) external payable;
 
     /**
      * @notice called by the owner to register this market with v3. This is an initialization call only.
      */
-    function registerMarket() external returns (uint128 newMarketId);
+    function registerMarket() external payable returns (uint128 newMarketId);
 
     /**
      * @notice called by the owner to set the addresses of the v3 and v2x systems which are needed for calls in `migrate` and `convertUSD`
@@ -85,17 +85,17 @@ interface ILegacyMarket {
     function setSystemAddresses(
         IAddressResolver v2xResolverAddress,
         IV3CoreProxy v3SystemAddress
-    ) external returns (bool didInitialize);
+    ) external payable returns (bool didInitialize);
 
     /**
      * @notice called by the owner to disable `convertUSD` (ex. in the case of an emergency)
      * @param paused whether or not `convertUSD` should be disable
      */
-    function setPauseStablecoinConversion(bool paused) external;
+    function setPauseStablecoinConversion(bool paused) external payable;
 
     /**
      * @notice called by the owner to disable `migrate` (ex. in the case of an emergency)
      * @param paused whether or not `migrate` should be disable
      */
-    function setPauseMigration(bool paused) external;
+    function setPauseMigration(bool paused) external payable;
 }

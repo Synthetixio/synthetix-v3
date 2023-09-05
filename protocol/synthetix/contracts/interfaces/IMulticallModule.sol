@@ -14,7 +14,7 @@ interface IMulticallModule {
      * @param data Array of calldata objects, one for each function that is to be called in the system.
      * @return results Array of each `delegatecall`'s response corresponding to the incoming calldata array.
      */
-    function multicall(bytes[] calldata data) external returns (bytes[] memory results);
+    function multicall(bytes[] calldata data) external payable returns (bytes[] memory results);
 
     /**
      * @notice Similar to `multicall`, but allows for transactions to be executed
@@ -36,7 +36,7 @@ interface IMulticallModule {
      * @param target The address of the contract to alter permissions
      * @param allowlisted Whether or not the target is allowlisted
      */
-    function setAllowlistedMulticallTarget(address target, bool allowlisted) external;
+    function setAllowlistedMulticallTarget(address target, bool allowlisted) external payable;
 
     /**
      * @notice When receiving a call from this contract through `multicallThrough`, the receiver can use this function to get the original caller.

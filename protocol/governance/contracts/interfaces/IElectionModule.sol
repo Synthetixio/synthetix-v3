@@ -14,7 +14,7 @@ interface IElectionModule {
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) external;
+    ) external payable;
 
     /// @notice Shows whether the module has been initialized
     function isElectionModuleInitialized() external view returns (bool);
@@ -28,58 +28,58 @@ interface IElectionModule {
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external;
+    ) external payable;
 
     /// @notice Adjusts the current epoch schedule requiring that the current period remains Administration
     function modifyEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external;
+    ) external payable;
 
     /// @notice Determines minimum values for epoch schedule adjustments
     function setMinEpochDurations(
         uint64 newMinNominationPeriodDuration,
         uint64 newMinVotingPeriodDuration,
         uint64 newMinEpochDuration
-    ) external;
+    ) external payable;
 
     /// @notice Determines adjustment size for tweakEpochSchedule
-    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
+    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external payable;
 
     /// @notice Determines batch size when evaluate() is called with numBallots = 0
-    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external;
+    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external payable;
 
     /// @notice Determines the number of council members in the next epoch
-    function setNextEpochSeatCount(uint8 newSeatCount) external;
+    function setNextEpochSeatCount(uint8 newSeatCount) external payable;
 
     /// @notice Determines the minimum number of council members before triggering an emergency election
-    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external;
+    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external payable;
 
     /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
-    function dismissMembers(address[] calldata members) external;
+    function dismissMembers(address[] calldata members) external payable;
 
     // ---------------------------------------
     // User write functions
     // ---------------------------------------
 
     /// @notice Allows anyone to self-nominate during the Nomination period
-    function nominate() external;
+    function nominate() external payable;
 
     /// @notice Self-withdrawal of nominations during the Nomination period
-    function withdrawNomination() external;
+    function withdrawNomination() external payable;
 
     /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
-    function cast(address[] calldata candidates) external;
+    function cast(address[] calldata candidates) external payable;
 
     /// @notice Allows votes to be withdraw
-    function withdrawVote() external;
+    function withdrawVote() external payable;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
-    function evaluate(uint numBallots) external;
+    function evaluate(uint numBallots) external payable;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated
-    function resolve() external;
+    function resolve() external payable;
 
     // ---------------------------------------
     // View functions

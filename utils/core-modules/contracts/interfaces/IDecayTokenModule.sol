@@ -17,15 +17,15 @@ interface IDecayTokenModule is ITokenModule {
      * @notice Updates the decay rate for a year
      * @param _rate The decay rate with 18 decimals (1e16 means 1% decay per year).
      */
-    function setDecayRate(uint256 _rate) external;
+    function setDecayRate(uint256 _rate) external payable;
 
     /**
      * @notice get decay rate for a year
      */
-    function decayRate() external returns (uint256);
+    function decayRate() external view returns (uint256);
 
     /**
      * @notice advance epoch manually in order to avoid precision loss
      */
-    function advanceEpoch() external returns (uint256);
+    function advanceEpoch() external payable returns (uint256);
 }

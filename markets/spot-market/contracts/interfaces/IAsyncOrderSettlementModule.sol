@@ -74,7 +74,7 @@ interface IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external returns (uint finalOrderAmount, OrderFees.Data memory);
+    ) external payable returns (uint finalOrderAmount, OrderFees.Data memory);
 
     /**
      * @notice Callback function for Pyth settlement strategy

@@ -17,5 +17,5 @@ interface ICollateralModule {
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param collateralAmount max amount that for the synth
      */
-    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
+    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external payable;
 }

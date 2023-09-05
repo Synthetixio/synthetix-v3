@@ -28,19 +28,19 @@ interface IPerpsMarketFactoryModule is IMarket {
      * @dev this function should be called only once.
      * @return globalPerpsMarketId Id of the global perps market id.
      */
-    function initializeFactory() external returns (uint128);
+    function initializeFactory() external payable returns (uint128);
 
     /**
      * @notice Sets the synthetix system.
      * @param synthetix address of the main synthetix proxy.
      */
-    function setSynthetix(ISynthetixSystem synthetix) external;
+    function setSynthetix(ISynthetixSystem synthetix) external payable;
 
     /**
      * @notice Sets the spot market system.
      * @param spotMarket address of the spot market proxy.
      */
-    function setSpotMarket(ISpotMarketSystem spotMarket) external;
+    function setSpotMarket(ISpotMarketSystem spotMarket) external payable;
 
     /**
      * @notice Creates a new market.
@@ -53,5 +53,5 @@ interface IPerpsMarketFactoryModule is IMarket {
         uint128 requestedMarketId,
         string memory marketName,
         string memory marketSymbol
-    ) external returns (uint128);
+    ) external payable returns (uint128);
 }
