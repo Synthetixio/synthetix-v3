@@ -112,7 +112,10 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function rebalancePool(uint128 poolId, address optionalCollateralType) external payable override {
+    function rebalancePool(
+        uint128 poolId,
+        address optionalCollateralType
+    ) external payable override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         pool.distributeDebtToVaults(optionalCollateralType);
 
@@ -200,7 +203,10 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external payable override {
+    function setPoolCollateralDisabledByDefault(
+        uint128 poolId,
+        bool disabled
+    ) external payable override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 

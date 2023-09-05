@@ -55,7 +55,11 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
     /**
      * @inheritdoc ITokenModule
      */
-    function setAllowance(address from, address spender, uint amount) external payable virtual override {
+    function setAllowance(
+        address from,
+        address spender,
+        uint amount
+    ) external payable virtual override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }

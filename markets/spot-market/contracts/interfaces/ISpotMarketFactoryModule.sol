@@ -138,7 +138,11 @@ interface ISpotMarketFactoryModule is IMarket {
      * @param buyFeedId the oracle manager buy feed node id
      * @param sellFeedId the oracle manager sell feed node id
      */
-    function updatePriceData(uint128 marketId, bytes32 buyFeedId, bytes32 sellFeedId) external payable;
+    function updatePriceData(
+        uint128 marketId,
+        bytes32 buyFeedId,
+        bytes32 sellFeedId
+    ) external payable;
 
     /**
      * @notice upgrades the synth implementation to the current implementation for the specified market.

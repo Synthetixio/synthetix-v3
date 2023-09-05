@@ -62,7 +62,10 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external payable override {
+    function removeFromFeatureFlagAllowlist(
+        bytes32 feature,
+        address account
+    ) external payable override {
         OwnableStorage.onlyOwner();
 
         SetUtil.AddressSet storage permissionedAddresses = FeatureFlag

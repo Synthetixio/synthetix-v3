@@ -16,7 +16,7 @@ import "../../storage/CrossChain.sol";
  * @dev See IUtilsModule.
  */
 contract CcipReceiverModule is IAny2EVMMessageReceiver {
-		// solhint-disable-next-line payable/only-payable
+    // solhint-disable-next-line payable/only-payable
     function ccipReceive(CcipClient.Any2EVMMessage memory message) external {
         CrossChain.processCcipReceive(CrossChain.load(), message);
     }

@@ -138,7 +138,10 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the utilization fee applies to.
      * @param utilizationFeeRate the rate is represented in bips with 18 decimals and is the rate at which fee increases based on the % above 100% utilization of the delegated collateral for the market.
      */
-    function setMarketUtilizationFees(uint128 synthMarketId, uint256 utilizationFeeRate) external payable;
+    function setMarketUtilizationFees(
+        uint128 synthMarketId,
+        uint256 utilizationFeeRate
+    ) external payable;
 
     /**
      * @notice gets the market utilization fee for a given market
@@ -157,7 +160,10 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the collateral leverage applies to.
      * @param collateralLeverage the leverage is represented as % with 18 decimals. 1 = 1x leverage
      */
-    function setCollateralLeverage(uint128 synthMarketId, uint256 collateralLeverage) external payable;
+    function setCollateralLeverage(
+        uint128 synthMarketId,
+        uint256 collateralLeverage
+    ) external payable;
 
     /**
      * @notice gets the collateral leverage for a given market
@@ -222,7 +228,11 @@ interface IMarketConfigurationModule {
      * @param wrapFee wrapping fee in %, 18 decimals. Can be negative.
      * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
      */
-    function setWrapperFees(uint128 synthMarketId, int256 wrapFee, int256 unwrapFee) external payable;
+    function setWrapperFees(
+        uint128 synthMarketId,
+        int256 wrapFee,
+        int256 unwrapFee
+    ) external payable;
 
     /**
      * @notice Update the referral share percentage for a given market

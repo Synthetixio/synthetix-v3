@@ -32,7 +32,7 @@ contract RewardDistributorMock is IRewardDistributor {
         shouldFailPayout = fail;
     }
 
-		// solhint-disable-next-line payable/only-payable
+    // solhint-disable-next-line payable/only-payable
     function payout(
         uint128,
         uint128,

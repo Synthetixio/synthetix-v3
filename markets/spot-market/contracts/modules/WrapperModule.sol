@@ -102,7 +102,12 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 unwrapAmount,
         uint256 minAmountReceived
-    ) external payable override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
+    )
+        external
+        payable
+        override
+        returns (uint256 returnCollateralAmount, OrderFees.Data memory fees)
+    {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);

@@ -176,7 +176,9 @@ interface IMarketManagerModule {
      * @param marketId The id of the market whose debt per share is being queried.
      * @return debtPerShareD18 The market's debt per share value, denominated with 18 decimals of precision.
      */
-    function getMarketDebtPerShare(uint128 marketId) external payable returns (int256 debtPerShareD18);
+    function getMarketDebtPerShare(
+        uint128 marketId
+    ) external payable returns (int256 debtPerShareD18);
 
     /**
      * @notice Returns whether the capacity of the specified market is locked.

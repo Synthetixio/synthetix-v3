@@ -38,7 +38,10 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     // ---------------------------------------
 
     /// @notice Allows the system owner to declare a merkle root for user debt shares on other chains for this epoch
-    function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external payable;
+    function setCrossChainDebtShareMerkleRoot(
+        bytes32 merkleRoot,
+        uint blocknumber
+    ) external payable;
 
     /// @notice Returns the current epoch's merkle root for user debt shares on other chains
     function getCrossChainDebtShareMerkleRoot() external view returns (bytes32);

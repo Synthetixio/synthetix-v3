@@ -48,7 +48,9 @@ interface IElectionModule {
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external payable;
 
     /// @notice Determines batch size when evaluate() is called with numBallots = 0
-    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external payable;
+    function setDefaultBallotEvaluationBatchSize(
+        uint newDefaultBallotEvaluationBatchSize
+    ) external payable;
 
     /// @notice Determines the number of council members in the next epoch
     function setNextEpochSeatCount(uint8 newSeatCount) external payable;

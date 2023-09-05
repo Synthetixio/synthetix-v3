@@ -17,7 +17,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external payable override {
+    function setAtomicFixedFee(
+        uint128 synthMarketId,
+        uint256 atomicFixedFee
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).atomicFixedFee = atomicFixedFee;
@@ -48,7 +51,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external payable override {
+    function setAsyncFixedFee(
+        uint128 synthMarketId,
+        uint256 asyncFixedFee
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).asyncFixedFee = asyncFixedFee;
@@ -59,7 +65,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external payable override {
+    function setMarketSkewScale(
+        uint128 synthMarketId,
+        uint256 skewScale
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).skewScale = skewScale;
@@ -150,7 +159,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setFeeCollector(uint128 synthMarketId, address feeCollector) external payable override {
+    function setFeeCollector(
+        uint128 synthMarketId,
+        address feeCollector
+    ) external payable override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.onlyMarketOwner(synthMarketId);
         if (feeCollector != address(0)) {
