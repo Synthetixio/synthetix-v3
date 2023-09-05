@@ -249,8 +249,6 @@ describe.only('LiquidationModule', () => {
       );
     });
 
-    it('should partially liquidate if position hits liq window cap');
-
     it('should update market size and skew upon full liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -317,7 +315,7 @@ describe.only('LiquidationModule', () => {
 
     it('should send liqReward to flagger and keeperFee to liquidator');
 
-    it('should send send both fees to flagger if same keeper');
+    it('should send send both fees to flagger if same keeper', async () => {});
 
     it('should remove flagger on full liquidation', async () => {
       const { PerpMarketProxy } = systems();
@@ -375,8 +373,6 @@ describe.only('LiquidationModule', () => {
         PerpMarketProxy
       );
     });
-
-    it('should not remove flagger on partial liquidation');
 
     it('should remove all position collateral from market on liquidation', async () => {
       const { PerpMarketProxy } = systems();
@@ -437,8 +433,6 @@ describe.only('LiquidationModule', () => {
       const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
       await assertEvent(tx, `FundingRecomputed`, PerpMarketProxy);
     });
-
-    it('should revert when liq cap has been met');
 
     it('should revert when position is not flagged', async () => {
       const { PerpMarketProxy } = systems();
@@ -501,6 +495,26 @@ describe.only('LiquidationModule', () => {
         `MarketNotFound("${invalidMarketId}")`,
         PerpMarketProxy
       );
+    });
+
+    describe('liquidationCapacity', () => {
+      it('should partially liquidate if position hits liq window cap');
+
+      it('should allow an endorsed keeper to fully liquidate a position even if above caps');
+
+      it('should allow liquidations even if exceed caps if pd is below maxPd');
+
+      it('should partial liquidation even if pd is < maxPd and we reach cap');
+
+      it('should track and include endorsed keeper activity (cap + time)');
+
+      it('should not send endorsed keeper any fees');
+
+      it('should not remove flagger on partial liquidation');
+
+      it('should revert when liq cap has been met and not endorsed');
+
+      it('should revert when pd is below maxPd but liquidation happens in the same block');
     });
   });
 });
