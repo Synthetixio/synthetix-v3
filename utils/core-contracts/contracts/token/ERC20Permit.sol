@@ -29,6 +29,7 @@ contract ERC20Permit is ERC20, IERC20Permit {
     /**
      * @inheritdoc IERC20Permit
      */
+		// solhint-disable-next-line payable/only-payable
     function permit(
         address owner,
         address spender,
@@ -37,7 +38,7 @@ contract ERC20Permit is ERC20, IERC20Permit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public payable virtual {
+    ) public virtual {
         if (deadline < block.timestamp) {
             revert PermitDeadlineExpired();
         }

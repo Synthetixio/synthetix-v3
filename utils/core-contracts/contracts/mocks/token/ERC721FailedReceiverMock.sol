@@ -4,7 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import "../../interfaces/IERC721Receiver.sol";
 
 contract ERC721FailedReceiverMock is IERC721Receiver {
-    // solhint-disable-next-line payable/only-payable
     function onERC721Received(
         address,
         address,

@@ -6,7 +6,6 @@ import "../../interfaces/IERC721Receiver.sol";
 contract ERC721RevertingReceiverMock is IERC721Receiver {
     error SomeFancyError();
 
-    // solhint-disable-next-line payable/only-payable
     function onERC721Received(
         address,
         address,
