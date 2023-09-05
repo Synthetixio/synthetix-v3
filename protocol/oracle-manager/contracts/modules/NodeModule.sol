@@ -6,6 +6,7 @@ import "../nodes/ReducerNode.sol";
 import "../nodes/ExternalNode.sol";
 import "../nodes/PythNode.sol";
 import "../nodes/ChainlinkNode.sol";
+import "../nodes/ScryMetaMorphNode.sol.sol";
 import "../nodes/PriceDeviationCircuitBreakerNode.sol";
 import "../nodes/StalenessCircuitBreakerNode.sol";
 import "../nodes/UniswapNode.sol";
@@ -179,7 +180,9 @@ contract NodeModule is INodeModule {
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.CHAINLINK) {
             return ChainlinkNode.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
-            return UniswapNode.process(nodeDefinition.parameters);
+            return UniswapNode.process(nodeDefinition.parameters); 
+          else if (nodeDefinition.nodeType == NodeDefinition.NodeType.SCRY) {
+            return ScryMetaMorph.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
             return PythNode.process(nodeDefinition.parameters);
         } else if (
@@ -225,6 +228,8 @@ contract NodeModule is INodeModule {
             return ChainlinkNode.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
             return UniswapNode.isValid(nodeDefinition);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.SCRY) {
+            return ScryMetaMorph.isValid(nodeDefinition);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
             return PythNode.isValid(nodeDefinition);
         } else if (
