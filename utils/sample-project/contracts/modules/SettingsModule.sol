@@ -6,7 +6,7 @@ import "../storage/SettingsStorage.sol";
 import "../interfaces/ISettingsModule.sol";
 
 contract SettingsModule is SettingsStorage, ISettingsModule {
-    function setASettingValue(uint newSettingValue) public override {
+    function setASettingValue(uint newSettingValue) public payable override {
         OwnableStorage.onlyOwner();
         _settingsStore().aSettingValue = newSettingValue;
     }

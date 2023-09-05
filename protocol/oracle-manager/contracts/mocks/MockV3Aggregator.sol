@@ -21,7 +21,7 @@ contract MockV3Aggregator is IAggregatorV3Interface {
         return 3;
     }
 
-    function mockSetCurrentPrice(uint currentPrice, uint8 decimal) external {
+    function mockSetCurrentPrice(uint currentPrice, uint8 decimal) external payable {
         _price = currentPrice;
         _timestamp = block.timestamp;
         _roundId++;
@@ -64,11 +64,11 @@ contract MockV3Aggregator is IAggregatorV3Interface {
         return (_roundId, int(_price), _timestamp, _timestamp, _roundId);
     }
 
-    function setRoundId(uint80 roundId) external {
+    function setRoundId(uint80 roundId) external payable {
         _roundId = roundId;
     }
 
-    function setTimestamp(uint timestamp) external {
+    function setTimestamp(uint timestamp) external payable {
         _timestamp = timestamp;
     }
 }

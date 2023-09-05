@@ -7,7 +7,7 @@ contract ImplementationMockB is UUPSImplementationMock {
     uint private _a;
     string private _b;
 
-    function setA(uint newA) external {
+    function setA(uint newA) external payable {
         _a = newA;
     }
 

@@ -17,7 +17,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external override {
+    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).atomicFixedFee = atomicFixedFee;
@@ -48,7 +48,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external override {
+    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).asyncFixedFee = asyncFixedFee;
@@ -59,7 +59,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external override {
+    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).skewScale = skewScale;
@@ -82,7 +82,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function setMarketUtilizationFees(
         uint128 synthMarketId,
         uint256 utilizationFeeRate
-    ) external override {
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).utilizationFeeRate = utilizationFeeRate;
@@ -105,7 +105,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function setCollateralLeverage(
         uint128 synthMarketId,
         uint256 collateralLeverage
-    ) external override {
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         MarketConfiguration.isValidLeverage(collateralLeverage);
 
@@ -130,7 +130,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 synthMarketId,
         address transactor,
         uint256 fixedFeeAmount
-    ) external override {
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         MarketConfiguration.setFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
 
@@ -150,7 +150,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setFeeCollector(uint128 synthMarketId, address feeCollector) external override {
+    function setFeeCollector(uint128 synthMarketId, address feeCollector) external payable override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.onlyMarketOwner(synthMarketId);
         if (feeCollector != address(0)) {
@@ -181,7 +181,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 synthMarketId,
         int256 wrapFee,
         int256 unwrapFee
-    ) external override {
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         if (wrapFee + unwrapFee < 0) {
@@ -204,7 +204,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 synthMarketId,
         address referrer,
         uint256 sharePercentage
-    ) external override {
+    ) external payable override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         MarketConfiguration.load(synthMarketId).referrerShare[referrer] = sharePercentage;

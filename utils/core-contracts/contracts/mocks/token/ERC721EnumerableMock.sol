@@ -8,19 +8,19 @@ contract ERC721EnumerableMock is ERC721Enumerable {
         string memory tokenName,
         string memory tokenSymbol,
         string memory baseURL
-    ) public {
+    ) public payable {
         _initialize(tokenName, tokenSymbol, baseURL);
     }
 
-    function mintTo(address to, uint256 tokenId) external {
+    function mintTo(address to, uint256 tokenId) external payable {
         _mint(to, tokenId);
     }
 
-    function burn(uint256 tokenId) external {
+    function burn(uint256 tokenId) external payable {
         _burn(tokenId);
     }
 
-    function transfer(address from, address to, uint256 tokenId) external {
+    function transfer(address from, address to, uint256 tokenId) external payable {
         _transfer(from, to, tokenId);
     }
 }

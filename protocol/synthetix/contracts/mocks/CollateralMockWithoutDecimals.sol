@@ -28,15 +28,15 @@ contract CollateralMockWithoutDecimals {
     error AlreadyInitialized();
     error NotInitialized();
 
-    function initialize(string memory tokenName, string memory tokenSymbol) public {
+    function initialize(string memory tokenName, string memory tokenSymbol) public payable {
         _initialize(tokenName, tokenSymbol);
     }
 
-    function burn(uint256 amount) external {
+    function burn(uint256 amount) external payable {
         _burn(msg.sender, amount);
     }
 
-    function mint(address recipient, uint256 amount) external {
+    function mint(address recipient, uint256 amount) external payable {
         _mint(recipient, amount);
     }
 
@@ -66,32 +66,32 @@ contract CollateralMockWithoutDecimals {
         return load().balanceOf[owner];
     }
 
-    function approve(address spender, uint256 amount) public returns (bool) {
+    function approve(address spender, uint256 amount) public payable returns (bool) {
         _approve(msg.sender, spender, amount);
         return true;
     }
 
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) public payable returns (bool) {
         uint256 currentAllowance = load().allowance[msg.sender][spender];
         _approve(msg.sender, spender, currentAllowance + addedValue);
 
         return true;
     }
 
-    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public payable returns (bool) {
         uint256 currentAllowance = load().allowance[msg.sender][spender];
         _approve(msg.sender, spender, currentAllowance - subtractedValue);
 
         return true;
     }
 
-    function transfer(address to, uint256 amount) public returns (bool) {
+    function transfer(address to, uint256 amount) public payable returns (bool) {
         _transfer(msg.sender, to, amount);
 
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) external payable returns (bool) {
         return _transferFrom(from, to, amount);
     }
 

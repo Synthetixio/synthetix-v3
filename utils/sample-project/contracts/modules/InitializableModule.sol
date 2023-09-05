@@ -14,7 +14,7 @@ contract InitializableModule is InitializableStorage, InitializableMixin, IIniti
         return _isInitialized();
     }
 
-    function initializeInitializableModule() external override onlyIfNotInitialized {
+    function initializeInitializableModule() external payable override onlyIfNotInitialized {
         _initializableStore().initialized = true;
     }
 }

@@ -17,7 +17,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external override {
+    function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external payable override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).allowAll = allowAll;
 
@@ -31,7 +31,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function setFeatureFlagDenyAll(bytes32 feature, bool denyAll) external override {
+    function setFeatureFlagDenyAll(bytes32 feature, bool denyAll) external payable override {
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 
         if (!denyAll || !flag.isDenier(msg.sender)) {
@@ -46,7 +46,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function addToFeatureFlagAllowlist(bytes32 feature, address account) external override {
+    function addToFeatureFlagAllowlist(bytes32 feature, address account) external payable override {
         OwnableStorage.onlyOwner();
 
         SetUtil.AddressSet storage permissionedAddresses = FeatureFlag
@@ -62,7 +62,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external override {
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external payable override {
         OwnableStorage.onlyOwner();
 
         SetUtil.AddressSet storage permissionedAddresses = FeatureFlag
@@ -78,7 +78,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function setDeniers(bytes32 feature, address[] memory deniers) external override {
+    function setDeniers(bytes32 feature, address[] memory deniers) external payable override {
         OwnableStorage.onlyOwner();
         FeatureFlag.Data storage flag = FeatureFlag.load(feature);
 

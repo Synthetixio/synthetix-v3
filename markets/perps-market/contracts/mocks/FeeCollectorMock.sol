@@ -9,7 +9,7 @@ import "../interfaces/external/IFeeCollector.sol";
 contract FeeCollectorMock is IFeeCollector {
     uint internal feeRatioD18;
 
-    function mockSetFeeRatio(uint _feeRatio) external {
+    function mockSetFeeRatio(uint _feeRatio) external payable {
         feeRatioD18 = _feeRatio;
     }
 
@@ -18,7 +18,7 @@ contract FeeCollectorMock is IFeeCollector {
         uint128 marketId,
         uint256 feeAmount,
         address sender
-    ) external override returns (uint256) {
+    ) external payable override returns (uint256) {
         // mention the variables in the block to prevent unused local variable warning
         marketId;
         sender;

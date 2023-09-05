@@ -45,7 +45,7 @@ contract VaultModule is IVaultModule {
         address collateralType,
         uint256 newCollateralAmountD18,
         uint256 leverage
-    ) external override {
+    ) external payable override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
@@ -159,7 +159,7 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external override returns (uint256) {
+    ) external payable override returns (uint256) {
         return Pool.load(poolId).currentAccountCollateralRatio(collateralType, accountId);
     }
 
@@ -169,7 +169,7 @@ contract VaultModule is IVaultModule {
     function getVaultCollateralRatio(
         uint128 poolId,
         address collateralType
-    ) external override returns (uint256) {
+    ) external payable override returns (uint256) {
         return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
@@ -192,7 +192,7 @@ contract VaultModule is IVaultModule {
         uint128 poolId,
         address collateralType
     )
-        external
+        external payable
         override
         returns (
             uint256 collateralAmount,
@@ -219,7 +219,7 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external override returns (int256 debt) {
+    ) external payable override returns (int256 debt) {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         debt = pool.updateAccountDebt(collateralType, accountId);
         pool.rebalanceMarketsInPool();
@@ -238,7 +238,7 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
-    function getVaultDebt(uint128 poolId, address collateralType) public override returns (int256) {
+    function getVaultDebt(uint128 poolId, address collateralType) public payable override returns (int256) {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
     }
 

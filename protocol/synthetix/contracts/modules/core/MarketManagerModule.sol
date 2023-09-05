@@ -52,7 +52,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function registerMarket(address market) external override returns (uint128 marketId) {
+    function registerMarket(address market) external payable override returns (uint128 marketId) {
         FeatureFlag.ensureAccessToFeature(_MARKET_FEATURE_FLAG);
 
         if (!ERC165Helper.safeSupportsInterface(market, type(IMarket).interfaceId)) {
@@ -114,7 +114,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getMarketDebtPerShare(uint128 marketId) external override returns (int256) {
+    function getMarketDebtPerShare(uint128 marketId) external payable override returns (int256) {
         Market.Data storage market = Market.load(marketId);
 
         market.distributeDebtToPools(999999999);
@@ -128,7 +128,7 @@ contract MarketManagerModule is IMarketManagerModule {
     function getMarketPools(
         uint128 marketId
     )
-        external
+        external payable
         override
         returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds)
     {
@@ -157,7 +157,7 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         uint128 poolId
     )
-        external
+        external payable
         override
         returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27)
     {
@@ -193,7 +193,7 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external override returns (uint256 feeAmount) {
+    ) external payable override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
@@ -234,7 +234,7 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external override returns (uint256 feeAmount) {
+    ) external payable override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
@@ -288,14 +288,14 @@ contract MarketManagerModule is IMarketManagerModule {
     function distributeDebtToPools(
         uint128 marketId,
         uint256 maxIter
-    ) external override returns (bool) {
+    ) external payable override returns (bool) {
         return Market.load(marketId).distributeDebtToPools(maxIter);
     }
 
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external override {
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external payable override {
         Market.Data storage market = Market.load(marketId);
 
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
@@ -331,7 +331,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external override {
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external payable override {
         OwnableStorage.onlyOwner();
         Market.Data storage market = Market.load(marketId);
 

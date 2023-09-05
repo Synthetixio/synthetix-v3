@@ -30,7 +30,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function createPool(uint128 requestedPoolId, address owner) external override {
+    function createPool(uint128 requestedPoolId, address owner) external payable override {
         FeatureFlag.ensureAccessToFeature(_POOL_FEATURE_FLAG);
 
         if (owner == address(0)) {
@@ -45,7 +45,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override {
+    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external payable override {
         Pool.onlyPoolOwner(poolId, msg.sender);
 
         Pool.load(poolId).nominatedOwner = nominatedOwner;
@@ -56,7 +56,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function acceptPoolOwnership(uint128 poolId) external override {
+    function acceptPoolOwnership(uint128 poolId) external payable override {
         Pool.Data storage pool = Pool.load(poolId);
 
         if (pool.nominatedOwner != msg.sender) {
@@ -72,7 +72,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function revokePoolNomination(uint128 poolId) external override {
+    function revokePoolNomination(uint128 poolId) external payable override {
         Pool.onlyPoolOwner(poolId, msg.sender);
 
         Pool.load(poolId).nominatedOwner = address(0);
@@ -83,7 +83,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function renouncePoolNomination(uint128 poolId) external override {
+    function renouncePoolNomination(uint128 poolId) external payable override {
         Pool.Data storage pool = Pool.load(poolId);
 
         if (pool.nominatedOwner != msg.sender) {
@@ -112,7 +112,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function rebalancePool(uint128 poolId, address optionalCollateralType) external override {
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external payable override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         pool.distributeDebtToVaults(optionalCollateralType);
 
@@ -129,7 +129,7 @@ contract PoolModule is IPoolModule {
     function setPoolConfiguration(
         uint128 poolId,
         MarketConfiguration.Data[] memory newMarketConfigurations
-    ) external override {
+    ) external payable override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
         pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
@@ -200,7 +200,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external override {
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external payable override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
@@ -231,7 +231,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolName(uint128 poolId, string memory name) external override {
+    function setPoolName(uint128 poolId, string memory name) external payable override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
@@ -247,7 +247,7 @@ contract PoolModule is IPoolModule {
         uint128 poolId,
         address collateralType,
         PoolCollateralConfiguration.Data memory newConfig
-    ) external override {
+    ) external payable override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
@@ -276,7 +276,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setMinLiquidityRatio(uint256 minLiquidityRatio) external override {
+    function setMinLiquidityRatio(uint256 minLiquidityRatio) external payable override {
         OwnableStorage.onlyOwner();
 
         SystemPoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;

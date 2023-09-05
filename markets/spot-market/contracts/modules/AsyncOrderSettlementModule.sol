@@ -41,7 +41,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external override returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
+    ) external payable override returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
             SettlementStrategy.Data storage settlementStrategy

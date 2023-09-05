@@ -29,7 +29,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 tokenAmount
-    ) public override {
+    ) public payable override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_COLLATERAL_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
@@ -69,7 +69,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 tokenAmount
-    ) public override {
+    ) public payable override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_COLLATERAL_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
@@ -136,7 +136,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 amount
-    ) external override {
+    ) external payable override {
         OwnableStorage.onlyOwner();
 
         Market.Data storage marketData = Market.load(marketId);

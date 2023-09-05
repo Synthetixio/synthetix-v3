@@ -80,5 +80,8 @@
   "engines": {
     "node": "^18.16.0"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@3.6.0",
+  "dependencies": {
+    "solhint-plugin-payable": "../solhint-plugins/packages/solhint-plugin-payable"
+  }
 }

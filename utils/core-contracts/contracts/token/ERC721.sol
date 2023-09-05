@@ -85,7 +85,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function approve(address to, uint256 tokenId) public virtual override {
+    function approve(address to, uint256 tokenId) public payable virtual override {
         ERC721Storage.Data storage store = ERC721Storage.load();
         address holder = store.ownerOf[tokenId];
 
@@ -114,7 +114,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override {
+    function setApprovalForAll(address operator, bool approved) public payable virtual override {
         if (msg.sender == operator) {
             revert CannotSelfApprove(operator);
         }
@@ -137,7 +137,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function transferFrom(address from, address to, uint256 tokenId) public payable virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert AccessError.Unauthorized(msg.sender);
         }
@@ -148,7 +148,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public payable virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
 
@@ -160,7 +160,7 @@ contract ERC721 is IERC721, IERC721Metadata {
         address to,
         uint256 tokenId,
         bytes memory data
-    ) public virtual override {
+    ) public payable virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert AccessError.Unauthorized(msg.sender);
         }
