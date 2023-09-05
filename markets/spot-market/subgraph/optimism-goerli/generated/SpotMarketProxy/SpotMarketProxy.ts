@@ -3524,6 +3524,36 @@ export class RenounceMarketNominationCall__Outputs {
   }
 }
 
+export class RenounceMarketOwnershipCall extends ethereum.Call {
+  get inputs(): RenounceMarketOwnershipCall__Inputs {
+    return new RenounceMarketOwnershipCall__Inputs(this);
+  }
+
+  get outputs(): RenounceMarketOwnershipCall__Outputs {
+    return new RenounceMarketOwnershipCall__Outputs(this);
+  }
+}
+
+export class RenounceMarketOwnershipCall__Inputs {
+  _call: RenounceMarketOwnershipCall;
+
+  constructor(call: RenounceMarketOwnershipCall) {
+    this._call = call;
+  }
+
+  get synthMarketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class RenounceMarketOwnershipCall__Outputs {
+  _call: RenounceMarketOwnershipCall;
+
+  constructor(call: RenounceMarketOwnershipCall) {
+    this._call = call;
+  }
+}
+
 export class SetDecayRateCall extends ethereum.Call {
   get inputs(): SetDecayRateCall__Inputs {
     return new SetDecayRateCall__Inputs(this);
