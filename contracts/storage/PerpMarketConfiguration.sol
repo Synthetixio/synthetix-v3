@@ -56,6 +56,8 @@ library PerpMarketConfiguration {
         uint128 keeperLiquidationGasUnits;
         // A fixed fee sent to the liquidator upon position liquidation.
         uint256 keeperLiquidationFeeUsd;
+        // Address of endorsed liquidation keeper to exceed liq caps.
+        address keeperLiquidationEndorsed;
     }
 
     // @dev Perp market configuration specific to a market
@@ -90,6 +92,8 @@ library PerpMarketConfiguration {
         uint128 liquidationLimitScalar;
         // Liquidation window duration in seconds.
         uint128 liquidationWindowDuration;
+        // If below, allows further liquidations of pd is below this maximum and caps are reached.
+        uint128 liquidationMaxPd;
     }
 
     function load(uint128 marketId) internal pure returns (PerpMarketConfiguration.Data storage d) {

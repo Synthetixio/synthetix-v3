@@ -67,6 +67,7 @@ export const genBootstrap = () => ({
     keeperSettlementGasUnits: 1_200_000,
     keeperLiquidationGasUnits: 1_200_000,
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
+    keeperLiquidationEndorsed: genAddress(), // Dummy address to be replaced later.
   },
   markets: shuffle(MARKETS),
 });
@@ -80,8 +81,8 @@ export const genMarket = () => ({
   specific: {
     oracleNodeId: genBytes32(),
     pythPriceFeedId: genBytes32(),
-    makerFee: wei(genNumber(0.0001, 0.0005)).toBN(), // 1 - 5bps
-    takerFee: wei(genNumber(0.0006, 0.0008)).toBN(), // 1 - 8bps
+    makerFee: bn(genNumber(0.0001, 0.0005)), // 1 - 5bps
+    takerFee: bn(genNumber(0.0006, 0.0008)), // 1 - 8bps
     maxMarketSize: bn(genNumber(20_000, 50_000)),
     maxFundingVelocity: bn(genNumber(3, 9)),
     minMarginUsd: bn(genNumber(50, 60)),
@@ -90,9 +91,10 @@ export const genMarket = () => ({
     minMarginRatio: bn(genNumber(0.01, 0.02)),
     incrementalMarginScalar: bn(genNumber(0.04, 0.06)),
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
-    liquidationRewardPercent: wei(genNumber(0.005, 0.0075)).toBN(),
+    liquidationRewardPercent: bn(genNumber(0.005, 0.0075)),
     liquidationLimitScalar: bn(genNumber(0.9, 1.2)),
     liquidationWindowDuration: bn(genOneOf([36, 48, 60])),
+    liquidationMaxPd: bn(genNumber(0.0001, 0.001)),
   },
 });
 
