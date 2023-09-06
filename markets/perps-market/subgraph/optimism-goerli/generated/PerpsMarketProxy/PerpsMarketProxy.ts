@@ -1806,6 +1806,40 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     );
   }
 
+  getMessageSender(): Address {
+    let result = super.call('getMessageSender', 'getMessageSender():(address)', []);
+
+    return result[0].toAddress();
+  }
+
+  try_getMessageSender(): ethereum.CallResult<Address> {
+    let result = super.tryCall('getMessageSender', 'getMessageSender():(address)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  multicall(data: Array<Bytes>): Array<Bytes> {
+    let result = super.call('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+
+    return result[0].toBytesArray();
+  }
+
+  try_multicall(data: Array<Bytes>): ethereum.CallResult<Array<Bytes>> {
+    let result = super.tryCall('multicall', 'multicall(bytes[]):(bytes[])', [
+      ethereum.Value.fromBytesArray(data),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytesArray());
+  }
+
   getImplementation(): Address {
     let result = super.call('getImplementation', 'getImplementation():(address)', []);
 
@@ -3396,6 +3430,82 @@ export class MulticallCall__Outputs {
 
   get results(): Array<Bytes> {
     return this._call.outputValues[0].value.toBytesArray();
+  }
+}
+
+export class MulticallThroughCall extends ethereum.Call {
+  get inputs(): MulticallThroughCall__Inputs {
+    return new MulticallThroughCall__Inputs(this);
+  }
+
+  get outputs(): MulticallThroughCall__Outputs {
+    return new MulticallThroughCall__Outputs(this);
+  }
+}
+
+export class MulticallThroughCall__Inputs {
+  _call: MulticallThroughCall;
+
+  constructor(call: MulticallThroughCall) {
+    this._call = call;
+  }
+
+  get to(): Array<Address> {
+    return this._call.inputValues[0].value.toAddressArray();
+  }
+
+  get data(): Array<Bytes> {
+    return this._call.inputValues[1].value.toBytesArray();
+  }
+
+  get values(): Array<BigInt> {
+    return this._call.inputValues[2].value.toBigIntArray();
+  }
+}
+
+export class MulticallThroughCall__Outputs {
+  _call: MulticallThroughCall;
+
+  constructor(call: MulticallThroughCall) {
+    this._call = call;
+  }
+
+  get results(): Array<Bytes> {
+    return this._call.outputValues[0].value.toBytesArray();
+  }
+}
+
+export class SetAllowlistedMulticallTargetCall extends ethereum.Call {
+  get inputs(): SetAllowlistedMulticallTargetCall__Inputs {
+    return new SetAllowlistedMulticallTargetCall__Inputs(this);
+  }
+
+  get outputs(): SetAllowlistedMulticallTargetCall__Outputs {
+    return new SetAllowlistedMulticallTargetCall__Outputs(this);
+  }
+}
+
+export class SetAllowlistedMulticallTargetCall__Inputs {
+  _call: SetAllowlistedMulticallTargetCall;
+
+  constructor(call: SetAllowlistedMulticallTargetCall) {
+    this._call = call;
+  }
+
+  get target(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get allowlisted(): boolean {
+    return this._call.inputValues[1].value.toBoolean();
+  }
+}
+
+export class SetAllowlistedMulticallTargetCall__Outputs {
+  _call: SetAllowlistedMulticallTargetCall;
+
+  constructor(call: SetAllowlistedMulticallTargetCall) {
+    this._call = call;
   }
 }
 
