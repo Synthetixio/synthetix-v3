@@ -122,6 +122,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+        (, uint128 remainingCapacity) = market.getRemainingLiquidatableSizeCapacity(marketConfig);
+
         return
             IPerpMarketFactoryModule.MarketDigest(
                 market.name,
@@ -131,7 +133,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.getCurrentFundingVelocity(),
                 market.getCurrentFundingRate(),
                 market.lastLiquidationTime,
-                market.getRemainingLiquidatableSizeCapacity(marketConfig)
+                remainingCapacity
             );
     }
 }

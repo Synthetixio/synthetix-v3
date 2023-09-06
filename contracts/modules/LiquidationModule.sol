@@ -68,7 +68,8 @@ contract LiquidationModule is ILiquidationModule {
     function updateMarketPreLiquidation(
         uint128 accountId,
         uint128 marketId,
-        PerpMarket.Data storage market
+        PerpMarket.Data storage market,
+        PerpMarketConfiguration.GlobalData storage globalConfig
     )
         private
         returns (
@@ -87,6 +88,7 @@ contract LiquidationModule is ILiquidationModule {
             accountId,
             market,
             PerpMarketConfiguration.load(marketId),
+            globalConfig,
             oraclePrice
         );
 
@@ -115,14 +117,15 @@ contract LiquidationModule is ILiquidationModule {
             revert ErrorUtil.PositionNotFound();
         }
 
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         (, Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = updateMarketPreLiquidation(
             accountId,
             marketId,
-            market
+            market,
+            globalConfig
         );
 
         address flagger = market.flaggedLiquidations[accountId];
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
@@ -165,7 +168,9 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getRemainingLiquidatableSizeCapacity(uint128 marketId) external view returns (uint128) {
+    function getRemainingLiquidatableSizeCapacity(
+        uint128 marketId
+    ) external view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
     }

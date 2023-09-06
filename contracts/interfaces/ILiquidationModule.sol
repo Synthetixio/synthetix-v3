@@ -45,7 +45,9 @@ interface ILiquidationModule is IBasePerpMarket {
     /**
      * @dev Returns the remaining liquidation capacity for a given `marketId` in the current window.
      */
-    function getRemainingLiquidatableSizeCapacity(uint128 marketId) external view returns (uint128);
+    function getRemainingLiquidatableSizeCapacity(
+        uint128 marketId
+    ) external view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity);
 
     /**
      * @dev Returns whether a position owned by `accountId` can be flagged for liquidated.
