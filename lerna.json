@@ -15,7 +15,8 @@
       "allowBranch": [
         "main",
         "lerna",
-        "teleporters"
+        "teleporters",
+        "feature/3.3.4"
       ]
     }
   }
