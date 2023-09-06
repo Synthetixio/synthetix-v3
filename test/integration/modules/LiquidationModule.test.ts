@@ -16,11 +16,11 @@ describe('LiquidationModule', () => {
     it('should flag a position with a health factor <= 1', async () => {
       const { PerpMarketProxy } = systems();
 
-      const orderSize: 1 | -1 = genOneOf([1, -1]);
+      const orderSide: 1 | -1 = genOneOf([1, -1]);
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: orderSize,
+        desiredSide: orderSide,
       });
 
       await commitAndSettle(bs, marketId, trader, order);
@@ -29,20 +29,20 @@ describe('LiquidationModule', () => {
       //
       // Whether it goes up or down depends on the side of the order.
       const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
-      await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
-          .mul(orderSize === 1 ? 0.9 : 1.1)
-          .toBN()
-      );
+      const newMarketOraclePrice = wei(marketOraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
 
       assertBn.lte(healthFactor, wei(1).toBN());
 
       const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const keeperAddress = await keeper().getAddress();
       await assertEvent(
         tx,
-        `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${await keeper().getAddress()}")`,
+        `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
     });
@@ -67,16 +67,16 @@ describe('LiquidationModule', () => {
 
       // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
       const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
-      await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
-          .mul(orderSide === 1 ? 0.9 : 1.1)
-          .toBN()
-      );
+      const newMarketOraclePrice = wei(marketOraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const keeperAddress = await keeper().getAddress();
       await assertEvent(
         tx,
-        `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${await keeper().getAddress()}")`,
+        `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
       await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId})`, PerpMarketProxy);

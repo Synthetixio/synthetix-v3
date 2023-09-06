@@ -59,7 +59,7 @@ contract LiquidationModule is ILiquidationModule {
 
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
-        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender);
+        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, oraclePrice);
     }
 
     /**
@@ -69,6 +69,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId,
         PerpMarket.Data storage market,
+        uint256 oraclePrice,
         PerpMarketConfiguration.GlobalData storage globalConfig
     )
         private
@@ -79,7 +80,6 @@ contract LiquidationModule is ILiquidationModule {
             uint256 keeperFee
         )
     {
-        uint256 oraclePrice = market.getOraclePrice();
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
@@ -117,11 +117,13 @@ contract LiquidationModule is ILiquidationModule {
             revert ErrorUtil.PositionNotFound();
         }
 
+        uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         (, Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = updateMarketPreLiquidation(
             accountId,
             marketId,
             market,
+            oraclePrice,
             globalConfig
         );
 
@@ -143,7 +145,16 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
-        emit PositionLiquidated(accountId, marketId, newPosition.size, msg.sender, flagger, liqReward, keeperFee);
+        emit PositionLiquidated(
+            accountId,
+            marketId,
+            newPosition.size,
+            msg.sender,
+            flagger,
+            liqReward,
+            keeperFee,
+            oraclePrice
+        );
     }
 
     // --- Views --- //
