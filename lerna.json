@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json",
   "useWorkspaces": true,
-  "version": "3.3.2",
+  "version": "3.3.4",
   "exact": true,
   "changelog": false,
   "ignoreChanges": [
@@ -15,7 +15,8 @@
       "allowBranch": [
         "main",
         "lerna",
-        "teleporters"
+        "teleporters",
+        "feature/3.3.4"
       ]
     }
   }
