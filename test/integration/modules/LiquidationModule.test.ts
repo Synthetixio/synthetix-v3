@@ -25,7 +25,7 @@ describe('LiquidationModule', () => {
 
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Price falls/pumps between 15% and 8.25% should results in a healthFactor of < 1.
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
@@ -419,7 +419,7 @@ describe('LiquidationModule', () => {
 
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Price falls/pumps between 15% and 8.25% should results in a healthFactor of < 1.
+      // Price falls/rises between 10% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
       const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
