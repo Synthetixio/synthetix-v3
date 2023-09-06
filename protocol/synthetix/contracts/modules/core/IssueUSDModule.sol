@@ -102,7 +102,7 @@ contract IssueUSDModule is IIssueUSDModule {
 
         AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
 
-        // Mint stablecoins to the sender
+        // Mint stablecoins to the core system
         usdToken.asToken().mint(address(this), amount);
 
         account.collaterals[usdToken.getAddress()].increaseAvailableCollateral(amount);
@@ -126,6 +126,12 @@ contract IssueUSDModule is IIssueUSDModule {
         uint256 amount
     ) external override {
         FeatureFlag.ensureAccessToFeature(_BURN_FEATURE_FLAG);
+
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._BURN_PERMISSION
+        );
+
         Pool.Data storage pool = Pool.load(poolId);
 
         // Retrieve current position debt
@@ -152,8 +158,6 @@ contract IssueUSDModule is IIssueUSDModule {
 
         // Burn the stablecoins
         usdToken.asToken().burn(address(this), amount);
-
-        Account.Data storage account = Account.load(accountId);
 
         account.collaterals[usdToken.getAddress()].decreaseAvailableCollateral(amount);
 
