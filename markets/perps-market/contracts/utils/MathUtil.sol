@@ -1,13 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastI128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 library MathUtil {
     using SafeCastI256 for int256;
+    using SafeCastI128 for int128;
     using SafeCastU256 for uint256;
 
-    function abs(int x) internal pure returns (uint) {
+    function abs(int256 x) internal pure returns (uint256) {
+        return x >= 0 ? x.toUint() : (-x).toUint();
+    }
+
+    function abs128(int128 x) internal pure returns (uint128) {
         return x >= 0 ? x.toUint() : (-x).toUint();
     }
 

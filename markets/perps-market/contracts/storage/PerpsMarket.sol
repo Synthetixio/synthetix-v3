@@ -6,8 +6,10 @@ import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contra
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {LiquidationAmount} from "./LiquidationAmount.sol";
 
 /**
  * @title Data for a single perps market
@@ -33,7 +35,6 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        // TODO: move to new data structure?
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
@@ -47,6 +48,8 @@ library PerpsMarket {
         mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
+        // liquidation amounts
+        LiquidationAmount.Data[] liquidationAmounts;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -96,40 +99,31 @@ library PerpsMarket {
      */
     function maxLiquidatableAmount(
         Data storage self,
-        uint256 requestedLiquidationAmount
+        uint128 requestedLiquidationAmount
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         // if endorsedLiquidator is configured and is the sender, allow full liquidation
         if (msg.sender == marketConfig.endorsedLiquidator) {
-            return requestedLiquidationAmount.to128();
+            return requestedLiquidationAmount;
         }
 
-        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
+        (
+            uint liquidationCapacity,
+            uint maxLiquidationInWindow,
+            uint128 latestLiquidationTimestamp
+        ) = currentLiquidationCapacity(self, marketConfig);
+
         // this would only be 0 if fees or skew scale are configured to be 0.
         // in that case, (very unlikely), allow full liquidation
-        if (maxLiquidationAmountPerSecond == 0) {
-            return requestedLiquidationAmount.to128();
+        if (maxLiquidationInWindow == 0) {
+            return requestedLiquidationAmount;
         }
 
-        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
-        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
-
-        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
-            maxLiquidationAmountPerSecond;
-        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
-            liquidatableAmount = MathUtil
-                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
-                .to128();
-            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
-        } else {
-            liquidatableAmount = MathUtil
-                .min(
-                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
-                    requestedLiquidationAmount
-                )
-                .to128();
-            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
+        if (liquidationCapacity != 0) {
+            liquidatableAmount = liquidationCapacity > requestedLiquidationAmount.to256()
+                ? requestedLiquidationAmount
+                : liquidationCapacity.to128();
         }
 
         // liquidatable amount is 0 only if there's no more capacity in the window
@@ -140,33 +134,57 @@ library PerpsMarket {
             liquidatableAmount == 0 &&
             maxLiquidationPd != 0 &&
             // only allow this if the last update was not in the current block
-            self.lastTimeLiquidationCapacityUpdated != block.timestamp.to128()
+            latestLiquidationTimestamp != block.timestamp
         ) {
             uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
             if (currentPd < maxLiquidationPd) {
-                liquidatableAmount = (
-                    requestedLiquidationAmount > maxAllowedLiquidationInWindow
-                        ? maxAllowedLiquidationInWindow
-                        : requestedLiquidationAmount
-                ).to128();
-                // track how much was utilized in this block to ensure any subsequent
-                // liquidations don't combine for larger than what's allotted in the window
-                self.lastUtilizedLiquidationCapacity = liquidatableAmount;
+                liquidatableAmount = requestedLiquidationAmount > maxLiquidationInWindow.to128()
+                    ? maxLiquidationInWindow.to128()
+                    : requestedLiquidationAmount;
             }
         }
 
-        // only update timestamp if there is something being liquidated
         if (liquidatableAmount > 0) {
-            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+            uint index = block.timestamp % marketConfig.maxSecondsInLiquidationWindow;
+            self.liquidationAmounts[index] = LiquidationAmount.Data({
+                timestamp: block.timestamp.to128(),
+                amount: liquidatableAmount
+            });
         }
     }
 
-    struct MarketUpdateData {
-        uint128 marketId;
-        int256 skew;
-        uint256 size;
-        int256 currentFundingRate;
-        int256 currentFundingVelocity;
+    function currentLiquidationCapacity(
+        Data storage self,
+        PerpsMarketConfiguration.Data storage marketConfig
+    )
+        internal
+        view
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp)
+    {
+        uint accumulatedLiquidationAmounts;
+
+        for (uint i = 0; i < self.liquidationAmounts.length; i++) {
+            LiquidationAmount.Data storage liquidationAmount = self.liquidationAmounts[i];
+            uint windowStartTimestamp = block.timestamp.to128() -
+                marketConfig.maxSecondsInLiquidationWindow;
+            if (liquidationAmount.timestamp > windowStartTimestamp) {
+                // keep track of latest liquidation timestamp
+                // used in determining whether to allow another block of liquidation given p/d requirements are met
+                latestLiquidationTimestamp = latestLiquidationTimestamp <=
+                    liquidationAmount.timestamp
+                    ? liquidationAmount.timestamp
+                    : latestLiquidationTimestamp;
+                accumulatedLiquidationAmounts += liquidationAmount.amount;
+            }
+        }
+
+        maxLiquidationInWindow =
+            marketConfig.maxSecondsInLiquidationWindow *
+            marketConfig.maxLiquidationAmountPerSecond();
+        int availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
+            accumulatedLiquidationAmounts.toInt();
+
+        capacity = availableLiquidationCapacity > 0 ? availableLiquidationCapacity.toUint() : 0;
     }
 
     /**
@@ -178,13 +196,15 @@ library PerpsMarket {
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal returns (MarketUpdateData memory) {
+    ) internal returns (MarketUpdate.Data memory) {
         Position.Data storage oldPosition = self.positions[accountId];
 
         int128 oldPositionSize = oldPosition.size;
         int128 newPositionSize = newPosition.size;
 
-        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.size =
+            (self.size + MathUtil.abs128(newPositionSize)) -
+            MathUtil.abs128(oldPositionSize);
         self.skew += newPositionSize - oldPositionSize;
 
         uint currentPrice = newPosition.latestInteractionPrice;
@@ -201,7 +221,7 @@ library PerpsMarket {
         oldPosition.update(newPosition);
 
         return
-            MarketUpdateData(
+            MarketUpdate.Data(
                 self.id,
                 self.skew,
                 self.size,

@@ -443,7 +443,7 @@ interface IAsyncOrderSettlementModule {
         uint256 referralFees;
         uint256 feeCollectorFees;
         Position.Data newPosition;
-        PerpsMarket.MarketUpdateData updateData;
+        MarketUpdate.Data updateData;
     }
 }
 
@@ -565,6 +565,25 @@ library GlobalPerpsMarketConfiguration {
     }
 }
 
+// @custom:artifact contracts/storage/LiquidationAmount.sol:LiquidationAmount
+library LiquidationAmount {
+    struct Data {
+        uint128 timestamp;
+        uint128 amount;
+    }
+}
+
+// @custom:artifact contracts/storage/MarketUpdate.sol:MarketUpdate
+library MarketUpdate {
+    struct Data {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
+    }
+}
+
 // @custom:artifact contracts/storage/OrderFee.sol:OrderFee
 library OrderFee {
     struct Data {
@@ -605,13 +624,7 @@ library PerpsMarket {
         int256 debtCorrectionAccumulator;
         mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
-    }
-    struct MarketUpdateData {
-        uint128 marketId;
-        int256 skew;
-        uint256 size;
-        int256 currentFundingRate;
-        int256 currentFundingVelocity;
+        LiquidationAmount.Data[] liquidationAmounts;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));
