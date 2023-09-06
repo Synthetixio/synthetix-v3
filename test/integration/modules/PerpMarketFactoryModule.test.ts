@@ -98,7 +98,7 @@ describe('PerpMarketFactoryModule', () => {
   });
 
   describe('getMarketDigest', () => {
-    describe('{currentFundingRate,fundingVelocity}', () => {
+    describe('{fundingRate,fundingVelocity}', () => {
       const depostMarginToTraders = async (
         traders: Trader[],
         market: Market,
@@ -194,19 +194,19 @@ describe('PerpMarketFactoryModule', () => {
           const order = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
           await commitAndSettle(bs, market.marketId(), account, order);
 
-          const { fundingVelocity, currentFundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
+          const { fundingVelocity, fundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
 
-          assertBn.near(currentFundingRate, expectedFundingRate, wei(0.000001).toBN());
+          assertBn.near(fundingRate, expectedFundingRate, wei(0.000001).toBN());
           assertBn.equal(fundingVelocity, expectedFundingVelocity);
 
-          lastFundingRate = currentFundingRate;
+          lastFundingRate = fundingRate;
         }
 
         // No change in skew (zero) and velocity/funding should remain the same.
         await fastForward(SECONDS_ONE_DAY, provider()); // 1 day
-        const { fundingVelocity, currentFundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
+        const { fundingVelocity, fundingRate } = await PerpMarketProxy.getMarketDigest(market.marketId());
 
-        assertBn.equal(currentFundingRate, lastFundingRate);
+        assertBn.equal(fundingRate, lastFundingRate);
         assertBn.equal(fundingVelocity, BigNumber.from(0));
       });
 
@@ -234,14 +234,14 @@ describe('PerpMarketFactoryModule', () => {
         await fastForwardBySec(genNumber(15_000, 30_000));
 
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
-        assert.notEqual(d1.currentFundingRate.toString(), '0');
+        assert.notEqual(d1.fundingRate.toString(), '0');
 
         const order2 = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
         await commitAndSettle(bs, market.marketId(), trader2, order2);
         await fastForwardBySec(genNumber(15_000, 30_000));
 
         const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
-        assert.notEqual(d2.currentFundingRate.toString(), '0');
+        assert.notEqual(d2.fundingRate.toString(), '0');
       });
 
       it('should have zero funding when market is new and empty', async () => {
@@ -253,7 +253,7 @@ describe('PerpMarketFactoryModule', () => {
         // Expect zero values.
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
         assertBn.isZero(d1.size);
-        assertBn.isZero(d1.currentFundingRate);
+        assertBn.isZero(d1.fundingRate);
         assertBn.isZero(d1.fundingVelocity);
 
         await fastForward(60 * 60 * 24, provider());
@@ -261,7 +261,7 @@ describe('PerpMarketFactoryModule', () => {
         // Should still be zero values with no market changes.
         const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
         assertBn.isZero(d2.size);
-        assertBn.isZero(d2.currentFundingRate);
+        assertBn.isZero(d2.fundingRate);
         assertBn.isZero(d2.fundingVelocity);
       });
 
@@ -288,7 +288,7 @@ describe('PerpMarketFactoryModule', () => {
         await commitAndSettle(bs, market.marketId(), trader, order1);
         await fastForwardBySec(SECONDS_ONE_DAY);
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
-        assertBn.lt(d1.currentFundingRate, BigNumber.from(0));
+        assertBn.lt(d1.fundingRate, BigNumber.from(0));
 
         // Go long.
         const order2 = await genOrderFromSizeDelta(bs, market, wei(genNumber(11, 20)).toBN(), {
@@ -299,7 +299,7 @@ describe('PerpMarketFactoryModule', () => {
         const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
 
         // New funding rate should be trending towards zero or positive.
-        assertBn.gt(d2.currentFundingRate, d1.currentFundingRate);
+        assertBn.gt(d2.fundingRate, d1.fundingRate);
       });
 
       forEach(['long', 'short']).it('should result in max funding velocity when %s skewed', async (side: string) => {
@@ -376,7 +376,7 @@ describe('PerpMarketFactoryModule', () => {
           const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
 
           // Funding rate should be expanding from skew in the same direction.
-          assert.ok(isSameSide(d1.currentFundingRate, d2.currentFundingRate));
+          assert.ok(isSameSide(d1.fundingRate, d2.fundingRate));
         }
       );
     });

@@ -224,14 +224,6 @@ library PerpMarket {
 
     /**
      * @dev Returns the current funding rate given current market conditions.
-     *
-     * This is used during funding computation _before_ the market is modified (e.g. closing or
-     * opening a position). However, called via the `currentFundingRate` view, will return the
-     * 'instantaneous' funding rate. It's similar but subtle in that velocity now includes the most
-     * recent skew modification.
-     *
-     * There is no variance in computation but will be affected based on outside modifications to
-     * the market skew, max funding velocity, price, and time delta.
      */
     function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
         // calculations:

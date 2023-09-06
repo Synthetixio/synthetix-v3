@@ -6,7 +6,7 @@ import { genBootstrap, genOneOf, genOrder, genSide, genTrader } from '../../gene
 import { depositMargin, commitAndSettle, commitOrder, setMarketConfigurationById } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
-describe.only('LiquidationModule', () => {
+describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, keeper, systems, restore } = bs;
 
