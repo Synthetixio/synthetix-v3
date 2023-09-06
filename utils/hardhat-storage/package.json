@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/hardhat-storage",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "publishConfig": {
     "access": "public"
   },

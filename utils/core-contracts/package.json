@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-contracts",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "publishConfig": {
     "access": "public"
   },
