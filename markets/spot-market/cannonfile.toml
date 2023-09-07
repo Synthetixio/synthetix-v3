@@ -59,6 +59,7 @@ depends = ["contract.CoreModule"]
 # Core
 [router.SpotMarketRouter]
 contracts = [
+	"synthetix.MulticallModule",
   "CoreModule",
   "SpotMarketFactoryModule",
   "AtomicOrderModule",
@@ -70,6 +71,7 @@ contracts = [
   "FeatureFlagModule"
 ]
 depends = [
+	"import.synthetix",
   "contract.CoreModule",
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
@@ -109,7 +111,7 @@ func = "setSynthetix"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>"
 ]
-depends = ["invoke.upgradeSpotMarketProxy", "import.synthetix"]
+depends = ["invoke.upgradeSpotMarketProxy"]
 
 [invoke.setSynthImplementation]
 target = ["SpotMarketProxy"]
