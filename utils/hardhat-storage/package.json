@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/hardhat-storage",
-  "version": "3.3.2",
+  "version": "3.3.4",
   "publishConfig": {
     "access": "public"
   },
@@ -43,5 +43,5 @@
     "ts-jest": "29.0.5",
     "typescript": "4.9.3"
   },
-  "gitHead": "7883b35d5f3bfac43778b5f1eac936d4fa4098a1"
+  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
 }
