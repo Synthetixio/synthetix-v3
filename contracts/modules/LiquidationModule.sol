@@ -38,11 +38,6 @@ contract LiquidationModule is ILiquidationModule {
             revert ErrorUtil.CannotLiquidatePosition();
         }
 
-        // Cannot reflag something that's already flagged.
-        if (market.flaggedLiquidations[accountId] != address(0)) {
-            revert ErrorUtil.PositionFlagged();
-        }
-
         // Remove any pending orders that may exist.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
