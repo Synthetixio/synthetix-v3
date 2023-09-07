@@ -27,6 +27,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using PerpsMarket for PerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
 
     /**
@@ -71,6 +72,23 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      */
     function canLiquidate(uint128 accountId) external view override returns (bool isEligible) {
         (isEligible, , , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation();
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidationCapacity(
+        uint128 marketId
+    )
+        external
+        view
+        override
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp)
+    {
+        return
+            PerpsMarket.load(marketId).currentLiquidationCapacity(
+                PerpsMarketConfiguration.load(marketId)
+            );
     }
 
     /**

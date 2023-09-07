@@ -28,7 +28,15 @@ library MathUtil {
         return x < y ? x : y;
     }
 
+    function min128(int128 x, int128 y) internal pure returns (int128) {
+        return x < y ? x : y;
+    }
+
     function min(uint x, uint y) internal pure returns (uint) {
+        return x < y ? x : y;
+    }
+
+    function min128(uint128 x, uint128 y) internal pure returns (uint128) {
         return x < y ? x : y;
     }
 
