@@ -28,19 +28,19 @@ interface IOwnable {
      * @notice Allows a nominated address to accept ownership of the contract.
      * @dev Reverts if the caller is not nominated.
      */
-    function acceptOwnership() external payable;
+    function acceptOwnership() external;
 
     /**
      * @notice Allows the current owner to nominate a new owner.
      * @dev The nominated owner will have to call `acceptOwnership` in a separate transaction in order to finalize the action and become the new contract owner.
      * @param newNominatedOwner The address that is to become nominated.
      */
-    function nominateNewOwner(address newNominatedOwner) external payable;
+    function nominateNewOwner(address newNominatedOwner) external;
 
     /**
      * @notice Allows a nominated owner to reject the nomination.
      */
-    function renounceNomination() external payable;
+    function renounceNomination() external;
 
     /**
      * @notice Returns the current owner of the contract.

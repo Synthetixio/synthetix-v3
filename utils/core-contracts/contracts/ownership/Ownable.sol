@@ -18,7 +18,7 @@ contract Ownable is IOwnable {
     /**
      * @inheritdoc IOwnable
      */
-    function acceptOwnership() public payable override {
+    function acceptOwnership() public override {
         OwnableStorage.Data storage store = OwnableStorage.load();
 
         address currentNominatedOwner = store.nominatedOwner;
@@ -35,7 +35,7 @@ contract Ownable is IOwnable {
     /**
      * @inheritdoc IOwnable
      */
-    function nominateNewOwner(address newNominatedOwner) public payable override onlyOwner {
+    function nominateNewOwner(address newNominatedOwner) public override onlyOwner {
         OwnableStorage.Data storage store = OwnableStorage.load();
 
         if (newNominatedOwner == address(0)) {
@@ -53,7 +53,7 @@ contract Ownable is IOwnable {
     /**
      * @inheritdoc IOwnable
      */
-    function renounceNomination() external payable override {
+    function renounceNomination() external override {
         OwnableStorage.Data storage store = OwnableStorage.load();
 
         if (store.nominatedOwner != msg.sender) {
