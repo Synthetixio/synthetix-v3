@@ -39,7 +39,7 @@ contract PerpAccountModule is IPerpAccountModule {
                 Margin.getOraclePrice(collateralType)
             );
             unchecked {
-                i++;
+                ++i;
             }
         }
 

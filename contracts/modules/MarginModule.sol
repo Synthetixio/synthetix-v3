@@ -115,7 +115,7 @@ contract MarginModule is IMarginModule {
         uint256 available;
         uint256 total;
 
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length;) {
             collateralType = globalMarginConfig.supportedAddresses[i];
             available = accountMargin.collaterals[collateralType];
             total += available;
@@ -127,6 +127,10 @@ contract MarginModule is IMarginModule {
 
             // Withdraw all available collateral for this `collateralType`.
             withdrawAndTransfer(marketId, available, collateralType, globalConfig);
+
+            unchecked {
+                ++i;
+            }
         }
         if (total == 0) {
             revert ErrorUtil.NilCollateral();
@@ -235,7 +239,7 @@ contract MarginModule is IMarginModule {
             IERC20(collateralType).decreaseAllowance(address(this), allowance);
 
             unchecked {
-                i++;
+                ++i;
             }
         }
         delete globalMarginConfig.supportedAddresses;
@@ -259,7 +263,7 @@ contract MarginModule is IMarginModule {
             newSupportedAddresses[i] = collateralType;
 
             unchecked {
-                i++;
+                ++i;
             }
         }
         globalMarginConfig.supportedAddresses = newSupportedAddresses;
@@ -285,7 +289,7 @@ contract MarginModule is IMarginModule {
             collaterals[i] = AvailableCollateral(collateralType, c.oracleNodeId, c.maxAllowable);
 
             unchecked {
-                i++;
+                ++i;
             }
         }
 
