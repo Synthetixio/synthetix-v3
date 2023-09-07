@@ -109,7 +109,6 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (uint256 liqReward, uint256 keeperFee) {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         liqReward = Position.getLiquidationReward(
             market.positions[accountId].size,
@@ -131,7 +130,6 @@ contract LiquidationModule is ILiquidationModule {
      * @inheritdoc ILiquidationModule
      */
     function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 oraclePrice = market.getOraclePrice();
         return
@@ -150,7 +148,6 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (uint256 im, uint256 mm) {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         (im, mm, ) = Position.getLiquidationMarginUsd(
