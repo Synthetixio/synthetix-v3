@@ -176,4 +176,4 @@ args = [[
   "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createAccount'), true]).slice(2) %>",
 ]]
 
-depends = ["invoke.upgrade_core_proxy"]
+depends = ["invoke.upgrade_proxy"]

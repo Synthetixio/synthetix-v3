@@ -120,11 +120,12 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         return super.balanceOf(user).mulDecimal(_tokensPerShare());
     }
 
+		// solhint-disable-next-line payable/only-payable
     function transferFrom(
         address from,
         address to,
         uint256 amount
-    ) external payable virtual override(ERC20, IERC20) returns (bool) {
+    ) external virtual override(ERC20, IERC20) returns (bool) {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 currentAllowance = store.allowance[from][msg.sender];
@@ -141,10 +142,11 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         return true;
     }
 
+	  // solhint-disable-next-line payable/only-payable
     function transfer(
         address to,
         uint256 amount
-    ) public payable virtual override(ERC20, IERC20) returns (bool) {
+    ) public virtual override(ERC20, IERC20) returns (bool) {
         return super.transfer(to, _tokenToShare(amount));
     }
 
