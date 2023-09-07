@@ -199,6 +199,7 @@ library PerpsMarket {
 
         int availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
             accumulatedLiquidationAmounts.toInt();
+        // solhint-disable-next-line numcast/safe-cast
         capacity = MathUtil.max(availableLiquidationCapacity, int(0)).toUint();
     }
 
