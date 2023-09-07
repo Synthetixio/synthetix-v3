@@ -1,16 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {Margin} from "../storage/Margin.sol";
-import {Position} from "../storage/Position.sol";
-import {Order} from "../storage/Order.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
+import {Margin} from "../storage/Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import "../interfaces/ILiquidationModule.sol";
+import {Order} from "../storage/Order.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {Position} from "../storage/Position.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU256 for uint256;
