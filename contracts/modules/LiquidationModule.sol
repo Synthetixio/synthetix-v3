@@ -24,7 +24,6 @@ contract LiquidationModule is ILiquidationModule {
      * @inheritdoc ILiquidationModule
      */
     function flagPosition(uint128 accountId, uint128 marketId) external {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 oraclePrice = market.getOraclePrice();
 
