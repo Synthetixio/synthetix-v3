@@ -117,10 +117,14 @@ library PerpsMarketConfiguration {
         maintenanceMarginRatio = initialMarginRatio.mulDecimal(self.maintenanceMarginScalarD18);
 
         uint256 notional = sizeAbs.mulDecimal(price);
-        initialMargin = notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
-        maintenanceMargin =
-            notional.mulDecimal(maintenanceMarginRatio) +
-            self.minimumPositionMargin;
+
+        initialMargin = size == 0
+            ? 0
+            : notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
+
+        maintenanceMargin = size == 0
+            ? 0
+            : notional.mulDecimal(maintenanceMarginRatio) + self.minimumPositionMargin;
 
         liquidationMargin = calculateLiquidationReward(self, notional);
     }
