@@ -93,7 +93,12 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function totalGlobalCollateralValue() external view override returns (uint256) {
+    function totalGlobalCollateralValue()
+        external
+        view
+        override
+        returns (uint256 totalCollateralValue)
+    {
         return GlobalPerpsMarket.load().totalCollateralValue();
     }
 
@@ -117,7 +122,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getFeeCollector() external view override returns (address) {
+    function getFeeCollector() external view override returns (address feeCollector) {
         return address(GlobalPerpsMarketConfiguration.load().feeCollector);
     }
 
@@ -142,7 +147,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     function getReferrerShare(
         address referrer
     ) external view override returns (uint256 shareRatioD18) {
-        shareRatioD18 = GlobalPerpsMarketConfiguration.load().referrerShare[referrer];
+        return GlobalPerpsMarketConfiguration.load().referrerShare[referrer];
     }
 
     /**
