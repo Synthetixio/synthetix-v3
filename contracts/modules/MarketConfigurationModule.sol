@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
-import "../interfaces/IMarketConfigurationModule.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
