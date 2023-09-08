@@ -831,10 +831,7 @@ describe('MarginModule', async () => {
       });
       it('should recompute funding', async () => {
         const { PerpMarketProxy } = systems();
-        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
-          bs,
-          genTrader(bs)
-        );
+        const { trader, market } = await depositMargin(bs, genTrader(bs));
 
         // Perform the deposit.
         const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
@@ -897,6 +894,9 @@ describe('MarginModule', async () => {
 
         // Price change causing 50% loss.
         await market.aggregator().mockSetCurrentPrice(wei(openOrder.oraclePrice).mul(0.5).toBN());
+        // Change collateral price 10% win
+        const newCollateralPrice = wei(collateralPrice).mul(1.1);
+        await collateral.aggregator().mockSetCurrentPrice(newCollateralPrice.toBN());
 
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
@@ -922,7 +922,7 @@ describe('MarginModule', async () => {
 
         // Calculate diff amount.
         const usdDiffAmount = wei(pnl).sub(openOrderFees).sub(closeOrderFees).add(closeEventArgs?.accruedFunding);
-        const collateralDiffAmount = usdDiffAmount.div(collateralPrice);
+        const collateralDiffAmount = usdDiffAmount.div(newCollateralPrice);
 
         const expectedCollateralBalanceAfterTrade = wei(startingCollateralBalance).add(collateralDiffAmount).toBN();
         const balanceAfterTrade = await collateral.contract.balanceOf(traderAddress);
