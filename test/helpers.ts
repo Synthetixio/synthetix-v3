@@ -216,6 +216,3 @@ export const txWait = async (tx: ethers.ContractTransaction, provider: ethers.pr
   await provider.send('evm_mine', []);
   return await tx.wait();
 };
-
-export const createTxWait = (provider: ethers.providers.JsonRpcProvider) => (tx: ethers.ContractTransaction) =>
-  txWait(tx, provider);

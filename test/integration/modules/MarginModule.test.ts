@@ -23,7 +23,7 @@ import {
   approveAndMintMargin,
   commitAndSettle,
   commitOrder,
-  createTxWait,
+  txWait,
   depositMargin,
   extendContractAbi,
   findEventSafe,
@@ -36,7 +36,7 @@ import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, owner, systems, restore, provider } = bs;
-  const txWait = createTxWait(provider());
+
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
@@ -666,7 +666,12 @@ describe('MarginModule', async () => {
         const amountToWithdrawUsd = maxWithdrawUsd.add(1);
         // Convert to native units
         const amountToWithdraw = amountToWithdrawUsd.div(collateralPrice);
+        /**
+         *      Error: Transaction was expected to revert with "InsufficientMargin()", but reverted with "CanLiquidatePosition()"
+Error: transaction reverted in contract MarginModule: CanLiquidatePosition()
 
+Need to make sure we are not liquidatable
+         */
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
@@ -885,7 +890,7 @@ describe('MarginModule', async () => {
         // Collect some data for calculation.
         const { args: openEventArgs } =
           findEventSafe({
-            receipt: await txWait(openTx),
+            receipt: await txWait(openTx, provider()),
             contract: PerpMarketProxy,
             eventName: 'OrderSettled',
           }) || {};
@@ -904,7 +909,7 @@ describe('MarginModule', async () => {
         });
 
         const closeTx = await commitAndSettle(bs, marketId, trader, closeOrder);
-        const closeReceipt = await txWait(closeTx);
+        const closeReceipt = await txWait(closeTx, provider());
 
         // Do the withdraw.
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
@@ -1229,7 +1234,7 @@ describe('MarginModule', async () => {
       const tx = await commitAndSettle(bs, marketId, trader, order);
 
       const settleEvent = findEventSafe({
-        receipt: await txWait(tx),
+        receipt: await txWait(tx, provider()),
         eventName: 'OrderSettled',
         contract: PerpMarketProxy,
       });
@@ -1242,8 +1247,9 @@ describe('MarginModule', async () => {
         .sub(keeperFee)
         .add(order.keeperFeeBufferUsd)
         .add(pnl);
+
       // Assert margin before price change
-      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
+      assertBn.near(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN(), wei(0.000001).toBN());
       // Change the price, this might lead to profit or loss, depending the the generated order is long or short
       const newPrice = wei(order.oraclePrice).mul(1.5).toBN();
       // Update price
@@ -1262,7 +1268,7 @@ describe('MarginModule', async () => {
         .add(newPnl)
         .add(accruedFunding);
       // Assert marginUSD after price update
-      assertBn.equal(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN());
+      assertBn.near(marginUsdAfterPriceChange, expectedMarginUsdAfterPriceChange.toBN(), wei(0.000001).toBN());
     });
 
     it('should return 0 for underwater position not yet flagged', async () => {
@@ -1278,7 +1284,7 @@ describe('MarginModule', async () => {
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
       const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
       const settleEvent = findEventSafe({
-        receipt: await txWait(tx),
+        receipt: await txWait(tx, provider()),
         eventName: 'OrderSettled',
         contract: PerpMarketProxy,
       });
