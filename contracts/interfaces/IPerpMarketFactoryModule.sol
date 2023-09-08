@@ -18,13 +18,8 @@ interface IPerpMarketFactoryModule is IMarket {
         int128 skew;
         uint128 size;
         uint256 oraclePrice;
-        // TODO: Consistent naming here please.
-        //
-        // fundingVelocity, fundingRateVelocity, currentFundingRateVelocity, currentFundingVelocity
-        // currentFundingRate, fundingRate
-        // ???
         int256 fundingVelocity;
-        int256 currentFundingRate;
+        int256 fundingRate;
         uint256 lastLiquidationTime;
         uint256 remainingLiquidatableSizeCapacity;
     }

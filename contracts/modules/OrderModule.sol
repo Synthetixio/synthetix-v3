@@ -232,7 +232,7 @@ contract OrderModule is IOrderModule {
     function simulateOrder(
         uint128 accountId,
         uint128 marketId,
-        uint128 sizeDelta,
+        int128 sizeDelta,
         uint256 limitPrice,
         uint256 keeperFeeBufferUsd,
         uint256 oraclePrice

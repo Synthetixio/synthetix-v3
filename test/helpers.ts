@@ -178,6 +178,7 @@ export const commitAndSettle = async (
   });
 };
 
+/** Updates the provided `contract` with more ABI details. */
 export const extendContractAbi = (contract: Contract, abi: string[]) => {
   utils.Logger.setLogLevel(LogLevel.OFF); // Silence ethers duplicated event warnings
   const contractAbi = contract.interface.format(utils.FormatTypes.full) as string[];

@@ -26,10 +26,16 @@ contract LiquidationModule is ILiquidationModule {
     function flagPosition(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        uint256 oraclePrice = market.getOraclePrice();
+        Position.Data storage position = market.positions[accountId];
+
+        // Cannot flag a position that does not exist.
+        if (position.size == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
 
         // Cannot flag for liquidation unless they are liquidatable.
-        bool isLiquidatable = market.positions[accountId].isLiquidatable(
+        uint256 oraclePrice = market.getOraclePrice();
+        bool isLiquidatable = position.isLiquidatable(
             market,
             Margin.getMarginUsd(accountId, market, oraclePrice),
             oraclePrice,
@@ -47,32 +53,44 @@ contract LiquidationModule is ILiquidationModule {
         // Remove any pending orders that may exist.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
+            emit OrderCanceled(accountId, marketId);
             delete market.orders[accountId];
         }
 
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
-        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender);
+        emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, oraclePrice);
     }
 
     /**
-     * @inheritdoc ILiquidationModule
+     * @dev Before liquidation (not flag) peform validation and market updates.
      */
-    function liquidatePosition(uint128 accountId, uint128 marketId) external {
-        Account.exists(accountId);
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
-        uint256 oraclePrice = market.getOraclePrice();
+    function updateMarketPreLiquidation(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        uint256 oraclePrice,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    )
+        private
+        returns (
+            Position.Data storage oldPosition,
+            Position.Data memory newPosition,
+            uint256 liqReward,
+            uint256 keeperFee
+        )
+    {
         (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
         emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
 
-        (
-            Position.Data storage oldPosition,
-            Position.Data memory newPosition,
-            uint128 liqSize,
-            uint256 liqReward,
-            uint256 keeperFee
-        ) = Position.validateLiquidation(accountId, market, PerpMarketConfiguration.load(marketId), oraclePrice);
+        uint128 liqSize;
+        (oldPosition, newPosition, liqSize, liqReward, keeperFee) = Position.validateLiquidation(
+            accountId,
+            market,
+            PerpMarketConfiguration.load(marketId),
+            globalConfig,
+            oraclePrice
+        );
 
         // Update market to reflect a successful full or partial liquidation.
         market.lastLiquidationTime = block.timestamp;
@@ -84,6 +102,32 @@ contract LiquidationModule is ILiquidationModule {
         uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
         uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
         market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidatePosition(uint128 accountId, uint128 marketId) external {
+        Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        Position.Data storage position = market.positions[accountId];
+
+        // Cannot liquidate a position that does not exist.
+        if (position.size == 0) {
+            revert ErrorUtil.PositionNotFound();
+        }
+
+        uint256 oraclePrice = market.getOraclePrice();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        (, Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = updateMarketPreLiquidation(
+            accountId,
+            marketId,
+            market,
+            oraclePrice,
+            globalConfig
+        );
+
+        address flagger = market.flaggedLiquidations[accountId];
 
         // Full liquidation (size=0) vs. partial liquidation.
         if (newPosition.size == 0) {
@@ -94,8 +138,6 @@ contract LiquidationModule is ILiquidationModule {
             market.positions[accountId].update(newPosition);
         }
 
-        address flagger = market.flaggedLiquidations[accountId];
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         if (flagger == msg.sender) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
         } else {
@@ -103,7 +145,16 @@ contract LiquidationModule is ILiquidationModule {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         }
 
-        emit PositionLiquidated(accountId, marketId, msg.sender, flagger, liqReward, keeperFee);
+        emit PositionLiquidated(
+            accountId,
+            marketId,
+            newPosition.size,
+            msg.sender,
+            flagger,
+            liqReward,
+            keeperFee,
+            oraclePrice
+        );
     }
 
     // --- Views --- //
@@ -128,7 +179,9 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function getRemainingLiquidatableSizeCapacity(uint128 marketId) external view returns (uint128) {
+    function getRemainingLiquidatableSizeCapacity(
+        uint128 marketId
+    ) external view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity) {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
     }

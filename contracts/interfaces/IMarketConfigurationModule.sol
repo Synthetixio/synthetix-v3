@@ -22,6 +22,7 @@ interface IMarketConfigurationModule {
         uint128 keeperSettlementGasUnits;
         uint128 keeperLiquidationGasUnits;
         uint256 keeperLiquidationFeeUsd;
+        address keeperLiquidationEndorsed;
     }
 
     // @dev See PerpMarketConfiguration.Data
@@ -41,6 +42,7 @@ interface IMarketConfigurationModule {
         uint256 liquidationRewardPercent;
         uint128 liquidationLimitScalar;
         uint128 liquidationWindowDuration;
+        uint128 liquidationMaxPd;
     }
 
     // --- Events --- //

@@ -46,6 +46,15 @@ library Position {
         uint256 newMarginUsd;
     }
 
+    // --- Runtime structs --- //
+
+    struct Runtime_validateLiquidation {
+        address flagger;
+        uint128 oldPositionSize;
+        uint128 maxLiquidatableCapacity;
+        uint128 remainingCapacity;
+    }
+
     // --- Storage --- //
 
     struct Data {
@@ -217,6 +226,7 @@ library Position {
         uint128 accountId,
         PerpMarket.Data storage market,
         PerpMarketConfiguration.Data storage marketConfig,
+        PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 price
     )
         internal
@@ -229,28 +239,55 @@ library Position {
             uint256 keeperFee
         )
     {
-        uint128 remainingCapacity = market.getRemainingLiquidatableSizeCapacity(marketConfig);
-
-        // At max capacity for current liquidation window.
-        if (remainingCapacity == 0) {
-            revert ErrorUtil.LiquidationZeroCapacity();
-        }
-
-        oldPosition = market.positions[accountId];
-        address flagger = market.flaggedLiquidations[accountId];
+        Position.Runtime_validateLiquidation memory runtime;
 
         // The position must be flagged first.
-        if (flagger == address(0)) {
+        runtime.flagger = market.flaggedLiquidations[accountId];
+        if (runtime.flagger == address(0)) {
             revert ErrorUtil.PositionNotFlagged();
         }
 
         // Precautionary to ensure we're liquidating an open position.
-        if (oldPosition.size == 0) {
+        oldPosition = market.positions[accountId];
+        runtime.oldPositionSize = MathUtil.abs(oldPosition.size).to128();
+        if (runtime.oldPositionSize == 0) {
             revert ErrorUtil.PositionNotFound();
         }
 
-        // Determine the resulting position post liqudation
-        liqSize = MathUtil.min(remainingCapacity, MathUtil.abs(oldPosition.size)).to128();
+        // Fetch the available capacity then alter iff zero AND the caller is a whitelisted endorsed liquidation keeper.
+        (runtime.maxLiquidatableCapacity, runtime.remainingCapacity) = market.getRemainingLiquidatableSizeCapacity(
+            marketConfig
+        );
+        if (msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0) {
+            runtime.remainingCapacity = runtime.oldPositionSize;
+        }
+
+        // At max capacity for current liquidation window.
+        if (runtime.remainingCapacity == 0) {
+            uint128 skewScale = marketConfig.skewScale;
+            uint128 liquidationMaxPd = marketConfig.liquidationMaxPd;
+
+            // Allow max capacity to be bypassed iff the following holds true:
+            //  1. remainingCapacity is zero (as parent)
+            //  2. This liquidation is _not_ in the same block as the most recent liquidation
+            //  3. The current market premium/discount does not exceed a configurable maxPd.
+            //  4. The current position size as skew does not exceed a configurable maxPd.
+            if (
+                market.lastLiquidationTime != block.timestamp &&
+                MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd &&
+                runtime.oldPositionSize.divDecimal(skewScale) < liquidationMaxPd
+            ) {
+                runtime.remainingCapacity = runtime.oldPositionSize > runtime.maxLiquidatableCapacity
+                    ? runtime.maxLiquidatableCapacity
+                    : runtime.oldPositionSize;
+            } else {
+                // No liquidation for you.
+                revert ErrorUtil.LiquidationZeroCapacity();
+            }
+        }
+
+        // Determine the resulting position post liqudation.
+        liqSize = MathUtil.min(runtime.remainingCapacity, MathUtil.abs(oldPosition.size)).to128();
         liqReward = getLiquidationReward(oldPosition.size, price, marketConfig);
         keeperFee = getLiquidationKeeperFee();
         newPosition = Position.Data(

@@ -1,10 +1,17 @@
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
+import type { BootstrapArgs } from '../bootstrap';
 
 export const bn = (n: number) => wei(n).toBN();
 
-// A collection of reasonably realistic market parameters for BTC, ETH, SOL, OP, and ARB.
-export const MARKETS = [
+// Below is a collection of reasonably realistic market parameters for BTC, ETH, SOL, OP, and ARB.
+//
+// These markets are deliberately hardcoded. Market configured params are very particular and lots of
+// unexpected behaviours are mitigated simply by having correctly configured markets. As such, bootstrapped
+// markets shuffle between the 5 below here (see `genBootstrap()`).
+//
+// If you're looking for a completely random market, see `genMarket()`.
+export const MARKETS: BootstrapArgs['markets'] = [
   {
     name: ethers.utils.formatBytes32String('BTCPERP'),
     initialPrice: bn(30_000),
@@ -24,6 +31,7 @@ export const MARKETS = [
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
       liquidationWindowDuration: bn(30),
+      liquidationMaxPd: bn(0.0016),
     },
   },
   {
@@ -45,6 +53,7 @@ export const MARKETS = [
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
       liquidationWindowDuration: bn(30),
+      liquidationMaxPd: bn(0.0016),
     },
   },
   {
@@ -66,6 +75,7 @@ export const MARKETS = [
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
       liquidationWindowDuration: bn(30),
+      liquidationMaxPd: bn(0.002),
     },
   },
   {
@@ -87,6 +97,7 @@ export const MARKETS = [
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
       liquidationWindowDuration: bn(30),
+      liquidationMaxPd: bn(0.0024),
     },
   },
   {
@@ -108,6 +119,7 @@ export const MARKETS = [
       liquidationRewardPercent: bn(0.00002),
       liquidationLimitScalar: bn(1),
       liquidationWindowDuration: bn(30),
+      liquidationMaxPd: bn(0.0024),
     },
   },
 ];

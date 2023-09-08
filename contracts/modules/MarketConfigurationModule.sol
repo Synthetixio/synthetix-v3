@@ -26,6 +26,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.keeperSettlementGasUnits = data.keeperSettlementGasUnits;
         config.keeperLiquidationGasUnits = data.keeperLiquidationGasUnits;
         config.keeperLiquidationFeeUsd = data.keeperLiquidationFeeUsd;
+        config.keeperLiquidationEndorsed = data.keeperLiquidationEndorsed;
 
         emit ConfigurationUpdated(msg.sender);
     }
@@ -59,6 +60,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.liquidationRewardPercent = data.liquidationRewardPercent;
         config.liquidationLimitScalar = data.liquidationLimitScalar;
         config.liquidationWindowDuration = data.liquidationWindowDuration;
+        config.liquidationMaxPd = data.liquidationMaxPd;
 
         emit MarketConfigurationUpdated(marketId, msg.sender);
     }

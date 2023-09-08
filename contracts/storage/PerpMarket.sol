@@ -224,14 +224,6 @@ library PerpMarket {
 
     /**
      * @dev Returns the current funding rate given current market conditions.
-     *
-     * This is used during funding computation _before_ the market is modified (e.g. closing or
-     * opening a position). However, called via the `currentFundingRate` view, will return the
-     * 'instantaneous' funding rate. It's similar but subtle in that velocity now includes the most
-     * recent skew modification.
-     *
-     * There is no variance in computation but will be affected based on outside modifications to
-     * the market skew, max funding velocity, price, and time delta.
      */
     function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int256) {
         // calculations:
@@ -275,7 +267,7 @@ library PerpMarket {
     function getRemainingLiquidatableSizeCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128) {
+    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity) {
         // As an example, assume the following example parameters for a ETH/USD market.
         //
         // 100,000         skewScale
@@ -285,13 +277,12 @@ library PerpMarket {
         //
         // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000
         //                         = 80
-        uint128 maxLiquidatableCapacity = uint128(marketConfig.makerFee + marketConfig.takerFee)
+        maxLiquidatableCapacity = uint128(marketConfig.makerFee + marketConfig.takerFee)
             .mulDecimal(marketConfig.skewScale)
             .mulDecimal(marketConfig.liquidationLimitScalar)
             .to128();
-        return
-            block.timestamp - self.lastLiquidationTime > marketConfig.liquidationWindowDuration
-                ? maxLiquidatableCapacity
-                : MathUtil.max((maxLiquidatableCapacity - self.lastLiquidationUtilization).toInt(), 0).toUint().to128();
+        remainingCapacity = block.timestamp - self.lastLiquidationTime > marketConfig.liquidationWindowDuration
+            ? maxLiquidatableCapacity
+            : MathUtil.max((maxLiquidatableCapacity - self.lastLiquidationUtilization).toInt(), 0).toUint().to128();
     }
 }

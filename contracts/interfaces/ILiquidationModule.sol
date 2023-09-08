@@ -10,14 +10,21 @@ interface ILiquidationModule is IBasePerpMarket {
     event PositionLiquidated(
         uint128 indexed accountId,
         uint128 marketId,
+        int128 remainingSize,
         address keeper,
         address flagger,
         uint256 liqReward,
-        uint256 keeperFee
+        uint256 keeperFee,
+        uint256 liquidationPrice
     );
 
     // @dev Emitted when a position is flagged for liquidation.
-    event PositionFlaggedLiquidation(uint128 indexed accountId, uint128 marketId, address flagger);
+    event PositionFlaggedLiquidation(
+        uint128 indexed accountId,
+        uint128 marketId,
+        address flagger,
+        uint256 flaggedPrice
+    );
 
     // --- Mutative --- //
 
@@ -44,7 +51,9 @@ interface ILiquidationModule is IBasePerpMarket {
     /**
      * @dev Returns the remaining liquidation capacity for a given `marketId` in the current window.
      */
-    function getRemainingLiquidatableSizeCapacity(uint128 marketId) external view returns (uint128);
+    function getRemainingLiquidatableSizeCapacity(
+        uint128 marketId
+    ) external view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity);
 
     /**
      * @dev Returns whether a position owned by `accountId` can be flagged for liquidated.
