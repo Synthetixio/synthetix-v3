@@ -20,7 +20,7 @@ _You can find more details on the working model under [`docs/images`](./docs/ima
 
 ```bash
 # Download and install repository
-git clone git@github.com:davidvuong/bfp-market.git
+git clone git@github.com:synthetixio/bfp-market.git
 
 # Install dependencies
 yarn
