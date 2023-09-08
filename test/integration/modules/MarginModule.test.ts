@@ -24,6 +24,7 @@ import {
   commitOrder,
   depositMargin,
   extendContractAbi,
+  fastForwardBySec,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { CollateralMock } from '../../../typechain-types';
@@ -31,12 +32,49 @@ import { assertEvents } from '../../assert';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, owner, systems, restore } = bs;
+  const { markets, collaterals, traders, owner, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
-    it('should cancel order when modifying if pending order exists and expired');
+    it('should cancel order when modifying if pending order exists and expired (withdraw)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      // Commit an order for this trader.
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      // Verify that an order exists.
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+
+      // Fastforward to expire the pending order.
+      const { maxOrderAge } = await PerpMarketProxy.getMarketConfiguration();
+      fastForwardBySec(provider(), maxOrderAge.toNumber() + 1);
+
+      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+        trader.accountId,
+        marketId,
+        collateral.contract.address,
+        collateralDepositAmount.mul(-1)
+      );
+
+      const traderAddress = await trader.signer.getAddress();
+      await assertEvent(tx, `OrderCanceled()`, PerpMarketProxy);
+      await assertEvent(
+        tx,
+        `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
+        PerpMarketProxy
+      );
+    });
 
     it('should revert when a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();

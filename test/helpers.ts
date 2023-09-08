@@ -196,3 +196,7 @@ export const extendContractAbi = (contract: Contract, abi: string[]) => {
 /** Returns the latest block's timestamp. */
 export const getBlockTimestamp = async (provider: ReturnType<Bs['provider']>) =>
   (await provider.getBlock('latest')).timestamp;
+
+/** Fastforward block.timestamp by `seconds` (Replacement for `evm_increaseTime`, using `evm_setNextBlockTimestamp` instead). */
+export const fastForwardBySec = async (provider: ReturnType<Bs['provider']>, seconds: number) =>
+  await fastForwardTo((await getBlockTimestamp(provider)) + seconds, provider);

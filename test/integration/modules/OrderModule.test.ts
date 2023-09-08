@@ -57,7 +57,35 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should cancel order when commiting again with existing expired order');
+    it('should cancel order when commiting again with existing expired order', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      const { commitmentTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { maxOrderAge } = await PerpMarketProxy.getMarketConfiguration();
+      await fastForwardTo(commitmentTime + maxOrderAge.toNumber() + 1, provider());
+
+      // Committed, not settled, fastforward by maxAge, commit again, old order should be canceled.
+      const tx = await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      await assertEvent(tx, `OrderCanceled`, PerpMarketProxy);
+    });
 
     it('should emit all events in correct order');
 
@@ -493,8 +521,11 @@ describe('OrderModule', () => {
       const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
 
       // Fast forward block.timestamp but make sure it's _just_ before readiness.
-      const config = await PerpMarketProxy.getMarketConfiguration();
-      const settlementTime = commitmentTime + genNumber(1, config.minOrderAge.toNumber() - 1);
+      const { minOrderAge } = await PerpMarketProxy.getMarketConfiguration();
+
+      // minOrderAge -1 (1s less than minOrderAge) -1 (1s to account for the additional second added after the fact).
+      const settlementTime = commitmentTime + genNumber(1, minOrderAge.toNumber() - 2);
+
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
@@ -506,7 +537,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert if order is stale', async () => {
+    it('should revert if order is stale/expired', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
