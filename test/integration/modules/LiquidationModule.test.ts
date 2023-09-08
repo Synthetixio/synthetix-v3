@@ -16,7 +16,7 @@ describe('LiquidationModule', () => {
     it('should flag a position with a health factor <= 1', async () => {
       const { PerpMarketProxy } = systems();
 
-      const orderSide: 1 | -1 = genOneOf([1, -1]);
+      const orderSide = genSide();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
@@ -28,14 +28,12 @@ describe('LiquidationModule', () => {
       // Price falls/rises between 10% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
-      const newMarketOraclePrice = wei(marketOraclePrice)
+      const newMarketOraclePrice = wei(order.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
       const { healthFactor } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
-
       assertBn.lte(healthFactor, wei(1).toBN());
 
       const tx = await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
@@ -66,8 +64,7 @@ describe('LiquidationModule', () => {
       await commitOrder(bs, marketId, trader, order2);
 
       // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
-      const newMarketOraclePrice = wei(marketOraclePrice)
+      const newMarketOraclePrice = wei(order2.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
@@ -96,9 +93,8 @@ describe('LiquidationModule', () => {
 
       await commitAndSettle(bs, marketId, trader, order);
 
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
+        wei(order.oraclePrice)
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN()
       );
@@ -189,9 +185,8 @@ describe('LiquidationModule', () => {
       // Set a large enough liqCap to ensure a full liquidation.
       await setMarketConfigurationById(bs, marketId, { liquidationLimitScalar: wei(100).toBN() });
 
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
+        wei(order.oraclePrice)
           .mul(orderSize === 1 ? 0.9 : 1.1)
           .toBN()
       );
@@ -201,7 +196,7 @@ describe('LiquidationModule', () => {
       const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
       const keeperAddress = await keeper().getAddress();
 
-      // NOTE: Missing the last two values (liqReward and keeperFee).
+      // TODO: Missing the last two values (liqReward and keeperFee).
       await assertEvent(
         tx,
         `PositionLiquidated(${trader.accountId}, ${marketId}, 0, "${keeperAddress}", "${keeperAddress}"`,
@@ -221,7 +216,7 @@ describe('LiquidationModule', () => {
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
+      const marketOraclePrice = order.oraclePrice;
       await market.aggregator().mockSetCurrentPrice(
         wei(marketOraclePrice)
           .mul(orderSize === 1 ? 0.9 : 1.1)
@@ -241,7 +236,7 @@ describe('LiquidationModule', () => {
       const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
       const keeperAddress = await keeper().getAddress();
 
-      // NOTE: Missing the last two values (liqReward and keeperFee).
+      // TODO: Missing the last two values (liqReward and keeperFee).
       await assertEvent(
         tx,
         `PositionLiquidated(${trader.accountId}, ${marketId}, 0, "${keeperAddress}", "${keeperAddress}"`,
@@ -261,9 +256,8 @@ describe('LiquidationModule', () => {
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
+        wei(order.oraclePrice)
           .mul(orderSize === 1 ? 0.9 : 1.1)
           .toBN()
       );
@@ -294,9 +288,8 @@ describe('LiquidationModule', () => {
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
+        wei(order.oraclePrice)
           .mul(orderSize === 1 ? 0.9 : 1.1)
           .toBN()
       );
@@ -388,9 +381,8 @@ describe('LiquidationModule', () => {
 
       const d1 = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
 
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
+        wei(order.oraclePrice)
           .mul(orderSize === 1 ? 0.9 : 1.1)
           .toBN()
       );
@@ -422,9 +414,8 @@ describe('LiquidationModule', () => {
       // Price falls/rises between 10% should results in a healthFactor of < 1.
       //
       // Whether it goes up or down depends on the side of the order.
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
+        wei(order.oraclePrice)
           .mul(orderSize === 1 ? 0.9 : 1.1)
           .toBN()
       );
@@ -446,9 +437,8 @@ describe('LiquidationModule', () => {
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      const { answer: marketOraclePrice } = await market.aggregator().latestRoundData();
       await market.aggregator().mockSetCurrentPrice(
-        wei(marketOraclePrice)
+        wei(order.oraclePrice)
           .mul(orderSize === 1 ? 0.9 : 1.1)
           .toBN()
       );
