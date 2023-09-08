@@ -133,7 +133,11 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             uint256 liquidationReward = PerpsMarketConfiguration
                 .load(positionMarketId)
                 .calculateLiquidationReward(amountLiquidated.mulDecimal(price));
-            accumulatedLiquidationRewards += liquidationReward;
+
+            // endorsed liquidators do not get liquidation rewards
+            if (msg.sender != PerpsMarketConfiguration.load(positionMarketId).endorsedLiquidator) {
+                accumulatedLiquidationRewards += liquidationReward;
+            }
         }
 
         keeperLiquidationReward = _processLiquidationRewards(accumulatedLiquidationRewards);

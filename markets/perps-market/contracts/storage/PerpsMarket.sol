@@ -181,11 +181,10 @@ library PerpsMarket {
         uint maxConfiguredSeconds = marketConfig.maxSecondsInLiquidationWindow;
         maxLiquidationInWindow = marketConfig.maxLiquidationAmountInWindow();
 
+        uint windowStartTimestamp = block.timestamp.to128() -
+            marketConfig.maxSecondsInLiquidationWindow;
         for (uint i = 0; i < maxConfiguredSeconds; i++) {
             uint128 liquidationTimestamp = self.liquidationTimestamps[i];
-            uint windowStartTimestamp = block.timestamp.to128() -
-                marketConfig.maxSecondsInLiquidationWindow;
-
             // keep track of latest liquidation timestamp
             // used in determining whether to allow another block of liquidation given p/d requirements are met
             latestLiquidationTimestamp = MathUtil
