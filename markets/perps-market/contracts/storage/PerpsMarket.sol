@@ -102,13 +102,10 @@ library PerpsMarket {
         uint128 requestedLiquidationAmount
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
-        uint liquidationIndex = block.timestamp % marketConfig.maxSecondsInLiquidationWindow;
 
         // if endorsedLiquidator is configured and is the sender, allow full liquidation
         if (msg.sender == marketConfig.endorsedLiquidator) {
-            self.liquidationAmounts[liquidationIndex] += requestedLiquidationAmount;
-            self.liquidationTimestamps[liquidationIndex] = block.timestamp.to128();
-
+            _updateLiquidationData(self, marketConfig, requestedLiquidationAmount);
             return requestedLiquidationAmount;
         }
 
@@ -151,14 +148,22 @@ library PerpsMarket {
         }
 
         if (liquidatableAmount > 0) {
-            // if other liquidations happened in same block, add to amount otherwise set as liquidatable amt
-            self.liquidationAmounts[liquidationIndex] = self.liquidationTimestamps[
-                liquidationIndex
-            ] == block.timestamp
-                ? self.liquidationAmounts[liquidationIndex] + liquidatableAmount
-                : liquidatableAmount;
-            self.liquidationTimestamps[liquidationIndex] = block.timestamp.to128();
+            _updateLiquidationData(self, marketConfig, liquidatableAmount);
         }
+    }
+
+    function _updateLiquidationData(
+        Data storage self,
+        PerpsMarketConfiguration.Data storage marketConfig,
+        uint128 liquidationAmount
+    ) private {
+        uint liquidationIndex = block.timestamp % marketConfig.maxSecondsInLiquidationWindow;
+        // if other liquidations happened in same block, add to amount otherwise set as liquidatable amt
+        self.liquidationAmounts[liquidationIndex] = self.liquidationTimestamps[liquidationIndex] ==
+            block.timestamp
+            ? self.liquidationAmounts[liquidationIndex] + liquidationAmount
+            : liquidationAmount;
+        self.liquidationTimestamps[liquidationIndex] = block.timestamp.to128();
     }
 
     /**
