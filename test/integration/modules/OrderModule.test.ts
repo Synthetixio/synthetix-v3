@@ -270,7 +270,7 @@ describe('OrderModule', () => {
 
       await assertEvent(
         tx,
-        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${keeperFee}, 0, 0, ${order.fillPrice})`,
+        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${keeperFee}, ${accruedFunding}, ${pnl}, ${order.fillPrice})`,
         PerpMarketProxy
       );
 
