@@ -23,6 +23,7 @@ import {
   approveAndMintMargin,
   commitAndSettle,
   commitOrder,
+  createTxWait,
   depositMargin,
   extendContractAbi,
   findEventSafe,
@@ -35,7 +36,7 @@ import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, owner, systems, restore, provider } = bs;
-
+  const txWait = createTxWait(provider());
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
@@ -883,8 +884,14 @@ describe('MarginModule', async () => {
           desiredLeverage: 1,
           desiredKeeperFeeBufferUsd: 1,
         });
-        await commitAndSettle(bs, marketId, trader, order);
-
+        const openTx = await commitAndSettle(bs, marketId, trader, order);
+        // Collect some data for calculation.
+        const { args: openEventArgs } =
+          findEventSafe({
+            receipt: await txWait(openTx),
+            contract: PerpMarketProxy,
+            eventName: 'OrderSettled',
+          }) || {};
         // Make sure we lose some to funding.
         const currentBlockTimestamp = (await provider().getBlock('latest')).timestamp;
         await fastForwardTo(currentBlockTimestamp + genNumber(3000, 100000), provider());
@@ -898,8 +905,8 @@ describe('MarginModule', async () => {
           desiredLeverage: 2,
         });
 
-        const tx = await commitAndSettle(bs, marketId, trader, closeOrder);
-        const closeReceipt = await tx.wait();
+        const closeTx = await commitAndSettle(bs, marketId, trader, closeOrder);
+        const closeReceipt = await txWait(closeTx);
 
         // Do the withdraw.
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
@@ -913,8 +920,8 @@ describe('MarginModule', async () => {
           }) || {};
 
         const pnl = calcPnl(order.sizeDelta, closeOrder.fillPrice, order.fillPrice);
-        const openOrderFees = wei(order.orderFee).add(order.keeperFee);
-        const closeOrderFees = wei(closeOrder.orderFee).add(closeOrder.keeperFee);
+        const openOrderFees = wei(order.orderFee).add(openEventArgs?.keeperFee);
+        const closeOrderFees = wei(closeOrder.orderFee).add(closeEventArgs?.keeperFee);
 
         // Calculate diff amount.
         const usdDiffAmount = wei(pnl).sub(openOrderFees).sub(closeOrderFees).add(closeEventArgs?.accruedFunding);
@@ -1221,14 +1228,20 @@ describe('MarginModule', async () => {
       const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
-      await commitAndSettle(bs, marketId, trader, order);
+      const tx = await commitAndSettle(bs, marketId, trader, order);
 
+      const settleEvent = findEventSafe({
+        receipt: await txWait(tx),
+        eventName: 'OrderSettled',
+        contract: PerpMarketProxy,
+      });
+      const keeperFee = settleEvent?.args.keeperFee as BigNumber;
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
 
       const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
       const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
         .sub(order.orderFee)
-        .sub(order.keeperFee)
+        .sub(keeperFee)
         .add(order.keeperFeeBufferUsd)
         .add(pnl);
       // Assert margin before price change
@@ -1246,7 +1259,7 @@ describe('MarginModule', async () => {
       // Calculate expected margin
       const expectedMarginUsdAfterPriceChange = wei(order.marginUsd)
         .sub(order.orderFee)
-        .sub(order.keeperFee)
+        .sub(keeperFee)
         .add(order.keeperFeeBufferUsd)
         .add(newPnl)
         .add(accruedFunding);
@@ -1262,14 +1275,19 @@ describe('MarginModule', async () => {
         desiredSide: -1,
       });
 
-      await commitAndSettle(bs, marketId, trader, order);
+      const tx = await commitAndSettle(bs, marketId, trader, order);
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-
       const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
+      const settleEvent = findEventSafe({
+        receipt: await txWait(tx),
+        eventName: 'OrderSettled',
+        contract: PerpMarketProxy,
+      });
+
       const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
         .sub(order.orderFee)
-        .sub(order.keeperFee)
+        .sub(settleEvent?.args.keeperFee)
         .add(order.keeperFeeBufferUsd)
         .add(pnl);
       // Assert margin before price change

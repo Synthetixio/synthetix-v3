@@ -1,4 +1,4 @@
-import { BigNumber, Contract, ContractReceipt, utils } from 'ethers';
+import { BigNumber, Contract, ContractReceipt, ethers, utils } from 'ethers';
 import { LogLevel } from '@ethersproject/logger';
 import { PerpMarketConfiguration } from './generated/typechain/MarketConfigurationModule';
 import type { bootstrap } from './bootstrap';
@@ -206,6 +206,7 @@ export const findEventSafe = ({
       `no logs found when searching for event ${eventName}. Did you actually pass a transaction receipt into findEvent?`
     );
   }
+
   const foundEvent = receipt.logs
     .map((log) => {
       try {
@@ -218,3 +219,11 @@ export const findEventSafe = ({
   if (!foundEvent) return;
   return foundEvent;
 };
+
+export const txWait = async (tx: ethers.ContractTransaction, provider: ethers.providers.JsonRpcProvider) => {
+  await provider.send('evm_mine', []);
+  return await tx.wait();
+};
+
+export const createTxWait = (provider: ethers.providers.JsonRpcProvider) => (tx: ethers.ContractTransaction) =>
+  txWait(tx, provider);
