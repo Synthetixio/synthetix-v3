@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import "./IBasePerpMarket.sol";
+import {Position} from "../storage/Position.sol";
 import {Order} from "../storage/Order.sol";
 
 interface IOrderModule is IBasePerpMarket {
@@ -23,7 +24,10 @@ interface IOrderModule is IBasePerpMarket {
         uint128 indexed marketId,
         int128 sizeDelta,
         uint256 orderFee,
-        uint256 keeperFee
+        uint256 keeperFee,
+        int256 accruedFunding,
+        int256 pnl,
+        uint256 fillPrice
     );
 
     // --- Mutative --- //
