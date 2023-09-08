@@ -38,17 +38,6 @@ interface IOrderModule is IBasePerpMarket {
         uint256 keeperFee
     );
 
-    // --- Runtime structs --- //
-    struct Runtime_settleOrder {
-        uint256 pythPrice;
-        uint256 publishTime;
-        int256 accruedFunding;
-        int256 pnl;
-        uint256 fillPrice;
-        Position.ValidatedTrade trade;
-        Position.TradeParams params;
-    }
-
     // --- Mutative --- //
 
     /**
