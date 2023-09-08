@@ -22,20 +22,12 @@ interface IOrderModule is IBasePerpMarket {
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
+        int128 sizeDelta,
         uint256 orderFee,
         uint256 keeperFee,
         int256 accruedFunding,
         int256 pnl,
         uint256 fillPrice
-    );
-
-    // @dev Emitted when a stale order was canceled.
-    event OrderCanceled(
-        uint128 indexed accountId,
-        uint128 indexed marketId,
-        int256 sizeDelta,
-        uint256 orderFee,
-        uint256 keeperFee
     );
 
     // --- Mutative --- //
