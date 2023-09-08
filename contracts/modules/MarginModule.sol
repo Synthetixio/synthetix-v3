@@ -54,7 +54,7 @@ contract MarginModule is IMarginModule {
     ) private {
         Order.Data storage order = market.orders[accountId];
 
-        // A new order cannot be submitted if one is already pending.
+        // Margin cannot be modified if order is currently pending.
         if (order.sizeDelta != 0) {
             // Check if this order can be cancelled. If so, cancel and then proceed.
             if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
