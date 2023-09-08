@@ -201,13 +201,7 @@ export const findEventSafe = ({
   eventName: string;
   contract: Contract;
 }) => {
-  if (!receipt.logs) {
-    throw new Error(
-      `no logs found when searching for event ${eventName}. Did you actually pass a transaction receipt into findEvent?`
-    );
-  }
-
-  const foundEvent = receipt.logs
+  return receipt.logs
     .map((log) => {
       try {
         return contract.interface.parseLog(log);
@@ -216,8 +210,6 @@ export const findEventSafe = ({
       }
     })
     .find((parsedEvent) => parsedEvent?.name === eventName);
-  if (!foundEvent) return;
-  return foundEvent;
 };
 
 export const txWait = async (tx: ethers.ContractTransaction, provider: ethers.providers.JsonRpcProvider) => {
