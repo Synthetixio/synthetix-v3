@@ -861,6 +861,7 @@ describe('MarginModule', async () => {
             desiredTrader: tradersGenerator.next().value,
           })
         );
+        // TODO: investigate this
         // For some collateral + trader combinations the trader has a balance bigger than collateralDepositAmount, so record the full balance here.
         const startingCollateralBalance = wei(await collateral.contract.balanceOf(traderAddress)).add(
           collateralDepositAmount
