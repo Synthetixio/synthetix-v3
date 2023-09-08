@@ -37,8 +37,6 @@ salt = "<%= settings.salt %>"
 abiOf = ["InitialModuleBundle"]
 create2 = true
 
-depends = ["contract.InitialModuleBundle"]
-
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
@@ -62,13 +60,6 @@ contracts = [
   "InitialModuleBundle",
 ]
 
-depends = [
-  "contract.AssociatedSystemsModule",
-  "contract.ElectionModule",
-  "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
-]
-
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
 from = "<%= settings.owner %>"
@@ -77,17 +68,11 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-depends = ["contract.InitialProxy", "router.CoreRouter"]
 
 [router.CouncilTokenRouter]
 contracts = [
   "CouncilTokenModule",
   "InitialModuleBundle",
-]
-
-depends = [
-  "contract.CouncilTokenModule",
-  "contract.InitialModuleBundle"
 ]
 
 [invoke.init_council_token]
@@ -101,10 +86,7 @@ args = [
   "https://synthetix.io",
   "<%= contracts.CouncilTokenRouter.address %>"
 ]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "router.CouncilTokenRouter"
-]
+
 factory.AccountProxy.abiOf = ["CouncilTokenRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
@@ -121,5 +103,3 @@ args = [
   "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
-
-depends = ["invoke.init_council_token", "contract.DebtShareMock"]

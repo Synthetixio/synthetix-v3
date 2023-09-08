@@ -112,27 +112,6 @@ contracts = [
     "VaultModule",
 ]
 
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.FeatureFlagModule",
-  "contract.AccountModule",
-  "contract.AssociateDebtModule",
-  "contract.AssociatedSystemsModule",
-  "contract.CcipReceiverModule",
-  "contract.CollateralModule",
-  "contract.CollateralConfigurationModule",
-  "contract.CrossChainUSDModule",
-  "contract.IssueUSDModule",
-  "contract.LiquidationModule",
-  "contract.MarketCollateralModule",
-  "contract.MarketManagerModule",
-  "contract.MulticallModule",
-  "contract.PoolConfigurationModule",
-  "contract.PoolModule",
-  "contract.RewardsManagerModule",
-  "contract.UtilsModule",
-  "contract.VaultModule"
-]
 
 [contract.InitialCoreProxy]
 artifact = "contracts/Proxy.sol:Proxy"
@@ -140,7 +119,6 @@ args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
 salt = "<%= settings.salt %>"
 create2 = true
-depends = ["contract.InitialModuleBundle"]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialCoreProxy"]
@@ -153,20 +131,12 @@ factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
 
-depends = [
-  "contract.InitialCoreProxy",
-  "router.CoreRouter"
-]
 
 # Account
 [router.AccountRouter]
 contracts = [
     "InitialModuleBundle",
     "AccountTokenModule",
-]
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.AccountTokenModule"
 ]
 
 # USD
@@ -175,11 +145,6 @@ contracts = [
     "InitialModuleBundle",
     "AssociatedSystemsModule",
     "USDTokenModule"
-]
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.AssociatedSystemsModule",
-  "contract.USDTokenModule"
 ]
 
 # Post stuff
@@ -195,10 +160,7 @@ args = [
   "https://synthetix.io",
   "<%= contracts.AccountRouter.address %>"
 ]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "router.AccountRouter"
-]
+
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
@@ -214,10 +176,7 @@ args = [
   18,
   "<%= contracts.USDRouter.address %>"
 ]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "router.USDRouter"
-]
+
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2
@@ -229,7 +188,6 @@ func = "configureOracleManager"
 args = [
   "<%= imports.oracle_manager.contracts.Proxy.address %>",
 ]
-depends = ["invoke.upgrade_core_proxy", "provision.oracle_manager"]
 
 [invoke.enable_basic_features]
 target = ["CoreProxy"]
@@ -252,9 +210,6 @@ args = [[
   "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('delegateCollateral'), true]).slice(2) %>",
 ]]
 
-depends = ["invoke.upgrade_core_proxy"]
-
-
 [invoke.register_const_one_oracle]
 target = ["oracle_manager.Proxy"]
 func = "registerNode"
@@ -268,10 +223,6 @@ args = [
 extra.const_one_oracle_id.event = "NodeRegistered"
 extra.const_one_oracle_id.arg = 0
 
-depends = [
-  "provision.oracle_manager"
-]
-
 # we register USD as a collateral type because it is useful to treat it the same way as any other collateral
 [invoke.configure_usd_collateral]
 target = ["CoreProxy"]
@@ -281,5 +232,3 @@ func = "configureCollateral"
 args = [
   { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true }
 ]
-
-depends = ["invoke.register_const_one_oracle", "invoke.init_usd"]
