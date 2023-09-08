@@ -173,9 +173,11 @@ export const commitAndSettle = async (
     await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
   }
 
-  return PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+  const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
     value: updateFee,
   });
+
+  return { tx, settlementTime, publishTime };
 };
 
 /** Updates the provided `contract` with more ABI details. */
@@ -190,3 +192,7 @@ export const extendContractAbi = (contract: Contract, abi: string[]) => {
   utils.Logger.setLogLevel(LogLevel.WARNING); // enable default logging again
   return newContract;
 };
+
+/** Returns the latest block's timestamp. */
+export const getBlockTimestamp = async (provider: ReturnType<Bs['provider']>) =>
+  (await provider.getBlock('latest')).timestamp;

@@ -57,6 +57,8 @@ describe('OrderModule', () => {
       );
     });
 
+    it('should cancel order when commiting again with existing expired order');
+
     it('should emit all events in correct order');
 
     it('should recompute funding');
@@ -81,7 +83,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when an order already present', async () => {
+    it('should revert when an order already present and not yet expired', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
@@ -104,7 +106,7 @@ describe('OrderModule', () => {
           order2.limitPrice,
           order2.keeperFeeBufferUsd
         ),
-        `OrderFound("${trader.accountId}")`,
+        `OrderFound()`,
         PerpMarketProxy
       );
     });
@@ -265,11 +267,15 @@ describe('OrderModule', () => {
         value: updateFee,
       });
 
-      await assertEvent(
-        tx,
-        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${keeperFee})`,
-        PerpMarketProxy
-      );
+      const orderSettledEventProperties = [
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        orderFee,
+        keeperFee,
+        settlementTime + 1, // NOTE: + 1 here because `settleOrder` results in block.timestamp += 1;
+      ].join(', ');
+      await assertEvent(tx, `OrderSettled(${orderSettledEventProperties})`, PerpMarketProxy);
 
       // There should be no order.
       const pendingOrder2 = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
@@ -755,7 +761,7 @@ describe('OrderModule', () => {
           order.sizeDelta,
           order.keeperFeeBufferUsd
         );
-        const tx = await commitAndSettle(bs, marketId, trader, order);
+        const { tx, settlementTime } = await commitAndSettle(bs, marketId, trader, order);
 
         // block.basefee on the block which settled the commitment.
         const { lastBaseFeePerGas } = await provider().getFeeData();
@@ -765,7 +771,7 @@ describe('OrderModule', () => {
         assertBn.equal(expectedKeeperFee, keeperFee);
         assertEvent(
           tx,
-          `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee})`,
+          `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, ${settlementTime})`,
           PerpMarketProxy
         );
       });

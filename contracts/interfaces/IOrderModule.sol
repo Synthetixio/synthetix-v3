@@ -23,7 +23,8 @@ interface IOrderModule is IBasePerpMarket {
         uint128 indexed marketId,
         int128 sizeDelta,
         uint256 orderFee,
-        uint256 keeperFee
+        uint256 keeperFee,
+        uint256 settlementTime
     );
 
     // --- Mutative --- //
@@ -43,14 +44,6 @@ interface IOrderModule is IBasePerpMarket {
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
-
-    /**
-     * @dev Cancels a pending order.
-     *
-     * An order can only be canceled after a certain amount of time (i.e. when an order becomes stale). The keeperFee
-     * is not charged if the caller is the same owner as the order.
-     */
-    function cancelOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 

@@ -19,6 +19,7 @@ import {
   SECONDS_ONE_HR,
   commitAndSettle,
   depositMargin,
+  getBlockTimestamp,
   setMarketConfigurationById,
 } from '../../helpers';
 import { BigNumber } from 'ethers';
@@ -118,7 +119,7 @@ describe('PerpMarketFactoryModule', () => {
         }
       };
       const fastForwardBySec = async (seconds: number) =>
-        await fastForwardTo((await provider().getBlock('latest')).timestamp + seconds, provider());
+        await fastForwardTo((await getBlockTimestamp(provider())) + seconds, provider());
 
       it('should compute current funding rate relative to time (concrete)', async () => {
         // This test is pulled directly from a concrete example developed for PerpsV2.

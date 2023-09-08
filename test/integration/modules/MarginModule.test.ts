@@ -36,6 +36,8 @@ describe('MarginModule', async () => {
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
+    it('should cancel order when modifying if pending order exists and expired');
+
     it('should revert when a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -115,7 +117,7 @@ describe('MarginModule', async () => {
           gTrader2.collateral.contract.address,
           gTrader2.collateralDepositAmount
         ),
-        `OrderFound("${trader.accountId}")`
+        `OrderFound()`
       );
 
       // (withdraw) Attempt to withdraw previously deposted margin but expect fail.
@@ -126,7 +128,7 @@ describe('MarginModule', async () => {
           gTrader1.collateral.contract.address,
           gTrader1.collateralDepositAmount.mul(-1)
         ),
-        `OrderFound("${trader.accountId}")`
+        `OrderFound()`
       );
     });
 
@@ -699,6 +701,7 @@ describe('MarginModule', async () => {
           PerpMarketProxy
         );
       });
+
       it('should revert withdraw if position is liquidatable due to price', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
@@ -825,12 +828,12 @@ describe('MarginModule', async () => {
           collateralDepositAmount2.add(collateralWalletBalanceBeforeWithdrawal2)
         );
       });
+
+      it('should cancel order when withdrawing all if pending order exists and expired');
+
       it('should recompute funding', async () => {
         const { PerpMarketProxy } = systems();
-        const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
-          bs,
-          genTrader(bs)
-        );
+        const { trader, market } = await depositMargin(bs, genTrader(bs));
 
         // Perform the deposit.
         const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
@@ -877,7 +880,7 @@ describe('MarginModule', async () => {
         );
       });
 
-      it('should revert when trader have open order', async () => {
+      it('should revert when trader has a pending order', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
           bs,
@@ -888,7 +891,7 @@ describe('MarginModule', async () => {
         // Perform withdraw with invalid market
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
-          `OrderFound("${trader.accountId}")`,
+          `OrderFound()`,
           PerpMarketProxy
         );
       });
@@ -932,6 +935,7 @@ describe('MarginModule', async () => {
           `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
         );
       });
+
       it('should revert when flagged', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
