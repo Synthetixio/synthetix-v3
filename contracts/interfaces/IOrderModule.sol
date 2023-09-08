@@ -18,16 +18,6 @@ interface IOrderModule is IBasePerpMarket {
         uint256 estimatedKeeperFee
     );
 
-    // only used due to stack too deep during settlement
-    struct OrderSettleRuntime {
-        uint256 pythPrice;
-        uint256 publishTime;
-        int256 accruedFunding;
-        int256 pnl;
-        uint256 fillPrice;
-        Position.ValidatedTrade trade;
-        Position.TradeParams params;
-    }
     // @dev Emitted when a pending order was successfully settled/executed.
     event OrderSettled(
         uint128 indexed accountId,
@@ -47,6 +37,17 @@ interface IOrderModule is IBasePerpMarket {
         uint256 orderFee,
         uint256 keeperFee
     );
+
+    // --- Runtime structs --- //
+    struct Runtime_settleOrder {
+        uint256 pythPrice;
+        uint256 publishTime;
+        int256 accruedFunding;
+        int256 pnl;
+        uint256 fillPrice;
+        Position.ValidatedTrade trade;
+        Position.TradeParams params;
+    }
 
     // --- Mutative --- //
 
