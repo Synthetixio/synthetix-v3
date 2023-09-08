@@ -4,7 +4,7 @@ import { openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
-describe.only('Liquidation - max liquidatable amount with multiple continuing liquidations', async () => {
+describe('Liquidation - max liquidatable amount with multiple continuing liquidations', async () => {
   const { systems, provider, trader1, trader2, keeper, perpsMarkets } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [
@@ -221,10 +221,7 @@ describe.only('Liquidation - max liquidatable amount with multiple continuing li
 
     it('liquidated only 270, 20 left', async () => {
       const [, , size] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      // 300 original size - 280 (300 - 20 (amount liquidated in within last 30 seconds window))
       assertBn.equal(size, bn(20));
-      // this reverts as the 100 op liquidated ~87 seconds ago is still counted as well as 10 liquidated ~58 seconds ago
-      // actual size remaining is 130
     });
   });
 });
