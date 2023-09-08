@@ -336,7 +336,7 @@ library PerpsMarket {
     }
 
     function proportionalElapsed(Data storage self) internal view returns (int) {
-        return (block.timestamp - self.lastFundingTime).toInt().divDecimal(1 days);
+        return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
     function validatePositionSize(
