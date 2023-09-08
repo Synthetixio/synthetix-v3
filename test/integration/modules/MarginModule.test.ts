@@ -879,12 +879,11 @@ describe('MarginModule', async () => {
           })
         );
 
-        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSide: 1,
           desiredLeverage: 1,
-          desiredKeeperFeeBufferUsd: 1,
         });
-        const openTx = await commitAndSettle(bs, marketId, trader, order);
+        const openTx = await commitAndSettle(bs, marketId, trader, openOrder);
         // Collect some data for calculation.
         const { args: openEventArgs } =
           findEventSafe({
@@ -897,12 +896,10 @@ describe('MarginModule', async () => {
         await fastForwardTo(currentBlockTimestamp + genNumber(3000, 100000), provider());
 
         // Price change causing 50% loss.
-        await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(0.5).toBN());
+        await market.aggregator().mockSetCurrentPrice(wei(openOrder.oraclePrice).mul(0.5).toBN());
 
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
-          desiredKeeperFeeBufferUsd: 0,
-          desiredSize: wei(order.sizeDelta).mul(-1).toBN(),
-          desiredLeverage: 2,
+          desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
         });
 
         const closeTx = await commitAndSettle(bs, marketId, trader, closeOrder);
@@ -919,8 +916,8 @@ describe('MarginModule', async () => {
             eventName: 'OrderSettled',
           }) || {};
 
-        const pnl = calcPnl(order.sizeDelta, closeOrder.fillPrice, order.fillPrice);
-        const openOrderFees = wei(order.orderFee).add(openEventArgs?.keeperFee);
+        const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
+        const openOrderFees = wei(openOrder.orderFee).add(openEventArgs?.keeperFee);
         const closeOrderFees = wei(closeOrder.orderFee).add(closeEventArgs?.keeperFee);
 
         // Calculate diff amount.
