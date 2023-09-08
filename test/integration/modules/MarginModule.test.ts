@@ -887,7 +887,8 @@ describe('MarginModule', async () => {
 
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredKeeperFeeBufferUsd: 0,
-          desiredSize: wei(order.sizeDelta).mul(-1),
+          desiredSize: wei(order.sizeDelta).mul(-1).toBN(),
+          desiredLeverage: 2,
         });
 
         const tx = await commitAndSettle(bs, marketId, trader, closeOrder);

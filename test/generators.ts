@@ -165,7 +165,7 @@ export const genOrder = async (
     desiredLeverage?: number;
     desiredSide?: 1 | -1;
     desiredKeeperFeeBufferUsd?: number;
-    desiredSize?: Wei; // Note if desiredSize is specified, desiredSide and leverage will be ignored.
+    desiredSize?: BigNumber; // Note if desiredSize is specified, desiredSide and leverage will be ignored.
   }
 ) => {
   const { PerpMarketProxy } = systems();
@@ -185,7 +185,7 @@ export const genOrder = async (
 
   // `desiredSide` is specified, just use that.
   if (options?.desiredSize) {
-    sizeDelta = options.desiredSize.toBN();
+    sizeDelta = options.desiredSize;
   } else if (options?.desiredSide) {
     sizeDelta = sizeDelta.mul(options.desiredSide);
   } else {
