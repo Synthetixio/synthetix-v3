@@ -13,6 +13,14 @@ export const raise = (err: string): never => {
 
 export const bn = (n: number) => wei(n).toBN();
 
+export function* toRoundRobinGenerators<A>(l: A[]): Generator<A> {
+  let idx = 0;
+  while (true) {
+    yield l[idx];
+    idx = (idx + 1) % l.length;
+  }
+}
+
 // --- Primitive generators --- //
 
 export const genTimes = <A>(n: number, f: (n?: number) => A) => [...Array(n).keys()].map(f);

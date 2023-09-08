@@ -16,6 +16,7 @@ import {
   genOneOf,
   genTrader,
   genOrder,
+  toRoundRobinGenerators,
 } from '../../generators';
 import {
   ZERO_ADDRESS,
@@ -844,6 +845,7 @@ describe('MarginModule', async () => {
 
       it('should withdraw correct amount after losing position', async () => {
         const { PerpMarketProxy } = systems();
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
         // Deposit margin with collateral 1.
         const {
@@ -855,7 +857,12 @@ describe('MarginModule', async () => {
           market,
           collateral,
           collateralPrice,
-        } = await depositMargin(bs, genTrader(bs));
+        } = await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredTrader: tradersGenerator.next().value,
+          })
+        );
         // For some collateral + trader combinations the trader has a balance bigger than collateralDepositAmount, so record the full balance here.
         const startingCollateralBalance = wei(await collateral.contract.balanceOf(traderAddress)).add(
           collateralDepositAmount
@@ -865,7 +872,7 @@ describe('MarginModule', async () => {
         await depositMargin(
           bs,
           genTrader(bs, {
-            desiredTrader: bs.traders().find((t) => t.accountId !== trader.accountId), // Use another trader
+            desiredTrader: tradersGenerator.next().value, // Use another trader
             desiredCollateral: collateral, // Use same collateral
             desiredMarginUsdDepositAmount: wei(marginUsdDepositAmount).mul(2).toNumber(), // Use same margin
           })
