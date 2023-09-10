@@ -108,6 +108,9 @@ library PerpsMarketConfiguration {
             uint256 liquidationMargin
         )
     {
+        if (size == 0) {
+            return (0, 0, 0, 0, 0);
+        }
         uint256 sizeAbs = MathUtil.abs(size.to256());
         uint256 impactOnSkew = self.skewScale == 0 ? 0 : sizeAbs.divDecimal(self.skewScale);
 
@@ -118,13 +121,10 @@ library PerpsMarketConfiguration {
 
         uint256 notional = sizeAbs.mulDecimal(price);
 
-        initialMargin = size == 0
-            ? 0
-            : notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
-
-        maintenanceMargin = size == 0
-            ? 0
-            : notional.mulDecimal(maintenanceMarginRatio) + self.minimumPositionMargin;
+        initialMargin = notional.mulDecimal(initialMarginRatio) + self.minimumPositionMargin;
+        maintenanceMargin =
+            notional.mulDecimal(maintenanceMarginRatio) +
+            self.minimumPositionMargin;
 
         liquidationMargin = calculateLiquidationReward(self, notional);
     }
