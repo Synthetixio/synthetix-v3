@@ -64,5 +64,5 @@ interface ILiquidationModule {
     )
         external
         view
-        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp);
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp);
 }

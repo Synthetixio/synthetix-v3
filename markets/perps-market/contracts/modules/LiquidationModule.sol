@@ -83,7 +83,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         external
         view
         override
-        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp)
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp)
     {
         return
             PerpsMarket.load(marketId).currentLiquidationCapacity(

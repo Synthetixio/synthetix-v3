@@ -9,6 +9,7 @@ import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {Liquidation} from "./Liquidation.sol";
 
 /**
  * @title Data for a single perps market
@@ -37,9 +38,10 @@ library PerpsMarket {
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
-        // liquidation data
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128 __unused_1;
+        // solhint-disable-next-line var-name-mixedcase
+        uint128 __unused_2;
         // debt calculation
         // accumulates total notional size of the market including accrued funding until the last time any position changed
         int256 debtCorrectionAccumulator;
@@ -48,8 +50,7 @@ library PerpsMarket {
         // accountId => position
         mapping(uint => Position.Data) positions;
         // liquidation amounts
-        uint128[] liquidationAmounts;
-        uint128[] liquidationTimestamps;
+        Liquidation.Data[] liquidationData;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -105,14 +106,14 @@ library PerpsMarket {
 
         // if endorsedLiquidator is configured and is the sender, allow full liquidation
         if (msg.sender == marketConfig.endorsedLiquidator) {
-            _updateLiquidationData(self, marketConfig, requestedLiquidationAmount);
+            _updateLiquidationData(self, requestedLiquidationAmount);
             return requestedLiquidationAmount;
         }
 
         (
             uint liquidationCapacity,
             uint maxLiquidationInWindow,
-            uint128 latestLiquidationTimestamp
+            uint latestLiquidationTimestamp
         ) = currentLiquidationCapacity(self, marketConfig);
 
         // this would only occur if there was a misconfiguration (like skew scale not being set)
@@ -148,30 +149,29 @@ library PerpsMarket {
         }
 
         if (liquidatableAmount > 0) {
-            _updateLiquidationData(self, marketConfig, liquidatableAmount);
+            _updateLiquidationData(self, liquidatableAmount);
         }
     }
 
-    function _updateLiquidationData(
-        Data storage self,
-        PerpsMarketConfiguration.Data storage marketConfig,
-        uint128 liquidationAmount
-    ) private {
-        uint liquidationIndex = block.timestamp % marketConfig.maxSecondsInLiquidationWindow;
-        // if other liquidations happened in same block, add to amount otherwise set as liquidatable amt
-        self.liquidationAmounts[liquidationIndex] = self.liquidationTimestamps[liquidationIndex] ==
-            block.timestamp
-            ? self.liquidationAmounts[liquidationIndex] + liquidationAmount
-            : liquidationAmount;
-        self.liquidationTimestamps[liquidationIndex] = block.timestamp.to128();
+    function _updateLiquidationData(Data storage self, uint128 liquidationAmount) private {
+        uint liquidationDataLength = self.liquidationData.length;
+        uint currentTimestamp = liquidationDataLength == 0
+            ? 0
+            : self.liquidationData[liquidationDataLength - 1].timestamp;
+
+        if (currentTimestamp == block.timestamp) {
+            self.liquidationData[liquidationDataLength - 1].amount += liquidationAmount;
+        } else {
+            self.liquidationData.push(
+                Liquidation.Data({amount: liquidationAmount, timestamp: block.timestamp})
+            );
+        }
     }
 
     /**
      * @dev Returns the current liquidation capacity for the market
-     * @notice liquidationAmounts tracks every liquidation with the corresponding timestamp.
-     * The logic here goes through each item in the array and sums up the amounts that are within the
-     * configured liquidation window from the current block timestamp.  This value is used to determine
-     * the available capacity
+     * @notice This function sums up the liquidation amounts in the current liquidation window
+     * and returns the capacity left.
      */
     function currentLiquidationCapacity(
         Data storage self,
@@ -179,45 +179,27 @@ library PerpsMarket {
     )
         internal
         view
-        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp)
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp)
     {
-        uint accumulatedLiquidationAmounts;
-
-        uint maxConfiguredSeconds = marketConfig.maxSecondsInLiquidationWindow;
         maxLiquidationInWindow = marketConfig.maxLiquidationAmountInWindow();
+        uint accumulatedLiquidationAmounts;
+        uint liquidationDataLength = self.liquidationData.length;
+        if (liquidationDataLength == 0) return (maxLiquidationInWindow, maxLiquidationInWindow, 0);
 
-        uint windowStartTimestamp = block.timestamp.to128() -
-            marketConfig.maxSecondsInLiquidationWindow;
-        for (uint i = 0; i < maxConfiguredSeconds; i++) {
-            uint128 liquidationTimestamp = self.liquidationTimestamps[i];
-            // keep track of latest liquidation timestamp
-            // used in determining whether to allow another block of liquidation given p/d requirements are met
-            latestLiquidationTimestamp = MathUtil
-                .max(latestLiquidationTimestamp, liquidationTimestamp)
-                .to128();
+        uint currentIndex = liquidationDataLength - 1;
+        latestLiquidationTimestamp = self.liquidationData[currentIndex].timestamp;
+        uint windowStartTimestamp = block.timestamp - marketConfig.maxSecondsInLiquidationWindow;
 
-            if (liquidationTimestamp >= windowStartTimestamp) {
-                accumulatedLiquidationAmounts += self.liquidationAmounts[i];
-            }
+        while (self.liquidationData[currentIndex].timestamp > windowStartTimestamp) {
+            accumulatedLiquidationAmounts += self.liquidationData[currentIndex].amount;
+
+            if (currentIndex == 0) break;
+            currentIndex--;
         }
-
         int availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
             accumulatedLiquidationAmounts.toInt();
         // solhint-disable-next-line numcast/safe-cast
         capacity = MathUtil.max(availableLiquidationCapacity, int(0)).toUint();
-    }
-
-    /**
-     * @dev resets the liquidationAmounts array with 0 values
-     * @notice
-     */
-    function resetLiquidationAmounts(
-        uint128 marketId,
-        uint256 maxSecondsInLiquidationWindow
-    ) internal {
-        Data storage self = load(marketId);
-        self.liquidationAmounts = new uint128[](maxSecondsInLiquidationWindow);
-        self.liquidationTimestamps = new uint128[](maxSecondsInLiquidationWindow);
     }
 
     /**

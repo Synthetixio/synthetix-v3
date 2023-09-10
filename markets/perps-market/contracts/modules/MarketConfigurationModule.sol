@@ -118,12 +118,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
             .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
         config.maxLiquidationPd = maxLiquidationPd;
         config.endorsedLiquidator = endorsedLiquidator;
-
-        if (maxSecondsInLiquidationWindow != config.maxSecondsInLiquidationWindow) {
-            config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
-            // setting max seconds in window will reset the liquidation amounts that might exist from prior to this change
-            PerpsMarket.resetLiquidationAmounts(marketId, maxSecondsInLiquidationWindow);
-        }
+        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
 
         emit MaxLiquidationParametersSet(
             marketId,
