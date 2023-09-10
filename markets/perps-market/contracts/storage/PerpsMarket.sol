@@ -190,9 +190,7 @@ library PerpsMarket {
         latestLiquidationTimestamp = self.liquidationData[currentIndex].timestamp;
         uint windowStartTimestamp = block.timestamp - marketConfig.maxSecondsInLiquidationWindow;
 
-        while (
-            currentIndex >= 0 && self.liquidationData[currentIndex].timestamp > windowStartTimestamp
-        ) {
+        while (self.liquidationData[currentIndex].timestamp > windowStartTimestamp) {
             accumulatedLiquidationAmounts += self.liquidationData[currentIndex].amount;
 
             if (currentIndex == 0) break;
