@@ -21,7 +21,7 @@ describe('Liquidation - multi collateral', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.01),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -40,7 +40,7 @@ describe('Liquidation - multi collateral', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.02),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -59,7 +59,7 @@ describe('Liquidation - multi collateral', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {

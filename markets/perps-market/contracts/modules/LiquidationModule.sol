@@ -12,6 +12,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
 /**
@@ -26,6 +27,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using PerpsMarket for PerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
 
     /**
@@ -73,6 +75,23 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     }
 
     /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidationCapacity(
+        uint128 marketId
+    )
+        external
+        view
+        override
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp)
+    {
+        return
+            PerpsMarket.load(marketId).currentLiquidationCapacity(
+                PerpsMarketConfiguration.load(marketId)
+            );
+    }
+
+    /**
      * @dev liquidates an account
      */
     function _liquidateAccount(
@@ -91,7 +110,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 uint256 amountLiquidated,
                 int128 newPositionSize,
                 int128 sizeDelta,
-                PerpsMarket.MarketUpdateData memory marketUpdateData
+                MarketUpdate.Data memory marketUpdateData
             ) = account.liquidatePosition(positionMarketId, price);
 
             if (amountLiquidated == 0) {
@@ -114,7 +133,11 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             uint256 liquidationReward = PerpsMarketConfiguration
                 .load(positionMarketId)
                 .calculateLiquidationReward(amountLiquidated.mulDecimal(price));
-            accumulatedLiquidationRewards += liquidationReward;
+
+            // endorsed liquidators do not get liquidation rewards
+            if (msg.sender != PerpsMarketConfiguration.load(positionMarketId).endorsedLiquidator) {
+                accumulatedLiquidationRewards += liquidationReward;
+            }
         }
 
         keeperLiquidationReward = _processLiquidationRewards(accumulatedLiquidationRewards);

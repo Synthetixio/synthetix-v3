@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {Position} from "../storage/Position.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {MarketUpdate} from "../storage/MarketUpdate.sol";
 
 interface IAsyncOrderSettlementModule {
     /**
@@ -68,7 +69,7 @@ interface IAsyncOrderSettlementModule {
         uint256 referralFees;
         uint256 feeCollectorFees;
         Position.Data newPosition;
-        PerpsMarket.MarketUpdateData updateData;
+        MarketUpdate.Data updateData;
     }
 
     /**

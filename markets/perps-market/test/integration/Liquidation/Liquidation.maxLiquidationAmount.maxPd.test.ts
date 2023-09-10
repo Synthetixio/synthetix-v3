@@ -148,7 +148,7 @@ describe('Liquidation - max pd', async () => {
     });
 
     describe('next block', () => {
-      before('call liquidate twice more since under max pd', async () => {
+      before('call liquidate again', async () => {
         await systems().PerpsMarket.connect(keeper()).liquidate(2);
       });
 
@@ -169,9 +169,9 @@ describe('Liquidation - max pd', async () => {
     });
 
     // because the previous liquidation of trader 1 was of 15 OP, the remaining amount that can be liquidated is 10 OP
-    it('liquidated 10 OP', async () => {
+    it('liquidated all 10 OP', async () => {
       const [, , size] = await systems().PerpsMarket.getOpenPosition(3, perpsMarket.marketId());
-      assertBn.equal(size, bn(-15));
+      assertBn.equal(size, 0);
     });
   });
 });

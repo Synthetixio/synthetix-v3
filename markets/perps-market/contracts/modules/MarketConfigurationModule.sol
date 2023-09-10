@@ -5,6 +5,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 
 /**
@@ -115,9 +116,14 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
 
         config
             .maxLiquidationLimitAccumulationMultiplier = maxLiquidationLimitAccumulationMultiplier;
-        config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
         config.maxLiquidationPd = maxLiquidationPd;
         config.endorsedLiquidator = endorsedLiquidator;
+
+        if (maxSecondsInLiquidationWindow != config.maxSecondsInLiquidationWindow) {
+            config.maxSecondsInLiquidationWindow = maxSecondsInLiquidationWindow;
+            // setting max seconds in window will reset the liquidation amounts that might exist from prior to this change
+            PerpsMarket.resetLiquidationAmounts(marketId, maxSecondsInLiquidationWindow);
+        }
 
         emit MaxLiquidationParametersSet(
             marketId,
