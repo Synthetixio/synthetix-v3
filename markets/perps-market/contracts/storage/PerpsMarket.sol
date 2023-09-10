@@ -6,6 +6,7 @@ import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contra
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
+import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
 
@@ -33,7 +34,6 @@ library PerpsMarket {
         uint128 id;
         int256 skew;
         uint256 size;
-        // TODO: move to new data structure?
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
@@ -47,6 +47,9 @@ library PerpsMarket {
         mapping(uint => AsyncOrder.Data) asyncOrders;
         // accountId => position
         mapping(uint => Position.Data) positions;
+        // liquidation amounts
+        uint128[] liquidationAmounts;
+        uint128[] liquidationTimestamps;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage market) {
@@ -96,77 +99,125 @@ library PerpsMarket {
      */
     function maxLiquidatableAmount(
         Data storage self,
-        uint256 requestedLiquidationAmount
+        uint128 requestedLiquidationAmount
     ) internal returns (uint128 liquidatableAmount) {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         // if endorsedLiquidator is configured and is the sender, allow full liquidation
         if (msg.sender == marketConfig.endorsedLiquidator) {
-            return requestedLiquidationAmount.to128();
+            _updateLiquidationData(self, marketConfig, requestedLiquidationAmount);
+            return requestedLiquidationAmount;
         }
 
-        uint maxLiquidationAmountPerSecond = marketConfig.maxLiquidationAmountPerSecond();
-        // this would only be 0 if fees or skew scale are configured to be 0.
-        // in that case, (very unlikely), allow full liquidation
-        if (maxLiquidationAmountPerSecond == 0) {
-            return requestedLiquidationAmount.to128();
+        (
+            uint liquidationCapacity,
+            uint maxLiquidationInWindow,
+            uint128 latestLiquidationTimestamp
+        ) = currentLiquidationCapacity(self, marketConfig);
+
+        // this would only occur if there was a misconfiguration (like skew scale not being set)
+        // or the max liquidation window not being set etc.
+        // in this case, return the entire requested liquidation amount
+        if (maxLiquidationInWindow == 0) {
+            return requestedLiquidationAmount;
         }
 
-        uint timeSinceLastUpdate = block.timestamp - self.lastTimeLiquidationCapacityUpdated;
-        uint maxSecondsInLiquidationWindow = marketConfig.maxSecondsInLiquidationWindow;
-
-        uint256 maxAllowedLiquidationInWindow = maxSecondsInLiquidationWindow *
-            maxLiquidationAmountPerSecond;
-        if (timeSinceLastUpdate > maxSecondsInLiquidationWindow) {
-            liquidatableAmount = MathUtil
-                .min(maxAllowedLiquidationInWindow, requestedLiquidationAmount)
-                .to128();
-            self.lastUtilizedLiquidationCapacity = liquidatableAmount;
-        } else {
-            liquidatableAmount = MathUtil
-                .min(
-                    maxAllowedLiquidationInWindow - self.lastUtilizedLiquidationCapacity,
-                    requestedLiquidationAmount
-                )
-                .to128();
-            self.lastUtilizedLiquidationCapacity += liquidatableAmount;
-        }
-
-        // liquidatable amount is 0 only if there's no more capacity in the window
-        // but if maxLiquidationPd is set, and the current market p/d is less than that,
-        // then allow for an extra block of liquidation
         uint maxLiquidationPd = marketConfig.maxLiquidationPd;
-        if (
-            liquidatableAmount == 0 &&
+        // if liquidation capacity exists, update accordingly
+        if (liquidationCapacity != 0) {
+            liquidatableAmount = MathUtil.min128(
+                liquidationCapacity.to128(),
+                requestedLiquidationAmount
+            );
+        } else if (
             maxLiquidationPd != 0 &&
             // only allow this if the last update was not in the current block
-            self.lastTimeLiquidationCapacityUpdated != block.timestamp.to128()
+            latestLiquidationTimestamp != block.timestamp
         ) {
+            /**
+                if capacity is at 0, but the market is under configured liquidation p/d,
+                another block of liquidation becomes allowable.
+             */
             uint256 currentPd = MathUtil.abs(self.skew).divDecimal(marketConfig.skewScale);
             if (currentPd < maxLiquidationPd) {
-                liquidatableAmount = (
-                    requestedLiquidationAmount > maxAllowedLiquidationInWindow
-                        ? maxAllowedLiquidationInWindow
-                        : requestedLiquidationAmount
-                ).to128();
-                // track how much was utilized in this block to ensure any subsequent
-                // liquidations don't combine for larger than what's allotted in the window
-                self.lastUtilizedLiquidationCapacity = liquidatableAmount;
+                liquidatableAmount = MathUtil.min128(
+                    maxLiquidationInWindow.to128(),
+                    requestedLiquidationAmount
+                );
             }
         }
 
-        // only update timestamp if there is something being liquidated
         if (liquidatableAmount > 0) {
-            self.lastTimeLiquidationCapacityUpdated = block.timestamp.to128();
+            _updateLiquidationData(self, marketConfig, liquidatableAmount);
         }
     }
 
-    struct MarketUpdateData {
-        uint128 marketId;
-        int256 skew;
-        uint256 size;
-        int256 currentFundingRate;
-        int256 currentFundingVelocity;
+    function _updateLiquidationData(
+        Data storage self,
+        PerpsMarketConfiguration.Data storage marketConfig,
+        uint128 liquidationAmount
+    ) private {
+        uint liquidationIndex = block.timestamp % marketConfig.maxSecondsInLiquidationWindow;
+        // if other liquidations happened in same block, add to amount otherwise set as liquidatable amt
+        self.liquidationAmounts[liquidationIndex] = self.liquidationTimestamps[liquidationIndex] ==
+            block.timestamp
+            ? self.liquidationAmounts[liquidationIndex] + liquidationAmount
+            : liquidationAmount;
+        self.liquidationTimestamps[liquidationIndex] = block.timestamp.to128();
+    }
+
+    /**
+     * @dev Returns the current liquidation capacity for the market
+     * @notice liquidationAmounts tracks every liquidation with the corresponding timestamp.
+     * The logic here goes through each item in the array and sums up the amounts that are within the
+     * configured liquidation window from the current block timestamp.  This value is used to determine
+     * the available capacity
+     */
+    function currentLiquidationCapacity(
+        Data storage self,
+        PerpsMarketConfiguration.Data storage marketConfig
+    )
+        internal
+        view
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp)
+    {
+        uint accumulatedLiquidationAmounts;
+
+        uint maxConfiguredSeconds = marketConfig.maxSecondsInLiquidationWindow;
+        maxLiquidationInWindow = marketConfig.maxLiquidationAmountInWindow();
+
+        uint windowStartTimestamp = block.timestamp.to128() -
+            marketConfig.maxSecondsInLiquidationWindow;
+        for (uint i = 0; i < maxConfiguredSeconds; i++) {
+            uint128 liquidationTimestamp = self.liquidationTimestamps[i];
+            // keep track of latest liquidation timestamp
+            // used in determining whether to allow another block of liquidation given p/d requirements are met
+            latestLiquidationTimestamp = MathUtil
+                .max(latestLiquidationTimestamp, liquidationTimestamp)
+                .to128();
+
+            if (liquidationTimestamp >= windowStartTimestamp) {
+                accumulatedLiquidationAmounts += self.liquidationAmounts[i];
+            }
+        }
+
+        int availableLiquidationCapacity = maxLiquidationInWindow.toInt() -
+            accumulatedLiquidationAmounts.toInt();
+        // solhint-disable-next-line numcast/safe-cast
+        capacity = MathUtil.max(availableLiquidationCapacity, int(0)).toUint();
+    }
+
+    /**
+     * @dev resets the liquidationAmounts array with 0 values
+     * @notice
+     */
+    function resetLiquidationAmounts(
+        uint128 marketId,
+        uint256 maxSecondsInLiquidationWindow
+    ) internal {
+        Data storage self = load(marketId);
+        self.liquidationAmounts = new uint128[](maxSecondsInLiquidationWindow);
+        self.liquidationTimestamps = new uint128[](maxSecondsInLiquidationWindow);
     }
 
     /**
@@ -178,13 +229,15 @@ library PerpsMarket {
         Data storage self,
         uint128 accountId,
         Position.Data memory newPosition
-    ) internal returns (MarketUpdateData memory) {
+    ) internal returns (MarketUpdate.Data memory) {
         Position.Data storage oldPosition = self.positions[accountId];
 
         int128 oldPositionSize = oldPosition.size;
         int128 newPositionSize = newPosition.size;
 
-        self.size = (self.size + MathUtil.abs(newPositionSize)) - MathUtil.abs(oldPositionSize);
+        self.size =
+            (self.size + MathUtil.abs128(newPositionSize)) -
+            MathUtil.abs128(oldPositionSize);
         self.skew += newPositionSize - oldPositionSize;
 
         uint currentPrice = newPosition.latestInteractionPrice;
@@ -201,7 +254,7 @@ library PerpsMarket {
         oldPosition.update(newPosition);
 
         return
-            MarketUpdateData(
+            MarketUpdate.Data(
                 self.id,
                 self.skew,
                 self.size,

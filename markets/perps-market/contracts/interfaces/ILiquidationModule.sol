@@ -52,4 +52,17 @@ interface ILiquidationModule {
      * @return isEligible
      */
     function canLiquidate(uint128 accountId) external view returns (bool isEligible);
+
+    /**
+     * @notice Current liquidation capacity for the market
+     * @return capacity market can liquidate up to this #
+     * @return maxLiquidationInWindow max amount allowed to liquidate based on the current market configuration
+     * @return latestLiquidationTimestamp timestamp of the last liquidation of the market
+     */
+    function liquidationCapacity(
+        uint128 marketId
+    )
+        external
+        view
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint128 latestLiquidationTimestamp);
 }

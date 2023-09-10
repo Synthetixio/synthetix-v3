@@ -78,12 +78,12 @@ library PerpsMarketConfiguration {
         }
     }
 
-    function maxLiquidationAmountPerSecond(Data storage self) internal view returns (uint256) {
+    function maxLiquidationAmountInWindow(Data storage self) internal view returns (uint256) {
         OrderFee.Data storage orderFeeData = self.orderFees;
         return
             (orderFeeData.makerFee + orderFeeData.takerFee).mulDecimal(self.skewScale).mulDecimal(
                 self.maxLiquidationLimitAccumulationMultiplier
-            );
+            ) * self.maxSecondsInLiquidationWindow;
     }
 
     function calculateLiquidationReward(

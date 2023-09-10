@@ -180,7 +180,7 @@ describe('ModifyCollateral Withdraw', () => {
           maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
-          maxSecondsInLiquidationWindow: bn(10),
+          maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
           minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
@@ -199,7 +199,7 @@ describe('ModifyCollateral Withdraw', () => {
           maintenanceMarginScalar: bn(0.5),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: bn(0.05),
-          maxSecondsInLiquidationWindow: bn(10),
+          maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
           minimumPositionMargin: bn(0),
         },
         settlementStrategy: {

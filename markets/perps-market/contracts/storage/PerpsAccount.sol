@@ -9,6 +9,7 @@ import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {MarketUpdate} from "./MarketUpdate.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
@@ -432,7 +433,7 @@ library PerpsAccount {
             uint128 amountToLiquidate,
             int128 newPositionSize,
             int128 sizeDelta,
-            PerpsMarket.MarketUpdateData memory marketUpdateData
+            MarketUpdate.Data memory marketUpdateData
         )
     {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
@@ -441,7 +442,7 @@ library PerpsAccount {
         perpsMarket.recomputeFunding(price);
 
         int128 oldPositionSize = position.size;
-        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
+        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs128(oldPositionSize));
 
         if (amountToLiquidate == 0) {
             return (0, oldPositionSize, 0, marketUpdateData);
