@@ -566,11 +566,11 @@ library GlobalPerpsMarketConfiguration {
     }
 }
 
-// @custom:artifact contracts/storage/LiquidationAmount.sol:LiquidationAmount
-library LiquidationAmount {
+// @custom:artifact contracts/storage/Liquidation.sol:Liquidation
+library Liquidation {
     struct Data {
-        uint128 timestamp;
         uint128 amount;
+        uint256 timestamp;
     }
 }
 
@@ -620,12 +620,12 @@ library PerpsMarket {
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        uint128 __unused_1;
+        uint128 __unused_2;
         int256 debtCorrectionAccumulator;
         mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
-        LiquidationAmount.Data[] liquidationAmounts;
+        Liquidation.Data[] liquidationData;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));

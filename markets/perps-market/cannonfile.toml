@@ -16,6 +16,9 @@ defaultValue = "synthetix:<%= package.version %>"
 [setting.synthetixPreset]
 defaultValue = "main"
 
+[setting.spotMarketPreset]
+defaultValue = "main"
+
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>"
 
@@ -28,6 +31,7 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
+preset = "<%= settings.spotMarketPreset %>"
 
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
