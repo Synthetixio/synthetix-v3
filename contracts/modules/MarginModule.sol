@@ -116,6 +116,10 @@ contract MarginModule is IMarginModule {
         uint256 total;
 
         for (uint256 i = 0; i < length;) {
+            unchecked {
+                ++i;
+            }
+            
             collateralType = globalMarginConfig.supportedAddresses[i];
             available = accountMargin.collaterals[collateralType];
             total += available;
@@ -127,10 +131,6 @@ contract MarginModule is IMarginModule {
 
             // Withdraw all available collateral for this `collateralType`.
             withdrawAndTransfer(marketId, available, collateralType, globalConfig);
-
-            unchecked {
-                ++i;
-            }
         }
         if (total == 0) {
             revert ErrorUtil.NilCollateral();
