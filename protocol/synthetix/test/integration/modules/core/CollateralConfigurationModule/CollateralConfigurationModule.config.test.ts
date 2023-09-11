@@ -164,7 +164,7 @@ describe('CollateralModule', function () {
 
       it('collateral can successfully get its price once its configured', async () => {
         assertBn.equal(
-          await systems().Core.getCollateralPrice(Collateral.address),
+          await systems().Core.getCollateralPrice(Collateral.address, 0),
           collateralPrice
         );
       });

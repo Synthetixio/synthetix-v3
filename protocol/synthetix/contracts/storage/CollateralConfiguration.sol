@@ -203,13 +203,21 @@ library CollateralConfiguration {
     /**
      * @dev Returns the price of this collateral configuration object.
      * @param self The CollateralConfiguration object.
+     * @param collateralAmount The amount of collateral to get the price for.
      * @return The price of the collateral with 18 decimals of precision.
      */
-    function getCollateralPrice(Data storage self) internal view returns (uint256) {
+    function getCollateralPrice(
+        Data storage self,
+        uint256 collateralAmount
+    ) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();
-        NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress).process(
-            self.oracleNodeId
-        );
+
+        bytes32[] memory runtimeKeys = new bytes32[](1);
+        bytes32[] memory runtimeValues = new bytes32[](1);
+        runtimeKeys[0] = bytes32("synthAmount");
+        runtimeValues[0] = bytes32(collateralAmount);
+        NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress)
+            .processWithRuntime(self.oracleNodeId, runtimeKeys, runtimeValues);
 
         return node.price.toUint();
     }

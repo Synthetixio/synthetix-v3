@@ -12,6 +12,7 @@ import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
@@ -340,7 +341,9 @@ library Pool {
         address collateralType
     ) internal returns (uint256 collateralPriceD18) {
         // Get the latest collateral price.
-        collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
+        collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice(
+            DecimalMath.UNIT
+        );
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
         (uint256 usdWeightD18, ) = self.vaults[collateralType].updateCreditCapacity(
@@ -460,7 +463,7 @@ library Pool {
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice();
+            .getCollateralPrice(DecimalMath.UNIT);
 
         collateralAmountD18 = self.vaults[collateralType].currentCollateral();
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
@@ -476,7 +479,7 @@ library Pool {
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice();
+            .getCollateralPrice(DecimalMath.UNIT);
 
         collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);

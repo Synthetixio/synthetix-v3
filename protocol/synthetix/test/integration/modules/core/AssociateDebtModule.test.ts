@@ -68,7 +68,7 @@ describe('AssociateDebtModule', function () {
       const { liquidationRatioD18 } = await systems().Core.getCollateralConfiguration(
         collateralAddress()
       );
-      const price = await systems().Core.getCollateralPrice(collateralAddress());
+      const price = await systems().Core.getCollateralPrice(collateralAddress(), 0);
 
       await assertRevert(
         MockMarket().connect(user2).callAssociateDebt(poolId, collateralAddress(), accountId, debt),

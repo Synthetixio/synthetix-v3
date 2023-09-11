@@ -70,10 +70,14 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
-    function getCollateralPrice(address collateralType) external view override returns (uint256) {
+    function getCollateralPrice(
+        address collateralType,
+        uint256 collateralAmount
+    ) external view override returns (uint256) {
         return
             CollateralConfiguration.getCollateralPrice(
-                CollateralConfiguration.load(collateralType)
+                CollateralConfiguration.load(collateralType),
+                collateralAmount
             );
     }
 }
