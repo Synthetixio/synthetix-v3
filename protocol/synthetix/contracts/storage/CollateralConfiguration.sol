@@ -214,7 +214,7 @@ library CollateralConfiguration {
 
         bytes32[] memory runtimeKeys = new bytes32[](1);
         bytes32[] memory runtimeValues = new bytes32[](1);
-        runtimeKeys[0] = bytes32("synthAmount");
+        runtimeKeys[0] = bytes32("size");
         runtimeValues[0] = bytes32(collateralAmount);
         NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress)
             .processWithRuntime(self.oracleNodeId, runtimeKeys, runtimeValues);
