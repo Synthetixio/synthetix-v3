@@ -5,22 +5,27 @@ const fs = require('fs');
 const prettier = require('prettier');
 
 const [networkName] = process.argv.slice(2);
-const networkId = {
-  mainnet: 1,
-  'optimism-mainnet': 10,
-  goerli: 5,
-  'optimism-goerli': 420,
-}[networkName];
 
 const graphNetworkName = {
   mainnet: 'mainnet',
   'optimism-mainnet': 'optimism',
   goerli: 'goerli',
   'optimism-goerli': 'optimism-goerli',
+  'base-testnet': 'base-testnet',
+}[networkName];
+
+const infuraNetworkName = {
+  mainnet: 'mainnet',
+  'optimism-mainnet': 'optimism-mainnet',
+  goerli: 'goerli',
+  'optimism-goerli': 'optimism-goerli',
+  'base-testnet': 'base-goerli',
 }[networkName];
 
 async function run() {
-  const provider = new ethers.providers.InfuraProvider(networkId, process.env.INFURA_KEY);
+  const url = `https://${infuraNetworkName}.infura.io/v3/${process.env.INFURA_KEY}`;
+
+  const provider = new ethers.providers.JsonRpcProvider(url);
 
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
