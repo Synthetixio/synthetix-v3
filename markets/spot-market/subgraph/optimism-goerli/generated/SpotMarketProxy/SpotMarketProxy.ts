@@ -280,6 +280,10 @@ export class SynthRegistered__Params {
   get synthMarketId(): BigInt {
     return this._event.parameters[0].value.toBigInt();
   }
+
+  get synthTokenAddress(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
 }
 
 export class SynthetixSystemSet extends ethereum.Event {
@@ -3516,6 +3520,36 @@ export class RenounceMarketNominationCall__Outputs {
   _call: RenounceMarketNominationCall;
 
   constructor(call: RenounceMarketNominationCall) {
+    this._call = call;
+  }
+}
+
+export class RenounceMarketOwnershipCall extends ethereum.Call {
+  get inputs(): RenounceMarketOwnershipCall__Inputs {
+    return new RenounceMarketOwnershipCall__Inputs(this);
+  }
+
+  get outputs(): RenounceMarketOwnershipCall__Outputs {
+    return new RenounceMarketOwnershipCall__Outputs(this);
+  }
+}
+
+export class RenounceMarketOwnershipCall__Inputs {
+  _call: RenounceMarketOwnershipCall;
+
+  constructor(call: RenounceMarketOwnershipCall) {
+    this._call = call;
+  }
+
+  get synthMarketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class RenounceMarketOwnershipCall__Outputs {
+  _call: RenounceMarketOwnershipCall;
+
+  constructor(call: RenounceMarketOwnershipCall) {
     this._call = call;
   }
 }

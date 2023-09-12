@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/common-config",
-  "version": "3.3.2",
+  "version": "3.3.4",
   "publishConfig": {
     "access": "public"
   },
@@ -26,5 +26,5 @@
     "solidity-coverage": "0.8.2",
     "typechain": "8.1.1"
   },
-  "gitHead": "7883b35d5f3bfac43778b5f1eac936d4fa4098a1"
+  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
 }
