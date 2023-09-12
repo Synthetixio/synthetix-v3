@@ -2677,7 +2677,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.0
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^2.8.8
@@ -2737,7 +2737,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.0
     handlebars: 4.7.7
     prettier: ^2.8.8
     solidity-ast: 0.4.46
@@ -2838,7 +2838,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.0
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^2.8.8
@@ -2859,7 +2859,7 @@ __metadata:
     "@synthetixio/router": ^3.1.3
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": 2.74.4
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.0
     ethers: ^5.7.2
     hardhat: 2.17.2
     solidity-docgen: 0.6.0-beta.35
@@ -2891,6 +2891,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@synthetixio/router@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "@synthetixio/router@npm:3.2.1"
+  dependencies:
+    "@ethersproject/keccak256": ^5.7.0
+    debug: ^4.3.4
+    mustache: ^4.2.0
+  peerDependencies:
+    "@usecannon/builder": ^2.0.0
+    ethers: ^5.0.0
+    hardhat: ^2.0.0
+    solc: ^0.8.17
+  checksum: 27200e2d59b35b04fa38d25f3a0163cfd4df67a0e1838144c14ae332525e975b36de8d5c571d940f1ba7ac3570748ac2548321d10b64c18af00ce4e16bc02385
+  languageName: node
+  linkType: hard
+
 "@synthetixio/sample-project@workspace:utils/sample-project":
   version: 0.0.0-use.local
   resolution: "@synthetixio/sample-project@workspace:utils/sample-project"
@@ -2916,7 +2932,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.0
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^2.8.8
@@ -2937,7 +2953,7 @@ __metadata:
     "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
     "@types/node-fetch": 2.6.4
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.0
     ethers: ^5.7.2
     hardhat: 2.17.2
     node-fetch: 2.6.9
@@ -3561,6 +3577,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@usecannon/builder@npm:^2.6.0":
+  version: 2.6.0
+  resolution: "@usecannon/builder@npm:2.6.0"
+  dependencies:
+    "@synthetixio/router": ^3.2.1
+    axios: ^1.2.2
+    buffer: ^6.0.3
+    debug: ^4.3.4
+    form-data: ^4.0.0
+    lodash: ^4.17.21
+    pako: ^2.1.0
+    promise-events: ^0.2.4
+    typedoc-plugin-markdown: ^3.15.4
+    zod: ^3.21.4
+  peerDependencies:
+    ethers: ">=5.6.0"
+  checksum: b16e131ff1db3c44ec26da9ea791f83346be0007f71f4575d177c4f75f7af8db080b97ae4853d63f6bfa83bf15ec8314b7b649f2fb89d31f18bd22bc7db875d3
+  languageName: node
+  linkType: hard
+
 "@usecannon/cli@npm:^2.5.4":
   version: 2.5.4
   resolution: "@usecannon/cli@npm:2.5.4"
@@ -3584,6 +3620,32 @@ __metadata:
   bin:
     cannon: dist/bin/cannon.js
   checksum: bc20b04b3848bc8501f71de8f9e64a09076f7a4df0e8e8c4aebe244bb9812f35ce4746af9541b209e2d46a4cfadcd52b8912af49d0a574f1d1f65b768d2c7048
+  languageName: node
+  linkType: hard
+
+"@usecannon/cli@npm:^2.6.0":
+  version: 2.6.0
+  resolution: "@usecannon/cli@npm:2.6.0"
+  dependencies:
+    "@iarna/toml": ^3.0.0
+    "@synthetixio/wei": ^2.74.1
+    "@usecannon/builder": ^2.6.0
+    chalk: ^4.1.2
+    commander: ^9.5.0
+    debug: ^4.3.4
+    eth-provider: ^0.13.6
+    ethers: ^5.7.1
+    fastq: ^1.15.0
+    fs-extra: ^10.1.0
+    lodash: ^4.17.21
+    prompts: ^2.4.2
+    semver: ^7.3.7
+    table: ^6.8.0
+    tildify: 2.0.0
+    untildify: ^4.0.0
+  bin:
+    cannon: dist/bin/cannon.js
+  checksum: 452b6b1dacfd36f826aac5c7d2e0e8021488bf52d3bf860698a2665e9cfa765db694623831f839183db45d5e8b048bae76e46155d827183c7c06156e19223c5a
   languageName: node
   linkType: hard
 
@@ -15050,7 +15112,7 @@ __metadata:
     "@types/node": 18.11.10
     "@typescript-eslint/eslint-plugin": 5.45.0
     "@typescript-eslint/parser": 5.45.0
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.0
     eslint: 8.29.0
     eslint-config-prettier: 8.5.0
     eslint-plugin-no-only-tests: 3.1.0
