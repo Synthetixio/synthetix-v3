@@ -174,6 +174,13 @@ export const bootstrap = (args: BootstrapArgs) => {
   // Overall market allows up to n collaterals, each having their own oracle node.
   const configureCollateral = async () => {
     const collaterals = [
+      // We add the real USD here to get it setup, it will not be part of the final `collaterals` array.
+      {
+        contract: systems.USD,
+        initialPrice: bn(1),
+        max: bn(10_000_000),
+        oracleNode: undefined,
+      },
       // `CollteralMock` is the same staked collateral (e.g. SNX)
       {
         contract: systems.CollateralMock,
@@ -244,7 +251,10 @@ export const bootstrap = (args: BootstrapArgs) => {
   let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
 
   before('configure margin collaterals and their prices', async () => {
-    collaterals = await configureCollateral();
+    const allCollaterals = await configureCollateral();
+    // Remove USD collateral, we do this since the USD if the "real" sUSD provisioned by protocol/syntehtix.
+    // All the collaterals in this array are expected to be "mintable"
+    collaterals = allCollaterals.slice(1);
   });
 
   let keeper: Signer;
