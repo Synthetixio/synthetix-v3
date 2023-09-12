@@ -5,8 +5,6 @@ require('hardhat-cannon');
 require('@synthetixio/hardhat-storage');
 require('solidity-coverage');
 
-registerAction(require('cannon-plugin-router'));
-
 module.exports = {
   solidity: {
     version: '0.8.17',
