@@ -13,7 +13,6 @@ describe('Market - size test', () => {
         token: 'snxETH',
         price: bn(2000),
         maxMarketValue: bn(10_000),
-        settlementStrategy: { priceDeviationTolerance: bn(50) },
       },
     ],
     traderAccountIds: [2, 3],

@@ -22,9 +22,6 @@ describe('Offchain Async Order - Price tests', () => {
     traderAccountIds: [2, 3],
   });
 
-  const largeDeviation = toNum(DEFAULT_SETTLEMENT_STRATEGY.priceDeviationTolerance) * (1 + 0.001);
-  const limitDeviation = toNum(DEFAULT_SETTLEMENT_STRATEGY.priceDeviationTolerance);
-
   let ethMarketId: ethers.BigNumber;
   let extraData: string;
 
@@ -98,52 +95,6 @@ describe('Offchain Async Order - Price tests', () => {
 
         const restoreToSettleTime = snapshotCheckpoint(provider);
 
-        describe('failures', () => {
-          before(restoreToSettleTime);
-
-          it('reverts if pyth price is larger than spot by more than deviation tolerance', async () => {
-            const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-              DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              1000_0000 * (1 + largeDeviation),
-              1,
-              -4,
-              1000_0000,
-              1,
-              startTime + 6
-            );
-            updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
-            await assertRevert(
-              systems()
-                .PerpsMarket.connect(keeper())
-                .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
-              `PriceDeviationToleranceExceeded("${bn(0.01001)}", "${
-                DEFAULT_SETTLEMENT_STRATEGY.priceDeviationTolerance
-              }")`
-            );
-          });
-
-          it('reverts if pyth price smaller than spot by more than deviation tolerance', async () => {
-            const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
-              DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              1000_0000 * (1 - largeDeviation),
-              1,
-              -4,
-              1000_0000,
-              1,
-              startTime + 6
-            );
-            updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
-            await assertRevert(
-              systems()
-                .PerpsMarket.connect(keeper())
-                .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
-              `PriceDeviationToleranceExceeded("${bn(largeDeviation)}", "${
-                DEFAULT_SETTLEMENT_STRATEGY.priceDeviationTolerance
-              }")`
-            );
-          });
-        });
-
         describe('price at max limit', () => {
           let validPythPriceData: string, updateFee: ethers.BigNumber;
           before(restoreToSettleTime);
@@ -151,7 +102,7 @@ describe('Offchain Async Order - Price tests', () => {
           before('set test price', async () => {
             validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
               DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              1000_0000 * (1 + limitDeviation),
+              1000_0000,
               1,
               -4,
               1000_0000,
@@ -180,7 +131,7 @@ describe('Offchain Async Order - Price tests', () => {
           before('set test price', async () => {
             validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
               DEFAULT_SETTLEMENT_STRATEGY.feedId,
-              1000_0000 * (1 - limitDeviation),
+              1000_0000,
               1,
               -4,
               1000_0000,

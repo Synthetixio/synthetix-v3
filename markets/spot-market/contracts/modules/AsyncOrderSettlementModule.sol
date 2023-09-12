@@ -96,11 +96,6 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         IPythVerifier.PriceFeed memory pythData = priceFeeds[0];
         uint256 offchainPrice = _getScaledPrice(pythData.price.price, pythData.price.expo).toUint();
 
-        settlementStrategy.checkPriceDeviation(
-            offchainPrice,
-            Price.getCurrentPrice(marketId, asyncOrderClaim.orderType)
-        );
-
         return
             _settleOrder(
                 marketId,
