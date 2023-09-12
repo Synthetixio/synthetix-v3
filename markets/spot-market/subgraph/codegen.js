@@ -17,10 +17,16 @@ const graphNetworkName = {
   'optimism-mainnet': 'optimism',
   goerli: 'goerli',
   'optimism-goerli': 'optimism-goerli',
+  'base-testnet': 'base-goerli',
 }[networkName];
 
 async function run() {
-  const provider = new ethers.providers.InfuraProvider(networkId, process.env.INFURA_KEY);
+  const url =
+    networkName === 'base-goerli'
+      ? 'https://base-goerli.infura.io/v3/' + process.env.INFURA_KEY
+      : ethers.providers.InfuraProvider.getUrl(networkId, process.env.INFURA_KEY);
+
+  const provider = new ethers.providers.JsonRpcProvider(url);
 
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
