@@ -10,6 +10,9 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.synthetixPackage]
 defaultValue = "synthetix:<%= package.dependencies['@synthetixio/core-contracts'].replace('^', '') %>"
 
+[setting.spotMarketPackage]
+defaultValue = "synthetix-spot-market:<%= package.dependencies['@synthetixio/spot-market'].replace('^', '') %>"
+
 # What is salt?
 #
 # salt - The salt is a string which, when changed, will result in a new contract deployment.
@@ -21,6 +24,9 @@ defaultValue = "bfp"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
+
+[import.spotMarket]
+source = "<%= settings.spotMarketPackage %>"
 
 # --- Market Contracts --- #
 
@@ -184,6 +190,15 @@ args = [
 ]
 depends = ["invoke.upgradeProxy"]
 
+[invoke.setSpotMarket]
+target = ["PerpMarketProxy"]
+fromCall.func = "owner"
+func = "setSpotMarket"
+args = [
+  "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
+]
+depends = ["invoke.upgradeProxy", "import.spotMarket"]
+
 [invoke.setPyth]
 target = ["PerpMarketProxy"]
 fromCall.func = "owner"
@@ -191,10 +206,7 @@ func = "setPyth"
 args = [
   "<%= contracts.PythMock.address %>",
 ]
-depends = [
-  "invoke.upgradeProxy",
-  "contract.PythMock"
-]
+depends = ["invoke.upgradeProxy", "contract.PythMock"]
 
 # --- Feature Flags --- #
 

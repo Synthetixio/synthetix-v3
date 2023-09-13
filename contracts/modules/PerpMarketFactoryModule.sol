@@ -42,6 +42,16 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IPerpMarketFactoryModule
      */
+    function setSpotMarket(ISpotMarketSystem spotMarket) external {
+        OwnableStorage.onlyOwner();
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        globalConfig.spotMarket = spotMarket;
+    }
+
+    /**
+     * @inheritdoc IPerpMarketFactoryModule
+     */
     function setPyth(IPyth pyth) external {
         OwnableStorage.onlyOwner();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();

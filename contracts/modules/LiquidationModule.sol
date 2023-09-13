@@ -18,6 +18,53 @@ contract LiquidationModule is ILiquidationModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
+    // --- Helpers --- //
+
+    /**
+     * @dev Before liquidation (not flag) peform validation and market updates.
+     */
+    function updateMarketPreLiquidation(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        uint256 oraclePrice,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    )
+        private
+        returns (
+            Position.Data storage oldPosition,
+            Position.Data memory newPosition,
+            uint256 liqReward,
+            uint256 keeperFee
+        )
+    {
+        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
+        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
+
+        uint128 liqSize;
+        (oldPosition, newPosition, liqSize, liqReward, keeperFee) = Position.validateLiquidation(
+            accountId,
+            market,
+            PerpMarketConfiguration.load(marketId),
+            globalConfig,
+            oraclePrice
+        );
+
+        // Update market to reflect a successful full or partial liquidation.
+        market.lastLiquidationTime = block.timestamp;
+        market.lastLiquidationUtilization += liqSize;
+        market.skew -= oldPosition.size;
+        market.size -= MathUtil.abs(oldPosition.size).to128();
+
+        // Update market debt relative to the liqReward and keeperFee incurred.
+        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
+        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
+        market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
+    }
+
+    /** @dev Sell all position margin for sUSD upon flag. */
+    function yeetMarginCollateralForUsd() private {}
+
     // --- Mutative --- //
 
     /**
@@ -60,48 +107,8 @@ contract LiquidationModule is ILiquidationModule {
         // Flag and emit event.
         market.flaggedLiquidations[accountId] = msg.sender;
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, oraclePrice);
-    }
 
-    /**
-     * @dev Before liquidation (not flag) peform validation and market updates.
-     */
-    function updateMarketPreLiquidation(
-        uint128 accountId,
-        uint128 marketId,
-        PerpMarket.Data storage market,
-        uint256 oraclePrice,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    )
-        private
-        returns (
-            Position.Data storage oldPosition,
-            Position.Data memory newPosition,
-            uint256 liqReward,
-            uint256 keeperFee
-        )
-    {
-        (int256 fundingRate, ) = market.recomputeFunding(oraclePrice);
-        emit FundingRecomputed(marketId, market.skew, fundingRate, market.getCurrentFundingVelocity());
-
-        uint128 liqSize;
-        (oldPosition, newPosition, liqSize, liqReward, keeperFee) = Position.validateLiquidation(
-            accountId,
-            market,
-            PerpMarketConfiguration.load(marketId),
-            globalConfig,
-            oraclePrice
-        );
-
-        // Update market to reflect a successful full or partial liquidation.
-        market.lastLiquidationTime = block.timestamp;
-        market.lastLiquidationUtilization += liqSize;
-        market.skew -= oldPosition.size;
-        market.size -= MathUtil.abs(oldPosition.size).to128();
-
-        // Update market debt relative to the liqReward and keeperFee incurred.
-        uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
-        uint256 newMarginUsd = MathUtil.max(marginUsd.toInt() - liqReward.toInt() - keeperFee.toInt(), 0).toUint();
-        market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
+        yeetMarginCollateralForUsd();
     }
 
     /**

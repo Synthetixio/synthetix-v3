@@ -1196,6 +1196,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@synthetixio/spot-market@npm:^3.2.0":
+  version: 3.3.2
+  resolution: "@synthetixio/spot-market@npm:3.3.2"
+  checksum: 9ceb0bff4e7acc9634fe8ef496ba6cd95de9ccacaa13622bf242e3a4fe30404b9aa551296dd54f647623873f16492756c9382255f9c72580a570ee44d33877e6
+  languageName: node
+  linkType: hard
+
 "@synthetixio/v3-contracts@npm:^3.1.0":
   version: 3.1.0
   resolution: "@synthetixio/v3-contracts@npm:3.1.0"
@@ -1825,6 +1832,7 @@ __metadata:
     "@synthetixio/core-utils": ^3.2.0
     "@synthetixio/main": ^3.2.0
     "@synthetixio/oracle-manager": ^3.2.0
+    "@synthetixio/spot-market": ^3.2.0
     "@synthetixio/v3-contracts": ^3.1.0
     "@synthetixio/wei": ^2.74.4
     "@typechain/ethers-v5": ^10.2.1

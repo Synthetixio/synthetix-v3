@@ -6,6 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 
 /**
@@ -26,6 +27,8 @@ library PerpMarketConfiguration {
     struct GlobalData {
         // A reference to the core Synthetix v3 system.
         ISynthetixSystem synthetix;
+        // A reference to the core Synthetix v3 spot market system.
+        ISpotMarketSystem spotMarket;
         // A reference to the Synthetix USD stablecoin.
         ITokenModule usdToken;
         // A reference to the Synthetix oracle manager (used to fetch market prices).
