@@ -154,7 +154,7 @@ contract OrderModule is IOrderModule {
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
-        uint256 marginUsd,
+        uint256 collateralUsd,
         uint256 newMarginUsd
     ) private {
         Position.Data storage oldPosition = market.positions[accountId];
@@ -162,11 +162,11 @@ contract OrderModule is IOrderModule {
         market.skew = market.skew + newPosition.size - oldPosition.size;
         market.size = (market.size.to256() + MathUtil.abs(newPosition.size) - MathUtil.abs(oldPosition.size)).to128();
 
-        market.updateDebtCorrection(oldPosition, newPosition, marginUsd, newMarginUsd);
+        market.updateDebtCorrection(oldPosition, newPosition, collateralUsd, newMarginUsd);
 
         // Update collateral used for margin if necessary. We only perform this if modifying an existing position.
         if (oldPosition.size != 0) {
-            Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - marginUsd.toInt());
+            Margin.updateAccountCollateral(accountId, market, newMarginUsd.toInt() - collateralUsd.toInt());
         }
 
         if (newPosition.size == 0) {
@@ -179,6 +179,16 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
+    struct Runtime_settleOrder {
+        uint256 pythPrice;
+        uint256 publishTime;
+        int256 accruedFunding;
+        int256 pnl;
+        uint256 fillPrice;
+        Position.ValidatedTrade trade;
+        Position.TradeParams params;
+    }
+
     /**
      * @inheritdoc IOrderModule
      */
@@ -186,6 +196,7 @@ contract OrderModule is IOrderModule {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
+        Runtime_settleOrder memory runtime;
 
         // No order available to settle.
         if (order.sizeDelta == 0) {
@@ -200,29 +211,51 @@ contract OrderModule is IOrderModule {
         // We can create a separate external updatePythPrice function, including adding an external `pythPrice`
         // such that keepers can conditionally update prices only if necessary.
         PerpMarket.updatePythPrice(priceUpdateData);
-        (uint256 pythPrice, uint256 publishTime) = market.getPythPrice(order.commitmentTime);
-
-        Position.TradeParams memory params = Position.TradeParams(
+        (runtime.pythPrice, runtime.publishTime) = market.getPythPrice(order.commitmentTime);
+        runtime.fillPrice = Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, runtime.pythPrice);
+        runtime.params = Position.TradeParams(
             order.sizeDelta,
-            pythPrice,
-            Order.getFillPrice(market.skew, marketConfig.skewScale, order.sizeDelta, pythPrice),
+            runtime.pythPrice,
+            runtime.fillPrice,
             marketConfig.makerFee,
             marketConfig.takerFee,
             order.limitPrice,
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(globalConfig, order.commitmentTime, publishTime, params);
+        validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.publishTime, runtime.params);
 
-        recomputeFunding(market, pythPrice);
+        recomputeFunding(market, runtime.pythPrice);
 
-        Position.ValidatedTrade memory trade = Position.validateTrade(accountId, market, params);
+        runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        updateMarketPostSettlement(accountId, market, trade.newPosition, trade.marginUsd, trade.newMarginUsd);
+        (, runtime.accruedFunding, runtime.pnl, ) = market.positions[accountId].getHealthData(
+            market,
+            runtime.trade.newMarginUsd,
+            runtime.pythPrice,
+            marketConfig
+        );
+        updateMarketPostSettlement(
+            accountId,
+            market,
+            runtime.trade.newPosition,
+            // @dev note that we're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
+            Margin.getCollateralUsd(accountId, marketId),
+            runtime.trade.newMarginUsd
+        );
 
-        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, trade.keeperFee);
-
-        emit OrderSettled(accountId, marketId, params.sizeDelta, trade.orderFee, trade.keeperFee, block.timestamp);
+        globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
+        emit OrderSettled(
+            accountId,
+            marketId,
+            runtime.params.sizeDelta,
+            runtime.trade.orderFee,
+            runtime.trade.keeperFee,
+            runtime.accruedFunding,
+            runtime.pnl,
+            runtime.fillPrice,
+            block.timestamp
+        );
     }
 
     /**

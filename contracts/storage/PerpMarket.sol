@@ -52,7 +52,7 @@ library PerpMarket {
         uint256 lastFundingTime;
         // This is needed to perform a fast constant time op for overall market debt.
         //
-        // debtCorrection = positions.sum(p.margin - p.size * (p.entryPrice + p.entryFunding))
+        // debtCorrection = positions.sum(p.collateralUsd - p.size * (p.entryPrice + p.entryFunding))
         // marketDebt     = market.skew * (price + nextFundingEntry) + debtCorrection
         int128 debtCorrection;
         // {accountId: Order}.
@@ -114,6 +114,7 @@ library PerpMarket {
         uint256 entryPrice,
         int256 entryFundingAccrued
     ) internal pure returns (int256) {
+        // TODO figure out if we should be dedecuting fees here.
         return marginUsd.toInt() - (size.mulDecimal(entryPrice.toInt() + entryFundingAccrued));
     }
 
@@ -124,17 +125,17 @@ library PerpMarket {
         PerpMarket.Data storage self,
         Position.Data storage oldPosition,
         Position.Data memory newPosition,
-        uint256 marginUsd,
+        uint256 collateralUsd,
         uint256 newMarginUsd
     ) internal {
         int256 oldCorrection = getPositionDebtCorrection(
-            marginUsd,
+            collateralUsd,
             oldPosition.size,
             oldPosition.entryPrice,
             oldPosition.entryFundingAccrued
         );
         int256 newCorrection = getPositionDebtCorrection(
-            newMarginUsd,
+            newMarginUsd, // TODO  this should probably be collatrealUsd, fix when adding test for debtCorrection
             newPosition.size,
             newPosition.entryPrice,
             newPosition.entryFundingAccrued

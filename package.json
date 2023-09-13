@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:davidvuong/bfp-market.git"
+    "url": "git@github.com:synthetixio/bfp-market.git"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
