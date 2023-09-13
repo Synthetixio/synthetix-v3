@@ -1,8 +1,19 @@
 {
   "overrides": [
     {
+      "files": "*.toml",
+      "options": {
+        "plugins": ["prettier-plugin-toml"],
+        "tabWidth": 4,
+        "useTabs": false,
+        "singleQuote": false,
+        "bracketSpacing": false
+      }
+    },
+    {
       "files": "*.sol",
       "options": {
+        "plugins": ["prettier-plugin-solidity"],
         "printWidth": 100,
         "tabWidth": 4,
         "useTabs": false,
