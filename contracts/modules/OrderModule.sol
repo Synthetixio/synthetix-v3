@@ -4,15 +4,15 @@ pragma solidity 0.8.19;
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {Order} from "../storage/Order.sol";
-import {Position} from "../storage/Position.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {Margin} from "../storage/Margin.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
-import "../interfaces/IOrderModule.sol";
+import {Position} from "../storage/Position.sol";
+import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -58,7 +58,6 @@ contract OrderModule is IOrderModule {
         uint256 limitPrice,
         uint256 keeperFeeBufferUsd
     ) external {
-        Account.exists(accountId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -193,7 +192,6 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
         Runtime_settleOrder memory runtime;
