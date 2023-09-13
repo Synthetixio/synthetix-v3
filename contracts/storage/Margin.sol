@@ -94,9 +94,11 @@ library Margin {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
 
+        // >0 means to add sUSD to this account's margin (realized profit).
         if (amountDeltaUsd > 0) {
             accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += amountDeltaUsd.toUint();
         } else {
+            // <0 means a realized loss and we need to partially deduct from their collateral.
             Margin.GlobalData storage globalMarginConfig = Margin.load();
             uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
             uint256 amountToDeductUsd = MathUtil.abs(amountDeltaUsd);
@@ -112,12 +114,18 @@ library Margin {
                 synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
                 available = accountMargin.collaterals[synthMarketId];
 
+                // Account has _any_ amount to deduct collateral from (or has realized profits if sUSD).
                 if (available > 0) {
                     price = getCollateralPrice(synthMarketId, available, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
                     accountMargin.collaterals[synthMarketId] -= deductionAmount;
                     amountToDeductUsd -= deductionAmountUsd;
+                }
+
+                // Exit early in the event the first deducted collateral is enough to cover the loss.
+                if (amountToDeductUsd == 0) {
+                    break;
                 }
 
                 unchecked {
@@ -127,7 +135,10 @@ library Margin {
 
             // Not enough remaining margin to deduct from `-amount`.
             //
-            // TODO: Think through when this could happen and if reverting is the best path forward.
+            // NOTE: This is _only_ used within settlement and should revert settlement if the margin is
+            // not enough to cover fees incurred to modify position. However, IM/MM should be configured
+            // well enough to prevent this from ever happening. Additionally, instant liquidation checks
+            // should also prevent this from happening too.
             if (amountToDeductUsd > 0) {
                 revert ErrorUtil.InsufficientMargin();
             }
