@@ -1,7 +1,7 @@
 import assert from 'assert';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { fastForward, fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
@@ -19,6 +19,7 @@ import {
   SECONDS_ONE_HR,
   commitAndSettle,
   depositMargin,
+  fastForwardBySec,
   setMarketConfigurationById,
 } from '../../helpers';
 import { BigNumber } from 'ethers';
@@ -140,8 +141,6 @@ describe('PerpMarketFactoryModule', () => {
           );
         }
       };
-      const fastForwardBySec = async (seconds: number) =>
-        await fastForwardTo((await provider().getBlock('latest')).timestamp + seconds, provider());
 
       it('should compute current funding rate relative to time (concrete)', async () => {
         // This test is pulled directly from a concrete example developed for PerpsV2.
@@ -212,7 +211,7 @@ describe('PerpMarketFactoryModule', () => {
           const { sizeDelta, account, fastForwardInSec, expectedFundingRate, expectedFundingVelocity } = trade;
 
           // Fastforward by static seconds, excluding the settlement required min (minOrderAge) and 2s (for the commitment block).
-          await fastForwardBySec(fastForwardInSec - minOrderAge.toNumber() - 2);
+          await fastForwardBySec(provider(), fastForwardInSec - minOrderAge.toNumber() - 2);
 
           const order = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
           await commitAndSettle(bs, market.marketId(), account, order);
@@ -254,14 +253,14 @@ describe('PerpMarketFactoryModule', () => {
 
         const order1 = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
         await commitAndSettle(bs, market.marketId(), trader1, order1);
-        await fastForwardBySec(genNumber(15_000, 30_000));
+        await fastForwardBySec(provider(), genNumber(15_000, 30_000));
 
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
         assert.notEqual(d1.fundingRate.toString(), '0');
 
         const order2 = await genOrderFromSizeDelta(bs, market, sizeDelta, { desiredKeeperFeeBufferUsd: 0 });
         await commitAndSettle(bs, market.marketId(), trader2, order2);
-        await fastForwardBySec(genNumber(15_000, 30_000));
+        await fastForwardBySec(provider(), genNumber(15_000, 30_000));
 
         const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
         assert.notEqual(d2.fundingRate.toString(), '0');
@@ -309,7 +308,7 @@ describe('PerpMarketFactoryModule', () => {
           desiredKeeperFeeBufferUsd: 0,
         });
         await commitAndSettle(bs, market.marketId(), trader, order1);
-        await fastForwardBySec(SECONDS_ONE_DAY);
+        await fastForwardBySec(provider(), SECONDS_ONE_DAY);
         const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
         assertBn.lt(d1.fundingRate, BigNumber.from(0));
 
@@ -318,7 +317,7 @@ describe('PerpMarketFactoryModule', () => {
           desiredKeeperFeeBufferUsd: 0,
         });
         await commitAndSettle(bs, market.marketId(), trader, order2);
-        await fastForwardBySec(SECONDS_ONE_DAY);
+        await fastForwardBySec(provider(), SECONDS_ONE_DAY);
         const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
 
         // New funding rate should be trending towards zero or positive.
@@ -390,11 +389,11 @@ describe('PerpMarketFactoryModule', () => {
           });
           await commitAndSettle(bs, market.marketId(), trader, order);
 
-          await fastForwardBySec(SECONDS_ONE_HR);
+          await fastForwardBySec(provider(), SECONDS_ONE_HR);
 
           const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
 
-          await fastForwardBySec(SECONDS_ONE_DAY);
+          await fastForwardBySec(provider(), SECONDS_ONE_DAY);
 
           const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
 

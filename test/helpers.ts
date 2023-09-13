@@ -6,7 +6,6 @@ import { type genTrader, type genOrder, genNumber } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';
-import { LogDescription } from 'ethers/lib/utils';
 
 // --- Constants --- //
 
@@ -174,9 +173,11 @@ export const commitAndSettle = async (
     await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
   }
 
-  return PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+  const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
     value: updateFee,
   });
+
+  return { tx, settlementTime, publishTime };
 };
 
 /** Updates the provided `contract` with more ABI details. */
@@ -192,6 +193,15 @@ export const extendContractAbi = (contract: Contract, abi: string[]) => {
   return newContract;
 };
 
+/** Returns the latest block's timestamp. */
+export const getBlockTimestamp = async (provider: ReturnType<Bs['provider']>) =>
+  (await provider.getBlock('latest')).timestamp;
+
+/** Fastforward block.timestamp by `seconds` (Replacement for `evm_increaseTime`, using `evm_setNextBlockTimestamp` instead). */
+export const fastForwardBySec = async (provider: ReturnType<Bs['provider']>, seconds: number) =>
+  await fastForwardTo((await getBlockTimestamp(provider)) + seconds, provider);
+
+/** Search for events in `receipt.logs` in a non-throw (safe) way. */
 export const findEventSafe = ({
   receipt,
   eventName,
@@ -205,14 +215,18 @@ export const findEventSafe = ({
     .map((log) => {
       try {
         return contract.interface.parseLog(log);
-      } catch (error) {
+      } catch (err) {
         return undefined;
       }
     })
     .find((parsedEvent) => parsedEvent?.name === eventName);
 };
 
+/** Performs a tx.wait() against the supplied `tx` with an evm_mine called without an `await. */
 export const txWait = async (tx: ethers.ContractTransaction, provider: ethers.providers.JsonRpcProvider) => {
-  await provider.send('evm_mine', []);
+  // By calling evm_mine without an `await` before tx.wait(), we think we might result in fixing scenarios
+  // where tx.wait() hangs. We think it hangs due to blocks not being created (as by defaul blocks are created)
+  // for every transaction. There _may_ be a timing issue where a tx.wait() occurs _before_ the tx is accepted.
+  provider.send('evm_mine', []);
   return await tx.wait();
 };

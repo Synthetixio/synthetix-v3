@@ -15,7 +15,7 @@ library ErrorUtil {
     error OrderNotFound();
 
     // @dev Thrown when an order exists when none is expected.
-    error OrderFound(uint128 accountId);
+    error OrderFound();
 
     // @dev Thrown when order not ready for settlement.
     error OrderNotReady();

@@ -27,6 +27,27 @@ contract OrderModule is IOrderModule {
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
 
+    /** @dev Same implementation as `MarginModule.validateOrderAvailability`. */
+    function validateOrderAvailability(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        Order.Data storage order = market.orders[accountId];
+
+        // A new order cannot be submitted if one is already pending.
+        if (order.sizeDelta != 0) {
+            // Check if this order can be cancelled. If so, cancel and then proceed.
+            if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
+                delete market.orders[accountId];
+                emit OrderCanceled(accountId, marketId, order.commitmentTime);
+            } else {
+                revert ErrorUtil.OrderFound();
+            }
+        }
+    }
+
     /**
      * @inheritdoc IOrderModule
      */
@@ -39,13 +60,9 @@ contract OrderModule is IOrderModule {
     ) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
-        // A new order cannot be submitted if one is already pending.
-        if (market.orders[accountId].sizeDelta != 0) {
-            revert ErrorUtil.OrderFound(accountId);
-        }
-
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
         uint256 oraclePrice = market.getOraclePrice();
 
         // TODO: Consider removing and only recomputing funding at the settlement.
@@ -227,7 +244,6 @@ contract OrderModule is IOrderModule {
         );
 
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
-
         emit OrderSettled(
             accountId,
             marketId,
@@ -236,17 +252,9 @@ contract OrderModule is IOrderModule {
             runtime.trade.keeperFee,
             runtime.accruedFunding,
             runtime.pnl,
-            runtime.fillPrice
+            runtime.fillPrice,
+            block.timestamp
         );
-    }
-
-    /**
-     * @inheritdoc IOrderModule
-     */
-    function cancelOrder(uint128 accountId, uint128 marketId) external {
-        // TODO: Consider removing cancellations. Do we need it?
-        //
-        // If an order is stale, on next settle, we can simply wipe the order, emit event, start new order.
     }
 
     /**

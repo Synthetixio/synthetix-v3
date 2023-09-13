@@ -26,6 +26,7 @@ import {
   txWait,
   depositMargin,
   extendContractAbi,
+  fastForwardBySec,
   findEventSafe,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
@@ -35,11 +36,50 @@ import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, owner, systems, restore, provider } = bs;
+  const { markets, collaterals, traders, owner, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
   describe('modifyCollateral', () => {
+    it('should cancel order when modifying if pending order exists and expired (withdraw)', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      // Commit an order for this trader.
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      // Verify that an order exists.
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+
+      // Fastforward to expire the pending order.
+      const { maxOrderAge } = await PerpMarketProxy.getMarketConfiguration();
+      fastForwardBySec(provider(), maxOrderAge.toNumber() + 1);
+
+      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
+        trader.accountId,
+        marketId,
+        collateral.contract.address,
+        collateralDepositAmount.mul(-1)
+      );
+
+      const traderAddress = await trader.signer.getAddress();
+      await assertEvent(tx, `OrderCanceled()`, PerpMarketProxy);
+      await assertEvent(
+        tx,
+        `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
+        PerpMarketProxy
+      );
+    });
+
     it('should revert when a transfer amount of 0', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -119,7 +159,7 @@ describe('MarginModule', async () => {
           gTrader2.collateral.contract.address,
           gTrader2.collateralDepositAmount
         ),
-        `OrderFound("${trader.accountId}")`
+        `OrderFound()`
       );
 
       // (withdraw) Attempt to withdraw previously deposted margin but expect fail.
@@ -130,7 +170,7 @@ describe('MarginModule', async () => {
           gTrader1.collateral.contract.address,
           gTrader1.collateralDepositAmount.mul(-1)
         ),
-        `OrderFound("${trader.accountId}")`
+        `OrderFound()`
       );
     });
 
@@ -708,6 +748,7 @@ Need to make sure we are not liquidatable
           PerpMarketProxy
         );
       });
+
       it('should revert withdraw if position is liquidatable due to price', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
@@ -834,6 +875,9 @@ Need to make sure we are not liquidatable
           collateralDepositAmount2.add(collateralWalletBalanceBeforeWithdrawal2)
         );
       });
+
+      it('should cancel order when withdrawing all if pending order exists and expired');
+
       it('should recompute funding', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, market } = await depositMargin(bs, genTrader(bs));
@@ -886,7 +930,8 @@ Need to make sure we are not liquidatable
           desiredSide: 1,
           desiredLeverage: 1,
         });
-        const openTx = await commitAndSettle(bs, marketId, trader, openOrder);
+        const { tx: openTx } = await commitAndSettle(bs, marketId, trader, openOrder);
+
         // Collect some data for calculation.
         const { args: openEventArgs } =
           findEventSafe({
@@ -894,6 +939,7 @@ Need to make sure we are not liquidatable
             contract: PerpMarketProxy,
             eventName: 'OrderSettled',
           }) || {};
+
         // Make sure we lose some to funding.
         const currentBlockTimestamp = (await provider().getBlock('latest')).timestamp;
         await fastForwardTo(currentBlockTimestamp + genNumber(3000, 100000), provider());
@@ -908,7 +954,7 @@ Need to make sure we are not liquidatable
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
         });
 
-        const closeTx = await commitAndSettle(bs, marketId, trader, closeOrder);
+        const { tx: closeTx } = await commitAndSettle(bs, marketId, trader, closeOrder);
         const closeReceipt = await txWait(closeTx, provider());
 
         // Do the withdraw.
@@ -976,7 +1022,7 @@ Need to make sure we are not liquidatable
         );
       });
 
-      it('should revert when trader have open order', async () => {
+      it('should revert when trader has a pending order', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(
           bs,
@@ -987,7 +1033,7 @@ Need to make sure we are not liquidatable
         // Perform withdraw with invalid market
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId),
-          `OrderFound("${trader.accountId}")`,
+          `OrderFound()`,
           PerpMarketProxy
         );
       });
@@ -1031,6 +1077,7 @@ Need to make sure we are not liquidatable
           `PermissionDenied("${trader1.accountId}", "${permission}", "${signerAddress}")`
         );
       });
+
       it('should revert when flagged', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
@@ -1233,7 +1280,7 @@ Need to make sure we are not liquidatable
       const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
-      const tx = await commitAndSettle(bs, marketId, trader, order);
+      const { tx } = await commitAndSettle(bs, marketId, trader, order);
 
       const settleEvent = findEventSafe({
         receipt: await txWait(tx, provider()),
@@ -1281,7 +1328,7 @@ Need to make sure we are not liquidatable
         desiredSide: -1,
       });
 
-      const tx = await commitAndSettle(bs, marketId, trader, order);
+      const { tx } = await commitAndSettle(bs, marketId, trader, order);
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
       const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);

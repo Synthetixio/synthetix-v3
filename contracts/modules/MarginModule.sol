@@ -45,6 +45,27 @@ contract MarginModule is IMarginModule {
         }
     }
 
+    /** @dev Validates whether an order exists and if that order can be cancelled before performing margin ops. */
+    function validateOrderAvailability(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        Order.Data storage order = market.orders[accountId];
+
+        // Margin cannot be modified if order is currently pending.
+        if (order.sizeDelta != 0) {
+            // Check if this order can be cancelled. If so, cancel and then proceed.
+            if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
+                delete market.orders[accountId];
+                emit OrderCanceled(accountId, marketId, order.commitmentTime);
+            } else {
+                revert ErrorUtil.OrderFound();
+            }
+        }
+    }
+
     /**
      * @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
      */
@@ -57,7 +78,7 @@ contract MarginModule is IMarginModule {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
             globalConfig.synthetix.depositMarketUsd(marketId, address(this), amount);
         } else {
-            ITokenModule synth = globalConfig.spotMarket.getSynth(synthMarketId);
+            ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             synth.transferFrom(msg.sender, address(this), amount);
             globalConfig.synthetix.depositMarketCollateral(marketId, synth, amount);
         }
@@ -76,7 +97,7 @@ contract MarginModule is IMarginModule {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, amount);
         } else {
-            ITokenModule synth = globalConfig.spotMarket.getSynth(synthMarketId);
+            ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, amount);
             synth.transferFrom(address(this), msg.sender, amount);
         }
@@ -88,13 +109,12 @@ contract MarginModule is IMarginModule {
      */
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
-
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         // Prevent collateral transfers when there's a pending order.
-        if (market.orders[accountId].sizeDelta != 0) {
-            revert ErrorUtil.OrderFound(accountId);
-        }
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
+
         // Position is frozen due to prior flagged for liquidation.
         if (market.flaggedLiquidations[accountId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
@@ -110,10 +130,9 @@ contract MarginModule is IMarginModule {
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
-        address synthMarketId;
+        uint128 synthMarketId;
         uint256 available;
         uint256 total;
 
@@ -141,20 +160,23 @@ contract MarginModule is IMarginModule {
      */
     function modifyCollateral(uint128 accountId, uint128 marketId, uint128 synthMarketId, int256 amountDelta) external {
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
-
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        // Prevent collateral transfers when there's a pending order.
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
 
         // Prevent collateral transfers when there's a pending order.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
-            revert ErrorUtil.OrderFound(accountId);
+            revert ErrorUtil.OrderFound();
         }
+
         // Position is frozen due to prior flagged for liquidation.
         if (market.flaggedLiquidations[accountId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
         }
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
