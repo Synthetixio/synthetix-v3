@@ -10,7 +10,6 @@ import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
 import {
   commitAndSettle,
-  txWait,
   depositMargin,
   findEventSafe,
   getFastForwardTimestamp,

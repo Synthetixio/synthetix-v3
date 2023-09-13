@@ -173,11 +173,15 @@ export const commitAndSettle = async (
     await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
   }
 
-  const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
-    value: updateFee,
-  });
+  const { tx, receipt } = await withExplicitEvmMine(
+    () =>
+      PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+        value: updateFee,
+      }),
+    provider()
+  );
 
-  return { tx, settlementTime, publishTime };
+  return { tx, receipt, settlementTime, publishTime };
 };
 
 /** Updates the provided `contract` with more ABI details. */
@@ -222,17 +226,18 @@ export const findEventSafe = ({
     .find((parsedEvent) => parsedEvent?.name === eventName);
 };
 
-export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Performs a tx.wait() against the supplied `tx` with an evm_mine called without an `await. */
-export const txWait = async (tx: ethers.ContractTransaction, provider: ethers.providers.JsonRpcProvider) => {
-  // By calling evm_mine with an `await` before tx.wait(), we think we might result in fixing scenarios
-  // where tx.wait() hangs. Not entirely sure why it hangs but forcing a block mine seems to resolve this
-  // issue...
-  await provider.send('evm_mine', []);
-  return await tx.wait();
-};
-
+/**
+ * Disables autoMine, perform tx, explict mine, wait, enable autoMine, return.
+ *
+ * Why?
+ *
+ * `tx.wait()` can occasionally cause tests to hang. We believe this is due to async issues with autoMine. By
+ * default anvil auto mines a block on every transaction. However, depending on the sun/moon and frequently of
+ * a butterfly's flapping wing, it can result in the .wait() to hang because the block is produced before the
+ * wait recognising the block (?).
+ *
+ * This completely avoids that by disabling the autoMine and performing an explicit mine then reenabling after.
+ */
 export const withExplicitEvmMine = async (
   f: () => Promise<ethers.ContractTransaction>,
   provider: ethers.providers.JsonRpcProvider
