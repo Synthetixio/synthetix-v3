@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { BigNumber, ethers } from 'ethers';
 import { shuffle, isNil, random } from 'lodash';
-import Wei, { wei } from '@synthetixio/wei';
+import { wei } from '@synthetixio/wei';
 import { MARKETS } from './data/markets.fixture';
 import { Bs, Market, Trader, Collateral } from './typed';
 

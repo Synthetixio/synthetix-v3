@@ -27,6 +27,18 @@ contract OrderModule is IOrderModule {
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
 
+    // --- Runtime structs ---
+
+    struct Runtime_settleOrder {
+        uint256 pythPrice;
+        uint256 publishTime;
+        int256 accruedFunding;
+        int256 pnl;
+        uint256 fillPrice;
+        Position.ValidatedTrade trade;
+        Position.TradeParams params;
+    }
+
     /** @dev Same implementation as `MarginModule.validateOrderAvailability`. */
     function validateOrderAvailability(
         uint128 accountId,
@@ -178,22 +190,13 @@ contract OrderModule is IOrderModule {
         delete market.orders[accountId];
     }
 
-    struct Runtime_settleOrder {
-        uint256 pythPrice;
-        uint256 publishTime;
-        int256 accruedFunding;
-        int256 pnl;
-        uint256 fillPrice;
-        Position.ValidatedTrade trade;
-        Position.TradeParams params;
-    }
-
     /**
      * @inheritdoc IOrderModule
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
         Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+
         Order.Data storage order = market.orders[accountId];
         Runtime_settleOrder memory runtime;
 

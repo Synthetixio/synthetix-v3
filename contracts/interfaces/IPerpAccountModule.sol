@@ -8,16 +8,16 @@ interface IPerpAccountModule {
     // --- Structs --- //
 
     struct DepositedCollateral {
-        // @dev Address of the collateral deposited
-        address collateralType;
-        // @dev Amount of available collateral deposited (unrelated to position)
+        // @dev Id of the synth market collateral.
+        uint128 synthMarketId;
+        // @dev Amount of available collateral deposited (unrelated to position).
         uint256 available;
-        // @dev Oracle price of collateral
+        // @dev Oracle price of collateral.
         uint256 oraclePrice;
     }
 
     struct AccountDigest {
-        // @dev Array of data pertaining to deposited collateral
+        // @dev Array of data pertaining to deposited collateral.
         IPerpAccountModule.DepositedCollateral[] collateral;
         // @dev Notional value of deposited collateral in USD.
         uint256 collateralUsd;

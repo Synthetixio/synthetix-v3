@@ -80,7 +80,7 @@ contract MarginModule is IMarginModule {
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             synth.transferFrom(msg.sender, address(this), amount);
-            globalConfig.synthetix.depositMarketCollateral(marketId, synth, amount);
+            globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
         }
         emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);
     }
@@ -98,7 +98,7 @@ contract MarginModule is IMarginModule {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, amount);
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-            globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, amount);
+            globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
             synth.transferFrom(address(this), msg.sender, amount);
         }
         emit MarginWithdraw(address(this), msg.sender, amount, synthMarketId);
@@ -167,8 +167,7 @@ contract MarginModule is IMarginModule {
         validateOrderAvailability(accountId, marketId, market, globalConfig);
 
         // Prevent collateral transfers when there's a pending order.
-        Order.Data storage order = market.orders[accountId];
-        if (order.sizeDelta != 0) {
+        if (market.orders[accountId].sizeDelta != 0) {
             revert ErrorUtil.OrderFound();
         }
 
@@ -262,10 +261,10 @@ contract MarginModule is IMarginModule {
 
         // Update with passed in configuration.
         uint256 length1 = synthMarketIds.length;
-        address[] memory newSupportedSynthMarketIds = new address[](length1);
+        uint128[] memory newSupportedSynthMarketIds = new uint128[](length1);
         for (uint256 i = 0; i < length1; ) {
             uint128 synthMarketId = synthMarketIds[i];
-            ITokenModule synth = globalMarketConfig.spotMarket.getSynth(synthMarketId);
+            ITokenModule synth = ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
 
             // Perform approve _once_ when this collateral is added as a supported collateral.
             uint128 maxAllowable = maxAllowables[i];

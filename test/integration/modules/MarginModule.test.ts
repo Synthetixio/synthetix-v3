@@ -343,17 +343,17 @@ describe('MarginModule', async () => {
 
         const trader = genOneOf(traders());
         const market = genOneOf(markets());
-        const invalidCollateralAddress = genAddress();
+        const invalidSynthMarketId = genNumber(69, 420);
         const amountDelta = bn(genNumber(10, 100));
 
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
             trader.accountId,
             market.marketId(),
-            invalidCollateralAddress,
+            invalidSynthMarketId,
             amountDelta
           ),
-          `UnsupportedCollateral("${invalidCollateralAddress}")`
+          `UnsupportedCollateral("${invalidSynthMarketId}")`
         );
       });
 
