@@ -18,7 +18,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/hardhat-storage": "workspace:*",
     "@synthetixio/router": "^3.3.0",
-    "@usecannon/builder": "^2.6.0",
+    "@usecannon/builder": "^2.6.1",
     "ethers": "^5.7.2",
     "hardhat": "2.17.2",
     "hardhat-cannon": "2.5.5",

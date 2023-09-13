@@ -32,7 +32,7 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "2.74.4",
-    "@usecannon/builder": "^2.6.0",
+    "@usecannon/builder": "^2.6.1",
     "ethers": "^5.7.2",
     "hardhat": "2.17.2",
     "solidity-ast": "0.4.46",
