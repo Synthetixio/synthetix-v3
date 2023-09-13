@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IPerpsAccountModule} from "../interfaces/IPerpsAccountModule.sol";
@@ -20,6 +21,7 @@ import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/
  * @dev See IPerpsAccountModule.
  */
 contract PerpsAccountModule is IPerpsAccountModule {
+    using SetUtil for SetUtil.UintSet;
     using PerpsAccount for PerpsAccount.Data;
     using Position for Position.Data;
     using AsyncOrder for AsyncOrder.Data;
@@ -148,16 +150,20 @@ contract PerpsAccountModule is IPerpsAccountModule {
             uint256 maxLiquidationReward
         )
     {
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+
         (
             requiredInitialMargin,
             requiredMaintenanceMargin,
             totalAccumulatedLiquidationRewards,
             maxLiquidationReward
-        ) = PerpsAccount.load(accountId).getAccountRequiredMargins();
+        ) = account.getAccountRequiredMargins();
 
-        // Include liquidation rewards to required initial margin and required maintenance margin
-        requiredInitialMargin += maxLiquidationReward;
-        requiredMaintenanceMargin += maxLiquidationReward;
+        if (account.openPositionMarketIds.length() > 0) {
+            // Include liquidation rewards to required initial margin and required maintenance margin
+            requiredInitialMargin += maxLiquidationReward;
+            requiredMaintenanceMargin += maxLiquidationReward;
+        }
     }
 
     /**
