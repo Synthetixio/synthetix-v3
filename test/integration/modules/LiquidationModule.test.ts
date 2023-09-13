@@ -86,6 +86,10 @@ describe('LiquidationModule', () => {
       await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
     });
 
+    it('should sell all available synth collateral for sUSD when flagging');
+
+    it('should not sell any synth collateral when all collateral is already sUSD');
+
     it('should emit all events in correct order');
 
     it('should revert when position already flagged', async () => {
