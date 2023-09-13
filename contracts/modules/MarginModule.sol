@@ -45,6 +45,27 @@ contract MarginModule is IMarginModule {
         }
     }
 
+    /** @dev Validates whether an order exists and if that order can be cancelled before performing margin ops. */
+    function validateOrderAvailability(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        Order.Data storage order = market.orders[accountId];
+
+        // Margin cannot be modified if order is currently pending.
+        if (order.sizeDelta != 0) {
+            // Check if this order can be cancelled. If so, cancel and then proceed.
+            if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
+                delete market.orders[accountId];
+                emit OrderCanceled(accountId, marketId, order.commitmentTime);
+            } else {
+                revert ErrorUtil.OrderFound();
+            }
+        }
+    }
+
     /**
      * @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
      */
@@ -87,13 +108,12 @@ contract MarginModule is IMarginModule {
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external {
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
-
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         // Prevent collateral transfers when there's a pending order.
-        if (market.orders[accountId].sizeDelta != 0) {
-            revert ErrorUtil.OrderFound(accountId);
-        }
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
+
         // Position is frozen due to prior flagged for liquidation.
         if (market.flaggedLiquidations[accountId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
@@ -109,7 +129,6 @@ contract MarginModule is IMarginModule {
 
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
 
         uint256 length = globalMarginConfig.supportedAddresses.length;
         address collateralType;
@@ -145,25 +164,22 @@ contract MarginModule is IMarginModule {
     ) external {
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION);
-
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        // Prevent collateral transfers when there's a pending order.
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
 
         // Fail fast if the collateralType is empty.
         if (collateralType == address(0)) {
             revert ErrorUtil.ZeroAddress();
         }
 
-        // Prevent collateral transfers when there's a pending order.
-        Order.Data storage order = market.orders[accountId];
-        if (order.sizeDelta != 0) {
-            revert ErrorUtil.OrderFound(accountId);
-        }
         // Position is frozen due to prior flagged for liquidation.
         if (market.flaggedLiquidations[accountId] != address(0)) {
             revert ErrorUtil.PositionFlagged();
         }
 
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 

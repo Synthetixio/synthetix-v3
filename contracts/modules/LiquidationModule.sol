@@ -53,7 +53,7 @@ contract LiquidationModule is ILiquidationModule {
         // Remove any pending orders that may exist.
         Order.Data storage order = market.orders[accountId];
         if (order.sizeDelta != 0) {
-            emit OrderCanceled(accountId, marketId);
+            emit OrderCanceled(accountId, marketId, order.commitmentTime);
             delete market.orders[accountId];
         }
 

@@ -19,6 +19,8 @@ interface IOrderModule is IBasePerpMarket {
     );
 
     // @dev Emitted when a pending order was successfully settled/executed.
+    //
+    // TODO: Rename pnl to unrealizedPnl?
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
@@ -27,7 +29,8 @@ interface IOrderModule is IBasePerpMarket {
         uint256 keeperFee,
         int256 accruedFunding,
         int256 pnl,
-        uint256 fillPrice
+        uint256 fillPrice,
+        uint256 settlementTime
     );
 
     // --- Mutative --- //
@@ -47,14 +50,6 @@ interface IOrderModule is IBasePerpMarket {
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
-
-    /**
-     * @dev Cancels a pending order.
-     *
-     * An order can only be canceled after a certain amount of time (i.e. when an order becomes stale). The keeperFee
-     * is not charged if the caller is the same owner as the order.
-     */
-    function cancelOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 
