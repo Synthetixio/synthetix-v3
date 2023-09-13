@@ -110,9 +110,12 @@ contract LiquidationModule is ILiquidationModule {
         market.flaggedLiquidations[accountId] = msg.sender;
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, oraclePrice);
 
-        // Sell any non sUSD collateral for sUSD. Non sUSD margin value is already discounted by the fillPrice
-        // provided by the spot market.
-        yeetMarginCollateralForUsd();
+        // Sell any non sUSD collateral for sUSD post flag. Non sUSD margin value is already discounted in the quote
+        // price on the synth by spot market. This simply realizes that discount.
+        //
+        // We sell the synth collateral here to ensure there's enough sUSD at this point in time to pay down any debt
+        // incurred on this position and to also credit LPs with sUSD.
+        Margin.yeetAllSynthCollateralForUsd(accountId, marketId);
     }
 
     /**

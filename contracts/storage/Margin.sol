@@ -173,6 +173,45 @@ library Margin {
         }
     }
 
+    /**
+     * @dev Sell all depoisted synth collateral for sUSD.
+     */
+    function yeetAllSynthCollateralForUsd(uint128 accountId, uint128 marketId) internal {
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        Margin.GlobalData storage globalMarginConfig = Margin.load();
+        Margin.Data storage accountMargin = Margin.load(accountId, marketId);
+
+        // Variable declaration outside of loop to be more gas efficient.
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
+        uint256 available;
+
+        for (uint256 i = 0; i < length; ) {
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
+
+            // Skip this collateral if there is no collateral available to swap. Also avoid swapping sUSD for sUSD.
+            if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
+                address synth = globalConfig.spotMarket.getSynth(synthMarketId);
+
+                // Withdraw the collateral from the market.
+                globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
+
+                // Sell said collateral for sUSD
+                (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(synthMarketId, available, 0, address(0));
+                globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
+
+                // Update internal accounting to update sale.
+                accountMargin.collaterals[synthMarketId] = 0;
+                accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += amountUsd;
+            }
+
+            unchecked {
+                i++;
+            }
+        }
+    }
+
     // --- Views --- //
 
     /**
