@@ -23,7 +23,7 @@
   "devDependencies": {
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
-    "@synthetixio/router": "^3.2.1",
+    "@synthetixio/router": "^3.3.0",
     "ethers": "^5.7.2",
     "hardhat": "2.17.2"
   },

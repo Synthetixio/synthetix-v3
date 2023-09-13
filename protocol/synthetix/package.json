@@ -30,7 +30,7 @@
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/oracle-manager": "workspace:*",
-    "@synthetixio/router": "^3.2.1",
+    "@synthetixio/router": "^3.3.0",
     "@synthetixio/wei": "2.74.4",
     "@usecannon/builder": "^2.6.0",
     "ethers": "^5.7.2",

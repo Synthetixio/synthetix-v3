@@ -2652,7 +2652,7 @@ __metadata:
     "@ethersproject/bignumber": ^5.7.0
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     ethers: ^5.7.2
     hardhat: 2.17.2
   languageName: unknown
@@ -2664,7 +2664,7 @@ __metadata:
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     ethers: ^5.7.2
     hardhat: 2.17.2
   languageName: unknown
@@ -2753,7 +2753,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     hardhat: 2.17.2
     solidity-docgen: 0.6.0-beta.35
   languageName: unknown
@@ -2782,7 +2782,7 @@ __metadata:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": 2.74.4
     ethers: ^5.7.2
     hardhat: 2.17.2
@@ -2800,7 +2800,7 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": 2.74.4
     "@usecannon/builder": ^2.6.0
     ethers: ^5.7.2
@@ -2820,7 +2820,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": 2.74.4
     "@types/node": 18.11.10
     ethers: ^5.7.2
@@ -2855,7 +2855,7 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": 2.74.4
     "@usecannon/cli": ^2.6.0
@@ -2883,6 +2883,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@synthetixio/router@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@synthetixio/router@npm:3.3.0"
+  dependencies:
+    "@ethersproject/keccak256": ^5.7.0
+    debug: ^4.3.4
+    mustache: ^4.2.0
+  peerDependencies:
+    "@usecannon/builder": ^2.0.0
+    ethers: ^5.0.0
+    hardhat: ^2.0.0
+    solc: ^0.8.17
+  checksum: 923709d5b5a0955f4cdfa7271b0fa83ac10dc1d5dbb169be91c8c4c1c4929402681170a66a16f05879d9b012d665c44dad37307297cdf7dac8c8358d0f21f087
+  languageName: node
+  linkType: hard
+
 "@synthetixio/sample-project@workspace:utils/sample-project":
   version: 0.0.0-use.local
   resolution: "@synthetixio/sample-project@workspace:utils/sample-project"
@@ -2892,7 +2908,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/hardhat-storage": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     "@usecannon/builder": ^2.6.0
     ethers: ^5.7.2
     hardhat: 2.17.2
@@ -2925,7 +2941,7 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": ^3.2.1
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": 2.74.4
     "@types/node-fetch": 2.6.4
     "@usecannon/cli": ^2.6.0
