@@ -9,6 +9,9 @@ import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
 import {IPyth} from "../external/pyth/IPyth.sol";
 
+// @dev A static uint128 of the sUSD marketId.
+uint128 constant SYNTHETIX_USD_MARKET_ID = 0;
+
 /**
  * @dev Market specific and shared configuration.
  */

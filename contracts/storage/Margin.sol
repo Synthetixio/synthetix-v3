@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {PerpMarketConfiguration} from "./PerpMarketConfiguration.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "./PerpMarketConfiguration.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {PerpMarket} from "./PerpMarket.sol";
@@ -24,24 +24,22 @@ library Margin {
     // --- Structs --- //
 
     struct CollateralType {
-        // Oracle price feed node id.
-        bytes32 oracleNodeId;
-        // Maximum allowable deposited amount.
+        // Maximum allowable deposited amount for this collateral type.
         uint128 maxAllowable;
     }
 
     // --- Storage --- //
 
     struct GlobalData {
-        // {collateralAddress: CollateralType}.
-        mapping(address => CollateralType) supported;
-        // Array of addresses of supported collaterals for iteration.
-        address[] supportedAddresses;
+        // {synthMarketId: CollateralType}.
+        mapping(uint128 => CollateralType) supported;
+        // Array of supported synth spot market ids useable as collateral for margin.
+        uint128[] supportedSynthMarketIds;
     }
 
     struct Data {
-        // {collateralAddress: amount} (amount of collateral deposited into this account).
-        mapping(address => uint256) collaterals;
+        // {synthMarketId: collateralAmount} (amount of collateral deposited into this account).
+        mapping(uint128 => uint256) collaterals;
     }
 
     function load(uint128 accountId, uint128 marketId) internal pure returns (Margin.Data storage d) {
@@ -95,33 +93,30 @@ library Margin {
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.Data storage accountMargin = Margin.load(accountId, market.id);
-        address usdToken = address(globalConfig.usdToken);
 
         if (amountDeltaUsd > 0) {
-            accountMargin.collaterals[usdToken] += amountDeltaUsd.toUint();
+            accountMargin.collaterals[SYNTHETIX_USD_MARKET_ID] += amountDeltaUsd.toUint();
         } else {
             Margin.GlobalData storage globalMarginConfig = Margin.load();
-            uint256 length = globalMarginConfig.supportedAddresses.length;
+            uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
             uint256 amountToDeductUsd = MathUtil.abs(amountDeltaUsd);
 
             // Variable declaration outside of loop to be more gas efficient.
-            Margin.CollateralType memory collateral;
-            address collateralType;
+            uint128 synthMarketId;
             uint256 available;
             uint256 price;
             uint256 deductionAmount;
             uint256 deductionAmountUsd;
 
             for (uint256 i = 0; i < length; ) {
-                collateralType = globalMarginConfig.supportedAddresses[i];
-                collateral = globalMarginConfig.supported[collateralType];
-                available = accountMargin.collaterals[collateralType];
+                synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+                available = accountMargin.collaterals[synthMarketId];
 
                 if (available > 0) {
-                    price = INodeModule(globalConfig.oracleManager).process(collateral.oracleNodeId).price.toUint();
+                    price = getCollateralPrice(synthMarketId, available, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
-                    accountMargin.collaterals[collateralType] -= deductionAmount;
+                    accountMargin.collaterals[synthMarketId] -= deductionAmount;
                     amountToDeductUsd -= deductionAmountUsd;
                 }
 
@@ -148,16 +143,17 @@ library Margin {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-        uint256 length = globalMarginConfig.supportedAddresses.length;
-        address collateralType;
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
         uint256 available;
 
         for (uint256 i = 0; i < length; ) {
-            collateralType = globalMarginConfig.supportedAddresses[i];
-            available = accountMargin.collaterals[collateralType];
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
 
+            // Avoid changing the value to zero if already zero.
             if (available > 0) {
-                accountMargin.collaterals[collateralType] = 0;
+                accountMargin.collaterals[synthMarketId] = 0;
             }
 
             unchecked {
@@ -169,17 +165,17 @@ library Margin {
     // --- Views --- //
 
     /**
-     * @dev Returns the latest oracle price for the collateral at `collateralType`.
+     * @dev Returns the collateral price based on the quote price from the spot market. This is necessary to discount
+     * the collateral value relative fees incurred on the sale during liquidation. Fees might be either the skew fee
+     * incurred if skewed is expanded on spot and/or a flat fee on the market to spot market LPs.
      */
-    function getOraclePrice(address collateralType) internal view returns (uint256) {
-        PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
-        Margin.GlobalData storage globalMarginConfig = Margin.load();
-        return
-            globalMarketConfig
-                .oracleManager
-                .process(globalMarginConfig.supported[collateralType].oracleNodeId)
-                .price
-                .toUint();
+    function getCollateralPrice(
+        uint128 synthMarketId,
+        uint256 available,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) internal view returns (uint256) {
+        (uint256 price, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
+        return price;
     }
 
     /**
@@ -190,24 +186,19 @@ library Margin {
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
-        uint256 length = globalMarginConfig.supportedAddresses.length;
-
         // Variable declaration outside of loop to be more gas efficient.
-        address collateralType;
-        Margin.CollateralType memory collateral;
+        uint256 length = globalMarginConfig.supportedSynthMarketIds.length;
+        uint128 synthMarketId;
         uint256 available;
-        uint256 price;
-        uint256 collateralValueUsd;
+        uint256 collateralUsd;
 
         for (uint256 i = 0; i < length; ) {
-            collateralType = globalMarginConfig.supportedAddresses[i];
-            collateral = globalMarginConfig.supported[collateralType];
+            synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
+            available = accountMargin.collaterals[synthMarketId];
 
-            // `INodeModule.process()` is an expensive op, skip if we can.
-            available = accountMargin.collaterals[collateralType];
+            // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                price = INodeModule(globalConfig.oracleManager).process(collateral.oracleNodeId).price.toUint();
-                collateralValueUsd += available.mulDecimal(price);
+                collateralUsd += available.mulDecimal(getCollateralPrice(synthMarketId, available, globalConfig));
             }
 
             unchecked {
@@ -215,26 +206,33 @@ library Margin {
             }
         }
 
-        return collateralValueUsd;
+        return collateralUsd;
     }
 
     /**
-     * @dev Returns the `collateralValueUsd  + position.funding + position.pnl - position.feesPaid` on an open position.
+     * @dev Returns the margin value in usd given the account, market, and market price.
+     *
+     * Margin is effectively the discounted value of the deposited collateral, accounting for the funding accrued,
+     * fees paid and any unrealized profit/loss on the position.
+     *
+     * In short, `collateralValueUsd  + position.funding + position.pnl - position.feesPaid`.
      */
     function getMarginUsd(
         uint128 accountId,
         PerpMarket.Data storage market,
         uint256 price
     ) internal view returns (uint256) {
-        uint256 collateralValueUsd = getCollateralUsd(accountId, market.id);
+        uint256 collateralUsd = getCollateralUsd(accountId, market.id);
         Position.Data storage position = market.positions[accountId];
+
+        // Zero position means that marginUsd eq collateralUsd.
         if (position.size == 0) {
-            return collateralValueUsd;
+            return collateralUsd;
         }
         return
             MathUtil
                 .max(
-                    collateralValueUsd.toInt() +
+                    collateralUsd.toInt() +
                         position.getPnl(price) +
                         position.getAccruedFunding(market, price) -
                         position.accruedFeesUsd.toInt(),

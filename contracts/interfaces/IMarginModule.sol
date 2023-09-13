@@ -7,10 +7,8 @@ interface IMarginModule is IBasePerpMarket {
     // --- Structs --- //
 
     struct AvailableCollateral {
-        // Address of the available collateral.
-        address collateralType;
-        // Oracle price feed node id.
-        bytes32 oracleNodeId;
+        // Id of the synth market.
+        uint128 synthMarketId;
         // Maximum allowable deposited amount.
         uint128 maxAllowable;
     }
@@ -18,10 +16,10 @@ interface IMarginModule is IBasePerpMarket {
     // --- Events --- //
 
     // @dev Emitted when margin is deposited from user to market.
-    event MarginDeposit(address indexed from, address indexed to, uint256 value, address collateral);
+    event MarginDeposit(address indexed from, address indexed to, uint256 value, uint128 synthMarketId);
 
     // @dev Emitted when margin is withdrawn from market to user.
-    event MarginWithdraw(address indexed from, address indexed to, uint256 value, address collateral);
+    event MarginWithdraw(address indexed from, address indexed to, uint256 value, uint128 synthMarketId);
 
     // @dev Emitted when collateral is configured.
     event CollateralConfigured(address indexed from, uint256 collaterals);
@@ -29,9 +27,10 @@ interface IMarginModule is IBasePerpMarket {
     // --- Mutative --- //
 
     /**
-     * Withdraws all collateral for a account and market.
-     * This method reverts if the account has any open positions or orders
-     * There are no fees associated with the transfer of collateral.
+     * @dev Convenience method to withdraw all collateral for an account and market.
+     *
+     * This method will revert if the account has an open positions or orders. There are no fees associated with the
+     * withdrawal of collateral.
      */
     function withdrawAllCollateral(uint128 accountId, uint128 marketId) external;
 
@@ -44,19 +43,15 @@ interface IMarginModule is IBasePerpMarket {
      *
      * There are no fees associated with the transfer of collateral.
      */
-    function modifyCollateral(uint128 accountId, uint128 marketId, address collateral, int256 amountDelta) external;
+    function modifyCollateral(uint128 accountId, uint128 marketId, uint128 synthMarketId, int256 amountDelta) external;
 
     /**
-     * @dev Configure with collateral types, their allowables, and a ref to the oracle for price data.
+     * @dev Configure with collateral types (synth id) and their allowables.
      *
      * Recommended to use sUSD as the first collateralType so that negative PnL deducts from sUSD before other
      * collateral types to facilitate better UX.
      */
-    function setCollateralConfiguration(
-        address[] calldata collateralTypes,
-        bytes32[] calldata oracleNodeIds,
-        uint128[] calldata maxAllowables
-    ) external;
+    function setCollateralConfiguration(uint128[] calldata synthMarketIds, uint128[] calldata maxAllowables) external;
 
     // --- Views --- //
 

@@ -62,7 +62,9 @@ contract LiquidationModule is ILiquidationModule {
         market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
     }
 
-    /** @dev Sell all position margin for sUSD upon flag. */
+    /**
+     * @dev Rid this account of all non sUSD margin by selling on the spot market in one go.
+     */
     function yeetMarginCollateralForUsd() private {}
 
     // --- Mutative --- //
@@ -108,6 +110,8 @@ contract LiquidationModule is ILiquidationModule {
         market.flaggedLiquidations[accountId] = msg.sender;
         emit PositionFlaggedLiquidation(accountId, marketId, msg.sender, oraclePrice);
 
+        // Sell any non sUSD collateral for sUSD. Non sUSD margin value is already discounted by the fillPrice
+        // provided by the spot market.
         yeetMarginCollateralForUsd();
     }
 

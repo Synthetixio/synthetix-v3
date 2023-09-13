@@ -37,7 +37,6 @@ contract OrderModule is IOrderModule {
         uint256 limitPrice,
         uint256 keeperFeeBufferUsd
     ) external {
-        Account.exists(accountId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
         PerpMarket.Data storage market = PerpMarket.exists(marketId);

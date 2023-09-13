@@ -1112,6 +1112,8 @@ Need to make sure we are not liquidatable
       await assertEvent(tx, `CollateralConfigured("${await from.getAddress()}", ${n})`, PerpMarketProxy);
     });
 
+    it('should reset maxAllowable of when supported collateral is removed');
+
     it('should reset existing collaterals when new config is empty', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
