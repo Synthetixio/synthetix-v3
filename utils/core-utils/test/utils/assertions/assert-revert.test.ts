@@ -37,9 +37,14 @@ describe('utils/assertions/assert-revert.ts', function () {
       const message = 'Unknown transaction error';
       const expectedMessage = 'The expected transaction error';
 
-      await rejects(async () => {
-        await assertRevert(mockRevertingTx(message), expectedMessage);
-      }, new Error(`Transaction was expected to revert with "${expectedMessage}", but reverted with "Error: ${message}"\nError: Unknown transaction error`));
+      await rejects(
+        async () => {
+          await assertRevert(mockRevertingTx(message), expectedMessage);
+        },
+        new Error(
+          `Transaction was expected to revert with "${expectedMessage}", but reverted with "Error: ${message}"\nError: Unknown transaction error`
+        )
+      );
     });
   });
 
