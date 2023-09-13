@@ -314,7 +314,7 @@ describe('MarginModule', async () => {
             collateral.address,
             amountDelta
           ),
-          `AccountNotFound("${invalidAccountId}")`
+          `PermissionDenied("${invalidAccountId}"`
         );
       });
 
@@ -624,7 +624,7 @@ describe('MarginModule', async () => {
             collateral.contract.address,
             collateralDepositAmount.mul(-1)
           ),
-          `AccountNotFound("${invalidAccountId}")`,
+          `PermissionDenied("${invalidAccountId}"`,
           PerpMarketProxy
         );
       });
@@ -1004,7 +1004,7 @@ Need to make sure we are not liquidatable
         // Perform withdraw with invalid account
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(invalidAccountId, marketId),
-          `AccountNotFound("${invalidAccountId}")`,
+          `PermissionDenied("${invalidAccountId}"`,
           PerpMarketProxy
         );
       });

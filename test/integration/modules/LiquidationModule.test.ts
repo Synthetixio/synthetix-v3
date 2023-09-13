@@ -157,7 +157,7 @@ describe('LiquidationModule', () => {
 
       await assertRevert(
         PerpMarketProxy.connect(keeper()).flagPosition(invalidAccountId, marketId),
-        `AccountNotFound("${invalidAccountId}")`,
+        `PositionNotFound()`,
         PerpMarketProxy
       );
     });

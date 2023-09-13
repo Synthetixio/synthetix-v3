@@ -73,8 +73,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IMarket
      */
-    function name(uint128 marketId) external pure override returns (string memory) {
-        return "Market wstETHPERP";
+    function name(uint128) external pure override returns (string memory) {
+        return "BFP Market";
     }
 
     /**

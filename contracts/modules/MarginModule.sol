@@ -134,11 +134,7 @@ contract MarginModule is IMarginModule {
         uint256 available;
         uint256 total;
 
-        for (uint256 i = 0; i < length;) {
-            unchecked {
-                ++i;
-            }
-            
+        for (uint256 i = 0; i < length; ++i) {
             collateralType = globalMarginConfig.supportedAddresses[i];
             available = accountMargin.collaterals[collateralType];
             total += available;

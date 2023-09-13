@@ -222,11 +222,28 @@ export const findEventSafe = ({
     .find((parsedEvent) => parsedEvent?.name === eventName);
 };
 
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /** Performs a tx.wait() against the supplied `tx` with an evm_mine called without an `await. */
 export const txWait = async (tx: ethers.ContractTransaction, provider: ethers.providers.JsonRpcProvider) => {
-  // By calling evm_mine without an `await` before tx.wait(), we think we might result in fixing scenarios
-  // where tx.wait() hangs. We think it hangs due to blocks not being created (as by defaul blocks are created)
-  // for every transaction. There _may_ be a timing issue where a tx.wait() occurs _before_ the tx is accepted.
-  provider.send('evm_mine', []);
+  // By calling evm_mine with an `await` before tx.wait(), we think we might result in fixing scenarios
+  // where tx.wait() hangs. Not entirely sure why it hangs but forcing a block mine seems to resolve this
+  // issue...
+  await provider.send('evm_mine', []);
   return await tx.wait();
+};
+
+export const withExplicitEvmMine = async (
+  f: () => Promise<ethers.ContractTransaction>,
+  provider: ethers.providers.JsonRpcProvider
+) => {
+  await provider.send('evm_setAutomine', [false]);
+
+  const tx = await f();
+  await provider.send('evm_mine', []);
+
+  const receipt = await tx.wait();
+  await provider.send('evm_setAutomine', [true]);
+
+  return { tx, receipt };
 };

@@ -90,7 +90,7 @@ contract OrderModule is IOrderModule {
         );
 
         market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
-        emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, trade.orderFee, trade.keeperFee);
+        emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
     /**
@@ -246,13 +246,13 @@ contract OrderModule is IOrderModule {
         emit OrderSettled(
             accountId,
             marketId,
+            block.timestamp,
             runtime.params.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
             runtime.accruedFunding,
             runtime.pnl,
-            runtime.fillPrice,
-            block.timestamp
+            runtime.fillPrice
         );
     }
 
