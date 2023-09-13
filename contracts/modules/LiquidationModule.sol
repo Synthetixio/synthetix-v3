@@ -62,11 +62,6 @@ contract LiquidationModule is ILiquidationModule {
         market.updateDebtCorrection(market.positions[accountId], newPosition, marginUsd, newMarginUsd);
     }
 
-    /**
-     * @dev Rid this account of all non sUSD margin by selling on the spot market in one go.
-     */
-    function yeetMarginCollateralForUsd() private {}
-
     // --- Mutative --- //
 
     /**
