@@ -151,6 +151,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
         )
     {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        if (account.openPositionMarketIds.length() == 0) {
+            return (0, 0, 0, 0);
+        }
 
         (
             requiredInitialMargin,
@@ -159,11 +162,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
             maxLiquidationReward
         ) = account.getAccountRequiredMargins();
 
-        if (account.openPositionMarketIds.length() > 0) {
-            // Include liquidation rewards to required initial margin and required maintenance margin
-            requiredInitialMargin += maxLiquidationReward;
-            requiredMaintenanceMargin += maxLiquidationReward;
-        }
+        // Include liquidation rewards to required initial margin and required maintenance margin
+        requiredInitialMargin += maxLiquidationReward;
+        requiredMaintenanceMargin += maxLiquidationReward;
     }
 
     /**
