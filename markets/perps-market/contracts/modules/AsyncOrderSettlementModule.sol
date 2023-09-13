@@ -68,9 +68,12 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
         bytes[] memory updateData = new bytes[](1);
         updateData[0] = result;
 
+        IPythVerifier verifier = IPythVerifier(settlementStrategy.priceVerificationContract);
+        uint256 msgValue = verifier.getUpdateFee(1);
+
         IPythVerifier.PriceFeed[] memory priceFeeds = IPythVerifier(
             settlementStrategy.priceVerificationContract
-        ).parsePriceFeedUpdates{value: msg.value}(
+        ).parsePriceFeedUpdates{value: msgValue}(
             updateData,
             priceIds,
             order.settlementTime.to64(),

@@ -71,6 +71,10 @@ contract MockPyth is AbstractPyth {
         sequenceNumber += 1;
     }
 
+    function getUpdateFee(uint updateDataSize) external view returns (uint feeAmount) {
+        return singleUpdateFeeInWei * updateDataSize;
+    }
+
     function getUpdateFee(
         bytes[] calldata updateData
     ) public view override returns (uint feeAmount) {

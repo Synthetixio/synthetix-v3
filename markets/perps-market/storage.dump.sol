@@ -719,7 +719,6 @@ library SettlementStrategy {
         bytes32 feedId;
         string url;
         uint256 settlementReward;
-        uint256 priceDeviationTolerance;
         bool disabled;
     }
 }
