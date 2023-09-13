@@ -129,7 +129,7 @@ library Margin {
                 }
 
                 unchecked {
-                    i++;
+                    ++i;
                 }
             }
 
@@ -207,7 +207,7 @@ library Margin {
             }
 
             unchecked {
-                i++;
+                ++i;
             }
         }
     }
@@ -252,7 +252,7 @@ library Margin {
             }
 
             unchecked {
-                i++;
+                ++i;
             }
         }
 

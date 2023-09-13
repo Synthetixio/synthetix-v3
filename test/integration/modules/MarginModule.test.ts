@@ -23,11 +23,11 @@ import {
   approveAndMintMargin,
   commitAndSettle,
   commitOrder,
-  txWait,
   depositMargin,
   extendContractAbi,
   fastForwardBySec,
   findEventSafe,
+  withExplicitEvmMine,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { CollateralMock } from '../../../typechain-types';
@@ -314,7 +314,7 @@ describe('MarginModule', async () => {
             collateral.address,
             amountDelta
           ),
-          `AccountNotFound("${invalidAccountId}")`
+          `PermissionDenied("${invalidAccountId}"`
         );
       });
 
@@ -624,7 +624,7 @@ describe('MarginModule', async () => {
             collateral.contract.address,
             collateralDepositAmount.mul(-1)
           ),
-          `AccountNotFound("${invalidAccountId}")`,
+          `PermissionDenied("${invalidAccountId}"`,
           PerpMarketProxy
         );
       });
@@ -930,12 +930,13 @@ Need to make sure we are not liquidatable
           desiredSide: 1,
           desiredLeverage: 1,
         });
-        const { tx: openTx } = await commitAndSettle(bs, marketId, trader, openOrder);
+
+        const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
 
         // Collect some data for calculation.
         const { args: openEventArgs } =
           findEventSafe({
-            receipt: await txWait(openTx, provider()),
+            receipt: openReceipt,
             contract: PerpMarketProxy,
             eventName: 'OrderSettled',
           }) || {};
@@ -954,8 +955,7 @@ Need to make sure we are not liquidatable
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
         });
 
-        const { tx: closeTx } = await commitAndSettle(bs, marketId, trader, closeOrder);
-        const closeReceipt = await txWait(closeTx, provider());
+        const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
 
         // Do the withdraw.
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
@@ -1004,7 +1004,7 @@ Need to make sure we are not liquidatable
         // Perform withdraw with invalid account
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(invalidAccountId, marketId),
-          `AccountNotFound("${invalidAccountId}")`,
+          `PermissionDenied("${invalidAccountId}"`,
           PerpMarketProxy
         );
       });
@@ -1280,10 +1280,9 @@ Need to make sure we are not liquidatable
       const { trader, marketId, collateral, market, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1.1 });
 
-      const { tx } = await commitAndSettle(bs, marketId, trader, order);
-
+      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
       const settleEvent = findEventSafe({
-        receipt: await txWait(tx, provider()),
+        receipt,
         eventName: 'OrderSettled',
         contract: PerpMarketProxy,
       });
@@ -1328,12 +1327,12 @@ Need to make sure we are not liquidatable
         desiredSide: -1,
       });
 
-      const { tx } = await commitAndSettle(bs, marketId, trader, order);
+      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
       const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
       const settleEvent = findEventSafe({
-        receipt: await txWait(tx, provider()),
+        receipt,
         eventName: 'OrderSettled',
         contract: PerpMarketProxy,
       });

@@ -2,16 +2,17 @@
 pragma solidity 0.8.19;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {IERC165} from "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
+import {ISpotMarketSystem} from "../external/ISpotMarketSystem.sol";
+import {IPyth} from "../external/pyth/IPyth.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
-import {IPyth} from "../external/pyth/IPyth.sol";
+import {IPerpMarketFactoryModule, IMarket} from "../interfaces/IPerpMarketFactoryModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import "../interfaces/IPerpMarketFactoryModule.sol";
 
 contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for int128;
@@ -19,10 +20,6 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
     using PerpMarket for PerpMarket.Data;
-
-    // --- Events --- //
-
-    event MarketCreated(uint128 id, bytes32 name);
 
     // --- Mutative --- //
 
@@ -87,8 +84,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /**
      * @inheritdoc IMarket
      */
-    function name(uint128 marketId) external view override returns (string memory) {
-        return string(abi.encodePacked("Market ", PerpMarket.exists(marketId).name)); // e.g. "Market wstETHPERP"
+    function name(uint128) external pure override returns (string memory) {
+        return "BFP Market";
     }
 
     /**

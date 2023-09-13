@@ -2,18 +2,18 @@
 pragma solidity 0.8.19;
 
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {Margin} from "../storage/Margin.sol";
-import {Order} from "../storage/Order.sol";
-import {Position} from "../storage/Position.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import "../interfaces/IMarginModule.sol";
+import {IMarginModule} from "../interfaces/IMarginModule.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {Order} from "../storage/Order.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
+import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpMarketConfiguration.sol";
+import {Position} from "../storage/Position.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {Margin} from "../storage/Margin.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -136,7 +136,7 @@ contract MarginModule is IMarginModule {
         uint256 available;
         uint256 total;
 
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; ++i) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             available = accountMargin.collaterals[synthMarketId];
 
@@ -248,13 +248,12 @@ contract MarginModule is IMarginModule {
             delete globalMarginConfig.supported[synthMarketId];
 
             // Revoke access after wiping collateral from supported market collateral.
-            //
-            // TODO: Add this back later. Synthetix IERC20.approve contracts throw InvalidParameter when amount = 0.
-            //
-            // IERC20(collateralType).approve(address(this), 0);
+            ITokenModule synth = ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
+            uint256 allowance = synth.allowance(msg.sender, address(this));
+            synth.decreaseAllowance(address(this), allowance);
 
             unchecked {
-                i++;
+                ++i;
             }
         }
         delete globalMarginConfig.supportedSynthMarketIds;
@@ -276,7 +275,7 @@ contract MarginModule is IMarginModule {
             newSupportedSynthMarketIds[i] = synthMarketId;
 
             unchecked {
-                i++;
+                ++i;
             }
         }
         globalMarginConfig.supportedSynthMarketIds = newSupportedSynthMarketIds;
@@ -302,7 +301,7 @@ contract MarginModule is IMarginModule {
             collaterals[i] = AvailableCollateral(synthMarketId, c.maxAllowable);
 
             unchecked {
-                i++;
+                ++i;
             }
         }
 

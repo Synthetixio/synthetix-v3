@@ -8,12 +8,12 @@ import {Order} from "../storage/Order.sol";
 interface IOrderModule is IBasePerpMarket {
     // --- Events --- //
 
-    // @dev Emitted when a new order is submitted/created.
-    event OrderSubmitted(
+    // @dev Emitted when a new order is committed.
+    event OrderCommitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        int128 sizeDelta,
         uint256 commitmentTime,
+        int128 sizeDelta,
         uint256 estimatedOrderFee,
         uint256 estimatedKeeperFee
     );
@@ -24,13 +24,13 @@ interface IOrderModule is IBasePerpMarket {
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
+        uint256 settlementTime,
         int128 sizeDelta,
         uint256 orderFee,
         uint256 keeperFee,
         int256 accruedFunding,
         int256 pnl,
-        uint256 fillPrice,
-        uint256 settlementTime
+        uint256 fillPrice
     );
 
     // --- Mutative --- //

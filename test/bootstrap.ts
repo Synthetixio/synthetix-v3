@@ -174,6 +174,13 @@ export const bootstrap = (args: BootstrapArgs) => {
   // Overall market allows up to n collaterals, each having their own oracle node.
   const configureCollateral = async () => {
     const collaterals = [
+      // We add the real USD here to get it setup, it will not be part of the final `collaterals` array.
+      {
+        contract: systems.USD,
+        initialPrice: bn(1),
+        max: bn(10_000_000),
+        oracleNode: undefined,
+      },
       // `CollteralMock` is the same staked collateral (e.g. SNX)
       {
         contract: systems.CollateralMock,
@@ -204,20 +211,18 @@ export const bootstrap = (args: BootstrapArgs) => {
     for (const { initialPrice, contract, oracleNode } of collaterals) {
       const collateralOracle = oracleNode ?? (await createOracleNode(owner, initialPrice, systems.OracleManager));
       collateralOracles.push(collateralOracle);
-
+      // Ensure core system recognises this collateral.
+      await systems.Core.connect(owner).configureCollateral({
+        tokenAddress: contract.address,
+        oracleNodeId: collateralOracle.oracleNodeId,
+        issuanceRatioD18: bn(1),
+        liquidationRatioD18: bn(1),
+        liquidationRewardD18: bn(1),
+        minDelegationD18: bn(1),
+        depositingEnabled: true,
+      });
       // Update core system to allow this collateral to be deposited for all provisioned markets.
       for (const market of markets) {
-        // Ensure core system recognises this collateral.
-        await systems.Core.connect(owner).configureCollateral({
-          tokenAddress: contract.address,
-          oracleNodeId: collateralOracle.oracleNodeId,
-          issuanceRatioD18: bn(1),
-          liquidationRatioD18: bn(1),
-          liquidationRewardD18: bn(1),
-          minDelegationD18: bn(1),
-          depositingEnabled: true,
-        });
-
         // Ensure core system has enough capacity to deposit this collateral for market x.
         await systems.Core.connect(owner).configureMaximumMarketCollateral(
           market.marketId(),
@@ -246,7 +251,10 @@ export const bootstrap = (args: BootstrapArgs) => {
   let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
 
   before('configure margin collaterals and their prices', async () => {
-    collaterals = await configureCollateral();
+    const allCollaterals = await configureCollateral();
+    // Remove USD collateral, we do this since the USD if the "real" sUSD provisioned by protocol/syntehtix.
+    // All the collaterals in this array are expected to be "mintable"
+    collaterals = allCollaterals.slice(1);
   });
 
   let keeper: Signer;

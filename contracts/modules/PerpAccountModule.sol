@@ -7,9 +7,8 @@ import {Position} from "../storage/Position.sol";
 import {Margin} from "../storage/Margin.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {IPerpAccountModule} from "../interfaces/IPerpAccountModule.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-
-import "../interfaces/IPerpAccountModule.sol";
 
 contract PerpAccountModule is IPerpAccountModule {
     using DecimalMath for uint256;
@@ -48,7 +47,7 @@ contract PerpAccountModule is IPerpAccountModule {
             );
 
             unchecked {
-                i++;
+                ++i;
             }
         }
 

@@ -1,16 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
-import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {PerpMarket} from "../storage/PerpMarket.sol";
-import {Margin} from "../storage/Margin.sol";
-import {Position} from "../storage/Position.sol";
-import {Order} from "../storage/Order.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
+import {Margin} from "../storage/Margin.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
-import "../interfaces/ILiquidationModule.sol";
+import {Order} from "../storage/Order.sol";
+import {PerpMarket} from "../storage/PerpMarket.sol";
+import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {Position} from "../storage/Position.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU256 for uint256;
@@ -68,7 +68,6 @@ contract LiquidationModule is ILiquidationModule {
      * @inheritdoc ILiquidationModule
      */
     function flagPosition(uint128 accountId, uint128 marketId) external {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Position.Data storage position = market.positions[accountId];
 
@@ -175,7 +174,6 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (uint256 liqReward, uint256 keeperFee) {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         liqReward = Position.getLiquidationReward(
             market.positions[accountId].size,
@@ -199,7 +197,6 @@ contract LiquidationModule is ILiquidationModule {
      * @inheritdoc ILiquidationModule
      */
     function isPositionLiquidatable(uint128 accountId, uint128 marketId) external view returns (bool) {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         uint256 oraclePrice = market.getOraclePrice();
         return
@@ -218,7 +215,6 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 marketId
     ) external view returns (uint256 im, uint256 mm) {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
         (im, mm, ) = Position.getLiquidationMarginUsd(
