@@ -19,7 +19,6 @@ import {
   toRoundRobinGenerators,
 } from '../../generators';
 import {
-  ZERO_ADDRESS,
   mintAndApproveWithTrader,
   commitAndSettle,
   commitOrder,

@@ -9,7 +9,6 @@ import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './type
 
 // --- Constants --- //
 
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 export const SECONDS_ONE_HR = 60 * 60;
 export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
 
