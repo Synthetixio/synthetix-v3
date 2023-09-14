@@ -18,8 +18,8 @@ describe.only('LiquidationModule', () => {
 
   beforeEach(restore);
 
-  describe('flagPosition', () => {
-    it.only('should flag a position with a health factor <= 1', async () => {
+  describe.only('flagPosition', () => {
+    it('should flag a position with a health factor <= 1', async () => {
       const { PerpMarketProxy } = systems();
 
       const orderSide = genSide();

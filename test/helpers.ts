@@ -22,15 +22,18 @@ type CommitableOrder = Pick<Awaited<ReturnType<typeof genOrder>>, 'sizeDelta' | 
 /** Provision margin for this trader given the full `gTrader` context. */
 export const approveAndMintMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   const { trader, collateral, collateralDepositAmount } = await gTrader;
-  const { systems, signers } = bs;
+  const { provider, systems } = bs;
   const { PerpMarketProxy, SpotMarket } = systems();
-  const [, , spotMarketOwner] = signers();
 
   // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
   const synth = collateral.synthMarket.synth();
-  console.log(await synth.balanceOf(trader.signer.getAddress()));
+  const synthOwnerAddress = await synth.owner();
 
-  await synth.connect(spotMarketOwner).mint(trader.signer.getAddress(), collateralDepositAmount);
+  await provider().send('hardhat_impersonateAccount', [synthOwnerAddress]);
+  const synthOwner = provider().getSigner(synthOwnerAddress);
+  await provider().send('hardhat_setBalance', [await synthOwner.getAddress(), `0x${(1e22).toString(16)}`]);
+
+  await synth.connect(synthOwner).mint(trader.signer.getAddress(), collateralDepositAmount);
   await synth.connect(trader.signer).approve(PerpMarketProxy.address, collateralDepositAmount);
   await synth.connect(trader.signer).approve(SpotMarket.address, collateralDepositAmount);
 

@@ -161,6 +161,7 @@ export const genTrader = async (
   };
 };
 
+/** Generates a side randomly, 1 for long, -1 for short. */
 export const genSide = (): 1 | -1 => genOneOf([1, -1]);
 
 /** Generates a valid order to settle on a specific market for a specific collateral type/amount. */

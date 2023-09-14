@@ -237,6 +237,17 @@ export const bootstrap = (args: BootstrapArgs) => {
     // Remove USD collateral, we do this since the USD if the "real" sUSD provisioned by protocol/syntehtix.
     // All the collaterals in this array are expected to be "mintable"
     collaterals = (await configureCollateral()).slice(1);
+
+    // Ensure core system has enough capacity to deposit this collateral for perp market x.
+    for (const collateral of collaterals) {
+      for (const market of markets) {
+        await systems.Core.connect(getOwner()).configureMaximumMarketCollateral(
+          market.marketId(),
+          collateral.synthMarket.synthAddress(),
+          constants.MaxUint256
+        );
+      }
+    }
   });
 
   let keeper: Signer;
