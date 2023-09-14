@@ -36,6 +36,19 @@ describe('ElectionModule - voting', () => {
         await fastForwardTo(Number(schedule.votingPeriodStartDate), getProvider());
       });
 
+      it('reverts if ballot has too many candidates', async () => {
+        const candidates = [
+          ethers.Wallet.createRandom().address,
+          ethers.Wallet.createRandom().address,
+        ];
+
+        await assertRevert(
+          c.CoreProxy.connect(user).cast(candidates, [1, 1]),
+          'InvalidParameter("candidates", "too many candidates")',
+          c.CoreProxy
+        );
+      });
+
       it('reverts if voting power does not exist', async () => {
         await assertRevert(
           c.CoreProxy.connect(user).cast([await otherUser.getAddress()], [0]),

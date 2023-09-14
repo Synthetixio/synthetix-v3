@@ -170,9 +170,10 @@ library CcipClient {
     }
 }
 
-// @custom:artifact contracts/modules/core/BaseElectionModule.sol:BaseElectionModule
-contract BaseElectionModule {
+// @custom:artifact contracts/modules/core/ElectionModule.sol:ElectionModule
+contract ElectionModule {
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
+    uint8 private constant _MAX_BALLOT_SIZE = 1;
 }
 
 // @custom:artifact contracts/storage/Ballot.sol:Ballot

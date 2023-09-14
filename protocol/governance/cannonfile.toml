@@ -101,6 +101,7 @@ args = [
     "https://synthetix.io",
     "<%= contracts.CouncilTokenRouter.address %>"
 ]
+depends = ["invoke.upgrade_core_proxy", "router.CouncilTokenRouter"]
 factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
 factory.CouncilToken.event = "AssociatedSystemSet"
 factory.CouncilToken.arg = 2

@@ -3,7 +3,9 @@
     {
       "files": "*.toml",
       "options": {
-        "plugins": ["prettier-plugin-toml"],
+        "plugins": [
+          "prettier-plugin-toml"
+        ],
         "tabWidth": 4,
         "useTabs": false,
         "singleQuote": false,
@@ -13,7 +15,9 @@
     {
       "files": "*.sol",
       "options": {
-        "plugins": ["prettier-plugin-solidity"],
+        "plugins": [
+          "prettier-plugin-solidity"
+        ],
         "printWidth": 100,
         "tabWidth": 4,
         "useTabs": false,
@@ -22,7 +26,11 @@
       }
     },
     {
-      "files": ["*.js", "*.ts", "*.md"],
+      "files": [
+        "*.js",
+        "*.ts",
+        "*.md"
+      ],
       "options": {
         "printWidth": 100,
         "semi": true,
@@ -32,7 +40,11 @@
       }
     },
     {
-      "files": ["*.js", "*.ts", "*.json"],
+      "files": [
+        "*.js",
+        "*.ts",
+        "*.json"
+      ],
       "options": {
         "useTabs": false
       }

@@ -7,15 +7,15 @@ import { daysToSeconds } from '@synthetixio/core-utils/utils/misc/dates';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import { ElectionPeriod } from '../../constants';
-import { BaseElectionModule } from '../../generated/typechain';
+import { CoreProxy } from '../../generated/typechain';
 
-describe('BaseElectionModule - Initialization', function () {
-  const { c, getSigners, getProvider } = bootstrap();
+describe('ElectionModule - Initialization', function () {
+  const { c, getSigners, getProvider, deployNewProxy } = bootstrap();
 
   let owner: ethers.Signer;
   let user: ethers.Signer;
 
-  let BaseElectionModule: BaseElectionModule;
+  let ElectionModule: CoreProxy;
 
   async function _initOrUpdateElectionSettings({
     caller = owner,
@@ -25,7 +25,7 @@ describe('BaseElectionModule - Initialization', function () {
     nominationPeriodDuration = daysToSeconds(7),
     votingPeriodDuration = daysToSeconds(7),
   } = {}) {
-    return BaseElectionModule.connect(caller).initOrUpdateElectionSettings(
+    return ElectionModule.connect(caller).initOrUpdateElectionSettings(
       [await caller.getAddress()],
       minimumActiveMembers,
       initialNominationPeriodStartDate,
@@ -39,13 +39,21 @@ describe('BaseElectionModule - Initialization', function () {
     [owner, user] = getSigners();
   });
 
-  before('deploy module', async function () {
-    BaseElectionModule = c.BaseElectionProxy;
+  before('deploy uninitialized module', async function () {
+    ElectionModule = await deployNewProxy();
+
+    await ElectionModule.initOrUpgradeNft(
+      ethers.utils.formatBytes32String('councilToken'),
+      await c.CouncilToken.name(),
+      await c.CouncilToken.symbol(),
+      'https://synthetix.io',
+      await c.CouncilToken.getImplementation()
+    );
   });
 
   describe('before initializing the module', function () {
     it('shows that the module is not initialized', async function () {
-      assert.equal(await BaseElectionModule.isElectionModuleInitialized(), false);
+      assert.equal(await ElectionModule.isElectionModuleInitialized(), false);
     });
   });
 
@@ -106,18 +114,15 @@ describe('BaseElectionModule - Initialization', function () {
         });
 
         it('shows that the current period is Administration', async function () {
-          assertBn.equal(
-            await BaseElectionModule.getCurrentPeriod(),
-            ElectionPeriod.Administration
-          );
+          assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Administration);
         });
 
         it('shows that the current epoch index is 0', async function () {
-          assertBn.equal(await BaseElectionModule.getEpochIndex(), 0);
+          assertBn.equal(await ElectionModule.getEpochIndex(), 0);
         });
 
         it('returns the current schedule', async function () {
-          const schedule = await BaseElectionModule.connect(user).getEpochSchedule();
+          const schedule = await ElectionModule.connect(user).getEpochSchedule();
           assertBn.near(schedule.startDate, epochStartDate, 2);
           assertBn.near(schedule.endDate, epochEndDate, 2);
           assertBn.near(schedule.nominationPeriodStartDate, nominationPeriodStartDate, 2);
