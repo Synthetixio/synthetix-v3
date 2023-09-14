@@ -1,4 +1,4 @@
-import { BigNumber, Contract, ethers, utils } from 'ethers';
+import { BigNumber, ethers, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
@@ -8,9 +8,7 @@ import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
 import {
   bn,
-  genAddress,
   genBootstrap,
-  genBytes32,
   genNumber,
   genListOf,
   genOneOf,
@@ -29,7 +27,6 @@ import {
   mintAndApprove,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
-import { CollateralMock } from '../../../typechain-types';
 import { assertEvents } from '../../assert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
@@ -39,7 +36,7 @@ describe.only('MarginModule', async () => {
 
   beforeEach(restore);
 
-  describe.only('modifyCollateral', () => {
+  describe('modifyCollateral', () => {
     it('should cancel order when modifying if pending order exists and expired (withdraw)', async () => {
       const { PerpMarketProxy } = systems();
 
@@ -1278,58 +1275,48 @@ describe.only('MarginModule', async () => {
 
   describe('setCollateralConfiguration', () => {
     it('should revert when array has mismatched length', async () => {
-      const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
+      const { PerpMarketProxy } = systems();
       const from = owner();
 
-      // `maxAllowables` to have _at least_ 6 elements to ensure there's _always_ a mismatch.
-      const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
-      const oracleNodeIds = genListOf(genNumber(1, 5), () => genBytes32());
-      const maxAllowables = genListOf(genNumber(6, 10), () => bn(genNumber(10_000, 100_000)));
+      const synthMarketIds = [collaterals()[0].synthMarket.marketId(), collaterals()[1].synthMarket.marketId()];
+      const maxAllowables = genListOf(genNumber(3, 10), () => bn(genNumber(10_000, 100_000)));
 
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration(collateralTypes, oracleNodeIds, maxAllowables),
+        PerpMarketProxy.connect(from).setCollateralConfiguration(synthMarketIds, maxAllowables),
         `ArrayLengthMismatch()`
       );
     });
 
-    it('should configure many collaterals, also tests getConfiguredCollaterals', async () => {
-      const { PerpMarketProxy, Collateral2Mock, Collateral3Mock } = systems();
+    it('should configure and return many collaterals configured', async () => {
+      const { PerpMarketProxy } = systems();
       const from = owner();
 
-      // Unfortunately `collateralTypes` must be a real ERC20 contract otherwise this will fail due to the `.approve`.
-      const collateralTypes = shuffle([Collateral2Mock.address, Collateral3Mock.address]);
-      const n = collateralTypes.length;
-      const oracleNodeIds = genListOf(n, () => genBytes32());
-      const maxAllowables = genListOf(n, () => bn(genNumber(10_000, 100_000)));
+      const newCollaterals = shuffle(collaterals());
+      const newSynthMarketIds = newCollaterals.map(({ synthMarket }) => synthMarket.marketId());
+      const newMaxAllowables = genListOf(newCollaterals.length, () => bn(genNumber(10_000, 100_000)));
 
-      const tx = await PerpMarketProxy.connect(from).setCollateralConfiguration(
-        collateralTypes,
-        oracleNodeIds,
-        maxAllowables
-      );
-      const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
+      const tx = await PerpMarketProxy.connect(from).setCollateralConfiguration(newSynthMarketIds, newMaxAllowables);
+      const configuredCollaterals = await PerpMarketProxy.getConfiguredCollaterals();
 
-      assert.equal(collaterals.length, n);
+      assert.equal(configuredCollaterals.length, newCollaterals.length);
 
-      for (const [i, collateral] of Object.entries(collaterals)) {
-        const index = parseInt(i);
-        const { maxAllowable, collateralType, oracleNodeId } = collateral;
-        const collateralContract = new Contract(
-          collateralType,
-          ['function allowance(address, address) view returns (uint256)'],
-          bs.provider()
-        ) as CollateralMock;
-        const perpsAllowance = await collateralContract.allowance(PerpMarketProxy.address, PerpMarketProxy.address);
-        const coreAllowance = await collateralContract.allowance(PerpMarketProxy.address, bs.systems().Core.address);
+      for (const [_i, configuredCollateral] of Object.entries(configuredCollaterals)) {
+        const idx = parseInt(_i);
+        const synth = newCollaterals[idx].synthMarket.synth();
 
-        assertBn.equal(ethers.constants.MaxUint256, perpsAllowance);
+        const perpAllowance = await synth.allowance(PerpMarketProxy.address, PerpMarketProxy.address);
+        const coreAllowance = await synth.allowance(PerpMarketProxy.address, bs.systems().Core.address);
+
+        assertBn.equal(ethers.constants.MaxUint256, perpAllowance);
         assertBn.equal(ethers.constants.MaxUint256, coreAllowance);
-        assertBn.equal(maxAllowable, maxAllowables[index]);
-        assert.equal(collateralType, collateralTypes[index]);
-        assert.equal(oracleNodeId, oracleNodeIds[index]);
+        assertBn.equal(configuredCollateral.maxAllowable, newMaxAllowables[idx]);
       }
 
-      await assertEvent(tx, `CollateralConfigured("${await from.getAddress()}", ${n})`, PerpMarketProxy);
+      await assertEvent(
+        tx,
+        `CollateralConfigured("${await from.getAddress()}", ${newCollaterals.length})`,
+        PerpMarketProxy
+      );
     });
 
     it('should reset maxAllowable of when supported collateral is removed');
@@ -1338,7 +1325,7 @@ describe.only('MarginModule', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
 
-      await PerpMarketProxy.connect(from).setCollateralConfiguration([], [], []);
+      await PerpMarketProxy.connect(from).setCollateralConfiguration([], []);
       const collaterals = await PerpMarketProxy.getConfiguredCollaterals();
 
       assert.equal(collaterals.length, 0);
@@ -1347,17 +1334,14 @@ describe.only('MarginModule', async () => {
     it('should revert when non-owners configuring collateral', async () => {
       const { PerpMarketProxy } = systems();
       const from = await traders()[0].signer.getAddress();
-      await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([], [], []),
-        `Unauthorized("${from}")`
-      );
+      await assertRevert(PerpMarketProxy.connect(from).setCollateralConfiguration([], []), `Unauthorized("${from}")`);
     });
 
     it('should revert when max allowable is negative', async () => {
       const { PerpMarketProxy } = systems();
       const from = owner();
       await assertRevert(
-        PerpMarketProxy.connect(from).setCollateralConfiguration([genAddress()], [genBytes32()], [bn(-1)]),
+        PerpMarketProxy.connect(from).setCollateralConfiguration([bn(genNumber())], [bn(-1)]),
         'Error: value out-of-bounds'
       );
     });
