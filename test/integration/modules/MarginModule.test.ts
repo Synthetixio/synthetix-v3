@@ -33,7 +33,7 @@ import { CollateralMock } from '../../../typechain-types';
 import { assertEvents } from '../../assert';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-describe('MarginModule', async () => {
+describe.only('MarginModule', async () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, owner, systems, provider, restore } = bs;
 

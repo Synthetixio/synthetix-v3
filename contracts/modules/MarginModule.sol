@@ -14,7 +14,6 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {Position} from "../storage/Position.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Margin} from "../storage/Margin.sol";
-import "hardhat/console.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;
@@ -81,10 +80,6 @@ contract MarginModule is IMarginModule {
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             synth.transferFrom(msg.sender, address(this), amount);
-
-            console.log("depositing");
-            console.logUint(synthMarketId);
-            console.logUint(amount);
             globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
         }
         emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);

@@ -9,7 +9,6 @@ import {PerpMarket} from "./PerpMarket.sol";
 import {Position} from "./Position.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import "hardhat/console.sol";
 
 library Margin {
     using DecimalMath for uint256;
@@ -195,27 +194,11 @@ library Margin {
             if (available > 0 && synthMarketId != SYNTHETIX_USD_MARKET_ID) {
                 address synth = globalConfig.spotMarket.getSynth(synthMarketId);
 
-                console.log("synthMarketId");
-                console.logUint(synthMarketId);
-
-                console.log("market value");
-                console.logUint(globalConfig.synthetix.getMarketCollateralValue(marketId));
-                console.logUint(globalConfig.synthetix.getWithdrawableMarketUsd(marketId));
-                (uint256 depositFee, uint256 withdrawlFee) = globalConfig.synthetix.getMarketFees(marketId, available);
-                console.logUint(depositFee);
-                console.logUint(withdrawlFee);
-
-                console.log("avail");
-                console.logUint(available);
-
-                console.log("withdrawing");
                 // Withdraw the collateral from the market.
                 globalConfig.synthetix.withdrawMarketCollateral(marketId, synth, available);
 
-                console.log("selling");
-                // Sell said collateral for sUSD.
+                // Sell collateral for sUSD.
                 (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(synthMarketId, available, 0, address(0));
-                console.log("burning");
                 globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
 
                 // Update internal accounting to update sale.
@@ -265,10 +248,6 @@ library Margin {
 
             // `getCollateralPrice()` is an expensive op, skip if we can.
             if (available > 0) {
-                console.log("collat price");
-                console.logUint(getCollateralPrice(synthMarketId, available, globalConfig));
-                console.log("ava");
-                console.logUint(available);
                 collateralUsd += available.mulDecimal(getCollateralPrice(synthMarketId, available, globalConfig));
             }
 
