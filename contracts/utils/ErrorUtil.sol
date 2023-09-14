@@ -59,9 +59,6 @@ library ErrorUtil {
     // @dev Thrown when performing an update will cause a position to be instantly liquidated.
     error CanLiquidatePosition();
 
-    // @dev Emitted when a collateral type in configuration is zero.
-    error ZeroAddress();
-
     // @dev Thrown when an account has insufficient collateral to transfer.
     error InsufficientCollateral(uint128 synthMarketId, uint256 available, uint256 value);
 
