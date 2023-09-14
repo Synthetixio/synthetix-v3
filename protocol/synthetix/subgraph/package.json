@@ -28,7 +28,7 @@
     "deployments:base-goerli": "cannon inspect synthetix:latest --chain-id 84531 --write-deployments ./base-goerli/deployments",
     "codegen:base-goerli": "node ./codegen base-goerli && graph codegen subgraph.base-goerli.yaml --output-dir=base-goerli/generated && prettier --write base-goerli/generated",
     "build:base-goerli": "graph build subgraph.base-goerli.yaml --output-dir ./build/base-goerli --network base-testnet",
-    "deploy:base-goerli": "graph deploy synthetix-base-testnet subgraph.base-goerli.yaml --output-dir ./build/base-goerli --network base-testnet --version-label v0.0.1 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key --ipfs https://ipfs.satsuma.xyz",
+    "deploy:base-goerli": "graph deploy synthetix-base-testnet subgraph.base-goerli.yaml --output-dir ./build/base-goerli --network base-testnet --version-label v0.0.1 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "test": "graph test",
     "coverage": "yarn deployments:optimism-goerli && yarn codegen:optimism-goerli && git diff --exit-code && yarn test --coverage",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
