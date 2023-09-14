@@ -224,6 +224,10 @@ library Margin {
         uint256 available,
         PerpMarketConfiguration.GlobalData storage globalConfig
     ) internal view returns (uint256) {
+        if (available == 0) {
+            return 0;
+        }
+
         (uint256 synthAmount, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
         return synthAmount.divDecimal(available);
     }

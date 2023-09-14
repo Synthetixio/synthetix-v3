@@ -617,7 +617,7 @@ describe.only('MarginModule', async () => {
         );
       });
 
-      it('should revert withdraw to a market that does not exist', async () => {
+      it('should revert withdraw from market that does not exist', async () => {
         const { PerpMarketProxy } = systems();
         const { trader, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
         const invalidMarketId = bn(genNumber(42069, 50_000));
@@ -648,7 +648,7 @@ describe.only('MarginModule', async () => {
             invalidSynthMarketId,
             collateralDepositAmount.mul(-1)
           ),
-          `UnsupportedCollateral(${invalidSynthMarketId})`,
+          `UnsupportedCollateral("${invalidSynthMarketId}")`,
           PerpMarketProxy
         );
       });
@@ -815,6 +815,7 @@ describe.only('MarginModule', async () => {
           bs,
           genTrader(bs, { desiredCollateral: collateralGenerator.next().value })
         );
+
         // Deposit margin with collateral 2
         const { collateralDepositAmount: collateralDepositAmount2, collateral: collateral2 } = await depositMargin(
           bs,
@@ -825,46 +826,57 @@ describe.only('MarginModule', async () => {
           })
         );
 
-        // Assert deposit went thorough and  we have two different types of collateral
+        // Assert deposit went thorough and we have two different types of collateral.
         const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
         const { available: collateralBalance = bn(0) } =
-          accountDigest.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+          accountDigest.collateral.find(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarket.marketId())) ||
+          {};
         const { available: collateral2Balance = bn(0) } =
-          accountDigest.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+          accountDigest.collateral.find(({ synthMarketId }) => synthMarketId.eq(collateral2.synthMarket.marketId())) ||
+          {};
 
         assertBn.equal(collateralBalance, collateralDepositAmount);
         assertBn.equal(collateral2Balance, collateralDepositAmount2);
 
-        // Store balances before withdrawal
+        // Store balances before withdrawal.
         const collateralWalletBalanceBeforeWithdrawal = await collateral.contract.balanceOf(traderAddress);
         const collateralWalletBalanceBeforeWithdrawal2 = await collateral2.contract.balanceOf(traderAddress);
 
-        // Perform the withdrawAllCollateral
+        // Perform the `withdrawAllCollateral`.
         const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
 
-        // Assert that events are triggered
+        // Assert that events are triggered.
         await assertEvent(
           tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount}, "${collateral.contract.address}")`,
+          `MarginWithdraw("${
+            PerpMarketProxy.address
+          }", "${traderAddress}", ${collateralDepositAmount}, ${collateral.synthMarket.marketId()})`,
           PerpMarketProxy
         );
         await assertEvent(
           tx,
-          `MarginWithdraw("${PerpMarketProxy.address}", "${traderAddress}", ${collateralDepositAmount2}, "${collateral2.contract.address}")`,
+          `MarginWithdraw("${
+            PerpMarketProxy.address
+          }", "${traderAddress}", ${collateralDepositAmount2}, ${collateral2.synthMarket.marketId()})`,
           PerpMarketProxy
         );
 
         // Assert that no collateral is left the market
         const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
         const { available: collateralBalanceAfter = bn(0) } =
-          accountDigestAfter.collateral.find((c) => c.collateralType === collateral.contract.address) || {};
+          accountDigestAfter.collateral.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral.synthMarket.marketId())
+          ) || {};
         const { available: collateral2BalanceAfter = bn(0) } =
-          accountDigestAfter.collateral.find((c) => c.collateralType === collateral2.contract.address) || {};
+          accountDigestAfter.collateral.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral2.synthMarket.marketId())
+          ) || {};
 
-        assertBn.equal(collateralBalanceAfter, bn(0));
-        assertBn.equal(collateral2BalanceAfter, bn(0));
+        assertBn.isZero(collateralBalanceAfter);
+        assertBn.isZero(collateral2BalanceAfter);
 
-        // Assert that we have the collateral back in the trader's wallet
+        // Assert that we have the collateral back in the trader's wallet.
         assertBn.equal(
           await collateral.contract.balanceOf(traderAddress),
           collateralDepositAmount.add(collateralWalletBalanceBeforeWithdrawal)
@@ -1424,7 +1436,7 @@ describe.only('MarginModule', async () => {
     it('should return zero marginUsd when no collateral has been deposited', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, marketId } = await genTrader(bs);
-      assertBn.equal(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId), bn(0));
+      assertBn.isZero(await PerpMarketProxy.getMarginUsd(trader.accountId, marketId));
     });
 
     it('should return marginUsd + pnl of position', async () => {
@@ -1482,16 +1494,19 @@ describe.only('MarginModule', async () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-
       assertBn.gt(marginUsdBeforePriceChange, 0);
+
       // Price double, causing our short to be underwater
       const newPrice = wei(order.oraclePrice).mul(2).toBN();
+
       // Update price
       await market.aggregator().mockSetCurrentPrice(newPrice);
+
       // Load margin again
       const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
+
       // Assert marginUSD is 0 since price change made the position underwater
-      assertBn.equal(marginUsdAfterPriceChange, bn(0));
+      assertBn.isZero(marginUsdAfterPriceChange);
     });
 
     it('should not consider a position in a different market for the same account', async () => {
