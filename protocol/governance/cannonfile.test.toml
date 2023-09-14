@@ -1,11 +1,5 @@
 version = "<%= package.version %>-testable"
-
-include = [
-  "cannonfile.toml"
-]
-
-[contract.BaseElectionModule]
-artifact = "contracts/modules/core/BaseElectionModule.sol:BaseElectionModule"
+include = ["cannonfile.toml"]
 
 [contract.SnapshotRecordMock]
 artifact = "contracts/mocks/SnapshotRecordMock.sol:SnapshotRecordMock"
@@ -29,22 +23,22 @@ artifact = "contracts/generated/test/TestableElectionStorage.sol:TestableElectio
 # Core Router + Testable modules
 [router.TestRouter]
 contracts = [
-  # Extend Original Core Router
-  "CoreRouter",
-  # Testable storage contracts
-  "TestableCouncilStorage",
-	"TestableBallotStorage",
-  "TestableSnapshotVotePowerStorage",
-  "TestableElectionSettingsStorage",
-  "TestableElectionStorage",
+    # Extend Original Core Router
+    "CoreRouter",
+    # Testable storage contracts
+    "TestableCouncilStorage",
+    "TestableBallotStorage",
+    "TestableSnapshotVotePowerStorage",
+    "TestableElectionSettingsStorage",
+    "TestableElectionStorage",
 ]
 depends = [
-  "router.CoreRouter",
-  "contract.TestableCouncilStorage",
-	"contract.TestableBallotStorage",
-  "contract.TestableSnapshotVotePowerStorage",
-  "contract.TestableElectionSettingsStorage",
-  "contract.TestableElectionStorage",
+    "router.CoreRouter",
+    "contract.TestableCouncilStorage",
+    "contract.TestableBallotStorage",
+    "contract.TestableSnapshotVotePowerStorage",
+    "contract.TestableElectionSettingsStorage",
+    "contract.TestableElectionStorage",
 ]
 
 [invoke.upgrade_core_proxy]
@@ -56,42 +50,3 @@ factory.CoreProxy.abiOf = ["TestRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
 depends = ["contract.InitialProxy", "router.TestRouter"]
-
-[router.BaseElectionRouter]
-contracts = [
-  "AssociatedSystemsModule",
-  "BaseElectionModule",
-  "InitialModuleBundle",
-]
-depends = [
-  "contract.AssociatedSystemsModule",
-  "contract.BaseElectionModule",
-  "contract.InitialModuleBundle",
-]
-
-[contract.BaseElectionProxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.BaseElectionRouter.address %>", "<%= settings.owner %>"]
-salt = "<%= settings.salt %>"
-abiOf = ["BaseElectionRouter"]
-create2 = true
-depends = ["router.BaseElectionRouter"]
-
-[invoke.init_base_election_council_token]
-target = ["BaseElectionProxy"]
-from = "<%= settings.owner %>"
-func = "initOrUpgradeNft"
-args = [
-  "<%= formatBytes32String('councilToken') %>",
-  "Generic Governance Token",
-  "GGOV",
-  "https://synthetix.io",
-  "<%= contracts.CouncilTokenRouter.address %>"
-]
-depends = [
-  "contract.BaseElectionProxy",
-  "router.CouncilTokenRouter"
-]
-factory.BaseElectionCouncilToken.abiOf = ["CouncilTokenRouter"]
-factory.BaseElectionCouncilToken.event = "AssociatedSystemSet"
-factory.BaseElectionCouncilToken.arg = 2
