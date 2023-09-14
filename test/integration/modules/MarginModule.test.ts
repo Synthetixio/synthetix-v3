@@ -2,7 +2,7 @@ import { BigNumber, Contract, ethers, utils } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import Wei, { wei } from '@synthetixio/wei';
+import { wei } from '@synthetixio/wei';
 import assert from 'assert';
 import { shuffle } from 'lodash';
 import { bootstrap } from '../../bootstrap';
@@ -27,8 +27,6 @@ import {
   depositMargin,
   extendContractAbi,
   findEventSafe,
-  setMarketConfiguration,
-  setMarketConfigurationById,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { CollateralMock } from '../../../typechain-types';
@@ -86,13 +84,9 @@ describe('MarginModule', async () => {
 
     it('should revert on modify when an order is pending', async () => {
       const { PerpMarketProxy } = systems();
-      const gTrader1 = await genTrader(bs);
 
-      await depositMargin(bs, gTrader1);
-      const order = await genOrder(bs, gTrader1.market, gTrader1.collateral, gTrader1.collateralDepositAmount);
-
-      // We are using the same trader/market for both deposit and withdraws.
-      const { trader, marketId } = gTrader1;
+      const { market, collateral, collateralDepositAmount, marketId, trader } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       // Commit an order for this trader.
       await PerpMarketProxy.connect(trader.signer).commitOrder(
@@ -108,7 +102,7 @@ describe('MarginModule', async () => {
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
       // (deposit) Same trader in the same market but (possibly) different collateral.
-      const gTrader2 = await genTrader(bs, { desiredTrader: trader, desiredMarket: gTrader1.market });
+      const gTrader2 = await genTrader(bs, { desiredTrader: trader, desiredMarket: market });
 
       // (deposit) Mint and give access.
       await approveAndMintMargin(bs, gTrader2);
@@ -124,13 +118,13 @@ describe('MarginModule', async () => {
         `OrderFound("${trader.accountId}")`
       );
 
-      // (withdraw) Attempt to withdraw previously deposted margin but expect fail.
+      // (withdraw) Attempt to withdraw previously deposited margin but expect fail.
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          gTrader1.collateral.contract.address,
-          gTrader1.collateralDepositAmount.mul(-1)
+          collateral.contract.address,
+          collateralDepositAmount.mul(-1)
         ),
         `OrderFound("${trader.accountId}")`
       );
@@ -138,16 +132,18 @@ describe('MarginModule', async () => {
 
     it('should revert when modifying collateral of another account', async () => {
       const { PerpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
-      const trader1 = traders()[0];
-      const trader2 = traders()[1];
+      const {
+        market,
+        collateral,
+        collateralDepositAmount,
+        trader: trader1,
+      } = await approveAndMintMargin(bs, genTrader(bs, { desiredTrader: tradersGenerator.next().value }));
 
-      const gTrader = await genTrader(bs, { desiredTrader: trader1 });
-      const { market, collateral, collateralDepositAmount } = gTrader;
-      await approveAndMintMargin(bs, gTrader);
-
-      // Connected using trader2 for an accountId that belongs to trader1.
       const permission = ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL');
+      const trader2 = tradersGenerator.next().value;
+      // Connected using trader2 for an accountId that belongs to trader1.
       const signerAddress = await trader2.signer.getAddress();
       await assertRevert(
         PerpMarketProxy.connect(trader2.signer).modifyCollateral(
@@ -503,7 +499,7 @@ describe('MarginModule', async () => {
           withdrawAmount
         );
 
-        // Convert withdrawAmount back to positive beacuse Transfer takes in abs(amount).
+        // Convert withdrawAmount back to positive because Transfer takes in abs(amount).
         const withdrawAmountAbs = withdrawAmount.abs();
         await assertEvent(
           tx,
@@ -770,7 +766,8 @@ Need to make sure we are not liquidatable
     describe('withdrawAllCollateral', () => {
       it('should withdraw all account collateral', async () => {
         const { PerpMarketProxy } = systems();
-        const gTrader = await genTrader(bs);
+
+        const collateralGenerator = toRoundRobinGenerators(shuffle(collaterals()));
 
         // We want to make sure we have two different types of collateral
         const collateral = collaterals()[0];
@@ -779,12 +776,12 @@ Need to make sure we are not liquidatable
         // Deposit margin with collateral 1
         const { trader, traderAddress, marketId, collateralDepositAmount } = await depositMargin(
           bs,
-          Promise.resolve({ ...gTrader, collateral })
+          genTrader(bs, { desiredCollateral: collateralGenerator.next().value })
         );
         // Deposit margin with collateral 2
         const { collateralDepositAmount: collateralDepositAmount2 } = await depositMargin(
           bs,
-          Promise.resolve({ ...gTrader, collateral: collateral2 })
+          genTrader(bs, { desiredCollateral: collateralGenerator.next().value })
         );
 
         // Assert deposit went thorough and  we have two different types of collateral
@@ -847,8 +844,9 @@ Need to make sure we are not liquidatable
         );
         await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
       });
+
       it('should withdraw with fees and funding removed when no price changes', async () => {
-        const { PerpMarketProxy, USD } = systems();
+        const { PerpMarketProxy } = systems();
         const { trader, marketId, market, collateral, collateralDepositAmount, traderAddress, collateralPrice } =
           await depositMargin(bs, genTrader(bs));
         // For some collateral + trader combinations the trader has a balance bigger than collateralDepositAmount, so record the full balance here.
@@ -903,8 +901,10 @@ Need to make sure we are not liquidatable
         const { PerpMarketProxy, USD } = systems();
         const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
-        const { trader, marketId, market, collateral, collateralDepositAmount, collateralPrice, traderAddress } =
-          await depositMargin(bs, genTrader(bs, { desiredTrader: tradersGenerator.next().value }));
+        const { trader, marketId, market, collateral, collateralDepositAmount, traderAddress } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredTrader: tradersGenerator.next().value })
+        );
 
         // For some collateral + trader combinations the trader has a balance bigger than collateralDepositAmount, so record the full balance here.
         const startingCollateralBalance = wei(await collateral.contract.balanceOf(traderAddress)).add(
@@ -949,7 +949,7 @@ Need to make sure we are not liquidatable
          * So why cant we just withdraw our profit, why do we need a deposit form another trader?
          * In V3, the smart contract will revert if:
          * marketData.creditCapacityD18 + (depositedCollateralValue - our withdrawalAmount) < 0
-         * We started with a creditCapacityD18 of 0, since we dont have any pools delegating to us.
+         * We started with a creditCapacityD18 of 0, since we don't have any pools delegating to us.
          *
          * Keeper Fees:
          * When we paid out the keeper fees, we borrowed sUSD, which increased the market debt.
@@ -959,7 +959,7 @@ Need to make sure we are not liquidatable
          * After our withdrawal the depositedCollateralValue in v3 will be 0.
          * So we need another trader to deposit collateral matching the profit. As well as the keeper fees.
          * The traders profit would have the keeper fees deducted already,
-         * so the LPs (or the market) really did loose kepper fees + profit.
+         * so the LPs (or the market) really did loose keeper fees + profit.
          *
          * The other way of working around this and probably a more real life scenario,
          * would be having LPs delegating to us giving us more creditCapacityD18 to start of with
