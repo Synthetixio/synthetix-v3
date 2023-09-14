@@ -273,7 +273,6 @@ describe('OrderModule', () => {
 
       await fastForwardTo(settlementTime, provider());
 
-      const { orderFee, keeperFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFee);
       const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
         value: updateFee,
       });
@@ -290,7 +289,7 @@ describe('OrderModule', () => {
 
       await assertEvent(
         tx,
-        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${orderSettledArgs.keeperFee}, ${accruedFunding}, ${pnl}, ${order.fillPrice})`,
+        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderSettledArgs?.orderFee}, ${orderSettledArgs?.keeperFee}, ${accruedFunding}, ${pnl}, ${order.fillPrice})`,
         PerpMarketProxy
       );
 
