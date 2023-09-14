@@ -4,15 +4,15 @@ pragma solidity 0.8.19;
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import {SafeCastI256, SafeCastU256, SafeCastI128, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {Order} from "../storage/Order.sol";
-import {Position} from "../storage/Position.sol";
+import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {IOrderModule} from "../interfaces/IOrderModule.sol";
 import {Margin} from "../storage/Margin.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
+import {Order} from "../storage/Order.sol";
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
-import {ErrorUtil} from "../utils/ErrorUtil.sol";
-import {MathUtil} from "../utils/MathUtil.sol";
-import "../interfaces/IOrderModule.sol";
+import {Position} from "../storage/Position.sol";
+import {SafeCastI128, SafeCastI256, SafeCastU128, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract OrderModule is IOrderModule {
     using DecimalMath for int256;
@@ -27,6 +27,27 @@ contract OrderModule is IOrderModule {
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
 
+    /** @dev Same implementation as `MarginModule.validateOrderAvailability`. */
+    function validateOrderAvailability(
+        uint128 accountId,
+        uint128 marketId,
+        PerpMarket.Data storage market,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        Order.Data storage order = market.orders[accountId];
+
+        // A new order cannot be submitted if one is already pending.
+        if (order.sizeDelta != 0) {
+            // Check if this order can be cancelled. If so, cancel and then proceed.
+            if (block.timestamp > order.commitmentTime + globalConfig.maxOrderAge) {
+                delete market.orders[accountId];
+                emit OrderCanceled(accountId, marketId, order.commitmentTime);
+            } else {
+                revert ErrorUtil.OrderFound();
+            }
+        }
+    }
+
     /**
      * @inheritdoc IOrderModule
      */
@@ -37,16 +58,11 @@ contract OrderModule is IOrderModule {
         uint256 limitPrice,
         uint256 keeperFeeBufferUsd
     ) external {
-        Account.exists(accountId);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
 
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-
-        // A new order cannot be submitted if one is already pending.
-        if (market.orders[accountId].sizeDelta != 0) {
-            revert ErrorUtil.OrderFound(accountId);
-        }
-
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
         uint256 oraclePrice = market.getOraclePrice();
 
         // TODO: Consider removing and only recomputing funding at the settlement.
@@ -74,7 +90,7 @@ contract OrderModule is IOrderModule {
         );
 
         market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
-        emit OrderSubmitted(accountId, marketId, sizeDelta, block.timestamp, trade.orderFee, trade.keeperFee);
+        emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
     /**
@@ -176,7 +192,6 @@ contract OrderModule is IOrderModule {
      * @inheritdoc IOrderModule
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable {
-        Account.exists(accountId);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         Order.Data storage order = market.orders[accountId];
         Runtime_settleOrder memory runtime;
@@ -229,10 +244,10 @@ contract OrderModule is IOrderModule {
         );
 
         globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, runtime.trade.keeperFee);
-
         emit OrderSettled(
             accountId,
             marketId,
+            block.timestamp,
             runtime.params.sizeDelta,
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
@@ -240,15 +255,6 @@ contract OrderModule is IOrderModule {
             runtime.pnl,
             runtime.fillPrice
         );
-    }
-
-    /**
-     * @inheritdoc IOrderModule
-     */
-    function cancelOrder(uint128 accountId, uint128 marketId) external {
-        // TODO: Consider removing cancellations. Do we need it?
-        //
-        // If an order is stale, on next settle, we can simply wipe the order, emit event, start new order.
     }
 
     /**

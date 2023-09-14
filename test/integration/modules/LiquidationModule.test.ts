@@ -3,12 +3,18 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { wei } from '@synthetixio/wei';
 import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genOneOf, genOrder, genSide, genTrader } from '../../generators';
-import { depositMargin, commitAndSettle, commitOrder, setMarketConfigurationById } from '../../helpers';
+import {
+  depositMargin,
+  commitAndSettle,
+  commitOrder,
+  setMarketConfigurationById,
+  getBlockTimestamp,
+} from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, collaterals, traders, keeper, systems, restore } = bs;
+  const { markets, collaterals, traders, keeper, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
@@ -62,6 +68,7 @@ describe('LiquidationModule', () => {
         desiredSide: orderSide,
       });
       await commitOrder(bs, marketId, trader, order2);
+      const commitmentTime = await getBlockTimestamp(provider());
 
       // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
       const newMarketOraclePrice = wei(order2.oraclePrice)
@@ -76,7 +83,7 @@ describe('LiquidationModule', () => {
         `PositionFlaggedLiquidation(${trader.accountId}, ${marketId}, "${keeperAddress}", ${newMarketOraclePrice})`,
         PerpMarketProxy
       );
-      await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId})`, PerpMarketProxy);
+      await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
     });
 
     it('should emit all events in correct order');
@@ -150,7 +157,7 @@ describe('LiquidationModule', () => {
 
       await assertRevert(
         PerpMarketProxy.connect(keeper()).flagPosition(invalidAccountId, marketId),
-        `AccountNotFound("${invalidAccountId}")`,
+        `PositionNotFound()`,
         PerpMarketProxy
       );
     });

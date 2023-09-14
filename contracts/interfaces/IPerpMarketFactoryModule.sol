@@ -24,6 +24,10 @@ interface IPerpMarketFactoryModule is IMarket {
         uint256 remainingLiquidatableSizeCapacity;
     }
 
+    // --- Events --- //
+
+    event MarketCreated(uint128 id, bytes32 name);
+
     // --- Mutative --- //
 
     /**

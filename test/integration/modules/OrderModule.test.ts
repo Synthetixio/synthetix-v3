@@ -10,13 +10,13 @@ import { bootstrap } from '../../bootstrap';
 import { genBootstrap, genNumber, genOrder, genTrader } from '../../generators';
 import {
   commitAndSettle,
-  txWait,
   depositMargin,
   findEventSafe,
   getFastForwardTimestamp,
   getPythPriceData,
   setMarketConfiguration,
   setMarketConfigurationById,
+  withExplicitEvmMine,
 } from '../../helpers';
 import { BigNumber } from 'ethers';
 import { calcOrderFees, calcFillPrice } from '../../calculations';
@@ -34,6 +34,69 @@ describe('OrderModule', () => {
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
+      const { tx, receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).commitOrder(
+            trader.accountId,
+            marketId,
+            order.sizeDelta,
+            order.limitPrice,
+            order.keeperFeeBufferUsd
+          ),
+        provider()
+      );
+
+      const block = await provider().getBlock(receipt.blockNumber);
+      const timestamp = block.timestamp;
+
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+      assertBn.equal(pendingOrder.limitPrice, order.limitPrice);
+      assertBn.equal(pendingOrder.keeperFeeBufferUsd, order.keeperFeeBufferUsd);
+      assertBn.equal(pendingOrder.commitmentTime, timestamp);
+
+      const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFee);
+
+      // It's a little weird to get the event that we're asserting. We're doing this to get the correct base fee, anvil
+      // have some issue with consistent base fee, which keeperFee is based on.
+      const { args: orderCommittedArgs } =
+        findEventSafe({
+          receipt,
+          eventName: 'OrderCommitted',
+          contract: PerpMarketProxy,
+        }) || {};
+
+      const orderCommittedEventProperties = [
+        trader.accountId,
+        marketId,
+        timestamp,
+        order.sizeDelta,
+        orderFee,
+        orderCommittedArgs?.estimatedKeeperFee ?? 0,
+      ].join(', ');
+
+      await assertEvent(tx, `OrderCommitted(${orderCommittedEventProperties})`, PerpMarketProxy);
+    });
+
+    it('should cancel order when commiting again with existing expired order', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+
+      const { commitmentTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { maxOrderAge } = await PerpMarketProxy.getMarketConfiguration();
+      await fastForwardTo(commitmentTime + maxOrderAge.toNumber() + 1, provider());
+
+      // Committed, not settled, fastforward by maxAge, commit again, old order should be canceled.
       const tx = await PerpMarketProxy.connect(trader.signer).commitOrder(
         trader.accountId,
         marketId,
@@ -41,33 +104,8 @@ describe('OrderModule', () => {
         order.limitPrice,
         order.keeperFeeBufferUsd
       );
-      const receipt = await txWait(tx, provider());
-      const block = await provider().getBlock(receipt.blockNumber);
 
-      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
-      assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
-      assertBn.equal(pendingOrder.limitPrice, order.limitPrice);
-      assertBn.equal(pendingOrder.keeperFeeBufferUsd, order.keeperFeeBufferUsd);
-      assertBn.equal(pendingOrder.commitmentTime, block.timestamp);
-
-      const { orderFee, keeperFee: _keeperFees } = await PerpMarketProxy.getOrderFees(
-        marketId,
-        order.sizeDelta,
-        order.keeperFee
-      );
-      // It's a little weird to get the event that we're asserting, we're doing this to get the correct base fee, anvil have some issue with consistent base fee, which keeperFee is based on.
-      const { args: orderCommittedArgs } =
-        findEventSafe({
-          receipt,
-          eventName: 'OrderSubmitted',
-          contract: PerpMarketProxy,
-        }) || {};
-
-      await assertEvent(
-        tx,
-        `OrderSubmitted(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${block.timestamp}, ${orderFee}, ${orderCommittedArgs?.estimatedKeeperFee})`,
-        PerpMarketProxy
-      );
+      await assertEvent(tx, `OrderCanceled`, PerpMarketProxy);
     });
 
     it('should emit all events in correct order');
@@ -94,7 +132,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert when an order already present', async () => {
+    it('should revert when an order already present and not yet expired', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, { desiredLeverage: 1 });
@@ -117,7 +155,7 @@ describe('OrderModule', () => {
           order2.limitPrice,
           order2.keeperFeeBufferUsd
         ),
-        `OrderFound("${trader.accountId}")`,
+        `OrderFound()`,
         PerpMarketProxy
       );
     });
@@ -189,7 +227,7 @@ describe('OrderModule', () => {
           limitPrice,
           keeperFeeBufferUsd
         ),
-        `AccountNotFound("${invalidAccountId}")`,
+        `PermissionDenied("${invalidAccountId}"`,
         PerpMarketProxy
       );
     });
@@ -273,25 +311,35 @@ describe('OrderModule', () => {
 
       await fastForwardTo(settlementTime, provider());
 
-      const tx = await PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
-        value: updateFee,
-      });
-      const receipt = await txWait(tx, provider());
+      const { tx, receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+            value: updateFee,
+          }),
+        provider()
+      );
+      const block = await provider().getBlock(receipt.blockNumber);
+      const timestamp = block.timestamp;
+
       const { args: orderSettledArgs } =
         findEventSafe({
           receipt,
           eventName: 'OrderSettled',
           contract: PerpMarketProxy,
         }) || {};
-      // This is an open order, so no funding or pnl
-      const accruedFunding = 0;
-      const pnl = 0;
 
-      await assertEvent(
-        tx,
-        `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderSettledArgs?.orderFee}, ${orderSettledArgs?.keeperFee}, ${accruedFunding}, ${pnl}, ${order.fillPrice})`,
-        PerpMarketProxy
-      );
+      const orderSettledEventProperties = [
+        trader.accountId,
+        marketId,
+        timestamp,
+        order.sizeDelta,
+        orderSettledArgs?.orderFee,
+        orderSettledArgs?.keeperFee,
+        0, // accruedFunding (zero because no existing open position).
+        0, // pnl.
+        order.fillPrice,
+      ].join(', ');
+      await assertEvent(tx, `OrderSettled(${orderSettledEventProperties})`, PerpMarketProxy);
 
       // There should be no order.
       const pendingOrder2 = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
@@ -459,7 +507,7 @@ describe('OrderModule', () => {
         PerpMarketProxy.connect(bs.keeper()).settleOrder(invalidAccountId, marketId, [updateData], {
           value: updateFee,
         }),
-        `AccountNotFound("${invalidAccountId}")`,
+        `OrderNotFound()`,
         PerpMarketProxy
       );
     });
@@ -509,8 +557,11 @@ describe('OrderModule', () => {
       const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
 
       // Fast forward block.timestamp but make sure it's _just_ before readiness.
-      const config = await PerpMarketProxy.getMarketConfiguration();
-      const settlementTime = commitmentTime + genNumber(1, config.minOrderAge.toNumber() - 1);
+      const { minOrderAge } = await PerpMarketProxy.getMarketConfiguration();
+
+      // minOrderAge -1 (1s less than minOrderAge) -1 (1s to account for the additional second added after the fact).
+      const settlementTime = commitmentTime + genNumber(1, minOrderAge.toNumber() - 2);
+
       await fastForwardTo(settlementTime, provider());
 
       await assertRevert(
@@ -522,7 +573,7 @@ describe('OrderModule', () => {
       );
     });
 
-    it('should revert if order is stale', async () => {
+    it('should revert if order is stale/expired', async () => {
       const { PerpMarketProxy } = systems();
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
@@ -777,7 +828,7 @@ describe('OrderModule', () => {
           order.sizeDelta,
           order.keeperFeeBufferUsd
         );
-        const tx = await commitAndSettle(bs, marketId, trader, order);
+        const { tx, settlementTime } = await commitAndSettle(bs, marketId, trader, order);
 
         // block.basefee on the block which settled the commitment.
         const { lastBaseFeePerGas } = await provider().getFeeData();
@@ -787,7 +838,7 @@ describe('OrderModule', () => {
         assertBn.equal(expectedKeeperFee, keeperFee);
         assertEvent(
           tx,
-          `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee})`,
+          `OrderSettled(${trader.accountId}, ${marketId}, ${order.sizeDelta}, ${orderFee}, ${expectedKeeperFee}, ${settlementTime})`,
           PerpMarketProxy
         );
       });

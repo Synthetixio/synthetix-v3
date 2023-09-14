@@ -8,20 +8,23 @@ import {Order} from "../storage/Order.sol";
 interface IOrderModule is IBasePerpMarket {
     // --- Events --- //
 
-    // @dev Emitted when a new order is submitted/created.
-    event OrderSubmitted(
+    // @dev Emitted when a new order is committed.
+    event OrderCommitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
-        int128 sizeDelta,
         uint256 commitmentTime,
+        int128 sizeDelta,
         uint256 estimatedOrderFee,
         uint256 estimatedKeeperFee
     );
 
     // @dev Emitted when a pending order was successfully settled/executed.
+    //
+    // TODO: Rename pnl to unrealizedPnl?
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
+        uint256 settlementTime,
         int128 sizeDelta,
         uint256 orderFee,
         uint256 keeperFee,
@@ -47,14 +50,6 @@ interface IOrderModule is IBasePerpMarket {
      * @dev Given an accountId, find the associated market by `marketId` and settles the order.
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
-
-    /**
-     * @dev Cancels a pending order.
-     *
-     * An order can only be canceled after a certain amount of time (i.e. when an order becomes stale). The keeperFee
-     * is not charged if the caller is the same owner as the order.
-     */
-    function cancelOrder(uint128 accountId, uint128 marketId) external;
 
     // --- Views --- //
 

@@ -6,7 +6,6 @@ import { type genTrader, type genOrder, genNumber } from './generators';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { isNil, uniq } from 'lodash';
-import { LogDescription } from 'ethers/lib/utils';
 
 // --- Constants --- //
 
@@ -174,9 +173,15 @@ export const commitAndSettle = async (
     await bs.provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
   }
 
-  return PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
-    value: updateFee,
-  });
+  const { tx, receipt } = await withExplicitEvmMine(
+    () =>
+      PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+        value: updateFee,
+      }),
+    provider()
+  );
+
+  return { tx, receipt, settlementTime, publishTime };
 };
 
 /** Updates the provided `contract` with more ABI details. */
@@ -192,6 +197,15 @@ export const extendContractAbi = (contract: Contract, abi: string[]) => {
   return newContract;
 };
 
+/** Returns the latest block's timestamp. */
+export const getBlockTimestamp = async (provider: ReturnType<Bs['provider']>) =>
+  (await provider.getBlock('latest')).timestamp;
+
+/** Fastforward block.timestamp by `seconds` (Replacement for `evm_increaseTime`, using `evm_setNextBlockTimestamp` instead). */
+export const fastForwardBySec = async (provider: ReturnType<Bs['provider']>, seconds: number) =>
+  await fastForwardTo((await getBlockTimestamp(provider)) + seconds, provider);
+
+/** Search for events in `receipt.logs` in a non-throw (safe) way. */
 export const findEventSafe = ({
   receipt,
   eventName,
@@ -205,14 +219,36 @@ export const findEventSafe = ({
     .map((log) => {
       try {
         return contract.interface.parseLog(log);
-      } catch (error) {
+      } catch (err) {
         return undefined;
       }
     })
     .find((parsedEvent) => parsedEvent?.name === eventName);
 };
 
-export const txWait = async (tx: ethers.ContractTransaction, provider: ethers.providers.JsonRpcProvider) => {
+/**
+ * Disables autoMine, perform tx, explict mine, wait, enable autoMine, return.
+ *
+ * Why?
+ *
+ * `tx.wait()` can occasionally cause tests to hang. We believe this is due to async issues with autoMine. By
+ * default anvil auto mines a block on every transaction. However, depending on the sun/moon and frequently of
+ * a butterfly's flapping wing, it can result in the .wait() to hang because the block is produced before the
+ * wait recognising the block (?).
+ *
+ * This completely avoids that by disabling the autoMine and performing an explicit mine then reenabling after.
+ */
+export const withExplicitEvmMine = async (
+  f: () => Promise<ethers.ContractTransaction>,
+  provider: ethers.providers.JsonRpcProvider
+) => {
+  await provider.send('evm_setAutomine', [false]);
+
+  const tx = await f();
   await provider.send('evm_mine', []);
-  return await tx.wait();
+
+  const receipt = await tx.wait();
+  await provider.send('evm_setAutomine', [true]);
+
+  return { tx, receipt };
 };
