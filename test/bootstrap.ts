@@ -160,10 +160,13 @@ export const bootstrap = (args: BootstrapArgs) => {
       return {
         ...collateral,
         synthMarket: synthMarket,
+        contract: synthMarket.synth(),
         // Why `sellAggregator`? All of BFP only uses `quoteSellExactIn`, so we only need to mock the `sellAggregator`.
+        // If we need to buy synths during tests and for whatever reason we cannot just mint with owner, then that can
+        // still be referenced via `collateral.synthMarket.buyAggregator()`.
         //
         // @see: `spotMarket.contracts.storage.Price.getCurrentPriceData`
-        aggregator: synthMarkets()[idx].sellAggregator,
+        aggregator: synthMarket.sellAggregator,
       };
     });
   };
@@ -262,13 +265,15 @@ export const bootstrap = (args: BootstrapArgs) => {
     // 1 = trader
     // 2 = trader
     // 3 = trader
-    // 4 = keeper (no funds)
-    const [trader1, trader2, trader3, _keeper] = getSigners().slice(1);
+    // 4 = trader
+    // 5 = trader
+    // 6 = keeper (no funds)
+    const [trader1, trader2, trader3, trader4, trader5, _keeper] = getSigners().slice(1);
     keeper = _keeper;
 
     const owner = getOwner();
     const createAccountFeature = utils.formatBytes32String('createAccount');
-    for (const [i, signer] of [trader1, trader2, trader3].entries()) {
+    for (const [i, signer] of [trader1, trader2, trader3, trader4, trader5].entries()) {
       const address = await signer.getAddress();
 
       // The Synthetix AccountModule has a feature flag that currently prevents anyone from creating an account.

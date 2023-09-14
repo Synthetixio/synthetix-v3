@@ -693,21 +693,22 @@ describe('MarginModule', async () => {
           desiredSide: -1,
           desiredLeverage: 5,
         });
-        // open leveraged position
+
+        // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
 
         const { im, remainingMarginUsd } = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
         const maxWithdrawUsd = wei(remainingMarginUsd).sub(im);
 
-        // Try withdrawing $1 more than max withdraw
+        // Try withdrawing $1 more than max withdraw in native units.
         const amountToWithdrawUsd = maxWithdrawUsd.add(1);
-        // Convert to native units
         const amountToWithdraw = amountToWithdrawUsd.div(collateralPrice);
-        /**
-         *      Error: Transaction was expected to revert with "InsufficientMargin()", but reverted with "CanLiquidatePosition()"
-Error: transaction reverted in contract MarginModule: CanLiquidatePosition()
 
-Need to make sure we are not liquidatable
+        /**
+         * Error: Transaction was expected to revert with "InsufficientMargin()", but reverted with "CanLiquidatePosition()"
+         * Error: transaction reverted in contract MarginModule: CanLiquidatePosition()
+         *
+         * Need to make sure we are not liquidatable
          */
         await assertRevert(
           PerpMarketProxy.connect(trader.signer).modifyCollateral(
@@ -731,7 +732,8 @@ Need to make sure we are not liquidatable
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+
+        // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
 
         await assertRevert(
@@ -756,9 +758,11 @@ Need to make sure we are not liquidatable
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+
+        // Open leveraged position.
         await commitAndSettle(bs, marketId, trader, order);
-        // Change market price to make position liquidatable
+
+        // Change market price to make position liquidatable.
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
 
         await assertRevert(
@@ -783,11 +787,13 @@ Need to make sure we are not liquidatable
           desiredSide: -1,
           desiredLeverage: 10,
         });
-        // open leveraged position
+        // Open leveraged position
         await commitAndSettle(bs, marketId, trader, order);
-        // updating price, causing position to be liquidatable
+
+        // Updating price, causing position to be liquidatable
         await market.aggregator().mockSetCurrentPrice(wei(order.oraclePrice).mul(2).toBN());
-        // flag position
+
+        // Flag position
         await PerpMarketProxy.flagPosition(trader.accountId, marketId);
 
         await assertRevert(
@@ -964,7 +970,7 @@ Need to make sure we are not liquidatable
         const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
         const isLong = openOrder.sizeDelta.gt(0);
 
-        // Increase or Decrease price 20%
+        // Increase or decrease price 20%
         const newPrice = wei(openOrder.oraclePrice).mul(isLong ? 1.2 : 0.8);
         await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
 
@@ -1103,7 +1109,8 @@ Need to make sure we are not liquidatable
 
         // Price change causing 50% loss.
         await market.aggregator().mockSetCurrentPrice(wei(openOrder.oraclePrice).mul(0.5).toBN());
-        // Change collateral price 10% win
+
+        // Change collateral price 10% win.
         const newCollateralPrice = wei(collateralPrice).mul(1.1);
         await collateral.aggregator().mockSetCurrentPrice(newCollateralPrice.toBN());
 
