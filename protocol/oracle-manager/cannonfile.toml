@@ -25,15 +25,11 @@ args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
 abiOf = ["CoreModule"]
 create2 = true
-
 depends = ["contract.CoreModule"]
 
 [router.OracleRouter]
 contracts = ["CoreModule", "NodeModule"]
-depends = [
-  "contract.CoreModule",
-  "contract.NodeModule"
-]
+depends = ["contract.CoreModule", "contract.NodeModule"]
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]

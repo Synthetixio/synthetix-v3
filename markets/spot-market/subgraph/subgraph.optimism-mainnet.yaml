@@ -34,7 +34,8 @@ dataSources:
         - event: SynthUnwrapped(indexed
             uint256,uint256,(uint256,uint256,int256,int256),uint256)
           handler: handleSynthUnWrapped
-        - event: OrderCommitted(indexed uint128,indexed uint8,uint256,uint128,indexed
+        - event:
+            OrderCommitted(indexed uint128,indexed uint8,uint256,uint128,indexed
             address,address)
           handler: handleOrderCommitted
         - event: OrderCancelled(indexed uint128,indexed

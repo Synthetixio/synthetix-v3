@@ -25,14 +25,17 @@ export function getSelectors(
 ) {
   const contract = new ethers.Contract('0x0000000000000000000000000000000000000001', contractAbi);
 
-  return contract.interface.fragments.reduce((selectors, fragment) => {
-    if (fragment.type === 'function' && functionFilter(fragment.name)) {
-      selectors.push({
-        name: fragment.name,
-        selector: contract.interface.getSighash(fragment),
-      });
-    }
+  return contract.interface.fragments.reduce(
+    (selectors, fragment) => {
+      if (fragment.type === 'function' && functionFilter(fragment.name)) {
+        selectors.push({
+          name: fragment.name,
+          selector: contract.interface.getSighash(fragment),
+        });
+      }
 
-    return selectors;
-  }, [] as { name: string; selector: string }[]);
+      return selectors;
+    },
+    [] as { name: string; selector: string }[]
+  );
 }

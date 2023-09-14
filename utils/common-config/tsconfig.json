@@ -3,5 +3,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "files": ["./hardhat.config.ts", "types/cannon-plugin-router.d.ts"]
+  "files": ["./hardhat.config.ts"]
 }

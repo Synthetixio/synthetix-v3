@@ -68,6 +68,7 @@ dataSources:
           handler: handlePositionLiquidated
         - event: AccountLiquidated(indexed uint128,uint256,bool)
           handler: handleAccountLiquidated
-        - event: CollateralModified(indexed uint128,indexed uint128,int256,indexed
+        - event:
+            CollateralModified(indexed uint128,indexed uint128,int256,indexed
             address)
           handler: handleCollateralModified

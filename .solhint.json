@@ -21,7 +21,6 @@
         "maxLength": 32
       }
     ],
-    "numcast/safe-cast": "error",
-    "no-global-import": "off"
+    "numcast/safe-cast": "error"
   }
 }

@@ -59,26 +59,26 @@ depends = ["contract.CoreModule"]
 # Core
 [router.SpotMarketRouter]
 contracts = [
-  "CoreModule",
-  "SpotMarketFactoryModule",
-  "AtomicOrderModule",
-  "AsyncOrderModule",
-  "AsyncOrderSettlementModule",
-  "AsyncOrderConfigurationModule",
-  "WrapperModule",
-  "MarketConfigurationModule",
-  "FeatureFlagModule"
+    "CoreModule",
+    "SpotMarketFactoryModule",
+    "AtomicOrderModule",
+    "AsyncOrderModule",
+    "AsyncOrderSettlementModule",
+    "AsyncOrderConfigurationModule",
+    "WrapperModule",
+    "MarketConfigurationModule",
+    "FeatureFlagModule"
 ]
 depends = [
-  "contract.CoreModule",
-  "contract.SpotMarketFactoryModule",
-  "contract.AtomicOrderModule",
-  "contract.AsyncOrderModule",
-  "contract.AsyncOrderSettlementModule",
-  "contract.AsyncOrderConfigurationModule",
-  "contract.WrapperModule",
-  "contract.MarketConfigurationModule",
-  "contract.FeatureFlagModule",
+    "contract.CoreModule",
+    "contract.SpotMarketFactoryModule",
+    "contract.AtomicOrderModule",
+    "contract.AsyncOrderModule",
+    "contract.AsyncOrderSettlementModule",
+    "contract.AsyncOrderConfigurationModule",
+    "contract.WrapperModule",
+    "contract.MarketConfigurationModule",
+    "contract.FeatureFlagModule",
 ]
 
 [invoke.upgradeSpotMarketProxy]
@@ -93,31 +93,21 @@ depends = ["contract.InitialSpotMarketProxy", "router.SpotMarketRouter"]
 
 # create synth router
 [router.SynthRouter]
-contracts = [
-  "CoreModule",
-  "SynthTokenModule"
-]
-depends = [
-  "contract.CoreModule",
-  "contract.SynthTokenModule"
-]
+contracts = ["CoreModule", "SynthTokenModule"]
+depends = ["contract.CoreModule", "contract.SynthTokenModule"]
 
 [invoke.setSynthetixSystem]
 target = ["SpotMarketProxy"]
 fromCall.func = "owner"
 func = "setSynthetix"
-args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>"
-]
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 depends = ["invoke.upgradeSpotMarketProxy", "import.synthetix"]
 
 [invoke.setSynthImplementation]
 target = ["SpotMarketProxy"]
 fromCall.func = "owner"
 func = "setSynthImplementation"
-args = [
-  "<%= contracts.SynthRouter.address %>"
-]
+args = ["<%= contracts.SynthRouter.address %>"]
 depends = ["invoke.upgradeSpotMarketProxy", "router.SynthRouter"]
 
 # add pool owner to feature flag allow list
@@ -125,7 +115,10 @@ depends = ["invoke.upgradeSpotMarketProxy", "router.SynthRouter"]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 fromCall.func = "owner"
-args = ["<%= formatBytes32String('registerMarket') %>", "<%= contracts.SpotMarketProxy.address %>"]
+args = [
+    "<%= formatBytes32String('registerMarket') %>",
+    "<%= contracts.SpotMarketProxy.address %>"
+]
 depends = ['invoke.setSynthetixSystem']
 
 [invoke.addCreateSynthToFeatureFlag]
