@@ -135,7 +135,7 @@ library PerpMarket {
             oldPosition.entryFundingAccrued
         );
         int256 newCorrection = getPositionDebtCorrection(
-            newMarginUsd, // TODO  this should probably be collatrealUsd, fix when adding test for debtCorrection
+            newMarginUsd,
             newPosition.size,
             newPosition.entryPrice,
             newPosition.entryFundingAccrued
