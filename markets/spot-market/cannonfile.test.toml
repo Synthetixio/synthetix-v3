@@ -56,26 +56,26 @@ depends = ["contract.CoreModule"]
 # Core
 [router.SpotMarketRouter]
 contracts = [
-  "CoreModule",
-  "SpotMarketFactoryModule",
-  "AtomicOrderModule",
-  "AsyncOrderModule",
-  "AsyncOrderSettlementModule",
-  "AsyncOrderConfigurationModule",
-  "WrapperModule",
-  "MarketConfigurationModule",
-  "FeatureFlagModule"
+    "CoreModule",
+    "SpotMarketFactoryModule",
+    "AtomicOrderModule",
+    "AsyncOrderModule",
+    "AsyncOrderSettlementModule",
+    "AsyncOrderConfigurationModule",
+    "WrapperModule",
+    "MarketConfigurationModule",
+    "FeatureFlagModule"
 ]
 depends = [
-  "contract.CoreModule",
-  "contract.SpotMarketFactoryModule",
-  "contract.AtomicOrderModule",
-  "contract.AsyncOrderModule",
-  "contract.AsyncOrderSettlementModule",
-  "contract.AsyncOrderConfigurationModule",
-  "contract.WrapperModule",
-  "contract.MarketConfigurationModule",
-  "contract.FeatureFlagModule",
+    "contract.CoreModule",
+    "contract.SpotMarketFactoryModule",
+    "contract.AtomicOrderModule",
+    "contract.AsyncOrderModule",
+    "contract.AsyncOrderSettlementModule",
+    "contract.AsyncOrderConfigurationModule",
+    "contract.WrapperModule",
+    "contract.MarketConfigurationModule",
+    "contract.FeatureFlagModule",
 ]
 
 [invoke.upgrade_spot_market_proxy]
@@ -90,31 +90,21 @@ depends = ["contract.InitialSpotMarketProxy", "router.SpotMarketRouter"]
 
 # create synth router
 [router.SynthRouter]
-contracts = [
-  "CoreModule",
-  "SynthTokenModule"
-]
-depends = [
-  "contract.CoreModule",
-  "contract.SynthTokenModule"
-]
+contracts = ["CoreModule", "SynthTokenModule"]
+depends = ["contract.CoreModule", "contract.SynthTokenModule"]
 
 [invoke.set_synthetix_system]
 target = ["SpotMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
 func = "setSynthetix"
-args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>"
-]
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix"]
 
 [invoke.set_synth_implementation]
 target = ["SpotMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
 func = "setSynthImplementation"
-args = [
-  "<%= contracts.SynthRouter.address %>"
-]
+args = ["<%= contracts.SynthRouter.address %>"]
 depends = ["invoke.upgrade_spot_market_proxy", "router.SynthRouter"]
 
 # add pool owner to feature flag allow list
@@ -122,14 +112,20 @@ depends = ["invoke.upgrade_spot_market_proxy", "router.SynthRouter"]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
+args = [
+    "0x72656769737465724d61726b6574000000000000000000000000000000000000",
+    "<%= contracts.SpotMarketProxy.address %>"
+] # formatBytes32String("registerMarket")
 depends = ['invoke.set_synthetix_system']
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
-args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
+args = [
+    "0x63726561746553796e7468000000000000000000000000000000000000000000",
+    "<%= settings.owner %>"
+] # formatBytes32String("createSynth")
 depends = ["invoke.upgrade_spot_market_proxy"]
 
 [contract.FeeCollectorMock]

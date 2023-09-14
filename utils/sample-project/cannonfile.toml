@@ -31,28 +31,25 @@ artifact = "contracts/modules/AnotherModule.sol:AnotherModule"
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = [
-  "<%= contracts.CoreModule.address %>",
-  "<%= settings.initialOwner %>"
-]
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.initialOwner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
 depends = ["contract.CoreModule"]
 
 [router.Router]
 contracts = [
-  "CoreModule",
-  "InitializableModule",
-  "SettingsModule",
-  "SomeModule",
-  "AnotherModule",
+    "CoreModule",
+    "InitializableModule",
+    "SettingsModule",
+    "SomeModule",
+    "AnotherModule",
 ]
 depends = [
-  "contract.CoreModule",
-  "contract.InitializableModule",
-  "contract.SettingsModule",
-  "contract.SomeModule",
-  "contract.AnotherModule"
+    "contract.CoreModule",
+    "contract.InitializableModule",
+    "contract.SettingsModule",
+    "contract.SomeModule",
+    "contract.AnotherModule"
 ]
 
 [invoke.upgrade_proxy]
