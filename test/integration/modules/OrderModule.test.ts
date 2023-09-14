@@ -311,6 +311,7 @@ describe('OrderModule', () => {
 
       await fastForwardTo(settlementTime, provider());
 
+      const { orderFee } = await PerpMarketProxy.getOrderFees(marketId, order.sizeDelta, order.keeperFee);
       const { tx, receipt } = await withExplicitEvmMine(
         () =>
           PerpMarketProxy.connect(keeper()).settleOrder(trader.accountId, marketId, [updateData], {
@@ -333,8 +334,8 @@ describe('OrderModule', () => {
         marketId,
         timestamp,
         order.sizeDelta,
-        orderSettledArgs?.orderFee,
-        orderSettledArgs?.keeperFee,
+        orderFee,
+        orderSettledArgs?.keeperFee ?? 0,
         0, // accruedFunding (zero because no existing open position).
         0, // pnl.
         order.fillPrice,

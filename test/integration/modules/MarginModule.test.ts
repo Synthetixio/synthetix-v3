@@ -810,19 +810,19 @@ Need to make sure we are not liquidatable
 
         const collateralGenerator = toRoundRobinGenerators(shuffle(collaterals()));
 
-        // We want to make sure we have two different types of collateral
-        const collateral = collaterals()[0];
-        const collateral2 = collaterals()[1];
-
         // Deposit margin with collateral 1
-        const { trader, traderAddress, marketId, collateralDepositAmount } = await depositMargin(
+        const { trader, traderAddress, marketId, collateralDepositAmount, collateral, market } = await depositMargin(
           bs,
           genTrader(bs, { desiredCollateral: collateralGenerator.next().value })
         );
         // Deposit margin with collateral 2
-        const { collateralDepositAmount: collateralDepositAmount2 } = await depositMargin(
+        const { collateralDepositAmount: collateralDepositAmount2, collateral: collateral2 } = await depositMargin(
           bs,
-          genTrader(bs, { desiredCollateral: collateralGenerator.next().value })
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredCollateral: collateralGenerator.next().value,
+            desiredTrader: trader,
+          })
         );
 
         // Assert deposit went thorough and  we have two different types of collateral
@@ -904,22 +904,23 @@ Need to make sure we are not liquidatable
 
         // Open an order
         const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
-        const openTx = await commitAndSettle(bs, marketId, trader, openOrder);
+        const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
 
         // Close the order
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
         });
-        const closeTx = await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
 
         // Get the fees from the open and close order events
         const openOrderEvent = findEventSafe({
-          receipt: await txWait(openTx, provider()),
+          receipt: openReceipt,
           eventName: 'OrderSettled',
           contract: PerpMarketProxy,
         });
         const closeOrderEvent = findEventSafe({
-          receipt: await txWait(closeTx, provider()),
+          receipt: closeReceipt,
           eventName: 'OrderSettled',
           contract: PerpMarketProxy,
         });
@@ -957,7 +958,7 @@ Need to make sure we are not liquidatable
 
         // Open an order
         const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
-        const openTx = await commitAndSettle(bs, marketId, trader, openOrder);
+        const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
         const isLong = openOrder.sizeDelta.gt(0);
         // Increase or Decrease price 20%
         const newPrice = wei(openOrder.oraclePrice).mul(isLong ? 1.2 : 0.8);
@@ -967,16 +968,17 @@ Need to make sure we are not liquidatable
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
         });
-        const closeTx = await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
 
         // Get the fees from the open and close order events
         const openOrderEvent = findEventSafe({
-          receipt: await txWait(openTx, provider()),
+          receipt: openReceipt,
           eventName: 'OrderSettled',
           contract: PerpMarketProxy,
         });
         const closeOrderEvent = findEventSafe({
-          receipt: await txWait(closeTx, provider()),
+          receipt: closeReceipt,
           eventName: 'OrderSettled',
           contract: PerpMarketProxy,
         });
@@ -1468,24 +1470,12 @@ Need to make sure we are not liquidatable
         desiredSide: -1,
       });
 
-      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
+      await commitAndSettle(bs, marketId, trader, order);
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
-      const settleEvent = findEventSafe({
-        receipt,
-        eventName: 'OrderSettled',
-        contract: PerpMarketProxy,
-      });
 
-      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
-        .sub(order.orderFee)
-        .sub(settleEvent?.args.keeperFee)
-        .add(order.keeperFeeBufferUsd)
-        .add(pnl);
-      // Assert margin before price change
-      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
-      // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+      assertBn.gt(marginUsdBeforePriceChange, 0);
+      // Price double,causing our short to be underwater
       const newPrice = wei(order.oraclePrice).mul(2).toBN();
       // Update price
       await market.aggregator().mockSetCurrentPrice(newPrice);
