@@ -1111,135 +1111,6 @@ export class SpotMarketProxy__getAssociatedSystemResult {
   }
 }
 
-export class SpotMarketProxy__buyResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__buyResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__buyResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__buyResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getSynthAmount(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__buyResultFeesStruct {
-    return this.value1;
-  }
-}
-
-export class SpotMarketProxy__buyExactInResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__buyExactInResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__buyExactInResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__buyExactInResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getSynthAmount(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__buyExactInResultFeesStruct {
-    return this.value1;
-  }
-}
-
-export class SpotMarketProxy__buyExactOutResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__buyExactOutResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__buyExactOutResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__buyExactOutResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getUsdAmountCharged(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__buyExactOutResultFeesStruct {
-    return this.value1;
-  }
-}
-
 export class SpotMarketProxy__quoteBuyExactInResultFeesStruct extends ethereum.Tuple {
   get fixedFees(): BigInt {
     return this[0].toBigInt();
@@ -1412,173 +1283,6 @@ export class SpotMarketProxy__quoteSellExactOutResult {
   }
 }
 
-export class SpotMarketProxy__sellResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__sellResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__sellResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__sellResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getUsdAmountReceived(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__sellResultFeesStruct {
-    return this.value1;
-  }
-}
-
-export class SpotMarketProxy__sellExactInResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__sellExactInResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__sellExactInResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__sellExactInResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getReturnAmount(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__sellExactInResultFeesStruct {
-    return this.value1;
-  }
-}
-
-export class SpotMarketProxy__sellExactOutResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__sellExactOutResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__sellExactOutResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__sellExactOutResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getSynthToBurn(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__sellExactOutResultFeesStruct {
-    return this.value1;
-  }
-}
-
-export class SpotMarketProxy__commitOrderResultAsyncOrderClaimStruct extends ethereum.Tuple {
-  get id(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get owner(): Address {
-    return this[1].toAddress();
-  }
-
-  get orderType(): i32 {
-    return this[2].toI32();
-  }
-
-  get amountEscrowed(): BigInt {
-    return this[3].toBigInt();
-  }
-
-  get settlementStrategyId(): BigInt {
-    return this[4].toBigInt();
-  }
-
-  get settlementTime(): BigInt {
-    return this[5].toBigInt();
-  }
-
-  get minimumSettlementAmount(): BigInt {
-    return this[6].toBigInt();
-  }
-
-  get settledAt(): BigInt {
-    return this[7].toBigInt();
-  }
-
-  get referrer(): Address {
-    return this[8].toAddress();
-  }
-}
-
 export class SpotMarketProxy__getAsyncOrderClaimResultAsyncOrderClaimStruct extends ethereum.Tuple {
   get id(): BigInt {
     return this[0].toBigInt();
@@ -1614,95 +1318,6 @@ export class SpotMarketProxy__getAsyncOrderClaimResultAsyncOrderClaimStruct exte
 
   get referrer(): Address {
     return this[8].toAddress();
-  }
-}
-
-export class SpotMarketProxy__settleOrderResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__settleOrderResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__settleOrderResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__settleOrderResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getFinalOrderAmount(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__settleOrderResultFeesStruct {
-    return this.value1;
-  }
-}
-
-export class SpotMarketProxy__addSettlementStrategyInputStrategyStruct extends ethereum.Tuple {
-  get strategyType(): i32 {
-    return this[0].toI32();
-  }
-
-  get settlementDelay(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get settlementWindowDuration(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get priceVerificationContract(): Address {
-    return this[3].toAddress();
-  }
-
-  get feedId(): Bytes {
-    return this[4].toBytes();
-  }
-
-  get url(): string {
-    return this[5].toString();
-  }
-
-  get settlementReward(): BigInt {
-    return this[6].toBigInt();
-  }
-
-  get priceDeviationTolerance(): BigInt {
-    return this[7].toBigInt();
-  }
-
-  get minimumUsdExchangeAmount(): BigInt {
-    return this[8].toBigInt();
-  }
-
-  get maxRoundingLoss(): BigInt {
-    return this[9].toBigInt();
-  }
-
-  get disabled(): boolean {
-    return this[10].toBoolean();
   }
 }
 
@@ -1752,92 +1367,6 @@ export class SpotMarketProxy__getSettlementStrategyResultSettlementStrategyStruc
   }
 }
 
-export class SpotMarketProxy__unwrapResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__unwrapResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__unwrapResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__unwrapResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getReturnCollateralAmount(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__unwrapResultFeesStruct {
-    return this.value1;
-  }
-}
-
-export class SpotMarketProxy__wrapResultFeesStruct extends ethereum.Tuple {
-  get fixedFees(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get utilizationFees(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get skewFees(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get wrapperFees(): BigInt {
-    return this[3].toBigInt();
-  }
-}
-
-export class SpotMarketProxy__wrapResult {
-  value0: BigInt;
-  value1: SpotMarketProxy__wrapResultFeesStruct;
-
-  constructor(value0: BigInt, value1: SpotMarketProxy__wrapResultFeesStruct) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromTuple(this.value1));
-    return map;
-  }
-
-  getAmountToMint(): BigInt {
-    return this.value0;
-  }
-
-  getFees(): SpotMarketProxy__wrapResultFeesStruct {
-    return this.value1;
-  }
-}
-
 export class SpotMarketProxy__getMarketFeesResult {
   value0: BigInt;
   value1: BigInt;
@@ -1880,6 +1409,21 @@ export class SpotMarketProxy__getMarketFeesResult {
 export class SpotMarketProxy extends ethereum.SmartContract {
   static bind(address: Address): SpotMarketProxy {
     return new SpotMarketProxy('SpotMarketProxy', address);
+  }
+
+  getMessageSender(): Address {
+    let result = super.call('getMessageSender', 'getMessageSender():(address)', []);
+
+    return result[0].toAddress();
+  }
+
+  try_getMessageSender(): ethereum.CallResult<Address> {
+    let result = super.tryCall('getMessageSender', 'getMessageSender():(address)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
   getImplementation(): Address {
@@ -1925,33 +1469,6 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
-  }
-
-  createSynth(tokenName: string, tokenSymbol: string, synthOwner: Address): BigInt {
-    let result = super.call('createSynth', 'createSynth(string,string,address):(uint128)', [
-      ethereum.Value.fromString(tokenName),
-      ethereum.Value.fromString(tokenSymbol),
-      ethereum.Value.fromAddress(synthOwner),
-    ]);
-
-    return result[0].toBigInt();
-  }
-
-  try_createSynth(
-    tokenName: string,
-    tokenSymbol: string,
-    synthOwner: Address
-  ): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('createSynth', 'createSynth(string,string,address):(uint128)', [
-      ethereum.Value.fromString(tokenName),
-      ethereum.Value.fromString(tokenSymbol),
-      ethereum.Value.fromAddress(synthOwner),
-    ]);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getAssociatedSystem(id: Bytes): SpotMarketProxy__getAssociatedSystemResult {
@@ -2117,159 +1634,6 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
-  buy(
-    marketId: BigInt,
-    usdAmount: BigInt,
-    minAmountReceived: BigInt,
-    referrer: Address
-  ): SpotMarketProxy__buyResult {
-    let result = super.call(
-      'buy',
-      'buy(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(usdAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-
-    return new SpotMarketProxy__buyResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__buyResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_buy(
-    marketId: BigInt,
-    usdAmount: BigInt,
-    minAmountReceived: BigInt,
-    referrer: Address
-  ): ethereum.CallResult<SpotMarketProxy__buyResult> {
-    let result = super.tryCall(
-      'buy',
-      'buy(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(usdAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__buyResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__buyResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
-  buyExactIn(
-    marketId: BigInt,
-    usdAmount: BigInt,
-    minAmountReceived: BigInt,
-    referrer: Address
-  ): SpotMarketProxy__buyExactInResult {
-    let result = super.call(
-      'buyExactIn',
-      'buyExactIn(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(usdAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-
-    return new SpotMarketProxy__buyExactInResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__buyExactInResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_buyExactIn(
-    marketId: BigInt,
-    usdAmount: BigInt,
-    minAmountReceived: BigInt,
-    referrer: Address
-  ): ethereum.CallResult<SpotMarketProxy__buyExactInResult> {
-    let result = super.tryCall(
-      'buyExactIn',
-      'buyExactIn(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(usdAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__buyExactInResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__buyExactInResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
-  buyExactOut(
-    marketId: BigInt,
-    synthAmount: BigInt,
-    maxUsdAmount: BigInt,
-    referrer: Address
-  ): SpotMarketProxy__buyExactOutResult {
-    let result = super.call(
-      'buyExactOut',
-      'buyExactOut(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(synthAmount),
-        ethereum.Value.fromUnsignedBigInt(maxUsdAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-
-    return new SpotMarketProxy__buyExactOutResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__buyExactOutResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_buyExactOut(
-    marketId: BigInt,
-    synthAmount: BigInt,
-    maxUsdAmount: BigInt,
-    referrer: Address
-  ): ethereum.CallResult<SpotMarketProxy__buyExactOutResult> {
-    let result = super.tryCall(
-      'buyExactOut',
-      'buyExactOut(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(synthAmount),
-        ethereum.Value.fromUnsignedBigInt(maxUsdAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__buyExactOutResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__buyExactOutResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
   quoteBuyExactIn(marketId: BigInt, usdAmount: BigInt): SpotMarketProxy__quoteBuyExactInResult {
     let result = super.call(
       'quoteBuyExactIn',
@@ -2406,212 +1770,6 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  sell(
-    marketId: BigInt,
-    synthAmount: BigInt,
-    minUsdAmount: BigInt,
-    referrer: Address
-  ): SpotMarketProxy__sellResult {
-    let result = super.call(
-      'sell',
-      'sell(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(synthAmount),
-        ethereum.Value.fromUnsignedBigInt(minUsdAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-
-    return new SpotMarketProxy__sellResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__sellResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_sell(
-    marketId: BigInt,
-    synthAmount: BigInt,
-    minUsdAmount: BigInt,
-    referrer: Address
-  ): ethereum.CallResult<SpotMarketProxy__sellResult> {
-    let result = super.tryCall(
-      'sell',
-      'sell(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(synthAmount),
-        ethereum.Value.fromUnsignedBigInt(minUsdAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__sellResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__sellResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
-  sellExactIn(
-    marketId: BigInt,
-    synthAmount: BigInt,
-    minAmountReceived: BigInt,
-    referrer: Address
-  ): SpotMarketProxy__sellExactInResult {
-    let result = super.call(
-      'sellExactIn',
-      'sellExactIn(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(synthAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-
-    return new SpotMarketProxy__sellExactInResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__sellExactInResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_sellExactIn(
-    marketId: BigInt,
-    synthAmount: BigInt,
-    minAmountReceived: BigInt,
-    referrer: Address
-  ): ethereum.CallResult<SpotMarketProxy__sellExactInResult> {
-    let result = super.tryCall(
-      'sellExactIn',
-      'sellExactIn(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(synthAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__sellExactInResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__sellExactInResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
-  sellExactOut(
-    marketId: BigInt,
-    usdAmount: BigInt,
-    maxSynthAmount: BigInt,
-    referrer: Address
-  ): SpotMarketProxy__sellExactOutResult {
-    let result = super.call(
-      'sellExactOut',
-      'sellExactOut(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(usdAmount),
-        ethereum.Value.fromUnsignedBigInt(maxSynthAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-
-    return new SpotMarketProxy__sellExactOutResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__sellExactOutResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_sellExactOut(
-    marketId: BigInt,
-    usdAmount: BigInt,
-    maxSynthAmount: BigInt,
-    referrer: Address
-  ): ethereum.CallResult<SpotMarketProxy__sellExactOutResult> {
-    let result = super.tryCall(
-      'sellExactOut',
-      'sellExactOut(uint128,uint256,uint256,address):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(usdAmount),
-        ethereum.Value.fromUnsignedBigInt(maxSynthAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__sellExactOutResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__sellExactOutResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
-  commitOrder(
-    marketId: BigInt,
-    orderType: i32,
-    amountProvided: BigInt,
-    settlementStrategyId: BigInt,
-    minimumSettlementAmount: BigInt,
-    referrer: Address
-  ): SpotMarketProxy__commitOrderResultAsyncOrderClaimStruct {
-    let result = super.call(
-      'commitOrder',
-      'commitOrder(uint128,uint8,uint256,uint256,uint256,address):((uint128,address,uint8,uint256,uint256,uint256,uint256,uint256,address))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(orderType)),
-        ethereum.Value.fromUnsignedBigInt(amountProvided),
-        ethereum.Value.fromUnsignedBigInt(settlementStrategyId),
-        ethereum.Value.fromUnsignedBigInt(minimumSettlementAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-
-    return changetype<SpotMarketProxy__commitOrderResultAsyncOrderClaimStruct>(result[0].toTuple());
-  }
-
-  try_commitOrder(
-    marketId: BigInt,
-    orderType: i32,
-    amountProvided: BigInt,
-    settlementStrategyId: BigInt,
-    minimumSettlementAmount: BigInt,
-    referrer: Address
-  ): ethereum.CallResult<SpotMarketProxy__commitOrderResultAsyncOrderClaimStruct> {
-    let result = super.tryCall(
-      'commitOrder',
-      'commitOrder(uint128,uint8,uint256,uint256,uint256,address):((uint128,address,uint8,uint256,uint256,uint256,uint256,uint256,address))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(orderType)),
-        ethereum.Value.fromUnsignedBigInt(amountProvided),
-        ethereum.Value.fromUnsignedBigInt(settlementStrategyId),
-        ethereum.Value.fromUnsignedBigInt(minimumSettlementAmount),
-        ethereum.Value.fromAddress(referrer),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      changetype<SpotMarketProxy__commitOrderResultAsyncOrderClaimStruct>(value[0].toTuple())
-    );
-  }
-
   getAsyncOrderClaim(
     marketId: BigInt,
     asyncOrderId: BigInt
@@ -2660,69 +1818,6 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  settleOrder(marketId: BigInt, asyncOrderId: BigInt): SpotMarketProxy__settleOrderResult {
-    let result = super.call(
-      'settleOrder',
-      'settleOrder(uint128,uint128):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(asyncOrderId)]
-    );
-
-    return new SpotMarketProxy__settleOrderResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__settleOrderResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_settleOrder(
-    marketId: BigInt,
-    asyncOrderId: BigInt
-  ): ethereum.CallResult<SpotMarketProxy__settleOrderResult> {
-    let result = super.tryCall(
-      'settleOrder',
-      'settleOrder(uint128,uint128):(uint256,(uint256,uint256,int256,int256))',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(asyncOrderId)]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__settleOrderResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__settleOrderResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
-  addSettlementStrategy(
-    marketId: BigInt,
-    strategy: SpotMarketProxy__addSettlementStrategyInputStrategyStruct
-  ): BigInt {
-    let result = super.call(
-      'addSettlementStrategy',
-      'addSettlementStrategy(uint128,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool)):(uint256)',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromTuple(strategy)]
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_addSettlementStrategy(
-    marketId: BigInt,
-    strategy: SpotMarketProxy__addSettlementStrategyInputStrategyStruct
-  ): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      'addSettlementStrategy',
-      'addSettlementStrategy(uint128,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool)):(uint256)',
-      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromTuple(strategy)]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   getSettlementStrategy(
     marketId: BigInt,
     strategyId: BigInt
@@ -2754,100 +1849,6 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       changetype<SpotMarketProxy__getSettlementStrategyResultSettlementStrategyStruct>(
         value[0].toTuple()
-      )
-    );
-  }
-
-  unwrap(
-    marketId: BigInt,
-    unwrapAmount: BigInt,
-    minAmountReceived: BigInt
-  ): SpotMarketProxy__unwrapResult {
-    let result = super.call(
-      'unwrap',
-      'unwrap(uint128,uint256,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(unwrapAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-      ]
-    );
-
-    return new SpotMarketProxy__unwrapResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__unwrapResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_unwrap(
-    marketId: BigInt,
-    unwrapAmount: BigInt,
-    minAmountReceived: BigInt
-  ): ethereum.CallResult<SpotMarketProxy__unwrapResult> {
-    let result = super.tryCall(
-      'unwrap',
-      'unwrap(uint128,uint256,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(unwrapAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__unwrapResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__unwrapResultFeesStruct>(value[1].toTuple())
-      )
-    );
-  }
-
-  wrap(
-    marketId: BigInt,
-    wrapAmount: BigInt,
-    minAmountReceived: BigInt
-  ): SpotMarketProxy__wrapResult {
-    let result = super.call(
-      'wrap',
-      'wrap(uint128,uint256,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(wrapAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-      ]
-    );
-
-    return new SpotMarketProxy__wrapResult(
-      result[0].toBigInt(),
-      changetype<SpotMarketProxy__wrapResultFeesStruct>(result[1].toTuple())
-    );
-  }
-
-  try_wrap(
-    marketId: BigInt,
-    wrapAmount: BigInt,
-    minAmountReceived: BigInt
-  ): ethereum.CallResult<SpotMarketProxy__wrapResult> {
-    let result = super.tryCall(
-      'wrap',
-      'wrap(uint128,uint256,uint256):(uint256,(uint256,uint256,int256,int256))',
-      [
-        ethereum.Value.fromUnsignedBigInt(marketId),
-        ethereum.Value.fromUnsignedBigInt(wrapAmount),
-        ethereum.Value.fromUnsignedBigInt(minAmountReceived),
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new SpotMarketProxy__wrapResult(
-        value[0].toBigInt(),
-        changetype<SpotMarketProxy__wrapResultFeesStruct>(value[1].toTuple())
       )
     );
   }
@@ -3117,6 +2118,116 @@ export class SpotMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+}
+
+export class MulticallCall extends ethereum.Call {
+  get inputs(): MulticallCall__Inputs {
+    return new MulticallCall__Inputs(this);
+  }
+
+  get outputs(): MulticallCall__Outputs {
+    return new MulticallCall__Outputs(this);
+  }
+}
+
+export class MulticallCall__Inputs {
+  _call: MulticallCall;
+
+  constructor(call: MulticallCall) {
+    this._call = call;
+  }
+
+  get data(): Array<Bytes> {
+    return this._call.inputValues[0].value.toBytesArray();
+  }
+}
+
+export class MulticallCall__Outputs {
+  _call: MulticallCall;
+
+  constructor(call: MulticallCall) {
+    this._call = call;
+  }
+
+  get results(): Array<Bytes> {
+    return this._call.outputValues[0].value.toBytesArray();
+  }
+}
+
+export class MulticallThroughCall extends ethereum.Call {
+  get inputs(): MulticallThroughCall__Inputs {
+    return new MulticallThroughCall__Inputs(this);
+  }
+
+  get outputs(): MulticallThroughCall__Outputs {
+    return new MulticallThroughCall__Outputs(this);
+  }
+}
+
+export class MulticallThroughCall__Inputs {
+  _call: MulticallThroughCall;
+
+  constructor(call: MulticallThroughCall) {
+    this._call = call;
+  }
+
+  get to(): Array<Address> {
+    return this._call.inputValues[0].value.toAddressArray();
+  }
+
+  get data(): Array<Bytes> {
+    return this._call.inputValues[1].value.toBytesArray();
+  }
+
+  get values(): Array<BigInt> {
+    return this._call.inputValues[2].value.toBigIntArray();
+  }
+}
+
+export class MulticallThroughCall__Outputs {
+  _call: MulticallThroughCall;
+
+  constructor(call: MulticallThroughCall) {
+    this._call = call;
+  }
+
+  get results(): Array<Bytes> {
+    return this._call.outputValues[0].value.toBytesArray();
+  }
+}
+
+export class SetAllowlistedMulticallTargetCall extends ethereum.Call {
+  get inputs(): SetAllowlistedMulticallTargetCall__Inputs {
+    return new SetAllowlistedMulticallTargetCall__Inputs(this);
+  }
+
+  get outputs(): SetAllowlistedMulticallTargetCall__Outputs {
+    return new SetAllowlistedMulticallTargetCall__Outputs(this);
+  }
+}
+
+export class SetAllowlistedMulticallTargetCall__Inputs {
+  _call: SetAllowlistedMulticallTargetCall;
+
+  constructor(call: SetAllowlistedMulticallTargetCall) {
+    this._call = call;
+  }
+
+  get target(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get allowlisted(): boolean {
+    return this._call.inputValues[1].value.toBoolean();
+  }
+}
+
+export class SetAllowlistedMulticallTargetCall__Outputs {
+  _call: SetAllowlistedMulticallTargetCall;
+
+  constructor(call: SetAllowlistedMulticallTargetCall) {
+    this._call = call;
   }
 }
 

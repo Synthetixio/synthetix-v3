@@ -4,5 +4,11 @@
       "address": "0xf272382cB3BE898A8CdB1A23BE056fA2Fcf4513b",
       "startBlock": 12708889
     }
+  },
+  "base-testnet": {
+    "PerpsMarketProxy": {
+      "address": "0x9863Dae3f4b5F4Ffe3A841a21565d57F2BA10E87",
+      "startBlock": 9243743
+    }
   }
 }
