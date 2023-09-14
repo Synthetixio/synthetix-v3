@@ -27,7 +27,6 @@ import {
   extendContractAbi,
   fastForwardBySec,
   findEventSafe,
-  withExplicitEvmMine,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { CollateralMock } from '../../../typechain-types';
