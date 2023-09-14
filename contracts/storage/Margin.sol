@@ -174,9 +174,9 @@ library Margin {
     }
 
     /**
-     * @dev Sell all depoisted synth collateral for sUSD.
+     * @dev Sell all deposited synth collateral for sUSD.
      */
-    function yeetAllSynthCollateralForUsd(uint128 accountId, uint128 marketId) internal {
+    function sellAllSynthCollateralForUsd(uint128 accountId, uint128 marketId) internal {
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
@@ -269,7 +269,7 @@ library Margin {
      * Margin is effectively the discounted value of the deposited collateral, accounting for the funding accrued,
      * fees paid and any unrealized profit/loss on the position.
      *
-     * In short, `collateralValueUsd  + position.funding + position.pnl - position.feesPaid`.
+     * In short, `collateralUsd  + position.funding + position.pnl - position.feesPaid`.
      */
     function getMarginUsd(
         uint128 accountId,
