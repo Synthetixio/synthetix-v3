@@ -237,8 +237,9 @@ contract OrderModule is IOrderModule {
             accountId,
             market,
             runtime.trade.newPosition,
-            // @dev note that we're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
+            // @dev We're using getCollateralUsd and not marginUsd as we dont want price changes to be deducted yet.
             Margin.getCollateralUsd(accountId, marketId),
+            // @dev This is (oldMargin - orderFee - keeperFee). Where oldMargin has pnl, accruedFunding and prev fees taken into account.
             runtime.trade.newMarginUsd
         );
 
