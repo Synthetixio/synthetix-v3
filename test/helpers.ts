@@ -22,11 +22,17 @@ type CommitableOrder = Pick<Awaited<ReturnType<typeof genOrder>>, 'sizeDelta' | 
 /** Provision margin for this trader given the full `gTrader` context. */
 export const approveAndMintMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   const { trader, collateral, collateralDepositAmount } = await gTrader;
-  const { PerpMarketProxy } = bs.systems();
+  const { systems, signers } = bs;
+  const { PerpMarketProxy, SpotMarket } = systems();
+  const [, , spotMarketOwner] = signers();
 
-  const collateralConnected = collateral.contract.connect(trader.signer);
-  await collateralConnected.mint(trader.signer.getAddress(), collateralDepositAmount);
-  await collateralConnected.approve(PerpMarketProxy.address, collateralDepositAmount);
+  // NOTE: We `.mint` into the `trader.signer` before approving as only owners can mint.
+  const synth = collateral.synthMarket.synth();
+  console.log(await synth.balanceOf(trader.signer.getAddress()));
+
+  await synth.connect(spotMarketOwner).mint(trader.signer.getAddress(), collateralDepositAmount);
+  await synth.connect(trader.signer).approve(PerpMarketProxy.address, collateralDepositAmount);
+  await synth.connect(trader.signer).approve(SpotMarket.address, collateralDepositAmount);
 
   return gTrader;
 };
@@ -42,7 +48,7 @@ export const depositMargin = async (bs: Bs, gTrader: GeneratedTrader) => {
   await PerpMarketProxy.connect(trader.signer).modifyCollateral(
     trader.accountId,
     market.marketId(),
-    collateral.contract.address,
+    collateral.synthMarket.marketId(),
     collateralDepositAmount
   );
 

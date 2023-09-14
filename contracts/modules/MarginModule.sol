@@ -14,6 +14,7 @@ import {PerpMarketConfiguration, SYNTHETIX_USD_MARKET_ID} from "../storage/PerpM
 import {Position} from "../storage/Position.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Margin} from "../storage/Margin.sol";
+import "hardhat/console.sol";
 
 contract MarginModule is IMarginModule {
     using SafeCastU256 for uint256;

@@ -12,14 +12,14 @@ import {
 } from '../../helpers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
-describe('LiquidationModule', () => {
+describe.only('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
   const { markets, collaterals, traders, keeper, systems, provider, restore } = bs;
 
   beforeEach(restore);
 
   describe('flagPosition', () => {
-    it('should flag a position with a health factor <= 1', async () => {
+    it.only('should flag a position with a health factor <= 1', async () => {
       const { PerpMarketProxy } = systems();
 
       const orderSide = genSide();
