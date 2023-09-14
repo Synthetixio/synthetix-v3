@@ -14,7 +14,7 @@ import type { IMarketConfigurationModule } from './generated/typechain/MarketCon
 import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
-import { genNumber, bn } from './generators';
+import { bn, genOneOf } from './generators';
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
@@ -121,12 +121,12 @@ export const bootstrap = (args: BootstrapArgs) => {
     },
     {
       name: 'swstETH',
-      initialPrice: bn(genNumber(1800, 1900)),
-      max: bn(999_999),
+      initialPrice: genOneOf([bn(1500), bn(1650), bn(1750), bn(1850), bn(4800)]),
+      max: bn(500_000),
     },
     {
       name: 'sAAA',
-      initialPrice: bn(genNumber(1000, 5000)),
+      initialPrice: genOneOf([bn(10_000), bn(15_000), bn(25_000), bn(30_000)]),
       max: bn(100_000),
     },
   ];

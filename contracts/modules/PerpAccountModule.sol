@@ -38,8 +38,7 @@ contract PerpAccountModule is IPerpAccountModule {
         for (uint256 i = 0; i < length; ) {
             synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             collateralAvailable = accountMargin.collaterals[synthMarketId];
-
-            (collateralPrice, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, collateralAvailable);
+            collateralPrice = Margin.getCollateralPrice(synthMarketId, collateralAvailable, globalConfig);
             depositedCollaterals[i] = IPerpAccountModule.DepositedCollateral(
                 synthMarketId,
                 collateralAvailable,

@@ -81,6 +81,10 @@ contract MarginModule is IMarginModule {
         } else {
             ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
             synth.transferFrom(msg.sender, address(this), amount);
+
+            console.log("depositing");
+            console.logUint(synthMarketId);
+            console.logUint(amount);
             globalConfig.synthetix.depositMarketCollateral(marketId, address(synth), amount);
         }
         emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);
