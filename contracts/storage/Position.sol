@@ -42,7 +42,6 @@ library Position {
         Position.Data newPosition;
         uint256 orderFee;
         uint256 keeperFee;
-        uint256 marginUsd;
         uint256 newMarginUsd;
     }
 
@@ -216,7 +215,7 @@ library Position {
         // Check the new position hasn't hit max OI on either side.
         validateMaxOi(marketConfig.maxMarketSize, market.skew, market.size, currentPosition.size, newPosition.size);
 
-        return Position.ValidatedTrade(newPosition, orderFee, keeperFee, marginUsd, newMarginUsd);
+        return Position.ValidatedTrade(newPosition, orderFee, keeperFee, newMarginUsd);
     }
 
     /**
@@ -465,6 +464,7 @@ library Position {
         if (self.size == 0) {
             return 0;
         }
+
         return self.size.mulDecimal(market.getNextFundingAccrued(price) - self.entryFundingAccrued);
     }
 
