@@ -10,5 +10,11 @@
       "address": "0x38908Ee087D7db73A1Bd1ecab9AAb8E8c9C74595",
       "startBlock": 94846457
     }
+  },
+  "base-testnet": {
+    "SpotMarketProxy": {
+      "address": "0x17633A63083dbd4941891F87Bdf31B896e91e2B9",
+      "startBlock": 9243672
+    }
   }
 }

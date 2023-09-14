@@ -11,10 +11,18 @@ import { verifyChecksCollateralEnabled, verifyUsesFeatureFlag } from '../../veri
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
 describe('IssueUSDModule', function () {
-  const { signers, systems, provider, accountId, poolId, depositAmount, collateralAddress } =
-    bootstrapWithStakedPool();
+  const {
+    signers,
+    systems,
+    provider,
+    accountId,
+    poolId,
+    depositAmount,
+    collateralAddress,
+    collateralContract,
+  } = bootstrapWithStakedPool();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
 
   let MockMarket: ethers.Contract;
   let marketId: BigNumber;
@@ -22,7 +30,7 @@ describe('IssueUSDModule', function () {
   const feeAddress = '0x1234567890123456789012345678901234567890';
 
   before('identify signers', async () => {
-    [owner, user1, user2] = signers();
+    [owner, user1, user2, user3] = signers();
   });
 
   before('deploy and connect fake market', async () => {
@@ -209,6 +217,73 @@ describe('IssueUSDModule', function () {
       });
     });
 
+    describe('mint/burn security check', () => {
+      before(restore);
+
+      before('mint', async () => {
+        await systems().Core.connect(user1).mintUsd(
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.div(10) // should be enough
+        );
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
+      });
+
+      it('does not let another user pay back the debt without balance', async () => {
+        // User 1 mint some sUSD
+        await systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
+        // Mint some collateral for user3. It does not work without user3 having some collateral. (they will not loose any of this though.)
+        await collateralContract().mint(await user3.getAddress(), depositAmount);
+        const user3CollateralBalBefore = await collateralContract().balanceOf(
+          await user3.getAddress()
+        );
+        const user3sUSDBalanceBefore = await systems().USD.balanceOf(await user3.getAddress());
+        const user1DebtBefore = await systems()
+          .Core.connect(user1)
+          .callStatic.getPositionDebt(accountId, poolId, collateralAddress());
+
+        const user1SusdBalanceBefore = await systems().USD.balanceOf(await user1.getAddress());
+        console.log('user1DebtBefore', user1DebtBefore.toString());
+        console.log('user1SusdBalanceBefore', user1SusdBalanceBefore.toString());
+        console.log('user3CollateralBalBefore', user3CollateralBalBefore.toString());
+        console.log('user3sUSDBalanceBefore', user3sUSDBalanceBefore.toString());
+        console.log('Calling burnUSD connected as user3 but passing account id of user1...');
+        console.log('Note that user 3 does not have any sUSD');
+
+        // Try to burn for another user without having any sUSD
+        await assertRevert(
+          systems()
+            .Core.connect(user3)
+            .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10)),
+          'PermissionDenied'
+        );
+
+        const user3CollateralBalAfter = await collateralContract().balanceOf(
+          await user3.getAddress()
+        );
+        const user3sUSDBalanceAfter = await systems().USD.balanceOf(await user3.getAddress());
+        const user1DebtAfter = await systems()
+          .Core.connect(user1)
+          .callStatic.getPositionDebt(accountId, poolId, collateralAddress());
+
+        const user1SusdBalanceAfter = await systems().USD.balanceOf(await user1.getAddress());
+
+        console.log('Tx did not revert');
+        console.log('user3CollateralBalAfter', user3CollateralBalAfter.toString());
+        console.log('user3sUSDBalanceAfter', user3sUSDBalanceAfter.toString());
+        console.log('user1DebtAfter', user1DebtAfter.toString());
+        console.log('user1SusdBalanceAfter', user1SusdBalanceAfter.toString());
+        console.log('User3 have the same amount of collateral, and still 0 sUSD');
+        console.log('User1 now have less debt and the same amount of sUSD');
+        assertBn.equal(user1DebtBefore, user1DebtAfter);
+      });
+    });
+
     describe('successful mint when fee is levied', async () => {
       before(restore);
       before('set fee', async () => {
@@ -304,21 +379,30 @@ describe('IssueUSDModule', function () {
           .transfer(await user2.getAddress(), depositAmount.div(10));
       });
 
-      before('other account burn', async () => {
+      before('user deposit into other account', async () => {
         await systems()
           .USD.connect(user2)
           .approve(systems().Core.address, constants.MaxUint256.toString());
         await systems()
           .Core.connect(user2)
           .deposit(accountId, await systems().Core.getUsdToken(), depositAmount.div(10));
-        await systems()
-          .Core.connect(user2)
-          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
       });
 
-      it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
+      it('other account burn would revert', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user2)
+            .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10)),
+          'PermissionDenied'
+        );
+      });
 
-      it('took away from user2', async () => {
+      it(
+        'has correct debt',
+        verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(10))
+      );
+
+      it('did not took away from user2 balance', async () => {
         assertBn.equal(await systems().USD.balanceOf(await user2.getAddress()), 0);
       });
     });

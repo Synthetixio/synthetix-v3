@@ -12,7 +12,6 @@ description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 # Core Modules
-
 [contract.OwnerModule]
 artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
 
@@ -41,7 +40,6 @@ artifact = "contracts/modules/DecayTokenModule.sol:DecayTokenModule"
 artifact = "contracts/modules/NftModule.sol:NftModule"
 
 # Mocks
-
 [contract.SampleFeatureFlagModule]
 artifact = "contracts/modules/mocks/SampleFeatureFlagModule.sol:SampleFeatureFlagModule"
 
@@ -52,7 +50,6 @@ artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
 artifact = "contracts/modules/mocks/GenericModule.sol:GenericModule"
 
 # Setup Initial Proxy
-
 [contract.Proxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.CoreRouter.address %>", "<%= settings.owner %>"]
@@ -61,117 +58,60 @@ salt = "<%= settings.salt %>"
 depends = ["router.CoreRouter"]
 
 # Core Router
-
 [router.CoreRouter]
 contracts = ["CoreModule"]
 depends = ["contract.CoreModule"]
 
 # AssociatedSystemsModule Router
-
 [router.AssociatedSystemsModuleRouter]
-contracts = [
-    "CoreModule",
-    "AssociatedSystemsModule",
-]
-depends = [
-  "contract.CoreModule",
-  "contract.AssociatedSystemsModule"
-]
+contracts = ["CoreModule", "AssociatedSystemsModule"]
+depends = ["contract.CoreModule", "contract.AssociatedSystemsModule"]
 
 # TokenModule Router
-
 [router.TokenModuleRouter]
-contracts = [
-    "CoreModule",
-    "TokenModule",
-]
-depends = [
-  "contract.CoreModule",
-  "contract.TokenModule"
-]
-
+contracts = ["CoreModule", "TokenModule"]
+depends = ["contract.CoreModule", "contract.TokenModule"]
 
 [router.TokenModuleRouter2]
-contracts = [
-    "CoreModule",
-    "TokenModule",
-]
+contracts = ["CoreModule", "TokenModule"]
 salt = "second"
-depends = [
-  "contract.CoreModule",
-  "contract.TokenModule"
-]
+depends = ["contract.CoreModule", "contract.TokenModule"]
 
 [router.TokenModuleRouter3]
-contracts = [
-    "CoreModule",
-    "TokenModule",
-]
+contracts = ["CoreModule", "TokenModule"]
 salt = "third"
-depends = [
-  "contract.CoreModule",
-  "contract.TokenModule"
-]
+depends = ["contract.CoreModule", "contract.TokenModule"]
 
 # DecayTokenModule Router
-
 [router.DecayTokenModuleRouter]
-contracts = [
-  "CoreModule",
-  "DecayTokenModule",
-]
-depends = [
-  "contract.CoreModule",
-  "contract.DecayTokenModule"
-]
+contracts = ["CoreModule", "DecayTokenModule"]
+depends = ["contract.CoreModule", "contract.DecayTokenModule"]
 
 # Sample Router
-
 [router.SampleRouter]
-contracts = [
-    "CoreModule",
-    "SampleOwnedModule"
-]
-depends = [
-  "contract.CoreModule",
-  "contract.SampleOwnedModule"
-]
+contracts = ["CoreModule", "SampleOwnedModule"]
+depends = ["contract.CoreModule", "contract.SampleOwnedModule"]
 
 # NftModule Router ( we need multiple for tests)
-
 [router.NftModuleRouter]
-contracts = [
-  "CoreModule",
-  "NftModule",
-]
+contracts = ["CoreModule", "NftModule"]
 depends = ["contract.CoreModule", "contract.NftModule"]
 
 [router.NftModuleRouter2]
-contracts = [
-  "CoreModule",
-  "NftModule",
-]
+contracts = ["CoreModule", "NftModule"]
 salt = "second"
 depends = ["contract.CoreModule", "contract.NftModule"]
 
 [router.NftModuleRouter3]
-contracts = [
-  "CoreModule",
-  "NftModule",
-]
+contracts = ["CoreModule", "NftModule"]
 salt = "third"
 depends = ["contract.CoreModule", "contract.NftModule"]
 
 # FeatureFlagModule Router
-
 [router.FeatureFlagModuleRouter]
-contracts = [
-  "CoreModule",
-  "FeatureFlagModule",
-  "SampleFeatureFlagModule",
-]
+contracts = ["CoreModule", "FeatureFlagModule", "SampleFeatureFlagModule"]
 depends = [
-  "contract.CoreModule",
-  "contract.FeatureFlagModule",
-  "contract.SampleFeatureFlagModule"
+    "contract.CoreModule",
+    "contract.FeatureFlagModule",
+    "contract.SampleFeatureFlagModule"
 ]

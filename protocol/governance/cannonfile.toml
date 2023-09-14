@@ -62,18 +62,18 @@ artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenMod
 
 [router.CoreRouter]
 contracts = [
-  "AssociatedSystemsModule",
-  "ElectionInspectorModule",
-  "ElectionModule",
-  "SnapshotVotePowerModule",
-  "InitialModuleBundle",
+    "AssociatedSystemsModule",
+    "ElectionInspectorModule",
+    "ElectionModule",
+    "SnapshotVotePowerModule",
+    "InitialModuleBundle",
 ]
 depends = [
-  "contract.AssociatedSystemsModule",
-  "contract.ElectionInspectorModule",
-  "contract.ElectionModule",
-  "contract.SnapshotVotePowerModule",
-  "contract.InitialModuleBundle",
+    "contract.AssociatedSystemsModule",
+    "contract.ElectionInspectorModule",
+    "contract.ElectionModule",
+    "contract.SnapshotVotePowerModule",
+    "contract.InitialModuleBundle",
 ]
 
 [invoke.upgrade_core_proxy]
@@ -87,29 +87,19 @@ factory.CoreProxy.arg = 0
 depends = ["contract.InitialProxy", "router.CoreRouter"]
 
 [router.CouncilTokenRouter]
-contracts = [
-  "CouncilTokenModule",
-  "InitialModuleBundle",
-]
-depends = [
-  "contract.CouncilTokenModule",
-  "contract.InitialModuleBundle"
-]
+contracts = ["CouncilTokenModule", "InitialModuleBundle"]
+depends = ["contract.CouncilTokenModule", "contract.InitialModuleBundle"]
 
 [invoke.init_council_token]
 target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
-  "<%= formatBytes32String('councilToken') %>",
-  "Synthetix Governance Token",
-  "SNXGOV",
-  "https://synthetix.io",
-  "<%= contracts.CouncilTokenRouter.address %>"
-]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "router.CouncilTokenRouter"
+    "<%= formatBytes32String('councilToken') %>",
+    "Synthetix Governance Token",
+    "SNXGOV",
+    "https://synthetix.io",
+    "<%= contracts.CouncilTokenRouter.address %>"
 ]
 factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
 factory.CouncilToken.event = "AssociatedSystemSet"
@@ -119,12 +109,12 @@ factory.CouncilToken.arg = 2
 target = ["CoreProxy"]
 func = "initOrUpdateElectionSettings(address[],uint8,uint64,uint64,uint64,uint64)"
 args = [
-  ["<%= settings.init_council_member %>"],
-  "<%= settings.minimum_active_members %>",
-  "<%= settings.initial_nomination_period_start_date %>",
-  "<%= settings.administration_period_duration %>",
-  "<%= settings.nomination_period_duration %>",
-  "<%= settings.voting_period_duration %>",
+    ["<%= settings.init_council_member %>"],
+    "<%= settings.minimum_active_members %>",
+    "<%= settings.initial_nomination_period_start_date %>",
+    "<%= settings.administration_period_duration %>",
+    "<%= settings.nomination_period_duration %>",
+    "<%= settings.voting_period_duration %>",
 ]
 from = "<%= settings.owner %>"
 depends = ["invoke.init_council_token"]

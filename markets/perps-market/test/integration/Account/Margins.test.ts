@@ -3,6 +3,7 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import { openPosition } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { calculatePricePnl } from '../helpers/fillPrice';
+import { ethers } from 'ethers';
 
 describe('Account margins test', () => {
   const accountId = 4;
@@ -19,7 +20,7 @@ describe('Account margins test', () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(1000),
       },
       settlementStrategy: {
@@ -38,7 +39,7 @@ describe('Account margins test', () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(500),
       },
       settlementStrategy: {
@@ -67,9 +68,8 @@ describe('Account margins test', () => {
     });
 
     it('has correct initial and maintenance margin', async () => {
-      const [initialMargin, maintenanceMargin] = await systems().PerpsMarket.getRequiredMargins(
-        accountId
-      );
+      const [initialMargin, maintenanceMargin] =
+        await systems().PerpsMarket.getRequiredMargins(accountId);
       assertBn.equal(initialMargin, 0);
       assertBn.equal(maintenanceMargin, 0);
     });

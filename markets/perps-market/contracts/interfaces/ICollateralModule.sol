@@ -11,11 +11,4 @@ interface ICollateralModule {
      * @param collateralAmount max amount that was set for the synth
      */
     event MaxCollateralSet(uint128 indexed synthMarketId, uint256 collateralAmount);
-
-    /**
-     * @notice Set the max collateral amoutn via this function
-     * @param synthMarketId Synth market id, 0 for snxUSD.
-     * @param collateralAmount max amount that for the synth
-     */
-    function setMaxCollateralAmount(uint128 synthMarketId, uint collateralAmount) external;
 }

@@ -1,19 +1,15 @@
-import { assert } from 'matchstick-as';
+import { assert, log } from 'matchstick-as';
 import { handleAccountCreated } from '../optimism-goerli';
 import { createAccountCreatedEvent } from './event-factories/createAccountCreatedEvent';
 
 export default function test(): void {
-  const accountCreatedEvent = createAccountCreatedEvent(
-    1,
-    '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-    10_000,
-    10
-  );
+  assert.entityCount('Account', 0);
 
-  handleAccountCreated(accountCreatedEvent);
-
+  log.info('Should create a new record for the account', []);
+  const owner1 = '0x4200000000000000000000000000000000000000';
+  handleAccountCreated(createAccountCreatedEvent(1, owner1, 10_000, 10));
+  assert.entityCount('Account', 1);
   assert.fieldEquals('Account', '1', 'id', '1');
   assert.fieldEquals('Account', '1', 'accountId', '1');
-  assert.fieldEquals('Account', '1', 'owner', '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266');
-  assert.notInStore('Account', '2');
+  assert.fieldEquals('Account', '1', 'owner', owner1);
 }

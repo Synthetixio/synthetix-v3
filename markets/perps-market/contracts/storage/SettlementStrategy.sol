@@ -14,7 +14,7 @@ library SettlementStrategy {
 
     struct Data {
         /**
-         * @dev see Type.Data for more details
+         * @dev see Type for more details
          */
         Type strategyType;
         /**

@@ -1,5 +1,5 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import { AccountLiquidated } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createAccountLiquidatedEvent(
@@ -9,7 +9,7 @@ export function createAccountLiquidatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): AccountLiquidated {
-  const event = changetype<AccountLiquidated>(newMockEvent());
+  const event = newTypedMockEvent<AccountLiquidated>();
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('accountId', ethereum.Value.fromI32(id)));
   event.parameters.push(

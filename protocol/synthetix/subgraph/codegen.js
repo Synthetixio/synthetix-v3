@@ -5,35 +5,33 @@ const fs = require('fs');
 const prettier = require('prettier');
 
 const [networkName] = process.argv.slice(2);
-const networkId = {
-  mainnet: 1,
-  'optimism-mainnet': 10,
-  goerli: 5,
-  'optimism-goerli': 420,
-}[networkName];
 
 const graphNetworkName = {
   mainnet: 'mainnet',
   'optimism-mainnet': 'optimism',
   goerli: 'goerli',
   'optimism-goerli': 'optimism-goerli',
+  'base-goerli': 'base-testnet',
 }[networkName];
 
 async function run() {
-  const provider = new ethers.providers.InfuraProvider(networkId, process.env.INFURA_KEY);
+  const provider = new ethers.providers.JsonRpcProvider(
+    `https://${networkName}.infura.io/v3/${process.env.INFURA_KEY}`
+  );
 
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
-  networks[graphNetworkName].CoreProxy.address =
-    require(`./deployments/${networkName}/CoreProxy.json`).address;
+  networks[graphNetworkName].CoreProxy.address = require(
+    `./${networkName}/deployments/CoreProxy.json`
+  ).address;
 
-  const deployTx = require(`./deployments/${networkName}/InitialCoreProxy.json`).deployTxnHash;
+  const deployTx = require(`./${networkName}/deployments/InitialCoreProxy.json`).deployTxnHash;
   const tx = await provider.getTransactionReceipt(deployTx);
   networks[graphNetworkName].CoreProxy.startBlock = tx.blockNumber;
 
   const prettierOptions = JSON.parse(fs.readFileSync('../../../.prettierrc', 'utf8'));
 
-  const pretty = prettier.format(JSON.stringify(networks, null, 2), {
+  const pretty = await prettier.format(JSON.stringify(networks, null, 2), {
     parser: 'json',
     ...prettierOptions,
   });
