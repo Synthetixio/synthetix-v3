@@ -13,7 +13,7 @@ export const raise = (err: string): never => {
 
 export const bn = (n: number) => wei(n).toBN();
 
-export function* toRoundRobinGenerators<A>(l: A[]): Generator<A> {
+export function* toRoundRobinGenerators<A>(l: A[]): Generator<A, A> {
   let idx = 0;
   while (true) {
     yield l[idx];

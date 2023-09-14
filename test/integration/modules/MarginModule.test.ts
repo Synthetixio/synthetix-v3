@@ -123,13 +123,9 @@ describe('MarginModule', async () => {
 
     it('should revert on modify when an order is pending', async () => {
       const { PerpMarketProxy } = systems();
-      const gTrader1 = await genTrader(bs);
 
-      await depositMargin(bs, gTrader1);
-      const order = await genOrder(bs, gTrader1.market, gTrader1.collateral, gTrader1.collateralDepositAmount);
-
-      // We are using the same trader/market for both deposit and withdraws.
-      const { trader, marketId } = gTrader1;
+      const { market, collateral, collateralDepositAmount, marketId, trader } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
 
       // Commit an order for this trader.
       await PerpMarketProxy.connect(trader.signer).commitOrder(
@@ -145,7 +141,7 @@ describe('MarginModule', async () => {
       assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
 
       // (deposit) Same trader in the same market but (possibly) different collateral.
-      const gTrader2 = await genTrader(bs, { desiredTrader: trader, desiredMarket: gTrader1.market });
+      const gTrader2 = await genTrader(bs, { desiredTrader: trader, desiredMarket: market });
 
       // (deposit) Mint and give access.
       await approveAndMintMargin(bs, gTrader2);
@@ -161,13 +157,13 @@ describe('MarginModule', async () => {
         `OrderFound()`
       );
 
-      // (withdraw) Attempt to withdraw previously deposted margin but expect fail.
+      // (withdraw) Attempt to withdraw previously deposited margin but expect fail.
       await assertRevert(
         PerpMarketProxy.connect(trader.signer).modifyCollateral(
           trader.accountId,
           marketId,
-          gTrader1.collateral.contract.address,
-          gTrader1.collateralDepositAmount.mul(-1)
+          collateral.contract.address,
+          collateralDepositAmount.mul(-1)
         ),
         `OrderFound()`
       );
@@ -175,16 +171,18 @@ describe('MarginModule', async () => {
 
     it('should revert when modifying collateral of another account', async () => {
       const { PerpMarketProxy } = systems();
+      const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
-      const trader1 = traders()[0];
-      const trader2 = traders()[1];
+      const {
+        market,
+        collateral,
+        collateralDepositAmount,
+        trader: trader1,
+      } = await approveAndMintMargin(bs, genTrader(bs, { desiredTrader: tradersGenerator.next().value }));
 
-      const gTrader = await genTrader(bs, { desiredTrader: trader1 });
-      const { market, collateral, collateralDepositAmount } = gTrader;
-      await approveAndMintMargin(bs, gTrader);
-
-      // Connected using trader2 for an accountId that belongs to trader1.
       const permission = ethers.utils.formatBytes32String('PERPS_MODIFY_COLLATERAL');
+      const trader2 = tradersGenerator.next().value;
+      // Connected using trader2 for an accountId that belongs to trader1.
       const signerAddress = await trader2.signer.getAddress();
       await assertRevert(
         PerpMarketProxy.connect(trader2.signer).modifyCollateral(
@@ -540,7 +538,7 @@ describe('MarginModule', async () => {
           withdrawAmount
         );
 
-        // Convert withdrawAmount back to positive beacuse Transfer takes in abs(amount).
+        // Convert withdrawAmount back to positive because Transfer takes in abs(amount).
         const withdrawAmountAbs = withdrawAmount.abs();
         await assertEvent(
           tx,
@@ -808,21 +806,22 @@ Need to make sure we are not liquidatable
     describe('withdrawAllCollateral', () => {
       it('should withdraw all account collateral', async () => {
         const { PerpMarketProxy } = systems();
-        const gTrader = await genTrader(bs);
 
-        // We want to make sure we have two different types of collateral
-        const collateral = collaterals()[0];
-        const collateral2 = collaterals()[1];
+        const collateralGenerator = toRoundRobinGenerators(shuffle(collaterals()));
 
         // Deposit margin with collateral 1
-        const { trader, traderAddress, marketId, collateralDepositAmount } = await depositMargin(
+        const { trader, traderAddress, marketId, collateralDepositAmount, collateral, market } = await depositMargin(
           bs,
-          Promise.resolve({ ...gTrader, collateral })
+          genTrader(bs, { desiredCollateral: collateralGenerator.next().value })
         );
         // Deposit margin with collateral 2
-        const { collateralDepositAmount: collateralDepositAmount2 } = await depositMargin(
+        const { collateralDepositAmount: collateralDepositAmount2, collateral: collateral2 } = await depositMargin(
           bs,
-          Promise.resolve({ ...gTrader, collateral: collateral2 })
+          genTrader(bs, {
+            desiredMarket: market,
+            desiredCollateral: collateralGenerator.next().value,
+            desiredTrader: trader,
+          })
         );
 
         // Assert deposit went thorough and  we have two different types of collateral
@@ -889,6 +888,158 @@ Need to make sure we are not liquidatable
         await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
       });
 
+      it('should withdraw with fees and funding removed when no price changes', async () => {
+        const { PerpMarketProxy } = systems();
+        const { trader, marketId, market, collateral, collateralDepositAmount, traderAddress, collateralPrice } =
+          await depositMargin(bs, genTrader(bs));
+
+        // Some generated collateral, trader combinations results with balance > `collateralDepositAmount`. So this
+        // because the first collateral (sUSD) is partly configured by Synthetix Core. All traders receive _a lot_ of
+        // that collateral so we need to track the full balance here.
+        //
+        // @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/synthetix/test/common/stakers.ts#L65
+        const startingCollateralBalance = wei(await collateral.contract.balanceOf(traderAddress)).add(
+          collateralDepositAmount
+        );
+
+        // Open an order
+        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+        const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
+
+        // Close the order
+        const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+        });
+
+        const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        // Get the fees from the open and close order events
+        const openOrderEvent = findEventSafe({
+          receipt: openReceipt,
+          eventName: 'OrderSettled',
+          contract: PerpMarketProxy,
+        });
+        const closeOrderEvent = findEventSafe({
+          receipt: closeReceipt,
+          eventName: 'OrderSettled',
+          contract: PerpMarketProxy,
+        });
+        const fees = wei(openOrderEvent?.args.orderFee)
+          .add(openOrderEvent?.args.keeperFee)
+          .add(closeOrderEvent?.args.orderFee)
+          .add(closeOrderEvent?.args.keeperFee);
+
+        // Pnl expected to be close to 0 since not oracle price change
+        const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
+        const expectedChangeUsd = wei(pnl).sub(fees).add(closeOrderEvent?.args.accruedFunding);
+        const expectedChange = expectedChangeUsd.div(collateralPrice);
+
+        // Perform the withdrawal.
+        await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+        const actualBalance = await collateral.contract.balanceOf(traderAddress);
+
+        assertBn.equal(actualBalance, startingCollateralBalance.add(expectedChange).toBN());
+      });
+
+      it('should withdraw correct amounts after winning position', async () => {
+        const { PerpMarketProxy, USD } = systems();
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+
+        const { trader, marketId, market, collateral, collateralDepositAmount, traderAddress } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredTrader: tradersGenerator.next().value })
+        );
+
+        // Some generated collateral, trader combinations results with balance > `collateralDepositAmount`. So this
+        // because the first collateral (sUSD) is partly configured by Synthetix Core. All traders receive _a lot_ of
+        // that collateral so we need to track the full balance here.
+        //
+        // @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/synthetix/test/common/stakers.ts#L65
+        const startingCollateralBalance = wei(await collateral.contract.balanceOf(traderAddress)).add(
+          collateralDepositAmount
+        );
+
+        // Open an order
+        const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount);
+        const { receipt: openReceipt } = await commitAndSettle(bs, marketId, trader, openOrder);
+        const isLong = openOrder.sizeDelta.gt(0);
+
+        // Increase or Decrease price 20%
+        const newPrice = wei(openOrder.oraclePrice).mul(isLong ? 1.2 : 0.8);
+        await market.aggregator().mockSetCurrentPrice(newPrice.toBN());
+
+        // Close the order
+        const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+        });
+
+        const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
+
+        // Get the fees from the open and close order events
+        const openOrderEvent = findEventSafe({
+          receipt: openReceipt,
+          eventName: 'OrderSettled',
+          contract: PerpMarketProxy,
+        });
+        const closeOrderEvent = findEventSafe({
+          receipt: closeReceipt,
+          eventName: 'OrderSettled',
+          contract: PerpMarketProxy,
+        });
+
+        const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
+        const orderFees = wei(openOrderEvent?.args.orderFee).add(closeOrderEvent?.args.orderFee);
+        const keeperFees = wei(openOrderEvent?.args.keeperFee).add(closeOrderEvent?.args.keeperFee);
+        const fees = orderFees.add(keeperFees);
+        const expectedProfit = wei(pnl).sub(fees).add(closeOrderEvent?.args.accruedFunding);
+
+        /**
+         * So why cant we just withdraw our profit, why do we need a deposit from another trader?
+         *
+         * In V3, the smart contract will revert if:
+         *
+         * `marketData.creditCapacityD18 + (depositedCollateralValue - our withdrawalAmount) < 0`
+         *
+         * We started with a `creditCapacityD18` of 0, since we don't have any pools delegating to us.
+         *
+         * Keeper Fees:
+         * When we paid out the keeper fees, we borrowed sUSD, which increased the market debt.
+         * This debt is represented by a negative `creditCapacityD18`.
+         *
+         * Expected profit:
+         * After our withdrawal the `depositedCollateralValue` in v3 will be 0. So we need another
+         * trader to deposit collateral matching the profit. As well as the keeper fees.
+         *
+         * The traders profit would have the keeper fees deducted already, so the LPs (or the market)
+         * really did loose keeper fees + profit.
+         *
+         * The other way of working around this and probably a more real life scenario, would be having
+         * LPs delegating to us giving us more creditCapacityD18 to start of with.
+         */
+        await depositMargin(
+          bs,
+          genTrader(bs, {
+            desiredMarket: market, // Use same market
+            desiredTrader: tradersGenerator.next().value, // Use another trader
+            desiredMarginUsdDepositAmount: keeperFees
+              .add(expectedProfit)
+              .add(1 /* Rounding error protection */)
+              .toNumber(),
+          })
+        );
+
+        // Perform the withdrawal.
+        await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
+        // We expect to get back our full starting collateral balance.
+        const actualBalance = await collateral.contract.balanceOf(traderAddress);
+        assertBn.equal(actualBalance, startingCollateralBalance.toBN());
+
+        const actualUsdBalance = await USD.balanceOf(traderAddress);
+        // Our pnl, minus fees, funding should be equal to our sUSD balance.
+        assertBn.equal(actualUsdBalance, expectedProfit.toBN());
+      });
+
       it('should withdraw correct amount after losing position', async () => {
         const { PerpMarketProxy } = systems();
         const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
@@ -909,8 +1060,14 @@ Need to make sure we are not liquidatable
             desiredTrader: tradersGenerator.next().value,
           })
         );
-        // TODO: investigate this
-        // For some collateral + trader combinations the trader has a balance bigger than collateralDepositAmount, so record the full balance here.
+
+        // TODO: Investigate this (@joey is this TODO still needed?)
+        //
+        // Some generated collateral, trader combinations results with balance > `collateralDepositAmount`. So this
+        // because the first collateral (sUSD) is partly configured by Synthetix Core. All traders receive _a lot_ of
+        // that collateral so we need to track the full balance here.
+        //
+        // @see: https://github.com/Synthetixio/synthetix-v3/blob/main/protocol/synthetix/test/common/stakers.ts#L65
         const startingCollateralBalance = wei(await collateral.contract.balanceOf(traderAddress)).add(
           collateralDepositAmount
         );
@@ -921,7 +1078,7 @@ Need to make sure we are not liquidatable
           genTrader(bs, {
             desiredTrader: tradersGenerator.next().value, // Use another trader
             desiredCollateral: collateral, // Use same collateral
-            desiredMarginUsdDepositAmount: wei(marginUsdDepositAmount).mul(2).toNumber(), // Use same margin
+            desiredMarginUsdDepositAmount: wei(marginUsdDepositAmount).mul(2).toNumber(), // Use margin * 2
           })
         );
 
@@ -1326,29 +1483,16 @@ Need to make sure we are not liquidatable
         desiredSide: -1,
       });
 
-      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
+      await commitAndSettle(bs, marketId, trader, order);
 
       const marginUsdBeforePriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
-      const pnl = calcPnl(order.sizeDelta, order.oraclePrice, order.fillPrice);
-      const settleEvent = findEventSafe({
-        receipt,
-        eventName: 'OrderSettled',
-        contract: PerpMarketProxy,
-      });
 
-      const expectedMarginUsdBeforePriceChange = wei(order.marginUsd)
-        .sub(order.orderFee)
-        .sub(settleEvent?.args.keeperFee)
-        .add(order.keeperFeeBufferUsd)
-        .add(pnl);
-      // Assert margin before price change
-      assertBn.equal(marginUsdBeforePriceChange, expectedMarginUsdBeforePriceChange.toBN());
-      // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+      assertBn.gt(marginUsdBeforePriceChange, 0);
+      // Price double, causing our short to be underwater
       const newPrice = wei(order.oraclePrice).mul(2).toBN();
       // Update price
       await market.aggregator().mockSetCurrentPrice(newPrice);
-
-      // load margin again
+      // Load margin again
       const marginUsdAfterPriceChange = await PerpMarketProxy.getMarginUsd(trader.accountId, marketId);
       // Assert marginUSD is 0 since price change made the position underwater
       assertBn.equal(marginUsdAfterPriceChange, bn(0));
