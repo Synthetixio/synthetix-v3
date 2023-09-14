@@ -11,6 +11,7 @@ import {
   genBytes32,
   genNumber,
   genOneOf,
+  genOrder,
   genOrderFromSizeDelta,
   genTrader,
 } from '../../generators';
@@ -379,6 +380,45 @@ describe('PerpMarketFactoryModule', () => {
           assert.ok(isSameSide(d1.fundingRate, d2.fundingRate));
         }
       );
+    });
+    it.skip('market debtCorrection should reflect positions', async () => {
+      const { PerpMarketProxy } = systems();
+
+      // Deposit margin with collateral 1.
+      const {
+        trader,
+        traderAddress,
+        marketId,
+        collateralDepositAmount,
+        marginUsdDepositAmount,
+        market,
+        collateral,
+        collateralPrice,
+      } = await depositMargin(bs, genTrader(bs));
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 1,
+      });
+      const openTx = await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // const d1 = await PerpMarketProxy.getMarketDigest(market.marketId());
+
+      // assertBn.equal(d1.debtCorrection, wei(0).toBN());
+      let reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
+      console.log('reportedDebt', reportedDebt);
+      assertBn.equal(reportedDebt, wei(0).toBN());
+      const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
+      });
+
+      const closeTx = await commitAndSettle(bs, marketId, trader, closeOrder);
+      const d2 = await PerpMarketProxy.getMarketDigest(market.marketId());
+      reportedDebt = await PerpMarketProxy.reportedDebt(marketId);
+      console.log('reportedDebt', reportedDebt);
+      assertBn.equal(reportedDebt, wei(0).toBN());
+      assertBn.equal(d2.size, wei(0).toBN());
+      assertBn.equal(d2.skew, wei(0).toBN());
+      // assertBn.equal(d2.debtCorrection, wei(0).toBN());
     });
   });
 });
