@@ -123,7 +123,6 @@ depends = [
     "contract.TestableCollateralStorage",
     "contract.TestableCollateralConfigurationStorage",
     "contract.TestableCollateralLockStorage",
-    "contract.TestableCrossChainStorage",
     "contract.TestableDistributionStorage",
     "contract.TestableDistributionActorStorage",
     "contract.TestableMarketStorage",
