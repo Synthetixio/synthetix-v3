@@ -1358,21 +1358,22 @@ describe.only('MarginModule', async () => {
     });
 
     it('should return usd amount after price of collateral changes', async () => {
-      const { PerpMarketProxy } = systems();
-      const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice } = await depositMargin(
-        bs,
-        genTrader(bs)
-      );
+      const { PerpMarketProxy, SpotMarket } = systems();
+      const { trader, marketId, marginUsdDepositAmount, collateral, collateralPrice, collateralDepositAmount } =
+        await depositMargin(bs, genTrader(bs));
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
 
       // Change price
       await collateral.aggregator().mockSetCurrentPrice(wei(2).mul(collateralPrice).toBN());
-
-      assertBn.near(
-        await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId),
-        wei(marginUsdDepositAmount).mul(2).toBN()
+      const actual = await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId);
+      // Fetch the price of the synth, this is our expected collateral value
+      const { returnAmount: expected } = await SpotMarket.quoteSellExactIn(
+        collateral.synthMarket.marketId(),
+        collateralDepositAmount
       );
+
+      assertBn.equal(actual, expected);
     });
 
     it('should return zero when collateral has not been deposited', async () => {
