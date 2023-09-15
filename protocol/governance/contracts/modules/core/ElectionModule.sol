@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../interfaces/ISynthetixElectionModule.sol";
