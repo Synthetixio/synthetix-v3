@@ -190,7 +190,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     ethOracleAgg = aggregator;
   });
 
-  const markets = args.markets.map(({ name, initialPrice, specific }) => {
+  const markets = args.markets.map(({ name, initialPrice, specific }, i) => {
     const readableName = utils.parseBytes32String(name);
     let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
 
@@ -210,16 +210,6 @@ export const bootstrap = (args: BootstrapArgs) => {
       await systems.PerpMarketProxy.createMarket({ name });
     });
 
-    before(`delegate pool collateral to market - ${name}`, async () => {
-      await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, [
-        {
-          marketId,
-          weightD18: utils.parseEther('1'),
-          maxDebtShareValueD18: utils.parseEther('1'),
-        },
-      ]);
-    });
-
     before(`configure market - ${readableName}`, async () => {
       await systems.PerpMarketProxy.connect(getOwner()).setMarketConfigurationById(marketId, {
         ...specific,
@@ -233,6 +223,15 @@ export const bootstrap = (args: BootstrapArgs) => {
       aggregator: () => aggregator,
       marketId: () => marketId,
     };
+  });
+
+  before(`delegate pool collateral to all markets equally`, async () => {
+    const poolConfig = markets.map(({ marketId }) => ({
+      marketId: marketId(),
+      weightD18: utils.parseEther('1'),
+      maxDebtShareValueD18: utils.parseEther('1'),
+    }));
+    await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, poolConfig);
   });
 
   let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
