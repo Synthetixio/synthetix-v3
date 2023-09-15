@@ -80,5 +80,8 @@
   "engines": {
     "node": "^18.16.0"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@3.6.0",
+  "dependencies": {
+    "solhint-plugin-meta-transactions": "0.1.0"
+  }
 }

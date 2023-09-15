@@ -1,6 +1,6 @@
 {
   "extends": ["solhint:recommended"],
-  "plugins": ["numcast", "erc2771"],
+  "plugins": ["numcast", "meta-transactions"],
   "rules": {
     "not-rely-on-time": "off",
     "avoid-low-level-calls": "off",
@@ -21,7 +21,7 @@
         "maxLength": 32
       }
     ],
-    "erc2771/no-msg-sender": "error",
-    "erc2771/no-msg-data": "error"
+    "meta-transactions/no-msg-sender": "error",
+    "meta-transactions/no-msg-data": "error"
   }
 }
