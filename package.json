@@ -15,7 +15,9 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "clean": "yarn workspaces foreach --parallel --verbose run clean",
-    "build-prerelease-dev": "git diff --exit-code && yarn lerna exec -- npm version prepatch --no-git-tag-version --no-workspaces-update && yarn && yarn build && git stash && yarn",
+    "generate-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --topological-dev --verbose run generate-testable",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --topological-dev --verbose run build-testable",
+    "compile-contracts": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --topological-dev --verbose run compile-contracts",
     "build": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --topological-dev --verbose run build",
     "test": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --verbose run coverage",

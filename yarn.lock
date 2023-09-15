@@ -2356,6 +2356,7 @@ __metadata:
     "@nomiclabs/hardhat-ethers": ^2.2.3
     "@nomiclabs/hardhat-etherscan": ^3.1.7
     "@synthetixio/hardhat-storage": "workspace:*"
+    "@typechain/ethers-v5": ^11.1.1
     "@typechain/hardhat": ^9.0.0
     dotenv: ^16.3.1
     hardhat: ^2.17.3
@@ -2721,6 +2722,22 @@ __metadata:
   version: 1.0.4
   resolution: "@tsconfig/node16@npm:1.0.4"
   checksum: 202319785901f942a6e1e476b872d421baec20cf09f4b266a1854060efbf78cde16a4d256e8bc949d31e6cd9a90f1e8ef8fb06af96a65e98338a2b6b0de0a0ff
+  languageName: node
+  linkType: hard
+
+"@typechain/ethers-v5@npm:^11.1.1":
+  version: 11.1.1
+  resolution: "@typechain/ethers-v5@npm:11.1.1"
+  dependencies:
+    lodash: ^4.17.15
+    ts-essentials: ^7.0.1
+  peerDependencies:
+    "@ethersproject/abi": ^5.0.0
+    "@ethersproject/providers": ^5.0.0
+    ethers: ^5.1.3
+    typechain: ^8.3.1
+    typescript: ">=4.3.0"
+  checksum: af4f3198c4f76e38cf45f992482329b172e1c668f5a5c4743764ab5011d928cdc66a1feb9c02dba80a14fb3124bc37f39a6956f5323c0ac32f919e09cfb2a3b8
   languageName: node
   linkType: hard
 

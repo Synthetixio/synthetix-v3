@@ -13,6 +13,7 @@
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@synthetixio/hardhat-storage": "workspace:*",
+    "@typechain/ethers-v5": "^11.1.1",
     "@typechain/hardhat": "^9.0.0",
     "dotenv": "^16.3.1",
     "hardhat": "^2.17.3",
@@ -23,5 +24,10 @@
     "solidity-coverage": "^0.8.4",
     "typechain": "^8.3.1"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec",
+  "depcheck": {
+    "ignoreMatches": [
+      "@typechain/ethers-v5"
+    ]
+  }
 }
