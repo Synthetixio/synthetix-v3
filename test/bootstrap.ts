@@ -15,12 +15,15 @@ import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
+import { SUSD_MARKET_ID } from './helpers';
+
+type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
 
 interface Systems extends ReturnType<Parameters<typeof createStakedPool>[0]['systems']> {
   PerpMarketProxy: PerpMarketProxy;
   AggregatorV3Mock: AggregatorV3Mock;
-  SpotMarket: ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>['SpotMarket'];
-  Synth: ReturnType<ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>['Synth']>;
+  SpotMarket: SynthSystems['SpotMarket'];
+  Synth: SynthSystems['Synth'];
   PythMock: PythMock;
   CollateralMock: CollateralMock;
   Collateral2Mock: CollateralMock;
@@ -111,7 +114,7 @@ export const bootstrap = (args: BootstrapArgs) => {
   // Create a pool which makes `args.markets.length` with all equal weighting.
   const stakedPool = createStakedPool(core, args.pool.stakedCollateralPrice, args.pool.stakedAmount);
 
-  // NOTE: All collaterals here must be Synth collaterals available on the Synthetix spot market.
+  // Additional collaterals to provision as spot Synth markets.
   const getCollaterals = () => [
     {
       name: 'swstETH',
@@ -139,23 +142,20 @@ export const bootstrap = (args: BootstrapArgs) => {
   //
   // NOTE: See below for the `before` block below on collateral management.
   const configureCollateral = async () => {
-    const { synthMarkets } = spotMarket;
-    const sUSDmarketId = BigNumber.from(0);
-    const synthMarketIds = synthMarkets().map((market) => market.marketId());
+    const collaterals = getCollaterals();
+
+    const synthMarkets = spotMarket.synthMarkets();
+    const synthMarketIds = [SUSD_MARKET_ID].concat(synthMarkets.map((market) => market.marketId()));
+    const maxAllowances = [bn(10_000_000)].concat(collaterals.map(({ max }) => max));
 
     // Allow this collateral to be depositable into the perp market.
-    const collaterals = getCollaterals();
-    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
-      // TODO: Is there a nicer way of doing this?
-      [sUSDmarketId].concat(synthMarketIds),
-      [bn(10_000_000)].concat(collaterals.map(({ max }) => max))
-    );
+    await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(synthMarketIds, maxAllowances);
 
     return collaterals.map((collateral, idx) => {
-      const synthMarket = synthMarkets()[idx];
+      const synthMarket = synthMarkets[idx];
       return {
         ...collateral,
-        synthMarket: synthMarket,
+        synthMarket,
         contract: synthMarket.synth(),
         // Why `sellAggregator`? All of BFP only uses `quoteSellExactIn`, so we only need to mock the `sellAggregator`.
         // If we need to buy synths during tests and for whatever reason we cannot just mint with owner, then that can
@@ -222,22 +222,22 @@ export const bootstrap = (args: BootstrapArgs) => {
   });
 
   before(`delegate pool collateral to all markets equally`, async () => {
-    // Spot market is configured incorrectly, only the last marker gets delegated collateral.
+    // Spot market is configured incorrectly, only the last market gets delegated collateral.
+    //
     // TODO: We should fix this in bootstrapSynthMarkets when merging into monorepo.
     const spotMarketPoolConfig = spotMarket.synthMarkets().map(({ marketId }) => ({
       marketId: marketId(),
       weightD18: utils.parseEther('1'),
       maxDebtShareValueD18: utils.parseEther('1'),
     }));
-
-    const perpsPoolConfig = markets.map(({ marketId }) => ({
+    const perpMarketPoolConfig = markets.map(({ marketId }) => ({
       marketId: marketId(),
       weightD18: utils.parseEther('1'),
       maxDebtShareValueD18: utils.parseEther('1'),
     }));
     await systems.Core.connect(getOwner()).setPoolConfiguration(
       stakedPool.poolId,
-      spotMarketPoolConfig.concat(perpsPoolConfig)
+      spotMarketPoolConfig.concat(perpMarketPoolConfig)
     );
   });
 
@@ -264,7 +264,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
     // always reserved as the owner but everything else is free game.
     //
-    // Here we reserve the [1, 2, 3, 4] as traders and the rest can be for other purposes.
+    // Here we reserve the [1, 2, 3, 4, 5, 6] as traders and the rest can be for other purposes.
     //
     // 1 = trader
     // 2 = trader
