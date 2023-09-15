@@ -106,7 +106,7 @@ The Constant Node returns a value for its price, set on registrations. It return
 
 ### External Node
 
-The External Node allows a custom node to be defined in an smart contract at a specified address. This contract must conform to the [`IExternalNode` interface](./contracts/interfaces/external/IExternalNode.sol).
+The External Node allows a custom node to be defined in an smart contract at a specified address. This contract must conform to the [`IExternalNode` interface](./contracts/interfaces/external/IExternalNode.sol). See the [External Nodes repository](https://github.com/Synthetixio/external-nodes).
 
 - `nodeType` Value: 2
 - Parameters:
