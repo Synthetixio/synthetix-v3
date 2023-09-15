@@ -248,7 +248,9 @@ contract MarginModule is IMarginModule {
             delete globalMarginConfig.supported[synthMarketId];
 
             // Revoke access after wiping collateral from supported market collateral.
-            ITokenModule synth = ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
+            ITokenModule synth = synthMarketId == 0
+                ? ITokenModule(globalMarketConfig.usdToken)
+                : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
             uint256 allowance = synth.allowance(msg.sender, address(this));
             synth.decreaseAllowance(address(this), allowance);
 
@@ -263,7 +265,9 @@ contract MarginModule is IMarginModule {
         uint128[] memory newSupportedSynthMarketIds = new uint128[](length1);
         for (uint256 i = 0; i < length1; ) {
             uint128 synthMarketId = synthMarketIds[i];
-            ITokenModule synth = ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
+            ITokenModule synth = synthMarketId == 0
+                ? ITokenModule(globalMarketConfig.usdToken)
+                : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
 
             // Perform approve _once_ when this collateral is added as a supported collateral.
             uint128 maxAllowable = maxAllowables[i];
