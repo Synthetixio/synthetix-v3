@@ -121,5 +121,7 @@ args = [
   "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
-
 depends = ["invoke.init_council_token", "contract.DebtShareMock"]
+
+[provision.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"

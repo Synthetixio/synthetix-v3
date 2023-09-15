@@ -21,7 +21,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     function addSettlementStrategy(
         uint128 marketId,
         SettlementStrategy.Data memory strategy
-    ) external payable override returns (uint256 strategyId) {
+    ) external override returns (uint256 strategyId) {
         OwnableStorage.onlyOwner();
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
@@ -40,7 +40,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 marketId,
         uint256 strategyId,
         bool enabled
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration
             .load(marketId)
@@ -56,7 +56,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 marketId,
         uint256 makerFeeRatio,
         uint256 takerFeeRatio
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.orderFees.makerFee = makerFeeRatio;
@@ -67,7 +67,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external payable override {
+    function updatePriceData(uint128 perpsMarketId, bytes32 feedId) external override {
         OwnableStorage.onlyOwner();
 
         PerpsPrice.load(perpsMarketId).update(feedId);
@@ -78,7 +78,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external payable override {
+    function setMaxMarketSize(uint128 marketId, uint256 maxMarketSize) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.maxMarketSize = maxMarketSize;
@@ -92,7 +92,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 marketId,
         uint256 skewScale,
         uint256 maxFundingVelocity
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
@@ -110,7 +110,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint256 maxSecondsInLiquidationWindow,
         uint256 maxLiquidationPd,
         address endorsedLiquidator
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
@@ -139,7 +139,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint256 maintenanceMarginScalarD18,
         uint256 liquidationRewardRatioD18,
         uint256 minimumPositionMargin
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
 
@@ -162,10 +162,7 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     /**
      * @inheritdoc IMarketConfigurationModule
      */
-    function setLockedOiRatio(
-        uint128 marketId,
-        uint256 lockedOiRatioD18
-    ) external payable override {
+    function setLockedOiRatio(uint128 marketId, uint256 lockedOiRatioD18) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);
         config.lockedOiRatioD18 = lockedOiRatioD18;

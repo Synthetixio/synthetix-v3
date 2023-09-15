@@ -58,7 +58,7 @@ interface IAsyncOrderModule {
         uint256 settlementStrategyId,
         uint256 minimumSettlementAmount,
         address referrer
-    ) external payable returns (AsyncOrderClaim.Data memory asyncOrderClaim);
+    ) external returns (AsyncOrderClaim.Data memory asyncOrderClaim);
 
     /**
      * @notice Cancel an async order via this function
@@ -68,7 +68,7 @@ interface IAsyncOrderModule {
      * @param marketId Id of the market used for the trade.
      * @param asyncOrderId id of the async order created during commitment.
      */
-    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external payable;
+    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
 
     /**
      * @notice Get async order claim details

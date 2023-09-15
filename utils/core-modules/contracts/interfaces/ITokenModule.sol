@@ -20,21 +20,21 @@ interface ITokenModule is IERC20 {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) external payable;
+    ) external;
 
     /**
      * @notice Allows the owner to mint tokens.
      * @param to The address to receive the newly minted tokens.
      * @param amount The amount of tokens to mint.
      */
-    function mint(address to, uint amount) external payable;
+    function mint(address to, uint amount) external;
 
     /**
      * @notice Allows the owner to burn tokens.
      * @param from The address whose tokens will be burnt.
      * @param amount The amount of tokens to burn.
      */
-    function burn(address from, uint amount) external payable;
+    function burn(address from, uint amount) external;
 
     /**
      * @notice Allows an address that holds tokens to provide allowance to another.
@@ -42,5 +42,5 @@ interface ITokenModule is IERC20 {
      * @param spender The address that is given allowance.
      * @param amount The amount of allowance being given.
      */
-    function setAllowance(address from, address spender, uint amount) external payable;
+    function setAllowance(address from, address spender, uint amount) external;
 }

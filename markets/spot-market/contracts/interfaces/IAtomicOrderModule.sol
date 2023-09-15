@@ -78,7 +78,7 @@ interface IAtomicOrderModule {
         uint256 amountUsd,
         uint256 minAmountReceived,
         address referrer
-    ) external payable returns (uint256 synthAmount, OrderFees.Data memory fees);
+    ) external returns (uint256 synthAmount, OrderFees.Data memory fees);
 
     /**
      * @notice  alias for buyExactIn
@@ -94,7 +94,7 @@ interface IAtomicOrderModule {
         uint256 usdAmount,
         uint256 minAmountReceived,
         address referrer
-    ) external payable returns (uint256 synthAmount, OrderFees.Data memory fees);
+    ) external returns (uint256 synthAmount, OrderFees.Data memory fees);
 
     /**
      * @notice  user provides the synth amount they'd like to buy, and the function charges the USD amount which includes fees
@@ -111,7 +111,7 @@ interface IAtomicOrderModule {
         uint256 synthAmount,
         uint256 maxUsdAmount,
         address referrer
-    ) external payable returns (uint256 usdAmountCharged, OrderFees.Data memory fees);
+    ) external returns (uint256 usdAmountCharged, OrderFees.Data memory fees);
 
     /**
      * @notice  quote for buyExactIn.  same parameters and return values as buyExactIn
@@ -153,7 +153,7 @@ interface IAtomicOrderModule {
         uint256 sellAmount,
         uint256 minAmountReceived,
         address referrer
-    ) external payable returns (uint256 returnAmount, OrderFees.Data memory fees);
+    ) external returns (uint256 returnAmount, OrderFees.Data memory fees);
 
     /**
      * @notice  initiates a trade where trader specifies USD amount they'd like to receive
@@ -170,7 +170,7 @@ interface IAtomicOrderModule {
         uint256 usdAmount,
         uint256 maxSynthAmount,
         address referrer
-    ) external payable returns (uint256 synthToBurn, OrderFees.Data memory fees);
+    ) external returns (uint256 synthToBurn, OrderFees.Data memory fees);
 
     /**
      * @notice  alias for sellExactIn
@@ -186,7 +186,7 @@ interface IAtomicOrderModule {
         uint256 synthAmount,
         uint256 minUsdAmount,
         address referrer
-    ) external payable returns (uint256 usdAmountReceived, OrderFees.Data memory fees);
+    ) external returns (uint256 usdAmountReceived, OrderFees.Data memory fees);
 
     /**
      * @notice  quote for sellExactIn

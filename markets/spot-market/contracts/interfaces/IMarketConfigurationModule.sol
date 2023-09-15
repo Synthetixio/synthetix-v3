@@ -106,7 +106,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the fee applies to.
      * @param atomicFixedFee fixed fee amount represented in bips with 18 decimals.
      */
-    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external payable;
+    function setAtomicFixedFee(uint128 synthMarketId, uint256 atomicFixedFee) external;
 
     /**
      * @notice sets the async fixed fee for a given market
@@ -114,7 +114,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the fee applies to.
      * @param asyncFixedFee fixed fee amount represented in bips with 18 decimals.
      */
-    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external payable;
+    function setAsyncFixedFee(uint128 synthMarketId, uint256 asyncFixedFee) external;
 
     /**
      * @notice sets the skew scale for a given market
@@ -122,7 +122,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the skew scale applies to.
      * @param skewScale max amount of synth which makes the skew 100%. the fee is derived as a % of the max value.  100% premium means outstanding synth == skewScale.
      */
-    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external payable;
+    function setMarketSkewScale(uint128 synthMarketId, uint256 skewScale) external;
 
     /**
      * @notice gets the skew scale for a given market
@@ -138,10 +138,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the utilization fee applies to.
      * @param utilizationFeeRate the rate is represented in bips with 18 decimals and is the rate at which fee increases based on the % above 100% utilization of the delegated collateral for the market.
      */
-    function setMarketUtilizationFees(
-        uint128 synthMarketId,
-        uint256 utilizationFeeRate
-    ) external payable;
+    function setMarketUtilizationFees(uint128 synthMarketId, uint256 utilizationFeeRate) external;
 
     /**
      * @notice gets the market utilization fee for a given market
@@ -160,10 +157,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the collateral leverage applies to.
      * @param collateralLeverage the leverage is represented as % with 18 decimals. 1 = 1x leverage
      */
-    function setCollateralLeverage(
-        uint128 synthMarketId,
-        uint256 collateralLeverage
-    ) external payable;
+    function setCollateralLeverage(uint128 synthMarketId, uint256 collateralLeverage) external;
 
     /**
      * @notice gets the collateral leverage for a given market
@@ -188,7 +182,7 @@ interface IMarketConfigurationModule {
         uint128 synthMarketId,
         address transactor,
         uint256 fixedFeeAmount
-    ) external payable;
+    ) external;
 
     /**
      * @notice gets the fixed fee for a given market and transactor
@@ -211,7 +205,7 @@ interface IMarketConfigurationModule {
      * @param synthMarketId Id of the market the fee collector applies to.
      * @param feeCollector address of the fee collector inheriting the IFeeCollector interface.
      */
-    function setFeeCollector(uint128 synthMarketId, address feeCollector) external payable;
+    function setFeeCollector(uint128 synthMarketId, address feeCollector) external;
 
     /**
      * @notice gets a custom fee collector for a given market
@@ -228,11 +222,7 @@ interface IMarketConfigurationModule {
      * @param wrapFee wrapping fee in %, 18 decimals. Can be negative.
      * @param unwrapFee unwrapping fee in %, 18 decimals. Can be negative.
      */
-    function setWrapperFees(
-        uint128 synthMarketId,
-        int256 wrapFee,
-        int256 unwrapFee
-    ) external payable;
+    function setWrapperFees(uint128 synthMarketId, int256 wrapFee, int256 unwrapFee) external;
 
     /**
      * @notice Update the referral share percentage for a given market
@@ -244,7 +234,7 @@ interface IMarketConfigurationModule {
         uint128 marketId,
         address referrer,
         uint256 sharePercentage
-    ) external payable;
+    ) external;
 
     /**
      * @notice get the referral share percentage for a given market

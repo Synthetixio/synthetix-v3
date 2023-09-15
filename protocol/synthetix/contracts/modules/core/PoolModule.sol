@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -30,7 +31,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function createPool(uint128 requestedPoolId, address owner) external payable override {
+    function createPool(uint128 requestedPoolId, address owner) external override {
         FeatureFlag.ensureAccessToFeature(_POOL_FEATURE_FLAG);
 
         if (owner == address(0)) {
@@ -39,60 +40,60 @@ contract PoolModule is IPoolModule {
 
         Pool.create(requestedPoolId, owner);
 
-        emit PoolCreated(requestedPoolId, owner, msg.sender);
+        emit PoolCreated(requestedPoolId, owner, ERC2771Context._msgSender());
     }
 
     /**
      * @inheritdoc IPoolModule
      */
-    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external payable override {
-        Pool.onlyPoolOwner(poolId, msg.sender);
+    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
 
         Pool.load(poolId).nominatedOwner = nominatedOwner;
 
-        emit PoolOwnerNominated(poolId, nominatedOwner, msg.sender);
+        emit PoolOwnerNominated(poolId, nominatedOwner, ERC2771Context._msgSender());
     }
 
     /**
      * @inheritdoc IPoolModule
      */
-    function acceptPoolOwnership(uint128 poolId) external payable override {
+    function acceptPoolOwnership(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
 
-        if (pool.nominatedOwner != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (pool.nominatedOwner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        pool.owner = msg.sender;
+        pool.owner = ERC2771Context._msgSender();
         pool.nominatedOwner = address(0);
 
-        emit PoolOwnershipAccepted(poolId, msg.sender);
+        emit PoolOwnershipAccepted(poolId, ERC2771Context._msgSender());
     }
 
     /**
      * @inheritdoc IPoolModule
      */
-    function revokePoolNomination(uint128 poolId) external payable override {
-        Pool.onlyPoolOwner(poolId, msg.sender);
+    function revokePoolNomination(uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
 
         Pool.load(poolId).nominatedOwner = address(0);
 
-        emit PoolNominationRevoked(poolId, msg.sender);
+        emit PoolNominationRevoked(poolId, ERC2771Context._msgSender());
     }
 
     /**
      * @inheritdoc IPoolModule
      */
-    function renouncePoolNomination(uint128 poolId) external payable override {
+    function renouncePoolNomination(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
 
-        if (pool.nominatedOwner != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (pool.nominatedOwner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         pool.nominatedOwner = address(0);
 
-        emit PoolNominationRenounced(poolId, msg.sender);
+        emit PoolNominationRenounced(poolId, ERC2771Context._msgSender());
     }
 
     /**
@@ -112,10 +113,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function rebalancePool(
-        uint128 poolId,
-        address optionalCollateralType
-    ) external payable override {
+    function rebalancePool(uint128 poolId, address optionalCollateralType) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         pool.distributeDebtToVaults(optionalCollateralType);
 
@@ -132,9 +130,9 @@ contract PoolModule is IPoolModule {
     function setPoolConfiguration(
         uint128 poolId,
         MarketConfiguration.Data[] memory newMarketConfigurations
-    ) external payable override {
+    ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
+        Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
         pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
@@ -197,18 +195,15 @@ contract PoolModule is IPoolModule {
         // solhint-disable-next-line numcast/safe-cast
         pool.lastConfigurationTime = uint64(block.timestamp);
 
-        emit PoolConfigurationSet(poolId, newMarketConfigurations, msg.sender);
+        emit PoolConfigurationSet(poolId, newMarketConfigurations, ERC2771Context._msgSender());
     }
 
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolCollateralDisabledByDefault(
-        uint128 poolId,
-        bool disabled
-    ) external payable override {
+    function setPoolCollateralDisabledByDefault(uint128 poolId, bool disabled) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
+        Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
 
         pool.collateralDisabledByDefault = disabled;
 
@@ -237,13 +232,13 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolName(uint128 poolId, string memory name) external payable override {
+    function setPoolName(uint128 poolId, string memory name) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
+        Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
 
         pool.name = name;
 
-        emit PoolNameUpdated(poolId, name, msg.sender);
+        emit PoolNameUpdated(poolId, name, ERC2771Context._msgSender());
     }
 
     /**
@@ -253,9 +248,9 @@ contract PoolModule is IPoolModule {
         uint128 poolId,
         address collateralType,
         PoolCollateralConfiguration.Data memory newConfig
-    ) external payable override {
+    ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
+        Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
 
         pool.collateralConfigurations[collateralType] = newConfig;
 
@@ -282,7 +277,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setMinLiquidityRatio(uint256 minLiquidityRatio) external payable override {
+    function setMinLiquidityRatio(uint256 minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
 
         SystemPoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;

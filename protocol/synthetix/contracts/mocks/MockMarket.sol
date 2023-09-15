@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "../interfaces/external/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
 import "../interfaces/IAssociateDebtModule.sol";
@@ -18,7 +19,7 @@ contract MockMarket is IMarket {
     address private _proxy;
     uint128 private _marketId;
 
-    function initialize(address proxy, uint128 marketId, uint256 initialPrice) external payable {
+    function initialize(address proxy, uint128 marketId, uint256 initialPrice) external {
         _proxy = proxy;
         _marketId = marketId;
         _price = initialPrice;
@@ -29,7 +30,7 @@ contract MockMarket is IMarket {
         address collateralType,
         uint128 accountId,
         uint256 amount
-    ) external payable {
+    ) external {
         IAssociateDebtModule(_proxy).associateDebt(
             _marketId,
             poolId,
@@ -39,31 +40,49 @@ contract MockMarket is IMarket {
         );
     }
 
-    function buySynth(uint256 amount) external payable returns (uint256 feesPaid) {
+    function buySynth(uint256 amount) external returns (uint256 feesPaid) {
         _reportedDebt += amount;
         uint256 toDeposit = amount.divDecimal(_price);
-        return IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, toDeposit);
+        return
+            IMarketManagerModule(_proxy).depositMarketUsd(
+                _marketId,
+                ERC2771Context._msgSender(),
+                toDeposit
+            );
     }
 
-    function sellSynth(uint256 amount) external payable returns (uint256 feesPaid) {
+    function sellSynth(uint256 amount) external returns (uint256 feesPaid) {
         _reportedDebt -= amount;
         uint256 toDeposit = amount.divDecimal(_price);
-        return IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, toDeposit);
+        return
+            IMarketManagerModule(_proxy).withdrawMarketUsd(
+                _marketId,
+                ERC2771Context._msgSender(),
+                toDeposit
+            );
     }
 
-    function depositUsd(uint256 amount) external payable {
-        IMarketManagerModule(_proxy).depositMarketUsd(_marketId, msg.sender, amount);
+    function depositUsd(uint256 amount) external {
+        IMarketManagerModule(_proxy).depositMarketUsd(
+            _marketId,
+            ERC2771Context._msgSender(),
+            amount
+        );
     }
 
-    function withdrawUsd(uint256 amount) external payable {
-        IMarketManagerModule(_proxy).withdrawMarketUsd(_marketId, msg.sender, amount);
+    function withdrawUsd(uint256 amount) external {
+        IMarketManagerModule(_proxy).withdrawMarketUsd(
+            _marketId,
+            ERC2771Context._msgSender(),
+            amount
+        );
     }
 
-    function setReportedDebt(uint256 newReportedDebt) external payable {
+    function setReportedDebt(uint256 newReportedDebt) external {
         _reportedDebt = newReportedDebt;
     }
 
-    function setLocked(uint256 newLocked) external payable {
+    function setLocked(uint256 newLocked) external {
         _locked = newLocked;
     }
 
@@ -79,11 +98,11 @@ contract MockMarket is IMarket {
         return _locked;
     }
 
-    function setPrice(uint256 newPrice) external payable {
+    function setPrice(uint256 newPrice) external {
         _price = newPrice;
     }
 
-    function setMinDelegationTime(uint32 minDelegationTime) external payable {
+    function setMinDelegationTime(uint32 minDelegationTime) external {
         IMarketManagerModule(_proxy).setMarketMinDelegateTime(_marketId, minDelegationTime);
     }
 
@@ -91,15 +110,15 @@ contract MockMarket is IMarket {
         return _price;
     }
 
-    function depositCollateral(address collateralType, uint256 amount) external payable {
-        IERC20(collateralType).transferFrom(msg.sender, address(this), amount);
+    function depositCollateral(address collateralType, uint256 amount) external {
+        IERC20(collateralType).transferFrom(ERC2771Context._msgSender(), address(this), amount);
         IERC20(collateralType).approve(_proxy, amount);
         IMarketCollateralModule(_proxy).depositMarketCollateral(_marketId, collateralType, amount);
     }
 
-    function withdrawCollateral(address collateralType, uint256 amount) external payable {
+    function withdrawCollateral(address collateralType, uint256 amount) external {
         IMarketCollateralModule(_proxy).withdrawMarketCollateral(_marketId, collateralType, amount);
-        IERC20(collateralType).transfer(msg.sender, amount);
+        IERC20(collateralType).transfer(ERC2771Context._msgSender(), amount);
     }
 
     function name(uint256) external pure returns (string memory) {

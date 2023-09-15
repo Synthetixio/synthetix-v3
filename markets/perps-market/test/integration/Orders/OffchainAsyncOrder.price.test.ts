@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets, toNum } from '../bootstrap';
+import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { depositCollateral } from '../helpers';
@@ -69,7 +69,6 @@ describe('Offchain Async Order - Price tests', () => {
     const iter = testCases[i];
     describe(`${iter.kind} order`, () => {
       describe('offchain vs spot price deviation', () => {
-        let updateFee: ethers.BigNumber;
         let startTime: number;
 
         before(restoreToSetCollateralTime);

@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+
 contract CollateralMockWithoutDecimals {
     bytes32 private constant _SLOT_ERC20_STORAGE =
         keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
@@ -28,15 +30,15 @@ contract CollateralMockWithoutDecimals {
     error AlreadyInitialized();
     error NotInitialized();
 
-    function initialize(string memory tokenName, string memory tokenSymbol) public payable {
+    function initialize(string memory tokenName, string memory tokenSymbol) public {
         _initialize(tokenName, tokenSymbol);
     }
 
-    function burn(uint256 amount) external payable {
-        _burn(msg.sender, amount);
+    function burn(uint256 amount) external {
+        _burn(ERC2771Context._msgSender(), amount);
     }
 
-    function mint(address recipient, uint256 amount) external payable {
+    function mint(address recipient, uint256 amount) external {
         _mint(recipient, amount);
     }
 
@@ -66,52 +68,45 @@ contract CollateralMockWithoutDecimals {
         return load().balanceOf[owner];
     }
 
-    function approve(address spender, uint256 amount) public payable returns (bool) {
-        _approve(msg.sender, spender, amount);
+    function approve(address spender, uint256 amount) public returns (bool) {
+        _approve(ERC2771Context._msgSender(), spender, amount);
         return true;
     }
 
-    function increaseAllowance(address spender, uint256 addedValue) public payable returns (bool) {
-        uint256 currentAllowance = load().allowance[msg.sender][spender];
-        _approve(msg.sender, spender, currentAllowance + addedValue);
-
-        return true;
-    }
-
-    function decreaseAllowance(
-        address spender,
-        uint256 subtractedValue
-    ) public payable returns (bool) {
-        uint256 currentAllowance = load().allowance[msg.sender][spender];
-        _approve(msg.sender, spender, currentAllowance - subtractedValue);
+    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
+        uint256 currentAllowance = load().allowance[ERC2771Context._msgSender()][spender];
+        _approve(ERC2771Context._msgSender(), spender, currentAllowance + addedValue);
 
         return true;
     }
 
-    function transfer(address to, uint256 amount) public payable returns (bool) {
-        _transfer(msg.sender, to, amount);
+    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
+        uint256 currentAllowance = load().allowance[ERC2771Context._msgSender()][spender];
+        _approve(ERC2771Context._msgSender(), spender, currentAllowance - subtractedValue);
 
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external payable returns (bool) {
+    function transfer(address to, uint256 amount) public returns (bool) {
+        _transfer(ERC2771Context._msgSender(), to, amount);
+
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
         return _transferFrom(from, to, amount);
     }
 
     function _transferFrom(address from, address to, uint256 amount) internal returns (bool) {
         Data storage store = load();
 
-        uint256 currentAllowance = store.allowance[from][msg.sender];
+        uint256 currentAllowance = store.allowance[from][ERC2771Context._msgSender()];
         if (currentAllowance < amount) {
             revert InsufficientAllowance(amount, currentAllowance);
         }
 
         unchecked {
-            store.allowance[from][msg.sender] -= amount;
+            store.allowance[from][ERC2771Context._msgSender()] -= amount;
         }
 
         _transfer(from, to, amount);

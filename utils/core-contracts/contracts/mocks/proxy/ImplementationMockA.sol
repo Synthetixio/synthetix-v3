@@ -6,7 +6,6 @@ import "./UUPSImplementationMock.sol";
 contract ImplementationMockA is UUPSImplementationMock {
     uint private _a;
 
-    // solhint-disable-next-line payable/only-payable
     function setA(uint newA) external {
         _a = newA;
     }

@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../interfaces/ICollateralModule.sol";
 
@@ -37,14 +38,14 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) external payable override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_FEATURE_FLAG);
         CollateralConfiguration.collateralEnabled(collateralType);
         Account.exists(accountId);
 
         Account.Data storage account = Account.load(accountId);
 
-        address depositFrom = msg.sender;
+        address depositFrom = ERC2771Context._msgSender();
 
         address self = address(this);
 
@@ -59,7 +60,7 @@ contract CollateralModule is ICollateralModule {
             CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount)
         );
 
-        emit Deposited(accountId, collateralType, tokenAmount, msg.sender);
+        emit Deposited(accountId, collateralType, tokenAmount, ERC2771Context._msgSender());
     }
 
     /**
@@ -69,7 +70,7 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) external payable override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_FEATURE_FLAG);
         Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
@@ -95,9 +96,9 @@ contract CollateralModule is ICollateralModule {
 
         account.collaterals[collateralType].decreaseAvailableCollateral(tokenAmountD18);
 
-        collateralType.safeTransfer(msg.sender, tokenAmount);
+        collateralType.safeTransfer(ERC2771Context._msgSender(), tokenAmount);
 
-        emit Withdrawn(accountId, collateralType, tokenAmount, msg.sender);
+        emit Withdrawn(accountId, collateralType, tokenAmount, ERC2771Context._msgSender());
     }
 
     /**
@@ -133,7 +134,7 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 offset,
         uint256 count
-    ) external payable override returns (uint256 cleared) {
+    ) external override returns (uint256 cleared) {
         CollateralLock.Data[] storage locks = Account
             .load(accountId)
             .collaterals[collateralType]
@@ -205,7 +206,7 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 amount,
         uint64 expireTimestamp
-    ) external payable override {
+    ) external override {
         Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
             AccountRBAC._ADMIN_PERMISSION

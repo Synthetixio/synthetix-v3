@@ -62,6 +62,11 @@ library DecimalMath {
     uint256 public constant PRECISION_FACTOR = 9;
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/SetUtil.sol:SetUtil
 library SetUtil {
     struct UintSet {

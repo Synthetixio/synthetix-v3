@@ -9,11 +9,10 @@ import "../interfaces/external/IFeeCollector.sol";
 contract FeeCollectorMock is IFeeCollector {
     uint internal feeRatioD18;
 
-    function mockSetFeeRatio(uint _feeRatio) external payable {
+    function mockSetFeeRatio(uint _feeRatio) external {
         feeRatioD18 = _feeRatio;
     }
 
-    // solhint-disable-next-line payable/only-payable
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,

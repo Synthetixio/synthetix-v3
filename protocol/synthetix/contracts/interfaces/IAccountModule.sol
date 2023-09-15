@@ -80,7 +80,7 @@ interface IAccountModule {
     ) external view returns (AccountPermissions[] memory accountPerms);
 
     /**
-     * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
+     * @notice Mints an account token with id `requestedAccountId` to `ERC2771Context._msgSender()`.
      * @param requestedAccountId The id requested for the account being created. Reverts if id already exists.
      *
      * Requirements:
@@ -90,14 +90,14 @@ interface IAccountModule {
      *
      * Emits a {AccountCreated} event.
      */
-    function createAccount(uint128 requestedAccountId) external payable;
+    function createAccount(uint128 requestedAccountId) external;
 
     /**
-     * @notice Mints an account token with an available id to `msg.sender`.
+     * @notice Mints an account token with an available id to `ERC2771Context._msgSender()`.
      *
      * Emits a {AccountCreated} event.
      */
-    function createAccount() external payable returns (uint128 accountId);
+    function createAccount() external returns (uint128 accountId);
 
     /**
      * @notice Called by AccountTokenModule to notify the system when the account token is transferred.
@@ -107,9 +107,9 @@ interface IAccountModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must be the account token.
+     * - `ERC2771Context._msgSender()` must be the account token.
      */
-    function notifyAccountTransfer(address to, uint128 accountId) external payable;
+    function notifyAccountTransfer(address to, uint128 accountId) external;
 
     /**
      * @notice Grants `permission` to `user` for account `accountId`.
@@ -119,11 +119,11 @@ interface IAccountModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
+     * - `ERC2771Context._msgSender()` must own the account token with ID `accountId` or have the "admin" permission.
      *
      * Emits a {PermissionGranted} event.
      */
-    function grantPermission(uint128 accountId, bytes32 permission, address user) external payable;
+    function grantPermission(uint128 accountId, bytes32 permission, address user) external;
 
     /**
      * @notice Revokes `permission` from `user` for account `accountId`.
@@ -133,20 +133,20 @@ interface IAccountModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
+     * - `ERC2771Context._msgSender()` must own the account token with ID `accountId` or have the "admin" permission.
      *
      * Emits a {PermissionRevoked} event.
      */
-    function revokePermission(uint128 accountId, bytes32 permission, address user) external payable;
+    function revokePermission(uint128 accountId, bytes32 permission, address user) external;
 
     /**
-     * @notice Revokes `permission` from `msg.sender` for account `accountId`.
+     * @notice Revokes `permission` from `ERC2771Context._msgSender()` for account `accountId`.
      * @param accountId The id of the account whose permission was renounced.
      * @param permission The bytes32 identifier of the permission.
      *
      * Emits a {PermissionRevoked} event.
      */
-    function renouncePermission(uint128 accountId, bytes32 permission) external payable;
+    function renouncePermission(uint128 accountId, bytes32 permission) external;
 
     /**
      * @notice Returns `true` if `user` has been granted `permission` for account `accountId`.

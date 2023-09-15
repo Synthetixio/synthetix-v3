@@ -13,11 +13,11 @@ interface IUSDTokenModule is ITokenModule {
      * @param spender The address to which the holder has given allowance to.
      * @param amount The amount of snxUSD to be burned, denominated with 18 decimals of precision.
      */
-    function burnWithAllowance(address from, address spender, uint256 amount) external payable;
+    function burnWithAllowance(address from, address spender, uint256 amount) external;
 
     /**
      * @notice Destroys `amount` of snxUSD tokens from the caller. This is derived from ERC20Burnable.sol and is currently included for testing purposes with CCIP token pools.
      * @param amount The amount of snxUSD to be burned, denominated with 18 decimals of precision.
      */
-    function burn(uint256 amount) external payable;
+    function burn(uint256 amount) external;
 }

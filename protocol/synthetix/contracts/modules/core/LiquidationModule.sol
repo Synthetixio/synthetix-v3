@@ -10,6 +10,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -46,7 +47,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId
-    ) external payable override returns (LiquidationData memory liquidationData) {
+    ) external override returns (LiquidationData memory liquidationData) {
         FeatureFlag.ensureAccessToFeature(_LIQUIDATE_FEATURE_FLAG);
         // Ensure the account receiving rewards exists
         Account.exists(liquidateAsAccountId);
@@ -119,7 +120,7 @@ contract LiquidationModule is ILiquidationModule {
             collateralType,
             liquidationData,
             liquidateAsAccountId,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 
@@ -131,7 +132,7 @@ contract LiquidationModule is ILiquidationModule {
         address collateralType,
         uint128 liquidateAsAccountId,
         uint256 maxUsd
-    ) external payable override returns (LiquidationData memory liquidationData) {
+    ) external override returns (LiquidationData memory liquidationData) {
         FeatureFlag.ensureAccessToFeature(_LIQUIDATE_VAULT_FEATURE_FLAG);
         // Ensure the account receiving collateral exists
         Account.exists(liquidateAsAccountId);
@@ -168,7 +169,10 @@ contract LiquidationModule is ILiquidationModule {
             liquidationData.debtLiquidated = vaultDebt;
 
             // Burn all of the stablecoins necessary to clear the debt of this vault
-            AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, vaultDebt);
+            AssociatedSystem.load(_USD_TOKEN).asToken().burn(
+                ERC2771Context._msgSender(),
+                vaultDebt
+            );
 
             // Provide all of the collateral to the liquidator
             liquidationData.collateralLiquidated = vault
@@ -183,7 +187,7 @@ contract LiquidationModule is ILiquidationModule {
             liquidationData.debtLiquidated = maxUsd;
 
             // Burn all of the stablecoins provided by the liquidator
-            AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, maxUsd);
+            AssociatedSystem.load(_USD_TOKEN).asToken().burn(ERC2771Context._msgSender(), maxUsd);
 
             VaultEpoch.Data storage epoch = vault.currentEpoch();
 
@@ -210,7 +214,7 @@ contract LiquidationModule is ILiquidationModule {
             collateralType,
             liquidationData,
             liquidateAsAccountId,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 
@@ -237,7 +241,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external payable override returns (bool) {
+    ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int256 rawDebt = pool.updateAccountDebt(collateralType, accountId);
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
@@ -250,7 +254,7 @@ contract LiquidationModule is ILiquidationModule {
     function isVaultLiquidatable(
         uint128 poolId,
         address collateralType
-    ) external payable override returns (bool) {
+    ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
         (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);

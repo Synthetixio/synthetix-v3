@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
@@ -38,13 +39,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external payable override returns (AsyncOrder.Data memory retOrder, uint fees) {
+    ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
         PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid
         Account.exists(commitment.accountId);
 
-        // Check msg.sender can commit order for commitment.accountId
+        // Check ERC2771Context._msgSender() can commit order for commitment.accountId
         Account.loadAccountAndValidatePermission(
             commitment.accountId,
             AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
@@ -86,7 +87,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             order.settlementTime,
             order.settlementTime + strategy.settlementWindowDuration,
             commitment.trackingCode,
-            msg.sender
+            ERC2771Context._msgSender()
         );
 
         return (order, feesAccrued);

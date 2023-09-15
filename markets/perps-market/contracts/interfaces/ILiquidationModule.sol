@@ -39,13 +39,13 @@ interface ILiquidationModule {
      * @param accountId Id of the account to liquidate.
      * @return liquidationReward total reward sent to liquidator.
      */
-    function liquidate(uint128 accountId) external payable returns (uint256 liquidationReward);
+    function liquidate(uint128 accountId) external returns (uint256 liquidationReward);
 
     /**
      * @notice Liquidates all flagged accounts.
      * @return liquidationReward total reward sent to liquidator.
      */
-    function liquidateFlagged() external payable returns (uint256 liquidationReward);
+    function liquidateFlagged() external returns (uint256 liquidationReward);
 
     /**
      * @notice Returns if an account is eligible for liquidation.

@@ -15,15 +15,15 @@ contract HeapUtilMock {
         data.init();
     }
 
-    function insert(uint128 id, int128 priority) public payable returns (HeapUtil.Node memory) {
+    function insert(uint128 id, int128 priority) public returns (HeapUtil.Node memory) {
         return data.insert(id, priority);
     }
 
-    function extractMax() public payable returns (HeapUtil.Node memory) {
+    function extractMax() public returns (HeapUtil.Node memory) {
         return data.extractMax();
     }
 
-    function extractById(uint128 id) public payable returns (HeapUtil.Node memory) {
+    function extractById(uint128 id) public returns (HeapUtil.Node memory) {
         return data.extractById(id);
     }
 

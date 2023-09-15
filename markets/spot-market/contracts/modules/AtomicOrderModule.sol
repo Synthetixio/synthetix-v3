@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
@@ -26,7 +27,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint256 maxUsdAmount,
         address referrer
-    ) external payable override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
+    ) external override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -36,7 +37,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             synthAmount,
             price,
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.BUY
         );
 
@@ -49,19 +50,23 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InvalidPrices();
         }
 
-        spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmountCharged);
+        spotMarketFactory.usdToken.transferFrom(
+            ERC2771Context._msgSender(),
+            address(this),
+            usdAmountCharged
+        );
 
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer,
             spotMarketFactory,
             Transaction.Type.BUY
         );
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmountCharged - collectedFees);
-        SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
+        SynthUtil.getToken(marketId).mint(ERC2771Context._msgSender(), synthAmount);
 
         emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer, price);
 
@@ -76,7 +81,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 usdAmount,
         uint256 minAmountReceived,
         address referrer
-    ) external payable override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+    ) external override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         return buyExactIn(marketId, usdAmount, minAmountReceived, referrer);
     }
 
@@ -88,12 +93,16 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 usdAmount,
         uint256 minAmountReceived,
         address referrer
-    ) public payable override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+    ) public override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
         // transfer usd funds
-        spotMarketFactory.usdToken.transferFrom(msg.sender, address(this), usdAmount);
+        spotMarketFactory.usdToken.transferFrom(
+            ERC2771Context._msgSender(),
+            address(this),
+            usdAmount
+        );
 
         MarketConfiguration.Data storage config;
         uint256 price = Price.getCurrentPrice(marketId, Transaction.Type.BUY);
@@ -101,7 +110,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             usdAmount,
             price,
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.BUY
         );
 
@@ -117,14 +126,14 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer,
             spotMarketFactory,
             Transaction.Type.BUY
         );
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmount - collectedFees);
-        SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
+        SynthUtil.getToken(marketId).mint(ERC2771Context._msgSender(), synthAmount);
 
         emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer, price);
 
@@ -144,7 +153,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.BUY),
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.BUY
         );
     }
@@ -162,7 +171,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             synthAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.BUY),
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.BUY
         );
     }
@@ -180,7 +189,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             synthAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.SELL),
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.SELL
         );
     }
@@ -198,7 +207,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             usdAmount,
             Price.getCurrentPrice(marketId, Transaction.Type.SELL),
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.SELL
         );
     }
@@ -211,7 +220,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint256 minUsdAmount,
         address referrer
-    ) external payable override returns (uint256 usdAmountReceived, OrderFees.Data memory fees) {
+    ) external override returns (uint256 usdAmountReceived, OrderFees.Data memory fees) {
         return sellExactIn(marketId, synthAmount, minUsdAmount, referrer);
     }
 
@@ -223,7 +232,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 synthAmount,
         uint256 minAmountReceived,
         address referrer
-    ) public payable override returns (uint256 returnAmount, OrderFees.Data memory fees) {
+    ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -233,7 +242,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             synthAmount,
             price,
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.SELL
         );
 
@@ -248,18 +257,22 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         // Burn synths provided
         // Burn after calculation because skew is calculating using total supply prior to fill
-        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
+        SynthUtil.getToken(marketId).burn(ERC2771Context._msgSender(), synthAmount);
 
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer,
             spotMarketFactory,
             Transaction.Type.SELL
         );
 
-        spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, returnAmount);
+        spotMarketFactory.synthetix.withdrawMarketUsd(
+            marketId,
+            ERC2771Context._msgSender(),
+            returnAmount
+        );
 
         emit SynthSold(marketId, returnAmount, fees, collectedFees, referrer, price);
     }
@@ -272,7 +285,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 usdAmount,
         uint256 maxSynthAmount,
         address referrer
-    ) external payable override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
+    ) external override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -282,7 +295,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             marketId,
             usdAmount,
             price,
-            msg.sender,
+            ERC2771Context._msgSender(),
             Transaction.Type.SELL
         );
 
@@ -295,17 +308,21 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InvalidPrices();
         }
 
-        SynthUtil.getToken(marketId).burn(msg.sender, synthToBurn);
+        SynthUtil.getToken(marketId).burn(ERC2771Context._msgSender(), synthToBurn);
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer,
             spotMarketFactory,
             Transaction.Type.SELL
         );
 
-        spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, usdAmount);
+        spotMarketFactory.synthetix.withdrawMarketUsd(
+            marketId,
+            ERC2771Context._msgSender(),
+            usdAmount
+        );
 
         emit SynthSold(marketId, usdAmount, fees, collectedFees, referrer, price);
     }

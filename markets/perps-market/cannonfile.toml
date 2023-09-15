@@ -181,3 +181,6 @@ args = [[
 ]]
 
 depends = ["invoke.upgrade_proxy"]
+
+[provision.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"

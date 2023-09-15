@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
@@ -33,7 +34,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 settlementStrategyId,
         uint256 minimumSettlementAmount,
         address referrer
-    ) external payable override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
+    ) external override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
         // validation checks
         Transaction.validateAsyncTransaction(orderType);
         SpotMarketFactory.load().validateMarket(marketId);
@@ -48,7 +49,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         if (orderType == Transaction.Type.ASYNC_BUY) {
             strategy.validateAmount(amountProvided);
             SpotMarketFactory.load().usdToken.transferFrom(
-                msg.sender,
+                ERC2771Context._msgSender(),
                 address(this),
                 amountProvided
             );
@@ -67,7 +68,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             // using escrow in case of decaying token value
             amountEscrowed = AsyncOrder.transferIntoEscrow(
                 marketId,
-                msg.sender,
+                ERC2771Context._msgSender(),
                 amountProvided,
                 strategy.maxRoundingLoss
             );
@@ -85,7 +86,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             settlementStrategyId,
             block.timestamp + settlementDelay,
             minimumSettlementAmount,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer
         );
 
@@ -94,7 +95,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             orderType,
             amountProvided,
             asyncOrderClaim.id,
-            msg.sender,
+            ERC2771Context._msgSender(),
             referrer
         );
     }
@@ -102,7 +103,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     /**
      * @inheritdoc IAsyncOrderModule
      */
-    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external payable override {
+    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         asyncOrderClaim.checkClaimValidity();
         asyncOrderClaim.validateCancellationEligibility(

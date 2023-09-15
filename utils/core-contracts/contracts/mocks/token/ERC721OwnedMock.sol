@@ -7,7 +7,6 @@ contract ERC721OwnedMock is ERC721Owned {
     // solhint-disable-next-line no-empty-blocks
     constructor(address initialOwner) ERC721Owned(initialOwner) {}
 
-		// solhint-disable-next-line payable/only-payable
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -16,12 +15,10 @@ contract ERC721OwnedMock is ERC721Owned {
         _initialize(tokenName, tokenSymbol, baseURL);
     }
 
-		// solhint-disable-next-line payable/only-payable
     function mint(uint256 tokenId) external {
-        _mint(msg.sender, tokenId);
+        _mint(ERC2771Context._msgSender(), tokenId);
     }
 
-		// solhint-disable-next-line payable/only-payable
     function mintTo(address to, uint256 tokenId) external {
         _mint(to, tokenId);
     }

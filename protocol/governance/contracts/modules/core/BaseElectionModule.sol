@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -29,7 +30,7 @@ contract BaseElectionModule is
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) external payable virtual override onlyIfNotInitialized {
+    ) external virtual override onlyIfNotInitialized {
         OwnableStorage.onlyOwner();
 
         _initOrUpgradeElectionModule(
@@ -97,7 +98,7 @@ contract BaseElectionModule is
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external payable override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
         _adjustEpochSchedule(
             Council.load().getCurrentElection().epoch,
@@ -118,7 +119,7 @@ contract BaseElectionModule is
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external payable override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
         _adjustEpochSchedule(
             Council.load().getCurrentElection().epoch,
@@ -139,7 +140,7 @@ contract BaseElectionModule is
         uint64 newMinNominationPeriodDuration,
         uint64 newMinVotingPeriodDuration,
         uint64 newMinEpochDuration
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         _setMinEpochDurations(
             newMinNominationPeriodDuration,
@@ -154,9 +155,7 @@ contract BaseElectionModule is
         );
     }
 
-    function setMaxDateAdjustmentTolerance(
-        uint64 newMaxDateAdjustmentTolerance
-    ) external payable override {
+    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override {
         OwnableStorage.onlyOwner();
         if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
 
@@ -170,7 +169,7 @@ contract BaseElectionModule is
 
     function setDefaultBallotEvaluationBatchSize(
         uint newDefaultBallotEvaluationBatchSize
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
 
@@ -184,7 +183,7 @@ contract BaseElectionModule is
 
     function setNextEpochSeatCount(
         uint8 newSeatCount
-    ) external payable override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
@@ -193,7 +192,7 @@ contract BaseElectionModule is
         emit NextEpochSeatCountChanged(newSeatCount);
     }
 
-    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external payable override {
+    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external override {
         OwnableStorage.onlyOwner();
         if (newMinimumActiveMembers == 0) revert InvalidMinimumActiveMembers();
 
@@ -202,7 +201,7 @@ contract BaseElectionModule is
         emit MinimumActiveMembersChanged(newMinimumActiveMembers);
     }
 
-    function dismissMembers(address[] calldata membersToDismiss) external payable override {
+    function dismissMembers(address[] calldata membersToDismiss) external override {
         OwnableStorage.onlyOwner();
 
         uint epochIndex = Council.load().lastElectionId;
@@ -223,42 +222,35 @@ contract BaseElectionModule is
         emit EmergencyElectionStarted(epochIndex);
     }
 
-    function nominate()
-        public
-        payable
-        virtual
-        override
-        onlyInPeriod(Council.ElectionPeriod.Nomination)
-    {
+    function nominate() public virtual override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        if (nominees.contains(msg.sender)) revert AlreadyNominated();
+        if (nominees.contains(ERC2771Context._msgSender())) revert AlreadyNominated();
 
-        nominees.add(msg.sender);
+        nominees.add(ERC2771Context._msgSender());
 
-        emit CandidateNominated(msg.sender, Council.load().lastElectionId);
+        emit CandidateNominated(ERC2771Context._msgSender(), Council.load().lastElectionId);
     }
 
     function withdrawNomination()
         external
-        payable
         override
         onlyInPeriod(Council.ElectionPeriod.Nomination)
     {
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
 
-        if (!nominees.contains(msg.sender)) revert NotNominated();
+        if (!nominees.contains(ERC2771Context._msgSender())) revert NotNominated();
 
-        nominees.remove(msg.sender);
+        nominees.remove(ERC2771Context._msgSender());
 
-        emit NominationWithdrawn(msg.sender, Council.load().lastElectionId);
+        emit NominationWithdrawn(ERC2771Context._msgSender(), Council.load().lastElectionId);
     }
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
     function cast(
         address[] calldata candidates
-    ) public payable virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        uint votePower = _getVotePower(msg.sender);
+    ) public virtual override onlyInPeriod(Council.ElectionPeriod.Vote) {
+        uint votePower = _getVotePower(ERC2771Context._msgSender());
 
         if (votePower == 0) revert NoVotePower();
 
@@ -268,27 +260,27 @@ contract BaseElectionModule is
 
         uint epochIndex = Council.load().lastElectionId;
 
-        if (hasVoted(msg.sender)) {
-            _withdrawCastedVote(msg.sender, epochIndex);
+        if (hasVoted(ERC2771Context._msgSender())) {
+            _withdrawCastedVote(ERC2771Context._msgSender(), epochIndex);
         }
 
-        ballotId = _recordVote(msg.sender, votePower, candidates);
+        ballotId = _recordVote(ERC2771Context._msgSender(), votePower, candidates);
 
-        emit VoteRecorded(msg.sender, ballotId, epochIndex, votePower);
+        emit VoteRecorded(ERC2771Context._msgSender(), ballotId, epochIndex, votePower);
     }
 
-    function withdrawVote() external payable override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        if (!hasVoted(msg.sender)) {
+    function withdrawVote() external override onlyInPeriod(Council.ElectionPeriod.Vote) {
+        if (!hasVoted(ERC2771Context._msgSender())) {
             revert VoteNotCasted();
         }
 
-        _withdrawCastedVote(msg.sender, Council.load().lastElectionId);
+        _withdrawCastedVote(ERC2771Context._msgSender(), Council.load().lastElectionId);
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(
         uint numBallots
-    ) external payable override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
         Election.Data storage election = Council.load().getCurrentElection();
 
         if (election.evaluated) revert ElectionAlreadyEvaluated();
@@ -312,7 +304,7 @@ contract BaseElectionModule is
     }
 
     /// @dev Burns previous NFTs and mints new ones
-    function resolve() external payable override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
+    function resolve() external override onlyInPeriod(Council.ElectionPeriod.Evaluation) {
         Election.Data storage election = Council.load().getCurrentElection();
 
         if (!election.evaluated) revert ElectionNotEvaluated();

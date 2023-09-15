@@ -7,7 +7,7 @@ import "../../interfaces/IERC20Permit.sol";
 contract VaultMock {
     IERC20Permit public token;
 
-    function initialize(address _token) public payable {
+    function initialize(address _token) public {
         token = IERC20Permit(_token);
     }
 
@@ -17,8 +17,8 @@ contract VaultMock {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable {
-        token.permit(msg.sender, address(this), amount, deadline, v, r, s);
-        token.transferFrom(msg.sender, address(this), amount);
+    ) external {
+        token.permit(ERC2771Context._msgSender(), address(this), amount, deadline, v, r, s);
+        token.transferFrom(ERC2771Context._msgSender(), address(this), amount);
     }
 }

@@ -5,7 +5,6 @@ import "../../interfaces/IERC721Receiver.sol";
 import "../../interfaces/IERC721.sol";
 
 contract ERC721ReceiverMock is IERC721Receiver {
-		// solhint-disable-next-line payable/only-payable
     function onERC721Received(
         address,
         address,
@@ -15,7 +14,6 @@ contract ERC721ReceiverMock is IERC721Receiver {
         return this.onERC721Received.selector;
     }
 
-		// solhint-disable-next-line payable/only-payable
     function transferToken(address nftAddress, address to, uint256 tokenId) public {
         IERC721(nftAddress).transferFrom(address(this), to, tokenId);
     }

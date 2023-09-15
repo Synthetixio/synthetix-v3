@@ -186,3 +186,6 @@ args = ["<%= settings.sc_pool_id %>"]
 fromCall.func = "owner"
 
 depends = ["invoke.createPool"]
+
+[provision.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"

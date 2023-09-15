@@ -7,7 +7,6 @@ contract ImplementationMockB is UUPSImplementationMock {
     uint private _a;
     string private _b;
 
-    // solhint-disable-next-line payable/only-payable
     function setA(uint newA) external {
         _a = newA;
     }

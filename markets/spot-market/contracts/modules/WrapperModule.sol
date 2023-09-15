@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -33,7 +34,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         address wrapCollateralType,
         uint256 maxWrappableAmount
-    ) external payable override {
+    ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         Wrapper.updateValid(marketId, wrapCollateralType, maxWrappableAmount);
@@ -48,7 +49,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 wrapAmount,
         uint256 minAmountReceived
-    ) external payable override returns (uint256 amountToMint, OrderFees.Data memory fees) {
+    ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
@@ -76,13 +77,17 @@ contract WrapperModule is IWrapperModule {
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             address(0),
             spotMarketFactory,
             Transaction.Type.WRAP
         );
 
-        address(wrappingCollateral).safeTransferFrom(msg.sender, address(this), wrapAmount);
+        address(wrappingCollateral).safeTransferFrom(
+            ERC2771Context._msgSender(),
+            address(this),
+            wrapAmount
+        );
         wrappingCollateral.approve(address(spotMarketFactory.synthetix), wrapAmount);
         spotMarketFactory.synthetix.depositMarketCollateral(
             marketId,
@@ -90,7 +95,7 @@ contract WrapperModule is IWrapperModule {
             wrapAmount
         );
 
-        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
+        SynthUtil.getToken(marketId).mint(ERC2771Context._msgSender(), amountToMint);
 
         emit SynthWrapped(marketId, amountToMint, fees, collectedFees);
     }
@@ -102,12 +107,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 unwrapAmount,
         uint256 minAmountReceived
-    )
-        external
-        payable
-        override
-        returns (uint256 returnCollateralAmount, OrderFees.Data memory fees)
-    {
+    ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
@@ -116,7 +116,7 @@ contract WrapperModule is IWrapperModule {
         ITokenModule synth = SynthUtil.getToken(marketId);
 
         // burn from seller
-        synth.burn(msg.sender, unwrapAmount);
+        synth.burn(ERC2771Context._msgSender(), unwrapAmount);
 
         MarketConfiguration.Data storage config;
         uint256 returnCollateralAmountD18;
@@ -138,7 +138,7 @@ contract WrapperModule is IWrapperModule {
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             address(0),
             spotMarketFactory,
             Transaction.Type.UNWRAP
@@ -150,7 +150,10 @@ contract WrapperModule is IWrapperModule {
             returnCollateralAmount
         );
 
-        wrapperStore.wrapCollateralType.safeTransfer(msg.sender, returnCollateralAmount);
+        wrapperStore.wrapCollateralType.safeTransfer(
+            ERC2771Context._msgSender(),
+            returnCollateralAmount
+        );
 
         emit SynthUnwrapped(marketId, returnCollateralAmount, fees, collectedFees);
     }

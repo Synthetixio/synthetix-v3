@@ -85,7 +85,7 @@ interface ILiquidationModule {
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId
-    ) external payable returns (LiquidationData memory liquidationData);
+    ) external returns (LiquidationData memory liquidationData);
 
     /**
      * @notice Liquidates an entire vault.
@@ -102,7 +102,7 @@ interface ILiquidationModule {
         address collateralType,
         uint128 liquidateAsAccountId,
         uint256 maxUsd
-    ) external payable returns (LiquidationData memory liquidationData);
+    ) external returns (LiquidationData memory liquidationData);
 
     /**
      * @notice Determines whether a specified position is liquidatable.
@@ -115,7 +115,7 @@ interface ILiquidationModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external payable returns (bool canLiquidate);
+    ) external returns (bool canLiquidate);
 
     /**
      * @notice Determines whether a specified vault is liquidatable.
@@ -126,5 +126,5 @@ interface ILiquidationModule {
     function isVaultLiquidatable(
         uint128 poolId,
         address collateralType
-    ) external payable returns (bool canVaultLiquidate);
+    ) external returns (bool canVaultLiquidate);
 }

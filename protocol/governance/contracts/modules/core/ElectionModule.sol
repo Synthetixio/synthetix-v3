@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../../interfaces/IElectionModule.sol";
 import "../../interfaces/ISynthetixElectionModule.sol";
@@ -27,7 +28,7 @@ contract ElectionModule is
         uint64,
         uint64,
         uint64
-    ) external payable override(BaseElectionModule, IElectionModule) {
+    ) external override(BaseElectionModule, IElectionModule) {
         OwnableStorage.onlyOwner();
         revert WrongInitializer();
     }
@@ -40,7 +41,7 @@ contract ElectionModule is
         uint64 votingPeriodStartDate,
         uint64 epochEndDate,
         address debtShareContract
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         if (Council.load().initialized) {
             return;
@@ -61,7 +62,6 @@ contract ElectionModule is
         address[] calldata candidates
     )
         public
-        payable
         override(BaseElectionModule, IElectionModule)
         onlyInPeriod(Council.ElectionPeriod.Vote)
     {
@@ -78,7 +78,7 @@ contract ElectionModule is
 
     function setDebtShareContract(
         address debtShareContract
-    ) external payable override onlyInPeriod(Council.ElectionPeriod.Administration) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Administration) {
         OwnableStorage.onlyOwner();
 
         _setDebtShareContract(debtShareContract);
@@ -92,7 +92,7 @@ contract ElectionModule is
 
     function setDebtShareSnapshotId(
         uint snapshotId
-    ) external payable override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setDebtShareSnapshotId(snapshotId);
     }
@@ -112,7 +112,7 @@ contract ElectionModule is
     function setCrossChainDebtShareMerkleRoot(
         bytes32 merkleRoot,
         uint blocknumber
-    ) external payable override onlyInPeriod(Council.ElectionPeriod.Nomination) {
+    ) external override onlyInPeriod(Council.ElectionPeriod.Nomination) {
         OwnableStorage.onlyOwner();
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
 
@@ -135,7 +135,7 @@ contract ElectionModule is
         address user,
         uint256 debtShare,
         bytes32[] calldata merkleProof
-    ) public payable override onlyInPeriod(Council.ElectionPeriod.Vote) {
+    ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
         _declareCrossChainDebtShare(user, debtShare, merkleProof);
 
         emit CrossChainDebtShareDeclared(user, debtShare);
@@ -149,8 +149,8 @@ contract ElectionModule is
         uint256 debtShare,
         bytes32[] calldata merkleProof,
         address[] calldata candidates
-    ) public payable override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        declareCrossChainDebtShare(msg.sender, debtShare, merkleProof);
+    ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
+        declareCrossChainDebtShare(ERC2771Context._msgSender(), debtShare, merkleProof);
 
         cast(candidates);
     }

@@ -75,7 +75,7 @@ interface IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 amount
-    ) external payable;
+    ) external;
 
     /**
      * @notice Allows a market to withdraw collateral that it has previously deposited.
@@ -87,7 +87,7 @@ interface IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 amount
-    ) external payable;
+    ) external;
 
     /**
      * @notice Allow the system owner to configure the maximum amount of a given collateral type that a specified market is allowed to deposit.
@@ -99,7 +99,7 @@ interface IMarketCollateralModule {
         uint128 marketId,
         address collateralType,
         uint256 amount
-    ) external payable;
+    ) external;
 
     /**
      * @notice Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.

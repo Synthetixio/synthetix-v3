@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
@@ -35,7 +36,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId,
         uint128 synthMarketId,
         int amountDelta
-    ) external payable override {
+    ) external override {
         Account.exists(accountId);
         Account.loadAccountAndValidatePermission(
             accountId,
@@ -73,7 +74,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         // accounting
         account.updateCollateralAmount(synthMarketId, amountDelta);
 
-        emit CollateralModified(accountId, synthMarketId, amountDelta, msg.sender);
+        emit CollateralModified(accountId, synthMarketId, amountDelta, ERC2771Context._msgSender());
     }
 
     /**
@@ -178,12 +179,16 @@ contract PerpsAccountModule is IPerpsAccountModule {
     ) internal {
         if (synthMarketId == SNX_USD_MARKET_ID) {
             // depositing into the USD market
-            perpsMarketFactory.synthetix.depositMarketUsd(perpsMarketId, msg.sender, amount);
+            perpsMarketFactory.synthetix.depositMarketUsd(
+                perpsMarketId,
+                ERC2771Context._msgSender(),
+                amount
+            );
         } else {
             ITokenModule synth = ITokenModule(
                 perpsMarketFactory.spotMarket.getSynth(synthMarketId)
             );
-            synth.transferFrom(msg.sender, address(this), amount);
+            synth.transferFrom(ERC2771Context._msgSender(), address(this), amount);
             // depositing into a synth market
             perpsMarketFactory.depositMarketCollateral(synth, amount);
         }
@@ -197,7 +202,11 @@ contract PerpsAccountModule is IPerpsAccountModule {
     ) internal {
         if (synthMarketId == SNX_USD_MARKET_ID) {
             // withdrawing from the USD market
-            perpsMarketFactory.synthetix.withdrawMarketUsd(perpsMarketId, msg.sender, amount);
+            perpsMarketFactory.synthetix.withdrawMarketUsd(
+                perpsMarketId,
+                ERC2771Context._msgSender(),
+                amount
+            );
         } else {
             ITokenModule synth = ITokenModule(
                 perpsMarketFactory.spotMarket.getSynth(synthMarketId)
@@ -208,7 +217,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
                 address(synth),
                 amount
             );
-            synth.transfer(msg.sender, amount);
+            synth.transfer(ERC2771Context._msgSender(), amount);
         }
     }
 }

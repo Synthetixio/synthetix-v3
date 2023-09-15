@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "../utils/ERC2771Context.sol";
 import "../interfaces/IERC20.sol";
 import "../errors/InitError.sol";
 import "../errors/ParameterError.sol";
@@ -63,22 +64,24 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        _approve(msg.sender, spender, amount);
+        _approve(ERC2771Context._msgSender(), spender, amount);
         return true;
     }
 
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function increaseAllowance(
         address spender,
         uint256 addedValue
     ) public virtual override returns (bool) {
-        uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
-        _approve(msg.sender, spender, currentAllowance + addedValue);
+        uint256 currentAllowance = ERC20Storage.load().allowance[ERC2771Context._msgSender()][
+            spender
+        ];
+        _approve(ERC2771Context._msgSender(), spender, currentAllowance + addedValue);
 
         return true;
     }
@@ -86,13 +89,15 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function decreaseAllowance(
         address spender,
         uint256 subtractedValue
     ) public virtual override returns (bool) {
-        uint256 currentAllowance = ERC20Storage.load().allowance[msg.sender][spender];
-        _approve(msg.sender, spender, currentAllowance - subtractedValue);
+        uint256 currentAllowance = ERC20Storage.load().allowance[ERC2771Context._msgSender()][
+            spender
+        ];
+        _approve(ERC2771Context._msgSender(), spender, currentAllowance - subtractedValue);
 
         return true;
     }
@@ -100,9 +105,9 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
-        _transfer(msg.sender, to, amount);
+        _transfer(ERC2771Context._msgSender(), to, amount);
 
         return true;
     }
@@ -110,7 +115,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function transferFrom(
         address from,
         address to,
@@ -126,13 +131,13 @@ contract ERC20 is IERC20 {
     ) internal virtual returns (bool) {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
-        uint256 currentAllowance = store.allowance[from][msg.sender];
+        uint256 currentAllowance = store.allowance[from][ERC2771Context._msgSender()];
         if (currentAllowance < amount) {
             revert InsufficientAllowance(amount, currentAllowance);
         }
 
         unchecked {
-            store.allowance[from][msg.sender] -= amount;
+            store.allowance[from][ERC2771Context._msgSender()] -= amount;
         }
 
         _transfer(from, to, amount);

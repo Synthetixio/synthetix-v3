@@ -21,12 +21,12 @@ interface ICollateralConfigurationModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must be the owner of the system.
+     * - `ERC2771Context._msgSender()` must be the owner of the system.
      *
      * Emits a {CollateralConfigured} event.
      *
      */
-    function configureCollateral(CollateralConfiguration.Data memory config) external payable;
+    function configureCollateral(CollateralConfiguration.Data memory config) external;
 
     /**
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.

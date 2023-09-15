@@ -29,7 +29,7 @@ contract ERC20Permit is ERC20, IERC20Permit {
     /**
      * @inheritdoc IERC20Permit
      */
-		// solhint-disable-next-line payable/only-payable
+
     function permit(
         address owner,
         address spender,

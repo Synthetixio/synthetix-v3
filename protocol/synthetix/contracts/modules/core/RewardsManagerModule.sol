@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/AccountRBAC.sol";
@@ -44,12 +45,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external payable override {
+    ) external override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
-        if (pool.owner != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (pool.owner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         // Limit the maximum amount of rewards distributors can be connected to each vault to prevent excessive gas usage on other calls
@@ -90,12 +91,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) external payable override {
+    ) external override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
         // Identify the reward id for the caller, and revert if it is not a registered reward distributor.
-        bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
+        bytes32 rewardId = _getRewardId(poolId, collateralType, ERC2771Context._msgSender());
         if (!rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter(
                 "poolId-collateralType-distributor",
@@ -115,7 +116,14 @@ contract RewardsManagerModule is IRewardsManagerModule {
             .toUint()
             .to128();
 
-        emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
+        emit RewardsDistributed(
+            poolId,
+            collateralType,
+            ERC2771Context._msgSender(),
+            amount,
+            start,
+            duration
+        );
     }
 
     /**
@@ -125,7 +133,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external payable override returns (uint256[] memory, address[] memory) {
+    ) external override returns (uint256[] memory, address[] memory) {
         Account.exists(accountId);
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         return vault.updateRewards(accountId, poolId, collateralType);
@@ -150,7 +158,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external payable override returns (uint256) {
+    ) external override returns (uint256) {
         FeatureFlag.ensureAccessToFeature(_CLAIM_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
@@ -169,7 +177,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             accountId,
             poolId,
             collateralType,
-            msg.sender,
+            ERC2771Context._msgSender(),
             rewardAmount
         );
 
@@ -235,12 +243,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external payable override {
+    ) external override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
-        if (pool.owner != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (pool.owner != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);

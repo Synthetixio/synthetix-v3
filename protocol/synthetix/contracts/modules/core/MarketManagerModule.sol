@@ -10,6 +10,7 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../storage/Config.sol";
 import "../../storage/Market.sol";
@@ -52,7 +53,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function registerMarket(address market) external payable override returns (uint128 marketId) {
+    function registerMarket(address market) external override returns (uint128 marketId) {
         FeatureFlag.ensureAccessToFeature(_MARKET_FEATURE_FLAG);
 
         if (!ERC165Helper.safeSupportsInterface(market, type(IMarket).interfaceId)) {
@@ -61,7 +62,7 @@ contract MarketManagerModule is IMarketManagerModule {
 
         marketId = MarketCreator.create(market).id;
 
-        emit MarketRegistered(market, marketId, msg.sender);
+        emit MarketRegistered(market, marketId, ERC2771Context._msgSender());
 
         return marketId;
     }
@@ -114,7 +115,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getMarketDebtPerShare(uint128 marketId) external payable override returns (int256) {
+    function getMarketDebtPerShare(uint128 marketId) external override returns (int256) {
         Market.Data storage market = Market.load(marketId);
 
         market.distributeDebtToPools(999999999);
@@ -129,7 +130,6 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId
     )
         external
-        payable
         override
         returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds)
     {
@@ -159,7 +159,6 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 poolId
     )
         external
-        payable
         override
         returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27)
     {
@@ -195,12 +194,13 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external payable override returns (uint256 feeAmount) {
+    ) external override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_MARKET_FEATURE_FLAG);
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
-        if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
+        if (ERC2771Context._msgSender() != market.marketAddress)
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
         feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_DEPOSIT_MARKET_USD_FEE_RATIO, 0));
         address feeAddress = feeAmount > 0
@@ -218,7 +218,11 @@ contract MarketManagerModule is IMarketManagerModule {
         // Note: Instead of burning, we could transfer USD to and from the MarketManager,
         // but minting and burning takes the USD out of circulation,
         // which doesn't affect `totalSupply`, thus simplifying accounting.
-        IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
+        IUSDTokenModule(address(usdToken)).burnWithAllowance(
+            target,
+            ERC2771Context._msgSender(),
+            amount
+        );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             IUSDTokenModule(address(usdToken)).mint(feeAddress, feeAmount);
@@ -226,7 +230,7 @@ contract MarketManagerModule is IMarketManagerModule {
             emit MarketSystemFeePaid(marketId, feeAmount);
         }
 
-        emit MarketUsdDeposited(marketId, target, amount, msg.sender);
+        emit MarketUsdDeposited(marketId, target, amount, ERC2771Context._msgSender());
     }
 
     /**
@@ -236,12 +240,13 @@ contract MarketManagerModule is IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external payable override returns (uint256 feeAmount) {
+    ) external override returns (uint256 feeAmount) {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_MARKET_FEATURE_FLAG);
         Market.Data storage marketData = Market.load(marketId);
 
         // Call must come from the market itself.
-        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
+        if (ERC2771Context._msgSender() != marketData.marketAddress)
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
         // Ensure that the market's balance allows for this withdrawal.
         feeAmount = amount.mulDecimal(Config.readUint(_CONFIG_WITHDRAW_MARKET_USD_FEE_RATIO, 0));
@@ -265,7 +270,7 @@ contract MarketManagerModule is IMarketManagerModule {
             emit MarketSystemFeePaid(marketId, feeAmount);
         }
 
-        emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
+        emit MarketUsdWithdrawn(marketId, target, amount, ERC2771Context._msgSender());
     }
 
     /**
@@ -290,20 +295,18 @@ contract MarketManagerModule is IMarketManagerModule {
     function distributeDebtToPools(
         uint128 marketId,
         uint256 maxIter
-    ) external payable override returns (bool) {
+    ) external override returns (bool) {
         return Market.load(marketId).distributeDebtToPools(maxIter);
     }
 
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function setMarketMinDelegateTime(
-        uint128 marketId,
-        uint32 minDelegateTime
-    ) external payable override {
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external override {
         Market.Data storage market = Market.load(marketId);
 
-        if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
+        if (ERC2771Context._msgSender() != market.marketAddress)
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
 
         // min delegate time should not be unreasonably long
         uint256 maxMinDelegateTime = Config.readUint(
@@ -336,10 +339,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function setMinLiquidityRatio(
-        uint128 marketId,
-        uint256 minLiquidityRatio
-    ) external payable override {
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
         Market.Data storage market = Market.load(marketId);
 

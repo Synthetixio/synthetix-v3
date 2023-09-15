@@ -8,15 +8,15 @@ contract CollateralMock is ERC20 {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public payable {
+    ) public {
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
 
-    function burn(uint256 amount) external payable {
-        _burn(msg.sender, amount);
+    function burn(uint256 amount) external {
+        _burn(ERC2771Context._msgSender(), amount);
     }
 
-    function mint(address recipient, uint256 amount) external payable {
+    function mint(address recipient, uint256 amount) external {
         _mint(recipient, amount);
     }
 }

@@ -28,20 +28,20 @@ interface IPoolConfigurationModule {
      * @dev Note: The preferred pool does not receive any special treatment. It is only signaled as preferred here.
      * @param poolId The id of the pool that is to be set as preferred.
      */
-    function setPreferredPool(uint128 poolId) external payable;
+    function setPreferredPool(uint128 poolId) external;
 
     /**
      * @notice Marks a pool as approved by the system owner.
      * @dev Approved pools do not receive any special treatment. They are only signaled as approved here.
      * @param poolId The id of the pool that is to be approved.
      */
-    function addApprovedPool(uint128 poolId) external payable;
+    function addApprovedPool(uint128 poolId) external;
 
     /**
      * @notice Un-marks a pool as preferred by the system owner.
      * @param poolId The id of the pool that is to be no longer approved.
      */
-    function removeApprovedPool(uint128 poolId) external payable;
+    function removeApprovedPool(uint128 poolId) external;
 
     /**
      * @notice Retrieves the unique system preferred pool.

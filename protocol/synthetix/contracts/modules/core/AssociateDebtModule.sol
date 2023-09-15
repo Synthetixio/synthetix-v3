@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../storage/Account.sol";
@@ -43,7 +43,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         address collateralType,
         uint128 accountId,
         uint256 amount
-    ) external payable returns (int256) {
+    ) external returns (int256) {
         FeatureFlag.ensureAccessToFeature(_ASSOCIATE_DEBT_FEATURE_FLAG);
         Account.exists(accountId);
 
@@ -51,8 +51,8 @@ contract AssociateDebtModule is IAssociateDebtModule {
         VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
         Market.Data storage marketData = Market.load(marketId);
 
-        if (msg.sender != marketData.marketAddress) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (ERC2771Context._msgSender() != marketData.marketAddress) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         // The market must appear in pool configuration of the specified position

@@ -14294,21 +14294,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"solhint-plugin-meta-transactions@npm:0.1.0":
+  version: 0.1.0
+  resolution: "solhint-plugin-meta-transactions@npm:0.1.0"
+  peerDependencies:
+    solhint: ^3.0.0
+  checksum: 85d24640cc3dea5326ba233fab0ab0cc5a0fec43c9112e7d04f002a06a635b6513f4d3b3cc2afe94ee2d255f4d7de9a56ed021ee3aa722969a8e0b9935484b83
+  languageName: node
+  linkType: hard
+
 "solhint-plugin-numcast@npm:1.0.0":
   version: 1.0.0
   resolution: "solhint-plugin-numcast@npm:1.0.0"
   peerDependencies:
     solhint: ^3.0.0
   checksum: e1ddc7fd855bbe9b0c289af1dd29e602fa0c2b43c1e566c5a1f029e65f1c6044b64696bc50602388f589e61dac0db60137816359fa6010feb17b5e01085cd7f2
-  languageName: node
-  linkType: hard
-
-"solhint-plugin-payable@npm:0.1.0":
-  version: 0.1.0
-  resolution: "solhint-plugin-payable@npm:0.1.0"
-  peerDependencies:
-    solhint: ^3.0.0
-  checksum: efaebfcf9265484c879ca7e57b56d03d20702e7595fc5e196c1e9bbee35b9ddfe35f58c7bd147218ebf96ad61f47e43e737ba5b8f7f1cb7f2bd52ff82e66d070
   languageName: node
   linkType: hard
 
@@ -15070,8 +15070,8 @@ __metadata:
     prettier-plugin-solidity: 1.0.0
     pretty-quick: 3.1.3
     solhint: 3.3.7
+    solhint-plugin-meta-transactions: 0.1.0
     solhint-plugin-numcast: 1.0.0
-    solhint-plugin-payable: 0.1.0
     typescript: 4.9.3
   languageName: unknown
   linkType: soft

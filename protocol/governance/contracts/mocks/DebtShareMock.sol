@@ -10,7 +10,7 @@ contract DebtShareMock is IDebtShare {
 
     mapping(uint128 => Period) private _periods;
 
-    function setBalanceOfOnPeriod(address user, uint balance, uint periodId) external payable {
+    function setBalanceOfOnPeriod(address user, uint balance, uint periodId) external {
         // solhint-disable-next-line numcast/safe-cast
         Period storage period = _periods[uint128(periodId)];
 
