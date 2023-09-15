@@ -190,7 +190,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     ethOracleAgg = aggregator;
   });
 
-  const markets = args.markets.map(({ name, initialPrice, specific }, i) => {
+  const markets = args.markets.map(({ name, initialPrice, specific }) => {
     const readableName = utils.parseBytes32String(name);
     let oracleNodeId: string, aggregator: AggregatorV3Mock, marketId: BigNumber;
 
@@ -226,12 +226,17 @@ export const bootstrap = (args: BootstrapArgs) => {
   });
 
   before(`delegate pool collateral to all markets equally`, async () => {
-    const poolConfig = markets.map(({ marketId }) => ({
+    // Spot market is already configured, lets not override that
+    const spotMarketPoolConfig = await systems.Core.getPoolConfiguration(stakedPool.poolId);
+    const perpsPoolConfig = markets.map(({ marketId }) => ({
       marketId: marketId(),
       weightD18: utils.parseEther('1'),
       maxDebtShareValueD18: utils.parseEther('1'),
     }));
-    await systems.Core.connect(getOwner()).setPoolConfiguration(stakedPool.poolId, poolConfig);
+    await systems.Core.connect(getOwner()).setPoolConfiguration(
+      stakedPool.poolId,
+      spotMarketPoolConfig.concat(perpsPoolConfig)
+    );
   });
 
   let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
