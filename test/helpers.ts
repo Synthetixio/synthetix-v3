@@ -119,7 +119,7 @@ export const getPythPriceData = async (
 };
 
 /** Returns a reasonable timestamp and publishTime to fast forward to for settlements. */
-export const getFastForwardTimestamp = async ({ systems }: Bs, marketId: BigNumber, trader: Trader) => {
+export const getFastForwardTimestamp = async ({ systems, provider }: Bs, marketId: BigNumber, trader: Trader) => {
   const { PerpMarketProxy } = systems();
 
   const order = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
@@ -131,7 +131,11 @@ export const getFastForwardTimestamp = async ({ systems }: Bs, marketId: BigNumb
 
   // PublishTime is allowed to be between settlement - [0, maxAge - minAge]. For example, `[0, 12 - 8] = [0, 4]`.
   const publishTimeDelta = genNumber(0, pythPublishTimeMax - pythPublishTimeMin);
-  const settlementTime = commitmentTime + minOrderAge;
+
+  // Ensure the settlementTime (and hence publishTime) cannot be lte the current block.timestamp.
+  const nowTime = (await provider().getBlock('latest')).timestamp;
+  const settlementTime = Math.max(commitmentTime + minOrderAge, nowTime + 1);
+
   const publishTime = settlementTime - publishTimeDelta;
 
   return { commitmentTime, settlementTime, publishTime };
@@ -139,7 +143,7 @@ export const getFastForwardTimestamp = async ({ systems }: Bs, marketId: BigNumb
 
 /** Commits a generated `order` for `trader` on `marketId` */
 export const commitOrder = async (
-  { provider, systems }: Bs,
+  { systems }: Bs,
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>
@@ -174,6 +178,7 @@ export const commitAndSettle = async (
 
   const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
   const settlementKeeper = options?.desiredKeeper ?? keeper();
+
   const { tx, receipt } = await withExplicitEvmMine(
     () =>
       PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
@@ -181,8 +186,9 @@ export const commitAndSettle = async (
       }),
     provider()
   );
+  const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
 
-  return { tx, receipt, settlementTime, publishTime };
+  return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
 };
 
 /** Updates the provided `contract` with more ABI details. */
