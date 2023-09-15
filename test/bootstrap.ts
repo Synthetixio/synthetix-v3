@@ -61,7 +61,7 @@ export interface Contracts {
 const _bootstraped = coreBootstrap<Contracts>({ cannonfile: 'cannonfile.toml' });
 const restoreSnapshot = _bootstraped.createSnapshot();
 
-export interface BootstrapArgs {
+export interface GeneratedBootstrap {
   initialEthPrice: BigNumber;
   pool: {
     stakedCollateralPrice: BigNumber;
@@ -75,7 +75,7 @@ export interface BootstrapArgs {
   }[];
 }
 
-export const bootstrap = (args: BootstrapArgs) => {
+export const bootstrap = (args: GeneratedBootstrap) => {
   const { getContract, getSigners, getProvider } = _bootstraped;
 
   before(restoreSnapshot);
@@ -258,7 +258,9 @@ export const bootstrap = (args: BootstrapArgs) => {
   });
 
   let keeper: Signer;
+  let endorsedKeeper: Signer;
   const traders: { signer: Signer; accountId: number }[] = [];
+
   before('configure traders', async () => {
     const { PerpMarketProxy } = systems;
     // `getSigners()` returns a static amount of signers you can test with. The signer at idx=0 is
@@ -272,8 +274,9 @@ export const bootstrap = (args: BootstrapArgs) => {
     // 4 = trader
     // 5 = trader
     // 6 = keeper (no funds)
-    const [trader1, trader2, trader3, trader4, trader5, _keeper] = getSigners().slice(1);
+    const [trader1, trader2, trader3, trader4, trader5, _keeper, _endorsedKeeper] = getSigners().slice(1);
     keeper = _keeper;
+    endorsedKeeper = _endorsedKeeper;
 
     const owner = getOwner();
     const createAccountFeature = utils.formatBytes32String('createAccount');
@@ -290,6 +293,16 @@ export const bootstrap = (args: BootstrapArgs) => {
     }
   });
 
+  before(
+    'configure global market',
+    async () =>
+      await systems.PerpMarketProxy.connect(getOwner()).setMarketConfiguration({
+        ...args.global,
+        // Replace the mocked endorsedKeeper with a real designated endorsed keeper.
+        keeperLiquidationEndorsed: await endorsedKeeper.getAddress(),
+      })
+  );
+
   const restore = snapshotCheckpoint(core.provider);
 
   return {
@@ -297,6 +310,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     args,
     traders: () => traders,
     keeper: () => keeper,
+    endorsedKeeper: () => endorsedKeeper,
     restore,
     markets: () => markets,
     collaterals: () => collaterals,
