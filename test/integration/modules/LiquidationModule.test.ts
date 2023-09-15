@@ -19,15 +19,11 @@ describe('LiquidationModule', () => {
   beforeEach(restore);
 
   describe('flagPosition', () => {
-    it.only('should flag a position with a health factor <= 1', async () => {
+    it('should flag a position with a health factor <= 1', async () => {
       const { PerpMarketProxy } = systems();
 
       const orderSide = genSide();
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
-        bs,
-        genTrader(bs, { desiredMarginUsdDepositAmount: 10_000 })
-      );
-      console.log(collateral.name);
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
         desiredSide: orderSide,
