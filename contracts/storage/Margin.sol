@@ -227,7 +227,9 @@ library Margin {
         if (available == 0) {
             return 0;
         }
-
+        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+            return DecimalMath.UNIT;
+        }
         (uint256 synthAmount, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
         return synthAmount.divDecimal(available);
     }
