@@ -142,14 +142,9 @@ export const commitOrder = async (
   { provider, systems }: Bs,
   marketId: BigNumber,
   trader: Trader,
-  order: CommitableOrder | Promise<CommitableOrder>,
-  blockBaseFeePerGas?: number
+  order: CommitableOrder | Promise<CommitableOrder>
 ) => {
   const { PerpMarketProxy } = systems();
-
-  if (blockBaseFeePerGas) {
-    await provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
-  }
 
   const { sizeDelta, limitPrice, keeperFeeBufferUsd } = await order;
   await PerpMarketProxy.connect(trader.signer).commitOrder(
@@ -167,23 +162,17 @@ export const commitAndSettle = async (
   marketId: BigNumber,
   trader: Trader,
   order: CommitableOrder | Promise<CommitableOrder>,
-  blockBaseFeePerGas?: number,
   options?: { desiredKeeper?: ethers.Signer }
 ) => {
   const { systems, provider, keeper } = bs;
   const { PerpMarketProxy } = systems();
 
-  await commitOrder(bs, marketId, trader, order, blockBaseFeePerGas);
+  await commitOrder(bs, marketId, trader, order);
 
   const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
   await fastForwardTo(settlementTime, provider());
 
   const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
-
-  if (blockBaseFeePerGas) {
-    await provider().send('hardhat_setNextBlockBaseFeePerGas', [blockBaseFeePerGas]);
-  }
-
   const settlementKeeper = options?.desiredKeeper ?? keeper();
   const { tx, receipt } = await withExplicitEvmMine(
     () =>

@@ -626,7 +626,7 @@ describe('OrderModule', () => {
         desiredLeverage: 1,
         desiredKeeperFeeBufferUsd: 1,
       });
-      const { receipt } = await commitAndSettle(bs, marketId, trader, openOrder, undefined, {
+      const { receipt } = await commitAndSettle(bs, marketId, trader, openOrder, {
         desiredKeeper: keeper(),
       });
 
@@ -1034,19 +1034,12 @@ describe('OrderModule', () => {
       it('should cap the keeperFee by its max usd when exceeds ceiling', async () => {
         const { PerpMarketProxy } = systems();
 
-        const BLOCK_BASE_FEE_PER_GAS = 10;
-
         // Set a really high ETH price of 4.9k USD (Dec 21' ATH).
         await ethOracleNode().agg.mockSetCurrentPrice(wei(4900).toBN());
 
         // Cap the max keeperFee to $50 USD
         const maxKeeperFeeUsd = wei(50).toBN();
         await setMarketConfiguration(bs, { maxKeeperFeeUsd, minKeeperFeeUsd: wei(10).toBN() });
-
-        // Explicitly set the block.basefee here (and set again before commit etc.)
-        //
-        // This block.basefee _may_ move but _should_ be close enough.
-        await provider().send('hardhat_setNextBlockBaseFeePerGas', [BLOCK_BASE_FEE_PER_GAS]);
 
         const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
           bs,
@@ -1061,7 +1054,7 @@ describe('OrderModule', () => {
           order.keeperFeeBufferUsd
         );
 
-        await commitAndSettle(bs, marketId, trader, order, BLOCK_BASE_FEE_PER_GAS);
+        await commitAndSettle(bs, marketId, trader, order);
 
         const { lastBaseFeePerGas } = await provider().getFeeData();
         const expectedKeeperFee = calcKeeperOrderSettlementFee(lastBaseFeePerGas as BigNumber);
