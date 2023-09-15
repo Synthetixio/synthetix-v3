@@ -199,6 +199,8 @@ library Margin {
 
                 // Sell collateral for sUSD.
                 (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(synthMarketId, available, 0, address(0));
+                // TODO: talk about if this is the best place to appove.
+                globalConfig.usdToken.approve(address(this), amountUsd);
                 globalConfig.synthetix.depositMarketUsd(marketId, address(this), amountUsd);
 
                 // Update internal accounting to update sale.
