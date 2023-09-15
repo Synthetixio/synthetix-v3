@@ -477,6 +477,30 @@ describe('OrderModule', () => {
 
     it('should pay a non-zero settlement fee to keeper');
 
+    describe('SpotMarket.sellExactIn', () => {
+      describe('open', () => {
+        it('should not sell any margin when opening a new position');
+      });
+
+      describe('modify', () => {
+        it('should sell some non-sUSD synths to pay fees on when no sUSD margin');
+
+        it('should realize sUSD profit when modifying a profitable position');
+
+        it('should sell margin when modifying a neg pnl position (when no sUSD)');
+
+        it('should not sell margin when enough sUSD margin covers neg pnl');
+
+        it('should not sell margin on a profitable position even if fees > pnl');
+      });
+
+      describe('close', () => {
+        it('should not sell margin when closing a profitable position');
+
+        it('should sell margin when closing a neg pnl position');
+      });
+    });
+
     it('should revert when this order exceeds maxMarketSize (oi)');
 
     it('should revert when an existing position can be liquidated');
