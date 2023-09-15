@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {IFeeCollector} from "../interfaces/external/IFeeCollector.sol";
@@ -105,7 +106,7 @@ library GlobalPerpsMarketConfiguration {
         uint256 feeCollectorQuote = self.feeCollector.quoteFees(
             factory.perpsMarketId,
             remainingFees,
-            msg.sender
+            ERC2771Context._msgSender()
         );
 
         if (feeCollectorQuote == 0) {

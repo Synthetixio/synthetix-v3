@@ -50,7 +50,7 @@ interface IVaultModule {
      *
      * Requirements:
      *
-     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
      * - If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
      * - If decreasing the amount delegated, the liquidity position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type.
      *

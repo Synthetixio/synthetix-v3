@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
@@ -65,8 +66,8 @@ library SpotMarketFactory {
     function onlyMarketOwner(Data storage self, uint128 marketId) internal view {
         address marketOwner = self.marketOwners[marketId];
 
-        if (marketOwner != msg.sender) {
-            revert OnlyMarketOwner(marketOwner, msg.sender);
+        if (marketOwner != ERC2771Context._msgSender()) {
+            revert OnlyMarketOwner(marketOwner, ERC2771Context._msgSender());
         }
     }
 

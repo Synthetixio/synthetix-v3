@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
@@ -67,7 +68,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
+    ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
@@ -144,7 +145,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             finalOrderAmount,
             fees,
             collectedFees,
-            msg.sender,
+            ERC2771Context._msgSender(),
             price,
             asyncOrderClaim.orderType
         );
@@ -192,7 +193,10 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
             Transaction.Type.ASYNC_BUY
         );
         if (settlementReward > 0) {
-            ITokenModule(spotMarketFactory.usdToken).transfer(msg.sender, settlementReward);
+            ITokenModule(spotMarketFactory.usdToken).transfer(
+                ERC2771Context._msgSender(),
+                settlementReward
+            );
         }
         spotMarketFactory.depositToMarketManager(marketId, amountUsable - collectedFees);
         SynthUtil.getToken(marketId).mint(trader, returnSynthAmount);
@@ -252,7 +256,11 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
         );
 
         if (settlementReward > 0) {
-            spotMarketFactory.synthetix.withdrawMarketUsd(marketId, msg.sender, settlementReward);
+            spotMarketFactory.synthetix.withdrawMarketUsd(
+                marketId,
+                ERC2771Context._msgSender(),
+                settlementReward
+            );
         }
 
         spotMarketFactory.synthetix.withdrawMarketUsd(marketId, trader, finalOrderAmount);

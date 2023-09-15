@@ -149,7 +149,7 @@ contract ElectionModule is
         bytes32[] calldata merkleProof,
         address[] calldata candidates
     ) public override onlyInPeriod(Council.ElectionPeriod.Vote) {
-        declareCrossChainDebtShare(msg.sender, debtShare, merkleProof);
+        declareCrossChainDebtShare(ERC2771Context._msgSender(), debtShare, merkleProof);
 
         cast(candidates);
     }

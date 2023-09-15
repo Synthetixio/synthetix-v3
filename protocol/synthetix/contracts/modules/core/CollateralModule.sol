@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../interfaces/ICollateralModule.sol";
 
@@ -44,7 +45,7 @@ contract CollateralModule is ICollateralModule {
 
         Account.Data storage account = Account.load(accountId);
 
-        address depositFrom = msg.sender;
+        address depositFrom = ERC2771Context._msgSender();
 
         address self = address(this);
 
@@ -59,7 +60,7 @@ contract CollateralModule is ICollateralModule {
             CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount)
         );
 
-        emit Deposited(accountId, collateralType, tokenAmount, msg.sender);
+        emit Deposited(accountId, collateralType, tokenAmount, ERC2771Context._msgSender());
     }
 
     /**
@@ -95,9 +96,9 @@ contract CollateralModule is ICollateralModule {
 
         account.collaterals[collateralType].decreaseAvailableCollateral(tokenAmountD18);
 
-        collateralType.safeTransfer(msg.sender, tokenAmount);
+        collateralType.safeTransfer(ERC2771Context._msgSender(), tokenAmount);
 
-        emit Withdrawn(accountId, collateralType, tokenAmount, msg.sender);
+        emit Withdrawn(accountId, collateralType, tokenAmount, ERC2771Context._msgSender());
     }
 
     /**

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/* solhint-disable meta-transactions/no-msg-sender meta-transactions/no-msg-data */
+/* solhint-disable meta-transactions/no-msg-sender */
+/* solhint-disable meta-transactions/no-msg-data */
 
-contract ERC2771Context {
+library ERC2771Context {
     // This is the trusted-multicall-forwarder. The address is constant due to CREATE2.
     address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
 

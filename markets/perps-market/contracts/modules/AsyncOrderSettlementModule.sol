@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {IAsyncOrderSettlementModule} from "../interfaces/IAsyncOrderSettlementModule.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
@@ -175,7 +176,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
 
         if (runtime.settlementReward > 0) {
             // pay keeper
-            factory.withdrawMarketUsd(msg.sender, runtime.settlementReward);
+            factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
         }
 
         (runtime.referralFees, runtime.feeCollectorFees) = GlobalPerpsMarketConfiguration
@@ -203,7 +204,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule, IMarketEvent
             runtime.feeCollectorFees,
             runtime.settlementReward,
             asyncOrder.request.trackingCode,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 
