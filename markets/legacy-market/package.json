@@ -20,9 +20,9 @@
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/wei": "2.74.4",
+    "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
-    "hardhat": "2.17.2",
-    "solidity-docgen": "0.6.0-beta.35"
+    "hardhat": "^2.17.3",
+    "solidity-docgen": "^0.6.0-beta.36"
   }
 }
