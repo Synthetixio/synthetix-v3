@@ -113,12 +113,6 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   // NOTE: All collaterals here must be Synth collaterals available on the Synthetix spot market.
   const getCollaterals = () => [
-    // We add the real USD here to get it setup, it will not be part of the final `collaterals` array.
-    {
-      name: 'sUSD',
-      initialPrice: bn(1),
-      max: bn(10_000_000),
-    },
     {
       name: 'swstETH',
       initialPrice: genOneOf([bn(1500), bn(1650), bn(1750), bn(1850), bn(4800)]),
@@ -146,13 +140,15 @@ export const bootstrap = (args: BootstrapArgs) => {
   // NOTE: See below for the `before` block below on collateral management.
   const configureCollateral = async () => {
     const { synthMarkets } = spotMarket;
+    const sUSDmarketId = BigNumber.from(0);
     const synthMarketIds = synthMarkets().map((market) => market.marketId());
 
     // Allow this collateral to be depositable into the perp market.
     const collaterals = getCollaterals();
     await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(
-      synthMarketIds,
-      collaterals.map(({ max }) => max)
+      // TODO: Is there a nicer way of doing this?
+      [sUSDmarketId].concat(synthMarketIds),
+      [bn(10_000_000)].concat(collaterals.map(({ max }) => max))
     );
 
     return collaterals.map((collateral, idx) => {
@@ -247,9 +243,7 @@ export const bootstrap = (args: BootstrapArgs) => {
 
   let collaterals: Awaited<ReturnType<typeof configureCollateral>>;
   before('configure margin collaterals and their prices', async () => {
-    // Remove USD collateral, we do this since the USD if the "real" sUSD provisioned by protocol/syntehtix.
-    // All the collaterals in this array are expected to be "mintable"
-    collaterals = (await configureCollateral()).slice(1);
+    collaterals = await configureCollateral();
 
     // Ensure core system has enough capacity to deposit this collateral for perp market x.
     for (const collateral of collaterals) {
