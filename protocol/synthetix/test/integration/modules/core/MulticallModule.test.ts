@@ -4,16 +4,14 @@ import assert from 'assert/strict';
 import { bootstrap } from '../../bootstrap';
 import { ethers } from 'ethers';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import hre from 'hardhat';
 
 describe('MulticallModule', function () {
   const { systems, signers } = bootstrap();
 
-  let owner: ethers.Signer, user1: ethers.Signer;
+  let user1: ethers.Signer;
 
   before('identify signers', async () => {
-    [owner, user1] = signers();
+    [, user1] = signers();
   });
 
   describe('multicall()', () => {
