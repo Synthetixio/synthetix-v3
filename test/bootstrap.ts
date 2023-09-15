@@ -226,8 +226,14 @@ export const bootstrap = (args: BootstrapArgs) => {
   });
 
   before(`delegate pool collateral to all markets equally`, async () => {
-    // Spot market is already configured, lets not override that
-    const spotMarketPoolConfig = await systems.Core.getPoolConfiguration(stakedPool.poolId);
+    // Spot market is configured incorrectly, only the last marker gets delegated collateral.
+    // TODO: We should fix this in bootstrapSynthMarkets when merging into monorepo.
+    const spotMarketPoolConfig = spotMarket.synthMarkets().map(({ marketId }) => ({
+      marketId: marketId(),
+      weightD18: utils.parseEther('1'),
+      maxDebtShareValueD18: utils.parseEther('1'),
+    }));
+
     const perpsPoolConfig = markets.map(({ marketId }) => ({
       marketId: marketId(),
       weightD18: utils.parseEther('1'),
