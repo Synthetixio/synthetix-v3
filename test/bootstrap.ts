@@ -15,7 +15,7 @@ import { BigNumber, utils, Signer, constants } from 'ethers';
 import { createOracleNode } from '@synthetixio/oracle-manager/test/common';
 import { CollateralMock } from '../typechain-types';
 import { bn, genOneOf } from './generators';
-import { SUSD_MARKET_ID } from './helpers';
+import { SYNTHETIX_USD_MARKET_ID } from './helpers';
 
 type SynthSystems = ReturnType<Awaited<ReturnType<typeof bootstrapSynthMarkets>>['systems']>;
 
@@ -145,7 +145,7 @@ export const bootstrap = (args: BootstrapArgs) => {
     const collaterals = getCollaterals();
 
     const synthMarkets = spotMarket.synthMarkets();
-    const synthMarketIds = [SUSD_MARKET_ID].concat(synthMarkets.map((market) => market.marketId()));
+    const synthMarketIds = [SYNTHETIX_USD_MARKET_ID].concat(synthMarkets.map((market) => market.marketId()));
     const maxAllowances = [bn(10_000_000)].concat(collaterals.map(({ max }) => max));
 
     // Allow this collateral to be depositable into the perp market.

@@ -11,7 +11,7 @@ import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './type
 
 export const SECONDS_ONE_HR = 60 * 60;
 export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
-export const SUSD_MARKET_ID = BigNumber.from(0);
+export const SYNTHETIX_USD_MARKET_ID = BigNumber.from(0);
 
 // --- Mutative helpers --- //
 
