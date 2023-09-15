@@ -272,14 +272,17 @@ depends = [
   "provision.oracle_manager"
 ]
 
-# we register USD as a collateral type because it is useful to treat it the same way as any other collateral
+# USD is recognized as a collateral type because it is held in the protocol for minting/burning.
+# We configure minDelegationD18 to prevent its delegation to pools by default.
+# depositingEnabled is important to allow LPs to burn stablecoins.
 [invoke.configure_usd_collateral]
 target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "configureCollateral"
-
 args = [
   { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true }
 ]
-
 depends = ["invoke.register_const_one_oracle", "invoke.init_usd"]
+
+[provision.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"

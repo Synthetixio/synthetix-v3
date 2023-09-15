@@ -136,3 +136,6 @@ func = "addToFeatureFlagAllowlist"
 fromCall.func = "owner"
 args = ["<%= formatBytes32String('createSynth') %>", "<%= settings.owner %>"]
 depends = ["invoke.upgradeSpotMarketProxy"]
+
+[provision.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"
