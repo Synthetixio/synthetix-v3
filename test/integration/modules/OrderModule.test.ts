@@ -997,8 +997,7 @@ describe('OrderModule', () => {
     // to parse out the event logs that contain the keeperFee.
     //
     // @see: https://github.com/NomicFoundation/hardhat/issues/3028
-    describe.only('keeperFee', () => {
-      const getLastBaseFeePerGas = async () => (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
+    describe.skip('keeperFee', () => {
       const getKeeperFee = (PerpMarketProxy: PerpMarketProxy, receipt: ethers.ContractReceipt): BigNumber =>
         findEventSafe({
           receipt,
@@ -1065,7 +1064,7 @@ describe('OrderModule', () => {
         assertBn.equal(expectedKeeperFee, maxKeeperFeeUsd);
       });
 
-      it.skip('should cap the keeperFee by its min usd when below floor', async () => {
+      it('should cap the keeperFee by its min usd when below floor', async () => {
         const { PerpMarketProxy } = systems();
 
         // Lower the min requirements to reduce fees fairly significantly.
