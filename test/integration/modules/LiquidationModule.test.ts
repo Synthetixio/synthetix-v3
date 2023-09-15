@@ -381,9 +381,14 @@ describe('LiquidationModule', () => {
     it('should remove all position collateral from market on liquidation', async () => {
       const { PerpMarketProxy } = systems();
 
-      // Commit, settle, place position into liquidation, flag for liquidation.
+      // Commit, settle, place position into liquidation, flag for liquidation. For the purposes
+      // of this test, ensure we can liquidate the entire position in one call (hence the smaller
+      // marginUsd deposit amounts).
       const orderSide = genSide();
-      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredMarginUsdDepositAmount: genOneOf([1000, 3000, 5000]) })
+      );
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
         desiredSide: orderSide,
@@ -392,14 +397,14 @@ describe('LiquidationModule', () => {
 
       const d1 = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
 
-      await market.aggregator().mockSetCurrentPrice(
-        wei(order.oraclePrice)
-          .mul(orderSide === 1 ? 0.9 : 1.1)
-          .toBN()
-      );
-      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+      const newMarketOraclePrice = wei(order.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
 
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
       await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+
       const d2 = await PerpMarketProxy.getPositionDigest(trader.accountId, marketId);
       const { collateralUsd } = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
