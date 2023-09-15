@@ -37,7 +37,7 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) external payable override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_DEPOSIT_FEATURE_FLAG);
         CollateralConfiguration.collateralEnabled(collateralType);
         Account.exists(accountId);
@@ -69,7 +69,7 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint256 tokenAmount
-    ) external payable override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_WITHDRAW_FEATURE_FLAG);
         Account.Data storage account = Account.loadAccountAndValidatePermissionAndTimeout(
             accountId,
@@ -133,7 +133,7 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 offset,
         uint256 count
-    ) external payable override returns (uint256 cleared) {
+    ) external override returns (uint256 cleared) {
         CollateralLock.Data[] storage locks = Account
             .load(accountId)
             .collaterals[collateralType]
@@ -205,7 +205,7 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 amount,
         uint64 expireTimestamp
-    ) external payable override {
+    ) external override {
         Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
             AccountRBAC._ADMIN_PERMISSION

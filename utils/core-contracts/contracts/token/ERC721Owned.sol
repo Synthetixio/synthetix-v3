@@ -8,7 +8,6 @@ contract ERC721Owned is ERC721, Ownable {
     // solhint-disable-next-line no-empty-blocks
     constructor(address initialOwner) Ownable(initialOwner) {}
 
-		// solhint-disable-next-line payable/only-payable
     function transferFrom(
         address from,
         address to,
@@ -17,7 +16,6 @@ contract ERC721Owned is ERC721, Ownable {
         super.transferFrom(from, to, tokenId);
     }
 
-		// solhint-disable-next-line payable/only-payable
     function safeTransferFrom(
         address from,
         address to,
@@ -26,7 +24,6 @@ contract ERC721Owned is ERC721, Ownable {
         super.safeTransferFrom(from, to, tokenId);
     }
 
-		// solhint-disable-next-line payable/only-payable
     function safeTransferFrom(
         address from,
         address to,

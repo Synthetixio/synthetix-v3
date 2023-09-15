@@ -20,14 +20,14 @@ interface INftModule is IERC721Enumerable {
         string memory tokenName,
         string memory tokenSymbol,
         string memory uri
-    ) external payable;
+    ) external;
 
     /**
      * @notice Allows the owner to mint tokens.
      * @param to The address to receive the newly minted tokens.
      * @param tokenId The ID of the newly minted token
      */
-    function mint(address to, uint tokenId) external payable;
+    function mint(address to, uint tokenId) external;
 
     /**
      * @notice Allows the owner to mint tokens. Verifies that the receiver can receive the token
@@ -35,24 +35,24 @@ interface INftModule is IERC721Enumerable {
      * @param tokenId The ID of the newly minted token
      * @param data any data which should be sent to the receiver
      */
-    function safeMint(address to, uint256 tokenId, bytes memory data) external payable;
+    function safeMint(address to, uint256 tokenId, bytes memory data) external;
 
     /**
      * @notice Allows the owner to burn tokens.
      * @param tokenId The token to burn
      */
-    function burn(uint tokenId) external payable;
+    function burn(uint tokenId) external;
 
     /**
      * @notice Allows an address that holds tokens to provide allowance to another.
      * @param tokenId The token which should be allowed to spender
      * @param spender The address that is given allowance.
      */
-    function setAllowance(uint tokenId, address spender) external payable;
+    function setAllowance(uint tokenId, address spender) external;
 
     /**
      * @notice Allows the owner to update the base token URI.
      * @param uri The new base token uri
      */
-    function setBaseTokenURI(string memory uri) external payable;
+    function setBaseTokenURI(string memory uri) external;
 }

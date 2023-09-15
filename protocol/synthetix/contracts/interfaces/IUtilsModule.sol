@@ -17,10 +17,7 @@ interface IUtilsModule is IERC165 {
      * @param ccipRouter The address on this chain to which CCIP messages will be sent or received.
      * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.
      */
-    function configureChainlinkCrossChain(
-        address ccipRouter,
-        address ccipTokenPool
-    ) external payable;
+    function configureChainlinkCrossChain(address ccipRouter, address ccipTokenPool) external;
 
     /**
      * @notice Used to add new cross chain networks to the protocol
@@ -33,20 +30,20 @@ interface IUtilsModule is IERC165 {
     function setSupportedCrossChainNetworks(
         uint64[] memory supportedNetworks,
         uint64[] memory ccipSelectors
-    ) external payable returns (uint256 numRegistered);
+    ) external returns (uint256 numRegistered);
 
     /**
      * @notice Configure the system's single oracle manager address.
      * @param oracleManagerAddress The address of the oracle manager.
      */
-    function configureOracleManager(address oracleManagerAddress) external payable;
+    function configureOracleManager(address oracleManagerAddress) external;
 
     /**
      * @notice Configure a generic value in the KV system
      * @param k the key of the value to set
      * @param v the value that the key should be set to
      */
-    function setConfig(bytes32 k, bytes32 v) external payable;
+    function setConfig(bytes32 k, bytes32 v) external;
 
     /**
      * @notice Read a generic value from the KV system

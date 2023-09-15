@@ -64,7 +64,7 @@ interface IWrapperModule {
         uint128 marketId,
         address wrapCollateralType,
         uint256 maxWrappableAmount
-    ) external payable;
+    ) external;
 
     /**
      * @notice Wraps the specified amount and returns similar value of synth minus the fees.
@@ -79,7 +79,7 @@ interface IWrapperModule {
         uint128 marketId,
         uint256 wrapAmount,
         uint256 minAmountReceived
-    ) external payable returns (uint256 amountToMint, OrderFees.Data memory fees);
+    ) external returns (uint256 amountToMint, OrderFees.Data memory fees);
 
     /**
      * @notice Unwraps the synth and returns similar value of collateral minus the fees.
@@ -94,5 +94,5 @@ interface IWrapperModule {
         uint128 marketId,
         uint256 unwrapAmount,
         uint256 minAmountReceived
-    ) external payable returns (uint256 returnCollateralAmount, OrderFees.Data memory fees);
+    ) external returns (uint256 returnCollateralAmount, OrderFees.Data memory fees);
 }

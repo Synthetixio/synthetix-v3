@@ -36,7 +36,7 @@ interface IMulticallModule {
      * @param target The address of the contract to alter permissions
      * @param allowlisted Whether or not the target is allowlisted
      */
-    function setAllowlistedMulticallTarget(address target, bool allowlisted) external payable;
+    function setAllowlistedMulticallTarget(address target, bool allowlisted) external;
 
     /**
      * @notice When receiving a call from this contract through `multicallThrough`, the receiver can use this function to get the original caller.

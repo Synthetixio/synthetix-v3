@@ -41,7 +41,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId
-    ) external payable override returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
+    ) external override returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,
             SettlementStrategy.Data storage settlementStrategy
@@ -67,7 +67,7 @@ contract AsyncOrderSettlementModule is IAsyncOrderSettlementModule {
     function settlePythOrder(
         bytes calldata result,
         bytes calldata extraData
-    ) external payable returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
+    ) external returns (uint256 finalOrderAmount, OrderFees.Data memory fees) {
         (uint128 marketId, uint128 asyncOrderId) = abi.decode(extraData, (uint128, uint128));
         (
             AsyncOrderClaim.Data storage asyncOrderClaim,

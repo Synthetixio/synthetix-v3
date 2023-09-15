@@ -53,7 +53,7 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function createAccount(uint128 requestedAccountId) external payable override {
+    function createAccount(uint128 requestedAccountId) external override {
         FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
 
         if (requestedAccountId >= type(uint128).max / 2) {
@@ -71,7 +71,7 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function createAccount() external payable override returns (uint128 accountId) {
+    function createAccount() external override returns (uint128 accountId) {
         FeatureFlag.ensureAccessToFeature(_CREATE_ACCOUNT_FEATURE_FLAG);
 
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
@@ -91,7 +91,7 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function notifyAccountTransfer(address to, uint128 accountId) external payable override {
+    function notifyAccountTransfer(address to, uint128 accountId) external override {
         _onlyAccountToken();
 
         Account.Data storage account = Account.load(accountId);
@@ -133,7 +133,7 @@ contract AccountModule is IAccountModule {
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external payable override {
+    ) external override {
         AccountRBAC.isPermissionValid(permission);
 
         Account.Data storage account = Account.loadAccountAndValidatePermission(
@@ -153,7 +153,7 @@ contract AccountModule is IAccountModule {
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external payable override {
+    ) external override {
         Account.Data storage account = Account.loadAccountAndValidatePermission(
             accountId,
             AccountRBAC._ADMIN_PERMISSION
@@ -167,7 +167,7 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function renouncePermission(uint128 accountId, bytes32 permission) external payable override {
+    function renouncePermission(uint128 accountId, bytes32 permission) external override {
         if (!Account.load(accountId).rbac.hasPermission(permission, msg.sender)) {
             revert PermissionNotGranted(accountId, permission, msg.sender);
         }

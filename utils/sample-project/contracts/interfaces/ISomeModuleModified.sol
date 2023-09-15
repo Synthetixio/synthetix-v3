@@ -2,9 +2,9 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 interface ISomeModuleModified {
-    function setValue(uint newValue) external payable;
+    function setValue(uint newValue) external;
 
-    function setSomeValue(uint newSomeValue) external payable;
+    function setSomeValue(uint newSomeValue) external;
 
     function getValue() external view returns (uint);
 

@@ -6,7 +6,7 @@ import "../../storage/SampleStorage.sol";
 import "../../storage/FeatureFlag.sol";
 
 contract SampleFeatureFlagModule is ISampleFeatureFlagModule {
-    function setFeatureFlaggedValue(uint valueToSet) external payable {
+    function setFeatureFlaggedValue(uint valueToSet) external {
         FeatureFlag.ensureAccessToFeature("SAMPLE_FEATURE");
         SampleStorage.load().someValue = valueToSet;
     }

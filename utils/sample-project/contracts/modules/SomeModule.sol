@@ -7,13 +7,13 @@ import "../interfaces/ISomeModule.sol";
 contract SomeModule is GlobalStorage, ISomeModule {
     event ValueSet(address sender, uint value);
 
-    function setValue(uint newValue) public payable override {
+    function setValue(uint newValue) public override {
         _globalStore().value = newValue;
 
         emit ValueSet(msg.sender, newValue);
     }
 
-    function setSomeValue(uint newSomeValue) public payable override {
+    function setSomeValue(uint newSomeValue) public override {
         _globalStore().someValue = newSomeValue;
 
         emit ValueSet(msg.sender, newSomeValue);

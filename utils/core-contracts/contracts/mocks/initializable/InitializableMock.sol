@@ -12,7 +12,7 @@ contract InitializableMock is InitializableMixin {
         return _initialized;
     }
 
-    function initializeInitializableMock(uint256 initialValue) public payable onlyIfNotInitialized {
+    function initializeInitializableMock(uint256 initialValue) public onlyIfNotInitialized {
         _value = initialValue;
 
         _initialized = true;
@@ -22,7 +22,7 @@ contract InitializableMock is InitializableMixin {
         return _isInitialized();
     }
 
-    function doubleValue() public payable onlyIfInitialized {
+    function doubleValue() public onlyIfInitialized {
         _value *= 2;
     }
 
@@ -34,7 +34,7 @@ contract InitializableMock is InitializableMixin {
         return _nonCriticalValue;
     }
 
-    function setNonCriticalValue(uint256 nonCriticalValue) public payable {
+    function setNonCriticalValue(uint256 nonCriticalValue) public {
         _nonCriticalValue = nonCriticalValue;
     }
 }

@@ -33,7 +33,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 settlementStrategyId,
         uint256 minimumSettlementAmount,
         address referrer
-    ) external payable override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
+    ) external override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
         // validation checks
         Transaction.validateAsyncTransaction(orderType);
         SpotMarketFactory.load().validateMarket(marketId);
@@ -102,7 +102,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     /**
      * @inheritdoc IAsyncOrderModule
      */
-    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external payable override {
+    function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrderClaim.Data storage asyncOrderClaim = AsyncOrderClaim.load(marketId, asyncOrderId);
         asyncOrderClaim.checkClaimValidity();
         asyncOrderClaim.validateCancellationEligibility(

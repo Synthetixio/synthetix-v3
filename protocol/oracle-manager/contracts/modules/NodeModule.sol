@@ -28,7 +28,7 @@ contract NodeModule is INodeModule {
         NodeDefinition.NodeType nodeType,
         bytes memory parameters,
         bytes32[] memory parents
-    ) external payable returns (bytes32 nodeId) {
+    ) external returns (bytes32 nodeId) {
         NodeDefinition.Data memory nodeDefinition = NodeDefinition.Data({
             parents: parents,
             nodeType: nodeType,

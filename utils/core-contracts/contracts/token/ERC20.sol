@@ -63,7 +63,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
         _approve(msg.sender, spender, amount);
         return true;
@@ -72,7 +72,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function increaseAllowance(
         address spender,
         uint256 addedValue
@@ -86,7 +86,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function decreaseAllowance(
         address spender,
         uint256 subtractedValue
@@ -100,7 +100,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
         _transfer(msg.sender, to, amount);
 
@@ -110,7 +110,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-		// solhint-disable-next-line payable/only-payable
+
     function transferFrom(
         address from,
         address to,

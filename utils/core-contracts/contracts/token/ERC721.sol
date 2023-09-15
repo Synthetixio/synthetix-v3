@@ -85,7 +85,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-		// solhint-disable-next-line payable/only-payable
+
     function approve(address to, uint256 tokenId) public virtual override {
         ERC721Storage.Data storage store = ERC721Storage.load();
         address holder = store.ownerOf[tokenId];
@@ -115,7 +115,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-		// solhint-disable-next-line payable/only-payable
+
     function setApprovalForAll(address operator, bool approved) public virtual override {
         if (msg.sender == operator) {
             revert CannotSelfApprove(operator);
@@ -139,7 +139,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-		// solhint-disable-next-line payable/only-payable
+
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert AccessError.Unauthorized(msg.sender);
@@ -151,7 +151,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-		// solhint-disable-next-line payable/only-payable
+
     function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
@@ -159,7 +159,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
-		// solhint-disable-next-line payable/only-payable
+
     function safeTransferFrom(
         address from,
         address to,

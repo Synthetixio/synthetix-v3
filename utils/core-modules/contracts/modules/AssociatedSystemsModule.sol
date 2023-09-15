@@ -37,7 +37,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         string memory symbol,
         uint8 decimals,
         address impl
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         _initOrUpgradeToken(id, name, symbol, decimals, impl);
     }
@@ -51,7 +51,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         string memory symbol,
         string memory uri,
         address impl
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         _initOrUpgradeNft(id, name, symbol, uri, impl);
     }
@@ -59,7 +59,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
     /**
      * @inheritdoc IAssociatedSystemsModule
      */
-    function registerUnmanagedSystem(bytes32 id, address endpoint) external payable override {
+    function registerUnmanagedSystem(bytes32 id, address endpoint) external override {
         OwnableStorage.onlyOwner();
         // empty string require kind will make sure the system is either unregistered or already unmanaged
         AssociatedSystem.load(id).expectKind("");

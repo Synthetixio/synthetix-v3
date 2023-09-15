@@ -101,10 +101,7 @@ contract MulticallModule is IMulticallModule {
     /**
      * @inheritdoc IMulticallModule
      */
-    function setAllowlistedMulticallTarget(
-        address target,
-        bool allowlisted
-    ) external payable override {
+    function setAllowlistedMulticallTarget(address target, bool allowlisted) external override {
         OwnableStorage.onlyOwner();
         Config.put(
             keccak256(abi.encodePacked(_CONFIG_ALLOWLISTED_MULTICALL_TARGETS, target)),

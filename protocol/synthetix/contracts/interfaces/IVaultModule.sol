@@ -62,7 +62,7 @@ interface IVaultModule {
         address collateralType,
         uint256 amount,
         uint256 leverage
-    ) external payable;
+    ) external;
 
     /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.
@@ -77,7 +77,7 @@ interface IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external payable returns (uint256 ratioD18);
+    ) external returns (uint256 ratioD18);
 
     /**
      * @notice Returns the debt of the specified liquidity position. Credit is expressed as negative debt.
@@ -92,7 +92,7 @@ interface IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external payable returns (int256 debtD18);
+    ) external returns (int256 debtD18);
 
     /**
      * @notice Returns the amount and value of the collateral associated with the specified liquidity position.
@@ -127,7 +127,6 @@ interface IVaultModule {
         address collateralType
     )
         external
-        payable
         returns (
             uint256 collateralAmountD18,
             uint256 collateralValueD18,
@@ -143,10 +142,7 @@ interface IVaultModule {
      * @param collateralType The address of the collateral of the associated vault.
      * @return debtD18 The overall debt of the vault, denominated with 18 decimals of precision.
      **/
-    function getVaultDebt(
-        uint128 poolId,
-        address collateralType
-    ) external payable returns (int256 debtD18);
+    function getVaultDebt(uint128 poolId, address collateralType) external returns (int256 debtD18);
 
     /**
      * @notice Returns the amount and value of the collateral held by the vault.
@@ -174,5 +170,5 @@ interface IVaultModule {
     function getVaultCollateralRatio(
         uint128 poolId,
         address collateralType
-    ) external payable returns (uint256 ratioD18);
+    ) external returns (uint256 ratioD18);
 }

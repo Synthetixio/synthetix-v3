@@ -35,7 +35,7 @@ contract UtilsModule is IUtilsModule {
     function configureChainlinkCrossChain(
         address ccipRouter,
         address ccipTokenPool
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
 
         CrossChain.Data storage cc = CrossChain.load();
@@ -57,7 +57,7 @@ contract UtilsModule is IUtilsModule {
     function setSupportedCrossChainNetworks(
         uint64[] memory supportedNetworks,
         uint64[] memory ccipSelectors
-    ) external payable returns (uint256 numRegistered) {
+    ) external returns (uint256 numRegistered) {
         OwnableStorage.onlyOwner();
 
         uint64 myChainId = block.chainid.to64();
@@ -86,14 +86,14 @@ contract UtilsModule is IUtilsModule {
     /**
      * @inheritdoc IUtilsModule
      */
-    function configureOracleManager(address oracleManagerAddress) external payable override {
+    function configureOracleManager(address oracleManagerAddress) external override {
         OwnableStorage.onlyOwner();
 
         OracleManager.Data storage oracle = OracleManager.load();
         oracle.oracleManagerAddress = oracleManagerAddress;
     }
 
-    function setConfig(bytes32 k, bytes32 v) external payable override {
+    function setConfig(bytes32 k, bytes32 v) external override {
         OwnableStorage.onlyOwner();
         return Config.put(k, v);
     }

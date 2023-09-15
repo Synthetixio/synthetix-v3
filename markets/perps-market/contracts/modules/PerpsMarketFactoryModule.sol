@@ -41,7 +41,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function setSynthetix(ISynthetixSystem synthetix) external payable override {
+    function setSynthetix(ISynthetixSystem synthetix) external override {
         OwnableStorage.onlyOwner();
         PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
 
@@ -54,7 +54,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function setSpotMarket(ISpotMarketSystem spotMarket) external payable override {
+    function setSpotMarket(ISpotMarketSystem spotMarket) external override {
         OwnableStorage.onlyOwner();
 
         PerpsMarketFactory.load().spotMarket = spotMarket;
@@ -63,7 +63,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function initializeFactory() external payable override returns (uint128) {
+    function initializeFactory() external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
         OwnableStorage.onlyOwner();
 
@@ -89,7 +89,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         uint128 requestedMarketId,
         string memory marketName,
         string memory marketSymbol
-    ) external payable override returns (uint128) {
+    ) external override returns (uint128) {
         OwnableStorage.onlyOwner();
         PerpsMarketFactory.load().onlyIfInitialized();
 

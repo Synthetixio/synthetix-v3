@@ -38,7 +38,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
      */
     function commitOrder(
         AsyncOrder.OrderCommitmentRequest memory commitment
-    ) external payable override returns (AsyncOrder.Data memory retOrder, uint fees) {
+    ) external override returns (AsyncOrder.Data memory retOrder, uint fees) {
         PerpsMarket.loadValid(commitment.marketId);
 
         // Check if commitment.accountId is valid

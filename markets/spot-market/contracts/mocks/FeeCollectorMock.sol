@@ -7,11 +7,10 @@ import "../interfaces/external/IFeeCollector.sol";
 contract FeeCollectorMock is IFeeCollector {
     ITokenModule public usdToken;
 
-    function setUsdToken(ITokenModule _usdToken) external payable {
+    function setUsdToken(ITokenModule _usdToken) external {
         usdToken = _usdToken;
     }
 
-    // solhint-disable-next-line payable/only-payable
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,

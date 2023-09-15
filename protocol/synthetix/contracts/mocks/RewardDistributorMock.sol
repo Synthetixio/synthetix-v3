@@ -14,7 +14,7 @@ contract RewardDistributorMock is IRewardDistributor {
 
     bool public shouldFailPayout;
 
-    function initialize(address rewardManager, address token_, string memory name_) public payable {
+    function initialize(address rewardManager, address token_, string memory name_) public {
         _rewardManager = rewardManager;
         _token = token_;
         _name = name_;
@@ -28,11 +28,10 @@ contract RewardDistributorMock is IRewardDistributor {
         return _token;
     }
 
-    function setShouldFailPayout(bool fail) external payable {
+    function setShouldFailPayout(bool fail) external {
         shouldFailPayout = fail;
     }
 
-    // solhint-disable-next-line payable/only-payable
     function payout(
         uint128,
         uint128,
@@ -54,7 +53,7 @@ contract RewardDistributorMock is IRewardDistributor {
         uint256 amount,
         uint64 start,
         uint32 duration
-    ) public payable {
+    ) public {
         IRewardsManagerModule(_rewardManager).distributeRewards(
             poolId,
             collateralType,

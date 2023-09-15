@@ -53,7 +53,7 @@ contract IssueUSDModule is IIssueUSDModule {
         uint128 poolId,
         address collateralType,
         uint256 amount
-    ) external payable override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_MINT_FEATURE_FLAG);
 
         Account.Data storage account = Account.loadAccountAndValidatePermission(
@@ -124,7 +124,7 @@ contract IssueUSDModule is IIssueUSDModule {
         uint128 poolId,
         address collateralType,
         uint256 amount
-    ) external payable override {
+    ) external override {
         FeatureFlag.ensureAccessToFeature(_BURN_FEATURE_FLAG);
 
         Account.Data storage account = Account.loadAccountAndValidatePermission(

@@ -29,7 +29,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public payable override(TokenModule, ITokenModule) {
+    ) public override(TokenModule, ITokenModule) {
         OwnableStorage.onlyOwner();
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
@@ -52,7 +52,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     function burn(
         address from,
         uint256 amount
-    ) external payable override(TokenModule, ITokenModule) _advanceEpoch {
+    ) external override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -68,7 +68,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     function mint(
         address to,
         uint256 amount
-    ) external payable override(TokenModule, ITokenModule) _advanceEpoch {
+    ) external override(TokenModule, ITokenModule) _advanceEpoch {
         OwnableStorage.onlyOwner();
 
         uint256 shareAmount = _tokenToShare(amount);
@@ -81,7 +81,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     /**
      * @inheritdoc IDecayTokenModule
      */
-    function setDecayRate(uint256 _rate) external payable _advanceEpoch {
+    function setDecayRate(uint256 _rate) external _advanceEpoch {
         if ((10 ** 18) * SECONDS_PER_YEAR < _rate) {
             revert InvalidDecayRate();
         }
@@ -94,7 +94,7 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     /**
      * @inheritdoc IDecayTokenModule
      */
-    function advanceEpoch() external payable _advanceEpoch returns (uint256) {
+    function advanceEpoch() external _advanceEpoch returns (uint256) {
         DecayToken.Data storage store = DecayToken.load();
         store.totalSupplyAtEpochStart = totalSupply();
         return _tokensPerShare();
@@ -120,7 +120,6 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         return super.balanceOf(user).mulDecimal(_tokensPerShare());
     }
 
-		// solhint-disable-next-line payable/only-payable
     function transferFrom(
         address from,
         address to,
@@ -142,7 +141,6 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
         return true;
     }
 
-	  // solhint-disable-next-line payable/only-payable
     function transfer(
         address to,
         uint256 amount

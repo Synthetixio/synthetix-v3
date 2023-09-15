@@ -63,5 +63,5 @@ interface IAssociateDebtModule {
         address collateralType,
         uint128 accountId,
         uint256 amount
-    ) external payable returns (int256 debtAmount);
+    ) external returns (int256 debtAmount);
 }

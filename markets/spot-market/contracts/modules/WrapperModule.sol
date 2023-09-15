@@ -33,7 +33,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         address wrapCollateralType,
         uint256 maxWrappableAmount
-    ) external payable override {
+    ) external override {
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         Wrapper.updateValid(marketId, wrapCollateralType, maxWrappableAmount);
@@ -48,7 +48,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 wrapAmount,
         uint256 minAmountReceived
-    ) external payable override returns (uint256 amountToMint, OrderFees.Data memory fees) {
+    ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
@@ -102,12 +102,7 @@ contract WrapperModule is IWrapperModule {
         uint128 marketId,
         uint256 unwrapAmount,
         uint256 minAmountReceived
-    )
-        external
-        payable
-        override
-        returns (uint256 returnCollateralAmount, OrderFees.Data memory fees)
-    {
+    ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);

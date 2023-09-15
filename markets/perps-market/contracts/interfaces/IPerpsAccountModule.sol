@@ -30,11 +30,7 @@ interface IPerpsAccountModule {
      * @param synthMarketId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
      * @param amountDelta requested change in amount of collateral delegated to the account.
      */
-    function modifyCollateral(
-        uint128 accountId,
-        uint128 synthMarketId,
-        int amountDelta
-    ) external payable;
+    function modifyCollateral(uint128 accountId, uint128 synthMarketId, int amountDelta) external;
 
     /**
      * @notice Gets the account's collateral value for a specific collateral.

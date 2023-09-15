@@ -80,7 +80,7 @@ interface IMarketManagerModule {
      * @param market The address of the external market that is to be registered in the system.
      * @return newMarketId The id with which the market will be registered in the system.
      */
-    function registerMarket(address market) external payable returns (uint128 newMarketId);
+    function registerMarket(address market) external returns (uint128 newMarketId);
 
     /**
      * @notice Allows an external market connected to the system to deposit USD in the system.
@@ -95,7 +95,7 @@ interface IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external payable returns (uint256 feeAmount);
+    ) external returns (uint256 feeAmount);
 
     /**
      * @notice Allows an external market connected to the system to withdraw snxUSD from the system.
@@ -110,7 +110,7 @@ interface IMarketManagerModule {
         uint128 marketId,
         address target,
         uint256 amount
-    ) external payable returns (uint256 feeAmount);
+    ) external returns (uint256 feeAmount);
 
     /**
      * @notice Get the amount of fees paid in USD for a call to `depositMarketUsd` and `withdrawMarketUsd` for the given market and amount
@@ -176,9 +176,7 @@ interface IMarketManagerModule {
      * @param marketId The id of the market whose debt per share is being queried.
      * @return debtPerShareD18 The market's debt per share value, denominated with 18 decimals of precision.
      */
-    function getMarketDebtPerShare(
-        uint128 marketId
-    ) external payable returns (int256 debtPerShareD18);
+    function getMarketDebtPerShare(uint128 marketId) external returns (int256 debtPerShareD18);
 
     /**
      * @notice Returns whether the capacity of the specified market is locked.
@@ -208,7 +206,7 @@ interface IMarketManagerModule {
     function distributeDebtToPools(
         uint128 marketId,
         uint256 maxIter
-    ) external payable returns (bool finishedDistributing);
+    ) external returns (bool finishedDistributing);
 
     /**
      * @notice allows for a market to set its minimum delegation time. This is useful for preventing stakers from frontrunning rewards or losses
@@ -216,7 +214,7 @@ interface IMarketManagerModule {
      * @param marketId the id of the market that wants to set delegation time.
      * @param minDelegateTime the minimum number of seconds between delegation calls. Note: this value must be less than the globally defined maximum minDelegateTime
      */
-    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external payable;
+    function setMarketMinDelegateTime(uint128 marketId, uint32 minDelegateTime) external;
 
     /**
      * @notice Retrieve the minimum delegation time of a market
@@ -229,7 +227,7 @@ interface IMarketManagerModule {
      * @param marketId the id of the market
      * @param minLiquidityRatio The new market-specific minimum liquidity ratio, denominated with 18 decimals of precision. (100% is represented by 1 followed by 18 zeros.)
      */
-    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external payable;
+    function setMinLiquidityRatio(uint128 marketId, uint256 minLiquidityRatio) external;
 
     /**
      * @notice Retrieves the market-specific minimum liquidity ratio.
@@ -240,10 +238,10 @@ interface IMarketManagerModule {
 
     function getMarketPools(
         uint128 marketId
-    ) external payable returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds);
+    ) external returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds);
 
     function getMarketPoolDebtDistribution(
         uint128 marketId,
         uint128 poolId
-    ) external payable returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27);
+    ) external returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27);
 }

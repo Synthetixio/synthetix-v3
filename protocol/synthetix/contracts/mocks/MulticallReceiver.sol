@@ -6,7 +6,7 @@ import "../interfaces/IMulticallModule.sol";
 contract MulticallReceiver {
     event MessageSenderTested(address indexed sender);
 
-    function testMessageSender() external payable returns (address) {
+    function testMessageSender() external returns (address) {
         emit MessageSenderTested(IMulticallModule(msg.sender).getMessageSender());
         return msg.sender;
     }

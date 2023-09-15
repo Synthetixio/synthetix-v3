@@ -25,7 +25,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     function setMaxCollateralAmount(
         uint128 synthMarketId,
         uint collateralAmount
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.maxCollateralAmounts[synthMarketId] = collateralAmount;
@@ -45,7 +45,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      */
     function setSynthDeductionPriority(
         uint128[] memory newSynthDeductionPriority
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.load().updateSynthDeductionPriority(
             newSynthDeductionPriority
@@ -67,7 +67,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     function setLiquidationRewardGuards(
         uint256 minLiquidationRewardUsd,
         uint256 maxLiquidationRewardUsd
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minLiquidationRewardUsd = minLiquidationRewardUsd;
@@ -105,7 +105,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function setFeeCollector(address feeCollector) external payable override {
+    function setFeeCollector(address feeCollector) external override {
         OwnableStorage.onlyOwner();
         if (feeCollector != address(0)) {
             if (
@@ -129,10 +129,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function updateReferrerShare(
-        address referrer,
-        uint256 shareRatioD18
-    ) external payable override {
+    function updateReferrerShare(address referrer, uint256 shareRatioD18) external override {
         OwnableStorage.onlyOwner();
 
         if (shareRatioD18 > DecimalMath.UNIT) {
@@ -166,7 +163,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     function setPerAccountCaps(
         uint128 maxPositionsPerAccount,
         uint128 maxCollateralsPerAccount
-    ) external payable override {
+    ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.maxPositionsPerAccount = maxPositionsPerAccount;

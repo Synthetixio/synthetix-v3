@@ -40,7 +40,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public payable virtual {
+    ) public virtual {
         OwnableStorage.onlyOwner();
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
@@ -48,7 +48,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @dev Allows the core system and CCIP to mint tokens.
      */
-    function mint(address target, uint256 amount) external payable override {
+    function mint(address target, uint256 amount) external override {
         if (
             msg.sender != OwnableStorage.getOwner() &&
             msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
@@ -62,7 +62,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @dev Allows the core system and CCIP to burn tokens.
      */
-    function burn(address target, uint256 amount) external payable override {
+    function burn(address target, uint256 amount) external override {
         if (
             msg.sender != OwnableStorage.getOwner() &&
             msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
@@ -76,7 +76,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @inheritdoc IUSDTokenModule
      */
-    function burn(uint256 amount) external payable {
+    function burn(uint256 amount) external {
         if (
             msg.sender != OwnableStorage.getOwner() &&
             msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
@@ -90,7 +90,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @inheritdoc IUSDTokenModule
      */
-    function burnWithAllowance(address from, address spender, uint256 amount) external payable {
+    function burnWithAllowance(address from, address spender, uint256 amount) external {
         OwnableStorage.onlyOwner();
 
         ERC20Storage.Data storage erc20 = ERC20Storage.load();
@@ -107,7 +107,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @dev Included to satisfy ITokenModule inheritance.
      */
-    function setAllowance(address from, address spender, uint256 amount) external payable override {
+    function setAllowance(address from, address spender, uint256 amount) external override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }

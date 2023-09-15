@@ -7,7 +7,7 @@ import "../interfaces/external/IChainlinkVerifier.sol";
 contract OracleVerifierMock is IPythVerifier, IChainlinkVerifier {
     int64 public price;
 
-    function setPrice(int64 newPrice) external payable {
+    function setPrice(int64 newPrice) external {
         price = newPrice;
     }
 
