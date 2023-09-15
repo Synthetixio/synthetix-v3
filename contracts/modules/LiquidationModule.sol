@@ -146,7 +146,18 @@ contract LiquidationModule is ILiquidationModule {
             market.positions[accountId].update(newPosition);
         }
 
-        if (flagger == msg.sender) {
+        // `flagPosition` has already (1) withdrew collateral (2) spot sold (3) deposited as usd
+        //
+        // By the time the liquidation occurs (partial or otherwise), we're essentially withdrawing a portion
+        // of that deposited usd margin to pay keepers/liquidator.
+        //
+        // Additionally,
+        // - The endorsedLiquidator receives _no_ liqFreward
+        // - If flagger is the same as the liquidator, they receive both keeper/liqReward
+        // - If flagger/liquidator are different, distribute fees separately
+        if (msg.sender == globalConfig.keeperLiquidationEndorsed) {
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+        } else if (msg.sender == flagger) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
         } else {
             globalConfig.synthetix.withdrawMarketUsd(marketId, flagger, liqReward);

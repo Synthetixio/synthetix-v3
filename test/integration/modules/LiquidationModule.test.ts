@@ -358,7 +358,9 @@ describe('LiquidationModule', () => {
 
     it('should send liqReward to flagger and keeperFee to liquidator');
 
-    it('should send send both fees to flagger if same keeper', async () => {});
+    it('should send send both fees to flagger if same keeper');
+
+    it('should not send endorsed keeper any liquidation rewards');
 
     it('should remove flagger on full liquidation', async () => {
       const { PerpMarketProxy } = systems();
@@ -552,8 +554,6 @@ describe('LiquidationModule', () => {
       it('should partial liquidation even if pd is < maxPd and we reach cap');
 
       it('should track and include endorsed keeper activity (cap + time)');
-
-      it('should not send endorsed keeper any fees');
 
       it('should not remove flagger on partial liquidation');
 
