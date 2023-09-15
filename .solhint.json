@@ -1,6 +1,6 @@
 {
   "extends": ["solhint:recommended"],
-  "plugins": ["numcast", "payable"],
+  "plugins": ["numcast", "erc2771"],
   "rules": {
     "not-rely-on-time": "off",
     "avoid-low-level-calls": "off",
@@ -21,6 +21,7 @@
         "maxLength": 32
       }
     ],
-    "payable/only-payable": "error"
+    "erc2771/no-msg-sender": "error",
+    "erc2771/no-msg-data": "error"
   }
 }
