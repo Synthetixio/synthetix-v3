@@ -258,6 +258,8 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   });
 
   let keeper: Signer;
+  let keeper2: Signer;
+  let keeper3: Signer;
   let endorsedKeeper: Signer;
   const traders: { signer: Signer; accountId: number }[] = [];
 
@@ -274,8 +276,11 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // 4 = trader
     // 5 = trader
     // 6 = keeper (no funds)
-    const [trader1, trader2, trader3, trader4, trader5, _keeper, _endorsedKeeper] = getSigners().slice(1);
+    const [trader1, trader2, trader3, trader4, trader5, _keeper, _keeper2, _keeper3, _endorsedKeeper] =
+      getSigners().slice(1);
     keeper = _keeper;
+    keeper2 = _keeper2;
+    keeper3 = _keeper3;
     endorsedKeeper = _endorsedKeeper;
 
     const owner = getOwner();
@@ -310,7 +315,10 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     args,
     traders: () => traders,
     keeper: () => keeper,
+    keeper2: () => keeper2,
+    keeper3: () => keeper3,
     endorsedKeeper: () => endorsedKeeper,
+    keepers: () => [keeper, keeper2, keeper3, endorsedKeeper],
     restore,
     markets: () => markets,
     collaterals: () => collaterals,

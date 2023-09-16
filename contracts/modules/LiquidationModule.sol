@@ -152,12 +152,9 @@ contract LiquidationModule is ILiquidationModule {
         // of that deposited usd margin to pay keepers/liquidator.
         //
         // Additionally,
-        // - The endorsedLiquidator receives _no_ liqFreward
         // - If flagger is the same as the liquidator, they receive both keeper/liqReward
         // - If flagger/liquidator are different, distribute fees separately
-        if (msg.sender == globalConfig.keeperLiquidationEndorsed) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
-        } else if (msg.sender == flagger) {
+        if (msg.sender == flagger) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
         } else {
             globalConfig.synthetix.withdrawMarketUsd(marketId, flagger, liqReward);
