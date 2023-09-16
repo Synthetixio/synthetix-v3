@@ -100,15 +100,18 @@ describe('OrderModule', () => {
       await fastForwardTo(commitmentTime + maxOrderAge.toNumber() + 1, provider());
 
       // Committed, not settled, fastforward by maxAge, commit again, old order should be canceled.
-      const tx = await PerpMarketProxy.connect(trader.signer).commitOrder(
-        trader.accountId,
-        marketId,
-        order.sizeDelta,
-        order.limitPrice,
-        order.keeperFeeBufferUsd
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).commitOrder(
+            trader.accountId,
+            marketId,
+            order.sizeDelta,
+            order.limitPrice,
+            order.keeperFeeBufferUsd
+          ),
+        provider()
       );
-
-      await assertEvent(tx, `OrderCanceled`, PerpMarketProxy);
+      await assertEvent(receipt, `OrderCanceled`, PerpMarketProxy);
     });
 
     it('should emit all events in correct order');
