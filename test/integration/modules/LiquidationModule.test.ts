@@ -357,7 +357,7 @@ describe('LiquidationModule', () => {
       assertBn.lt(d2.remainingLiquidatableSizeCapacity, d1.remainingLiquidatableSizeCapacity);
     });
 
-    it.only('should send liqReward to flagger and keeperFee to liquidator', async () => {
+    it('should send liqReward to flagger and keeperFee to liquidator', async () => {
       const { PerpMarketProxy, USD } = systems();
 
       const settlementKeeper = keeper();
@@ -401,8 +401,8 @@ describe('LiquidationModule', () => {
       const liqReward = positionLiquidatedEvent?.args.liqReward as BigNumber;
       const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
 
-      assertBn.equal(await USD.balanceOf(flaggerKeeper), liqReward);
-      assertBn.equal(await USD.balanceOf(liquidatorKeeper), keeperFee);
+      assertBn.equal(await USD.balanceOf(await flaggerKeeper.getAddress()), liqReward);
+      assertBn.equal(await USD.balanceOf(await liquidatorKeeper.getAddress()), keeperFee);
     });
 
     it('should send send both fees to flagger if same keeper', async () => {
@@ -449,10 +449,11 @@ describe('LiquidationModule', () => {
       const keeperFee = positionLiquidatedEvent?.args.keeperFee as BigNumber;
       const expectedKeeperUsdBalance = liqReward.add(keeperFee);
 
-      assertBn.equal(await USD.balanceOf(flaggerKeeper), expectedKeeperUsdBalance);
+      assertBn.equal(await USD.balanceOf(await flaggerKeeper.getAddress()), expectedKeeperUsdBalance);
     });
 
-    it('should not send endorsed keeper any liquidation rewards');
+    // TODO: Still figuring out how the endorsed keeper should be paid if at all.
+    it('should not send endorsed keeper any liquidation rewards when flagger');
 
     it('should remove flagger on full liquidation', async () => {
       const { PerpMarketProxy } = systems();

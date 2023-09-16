@@ -90,8 +90,7 @@ contracts = [
   "PerpAccountModule",
   "MarginModule",
   "OrderModule",
-  "LiquidationModule",
-
+  "LiquidationModule"
 ]
 depends = [
   "import.synthetix",
