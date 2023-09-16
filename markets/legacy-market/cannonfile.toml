@@ -34,12 +34,10 @@ source = "<%= settings.oracle_package %>"
 
 [contract.InitialModuleBundle]
 artifact = "InitialModuleBundle"
-
 args = []
 
 [contract.InitialProxy]
 artifact = "Proxy"
-
 args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
 
@@ -54,7 +52,6 @@ abi = "UpgradeModule"
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.Market.address %>"]
-
 factory.Proxy.abiOf = ["Market"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
@@ -63,7 +60,6 @@ factory.Proxy.arg = 0
 target = ["Proxy"]
 from = "<%= settings.owner %>"
 func = "setSystemAddresses"
-
 args = [
     "<%= imports.v2x.contracts.AddressResolver.address %>",
     "<%= imports.v3.contracts.CoreProxy.address %>"
@@ -73,19 +69,28 @@ args = [
 [invoke.setFeatureFlagPool]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-args = ["0x637265617465506f6f6c00000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("createPool")
+args = [
+    "0x637265617465506f6f6c00000000000000000000000000000000000000000000",
+    "<%= settings.pool_owner %>"
+] # formatBytes32String("createPool")
 fromCall.func = "owner"
 
 [invoke.setFeatureFlagMarket]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("registerMarket")
+args = [
+    "0x72656769737465724d61726b6574000000000000000000000000000000000000",
+    "<%= contracts.Proxy.address %>"
+] # formatBytes32String("registerMarket")
 fromCall.func = "owner"
 
 [invoke.setFeatureFlagAssociateDebt]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
-args = ["0x6173736f63696174654465627400000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("associateDebt")
+args = [
+    "0x6173736f63696174654465627400000000000000000000000000000000000000",
+    "<%= contracts.Proxy.address %>"
+] # formatBytes32String("associateDebt")
 fromCall.func = "owner"
 
 [invoke.registerMarket]
@@ -102,18 +107,15 @@ args = [
     "<%= defaultAbiCoder.encode(['address', 'uint256', 'uint8'], [imports.fakeOracle.contracts.MockV3Aggregator.address, 0, 18]) %>",
     []
 ]
-
 extra.snx_oracle_id.event = "NodeRegistered"
 extra.snx_oracle_id.arg = 0
 
 [invoke.configureSnxCollateral]
 target = ["v3.CoreProxy"]
 func = "configureCollateral"
-
 args = [
     { tokenAddress = "<%= imports.v2x.contracts.ProxySynthetix.address %>", oracleNodeId = "<%= extras.snx_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "2000000000000000000", liquidationRewardD18 = "1000000000000000000", minDelegationD18 = "1000000000000000000", depositingEnabled = true }
 ]
-
 fromCall.func = "owner"
 
 # set up on v2x
@@ -126,14 +128,12 @@ args = [
     ["<%= contracts.Proxy.address %>"]
     #["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
 ]
-
 fromCall.func = "owner"
 
 [invoke.authorizedBroker]
 target = ["v2x.SynthetixDebtShare"]
 func = "addAuthorizedBroker"
 args = ["<%= contracts.Proxy.address %>"]
-
 fromCall.func = "owner"
 
 # create spartan council pool

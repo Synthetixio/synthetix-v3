@@ -67,9 +67,8 @@ describe('Account margins test', () => {
     });
 
     it('has correct initial and maintenance margin', async () => {
-      const [initialMargin, maintenanceMargin] = await systems().PerpsMarket.getRequiredMargins(
-        accountId
-      );
+      const [initialMargin, maintenanceMargin] =
+        await systems().PerpsMarket.getRequiredMargins(accountId);
       assertBn.equal(initialMargin, 0);
       assertBn.equal(maintenanceMargin, 0);
     });

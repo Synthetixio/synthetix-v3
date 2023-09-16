@@ -58,15 +58,15 @@ salt = "<%= settings.salt %>"
 # Core
 [router.SpotMarketRouter]
 contracts = [
-  "CoreModule",
-  "SpotMarketFactoryModule",
-  "AtomicOrderModule",
-  "AsyncOrderModule",
-  "AsyncOrderSettlementModule",
-  "AsyncOrderConfigurationModule",
-  "WrapperModule",
-  "MarketConfigurationModule",
-  "FeatureFlagModule"
+    "CoreModule",
+    "SpotMarketFactoryModule",
+    "AtomicOrderModule",
+    "AsyncOrderModule",
+    "AsyncOrderSettlementModule",
+    "AsyncOrderConfigurationModule",
+    "WrapperModule",
+    "MarketConfigurationModule",
+    "FeatureFlagModule"
 ]
 
 [invoke.upgradeSpotMarketProxy]
@@ -80,33 +80,29 @@ factory.SpotMarketProxy.arg = 0
 
 # create synth router
 [router.SynthRouter]
-contracts = [
-  "CoreModule",
-  "SynthTokenModule"
-]
+contracts = ["CoreModule", "SynthTokenModule"]
 
 [invoke.setSynthetixSystem]
 target = ["SpotMarketProxy"]
 fromCall.func = "owner"
 func = "setSynthetix"
-args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>"
-]
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [invoke.setSynthImplementation]
 target = ["SpotMarketProxy"]
 fromCall.func = "owner"
 func = "setSynthImplementation"
-args = [
-  "<%= contracts.SynthRouter.address %>"
-]
+args = ["<%= contracts.SynthRouter.address %>"]
 
 # add pool owner to feature flag allow list
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 fromCall.func = "owner"
-args = ["<%= formatBytes32String('registerMarket') %>", "<%= contracts.SpotMarketProxy.address %>"]
+args = [
+    "<%= formatBytes32String('registerMarket') %>",
+    "<%= contracts.SpotMarketProxy.address %>"
+]
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]

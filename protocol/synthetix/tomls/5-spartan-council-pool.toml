@@ -14,17 +14,12 @@ source = "<%= settings.snx_package %>"
 [invoke.create_preferred_pool]
 target = ["system.CoreProxy"]
 func = "createPool"
-args = [
-    1,
-    "<%= settings.owner %>",
-]
-depends=["import.system"]
+args = [1, "<%= settings.owner %>"]
+depends = ["import.system"]
 
 [invoke.set_preferred_pool]
 target = ["system.CoreProxy"]
 func = "setPreferredPool"
 from = "<%= settings.owner %>"
-args = [
-    1,
-]
-depends=["invoke.create_preferred_pool"]
+args = [1]
+depends = ["invoke.create_preferred_pool"]

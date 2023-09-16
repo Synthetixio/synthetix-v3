@@ -24,8 +24,9 @@ async function run() {
 
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
-  networks[graphNetworkName].PerpsMarketProxy.address =
-    require(`./${networkName}/deployments/PerpsMarketProxy.json`).address;
+  networks[graphNetworkName].PerpsMarketProxy.address = require(
+    `./${networkName}/deployments/PerpsMarketProxy.json`
+  ).address;
 
   const deployTx = require(`./${networkName}/deployments/InitialProxy.json`).deployTxnHash;
   const tx = await provider.getTransactionReceipt(deployTx);

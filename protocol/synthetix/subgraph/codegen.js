@@ -24,8 +24,9 @@ async function run() {
 
   const networks = JSON.parse(fs.readFileSync('./networks.json', 'utf8'));
 
-  networks[graphNetworkName].CoreProxy.address =
-    require(`./${networkName}/deployments/CoreProxy.json`).address;
+  networks[graphNetworkName].CoreProxy.address = require(
+    `./${networkName}/deployments/CoreProxy.json`
+  ).address;
 
   const deployTx = require(`./${networkName}/deployments/InitialCoreProxy.json`).deployTxnHash;
   const tx = await provider.getTransactionReceipt(deployTx);

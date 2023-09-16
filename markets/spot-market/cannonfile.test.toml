@@ -55,15 +55,15 @@ salt = "<%= settings.salt %>"
 # Core
 [router.SpotMarketRouter]
 contracts = [
-  "CoreModule",
-  "SpotMarketFactoryModule",
-  "AtomicOrderModule",
-  "AsyncOrderModule",
-  "AsyncOrderSettlementModule",
-  "AsyncOrderConfigurationModule",
-  "WrapperModule",
-  "MarketConfigurationModule",
-  "FeatureFlagModule"
+    "CoreModule",
+    "SpotMarketFactoryModule",
+    "AtomicOrderModule",
+    "AsyncOrderModule",
+    "AsyncOrderSettlementModule",
+    "AsyncOrderConfigurationModule",
+    "WrapperModule",
+    "MarketConfigurationModule",
+    "FeatureFlagModule"
 ]
 
 [invoke.upgrade_spot_market_proxy]
@@ -77,39 +77,38 @@ factory.SpotMarketProxy.arg = 0
 
 # create synth router
 [router.SynthRouter]
-contracts = [
-  "CoreModule",
-  "SynthTokenModule"
-]
+contracts = ["CoreModule", "SynthTokenModule"]
 
 [invoke.set_synthetix_system]
 target = ["SpotMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
 func = "setSynthetix"
-args = [
-  "<%= imports.synthetix.contracts.CoreProxy.address %>"
-]
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [invoke.set_synth_implementation]
 target = ["SpotMarketProxy"]
 from = "<%= settings.coreProxyOwner %>"
 func = "setSynthImplementation"
-args = [
-  "<%= contracts.SynthRouter.address %>"
-]
+args = ["<%= contracts.SynthRouter.address %>"]
 
 # add pool owner to feature flag allow list
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
+args = [
+    "0x72656769737465724d61726b6574000000000000000000000000000000000000",
+    "<%= contracts.SpotMarketProxy.address %>"
+] # formatBytes32String("registerMarket")
 
 [invoke.addCreateSynthToFeatureFlag]
 target = ["SpotMarketProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.owner %>"
-args = ["0x63726561746553796e7468000000000000000000000000000000000000000000", "<%= settings.owner %>"] # formatBytes32String("createSynth")
+args = [
+    "0x63726561746553796e7468000000000000000000000000000000000000000000",
+    "<%= settings.owner %>"
+] # formatBytes32String("createSynth")
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"

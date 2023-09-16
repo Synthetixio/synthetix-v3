@@ -25,10 +25,8 @@ target = ["system.CoreProxy"]
 from = "<%= settings.owner %>"
 func = "configureChainlinkCrossChain"
 args = [
-  "<%= settings.ccip_send_address %>",
-  "<%= settings.ccip_recv_address %>",
-  "<%= settings.ccip_token_pool_address %>"
+    "<%= settings.ccip_send_address %>",
+    "<%= settings.ccip_recv_address %>",
+    "<%= settings.ccip_token_pool_address %>"
 ]
-depends = [
-  "import.system"
-]
+depends = ["import.system"]

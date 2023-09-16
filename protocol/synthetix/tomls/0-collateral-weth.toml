@@ -25,22 +25,15 @@ args = [
     3,
     "0x000000000000000000000000<%= settings.weth_aggregator_address.slice(2) %>00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008"
 ]
-
 extra.weth_oracle_id.event = "NodeRegistered"
 extra.weth_oracle_id.arg = 0
-
-depends = [
-  "import.system"
-]
+depends = ["import.system"]
 
 [invoke.configure_collateral]
 target = ["system.CoreProxy"]
 fromCall.func = "owner"
 func = "configureCollateral"
 args = [
-  { tokenAddress = "<%= settings.weth_address %>", oracleNodeId = "<%= extras.weth_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "1500000000000000000", liquidationRewardD18 = "10000000000000000", minDelegationD18 = "10000000000000000", depositingEnabled = true }
+    { tokenAddress = "<%= settings.weth_address %>", oracleNodeId = "<%= extras.weth_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "1500000000000000000", liquidationRewardD18 = "10000000000000000", minDelegationD18 = "10000000000000000", depositingEnabled = true }
 ]
-
-depends = [
-  "invoke.registerOracleManager"
-]
+depends = ["invoke.registerOracleManager"]

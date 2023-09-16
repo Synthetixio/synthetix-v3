@@ -287,9 +287,8 @@ describe('MarketConfiguration', async () => {
   });
 
   it('get fundingParameters', async () => {
-    const [skewScale, maxFundingVelocity] = await systems().PerpsMarket.getFundingParameters(
-      marketId
-    );
+    const [skewScale, maxFundingVelocity] =
+      await systems().PerpsMarket.getFundingParameters(marketId);
     assertBn.equal(maxFundingVelocity, fixture.maxFundingVelocity);
     assertBn.equal(skewScale, fixture.skewScale);
   });
