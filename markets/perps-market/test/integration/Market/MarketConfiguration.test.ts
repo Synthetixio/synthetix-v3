@@ -42,7 +42,7 @@ describe('MarketConfiguration', async () => {
     maxLiquidationLimitAccumulationMultiplier: bn(5),
     minimumPositionMargin: bn(50),
     liquidationRewardRatioD18: bn(10e9),
-    maxSecondsInLiquidationWindow: bn(10),
+    maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
     maxLiquidationPd: bn(0),
   };
 

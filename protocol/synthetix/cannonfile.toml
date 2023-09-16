@@ -149,6 +149,7 @@ args = [
     "https://synthetix.io",
     "<%= contracts.AccountRouter.address %>"
 ]
+depends = ["invoke.upgrade_core_proxy", "router.AccountRouter"]
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
@@ -164,6 +165,7 @@ args = [
     18,
     "<%= contracts.USDRouter.address %>"
 ]
+depends = ["invoke.upgrade_core_proxy", "router.USDRouter"]
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2

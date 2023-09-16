@@ -90,5 +90,9 @@ describe('Liquidation - endorsed liquidator', async () => {
         .getOpenPosition(2, perpsMarket.marketId());
       assertBn.equal(size, bn(0));
     });
+
+    it('did not send any liquidation reward', async () => {
+      assertBn.equal(await systems().USD.balanceOf(keeper().getAddress()), 0);
+    });
   });
 });

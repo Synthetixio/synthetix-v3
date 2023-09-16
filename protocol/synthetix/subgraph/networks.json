@@ -22,5 +22,11 @@
       "address": "0x76490713314fCEC173f44e99346F54c6e92a8E42",
       "startBlock": 5833624
     }
+  },
+  "base-testnet": {
+    "CoreProxy": {
+      "address": "0xa53346A1684DAB73EFfd048fA40Fb1fA9327fDe9",
+      "startBlock": 9243584
+    }
   }
 }

@@ -5,14 +5,18 @@
   "version": "1.0.0",
   "scripts": {
     "subgraphgen": "yarn subgraph:deployments && yarn subgraph:codegen && yarn subgraph:build",
-    "subgraph:deployments": "yarn deployments:optimism-goerli",
-    "subgraph:codegen": "yarn codegen:optimism-goerli",
-    "subgraph:build": "yarn build:optimism-goerli",
+    "subgraph:deployments": "yarn deployments:optimism-goerli && yarn deployments:base-goerli",
+    "subgraph:codegen": "yarn codegen:optimism-goerli && yarn codegen:base-goerli",
+    "subgraph:build": "yarn build:optimism-goerli && yarn build:base-goerli",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "deployments:optimism-goerli": "cannon inspect synthetix-perps-market:latest --chain-id 420 --write-deployments ./optimism-goerli/deployments",
     "codegen:optimism-goerli": "node ./codegen optimism-goerli && graph codegen subgraph.optimism-goerli.yaml --output-dir=optimism-goerli/generated && prettier --write optimism-goerli/generated",
     "build:optimism-goerli": "graph build subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --network optimism-goerli",
-    "deploy:optimism-goerli": "graph deploy snx-v3/v3-perps-opt-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --network optimism-goerli --product hosted-service",
+    "deploy:optimism-goerli": "graph deploy perps-market-optimism-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --network optimism-goerli --version-label v0.0.1 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
+    "deployments:base-goerli": "cannon inspect synthetix-perps-market:latest --chain-id 84531 --write-deployments ./base-goerli/deployments",
+    "codegen:base-goerli": "node ./codegen base-goerli && graph codegen subgraph.base-goerli.yaml --output-dir=base-goerli/generated && prettier --write base-goerli/generated",
+    "build:base-goerli": "graph build subgraph.base-goerli.yaml --output-dir ./build/base-goerli --network base-testnet",
+    "deploy:base-goerli": "graph deploy perps-market-base-testnet subgraph.base-goerli.yaml --output-dir ./build/base-goerli --network base-testnet --version-label v0.0.1 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "test": "graph test",
     "coverage": "yarn deployments:optimism-goerli && yarn codegen:optimism-goerli && git diff --exit-code && yarn test --coverage",
     "create-local": "graph create --node http://localhost:8020/ snx-v3/v3-perps-opt-goerli",
@@ -22,9 +26,9 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.50.1",
     "@graphprotocol/graph-ts": "^0.30.0",
-    "@usecannon/cli": "^2.5.4",
+    "@usecannon/cli": "^2.6.1",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.5.2",
-    "prettier": "^2.8.8"
+    "prettier": "^3.0.3"
   }
 }

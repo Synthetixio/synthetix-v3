@@ -263,16 +263,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/parser@npm:7.16.4":
-  version: 7.16.4
-  resolution: "@babel/parser@npm:7.16.4"
-  bin:
-    parser: ./bin/babel-parser.js
-  checksum: ce0a8f92f440f2a12bc932f070a7b60c5133bf8a63f461841f9e39af0194f573707959d606c6fad1a2fd496a45148553afd9b74d3b8dd36cdb7861598d1f3e36
-  languageName: node
-  linkType: hard
-
-"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.15, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.21.3, @babel/parser@npm:^7.22.5":
+"@babel/parser@npm:7.22.5, @babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.15, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.21.3, @babel/parser@npm:^7.22.5":
   version: 7.22.5
   resolution: "@babel/parser@npm:7.22.5"
   bin:
@@ -2809,11 +2800,9 @@ __metadata:
     "@synthetixio/hardhat-storage": "workspace:*"
     "@typechain/ethers-v5": 10.1.0
     "@typechain/hardhat": 6.1.3
-    "@usecannon/builder": ^2.5.4
-    cannon-plugin-router: ^1.0.16
     dotenv: 16.0.1
     hardhat: 2.17.2
-    hardhat-cannon: 2.5.4
+    hardhat-cannon: 2.5.6
     hardhat-contract-sizer: 2.10.0
     hardhat-gas-reporter: 1.0.9
     hardhat-ignore-warnings: 0.2.9
@@ -2830,7 +2819,6 @@ __metadata:
     "@ethersproject/bignumber": ^5.7.0
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/router": ^3.1.3
     ethers: ^5.7.2
     hardhat: 2.17.2
   languageName: unknown
@@ -2842,7 +2830,7 @@ __metadata:
   dependencies:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
-    "@synthetixio/router": ^3.1.3
+    "@synthetixio/router": ^3.3.0
     ethers: ^5.7.2
     hardhat: 2.17.2
   languageName: unknown
@@ -2854,10 +2842,10 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.1
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
-    prettier: ^2.8.8
+    prettier: ^3.0.3
   languageName: unknown
   linkType: soft
 
@@ -2868,12 +2856,13 @@ __metadata:
     "@ethersproject/abi": ^5.7.0
     "@istanbuljs/nyc-config-typescript": 1.0.2
     "@types/prompts": 2.0.14
+    "@usecannon/builder": 2.6.1
     chalk: 4.1.2
     ethereumjs-util: 6.2.1
     ethers: ^5.7.2
     fast-glob: 3.2.12
     hardhat: 2.17.2
-    mocha: 10.2.0
+    mocha: ^10.2.0
     multimatch: 6.0.0
     nyc: 15.1.0
     prompts: 2.4.2
@@ -2881,7 +2870,7 @@ __metadata:
     sinon: 11.1.2
     solc: 0.8.17
     solidity-ast: 0.4.46
-    typescript: 4.9.3
+    typescript: ^4.9.3
   peerDependencies:
     "@usecannon/builder": 2.4.7
     ethers: ^5.7.2
@@ -2900,9 +2889,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/deps@workspace:utils/deps"
   dependencies:
-    depcheck: 1.4.3
-    prettier: ^2.8.8
-    typescript: 4.9.3
+    depcheck: ^1.4.3
+    prettier: ^3.0.3
+    typescript: ^4.9.3
   bin:
     deps: ./deps.js
     deps-circular: ./circular.js
@@ -2914,9 +2903,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.1
     handlebars: 4.7.7
-    prettier: ^2.8.8
+    prettier: ^3.0.3
     solidity-ast: 0.4.46
     solidity-docgen: 0.6.0-beta.35
   languageName: unknown
@@ -2931,7 +2920,7 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": ^3.1.3
+    "@synthetixio/router": ^3.3.0
     hardhat: 2.17.2
     solidity-docgen: 0.6.0-beta.35
   languageName: unknown
@@ -2949,7 +2938,7 @@ __metadata:
     mustache: 4.2.0
     solidity-ast: 0.4.46
     ts-jest: 29.0.5
-    typescript: 4.9.3
+    typescript: ^4.9.3
   languageName: unknown
   linkType: soft
 
@@ -2960,7 +2949,6 @@ __metadata:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": ^3.1.3
     "@synthetixio/wei": 2.74.4
     ethers: ^5.7.2
     hardhat: 2.17.2
@@ -2978,9 +2966,8 @@ __metadata:
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": ^3.1.3
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": 2.74.4
-    "@usecannon/builder": ^2.5.4
     ethers: ^5.7.2
     hardhat: 2.17.2
     solidity-ast: 0.4.46
@@ -2998,14 +2985,14 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/router": ^3.1.3
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": 2.74.4
-    "@types/node": 18.11.10
+    "@types/node": ^18.16.0
     ethers: ^5.7.2
     hardhat: 2.17.2
     solidity-docgen: 0.6.0-beta.35
     ts-node: 10.9.1
-    typescript: 4.9.3
+    typescript: ^4.9.3
   languageName: unknown
   linkType: soft
 
@@ -3015,10 +3002,10 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.1
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
-    prettier: ^2.8.8
+    prettier: ^3.0.3
   languageName: unknown
   linkType: soft
 
@@ -3033,15 +3020,15 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": ^3.1.3
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": 2.74.4
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.1
     ethers: ^5.7.2
     hardhat: 2.17.2
     solidity-docgen: 0.6.0-beta.35
     ts-node: 10.9.1
-    typescript: 4.9.3
+    typescript: ^4.9.3
   languageName: unknown
   linkType: soft
 
@@ -3070,12 +3057,10 @@ __metadata:
     "@synthetixio/core-modules": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/hardhat-storage": "workspace:*"
-    "@synthetixio/router": ^3.1.3
-    "@usecannon/builder": ^2.5.4
-    cannon-plugin-router: ^1.0.16
+    "@synthetixio/router": ^3.3.0
     ethers: ^5.7.2
     hardhat: 2.17.2
-    hardhat-cannon: 2.5.4
+    hardhat-cannon: 2.5.6
     solidity-coverage: 0.8.2
   languageName: unknown
   linkType: soft
@@ -3086,10 +3071,10 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.50.1
     "@graphprotocol/graph-ts": ^0.30.0
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.1
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
-    prettier: ^2.8.8
+    prettier: ^3.0.3
   languageName: unknown
   linkType: soft
 
@@ -3104,16 +3089,16 @@ __metadata:
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
     "@synthetixio/oracle-manager": "workspace:*"
-    "@synthetixio/router": ^3.1.3
+    "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": 2.74.4
     "@types/node-fetch": 2.6.4
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/cli": ^2.6.1
     ethers: ^5.7.2
     hardhat: 2.17.2
     node-fetch: 2.6.9
     solidity-docgen: 0.6.0-beta.35
     ts-node: 10.9.1
-    typescript: 4.9.3
+    typescript: ^4.9.3
   languageName: unknown
   linkType: soft
 
@@ -3476,13 +3461,6 @@ __metadata:
   version: 20.3.1
   resolution: "@types/node@npm:20.3.1"
   checksum: 63a393ab6d947be17320817b35d7277ef03728e231558166ed07ee30b09fd7c08861be4d746f10fdc63ca7912e8cd023939d4eab887ff6580ff704ff24ed810c
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:18.11.10":
-  version: 18.11.10
-  resolution: "@types/node@npm:18.11.10"
-  checksum: 0f60cb090b2ee91fcd3dc4311bc1ed7889b92f14644c0069f100776f86474c12eebbcc6c75bc0d7d96b975a103b4d5d6b3c22b4e88bea6e7f4e2b1bb0daf5ea8
   languageName: node
   linkType: hard
 
@@ -5165,16 +5143,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cannon-plugin-router@npm:^1.0.16":
-  version: 1.0.16
-  resolution: "cannon-plugin-router@npm:1.0.16"
-  dependencies:
-    "@synthetixio/router": ^3.1.4
-    zod: ^3.21.4
-  checksum: 27f6f541419e2c6ed1be4d4f433844079e5c72fa2dce631454321a7a14bddd48d7a4966de57934cf7c6753c8f16aad85a7673be7708f42ff6b640c59e93ce26f
-  languageName: node
-  linkType: hard
-
 "cardinal@npm:^2.1.1":
   version: 2.1.1
   resolution: "cardinal@npm:2.1.1"
@@ -5318,7 +5286,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chokidar@npm:3.5.3, chokidar@npm:>=3.0.0 <4.0.0, chokidar@npm:^3.4.0":
+"chokidar@npm:3.5.3, chokidar@npm:^3.4.0":
   version: 3.5.3
   resolution: "chokidar@npm:3.5.3"
   dependencies:
@@ -6280,17 +6248,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"depcheck@npm:1.4.3":
-  version: 1.4.3
-  resolution: "depcheck@npm:1.4.3"
+"depcheck@npm:^1.4.3":
+  version: 1.4.6
+  resolution: "depcheck@npm:1.4.6"
   dependencies:
-    "@babel/parser": 7.16.4
-    "@babel/traverse": ^7.12.5
+    "@babel/parser": 7.22.5
+    "@babel/traverse": 7.22.5
     "@vue/compiler-sfc": ^3.0.5
+    callsite: ^1.0.0
     camelcase: ^6.2.0
     cosmiconfig: ^7.0.0
     debug: ^4.2.0
     deps-regex: ^0.1.4
+    findup-sync: ^5.0.0
     ignore: ^5.1.8
     is-core-module: ^2.4.0
     js-yaml: ^3.14.0
@@ -6299,17 +6269,15 @@ __metadata:
     minimatch: ^3.0.4
     multimatch: ^5.0.0
     please-upgrade-node: ^3.2.0
-    query-ast: ^1.0.3
     readdirp: ^3.5.0
     require-package-name: ^2.0.1
     resolve: ^1.18.1
-    sass: ^1.29.0
-    scss-parser: ^1.0.4
+    resolve-from: ^5.0.0
     semver: ^7.3.2
     yargs: ^16.1.0
   bin:
     depcheck: bin/depcheck.js
-  checksum: 122631cab325707a55e26a8b530eb72c893bd481194100b1853ac2bc944b61320eb0e1ea0ff7e71724009cdfbd4057381d7bf868b9c5aad0c4207ac0bdca5e48
+  checksum: 028c11045377249e9a4c24817157829b238b7794e7ad4856f7d587214ed0fae3fb8bd27b9962bdad38b405464ad64a13e45fb45ca78f6563d1675057fd9961e9
   languageName: node
   linkType: hard
 
@@ -6331,6 +6299,13 @@ __metadata:
   version: 0.1.4
   resolution: "deps-regex@npm:0.1.4"
   checksum: 70c5e7fa887513bb8c55165c53e4ae511786ed7bf3d98d4dbef97a8879a808a5bc549034b1dfcdc7565c153e2fc2f7d8ee766eeb88156e78b2447dd75c1516e9
+  languageName: node
+  linkType: hard
+
+"detect-file@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "detect-file@npm:1.0.0"
+  checksum: 1861e4146128622e847abe0e1ed80fef01e78532665858a792267adf89032b7a9c698436137707fcc6f02956c2a6a0052d6a0cef5be3d4b76b1ff0da88e2158a
   languageName: node
   linkType: hard
 
@@ -7281,6 +7256,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expand-tilde@npm:^2.0.0, expand-tilde@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "expand-tilde@npm:2.0.2"
+  dependencies:
+    homedir-polyfill: ^1.0.1
+  checksum: 2efe6ed407d229981b1b6ceb552438fbc9e5c7d6a6751ad6ced3e0aa5cf12f0b299da695e90d6c2ac79191b5c53c613e508f7149e4573abfbb540698ddb7301a
+  languageName: node
+  linkType: hard
+
 "expect@npm:^29.0.0, expect@npm:^29.5.0":
   version: 29.5.0
   resolution: "expect@npm:29.5.0"
@@ -8194,6 +8178,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"global-prefix@npm:^1.0.1":
+  version: 1.0.2
+  resolution: "global-prefix@npm:1.0.2"
+  dependencies:
+    expand-tilde: ^2.0.2
+    homedir-polyfill: ^1.0.1
+    ini: ^1.3.4
+    is-windows: ^1.0.1
+    which: ^1.2.14
+  checksum: 061b43470fe498271bcd514e7746e8a8535032b17ab9570517014ae27d700ff0dca749f76bbde13ba384d185be4310d8ba5712cb0e74f7d54d59390db63dd9a0
+  languageName: node
+  linkType: hard
+
 "global-prefix@npm:^3.0.0":
   version: 3.0.0
   resolution: "global-prefix@npm:3.0.0"
@@ -8395,13 +8392,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-cannon@npm:2.5.4":
-  version: 2.5.4
-  resolution: "hardhat-cannon@npm:2.5.4"
+"hardhat-cannon@npm:2.5.6":
+  version: 2.5.6
+  resolution: "hardhat-cannon@npm:2.5.6"
   dependencies:
     "@iarna/toml": ^3.0.0
-    "@usecannon/builder": ^2.5.4
-    "@usecannon/cli": ^2.5.4
+    "@usecannon/builder": ^2.6.1
+    "@usecannon/cli": ^2.6.1
     adm-zip: ^0.5.9
     chalk: ^4.1.2
     debug: ^4.3.3
@@ -8417,7 +8414,7 @@ __metadata:
     "@nomiclabs/hardhat-ethers": ^2.0.0
     "@nomiclabs/hardhat-etherscan": ^3.0.0
     hardhat: ^2.0.0
-  checksum: 3ec2208fcaf61b70ef8c627cfe825fe2f56ee08ca9252ca6b89cc337495fb1965841c8a0e38e4a0f7c6bb405e712aa752158a2603b818afa23259b49b93af491
+  checksum: b76d9feb5846626c32bd20146345c4dec3a2a9a3e91b726d6e57336bf88c4fbdc6ce6884c406d85a11dea8fbce6b9943ee54af60a91efa8fb702a1edd044a0cc
   languageName: node
   linkType: hard
 
@@ -8665,6 +8662,15 @@ __metadata:
     minimalistic-assert: ^1.0.0
     minimalistic-crypto-utils: ^1.0.1
   checksum: bd30b6a68d7f22d63f10e1888aee497d7c2c5c0bb469e66bbdac99f143904d1dfe95f8131f95b3e86c86dd239963c9d972fcbe147e7cffa00e55d18585c43fe0
+  languageName: node
+  linkType: hard
+
+"homedir-polyfill@npm:^1.0.1":
+  version: 1.0.3
+  resolution: "homedir-polyfill@npm:1.0.3"
+  dependencies:
+    parse-passwd: ^1.0.0
+  checksum: 18dd4db87052c6a2179d1813adea0c4bfcfa4f9996f0e226fefb29eb3d548e564350fa28ec46b0bf1fbc0a1d2d6922ceceb80093115ea45ff8842a4990139250
   languageName: node
   linkType: hard
 
@@ -9009,15 +9015,6 @@ __metadata:
   version: 1.4.0
   resolution: "interpret@npm:1.4.0"
   checksum: 2e5f51268b5941e4a17e4ef0575bc91ed0ab5f8515e3cf77486f7c14d13f3010df9c0959f37063dcc96e78d12dc6b0bb1b9e111cdfe69771f4656d2993d36155
-  languageName: node
-  linkType: hard
-
-"invariant@npm:2.2.4":
-  version: 2.2.4
-  resolution: "invariant@npm:2.2.4"
-  dependencies:
-    loose-envify: ^1.0.0
-  checksum: cc3182d793aad82a8d1f0af697b462939cb46066ec48bbf1707c150ad5fad6406137e91a262022c269702e01621f35ef60269f6c0d7fd178487959809acdfb14
   languageName: node
   linkType: hard
 
@@ -9569,7 +9566,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-windows@npm:^1.0.2":
+"is-windows@npm:^1.0.1, is-windows@npm:^1.0.2":
   version: 1.0.2
   resolution: "is-windows@npm:1.0.2"
   checksum: 438b7e52656fe3b9b293b180defb4e448088e7023a523ec21a91a80b9ff8cdb3377ddb5b6e60f7c7de4fa8b63ab56e121b6705fe081b3cf1b828b0a380009ad7
@@ -10301,7 +10298,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-tokens@npm:^3.0.0 || ^4.0.0, js-tokens@npm:^4.0.0":
+"js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
   checksum: 8a95213a5a77deb6cbe94d86340e8d9ace2b93bc367790b260101d2f36a2eaf4e4e22d9fa9cf459b38af3a32fb4190e638024cf82ec95ef708680e405ea7cc78
@@ -11044,17 +11041,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0":
-  version: 1.4.0
-  resolution: "loose-envify@npm:1.4.0"
-  dependencies:
-    js-tokens: ^3.0.0 || ^4.0.0
-  bin:
-    loose-envify: cli.js
-  checksum: 6517e24e0cad87ec9888f500c5b5947032cdfe6ef65e1c1936a0c48a524b81e65542c9c3edc91c97d5bddc806ee2a985dbc79be89215d613b1de5db6d1cfe6f4
-  languageName: node
-  linkType: hard
-
 "lru-cache@npm:^4.0.1":
   version: 4.1.5
   resolution: "lru-cache@npm:4.1.5"
@@ -11696,6 +11682,38 @@ __metadata:
     _mocha: bin/_mocha
     mocha: bin/mocha
   checksum: 0fc9ad0dd79e43a34de03441634f58e8a3d211af4cdbcd56de150ec99f7aff3b8678bd5aeb41f82115f7df4199a24f7bb372f65e5bcba133b41a5310dee908bd
+  languageName: node
+  linkType: hard
+
+"mocha@npm:^10.0.0, mocha@npm:^10.2.0":
+  version: 10.2.0
+  resolution: "mocha@npm:10.2.0"
+  dependencies:
+    ansi-colors: 4.1.1
+    browser-stdout: 1.3.1
+    chokidar: 3.5.3
+    debug: 4.3.4
+    diff: 5.0.0
+    escape-string-regexp: 4.0.0
+    find-up: 5.0.0
+    glob: 7.2.0
+    he: 1.2.0
+    js-yaml: 4.1.0
+    log-symbols: 4.1.0
+    minimatch: 5.0.1
+    ms: 2.1.3
+    nanoid: 3.3.3
+    serialize-javascript: 6.0.0
+    strip-json-comments: 3.1.1
+    supports-color: 8.1.1
+    workerpool: 6.2.1
+    yargs: 16.2.0
+    yargs-parser: 20.2.4
+    yargs-unparser: 2.0.0
+  bin:
+    _mocha: bin/_mocha
+    mocha: bin/mocha.js
+  checksum: 406c45eab122ffd6ea2003c2f108b2bc35ba036225eee78e0c784b6fa2c7f34e2b13f1dbacef55a4fdf523255d76e4f22d1b5aacda2394bd11666febec17c719
   languageName: node
   linkType: hard
 
@@ -12756,6 +12774,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"parse-passwd@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "parse-passwd@npm:1.0.0"
+  checksum: 4e55e0231d58f828a41d0f1da2bf2ff7bcef8f4cb6146e69d16ce499190de58b06199e6bd9b17fbf0d4d8aef9052099cdf8c4f13a6294b1a522e8e958073066e
+  languageName: node
+  linkType: hard
+
 "parse-path@npm:^7.0.0":
   version: 7.0.0
   resolution: "parse-path@npm:7.0.0"
@@ -13313,16 +13338,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"query-ast@npm:^1.0.3":
-  version: 1.0.5
-  resolution: "query-ast@npm:1.0.5"
-  dependencies:
-    invariant: 2.2.4
-    lodash: ^4.17.21
-  checksum: 4b7ae79bc907d0614c8d306d77fc82a19d40f5900bace286943839b875d84a52aa4993a73fdb8f4e989461b88474c47a60a48c7a42964b53253d5abe1452e9ad
-  languageName: node
-  linkType: hard
-
 "queue-microtask@npm:^1.2.2, queue-microtask@npm:^1.2.3":
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
@@ -13695,6 +13710,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-dir@npm:^1.0.0, resolve-dir@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "resolve-dir@npm:1.0.1"
+  dependencies:
+    expand-tilde: ^2.0.0
+    global-modules: ^1.0.0
+  checksum: ef736b8ed60d6645c3b573da17d329bfb50ec4e1d6c5ffd6df49e3497acef9226f9810ea6823b8ece1560e01dcb13f77a9f6180d4f242d00cc9a8f4de909c65c
+  languageName: node
+  linkType: hard
+
 "resolve-from@npm:^3.0.0":
   version: 3.0.0
   resolution: "resolve-from@npm:3.0.0"
@@ -14005,16 +14030,6 @@ __metadata:
   version: 3.0.1
   resolution: "scrypt-js@npm:3.0.1"
   checksum: b7c7d1a68d6ca946f2fbb0778e0c4ec63c65501b54023b2af7d7e9f48fdb6c6580d6f7675cd53bda5944c5ebc057560d5a6365079752546865defb3b79dea454
-  languageName: node
-  linkType: hard
-
-"scss-parser@npm:^1.0.4":
-  version: 1.0.6
-  resolution: "scss-parser@npm:1.0.6"
-  dependencies:
-    invariant: 2.2.4
-    lodash: 4.17.21
-  checksum: f1424d73e9c6aec006df16da7222a590efc3ee9b2abb622caffb5e19ed029baf66cf0d2d7aaad1e3d84e5d7f75cf7a3f761570341f26b318b499b08a7e5cd91c
   languageName: node
   linkType: hard
 
@@ -14599,7 +14614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:>=0.6.2 <2.0.0, source-map-js@npm:^1.0.2":
+"source-map-js@npm:^1.0.2":
   version: 1.0.2
   resolution: "source-map-js@npm:1.0.2"
   checksum: c049a7fc4deb9a7e9b481ae3d424cc793cb4845daa690bc5a05d428bf41bf231ced49b4cf0c9e77f9d42fdb3d20d6187619fc586605f5eabe995a316da8d377c
@@ -15736,13 +15751,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.9.3":
-  version: 4.9.3
-  resolution: "typescript@npm:4.9.3"
+"typescript@npm:^4.9.3":
+  version: 4.9.5
+  resolution: "typescript@npm:4.9.5"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 17b8f816050b412403e38d48eef0e893deb6be522d6dc7caf105e54a72e34daf6835c447735fd2b28b66784e72bfbf87f627abb4818a8e43d1fa8106396128dc
+  checksum: ee000bc26848147ad423b581bd250075662a354d84f0e06eb76d3b892328d8d4440b7487b5a83e851b12b255f55d71835b008a66cbf8f255a11e4400159237db
   languageName: node
   linkType: hard
 
@@ -15762,7 +15777,7 @@ __metadata:
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: d7bdcf5e18193f709339540d69577f7b0389000265db2bf10edfaa67336a29d6bcbee11828084150f7fdd110d605794cfa6df33bebc0a2e33daad2dbe2a7a59f
+  checksum: 1f8f3b6aaea19f0f67cba79057674ba580438a7db55057eb89cc06950483c5d632115c14077f6663ea76fd09fce3c190e6414bb98582ec80aa5a4eaf345d5b68
   languageName: node
   linkType: hard
 
@@ -16195,7 +16210,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"which@npm:1.3.1, which@npm:^1.1.1, which@npm:^1.2.9, which@npm:^1.3.1":
+"which@npm:1.3.1, which@npm:^1.1.1, which@npm:^1.2.14, which@npm:^1.2.9, which@npm:^1.3.1":
   version: 1.3.1
   resolution: "which@npm:1.3.1"
   dependencies:

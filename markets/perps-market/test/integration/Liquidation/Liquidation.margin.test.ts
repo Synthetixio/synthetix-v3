@@ -20,7 +20,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -39,7 +39,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -58,7 +58,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -77,7 +77,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -96,7 +96,7 @@ describe('Liquidation - margin', async () => {
         maintenanceMarginScalar: bn(0.5),
         maxLiquidationLimitAccumulationMultiplier: bn(1),
         liquidationRewardRatio: bn(0.05),
-        maxSecondsInLiquidationWindow: bn(10),
+        maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
         minimumPositionMargin: bn(0),
       },
       settlementStrategy: {
@@ -284,7 +284,7 @@ describe('Liquidation - margin', async () => {
       const minimumInitialMarginRatio = bn(0.5);
       const maxLiquidationLimitAccumulationMultiplier = bn(1);
       const liquidationRewardRatio = bn(0.05);
-      const maxSecondsInLiquidationWindow = bn(10);
+      const maxSecondsInLiquidationWindow = ethers.BigNumber.from(10);
       const minimumPositionMargin = bn(50); // this is the only change from the initial values
       await systems()
         .PerpsMarket.connect(owner())
