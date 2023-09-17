@@ -142,3 +142,4 @@ func = "initializeFactory"
 from = "<%= settings.owner %>"
 extra.superMarketId.event = "FactoryInitialized"
 extra.superMarketId.arg = 0
+depends = ["invoke.setSynthetix"]
