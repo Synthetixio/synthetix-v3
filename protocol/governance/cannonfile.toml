@@ -48,6 +48,9 @@ depends = ["contract.InitialModuleBundle"]
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
+[contract.CrossChainModule]
+artifact = "contracts/modules/core/CrossChainModule.sol:CrossChainModule"
+
 [contract.ElectionInspectorModule]
 artifact = "contracts/modules/core/ElectionInspectorModule.sol:ElectionInspectorModule"
 
@@ -63,6 +66,7 @@ artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenMod
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",
+    "CrossChainModule",
     "ElectionInspectorModule",
     "ElectionModule",
     "SnapshotVotePowerModule",
@@ -70,6 +74,7 @@ contracts = [
 ]
 depends = [
     "contract.AssociatedSystemsModule",
+    "contract.CrossChainModule",
     "contract.ElectionInspectorModule",
     "contract.ElectionModule",
     "contract.SnapshotVotePowerModule",
