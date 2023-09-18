@@ -251,8 +251,14 @@ contract MarginModule is IMarginModule {
             ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
                 ? ITokenModule(globalMarketConfig.usdToken)
                 : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
-            uint256 allowance = synth.allowance(msg.sender, address(this));
-            synth.decreaseAllowance(address(this), allowance);
+            uint256 synthetixAllowance = synth.allowance(msg.sender, address(globalMarketConfig.synthetix));
+            synth.decreaseAllowance(address(globalMarketConfig.synthetix), synthetixAllowance);
+
+            uint256 spotMarketAllowance = synth.allowance(msg.sender, address(globalMarketConfig.spotMarket));
+            synth.decreaseAllowance(address(globalMarketConfig.spotMarket), spotMarketAllowance);
+
+            uint256 thisContractAllowance = synth.allowance(msg.sender, address(this));
+            synth.decreaseAllowance(address(this), thisContractAllowance);
 
             unchecked {
                 ++i;
@@ -274,6 +280,7 @@ contract MarginModule is IMarginModule {
             uint256 maxUint = type(uint256).max;
 
             synth.approve(address(globalMarketConfig.synthetix), maxUint);
+            synth.approve(address(globalMarketConfig.spotMarket), maxUint);
             synth.approve(address(this), maxUint);
             globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowable);
             newSupportedSynthMarketIds[i] = synthMarketId;
