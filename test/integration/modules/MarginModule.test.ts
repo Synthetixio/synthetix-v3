@@ -25,6 +25,7 @@ import {
   fastForwardBySec,
   findEventSafe,
   mintAndApprove,
+  BURN_ADDRESS,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -948,6 +949,8 @@ describe('MarginModule', async () => {
         await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
         const actualBalance = await collateral.contract.balanceOf(traderAddress);
 
+        assertBn.lt(expectedChange.toBN(), wei(0).toBN());
+
         assertBn.equal(actualBalance, startingCollateralBalance.add(expectedChange).toBN());
       });
 
@@ -1051,7 +1054,8 @@ describe('MarginModule', async () => {
       });
 
       it('should withdraw correct amount after losing position', async () => {
-        const { PerpMarketProxy } = systems();
+        const { PerpMarketProxy, SpotMarket, Core } = systems();
+
         const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
 
         // Deposit margin with collateral 1.
@@ -1116,16 +1120,13 @@ describe('MarginModule', async () => {
 
         // Change collateral price 10% win.
         const newCollateralPrice = wei(collateralPrice).mul(1.1);
-        await collateral.aggregator().mockSetCurrentPrice(newCollateralPrice.toBN());
+        await collateral.updatePrice(newCollateralPrice.toBN());
 
         const closeOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredSize: wei(openOrder.sizeDelta).mul(-1).toBN(),
         });
-
+        // Close the order with a loss
         const { receipt: closeReceipt } = await commitAndSettle(bs, marketId, trader, closeOrder);
-
-        // Do the withdraw.
-        await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
 
         // Collect some data for calculation.
         const { args: closeEventArgs } =
@@ -1134,18 +1135,80 @@ describe('MarginModule', async () => {
             contract: PerpMarketProxy,
             eventName: 'OrderSettled',
           }) || {};
+        const { args: marketUsdDepositedArgs } =
+          findEventSafe({
+            receipt: closeReceipt,
+            contract: Core,
+            eventName: 'MarketUsdDeposited',
+          }) || {};
 
+        // Calculate things for assertions
         const pnl = calcPnl(openOrder.sizeDelta, closeOrder.fillPrice, openOrder.fillPrice);
         const openOrderFees = wei(openOrder.orderFee).add(openEventArgs?.keeperFee);
         const closeOrderFees = wei(closeOrder.orderFee).add(closeEventArgs?.keeperFee);
+        const collateralMarketId = collateral.synthMarket.marketId();
+        const [keeperAddress, blockTimestamp] = await Promise.all([
+          bs.keeper().getAddress(),
+          provider()
+            .getBlock(closeReceipt.blockHash)
+            .then(({ timestamp }) => timestamp),
+        ]);
 
         // Calculate diff amount.
         const usdDiffAmount = wei(pnl).sub(openOrderFees).sub(closeOrderFees).add(closeEventArgs?.accruedFunding);
         const collateralDiffAmount = usdDiffAmount.div(newCollateralPrice);
 
+        /**
+         * Assert close position call. We want to make sure we've interacted with v3 Core correctly
+         */
+
+        // usdDiffAmount will have some rounding errors, make sure our calculated value it's "near" marketUsdDepositedArgs?.amount,
+        // and then use marketUsdDepositedArgs?.amount when matching events
+        assertBn.near(marketUsdDepositedArgs?.amount, usdDiffAmount.abs().toBN(), wei('0.000001').toBN());
+
+        const dollarAmount = marketUsdDepositedArgs?.amount;
+        const amount = wei(marketUsdDepositedArgs?.amount).div(newCollateralPrice).toBN();
+
+        // Assert events from all contracts, to make sure CORE's market manager is paid correctly
+        await assertEvents(
+          closeReceipt,
+          [
+            /PriceFeedUpdate/, // Pyth events
+            /BatchPriceFeedUpdate/, // Pyth events
+            /FundingRecomputed/, // funding recomputed, don't care about the exact values here
+            `Transfer("${Core.address}", "${PerpMarketProxy.address}", ${amount})`,
+            `MarketCollateralWithdrawn(${marketId}, "${collateral.contract.address}", ${amount}, "${PerpMarketProxy.address}")`, // withdraw collateral, to sell to pay back losing pos in sUSD
+            `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${amount})`, // withdraw collateral, to sell to pay back losing pos in sUSD
+            `Transfer("${BURN_ADDRESS}", "${PerpMarketProxy.address}", ${dollarAmount})`, // emitted from selling synths
+            `MarketUsdWithdrawn(${collateralMarketId}, "${PerpMarketProxy.address}", ${dollarAmount}, "${SpotMarket.address}")`, // emitted from selling synthe
+            `SynthSold(${collateralMarketId}, ${dollarAmount}, [0, 0, 0, 0], 0, "${BURN_ADDRESS}", ${newCollateralPrice.toBN()})`, // Sell collateral to sUSD to pay back losing pos
+            `Transfer("${PerpMarketProxy.address}", "${BURN_ADDRESS}", ${dollarAmount})`, // part of depositing sUSD to market manager
+            `MarketUsdDeposited(${marketId}, "${PerpMarketProxy.address}", ${dollarAmount}, "${PerpMarketProxy.address}")`, // deposit sUSD into market manager, this will let LPs of this market profit
+            `Transfer("${BURN_ADDRESS}", "${keeperAddress}", ${closeEventArgs?.keeperFee})`, // Part of withdrawing sUSD to pay keeper
+            `MarketUsdWithdrawn(${marketId}, "${keeperAddress}", ${closeEventArgs?.keeperFee}, "${PerpMarketProxy.address}")`, // Withdraw sUSD to pay keeper, note here that this amount is covered by the traders losses, so this amount will be included in MarketUsdDeposited
+            `OrderSettled(${trader.accountId}, ${marketId}, ${blockTimestamp}, ${closeOrder.sizeDelta}, ${closeOrder.orderFee}, ${closeEventArgs?.keeperFee}, ${closeEventArgs?.accruedFunding}, ${closeEventArgs?.pnl}, ${closeOrder.fillPrice})`, // Order settled.
+          ],
+          // PerpsMarket abi gets events from Core, SpotMarket, Pyth and ERC20 added
+          extendContractAbi(
+            PerpMarketProxy,
+            Core.interface
+              .format(utils.FormatTypes.full)
+              .concat(SpotMarket.interface.format(utils.FormatTypes.full))
+              .concat([
+                'event Transfer(address indexed from, address indexed to, uint256 value)', //ERC20
+                'event PriceFeedUpdate(bytes32 indexed id, uint64 publishTime, int64 price, uint64 conf)', // Pyth
+                'event BatchPriceFeedUpdate(uint16 chainId, uint64 sequenceNumber)', // Pyth
+              ])
+          )
+        );
+
+        // Actually do the withdraw.
+        await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, marketId);
+
         const expectedCollateralBalanceAfterTrade = wei(startingCollateralBalance).add(collateralDiffAmount).toBN();
         const balanceAfterTrade = await collateral.contract.balanceOf(traderAddress);
-
+        // We expect to be losing
+        assertBn.lt(collateralDiffAmount.toBN(), 0);
         // Assert that the balance is correct.
         assertBn.equal(expectedCollateralBalanceAfterTrade, balanceAfterTrade);
       });

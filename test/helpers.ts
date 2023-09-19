@@ -12,6 +12,7 @@ import { Bs, Collateral, CommitableOrder, GeneratedTrader, Trader } from './type
 export const SECONDS_ONE_HR = 60 * 60;
 export const SECONDS_ONE_DAY = SECONDS_ONE_HR * 24;
 export const SYNTHETIX_USD_MARKET_ID = BigNumber.from(0);
+export const BURN_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // --- Mutative helpers --- //
 
@@ -179,16 +180,12 @@ export const commitAndSettle = async (
   const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
   const settlementKeeper = options?.desiredKeeper ?? keeper();
 
-  const { tx, receipt } = await withExplicitEvmMine(
-    () =>
-      PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
-        value: updateFee,
-      }),
-    provider()
-  );
+  const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
+    value: updateFee,
+  });
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
-
-  return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
+  // TODO, need to figure out if we can rely on wait
+  return { tx, receipt: await tx.wait(), settlementTime, publishTime, lastBaseFeePerGas };
 };
 
 /** Updates the provided `contract` with more ABI details. */
