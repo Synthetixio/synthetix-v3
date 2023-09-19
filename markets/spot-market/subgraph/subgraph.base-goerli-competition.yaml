@@ -1,6 +1,6 @@
 specVersion: 0.0.4
 schema:
-  file: ./base-goerli/schema.graphql
+  file: ./base-goerli-competition/schema.graphql
 dataSources:
   - kind: ethereum
     network: base-testnet
@@ -13,10 +13,10 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./base-goerli/index.ts
+      file: ./base-goerli-competition/index.ts
       abis:
         - name: SpotMarketProxy
-          file: ./base-goerli/deployments/SpotMarketProxy.json
+          file: ./base-goerli-competition/deployments/SpotMarketProxy.json
       entities:
         - Wrapper
         - Order

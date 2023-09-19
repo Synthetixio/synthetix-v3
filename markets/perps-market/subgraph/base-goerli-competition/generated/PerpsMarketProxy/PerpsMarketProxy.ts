@@ -871,12 +871,8 @@ export class SettlementStrategyAddedStrategyStruct extends ethereum.Tuple {
     return this[7].toBigInt();
   }
 
-  get priceDeviationTolerance(): BigInt {
-    return this[8].toBigInt();
-  }
-
   get disabled(): boolean {
-    return this[9].toBoolean();
+    return this[8].toBoolean();
   }
 }
 
@@ -1187,6 +1183,101 @@ export class PerpsMarketProxy__metadataResult {
   }
 }
 
+export class PerpsMarketProxy__commitOrderResultRetOrderStruct extends ethereum.Tuple {
+  get settlementTime(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get request(): PerpsMarketProxy__commitOrderResultRetOrderRequestStruct {
+    return changetype<PerpsMarketProxy__commitOrderResultRetOrderRequestStruct>(this[1].toTuple());
+  }
+}
+
+export class PerpsMarketProxy__commitOrderResultRetOrderRequestStruct extends ethereum.Tuple {
+  get marketId(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get accountId(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get sizeDelta(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get settlementStrategyId(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get acceptablePrice(): BigInt {
+    return this[4].toBigInt();
+  }
+
+  get trackingCode(): Bytes {
+    return this[5].toBytes();
+  }
+
+  get referrer(): Address {
+    return this[6].toAddress();
+  }
+}
+
+export class PerpsMarketProxy__commitOrderResult {
+  value0: PerpsMarketProxy__commitOrderResultRetOrderStruct;
+  value1: BigInt;
+
+  constructor(value0: PerpsMarketProxy__commitOrderResultRetOrderStruct, value1: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromTuple(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    return map;
+  }
+
+  getRetOrder(): PerpsMarketProxy__commitOrderResultRetOrderStruct {
+    return this.value0;
+  }
+
+  getFees(): BigInt {
+    return this.value1;
+  }
+}
+
+export class PerpsMarketProxy__commitOrderInputCommitmentStruct extends ethereum.Tuple {
+  get marketId(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get accountId(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get sizeDelta(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get settlementStrategyId(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get acceptablePrice(): BigInt {
+    return this[4].toBigInt();
+  }
+
+  get trackingCode(): Bytes {
+    return this[5].toBytes();
+  }
+
+  get referrer(): Address {
+    return this[6].toAddress();
+  }
+}
+
 export class PerpsMarketProxy__computeOrderFeesResult {
   value0: BigInt;
   value1: BigInt;
@@ -1249,6 +1340,76 @@ export class PerpsMarketProxy__getOrderResultOrderRequestStruct extends ethereum
 
   get referrer(): Address {
     return this[6].toAddress();
+  }
+}
+
+export class PerpsMarketProxy__liquidationCapacityResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
+    return map;
+  }
+
+  getCapacity(): BigInt {
+    return this.value0;
+  }
+
+  getMaxLiquidationInWindow(): BigInt {
+    return this.value1;
+  }
+
+  getLatestLiquidationTimestamp(): BigInt {
+    return this.value2;
+  }
+}
+
+export class PerpsMarketProxy__addSettlementStrategyInputStrategyStruct extends ethereum.Tuple {
+  get strategyType(): i32 {
+    return this[0].toI32();
+  }
+
+  get settlementDelay(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get settlementWindowDuration(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get priceWindowDuration(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get priceVerificationContract(): Address {
+    return this[4].toAddress();
+  }
+
+  get feedId(): Bytes {
+    return this[5].toBytes();
+  }
+
+  get url(): string {
+    return this[6].toString();
+  }
+
+  get settlementReward(): BigInt {
+    return this[7].toBigInt();
+  }
+
+  get disabled(): boolean {
+    return this[8].toBoolean();
   }
 }
 
@@ -1420,12 +1581,8 @@ export class PerpsMarketProxy__getSettlementStrategyResultSettlementStrategyStru
     return this[7].toBigInt();
   }
 
-  get priceDeviationTolerance(): BigInt {
-    return this[8].toBigInt();
-  }
-
   get disabled(): boolean {
-    return this[9].toBoolean();
+    return this[8].toBoolean();
   }
 }
 
@@ -1482,6 +1639,21 @@ export class PerpsMarketProxy__getPerAccountCapsResult {
 export class PerpsMarketProxy extends ethereum.SmartContract {
   static bind(address: Address): PerpsMarketProxy {
     return new PerpsMarketProxy('PerpsMarketProxy', address);
+  }
+
+  createAccount(): BigInt {
+    let result = super.call('createAccount', 'createAccount():(uint128)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_createAccount(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('createAccount', 'createAccount():(uint128)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getAccountLastInteraction(accountId: BigInt): BigInt {
@@ -1654,21 +1826,6 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     );
   }
 
-  getMessageSender(): Address {
-    let result = super.call('getMessageSender', 'getMessageSender():(address)', []);
-
-    return result[0].toAddress();
-  }
-
-  try_getMessageSender(): ethereum.CallResult<Address> {
-    let result = super.tryCall('getMessageSender', 'getMessageSender():(address)', []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toAddress());
-  }
-
   getImplementation(): Address {
     let result = super.call('getImplementation', 'getImplementation():(address)', []);
 
@@ -1712,6 +1869,48 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  createMarket(requestedMarketId: BigInt, marketName: string, marketSymbol: string): BigInt {
+    let result = super.call('createMarket', 'createMarket(uint128,string,string):(uint128)', [
+      ethereum.Value.fromUnsignedBigInt(requestedMarketId),
+      ethereum.Value.fromString(marketName),
+      ethereum.Value.fromString(marketSymbol),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_createMarket(
+    requestedMarketId: BigInt,
+    marketName: string,
+    marketSymbol: string
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('createMarket', 'createMarket(uint128,string,string):(uint128)', [
+      ethereum.Value.fromUnsignedBigInt(requestedMarketId),
+      ethereum.Value.fromString(marketName),
+      ethereum.Value.fromString(marketSymbol),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  initializeFactory(): BigInt {
+    let result = super.call('initializeFactory', 'initializeFactory():(uint128)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_initializeFactory(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('initializeFactory', 'initializeFactory():(uint128)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   minimumCredit(perpsMarketId: BigInt): BigInt {
@@ -2159,6 +2358,45 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  commitOrder(
+    commitment: PerpsMarketProxy__commitOrderInputCommitmentStruct
+  ): PerpsMarketProxy__commitOrderResult {
+    let result = super.call(
+      'commitOrder',
+      'commitOrder((uint128,uint128,int128,uint128,uint256,bytes32,address)):((uint256,(uint128,uint128,int128,uint128,uint256,bytes32,address)),uint256)',
+      [ethereum.Value.fromTuple(commitment)]
+    );
+
+    return changetype<PerpsMarketProxy__commitOrderResult>(
+      new PerpsMarketProxy__commitOrderResult(
+        changetype<PerpsMarketProxy__commitOrderResultRetOrderStruct>(result[0].toTuple()),
+        result[1].toBigInt()
+      )
+    );
+  }
+
+  try_commitOrder(
+    commitment: PerpsMarketProxy__commitOrderInputCommitmentStruct
+  ): ethereum.CallResult<PerpsMarketProxy__commitOrderResult> {
+    let result = super.tryCall(
+      'commitOrder',
+      'commitOrder((uint128,uint128,int128,uint128,uint256,bytes32,address)):((uint256,(uint128,uint128,int128,uint128,uint256,bytes32,address)),uint256)',
+      [ethereum.Value.fromTuple(commitment)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      changetype<PerpsMarketProxy__commitOrderResult>(
+        new PerpsMarketProxy__commitOrderResult(
+          changetype<PerpsMarketProxy__commitOrderResultRetOrderStruct>(value[0].toTuple()),
+          value[1].toBigInt()
+        )
+      )
+    );
+  }
+
   computeOrderFees(marketId: BigInt, sizeDelta: BigInt): PerpsMarketProxy__computeOrderFeesResult {
     let result = super.call(
       'computeOrderFees',
@@ -2384,6 +2622,104 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
+  liquidate(accountId: BigInt): BigInt {
+    let result = super.call('liquidate', 'liquidate(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(accountId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_liquidate(accountId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('liquidate', 'liquidate(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(accountId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  liquidateFlagged(): BigInt {
+    let result = super.call('liquidateFlagged', 'liquidateFlagged():(uint256)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_liquidateFlagged(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('liquidateFlagged', 'liquidateFlagged():(uint256)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  liquidationCapacity(marketId: BigInt): PerpsMarketProxy__liquidationCapacityResult {
+    let result = super.call(
+      'liquidationCapacity',
+      'liquidationCapacity(uint128):(uint256,uint256,uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+
+    return new PerpsMarketProxy__liquidationCapacityResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt()
+    );
+  }
+
+  try_liquidationCapacity(
+    marketId: BigInt
+  ): ethereum.CallResult<PerpsMarketProxy__liquidationCapacityResult> {
+    let result = super.tryCall(
+      'liquidationCapacity',
+      'liquidationCapacity(uint128):(uint256,uint256,uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new PerpsMarketProxy__liquidationCapacityResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt()
+      )
+    );
+  }
+
+  addSettlementStrategy(
+    marketId: BigInt,
+    strategy: PerpsMarketProxy__addSettlementStrategyInputStrategyStruct
+  ): BigInt {
+    let result = super.call(
+      'addSettlementStrategy',
+      'addSettlementStrategy(uint128,(uint8,uint256,uint256,uint256,address,bytes32,string,uint256,bool)):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromTuple(strategy)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_addSettlementStrategy(
+    marketId: BigInt,
+    strategy: PerpsMarketProxy__addSettlementStrategyInputStrategyStruct
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'addSettlementStrategy',
+      'addSettlementStrategy(uint128,(uint8,uint256,uint256,uint256,address,bytes32,string,uint256,bool)):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromTuple(strategy)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getFundingParameters(marketId: BigInt): PerpsMarketProxy__getFundingParametersResult {
     let result = super.call(
       'getFundingParameters',
@@ -2557,7 +2893,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   ): PerpsMarketProxy__getSettlementStrategyResultSettlementStrategyStruct {
     let result = super.call(
       'getSettlementStrategy',
-      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,uint256,address,bytes32,string,uint256,uint256,bool))',
+      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,uint256,address,bytes32,string,uint256,bool))',
       [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(strategyId)]
     );
 
@@ -2572,7 +2908,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   ): ethereum.CallResult<PerpsMarketProxy__getSettlementStrategyResultSettlementStrategyStruct> {
     let result = super.tryCall(
       'getSettlementStrategy',
-      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,uint256,address,bytes32,string,uint256,uint256,bool))',
+      'getSettlementStrategy(uint128,uint256):((uint8,uint256,uint256,uint256,address,bytes32,string,uint256,bool))',
       [ethereum.Value.fromUnsignedBigInt(marketId), ethereum.Value.fromUnsignedBigInt(strategyId)]
     );
     if (result.reverted) {
@@ -3115,82 +3451,6 @@ export class MulticallCall__Outputs {
 
   get results(): Array<Bytes> {
     return this._call.outputValues[0].value.toBytesArray();
-  }
-}
-
-export class MulticallThroughCall extends ethereum.Call {
-  get inputs(): MulticallThroughCall__Inputs {
-    return new MulticallThroughCall__Inputs(this);
-  }
-
-  get outputs(): MulticallThroughCall__Outputs {
-    return new MulticallThroughCall__Outputs(this);
-  }
-}
-
-export class MulticallThroughCall__Inputs {
-  _call: MulticallThroughCall;
-
-  constructor(call: MulticallThroughCall) {
-    this._call = call;
-  }
-
-  get to(): Array<Address> {
-    return this._call.inputValues[0].value.toAddressArray();
-  }
-
-  get data(): Array<Bytes> {
-    return this._call.inputValues[1].value.toBytesArray();
-  }
-
-  get values(): Array<BigInt> {
-    return this._call.inputValues[2].value.toBigIntArray();
-  }
-}
-
-export class MulticallThroughCall__Outputs {
-  _call: MulticallThroughCall;
-
-  constructor(call: MulticallThroughCall) {
-    this._call = call;
-  }
-
-  get results(): Array<Bytes> {
-    return this._call.outputValues[0].value.toBytesArray();
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall extends ethereum.Call {
-  get inputs(): SetAllowlistedMulticallTargetCall__Inputs {
-    return new SetAllowlistedMulticallTargetCall__Inputs(this);
-  }
-
-  get outputs(): SetAllowlistedMulticallTargetCall__Outputs {
-    return new SetAllowlistedMulticallTargetCall__Outputs(this);
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall__Inputs {
-  _call: SetAllowlistedMulticallTargetCall;
-
-  constructor(call: SetAllowlistedMulticallTargetCall) {
-    this._call = call;
-  }
-
-  get target(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get allowlisted(): boolean {
-    return this._call.inputValues[1].value.toBoolean();
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall__Outputs {
-  _call: SetAllowlistedMulticallTargetCall;
-
-  constructor(call: SetAllowlistedMulticallTargetCall) {
-    this._call = call;
   }
 }
 
@@ -3955,12 +4215,8 @@ export class AddSettlementStrategyCallStrategyStruct extends ethereum.Tuple {
     return this[7].toBigInt();
   }
 
-  get priceDeviationTolerance(): BigInt {
-    return this[8].toBigInt();
-  }
-
   get disabled(): boolean {
-    return this[9].toBoolean();
+    return this[8].toBoolean();
   }
 }
 

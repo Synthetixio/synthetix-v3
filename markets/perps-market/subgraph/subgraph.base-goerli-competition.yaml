@@ -1,6 +1,6 @@
 specVersion: 0.0.4
 schema:
-  file: ./base-goerli/schema.graphql
+  file: ./base-goerli-competition/schema.graphql
 dataSources:
   - kind: ethereum
     network: base-testnet
@@ -13,10 +13,10 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./base-goerli/index.ts
+      file: ./base-goerli-competition/index.ts
       abis:
         - name: PerpsMarketProxy
-          file: ./base-goerli/deployments/PerpsMarketProxy.json
+          file: ./base-goerli-competition/deployments/PerpsMarketProxy.json
       entities:
         - Account
         - Market
@@ -47,9 +47,7 @@ dataSources:
           handler: handleLockedOiRatioSet
         - event: OrderFeesSet(indexed uint128,uint256,uint256)
           handler: handleOrderFeesSet
-        - event: SettlementStrategyAdded(indexed
-            uint128,(uint8,uint256,uint256,uint256,address,bytes32,string,uint256,uint256,bool),indexed
-            uint256)
+        - event: SettlementStrategyAdded(indexed uint128,(uint8,uint256,uint256,uint256,address,bytes32,string,uint256,bool),indexed uint256)
           handler: handleSettlementStrategyAdded
         - event: SettlementStrategyEnabled(indexed uint128,uint256,bool)
           handler: handleSettlementStrategyEnabled
