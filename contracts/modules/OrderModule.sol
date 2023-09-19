@@ -159,9 +159,9 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Upon successful settlement, update `market` for `accountId` with `newPosition` details.
+     * @dev Upon successful settlement, update `market` and account margin with `newPosition` details.
      */
-    function updateMarketPostSettlement(
+    function postSettlementUpdates(
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
@@ -237,7 +237,7 @@ contract OrderModule is IOrderModule {
             runtime.pythPrice,
             marketConfig
         );
-        updateMarketPostSettlement(
+        postSettlementUpdates(
             accountId,
             market,
             runtime.trade.newPosition,
