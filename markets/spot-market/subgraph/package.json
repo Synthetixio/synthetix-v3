@@ -4,6 +4,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "cannon": "cannon",
+    "prettier": "prettier",
+    "graph": "graph",
     "subgraphgen": "./codegen.sh",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "deploy:optimism-mainnet": "graph deploy spot-market-optimism-mainnet subgraph.optimism-mainnet.yaml --output-dir ./build/optimism-mainnet --network optimism --version-label v0.0.1 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",

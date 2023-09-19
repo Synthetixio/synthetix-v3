@@ -4,6 +4,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "cannon": "cannon",
+    "prettier": "prettier",
+    "graph": "graph",
     "subgraphgen": "./codegen.sh",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "deploy:mainnet": "graph deploy snx-v3/mainnet subgraph.mainnet.yaml --output-dir ./build/mainnet --network mainnet --product hosted-service",

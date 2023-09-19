@@ -10,21 +10,21 @@ codegen() {
   echo
   echo
   echo '>' cannon inspect "$cannonPackage" --preset $cannonPreset --chain-id "$chainId" --write-deployments "./$namespace/deployments"
-  cannon inspect "$cannonPackage" --preset $cannonPreset --chain-id "$chainId" --write-deployments "./$namespace/deployments"
+  yarn cannon inspect "$cannonPackage" --preset $cannonPreset --chain-id "$chainId" --write-deployments "./$namespace/deployments"
 
   echo
   echo
   echo
   echo '>' graph codegen "subgraph.$namespace.yaml" --output-dir "$namespace/generated"
-  graph codegen "subgraph.$namespace.yaml" --output-dir "$namespace/generated"
-  prettier --write "$namespace/generated"
+  yarn graph codegen "subgraph.$namespace.yaml" --output-dir "$namespace/generated"
+  yarn prettier --write "$namespace/generated"
 
   echo
   echo
   echo
   echo '>' graph build "subgraph.$namespace.yaml" --output-dir "./build/$namespace"
-  graph build "subgraph.$namespace.yaml" --output-dir "./build/$namespace"
-  prettier --write "subgraph.$namespace.yaml"
+  yarn graph build "subgraph.$namespace.yaml" --output-dir "./build/$namespace"
+  yarn prettier --write "subgraph.$namespace.yaml"
 }
 
 
