@@ -20,7 +20,7 @@ defaultValue = "main"
 defaultValue = "synthetix-spot-market:<%= package.version %>"
 
 [setting.salt]
-defaultValue = 'snax'
+defaultValue = "snax"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"

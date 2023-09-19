@@ -13,7 +13,7 @@ defaultValue = "synthetix:<%= package.version %>"
 defaultValue = "main"
 
 [setting.salt]
-defaultValue = 'snax'
+defaultValue = "snax"
 
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
