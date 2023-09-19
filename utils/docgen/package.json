@@ -12,7 +12,7 @@
     "docgen:contracts": "./docgen-contracts.sh"
   },
   "devDependencies": {
-    "@usecannon/cli": "^2.6.1",
+    "@usecannon/cli": "^2.7.1",
     "handlebars": "4.7.7",
     "prettier": "^3.0.3",
     "solidity-ast": "0.4.46",

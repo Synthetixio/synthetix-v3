@@ -133,6 +133,7 @@ library AccountRBAC {
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -565,11 +566,11 @@ library GlobalPerpsMarketConfiguration {
     }
 }
 
-// @custom:artifact contracts/storage/LiquidationAmount.sol:LiquidationAmount
-library LiquidationAmount {
+// @custom:artifact contracts/storage/Liquidation.sol:Liquidation
+library Liquidation {
     struct Data {
-        uint128 timestamp;
         uint128 amount;
+        uint256 timestamp;
     }
 }
 
@@ -619,12 +620,12 @@ library PerpsMarket {
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        uint128 __unused_1;
+        uint128 __unused_2;
         int256 debtCorrectionAccumulator;
         mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
-        LiquidationAmount.Data[] liquidationAmounts;
+        Liquidation.Data[] liquidationData;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));
