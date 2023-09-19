@@ -1,22 +1,22 @@
 specVersion: 0.0.4
 schema:
-  file: ./base-goerli/schema.graphql
+  file: ./base-goerli-competition/schema.graphql
 dataSources:
   - kind: ethereum
     network: base-testnet
     name: CoreProxy
     source:
       abi: CoreProxy
-      address: "0x76490713314fCEC173f44e99346F54c6e92a8E42"
-      startBlock: 3109083
+      address: "0xa53346A1684DAB73EFfd048fA40Fb1fA9327fDe9"
+      startBlock: 9243584
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./base-goerli/index.ts
+      file: ./base-goerli-competition/index.ts
       abis:
         - name: CoreProxy
-          file: ./base-goerli/deployments/CoreProxy.json
+          file: ./base-goerli-competition/deployments/CoreProxy.json
       entities:
         - PoolModule
         - MarketManagerModule
