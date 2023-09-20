@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.3.4",
+  "version": "3.2.0-xchain.0",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
@@ -24,6 +24,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@chainlink/contracts": "^0.6.1",
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-contracts": "workspace:*",
     "@synthetixio/core-modules": "workspace:*",
@@ -38,5 +39,8 @@
     "solidity-docgen": "0.6.0-beta.35",
     "ts-node": "10.9.1"
   },
-  "gitHead": "ba5a9730df248cd1999b5a6fd1bf67b307b95eec"
+  "gitHead": "af79d976af56150c628a885cc94a94f5bcc2c862",
+  "dependencies": {
+    "erc7412": "0.1.0"
+  }
 }

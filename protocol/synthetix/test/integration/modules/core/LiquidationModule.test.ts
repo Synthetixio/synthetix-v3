@@ -291,11 +291,7 @@ describe('LiquidationModule', function () {
 
           await systems()
             .Core.connect(user2)
-            .withdraw(
-              liquidatorAccountId,
-              await systems().Core.getUsdToken(),
-              liquidatorAccountStartingBalance
-            );
+            .withdraw(liquidatorAccountId, systems().USD.address, liquidatorAccountStartingBalance);
         });
 
         before('record collateral ratio', async () => {

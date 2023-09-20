@@ -20,6 +20,7 @@ import "../../storage/Config.sol";
 contract IssueUSDModule is IIssueUSDModule {
     using Account for Account.Data;
     using AccountRBAC for AccountRBAC.Data;
+    using Collateral for Collateral.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
@@ -100,12 +101,15 @@ contract IssueUSDModule is IIssueUSDModule {
         // Decrease the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
 
-        AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
-
-        // Mint stablecoins to the core system
-        usdToken.asToken().mint(address(this), amount);
-
-        account.collaterals[usdToken.getAddress()].increaseAvailableCollateral(amount);
+        // Mint stablecoins to the core system and set accounting to grant to account
+        AssociatedSystem.load(_USD_TOKEN).asToken().mint(address(this), amount);
+        Account
+            .load(accountId)
+            .collaterals[AssociatedSystem.load(_USD_TOKEN).proxy]
+            .increaseAvailableCollateral(amount);
+        Account.load(accountId).collaterals[AssociatedSystem.load(_USD_TOKEN).proxy].locks.push(
+            CollateralLock.Data(amount.to128(), uint64(block.timestamp), poolId, collateralType)
+        );
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);
@@ -157,9 +161,11 @@ contract IssueUSDModule is IIssueUSDModule {
         AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
 
         // Burn the stablecoins
-        usdToken.asToken().burn(address(this), amount);
-
-        account.collaterals[usdToken.getAddress()].decreaseAvailableCollateral(amount);
+        Account
+            .load(accountId)
+            .collaterals[AssociatedSystem.load(_USD_TOKEN).proxy]
+            .decreaseAvailableCollateral(amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().burn(address(this), amount);
 
         if (feeAmount > 0 && feeAddress != address(0)) {
             AssociatedSystem.load(_USD_TOKEN).asToken().mint(feeAddress, feeAmount);

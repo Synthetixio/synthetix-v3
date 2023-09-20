@@ -40,14 +40,23 @@ artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.CcipReceiverModule]
-artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
+[contract.OffchainChainlinkModule]
+artifact = "contracts/modules/core/OffchainChainlinkModule.sol:OffchainChainlinkModule"
+
+[contract.OffchainWormholeModule]
+artifact = "contracts/modules/core/OffchainWormholeModule.sol:OffchainWormholeModule"
 
 [contract.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 
 [contract.CollateralConfigurationModule]
 artifact = "contracts/modules/core/CollateralConfigurationModule.sol:CollateralConfigurationModule"
+
+[contract.CrossChainPoolModule]
+artifact = "contracts/modules/core/CrossChainPoolModule.sol:CrossChainPoolModule"
+
+[contract.CrossChainUpkeepModule]
+artifact = "contracts/modules/core/CrossChainUpkeepModule.sol:CrossChainUpkeepModule"
 
 [contract.CrossChainUSDModule]
 artifact = "contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule"
@@ -96,9 +105,12 @@ contracts = [
     "AccountModule",
     "AssociateDebtModule",
     "AssociatedSystemsModule",
-    "CcipReceiverModule",
+    "OffchainChainlinkModule",
+		"OffchainWormholeModule",
     "CollateralModule",
     "CollateralConfigurationModule",
+    "CrossChainPoolModule",
+    "CrossChainUpkeepModule",
     "CrossChainUSDModule",
     "IssueUSDModule",
     "LiquidationModule",
@@ -110,6 +122,31 @@ contracts = [
     "RewardsManagerModule",
     "UtilsModule",
     "VaultModule",
+]
+
+depends = [
+  "contract.InitialModuleBundle",
+  "contract.FeatureFlagModule",
+  "contract.AccountModule",
+  "contract.AssociateDebtModule",
+  "contract.AssociatedSystemsModule",
+  "contract.OffchainChainlinkModule",
+	"contract.OffchainWormholeModule",
+  "contract.CollateralModule",
+  "contract.CollateralConfigurationModule",
+  "contract.CrossChainPoolModule",
+  "contract.CrossChainUpkeepModule",
+  "contract.CrossChainUSDModule",
+  "contract.IssueUSDModule",
+  "contract.LiquidationModule",
+  "contract.MarketCollateralModule",
+  "contract.MarketManagerModule",
+  "contract.MulticallModule",
+  "contract.PoolConfigurationModule",
+  "contract.PoolModule",
+  "contract.RewardsManagerModule",
+  "contract.UtilsModule",
+  "contract.VaultModule"
 ]
 
 [contract.InitialCoreProxy]

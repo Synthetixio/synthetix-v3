@@ -22,8 +22,11 @@ artifact = "contracts/generated/test/TestableCollateralConfigurationStorage.sol:
 [contract.TestableCollateralLockStorage]
 artifact = "contracts/generated/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
 
-[contract.TestableCrossChainStorage]
-artifact = "contracts/generated/test/TestableCrossChainStorage.sol:TestableCrossChainStorage"
+[contract.TestableCrossChainChainlinkStorage]
+artifact = "contracts/generated/test/TestableCrossChainChainlinkStorage.sol:TestableCrossChainChainlinkStorage"
+
+[contract.TestableCrossChainWormholeStorage]
+artifact = "contracts/generated/test/TestableCrossChainWormholeStorage.sol:TestableCrossChainWormholeStorage"
 
 [contract.TestableDistributionStorage]
 artifact = "contracts/generated/test/TestableDistributionStorage.sol:TestableDistributionStorage"
@@ -69,9 +72,12 @@ contracts = [
     "AccountModule",
     "AssociateDebtModule",
     "AssociatedSystemsModule",
-    "CcipReceiverModule",
+    "OffchainChainlinkModule",
+    "OffchainWormholeModule",
     "CollateralModule",
     "CollateralConfigurationModule",
+    "CrossChainPoolModule",
+    "CrossChainUpkeepModule",
     "CrossChainUSDModule",
     "IssueUSDModule",
     "LiquidationModule",
@@ -88,7 +94,8 @@ contracts = [
     "TestableCollateralStorage",
     "TestableCollateralConfigurationStorage",
     "TestableCollateralLockStorage",
-    "TestableCrossChainStorage",
+    "TestableCrossChainChainlinkStorage",
+    "TestableCrossChainWormholeStorage",
     "TestableDistributionStorage",
     "TestableDistributionActorStorage",
     "TestableMarketStorage",
@@ -100,6 +107,50 @@ contracts = [
     "TestableScalableMappingStorage",
     "TestableVaultEpochStorage",
     "TestableVaultStorage",
+]
+
+depends = [
+  "contract.InitialModuleBundle",
+  "contract.FeatureFlagModule",
+  "contract.AccountModule",
+  "contract.AssociateDebtModule",
+  "contract.AssociatedSystemsModule",
+  "contract.OffchainChainlinkModule",
+	"contract.OffchainWormholeModule",
+  "contract.CollateralModule",
+  "contract.CollateralConfigurationModule",
+  "contract.CrossChainPoolModule",
+  "contract.CrossChainUpkeepModule",
+  "contract.CrossChainUSDModule",
+  "contract.IssueUSDModule",
+  "contract.LiquidationModule",
+  "contract.MarketCollateralModule",
+  "contract.MarketManagerModule",
+  "contract.MulticallModule",
+  "contract.PoolConfigurationModule",
+  "contract.PoolModule",
+  "contract.RewardsManagerModule",
+  "contract.UtilsModule",
+  "contract.VaultModule",
+  "contract.TestableAccountStorage",
+  "contract.TestableAccountRBACStorage",
+  "contract.TestableCollateralStorage",
+  "contract.TestableCollateralConfigurationStorage",
+  "contract.TestableCollateralLockStorage",
+  "contract.TestableCrossChainChainlinkStorage",
+  "contract.TestableCrossChainWormholeStorage",
+  "contract.TestableDistributionStorage",
+  "contract.TestableDistributionActorStorage",
+  "contract.TestableMarketStorage",
+  "contract.TestableMarketConfigurationStorage",
+  "contract.TestableMarketPoolInfoStorage",
+  "contract.TestablePoolStorage",
+  "contract.TestableSystemPoolConfigurationStorage",
+  "contract.TestableRewardDistributionStorage",
+  "contract.TestableRewardDistributionClaimStatusStorage",
+  "contract.TestableScalableMappingStorage",
+  "contract.TestableVaultEpochStorage",
+  "contract.TestableVaultStorage",
 ]
 
 # Post stuff
@@ -119,10 +170,10 @@ args = ["SampleToken", "TKN", "18"]
 target = ["CoreProxy"]
 fromCall.func = "owner"
 func = "multicall"
-args = [
-    [
-        # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('registerMarket'), true]).slice(2) %>",
-        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createPool'), true]).slice(2) %>",
-    ]
-]
+args = [[
+  # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
+  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('registerMarket'), true]).slice(2) %>",
+  "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createPool'), true]).slice(2) %>",
+]]
+
+depends = ["invoke.upgrade_core_proxy"]

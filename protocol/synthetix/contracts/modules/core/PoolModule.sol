@@ -37,6 +37,10 @@ contract PoolModule is IPoolModule {
             revert AddressError.ZeroAddress();
         }
 
+        if (requestedPoolId >= type(uint128).max / 2) {
+            revert InvalidPoolId(requestedPoolId);
+        }
+
         Pool.create(requestedPoolId, owner);
 
         emit PoolCreated(requestedPoolId, owner, msg.sender);
@@ -131,7 +135,11 @@ contract PoolModule is IPoolModule {
         MarketConfiguration.Data[] memory newMarketConfigurations
     ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
-        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        if (msg.sender != address(this)) {
+            Pool.onlyPoolOwner(poolId, msg.sender);
+        }
+
         pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
@@ -226,6 +234,10 @@ contract PoolModule is IPoolModule {
         }
 
         return marketConfigurations;
+    }
+
+    function getPoolLastConfigurationTime(uint128 poolId) external view override returns (uint64) {
+        return Pool.loadExisting(poolId).lastConfigurationTime;
     }
 
     /**

@@ -6,7 +6,7 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
-import "./PoolCollateralConfiguration.sol";
+import "./PoolCrossChainInfo.sol";
 import "./SystemPoolConfiguration.sol";
 import "./PoolCollateralConfiguration.sol";
 
@@ -29,6 +29,7 @@ library Pool {
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
+    using SetUtil for SetUtil.AddressSet;
     using SafeCastAddress for address;
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
@@ -46,19 +47,19 @@ library Pool {
     error PoolAlreadyExists(uint128 poolId);
 
     /**
+     * @dev Thrown when trying to create a cross chain pool from a non-primary pool (aka a pool that wasn't itself created by another pool)
+     */
+    error PoolIsNotPrimary(uint128 poolId);
+
+    /**
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
      */
     error MinDelegationTimeoutPending(uint128 poolId, uint32 timeRemaining);
 
     /**
-     * @dev Thrown when pool has surpassed max collateral deposit
+     * @notice Thrown when attempting to disconnect a market whose capacity is locked, and whose removal would cause a decrease in its associated pool's credit delegation proportion.
      */
-    error PoolCollateralLimitExceeded(
-        uint128 poolId,
-        address collateralType,
-        uint256 currentCollateral,
-        uint256 maxCollateral
-    );
+    error CapacityLocked(uint256 marketId);
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
 
@@ -125,15 +126,9 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
-        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
-        /**
-         * @dev A switch to make the pool opt-in for new collateral
-         *
-         * By default it's set to false, which means any new collateral accepeted by the system will be accpeted by the pool.
-         *
-         * If the pool owner sets this value to true, then new collaterals will be disabled for the pool unless a maxDeposit is set for a that collateral.
-         */
-        bool collateralDisabledByDefault;
+        int128 cumulativeDebtD18;
+        mapping(uint256 => uint256) heldMarketConfigurationWeights;
+        mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
     }
 
     /**
@@ -162,6 +157,38 @@ library Pool {
         pool.owner = owner;
     }
 
+    function isCrossChainEnabled(Data storage self) internal view returns (bool) {
+        return self.crossChain[0].pairedChains.length > 0;
+    }
+
+    function getCreditCapacity(Data storage self) internal view returns (uint256) {
+        return
+            isCrossChainEnabled(self)
+                ? self.crossChain[0].latestSync.liquidity
+                : self.vaultsDebtDistribution.totalSharesD18;
+    }
+
+    function getTotalDebts(Data storage self) internal view returns (int256) {
+        return
+            isCrossChainEnabled(self)
+                ? self.crossChain[0].latestSync.totalDebt
+                : self.totalVaultDebtsD18;
+    }
+
+    function getTotalWeight(Data storage self) internal view returns (uint256) {
+        return
+            isCrossChainEnabled(self)
+                ? self.crossChain[0].latestTotalWeights
+                : self.totalWeightsD18;
+    }
+
+    function getOldestSync(Data storage self) internal view returns (uint64) {
+        return
+            isCrossChainEnabled(self)
+                ? self.crossChain[0].latestSync.oldestDataTimestamp
+                : uint64(block.timestamp);
+    }
+
     /**
      * @dev Ticker function that updates the debt distribution chain downwards, from markets into the pool, according to each market's weight.
      * IMPORTANT: debt must be distributed downstream before invoking this function.
@@ -171,7 +198,7 @@ library Pool {
      * - Accumulates the change in debt value from each market into the pools own vault debt distribution's value per share.
      */
     function rebalanceMarketsInPool(Data storage self) internal {
-        uint256 totalWeightsD18 = self.totalWeightsD18;
+        uint256 totalWeightsD18 = getTotalWeight(self);
 
         if (totalWeightsD18 == 0) {
             return; // Nothing to rebalance.
@@ -179,9 +206,9 @@ library Pool {
 
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
-        uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
+        uint256 totalCreditCapacityD18 = getCreditCapacity(self);
         int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
-            ? int(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+            ? getTotalDebts(self).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
             : int128(0);
 
         uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
@@ -198,6 +225,19 @@ library Pool {
 
             uint256 marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) /
                 totalWeightsD18;
+
+            // do we have a delayed weight application for cross chain?
+            if (
+                isCrossChainEnabled(self) &&
+                self.crossChain[0].latestSync.oldestPoolConfigTimestamp < self.lastConfigurationTime
+            ) {
+                uint256 heldWeight = self.heldMarketConfigurationWeights[
+                    marketConfiguration.marketId
+                ];
+                marketCreditCapacityD18 = totalCreditCapacityD18.mulDecimal(
+                    heldWeight == 1 ? 0 : heldWeight
+                );
+            }
 
             Market.Data storage marketData = Market.load(marketConfiguration.marketId);
 
@@ -281,13 +321,48 @@ library Pool {
         return false;
     }
 
-    /**
-     * IMPORTANT: after this function, you should accumulateVaultDebt
-     */
+    function recalculateAllCollaterals(Data storage self) internal {
+        SetUtil.AddressSet storage availableCollaterals = CollateralConfiguration
+            .loadAvailableCollaterals();
+
+        int256 totalDebtD18;
+
+        for (uint i = 0; i < availableCollaterals.length(); i++) {
+            address collateralType = availableCollaterals.valueAt(i);
+
+            // Transfer the debt change from the pool into the vault.
+            bytes32 actorId = collateralType.toBytes32();
+            self.vaults[collateralType].distributeDebtToAccounts(
+                self.vaultsDebtDistribution.accumulateActor(actorId)
+            );
+
+            // Get the latest collateral price.
+            uint256 collateralPriceD18 = CollateralConfiguration
+                .load(collateralType)
+                .getCollateralPrice();
+
+            // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
+            (uint256 usdWeightD18, int256 debtD18, uint256 capacityD18) = self
+                .vaults[collateralType]
+                .updateCreditCapacity(collateralPriceD18);
+
+            // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
+            self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
+
+            totalDebtD18 += debtD18;
+        }
+
+        // Accumulate the change in total liquidity, from the vault, into the pool.
+        self.totalVaultDebtsD18 = totalDebtD18.to128();
+
+        // Distribute debt again because the market credit capacity may have changed, so we should ensure the vaults have the most up to date capacities
+        rebalanceMarketsInPool(self);
+    }
+
     function distributeDebtToVaults(
         Data storage self,
         address optionalCollateralType
-    ) internal returns (int256 cumulativeDebtChange) {
+    ) internal returns (int256 cumulativeDebtChange, int256 cumulativeDebtD18) {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         uint128 myPoolId = self.id;
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
@@ -297,14 +372,19 @@ library Pool {
             cumulativeDebtChange += market.accumulateDebtChange(myPoolId);
         }
 
-        assignDebt(self, cumulativeDebtChange);
+        cumulativeDebtD18 = self.cumulativeDebtD18 + cumulativeDebtChange;
+        self.cumulativeDebtD18 = cumulativeDebtD18.to128();
 
-        // Transfer the debt change from the pool into the vault.
-        if (optionalCollateralType != address(0)) {
-            bytes32 actorId = optionalCollateralType.toBytes32();
-            self.vaults[optionalCollateralType].distributeDebtToAccounts(
-                self.vaultsDebtDistribution.accumulateActor(actorId)
-            );
+        if (!isCrossChainEnabled(self)) {
+            assignDebt(self, cumulativeDebtChange);
+
+            // Transfer the debt change from the pool into the vault.
+            if (optionalCollateralType != address(0)) {
+                bytes32 actorId = optionalCollateralType.toBytes32();
+                self.vaults[optionalCollateralType].distributeDebtToAccounts(
+                    self.vaultsDebtDistribution.accumulateActor(actorId)
+                );
+            }
         }
     }
 
@@ -343,7 +423,8 @@ library Pool {
         collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-        (uint256 usdWeightD18, ) = self.vaults[collateralType].updateCreditCapacity(
+        // TODO: handle what happens when this function is called with a cross chain pool
+        (uint256 usdWeightD18, , ) = self.vaults[collateralType].updateCreditCapacity(
             collateralPriceD18
         );
 
@@ -435,6 +516,42 @@ library Pool {
             maxMinDelegateTime < requiredMinDelegateTime
                 ? maxMinDelegateTime
                 : requiredMinDelegateTime;
+    }
+
+    function addCrossChain(Data storage self, uint64 chainId) internal returns (uint128 ccPoolId) {
+        if (self.id > type(uint128).max / 2) {
+            revert PoolIsNotPrimary(self.id);
+        }
+
+        if (self.crossChain[0].pairedPoolIds[chainId] != 0) {
+            revert PoolAlreadyExists(self.crossChain[0].pairedPoolIds[chainId]);
+        }
+
+        if (self.crossChain[0].pairedChains.length == 0) {
+            // kind of redundant but good for consistency to ensure that the primary is always the first pool listed in paired chains
+            self.crossChain[0].pairedChains.push(uint64(block.chainid));
+            self.crossChain[0].pairedPoolIds[chainId] = self.id;
+        }
+
+        ccPoolId = getCrossChainPoolId(uint64(block.chainid), self.id);
+
+        self.crossChain[0].pairedPoolIds[chainId] = ccPoolId;
+        self.crossChain[0].pairedChains.push(chainId);
+    }
+
+    function getCrossChainPoolId(
+        uint64 srcChainId,
+        uint128 srcPoolId
+    ) internal pure returns (uint128 ccPoolId) {
+        return
+            uint128(uint256(keccak256(abi.encode("SNXV3CC", srcChainId, srcPoolId))) | (1 << 127));
+    }
+
+    function setCrossChainSyncData(
+        Data storage self,
+        PoolCrossChainSync.Data memory syncData
+    ) internal {
+        self.crossChain[0].latestSync = syncData;
     }
 
     /**
@@ -529,26 +646,238 @@ library Pool {
         }
     }
 
-    function checkPoolCollateralLimit(
-        Data storage self,
-        address collateralType,
-        uint256 collateralAmountD18
-    ) internal view {
-        uint256 collateralLimitD18 = self
-            .collateralConfigurations[collateralType]
-            .collateralLimitD18;
-        uint256 currentCollateral = self.vaults[collateralType].currentCollateral();
+    function setDelayedMarketWeights(Data storage self, uint128[] memory delayedMarkets) internal {
+        uint256 lastDelayedMarket;
 
-        if (
-            (self.collateralDisabledByDefault && collateralLimitD18 == 0) ||
-            (collateralLimitD18 > 0 && currentCollateral + collateralAmountD18 > collateralLimitD18)
-        ) {
-            revert PoolCollateralLimitExceeded(
-                self.id,
-                collateralType,
-                currentCollateral + collateralAmountD18,
-                collateralLimitD18
-            );
+        uint256 totalWeight = getTotalWeight(self);
+
+        for (uint i = 0; i < self.marketConfigurations.length; i++) {
+            uint128 marketId = self.marketConfigurations[i].marketId;
+
+            while (delayedMarkets[lastDelayedMarket] < marketId) {
+                // set it to an infitesimly small value
+                self.heldMarketConfigurationWeights[marketId] = 1;
+                lastDelayedMarket++;
+            }
+
+            if (delayedMarkets[lastDelayedMarket] == marketId) {
+                self.heldMarketConfigurationWeights[marketId] =
+                    self.marketConfigurations[i].weightD18 /
+                    totalWeight;
+                lastDelayedMarket++;
+            } else {
+                // market does not need to be held
+                self.heldMarketConfigurationWeights[marketId] = 0;
+            }
+        }
+    }
+
+    function setMarketConfiguration(
+        Data storage self,
+        MarketConfiguration.Data[] memory newMarketConfigurations
+    ) internal {
+        // Identify markets that need to be removed or verified later for being locked.
+        (
+            ,
+            uint128[] memory potentiallyLockedMarkets,
+            uint128[] memory potentiallyDelayedMarkets,
+            uint128[] memory removedMarkets
+        ) = _analyzePoolConfigurationChange(self, newMarketConfigurations);
+
+        if (isCrossChainEnabled(self)) {
+            setDelayedMarketWeights(self, potentiallyDelayedMarkets);
+        }
+
+        // Replace existing market configurations with the new ones.
+        // (May leave old configurations at the end of the array if the new array is shorter).
+        uint256 i = 0;
+        uint256 totalWeight = 0;
+        // Iterate up to the shorter length.
+        uint256 len = newMarketConfigurations.length < self.marketConfigurations.length
+            ? newMarketConfigurations.length
+            : self.marketConfigurations.length;
+        for (; i < len; i++) {
+            self.marketConfigurations[i] = newMarketConfigurations[i];
+            totalWeight += newMarketConfigurations[i].weightD18;
+        }
+
+        // If the old array was shorter, push the new elements in.
+        for (; i < newMarketConfigurations.length; i++) {
+            self.marketConfigurations.push(newMarketConfigurations[i]);
+            totalWeight += newMarketConfigurations[i].weightD18;
+        }
+
+        // If the old array was longer, truncate it.
+        uint256 popped = self.marketConfigurations.length - i;
+        for (i = 0; i < popped; i++) {
+            self.marketConfigurations.pop();
+        }
+
+        // Rebalance all markets that need to be removed.
+        for (i = 0; i < removedMarkets.length && removedMarkets[i] != 0; i++) {
+            Market.rebalancePools(removedMarkets[i], self.id, 0, 0);
+        }
+
+        self.totalWeightsD18 = totalWeight.to128();
+
+        // Credit capacity has been updated--rebalance pools.
+        rebalanceMarketsInPool(self);
+
+        // The credit delegation proportion of the pool can only stay the same, or increase,
+        // so prevent the removal of markets whose capacity is locked.
+        // Note: This check is done here because it needs to happen after removed markets are rebalanced.
+        for (i = 0; i < potentiallyLockedMarkets.length && potentiallyLockedMarkets[i] != 0; i++) {
+            if (Market.load(potentiallyLockedMarkets[i]).isCapacityLocked()) {
+                revert CapacityLocked(potentiallyLockedMarkets[i]);
+            }
+        }
+    }
+
+    struct AnalyzePoolConfigRuntime {
+        uint256 oldIdx;
+        uint256 potentiallyLockedMarketsIdx;
+        uint256 potentiallyDelayedMarketsIdx;
+        uint256 removedMarketsIdx;
+        uint128 lastMarketId;
+    }
+
+    /**
+     * @dev Compares a new pool configuration with the existing one,
+     * and returns information about markets that need to be removed, or whose capacity might be locked.
+     *
+     * Note: Stack too deep errors prevent the use of local variables to improve code readability here.
+     */
+    function _analyzePoolConfigurationChange(
+        Pool.Data storage pool,
+        MarketConfiguration.Data[] memory newMarketConfigurations
+    )
+        internal
+        view
+        returns (
+            uint256 totalWeightD18,
+            uint128[] memory potentiallyLockedMarkets,
+            uint128[] memory potentiallyDelayedMarkets,
+            uint128[] memory removedMarkets
+        )
+    {
+        AnalyzePoolConfigRuntime memory rt;
+
+        potentiallyLockedMarkets = new uint128[](pool.marketConfigurations.length);
+        potentiallyDelayedMarkets = new uint128[](pool.marketConfigurations.length);
+        removedMarkets = new uint128[](pool.marketConfigurations.length);
+
+        // First we need the current total weight
+        for (uint256 i = 0; i < newMarketConfigurations.length; i++) {
+            totalWeightD18 += newMarketConfigurations[i].weightD18;
+        }
+
+        if (isCrossChainEnabled(pool)) {
+            // we need to consider the cross chain weight as well
+            totalWeightD18 =
+                pool.crossChain[0].latestTotalWeights +
+                totalWeightD18 -
+                pool.totalWeightsD18;
+        }
+
+        // Now, iterate through the incoming market configurations, and compare with them with the existing ones.
+        for (uint256 newIdx = 0; newIdx < newMarketConfigurations.length; newIdx++) {
+            // Reject duplicate market ids,
+            // AND ensure that they are provided in ascending order.
+            if (newMarketConfigurations[newIdx].marketId <= rt.lastMarketId) {
+                revert ParameterError.InvalidParameter(
+                    "markets",
+                    "must be supplied in strictly ascending order"
+                );
+            }
+            rt.lastMarketId = newMarketConfigurations[newIdx].marketId;
+
+            // Reject markets with no weight.
+            if (newMarketConfigurations[newIdx].weightD18 == 0) {
+                revert ParameterError.InvalidParameter("weights", "weight must be non-zero");
+            }
+
+            // Note: The following blocks of code compare the incoming market (at newIdx) to an existing market (at oldIdx).
+            // newIdx increases once per iteration in the for loop, but oldIdx may increase multiple times if certain conditions are met.
+
+            // If the market id of newIdx is greater than any of the old market ids,
+            // consider all the old ones removed and mark them for post verification (increases oldIdx for each).
+            while (
+                rt.oldIdx < pool.marketConfigurations.length &&
+                pool.marketConfigurations[rt.oldIdx].marketId <
+                newMarketConfigurations[newIdx].marketId
+            ) {
+                potentiallyLockedMarkets[rt.potentiallyLockedMarketsIdx++] = pool
+                    .marketConfigurations[rt.oldIdx]
+                    .marketId;
+                removedMarkets[rt.removedMarketsIdx++] = potentiallyLockedMarkets[
+                    rt.potentiallyLockedMarketsIdx - 1
+                ];
+
+                rt.oldIdx++;
+            }
+
+            // If the market id of newIdx is equal to any of the old market ids,
+            // consider it updated (increases oldIdx once).
+            if (
+                rt.oldIdx < pool.marketConfigurations.length &&
+                pool.marketConfigurations[rt.oldIdx].marketId ==
+                newMarketConfigurations[newIdx].marketId
+            ) {
+                // Get weight ratios for comparison below.
+                // Upscale them to make sure that we have compatible precision in case of very small values.
+                // If the market's new maximum share value or weight ratio decreased,
+                // mark it for later verification.
+                if (
+                    newMarketConfigurations[newIdx].maxDebtShareValueD18 <
+                    pool.marketConfigurations[rt.oldIdx].maxDebtShareValueD18 ||
+                    newMarketConfigurations[newIdx]
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(totalWeightD18) < // newWeightRatioD27
+                    pool
+                        .marketConfigurations[rt.oldIdx]
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(pool.totalWeightsD18) // oldWeightRatioD27
+                ) {
+                    potentiallyLockedMarkets[
+                        rt.potentiallyLockedMarketsIdx++
+                    ] = newMarketConfigurations[newIdx].marketId;
+                }
+
+                // Get "delayed" markets aka markets with increasing weight
+                // this is necessary for cross chain pools, which should wait until pools with reduced weight to acknowledge the change before increasing weight
+                if (
+                    newMarketConfigurations[newIdx]
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(totalWeightD18) > // newWeightRatioD27
+                    pool
+                        .marketConfigurations[rt.oldIdx]
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(pool.totalWeightsD18) // oldWeightRatioD27
+                ) {
+                    potentiallyDelayedMarkets[
+                        rt.potentiallyDelayedMarketsIdx++
+                    ] = newMarketConfigurations[newIdx].marketId;
+                }
+
+                rt.oldIdx++;
+            }
+
+            // Note: processing or checks for added markets is not necessary.
+        } // for end
+
+        // If any of the old markets was not processed up to this point,
+        // it means that it is not present in the new array, so mark it for removal.
+        while (rt.oldIdx < pool.marketConfigurations.length) {
+            removedMarkets[rt.removedMarketsIdx++] = pool.marketConfigurations[rt.oldIdx].marketId;
+            rt.oldIdx++;
         }
     }
 }

@@ -49,6 +49,11 @@ library Vault {
         // solhint-disable-next-line private-vars-leading-underscore
         bytes32 __slotAvailableForFutureUse;
         /**
+         * @dev The previous capacity of the vault, which is basically the actual available USD capacity, not including debt
+         * TODO: check this storage addition, I think its OK? we forgot to "reserve" it earlier :( but this is the most efficient place
+         */
+        uint128 prevCapacityD18;
+        /**
          * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */
         // solhint-disable-next-line var-name-mixedcase
@@ -85,14 +90,14 @@ library Vault {
     function updateCreditCapacity(
         Data storage self,
         uint256 collateralPriceD18
-    ) internal view returns (uint256 usdWeightD18, int256 totalDebtD18) {
+    ) internal view returns (uint256 usdWeightD18, int256 totalDebtD18, uint256 usdCapacityD18) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        usdWeightD18 = (epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18);
+        usdWeightD18 = (epochData.collateralAmounts.totalAmount() +
+            epochData.totalExitingCollateralD18).mulDecimal(collateralPriceD18);
+        usdCapacityD18 = (epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18);
 
         totalDebtD18 = epochData.totalDebt();
-
-        //self.prevTotalDebtD18 = totalDebtD18.to128();
     }
 
     /**

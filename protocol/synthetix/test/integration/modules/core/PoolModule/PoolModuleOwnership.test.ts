@@ -4,8 +4,8 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { verifyUsesFeatureFlag } from '../../verifications';
+import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../../verifications';
 
 describe('PoolModule Create / Ownership', function () {
   const { signers, systems, MockMarket, marketId, poolId, depositAmount } =
