@@ -46,10 +46,14 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         emit CouncilMembersDismissed(membersToDismiss, electionId);
     }
 
-    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
+    function _recvResolve(
+        address[] calldata winners,
+        uint256 prevEpochIndex,
+        uint256 newEpochIndex
+    ) external {
         CrossChain.onlyCrossChain();
 
-        _removeAllCouncilMembers(newEpochIndex - 1);
+        _removeAllCouncilMembers(prevEpochIndex);
         _addCouncilMembers(winners, newEpochIndex);
     }
 }

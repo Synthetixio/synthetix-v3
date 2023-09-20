@@ -8,10 +8,10 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
-import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
 import {ElectionTally} from "../../submodules/election/ElectionTally.sol";
 import {Ballot} from "../../storage/Ballot.sol";
 import {Council} from "../../storage/Council.sol";
+import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 import {Election} from "../../storage/Election.sol";
 import {Epoch} from "../../storage/Epoch.sol";
 import {ElectionSettings} from "../../storage/ElectionSettings.sol";
@@ -191,26 +191,25 @@ contract ElectionModule is
         CrossChain.Data storage cc = CrossChain.load();
         cc.broadcast(
             cc.getSupportedNetworks(),
-            abi.encodeWithSelector(
-                IElectionModuleSatellite._recvDismissMembers.selector,
-                membersToDismiss
-            ),
+            abi.encodeWithSelector(this._recvDismissMembers.selector, membersToDismiss),
             _CROSSCHAIN_GAS_LIMIT
         );
 
-        Council.Data storage store = Council.load();
-        if (store.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
+        Council.Data storage council = Council.load();
+        CouncilMembers.Data storage membersStore = CouncilMembers.load();
+        if (council.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
 
         // Don't immediately jump to an election if the council still has enough members
         if (
-            store.councilMembers.length() >= store.getCurrentElectionSettings().minimumActiveMembers
+            membersStore.councilMembers.length() >=
+            council.getCurrentElectionSettings().minimumActiveMembers
         ) {
             return;
         }
 
-        store.jumpToNominationPeriod();
+        council.jumpToNominationPeriod();
 
-        emit EmergencyElectionStarted(store.currentElectionId);
+        emit EmergencyElectionStarted(council.currentElectionId);
     }
 
     function nominate() public virtual override {
@@ -337,6 +336,7 @@ contract ElectionModule is
             abi.encodeWithSelector(
                 this._recvResolve.selector,
                 election.winners.values(),
+                store.currentElectionId,
                 newEpochIndex
             ),
             _CROSSCHAIN_GAS_LIMIT
@@ -423,11 +423,11 @@ contract ElectionModule is
     }
 
     function getCouncilToken() public view override returns (address) {
-        return Council.load().councilToken;
+        return CouncilMembers.load().councilToken;
     }
 
     function getCouncilMembers() external view override returns (address[] memory) {
-        return Council.load().councilMembers.values();
+        return CouncilMembers.load().councilMembers.values();
     }
 
     function _validateCandidates(address[] calldata candidates) internal virtual {

@@ -20,12 +20,6 @@ library Council {
     struct Data {
         // True if initializeElectionModule was called
         bool initialized;
-        // The address of the council NFT
-        address councilToken;
-        // Council member addresses
-        SetUtil.AddressSet councilMembers;
-        // Council token id's by council member address
-        mapping(address => uint) councilTokenIds;
         // id of the current epoch
         uint256 currentElectionId;
     }

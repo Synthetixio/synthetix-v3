@@ -6,13 +6,13 @@ import {ArrayError} from "@synthetixio/core-contracts/contracts/errors/ArrayErro
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {IERC721} from "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 import {AssociatedSystem} from "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
-import {Council} from "../../storage/Council.sol";
+import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 
 /// @dev Core functionality for keeping track of council members with an NFT token
 contract ElectionCredentials {
     using SetUtil for SetUtil.AddressSet;
 
-    using Council for Council.Data;
+    using CouncilMembers for CouncilMembers.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
     event CouncilMemberAdded(address indexed member, uint indexed epochIndex);
@@ -24,7 +24,7 @@ contract ElectionCredentials {
     bytes32 internal constant _COUNCIL_NFT_SYSTEM = "councilToken";
 
     function _removeAllCouncilMembers(uint epochIndex) internal {
-        SetUtil.AddressSet storage members = Council.load().councilMembers;
+        SetUtil.AddressSet storage members = CouncilMembers.load().councilMembers;
 
         uint numMembers = members.length();
 
@@ -39,10 +39,10 @@ contract ElectionCredentials {
         uint numMembers = membersToAdd.length;
         if (numMembers == 0) revert ArrayError.EmptyArray();
 
-        Council.Data storage council = Council.load();
+        CouncilMembers.Data storage store = CouncilMembers.load();
 
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
-            _addCouncilMember(council, membersToAdd[memberIndex], epochIndex);
+            _addCouncilMember(store, membersToAdd[memberIndex], epochIndex);
         }
     }
 
@@ -56,11 +56,11 @@ contract ElectionCredentials {
     }
 
     function _addCouncilMember(
-        Council.Data storage council,
+        CouncilMembers.Data storage store,
         address newMember,
         uint epochIndex
     ) internal {
-        SetUtil.AddressSet storage members = council.councilMembers;
+        SetUtil.AddressSet storage members = store.councilMembers;
 
         if (members.contains(newMember)) {
             revert AlreadyACouncilMember();
@@ -72,13 +72,13 @@ contract ElectionCredentials {
         uint tokenId = members.length();
         AssociatedSystem.load(_COUNCIL_NFT_SYSTEM).asNft().mint(newMember, tokenId);
 
-        council.councilTokenIds[newMember] = tokenId;
+        store.councilTokenIds[newMember] = tokenId;
 
         emit CouncilMemberAdded(newMember, epochIndex);
     }
 
     function _removeCouncilMember(address member, uint epochIndex) internal {
-        Council.Data storage store = Council.load();
+        CouncilMembers.Data storage store = CouncilMembers.load();
         SetUtil.AddressSet storage members = store.councilMembers;
 
         if (!members.contains(member)) {
@@ -101,7 +101,7 @@ contract ElectionCredentials {
     }
 
     function _getCouncilMemberTokenId(address member) private view returns (uint) {
-        uint tokenId = Council.load().councilTokenIds[member];
+        uint tokenId = CouncilMembers.load().councilTokenIds[member];
 
         if (tokenId == 0) revert NotACouncilMember();
 
