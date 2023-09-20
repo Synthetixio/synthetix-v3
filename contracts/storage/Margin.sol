@@ -119,6 +119,28 @@ library Margin {
                     price = getCollateralPrice(synthMarketId, available, globalConfig);
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
+
+                    // If collateral isn't sUSD, withdraw, sell, deposit as USD. And then continue update accounting.
+                    if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
+                        globalConfig.synthetix.withdrawMarketCollateral(
+                            market.id,
+                            globalConfig.spotMarket.getSynth(synthMarketId),
+                            deductionAmount
+                        );
+
+                        (uint256 amountUsd, ) = globalConfig.spotMarket.sellExactIn(
+                            synthMarketId,
+                            deductionAmount,
+                            0,
+                            address(0)
+                        );
+
+                        globalConfig.synthetix.depositMarketUsd(market.id, address(this), amountUsd);
+                    }
+                    // At this point we can just update the accounting.
+                    // If non sUSD collateral was used, it's been sold too sUSD and depositied to CORE
+                    // The amountDeltaUsd will take order fees, keeper fees and funding into account.
+                    // If sUSD is used we can just update the accounting directly.
                     accountMargin.collaterals[synthMarketId] -= deductionAmount;
                     amountToDeductUsd -= deductionAmountUsd;
                 }
@@ -230,8 +252,8 @@ library Margin {
         if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
             return DecimalMath.UNIT;
         }
-        (uint256 synthAmount, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
-        return synthAmount.divDecimal(available);
+        (uint256 usdAmount, ) = globalConfig.spotMarket.quoteSellExactIn(synthMarketId, available);
+        return usdAmount.divDecimal(available);
     }
 
     /**

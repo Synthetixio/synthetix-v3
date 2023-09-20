@@ -163,6 +163,13 @@ export const bootstrap = (args: GeneratedBootstrap) => {
         //
         // @see: `spotMarket.contracts.storage.Price.getCurrentPriceData`
         aggregator: synthMarket.sellAggregator,
+        // If you only update the price of the sell aggregator, and try to close a losing position things might fail.
+        // sellExactIn is called and will revert with Invalid prices, if they differ too much.
+        // Adding a convenient method here to update the prices for both
+        updatePrice: async (price: BigNumber) => {
+          await synthMarket.sellAggregator().mockSetCurrentPrice(price);
+          return synthMarket.buyAggregator().mockSetCurrentPrice(price);
+        },
       };
     });
   };
