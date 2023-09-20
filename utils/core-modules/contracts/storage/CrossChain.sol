@@ -92,12 +92,6 @@ library CrossChain {
         }
     }
 
-    function onlyOnChainAt(uint64 chainIndex) internal view {
-        if (getChainIdAt(load(), chainIndex) != block.chainid.to64()) {
-            revert InvalidNetwork(block.chainid.to64());
-        }
-    }
-
     function getChainIdAt(Data storage self, uint64 index) internal view returns (uint64) {
         return self.supportedNetworks.valueAt(index + 1).to64();
     }

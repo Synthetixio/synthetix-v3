@@ -242,7 +242,6 @@ contract ElectionModule is
         address[] calldata candidates,
         uint256[] calldata amounts
     ) external override {
-        CrossChain.onlyOnChainAt(0);
         CrossChain.onlyCrossChain();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
@@ -298,7 +297,6 @@ contract ElectionModule is
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(uint numBallots) external override {
-        CrossChain.onlyOnChainAt(0);
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         Election.Data storage election = Council.load().getCurrentElection();
