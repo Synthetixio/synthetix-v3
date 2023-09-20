@@ -1,6 +1,8 @@
 name = "synthetix-governance-satellite"
 description = "On-chain voting for synthetix councils - Logic for satellite chains"
 version = "<%= package.version %>"
+include = ["./tomls/proxy-base.toml"]
+include = ["./tomls/council-token.toml"]
 
 [setting.salt]
 defaultValue = "governance-satellite"
@@ -8,27 +10,6 @@ defaultValue = "governance-satellite"
 # Deployment Owner, defaults to first hardhat account
 [setting.owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.council_token_name]
-defaultValue = "Synthetix Governance Module"
-
-[setting.council_token_symbol]
-defaultValue = "SNXGOV"
-
-[setting.init_council_member]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
-
-[contract.InitialModuleBundle]
-artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"
-create2 = true
-
-[contract.InitialProxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
-salt = "<%= settings.salt %>"
-abiOf = ["InitialModuleBundle"]
-create2 = true
-depends = ["contract.InitialModuleBundle"]
 
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
@@ -58,22 +39,3 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-
-[router.CouncilTokenRouter]
-contracts = ["CouncilTokenModule", "InitialModuleBundle"]
-
-[invoke.init_council_token]
-target = ["CoreProxy"]
-from = "<%= settings.owner %>"
-func = "initOrUpgradeNft"
-args = [
-    "<%= formatBytes32String('councilToken') %>",
-    "Synthetix Governance Token",
-    "SNXGOV",
-    "https://synthetix.io",
-    "<%= contracts.CouncilTokenRouter.address %>"
-]
-depends = ["invoke.upgrade_core_proxy", "router.CouncilTokenRouter"]
-factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
-factory.CouncilToken.event = "AssociatedSystemSet"
-factory.CouncilToken.arg = 2

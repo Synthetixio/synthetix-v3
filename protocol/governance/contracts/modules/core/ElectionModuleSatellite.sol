@@ -28,4 +28,12 @@ contract ElectionModuleSatellite is IElectionModuleSatellite {
             _CROSSCHAIN_GAS_LIMIT
         );
     }
+
+    function _recvDismissMembers(address[] calldata membersToDismiss) external override {
+        // TODO: burn nfts from received members
+    }
+
+    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
+        // TODO: distribute nfts to winners
+    }
 }
