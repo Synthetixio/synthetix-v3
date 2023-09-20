@@ -11,6 +11,9 @@ defaultValue = "governance"
 [setting.owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.initial_council_member]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [setting.minimum_active_members]
 defaultValue = "1"
 
@@ -68,7 +71,7 @@ depends = ["contract.InitialProxy", "router.CoreRouter"]
 target = ["CoreProxy"]
 func = "initOrUpdateElectionSettings(address[],uint8,uint64,uint64,uint64,uint64)"
 args = [
-    ["<%= settings.init_council_member %>"],
+    ["<%= settings.initial_council_member %>"],
     "<%= settings.minimum_active_members %>",
     "<%= settings.initial_nomination_period_start_date %>",
     "<%= settings.administration_period_duration %>",

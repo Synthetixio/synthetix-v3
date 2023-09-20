@@ -2,16 +2,36 @@
 pragma solidity ^0.8.0;
 
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
+import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
 import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
 import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
+import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 
 contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredentials {
     using CrossChain for CrossChain.Data;
+    using CouncilMembers for CouncilMembers.Data;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
-    // TODO: add satellite Council initialization logic
+    function initCouncilMembers(
+        address[] memory initialCouncil,
+        uint256 initialEpochIndex
+    ) external {
+        OwnableStorage.onlyOwner();
+        _initCouncilMembers(initialCouncil, initialEpochIndex);
+    }
+
+    function _initCouncilMembers(
+        address[] memory initialCouncil,
+        uint256 initialEpochIndex
+    ) internal {
+        CouncilMembers.Data storage store = CouncilMembers.load();
+
+        if (store.councilMembers.length() > 0) return;
+
+        _addCouncilMembers(initialCouncil, initialEpochIndex);
+    }
 
     function cast(
         address[] calldata candidates,
@@ -32,7 +52,10 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         );
     }
 
-    function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external {
+    function _recvDismissMembers(
+        address[] calldata membersToDismiss,
+        uint256 epochIndex
+    ) external override {
         CrossChain.onlyCrossChain();
 
         _removeCouncilMembers(membersToDismiss, epochIndex);
@@ -44,7 +67,7 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         address[] calldata winners,
         uint256 prevEpochIndex,
         uint256 newEpochIndex
-    ) external {
+    ) external override {
         CrossChain.onlyCrossChain();
 
         _removeAllCouncilMembers(prevEpochIndex);

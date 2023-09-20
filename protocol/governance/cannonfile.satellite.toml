@@ -11,6 +11,12 @@ defaultValue = "governance-satellite"
 [setting.owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.initial_epoch_index]
+defaultValue = 0
+
+[setting.initial_council_member]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
@@ -39,3 +45,12 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
+
+[invoke.init_election_module_satellite]
+target = ["CoreProxy"]
+func = "initCouncilMembers"
+from = "<%= settings.owner %>"
+args = [
+    ["<%= settings.initial_council_member %>"],
+    "<%= settings.initial_epoch_index %>",
+]

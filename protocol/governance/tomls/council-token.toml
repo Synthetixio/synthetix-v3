@@ -7,9 +7,6 @@ defaultValue = "SNXGOV"
 [setting.council_token_uri]
 defaultValue = "https://synthetix.io"
 
-[setting.init_council_member]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" # can only specify 1
-
 [contract.CouncilTokenModule]
 artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenModule"
 
