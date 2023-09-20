@@ -18,7 +18,6 @@ interface IElectionModule is IElectionModuleSatellite {
     event ElectionModuleInitialized();
     event EpochStarted(uint256 indexed epochId);
     event EpochScheduleUpdated(uint64 indexed epochId, uint64 startDate, uint64 endDate);
-    event CouncilMembersDismissed(address[] dismissedMembers, uint256 epochId);
     event EmergencyElectionStarted(uint256 indexed epochId);
     event CandidateNominated(address indexed candidate, uint256 indexed epochId);
     event NominationWithdrawn(address indexed candidate, uint256 indexed epochId);
@@ -86,7 +85,7 @@ interface IElectionModule is IElectionModuleSatellite {
     /// @notice Self-withdrawal of nominations during the Nomination period
     function withdrawNomination() external;
 
-    /// @dev Internal voting logic, ready to be used cross-chain
+    /// @dev Internal voting logic, receiving end of CCIP voting
     function _recvCast(
         address voter,
         uint256 chainId,

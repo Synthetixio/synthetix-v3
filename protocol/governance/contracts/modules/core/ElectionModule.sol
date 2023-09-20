@@ -8,7 +8,7 @@ import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
-import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
+import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
 import {ElectionTally} from "../../submodules/election/ElectionTally.sol";
 import {Ballot} from "../../storage/Ballot.sol";
 import {Council} from "../../storage/Council.sol";
@@ -20,7 +20,6 @@ import {ElectionModuleSatellite} from "./ElectionModuleSatellite.sol";
 contract ElectionModule is
     IElectionModule,
     ElectionModuleSatellite,
-    ElectionCredentials,
     ElectionTally,
     InitializableMixin
 {
@@ -192,18 +191,19 @@ contract ElectionModule is
     }
 
     function dismissMembers(address[] calldata membersToDismiss) external override {
-        // TODO: onlyOnMothership?
-
         OwnableStorage.onlyOwner();
 
+        CrossChain.Data storage cc = CrossChain.load();
+        cc.broadcast(
+            cc.getSupportedNetworks(),
+            abi.encodeWithSelector(
+                IElectionModuleSatellite._recvDismissMembers.selector,
+                membersToDismiss
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
+
         Council.Data storage store = Council.load();
-
-        uint electionId = store.currentElectionId;
-
-        _removeCouncilMembers(membersToDismiss, electionId);
-
-        emit CouncilMembersDismissed(membersToDismiss, electionId);
-
         if (store.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
 
         // Don't immediately jump to an election if the council still has enough members
@@ -215,7 +215,7 @@ contract ElectionModule is
 
         store.jumpToNominationPeriod();
 
-        emit EmergencyElectionStarted(electionId);
+        emit EmergencyElectionStarted(store.currentElectionId);
     }
 
     function nominate() public virtual override {
