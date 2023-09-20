@@ -36,19 +36,15 @@ describe('CrossChainUSDModule', function () {
       );
   });
 
-  before('get some snxUSD', async () => {
+  before('mint some sUSD', async () => {
     await systems()
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
-
-    // await systems()
-    //   .Core.connect(staker())
-    //   .withdraw(accountId, systems().USD.address, oneHundredUSD);
   });
 
   before('record balances', async () => {
     stakerBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-    proxyBalanceBefore = await systems().USD.connect(staker()).balanceOf(systems().Core.address);
+    proxyBalanceBefore = await systems().USD.balanceOf(systems().Core.address);
   });
 
   describe('transferCrossChain()', () => {
@@ -67,7 +63,7 @@ describe('CrossChainUSDModule', function () {
         );
     });
 
-    it('reverts if the sender did not set enough allownce', async () => {
+    it('reverts if the sender did not set enough allowance', async () => {
       const allowance = await systems()
         .USD.connect(staker())
         .allowance(stakerAddress, systems().Core.address);
@@ -97,6 +93,9 @@ describe('CrossChainUSDModule', function () {
       let transferCrossChainTxn: ethers.providers.TransactionResponse;
 
       before('invokes transferCrossChain', async () => {
+        await systems()
+          .Core.connect(staker())
+          .withdraw(accountId, await systems().Core.getUsdToken(), fiftyUSD);
         transferCrossChainTxn = await systems()
           .Core.connect(staker())
           .transferCrossChain(1, fiftyUSD);
@@ -106,12 +105,12 @@ describe('CrossChainUSDModule', function () {
         const usdBalanceAfter = await systems()
           .USD.connect(owner())
           .balanceOf(systems().Core.address);
-        assertBn.equal(usdBalanceAfter, proxyBalanceBefore.add(fiftyUSD));
+        assertBn.equal(usdBalanceAfter, proxyBalanceBefore);
       });
 
       it('should decrease the stakers balance by the expected amount', async () => {
         const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
-        assertBn.equal(usdBalanceAfter, stakerBalanceBefore.sub(fiftyUSD));
+        assertBn.equal(usdBalanceAfter, 0);
       });
 
       it('emits correct event with the expected values', async () => {

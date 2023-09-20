@@ -8,6 +8,7 @@ import "./Vault.sol";
 import "./Market.sol";
 import "./PoolCrossChainInfo.sol";
 import "./SystemPoolConfiguration.sol";
+import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";

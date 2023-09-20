@@ -54,6 +54,10 @@ describe('LiquidationModule', function () {
         await systems()
           .Core.connect(user1)
           .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
+
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), debtAmount.div(10));
       });
 
       before('going into debt', async () => {
@@ -226,6 +230,10 @@ describe('LiquidationModule', function () {
         await systems()
           .Core.connect(user1)
           .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
+
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), debtAmount.div(10));
       });
 
       before('going into debt', async () => {
@@ -268,8 +276,6 @@ describe('LiquidationModule', function () {
           await systems()
             .Core.connect(user2)
             .deposit(liquidatorAccountId, collateralAddress(), depositAmount.mul(50));
-
-          // use the zero pool to get minted USD
           await systems()
             .Core.connect(user2)
             .delegateCollateral(
@@ -279,7 +285,6 @@ describe('LiquidationModule', function () {
               depositAmount.mul(50),
               ethers.utils.parseEther('1')
             );
-
           await systems()
             .Core.connect(user2)
             .mintUsd(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
@@ -346,7 +351,7 @@ describe('LiquidationModule', function () {
           );
         });
 
-        describe('succesful full liquidation', () => {
+        describe('successful full liquidation', () => {
           let txn: ethers.providers.TransactionResponse;
 
           before('liquidate', async () => {

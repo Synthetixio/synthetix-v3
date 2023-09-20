@@ -25,6 +25,7 @@ describe('PoolModule Admin', function () {
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   const secondPoolId = 3384692;
+  const thirdPoolId = 3384633;
 
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
@@ -682,6 +683,95 @@ describe('PoolModule Admin', function () {
           ethers.utils.parseEther('2')
         );
       });
+    });
+  });
+
+  describe('disable/enable collateral for a pool ', async () => {
+    before(restore);
+
+    before('give user1 permission to create pool', async () => {
+      await systems()
+        .Core.connect(owner)
+        .addToFeatureFlagAllowlist(
+          ethers.utils.formatBytes32String('createPool'),
+          user1.getAddress()
+        );
+    });
+
+    before('create a pool', async () => {
+      await (
+        await systems()
+          .Core.connect(user1)
+          .createPool(thirdPoolId, await user1.getAddress())
+      ).wait();
+    });
+
+    it('only works for owner', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+            collateralLimitD18: bn(10),
+            issuanceRatioD18: bn(0),
+          }),
+        `Unauthorized("${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+  });
+
+  describe('set pool collateral issuance ratio', async () => {
+    before(restore);
+
+    before('give user1 permission to create pool', async () => {
+      await systems()
+        .Core.connect(owner)
+        .addToFeatureFlagAllowlist(
+          ethers.utils.formatBytes32String('createPool'),
+          user1.getAddress()
+        );
+    });
+
+    before('create a pool', async () => {
+      await (
+        await systems()
+          .Core.connect(user1)
+          .createPool(thirdPoolId, await user1.getAddress())
+      ).wait();
+    });
+
+    it('only works for owner', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+            collateralLimitD18: bn(10),
+            issuanceRatioD18: bn(2),
+          }),
+        `Unauthorized("${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+
+    it('min collateral ratio is set to zero for the pool by default', async () => {
+      await assert.equal(
+        await systems().Core.getPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress()),
+        0
+      );
+    });
+
+    it('set the pool collateal issuance ratio to 200%', async () => {
+      await systems()
+        .Core.connect(user1)
+        .setPoolCollateralConfiguration(thirdPoolId, collateralAddress(), {
+          collateralLimitD18: bn(10),
+          issuanceRatioD18: bn(2),
+        });
+
+      await assertBn.equal(
+        await systems().Core.getPoolCollateralIssuanceRatio(thirdPoolId, collateralAddress()),
+        bn(2)
+      );
     });
   });
 });

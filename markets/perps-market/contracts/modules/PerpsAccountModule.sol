@@ -6,7 +6,7 @@ import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {IPerpsAccountModule} from "../interfaces/IPerpsAccountModule.sol";
-import {PerpsAccount} from "../storage/PerpsAccount.sol";
+import {PerpsAccount, SNX_USD_MARKET_ID} from "../storage/PerpsAccount.sol";
 import {Position} from "../storage/Position.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
@@ -62,7 +62,11 @@ contract PerpsAccountModule is IPerpsAccountModule {
         } else {
             uint256 amountAbs = MathUtil.abs(amountDelta);
             // removing collateral
-            account.validateWithdrawableAmount(amountAbs);
+            account.validateWithdrawableAmount(
+                synthMarketId,
+                amountAbs,
+                perpsMarketFactory.spotMarket
+            );
             _withdrawMargin(perpsMarketFactory, perpsMarketId, synthMarketId, amountAbs);
         }
 
@@ -172,7 +176,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 synthMarketId,
         uint256 amount
     ) internal {
-        if (synthMarketId == 0) {
+        if (synthMarketId == SNX_USD_MARKET_ID) {
             // depositing into the USD market
             perpsMarketFactory.synthetix.depositMarketUsd(perpsMarketId, msg.sender, amount);
         } else {
@@ -191,7 +195,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 synthMarketId,
         uint256 amount
     ) internal {
-        if (synthMarketId == 0) {
+        if (synthMarketId == SNX_USD_MARKET_ID) {
             // withdrawing from the USD market
             perpsMarketFactory.synthetix.withdrawMarketUsd(perpsMarketId, msg.sender, amount);
         } else {

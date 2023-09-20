@@ -2,5 +2,5 @@
 tests/.bin/
 tests/.latest.json
 subgraph.yaml
-deployments/
+**/deployments/
 build/

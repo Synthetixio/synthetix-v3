@@ -30,7 +30,6 @@ contract CollateralModule is ICollateralModule {
 
     bytes32 private constant _DEPOSIT_FEATURE_FLAG = "deposit";
     bytes32 private constant _WITHDRAW_FEATURE_FLAG = "withdraw";
-
     bytes32 private constant _CONFIG_TIMEOUT_WITHDRAW = "accountTimeoutWithdraw";
 
     /**

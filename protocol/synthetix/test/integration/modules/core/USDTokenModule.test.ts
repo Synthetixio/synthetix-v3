@@ -1,6 +1,6 @@
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
@@ -62,6 +62,9 @@ describe('USDTokenModule', function () {
       let usdBalanceBefore: ethers.BigNumber;
 
       before('record balances', async () => {
+        await systems()
+          .Core.connect(staker())
+          .withdraw(accountId, await systems().Core.getUsdToken(), fiftyUSD);
         usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
       });
 

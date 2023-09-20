@@ -1,4 +1,4 @@
-import { ethers as Ethers, ethers } from 'ethers';
+import { ethers as Ethers, constants, ethers } from 'ethers';
 import { bn, bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
@@ -13,6 +13,7 @@ describe('SpotMarketFactory', () => {
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
+  let registerTxn: ethers.providers.TransactionResponse, synthMarketId: ethers.BigNumber;
   let marketOwner: Ethers.Signer, user1: Ethers.Signer, newMarketOwner: Ethers.Signer;
   let synth: SynthRouter;
 
@@ -37,17 +38,61 @@ describe('SpotMarketFactory', () => {
       });
     });
 
+    it('renounce market ownership by non-owner', async () => {
+      await assertRevert(
+        systems().SpotMarket.connect(user1).renounceMarketOwnership(marketId()),
+        'OnlyMarketOwner'
+      );
+    });
+
+    it('non owner tries to renounce market ownership', async () => {
+      await assertRevert(
+        systems().SpotMarket.connect(user1).renounceMarketOwnership(marketId()),
+        `OnlyMarketOwner(${await marketOwner.getAddress()}, ${await user1.getAddress()})`
+      );
+    });
+
+    it('renounce market ownership by owner', async () => {
+      const tx = await systems()
+        .SpotMarket.connect(marketOwner)
+        .renounceMarketOwnership(marketId());
+      await assertEvent(
+        tx,
+        `MarketOwnerChanged(${marketId()}, "${await marketOwner.getAddress()}", "${
+          constants.AddressZero
+        }")`,
+        systems().SpotMarket
+      );
+
+      assert.deepEqual(
+        await systems().SpotMarket.getMarketOwner(marketId()),
+        constants.AddressZero
+      );
+    });
+
     before('register synth', async () => {
-      await systems().SpotMarket.callStatic.createSynth(
+      synthMarketId = await systems().SpotMarket.callStatic.createSynth(
         tokenName,
         'sBTC',
         marketOwner.getAddress()
       );
-      await systems().SpotMarket.createSynth(tokenName, 'sBTC', marketOwner.getAddress());
+      registerTxn = await systems().SpotMarket.createSynth(
+        tokenName,
+        'sBTC',
+        marketOwner.getAddress()
+      );
     });
 
     it('check market name', async () => {
       assert.equal(await systems().SpotMarket.name(2), tokenName + ' Spot Market');
+    });
+
+    it('emits event', async () => {
+      await assertEvent(
+        registerTxn,
+        `SynthRegistered(2, "${await systems().SpotMarket.getSynth(synthMarketId)}")`,
+        systems().SpotMarket
+      );
     });
   });
 
@@ -113,7 +158,7 @@ describe('SpotMarketFactory', () => {
     });
   });
 
-  describe('transfering market ownership', () => {
+  describe('transferring market ownership', () => {
     it('nominateMarketOwner reverts if is not called by the market owner', async () => {
       await assertRevert(
         systems()

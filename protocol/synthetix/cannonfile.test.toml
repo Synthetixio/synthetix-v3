@@ -1,10 +1,10 @@
 # overrides to create a testable deployment of the core system
-
 version = "<%= package.version %>-testable"
+include = ["cannonfile.toml"]
 
-include = [
-  "cannonfile.toml"
-]
+# use the testable oracle manager
+[setting.oracle_manager_source]
+defaultValue = "oracle-manager:<%= package.version %>-testable"
 
 # Test Modules
 [contract.TestableAccountStorage]
@@ -164,8 +164,7 @@ salt = "2"
 [invoke.intializeCollateralMock]
 target = ["CollateralMock"]
 func = "initialize"
-args = ["SampleToken","TKN","18"]
-depends = ["contract.CollateralMock"]
+args = ["SampleToken", "TKN", "18"]
 
 [invoke.enableAllFeatures]
 target = ["CoreProxy"]
