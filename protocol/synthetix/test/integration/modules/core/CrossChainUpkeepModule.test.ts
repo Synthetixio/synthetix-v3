@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { verifyUsesFeatureFlag } from '../../verifications';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('CrossChainUpkeepModule', function () {

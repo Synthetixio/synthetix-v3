@@ -25,7 +25,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
     using SafeCastU128 for uint128;
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
-		using CallUtil for address;
+    using CallUtil for address;
 
     error PoolAlreadyExists(uint128, uint256);
 
@@ -84,7 +84,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
             (block.timestamp - pool.crossChain[0].latestSync.dataTimestamp) >
             pool.crossChain[0].subscriptionInterval;
 
-				performData = data;
+        performData = data;
     }
 
     /**
@@ -103,18 +103,22 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         // take this opporitunity to rebalance the markets in this pool
         // we do it here instead of fulfill because there is no reason for this to fail if for some reason the function fails
 
-				bytes[] memory calls = new bytes[](pool.crossChain[0].pairedChains.length);
-				for (uint i = 0;i < calls.length;i++) {
-						calls[i] = _encodeCrossChainPoolCall(pool.crossChain[0].pairedPoolIds[pool.crossChain[0].pairedChains[i]]);
-				}
+        bytes[] memory calls = new bytes[](pool.crossChain[0].pairedChains.length);
+        for (uint i = 0; i < calls.length; i++) {
+            calls[i] = _encodeCrossChainPoolCall(
+                pool.crossChain[0].pairedPoolIds[pool.crossChain[0].pairedChains[i]]
+            );
+        }
 
-        address(this).tryCall(abi.encodeWithSelector(
-						pool.crossChain[0].offchainReadSelector,
-            pool.crossChain[0].subscriptionId,
-						pool.crossChain[0].pairedChains,
-						calls,
-            300000
-        ));
+        address(this).tryCall(
+            abi.encodeWithSelector(
+                pool.crossChain[0].offchainReadSelector,
+                pool.crossChain[0].subscriptionId,
+                pool.crossChain[0].pairedChains,
+                calls,
+                300000
+            )
+        );
     }
 
     function _encodeCrossChainPoolCall(uint128 poolId) internal pure returns (bytes memory) {

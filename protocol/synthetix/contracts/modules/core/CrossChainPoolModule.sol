@@ -23,7 +23,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     using SafeCastU128 for uint128;
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
-		using CallUtil for address;
+    using CallUtil for address;
 
     error PoolAlreadyExists(uint128, uint256);
 
@@ -55,16 +55,18 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
 
         uint64[] memory targetChainIds = new uint64[](1);
         targetChainIds[0] = targetChainId;
-        bytes memory res = address(this).tryCall(abi.encodeWithSelector(
-						pool.crossChain[0].broadcastSelector, 
-            targetChainIds,
+        bytes memory res = address(this).tryCall(
             abi.encodeWithSelector(
-                this._recvCreateCrossChainPool.selector,
-                block.chainid,
-                sourcePoolId
-            ),
-            200000
-        ));
+                pool.crossChain[0].broadcastSelector,
+                targetChainIds,
+                abi.encodeWithSelector(
+                    this._recvCreateCrossChainPool.selector,
+                    block.chainid,
+                    sourcePoolId
+                ),
+                200000
+            )
+        );
 
         CrossChain.refundLeftoverGas(abi.decode(res, (uint256)));
     }
@@ -114,20 +116,22 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
             uint64[] memory targetChainIds = new uint64[](1);
             targetChainIds[0] = pool.crossChain[0].pairedChains[i];
 
-            bytes memory res = address(this).tryCall(abi.encodeWithSelector(
-								pool.crossChain[0].broadcastSelector,
-                targetChainIds,
+            bytes memory res = address(this).tryCall(
                 abi.encodeWithSelector(
-                    this._recvSetCrossChainPoolConfiguration.selector,
-                    poolId,
-                    newMarketConfigurations[i],
-                    newTotalWeight,
-                    uint64(block.timestamp)
-                ),
-                100000
-            ));
+                    pool.crossChain[0].broadcastSelector,
+                    targetChainIds,
+                    abi.encodeWithSelector(
+                        this._recvSetCrossChainPoolConfiguration.selector,
+                        poolId,
+                        newMarketConfigurations[i],
+                        newTotalWeight,
+                        uint64(block.timestamp)
+                    ),
+                    100000
+                )
+            );
 
-						gasTokenUsed += abi.decode(res, (uint256));
+            gasTokenUsed += abi.decode(res, (uint256));
         }
 
         CrossChain.refundLeftoverGas(gasTokenUsed);

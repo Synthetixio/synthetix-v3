@@ -6,7 +6,6 @@ import "../../interfaces/external/IWormholeReceiver.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
-
 import "../../storage/OracleManager.sol";
 import "../../storage/Config.sol";
 import "../../storage/CrossChainWormhole.sol";
@@ -20,32 +19,35 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
  * @dev See IUtilsModule.
  */
 contract OffchainWormholeModule is IWormholeReceiver, IOffchainWormholeModule {
-		using SetUtil for SetUtil.UintSet;
+    using SetUtil for SetUtil.UintSet;
 
-		function configureWormholeCrossChain(
-				IWormholeRelayerSend send,
-				IWormholeRelayerDelivery recv,
-				IWormholeCrossChainRead read,
-				uint64[] memory supportedNetworks,
-				uint16[] memory selectors
-		) external {
-				OwnableStorage.onlyOwner();
+    function configureWormholeCrossChain(
+        IWormholeRelayerSend send,
+        IWormholeRelayerDelivery recv,
+        IWormholeCrossChainRead read,
+        uint64[] memory supportedNetworks,
+        uint16[] memory selectors
+    ) external {
+        OwnableStorage.onlyOwner();
 
-				if (supportedNetworks.length != selectors.length) {
-						revert ParameterError.InvalidParameter("selectors", "must match length of supportedNetworks");
-				}
-			
-				CrossChainWormhole.Data storage wcc = CrossChainWormhole.load();
-				wcc.crossChainRead = read;
-				wcc.sender = send;
-				wcc.recv = recv;
+        if (supportedNetworks.length != selectors.length) {
+            revert ParameterError.InvalidParameter(
+                "selectors",
+                "must match length of supportedNetworks"
+            );
+        }
 
-				for (uint i = 0; i < supportedNetworks.length; i++) {
-						wcc.supportedNetworks.add(supportedNetworks[i]);
-						wcc.chainIdToSelector[supportedNetworks[i]] = selectors[i];
-						wcc.selectorToChainId[selectors[i]] = supportedNetworks[i];
-				}
-		}
+        CrossChainWormhole.Data storage wcc = CrossChainWormhole.load();
+        wcc.crossChainRead = read;
+        wcc.sender = send;
+        wcc.recv = recv;
+
+        for (uint i = 0; i < supportedNetworks.length; i++) {
+            wcc.supportedNetworks.add(supportedNetworks[i]);
+            wcc.chainIdToSelector[supportedNetworks[i]] = selectors[i];
+            wcc.selectorToChainId[selectors[i]] = supportedNetworks[i];
+        }
+    }
 
     function receiveWormholeMessages(
         bytes memory payload,
@@ -53,21 +55,21 @@ contract OffchainWormholeModule is IWormholeReceiver, IOffchainWormholeModule {
         bytes32 sourceAddress,
         uint16 sourceChain,
         bytes32 deliveryHash
-		) external payable {
-				CrossChainWormhole.Data storage wcc = CrossChainWormhole.load();
+    ) external payable {
+        CrossChainWormhole.Data storage wcc = CrossChainWormhole.load();
 
-				if (msg.sender != address(wcc.recv)) {
-						revert AccessError.Unauthorized(msg.sender);
-				}
+        if (msg.sender != address(wcc.recv)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
 
-				address sourceAddr = address(uint160(uint(sourceAddress)));
-				if (sourceAddr != address(this)) {
-						revert AccessError.Unauthorized(sourceAddr);
-				}
+        address sourceAddr = address(uint160(uint(sourceAddress)));
+        if (sourceAddr != address(this)) {
+            revert AccessError.Unauthorized(sourceAddr);
+        }
 
-				if (wcc.supportedNetworks.contains(sourceChain)) {
-						revert CrossChain.UnsupportedNetwork(sourceChain);
-				}
+        if (wcc.supportedNetworks.contains(sourceChain)) {
+            revert CrossChain.UnsupportedNetwork(sourceChain);
+        }
 
         (bool success, bytes memory result) = address(this).call(payload);
 
@@ -79,5 +81,5 @@ contract OffchainWormholeModule is IWormholeReceiver, IOffchainWormholeModule {
         }
 
         emit ProcessedWormholeMessage(payload, result);
-		}
+    }
 }

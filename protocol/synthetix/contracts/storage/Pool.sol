@@ -341,16 +341,14 @@ library Pool {
                 .getCollateralPrice();
 
             // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-            (
-                uint256 usdWeightD18,
-								int256 debtD18,
-								uint256 capacityD18
-            ) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
+            (uint256 usdWeightD18, int256 debtD18, uint256 capacityD18) = self
+                .vaults[collateralType]
+                .updateCreditCapacity(collateralPriceD18);
 
             // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
             self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
 
-						totalDebtD18 += debtD18;
+            totalDebtD18 += debtD18;
         }
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
@@ -373,20 +371,20 @@ library Pool {
             cumulativeDebtChange += market.accumulateDebtChange(myPoolId);
         }
 
-				cumulativeDebtD18 = self.cumulativeDebtD18 + cumulativeDebtChange;
-				self.cumulativeDebtD18 = cumulativeDebtD18.to128();
+        cumulativeDebtD18 = self.cumulativeDebtD18 + cumulativeDebtChange;
+        self.cumulativeDebtD18 = cumulativeDebtD18.to128();
 
-				if (!isCrossChainEnabled(self)) {
-						assignDebt(self, cumulativeDebtChange);
-						
-						// Transfer the debt change from the pool into the vault.
-						if (optionalCollateralType != address(0)) {
-								bytes32 actorId = optionalCollateralType.toBytes32();
-								self.vaults[optionalCollateralType].distributeDebtToAccounts(
-										self.vaultsDebtDistribution.accumulateActor(actorId)
-								);
-						}
-				}
+        if (!isCrossChainEnabled(self)) {
+            assignDebt(self, cumulativeDebtChange);
+
+            // Transfer the debt change from the pool into the vault.
+            if (optionalCollateralType != address(0)) {
+                bytes32 actorId = optionalCollateralType.toBytes32();
+                self.vaults[optionalCollateralType].distributeDebtToAccounts(
+                    self.vaultsDebtDistribution.accumulateActor(actorId)
+                );
+            }
+        }
     }
 
     function assignDebt(Data storage self, int256 debtAmountD18) internal {
@@ -424,8 +422,8 @@ library Pool {
         collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-				// TODO: handle what happens when this function is called with a cross chain pool
-        (uint256 usdWeightD18, ,) = self.vaults[collateralType].updateCreditCapacity(
+        // TODO: handle what happens when this function is called with a cross chain pool
+        (uint256 usdWeightD18, , ) = self.vaults[collateralType].updateCreditCapacity(
             collateralPriceD18
         );
 

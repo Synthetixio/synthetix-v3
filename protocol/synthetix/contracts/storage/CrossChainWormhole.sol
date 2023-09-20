@@ -18,12 +18,11 @@ library CrossChainWormhole {
 
     struct Data {
         IWormholeCrossChainRead crossChainRead;
-				IWormholeRelayerSend sender;
-				IWormholeRelayerDelivery recv;
-
-				SetUtil.UintSet supportedNetworks;
-				mapping(uint64 => uint16) chainIdToSelector;
-				mapping(uint16 => uint64) selectorToChainId;
+        IWormholeRelayerSend sender;
+        IWormholeRelayerDelivery recv;
+        SetUtil.UintSet supportedNetworks;
+        mapping(uint64 => uint16) chainIdToSelector;
+        mapping(uint16 => uint64) selectorToChainId;
     }
 
     function load() internal pure returns (Data storage crossChain) {
@@ -33,10 +32,18 @@ library CrossChainWormhole {
         }
     }
 
-		function getCrossChainData(uint64 chainId, bytes memory crossChainData) internal returns (bytes memory) {
-				// wormhole is ERC7412 compliant so all we need to do is call them foir the data and the standard will do the rest
-				return load().crossChainRead.getCrossChainData(load().chainIdToSelector[chainId], address(this), crossChainData);
-		}
+    function getCrossChainData(
+        uint64 chainId,
+        bytes memory crossChainData
+    ) internal returns (bytes memory) {
+        // wormhole is ERC7412 compliant so all we need to do is call them foir the data and the standard will do the rest
+        return
+            load().crossChainRead.getCrossChainData(
+                load().chainIdToSelector[chainId],
+                address(this),
+                crossChainData
+            );
+    }
 
     function transmit(
         Data storage self,
@@ -60,8 +67,8 @@ library CrossChainWormhole {
     ) internal returns (uint256 gasTokenUsed) {
         IWormholeRelayerSend wormholeSender = self.sender;
 
-				for (uint i = 0;i < chains.length; i++) {
-					if (chains[i] == block.chainid) {
+        for (uint i = 0; i < chains.length; i++) {
+            if (chains[i] == block.chainid) {
                 (bool success, bytes memory result) = address(this).call(data);
 
                 if (!success) {
@@ -70,27 +77,26 @@ library CrossChainWormhole {
                         revert(result, len)
                     }
                 }
-					} else {
+            } else {
+                uint16 chainSelector = self.chainIdToSelector[chains[i]];
 
-							uint16 chainSelector = self.chainIdToSelector[chains[i]];
+                (uint256 fee, ) = wormholeSender.quoteEVMDeliveryPrice(chainSelector, 0, gasLimit);
 
-							(uint256 fee, ) = wormholeSender.quoteEVMDeliveryPrice(chainSelector, 0, gasLimit);
+                // need to check sufficient fee here or else the error is very confusing
+                if (address(this).balance < fee) {
+                    revert CrossChain.InsufficientBridgeFee(fee, address(this).balance);
+                }
 
-							// need to check sufficient fee here or else the error is very confusing
-							if (address(this).balance < fee) {
-									revert CrossChain.InsufficientBridgeFee(fee, address(this).balance);
-							}
+                wormholeSender.sendPayloadToEvm{value: fee}(
+                    chainSelector,
+                    address(this),
+                    data,
+                    0,
+                    gasLimit
+                );
 
-							wormholeSender.sendPayloadToEvm{ value: fee }(
-								chainSelector,
-								address(this),
-								data,
-								0,
-								gasLimit
-							);
-
-							gasTokenUsed += fee;
-					}
-				}
+                gasTokenUsed += fee;
+            }
+        }
     }
 }

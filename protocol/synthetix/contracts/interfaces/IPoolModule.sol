@@ -12,8 +12,8 @@ interface IPoolModule {
      * @notice Thrown when the requested pool ID is greater or equal to type(uint128).max / 2
      */
     error InvalidPoolId(uint128 poolId);
-    
-		/**
+
+    /**
      * @notice Thrown when attempting to delegate collateral to a market whose capacity is locked.
      */
     error CapacityLocked(uint256 marketId);

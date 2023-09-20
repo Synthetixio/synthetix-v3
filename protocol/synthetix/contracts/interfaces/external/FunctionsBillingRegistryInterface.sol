@@ -104,10 +104,7 @@ interface FunctionsBillingRegistryInterface {
      * @param subscriptionId the subscription to add the consumer to
      * @param consumer the address which can spend from the subscription
      */
-    function addConsumer(
-    uint64 subscriptionId,
-    address consumer
-  ) external;
+    function addConsumer(uint64 subscriptionId, address consumer) external;
 
     /**
      * @notice Gets subscription owner.

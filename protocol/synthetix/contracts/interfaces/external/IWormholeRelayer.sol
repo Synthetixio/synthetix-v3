@@ -26,7 +26,11 @@ struct VaaKey {
 }
 
 interface IWormholeRelayerBase {
-    event SendEvent(uint64 indexed sequence, uint256 deliveryQuote, uint256 paymentForExtraReceiverValue);
+    event SendEvent(
+        uint64 indexed sequence,
+        uint256 deliveryQuote,
+        uint256 paymentForExtraReceiverValue
+    );
 
     function getRegisteredWormholeRelayerContract(uint16 chainId) external view returns (bytes32);
 }
@@ -487,10 +491,11 @@ interface IWormholeRelayerSend is IWormholeRelayerBase {
      * @return targetChainRefundPerGasUnused amount of target chain currency that will be refunded per unit of gas unused,
      *         if a refundAddress is specified
      */
-    function quoteEVMDeliveryPrice(uint16 targetChain, uint256 receiverValue, uint256 gasLimit)
-        external
-        view
-        returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused);
+    function quoteEVMDeliveryPrice(
+        uint16 targetChain,
+        uint256 receiverValue,
+        uint256 gasLimit
+    ) external view returns (uint256 nativePriceQuote, uint256 targetChainRefundPerGasUnused);
 
     /**
      * @notice Returns the price to request a relay to chain `targetChain`, using delivery provider `deliveryProviderAddress`
@@ -541,10 +546,11 @@ interface IWormholeRelayerSend is IWormholeRelayerBase {
      * @return targetChainAmount The amount such that if `targetAddress` will be called with `msg.value` equal to
      *         receiverValue + targetChainAmount
      */
-    function quoteNativeForChain(uint16 targetChain, uint256 currentChainAmount, address deliveryProviderAddress)
-        external
-        view
-        returns (uint256 targetChainAmount);
+    function quoteNativeForChain(
+        uint16 targetChain,
+        uint256 currentChainAmount,
+        address deliveryProviderAddress
+    ) external view returns (uint256 targetChainAmount);
 
     /**
      * @notice Returns the address of the current default delivery provider

@@ -7,8 +7,8 @@ import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessEr
  * @title System wide cross chain utility functions
  */
 library CrossChain {
-		error InsufficientBridgeFee(uint256 requiredAmount, uint256 availableAmount);
-		error UnsupportedNetwork(uint64 chainId);
+    error InsufficientBridgeFee(uint256 requiredAmount, uint256 availableAmount);
+    error UnsupportedNetwork(uint64 chainId);
 
     function onlyCrossChain() internal view {
         if (msg.sender != address(this)) {
