@@ -13,6 +13,8 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
+    // TODO: add satellite Council initialization logic
+
     function cast(
         address[] calldata candidates,
         uint256[] calldata amounts
@@ -44,7 +46,10 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         emit CouncilMembersDismissed(membersToDismiss, electionId);
     }
 
-    function _recvResolve(address[] calldata winners) external {
-        // TODO: distribute nfts to winners
+    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
+        CrossChain.onlyCrossChain();
+
+        _removeAllCouncilMembers(newEpochIndex - 1);
+        _addCouncilMembers(winners, newEpochIndex);
     }
 }

@@ -41,7 +41,6 @@ contract ElectionModule is
         uint64 nominationPeriodDuration,
         uint64 votingPeriodDuration
     ) external override {
-        // TODO: initialization should be called only on mothership and broadcasted?
         OwnableStorage.onlyOwner();
 
         _initOrUpdateElectionSettings(
@@ -146,8 +145,6 @@ contract ElectionModule is
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
     ) external override {
-        // TODO: onlyOnMothership?
-
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
@@ -175,8 +172,6 @@ contract ElectionModule is
         uint64 votingPeriodDuration,
         uint64 maxDateAdjustmentTolerance
     ) external override {
-        // TODO: onlyOnMothership?
-
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Council.ElectionPeriod.Administration);
 
@@ -219,8 +214,6 @@ contract ElectionModule is
     }
 
     function nominate() public virtual override {
-        // TODO: onlyOnMothership?
-
         Council.onlyInPeriods(Council.ElectionPeriod.Nomination, Council.ElectionPeriod.Vote);
 
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
@@ -233,8 +226,6 @@ contract ElectionModule is
     }
 
     function withdrawNomination() external override {
-        // TODO: onlyOnMothership?
-
         SetUtil.AddressSet storage nominees = Council.load().getCurrentElection().nominees;
         Council.onlyInPeriod(Council.ElectionPeriod.Nomination);
 
@@ -333,7 +324,6 @@ contract ElectionModule is
 
     /// @dev Burns previous NFTs and mints new ones
     function resolve() public virtual override {
-        CrossChain.onlyOnChainAt(0);
         Council.onlyInPeriod(Council.ElectionPeriod.Evaluation);
 
         Council.Data storage store = Council.load();
@@ -353,17 +343,6 @@ contract ElectionModule is
             ),
             _CROSSCHAIN_GAS_LIMIT
         );
-    }
-
-    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
-        CrossChain.onlyOnChainAt(0);
-        CrossChain.onlyCrossChain();
-
-        Council.Data storage store = Council.load();
-        Election.Data storage election = store.getCurrentElection();
-
-        _removeAllCouncilMembers(newEpochIndex);
-        _addCouncilMembers(winners, newEpochIndex);
 
         election.resolved = true;
         store.newElection();
