@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IElectionModuleSatellite} from "./IElectionModuleSatellite.sol";
 import {ElectionSettings} from "../storage/ElectionSettings.sol";
 import {Epoch} from "../storage/Epoch.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
-interface IElectionModule {
+interface IElectionModule is IElectionModuleSatellite {
     error AlreadyNominated();
     error ElectionAlreadyEvaluated();
     error ElectionNotEvaluated();
@@ -85,8 +86,13 @@ interface IElectionModule {
     /// @notice Self-withdrawal of nominations during the Nomination period
     function withdrawNomination() external;
 
-    /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
-    function cast(address[] calldata candidates, uint256[] calldata amounts) external;
+    /// @dev Internal voting logic, ready to be used cross-chain
+    function _recvCast(
+        address voter,
+        uint256 chainId,
+        address[] calldata candidates,
+        uint256[] calldata amounts
+    ) external;
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
     function evaluate(uint numBallots) external;

@@ -15,8 +15,15 @@ import {Council} from "../../storage/Council.sol";
 import {Election} from "../../storage/Election.sol";
 import {Epoch} from "../../storage/Epoch.sol";
 import {ElectionSettings} from "../../storage/ElectionSettings.sol";
+import {ElectionModuleSatellite} from "./ElectionModuleSatellite.sol";
 
-contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, InitializableMixin {
+contract ElectionModule is
+    IElectionModule,
+    ElectionModuleSatellite,
+    ElectionCredentials,
+    ElectionTally,
+    InitializableMixin
+{
     using SetUtil for SetUtil.AddressSet;
     using Council for Council.Data;
     using ElectionSettings for ElectionSettings.Data;
@@ -238,11 +245,14 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
         emit NominationWithdrawn(msg.sender, Council.load().currentElectionId);
     }
 
-    /// @dev ElectionVotes needs to be extended to specify what determines voting power
-    function cast(
+    function _recvCast(
+        address voter,
+        uint256 chainId,
         address[] calldata candidates,
         uint256[] calldata amounts
-    ) public virtual override {
+    ) external override {
+        CrossChain.onlyOnChainAt(0);
+        CrossChain.onlyCrossChain();
         Council.onlyInPeriod(Council.ElectionPeriod.Vote);
 
         if (candidates.length > _MAX_BALLOT_SIZE) {
@@ -252,6 +262,8 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
         if (candidates.length != amounts.length) {
             revert ParameterError.InvalidParameter("candidates", "length must match amounts");
         }
+
+        _validateCandidates(candidates);
 
         Ballot.Data storage ballot = Ballot.load(
             Council.load().currentElectionId,
@@ -273,21 +285,6 @@ contract ElectionModule is IElectionModule, ElectionCredentials, ElectionTally, 
 
         ballot.votedCandidates = candidates;
         ballot.amounts = amounts;
-
-        CrossChain.Data storage cc = CrossChain.load();
-        cc.transmit(
-            cc.getChainIdAt(0),
-            abi.encodeWithSelector(this._recvCast.selector, msg.sender, block.chainid, ballot),
-            _CROSSCHAIN_GAS_LIMIT
-        );
-    }
-
-    function _recvCast(address voter, uint256 chainId, Ballot.Data calldata ballot) external {
-        CrossChain.onlyOnChainAt(0);
-        CrossChain.onlyCrossChain();
-        Council.onlyInPeriod(Council.ElectionPeriod.Vote);
-
-        _validateCandidates(ballot.votedCandidates);
 
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();

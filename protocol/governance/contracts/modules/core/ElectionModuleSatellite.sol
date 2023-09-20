@@ -1,19 +1,31 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract ElectionModuleSatellite {
+import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
+import {IElectionModule} from "../../interfaces/IElectionModule.sol";
+import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
+
+contract ElectionModuleSatellite is IElectionModuleSatellite {
+    using CrossChain for CrossChain.Data;
+
+    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
+
     function cast(
         address[] calldata candidates,
         uint256[] calldata amounts
     ) public virtual override {
-        // TODO: cast the vote to mothership
-    }
+        CrossChain.Data storage cc = CrossChain.load();
 
-    function _recvDismissMembers(address[] calldata membersToDismiss) external override {
-        // TODO: burn nfts from received members
-    }
-
-    function _recvResolve(address[] calldata winners, uint256 newEpochIndex) external {
-        // TODO: distribute nfts to winners
+        cc.transmit(
+            cc.getChainIdAt(0),
+            abi.encodeWithSelector(
+                IElectionModule._recvCast.selector,
+                msg.sender,
+                block.chainid,
+                candidates,
+                amounts
+            ),
+            _CROSSCHAIN_GAS_LIMIT
+        );
     }
 }
