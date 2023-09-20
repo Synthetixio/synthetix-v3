@@ -711,13 +711,13 @@ workflows:
           name: "test-subgraph-perps-market"
           workspace: "@synthetixio/perps-market-subgraph"
 
-      - simulate-release:
-          name: "simulate-release-main"
-          workspace: "@synthetixio/main"
-          cannonPackage: "synthetix"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "InitialCoreProxy"
-          chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+      #- simulate-release:
+      #    name: "simulate-release-main"
+      #    workspace: "@synthetixio/main"
+      #    cannonPackage: "synthetix"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "InitialCoreProxy"
+      #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
       #- simulate-release: TODO: enable when cannon has fixed RPC proxy
       #    name: "simulate-release-oracle-manager"
