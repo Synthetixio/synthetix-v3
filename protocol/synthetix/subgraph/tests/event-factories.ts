@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
-import { newMockEvent } from 'matchstick-as';
+import { newTypedMockEvent } from 'matchstick-as';
 import {
   AccountCreated,
   CollateralConfigured,
@@ -41,7 +41,7 @@ export function createPoolCreatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolCreated {
-  const newPoolCreatedEvent = changetype<PoolCreated>(newMockEvent());
+  const newPoolCreatedEvent = newTypedMockEvent<PoolCreated>();
   const block = createBlock(timestamp, blockNumber);
   newPoolCreatedEvent.parameters = [];
   newPoolCreatedEvent.parameters.push(new ethereum.EventParam('id', ethereum.Value.fromI32(id)));
@@ -60,7 +60,7 @@ export function createPoolOwnerNominatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolOwnerNominated {
-  const newCreateNominatedPoolOwnerEvent = changetype<PoolOwnerNominated>(newMockEvent());
+  const newCreateNominatedPoolOwnerEvent = newTypedMockEvent<PoolOwnerNominated>();
   const block = createBlock(timestamp, blockNumber);
   newCreateNominatedPoolOwnerEvent.parameters = [];
   newCreateNominatedPoolOwnerEvent.parameters.push(
@@ -86,7 +86,7 @@ export function createPoolNameUpdatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolNameUpdated {
-  const newPoolNameUpdatedEvent = changetype<PoolNameUpdated>(newMockEvent());
+  const newPoolNameUpdatedEvent = newTypedMockEvent<PoolNameUpdated>();
   const block = createBlock(timestamp, blockNumber);
   newPoolNameUpdatedEvent.parameters = [];
   newPoolNameUpdatedEvent.parameters.push(
@@ -106,7 +106,7 @@ export function createPoolOwnershipAcceptedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolOwnershipAccepted {
-  const newPoolOwnershipAcceptedEvent = changetype<PoolOwnershipAccepted>(newMockEvent());
+  const newPoolOwnershipAcceptedEvent = newTypedMockEvent<PoolOwnershipAccepted>();
   const block = createBlock(timestamp, blockNumber);
   newPoolOwnershipAcceptedEvent.parameters = [];
   newPoolOwnershipAcceptedEvent.parameters.push(
@@ -125,7 +125,7 @@ export function createPoolNominationRevokedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolNominationRevoked {
-  const newPoolNominationRevokedEvent = changetype<PoolNominationRevoked>(newMockEvent());
+  const newPoolNominationRevokedEvent = newTypedMockEvent<PoolNominationRevoked>();
   const block = createBlock(timestamp, blockNumber);
   newPoolNominationRevokedEvent.parameters = [];
   newPoolNominationRevokedEvent.parameters.push(
@@ -141,7 +141,7 @@ export function createPoolOwnershipRenouncedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolNominationRenounced {
-  const newPoolOwnerNominationRenouncedEvent = changetype<PoolNominationRenounced>(newMockEvent());
+  const newPoolOwnerNominationRenouncedEvent = newTypedMockEvent<PoolNominationRenounced>();
   const block = createBlock(timestamp, blockNumber);
   newPoolOwnerNominationRenouncedEvent.parameters = [];
   newPoolOwnerNominationRenouncedEvent.parameters.push(
@@ -158,7 +158,7 @@ export function createMarketCreatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): MarketRegistered {
-  const newMarketRegisteredEvent = changetype<MarketRegistered>(newMockEvent());
+  const newMarketRegisteredEvent = newTypedMockEvent<MarketRegistered>();
   const block = createBlock(timestamp, blockNumber);
   newMarketRegisteredEvent.parameters = [];
   newMarketRegisteredEvent.parameters.push(
@@ -178,7 +178,7 @@ export function createAccountCreatedEvent(
   timestamp: i64,
   blockNumber: i64
 ): AccountCreated {
-  const newMarketRegisteredEvent = changetype<AccountCreated>(newMockEvent());
+  const newMarketRegisteredEvent = newTypedMockEvent<AccountCreated>();
   const block = createBlock(timestamp, blockNumber);
   newMarketRegisteredEvent.parameters = [];
 
@@ -199,7 +199,7 @@ export function createPoolConfigurationSetEvent(
   timestamp: i64,
   blockNumber: i64
 ): PoolConfigurationSet {
-  const newMarketRegisteredEvent = changetype<PoolConfigurationSet>(newMockEvent());
+  const newMarketRegisteredEvent = newTypedMockEvent<PoolConfigurationSet>();
   const block = createBlock(timestamp, blockNumber);
   newMarketRegisteredEvent.parameters = [];
   newMarketRegisteredEvent.parameters.push(
@@ -221,7 +221,7 @@ export function createMarketUsdDepositedEvent(
   timestamp: i64,
   blockNumber: i64
 ): MarketUsdDeposited {
-  const newUsdMintedEvent = changetype<MarketUsdDeposited>(newMockEvent());
+  const newUsdMintedEvent = newTypedMockEvent<MarketUsdDeposited>();
   const block = createBlock(timestamp, blockNumber);
   newUsdMintedEvent.parameters = [];
   newUsdMintedEvent.parameters.push(
@@ -245,7 +245,7 @@ export function createMarketUsdWithdrawnEvent(
   timestamp: i64,
   blockNumber: i64
 ): MarketUsdWithdrawn {
-  const newUsdWithdrawnEvent = changetype<MarketUsdWithdrawn>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<MarketUsdWithdrawn>();
   const block = createBlock(timestamp, blockNumber);
   newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
@@ -273,7 +273,7 @@ export function createCollateralConfiguredEvent(
   timestamp: i64,
   blockNumber: i64
 ): CollateralConfigured {
-  const newUsdWithdrawnEvent = changetype<CollateralConfigured>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<CollateralConfigured>();
   const block = createBlock(timestamp, blockNumber);
   newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
@@ -303,7 +303,7 @@ export function createDepositEvent(
   timestamp: i64,
   blockNumber: i64
 ): Deposited {
-  const newUsdWithdrawnEvent = changetype<Deposited>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<Deposited>();
   const block = createBlock(timestamp, blockNumber);
   newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
@@ -327,7 +327,7 @@ export function createWithdrawnEvent(
   timestamp: i64,
   blockNumber: i64
 ): Withdrawn {
-  const newUsdWithdrawnEvent = changetype<Withdrawn>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<Withdrawn>();
   const block = createBlock(timestamp, blockNumber);
   newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
@@ -351,7 +351,7 @@ export function createPermissionGrantedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PermissionGranted {
-  const newUsdWithdrawnEvent = changetype<PermissionGranted>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<PermissionGranted>();
   const block = createBlock(timestamp, blockNumber);
   newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
@@ -375,7 +375,7 @@ export function createPermissionRevokedEvent(
   timestamp: i64,
   blockNumber: i64
 ): PermissionRevoked {
-  const newUsdWithdrawnEvent = changetype<PermissionRevoked>(newMockEvent());
+  const newUsdWithdrawnEvent = newTypedMockEvent<PermissionRevoked>();
   const block = createBlock(timestamp, blockNumber);
   newUsdWithdrawnEvent.parameters = [];
   newUsdWithdrawnEvent.parameters.push(
@@ -401,7 +401,7 @@ export function createDelegationUpdateEvent(
   timestamp: i64,
   blockNumber: i64
 ): DelegationUpdated {
-  const newDelegationUpdatedEvent = changetype<DelegationUpdated>(newMockEvent());
+  const newDelegationUpdatedEvent = newTypedMockEvent<DelegationUpdated>();
   const block = createBlock(timestamp, blockNumber);
   newDelegationUpdatedEvent.parameters = [];
   newDelegationUpdatedEvent.parameters.push(
@@ -432,7 +432,7 @@ export function createUSDMintedEvent(
   timestamp: i64,
   blockNumber: i64
 ): UsdMinted {
-  const newUSDMintedEvent = changetype<UsdMinted>(newMockEvent());
+  const newUSDMintedEvent = newTypedMockEvent<UsdMinted>();
   const block = createBlock(timestamp, blockNumber);
   newUSDMintedEvent.parameters = [];
   newUSDMintedEvent.parameters.push(
@@ -460,7 +460,7 @@ export function createUSDBurnedEvent(
   timestamp: i64,
   blockNumber: i64
 ): UsdBurned {
-  const newUSDBurnedEvent = changetype<UsdBurned>(newMockEvent());
+  const newUSDBurnedEvent = newTypedMockEvent<UsdBurned>();
   const block = createBlock(timestamp, blockNumber);
   newUSDBurnedEvent.parameters = [];
   newUSDBurnedEvent.parameters.push(
@@ -487,9 +487,7 @@ export function createRewardsDistributorRegisteredEvent(
   timestamp: i64,
   blockNumber: i64
 ): RewardsDistributorRegistered {
-  const newRewardsDistributorRegisteredEvent = changetype<RewardsDistributorRegistered>(
-    newMockEvent()
-  );
+  const newRewardsDistributorRegisteredEvent = newTypedMockEvent<RewardsDistributorRegistered>();
   const block = createBlock(timestamp, blockNumber);
   newRewardsDistributorRegisteredEvent.parameters = [];
   newRewardsDistributorRegisteredEvent.parameters.push(
@@ -517,7 +515,7 @@ export function createRewardsDistributedEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): RewardsDistributed {
-  const newRewardsDistributedEvent = changetype<RewardsDistributed>(newMockEvent());
+  const newRewardsDistributedEvent = newTypedMockEvent<RewardsDistributed>();
   const block = createBlock(timestamp, blockNumber);
   newRewardsDistributedEvent.logIndex = BigInt.fromI32(logIndex);
   newRewardsDistributedEvent.parameters = [];
@@ -554,7 +552,7 @@ export function createRewardsClaimedEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): RewardsClaimed {
-  const newRewardsClaimedEvent = changetype<RewardsClaimed>(newMockEvent());
+  const newRewardsClaimedEvent = newTypedMockEvent<RewardsClaimed>();
   const block = createBlock(timestamp, blockNumber);
   newRewardsClaimedEvent.logIndex = BigInt.fromI32(logIndex);
   newRewardsClaimedEvent.parameters = [];
@@ -591,7 +589,7 @@ export function createLiquidationEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): Liquidation {
-  const newLiquidatedEvent = changetype<Liquidation>(newMockEvent());
+  const newLiquidatedEvent = newTypedMockEvent<Liquidation>();
   const block = createBlock(timestamp, blockNumber);
   newLiquidatedEvent.logIndex = BigInt.fromI32(logIndex);
   newLiquidatedEvent.parameters = [];
@@ -638,7 +636,7 @@ export function createVaultLiquidationEvent(
   blockNumber: i64,
   logIndex: i32 = 1
 ): VaultLiquidation {
-  const newVaultLiquidationEvent = changetype<VaultLiquidation>(newMockEvent());
+  const newVaultLiquidationEvent = newTypedMockEvent<VaultLiquidation>();
   const block = createBlock(timestamp, blockNumber);
   newVaultLiquidationEvent.logIndex = BigInt.fromI32(logIndex);
   newVaultLiquidationEvent.parameters = [];

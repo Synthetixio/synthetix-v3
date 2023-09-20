@@ -81,8 +81,9 @@ contract AccountModule is IAccountModule {
         accountId = (type(uint128).max / 2) + systemAccountConfiguration.accountIdOffset;
         systemAccountConfiguration.accountIdOffset += 1;
 
-        accountTokenModule.safeMint(msg.sender, accountId, "");
         Account.create(accountId, msg.sender);
+
+        accountTokenModule.safeMint(msg.sender, accountId, "");
 
         emit AccountCreated(accountId, msg.sender);
     }

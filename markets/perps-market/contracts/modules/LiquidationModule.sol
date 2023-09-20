@@ -12,6 +12,7 @@ import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
 import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
+import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 
 /**
@@ -26,12 +27,13 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using PerpsMarket for PerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidate(uint128 accountId) external override {
+    function liquidate(uint128 accountId) external override returns (uint256 liquidationReward) {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -41,19 +43,19 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
             if (isEligible) {
                 account.flagForLiquidation();
-                _liquidateAccount(account);
+                liquidationReward = _liquidateAccount(account);
             } else {
                 revert NotEligibleForLiquidation(accountId);
             }
         } else {
-            _liquidateAccount(account);
+            liquidationReward = _liquidateAccount(account);
         }
     }
 
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidateFlagged() external override {
+    function liquidateFlagged() external override returns (uint256 liquidationReward) {
         uint256[] memory liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts
@@ -61,14 +63,40 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
         for (uint i = 0; i < liquidatableAccounts.length; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();
-            _liquidateAccount(PerpsAccount.load(accountId));
+            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId));
         }
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function canLiquidate(uint128 accountId) external view override returns (bool isEligible) {
+        (isEligible, , , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation();
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidationCapacity(
+        uint128 marketId
+    )
+        external
+        view
+        override
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp)
+    {
+        return
+            PerpsMarket.load(marketId).currentLiquidationCapacity(
+                PerpsMarketConfiguration.load(marketId)
+            );
     }
 
     /**
      * @dev liquidates an account
      */
-    function _liquidateAccount(PerpsAccount.Data storage account) internal {
+    function _liquidateAccount(
+        PerpsAccount.Data storage account
+    ) internal returns (uint256 keeperLiquidationReward) {
         uint128 accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
 
@@ -82,7 +110,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 uint256 amountLiquidated,
                 int128 newPositionSize,
                 int128 sizeDelta,
-                PerpsMarket.MarketUpdateData memory marketUpdateData
+                MarketUpdate.Data memory marketUpdateData
             ) = account.liquidatePosition(positionMarketId, price);
 
             if (amountLiquidated == 0) {
@@ -105,10 +133,14 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             uint256 liquidationReward = PerpsMarketConfiguration
                 .load(positionMarketId)
                 .calculateLiquidationReward(amountLiquidated.mulDecimal(price));
-            accumulatedLiquidationRewards += liquidationReward;
+
+            // endorsed liquidators do not get liquidation rewards
+            if (msg.sender != PerpsMarketConfiguration.load(positionMarketId).endorsedLiquidator) {
+                accumulatedLiquidationRewards += liquidationReward;
+            }
         }
 
-        uint256 keeperLiquidationReward = _processLiquidationRewards(accumulatedLiquidationRewards);
+        keeperLiquidationReward = _processLiquidationRewards(accumulatedLiquidationRewards);
 
         bool accountFullyLiquidated = account.openPositionMarketIds.length() == 0;
         if (accountFullyLiquidated) {

@@ -88,7 +88,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         // default collateral leverage to 1
         MarketConfiguration.load(synthMarketId).collateralLeverage = DecimalMath.UNIT;
 
-        emit SynthRegistered(synthMarketId);
+        emit SynthRegistered(synthMarketId, address(SynthUtil.getToken(synthMarketId)));
     }
 
     /**
@@ -233,6 +233,18 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     ) public view override returns (address marketOwner) {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         return spotMarketFactory.marketOwners[synthMarketId];
+    }
+
+    /**
+     * @inheritdoc ISpotMarketFactoryModule
+     */
+    function renounceMarketOwnership(uint128 synthMarketId) external override {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.onlyMarketOwner(synthMarketId);
+
+        address currentOwner = spotMarketFactory.marketOwners[synthMarketId];
+        spotMarketFactory.marketOwners[synthMarketId] = address(0);
+        emit MarketOwnerChanged(synthMarketId, currentOwner, address(0));
     }
 
     /**

@@ -1,13 +1,13 @@
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../generated/typechain';
 import { MockMarket } from '../../typechain-types';
 import { createStakedPool } from '../common';
 
+import type { AccountProxy, CoreProxy, USDProxy, CollateralMock } from '../generated/typechain';
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
 export interface Proxies {
@@ -107,6 +107,14 @@ export function bootstrapWithMockMarketAndPool() {
           maxDebtShareValueD18: ethers.utils.parseEther('1'),
         },
       ]);
+
+    await r
+      .systems()
+      .Core.connect(owner)
+      .setPoolCollateralConfiguration(r.poolId, r.collateralAddress(), {
+        collateralLimitD18: bn(1000000000),
+        issuanceRatioD18: bn(1),
+      });
   });
 
   const restore = snapshotCheckpoint(r.provider);

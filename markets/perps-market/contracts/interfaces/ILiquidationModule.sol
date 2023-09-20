@@ -37,11 +37,32 @@ interface ILiquidationModule {
      * @notice Liquidates an account.
      * @dev according to the current situation and account size it can be a partial or full liquidation.
      * @param accountId Id of the account to liquidate.
+     * @return liquidationReward total reward sent to liquidator.
      */
-    function liquidate(uint128 accountId) external;
+    function liquidate(uint128 accountId) external returns (uint256 liquidationReward);
 
     /**
      * @notice Liquidates all flagged accounts.
+     * @return liquidationReward total reward sent to liquidator.
      */
-    function liquidateFlagged() external;
+    function liquidateFlagged() external returns (uint256 liquidationReward);
+
+    /**
+     * @notice Returns if an account is eligible for liquidation.
+     * @return isEligible
+     */
+    function canLiquidate(uint128 accountId) external view returns (bool isEligible);
+
+    /**
+     * @notice Current liquidation capacity for the market
+     * @return capacity market can liquidate up to this #
+     * @return maxLiquidationInWindow max amount allowed to liquidate based on the current market configuration
+     * @return latestLiquidationTimestamp timestamp of the last liquidation of the market
+     */
+    function liquidationCapacity(
+        uint128 marketId
+    )
+        external
+        view
+        returns (uint capacity, uint256 maxLiquidationInWindow, uint256 latestLiquidationTimestamp);
 }

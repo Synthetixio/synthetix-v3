@@ -396,6 +396,9 @@ contract MarketManagerModule {
 // @custom:artifact contracts/modules/core/MulticallModule.sol:MulticallModule
 contract MulticallModule {
     bytes32 internal constant _CONFIG_MESSAGE_SENDER = "_messageSender";
+    bytes32 internal constant _CONFIG_ALLOWLISTED_MULTICALL_TARGETS = "_allowlistedMulticallTargets";
+    bytes32 internal constant ALLOWED = bytes32(uint256(1));
+    bytes32 internal constant DISALLOWED = bytes32(uint256(0));
 }
 
 // @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
@@ -454,6 +457,7 @@ library AccountRBAC {
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -664,6 +668,8 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
         int128 cumulativeDebtD18;
         mapping(uint256 => uint256) heldMarketConfigurationWeights;
         mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
@@ -680,6 +686,15 @@ library Pool {
         assembly {
             pool.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 collateralLimitD18;
+        uint256 issuanceRatioD18;
     }
 }
 
@@ -829,5 +844,5 @@ library CcipClient {
 
 // @custom:artifact hardhat/console.sol:console
 library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
+    address internal constant CONSOLE_ADDRESS = 0x000000000000000000636F6e736F6c652e6c6f67;
 }

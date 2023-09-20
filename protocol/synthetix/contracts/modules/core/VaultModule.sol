@@ -85,6 +85,11 @@ contract VaultModule is IVaultModule {
                 newCollateralAmountD18 - currentCollateralAmount
             );
 
+            Pool.loadExisting(poolId).checkPoolCollateralLimit(
+                collateralType,
+                newCollateralAmountD18 - currentCollateralAmount
+            );
+
             // if decreasing delegation amount, ensure min time has elapsed
         } else {
             Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
@@ -116,11 +121,17 @@ contract VaultModule is IVaultModule {
         if (newCollateralAmountD18 < currentCollateralAmount) {
             int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
 
+            uint256 minIssuanceRatioD18 = Pool
+                .loadExisting(poolId)
+                .collateralConfigurations[collateralType]
+                .issuanceRatioD18;
+
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 debt < 0 ? 0 : debt.toUint(),
-                newCollateralAmountD18.mulDecimal(collateralPrice)
+                newCollateralAmountD18.mulDecimal(collateralPrice),
+                minIssuanceRatioD18
             );
 
             // Accounts cannot reduce collateral if any of the pool's
@@ -169,11 +180,19 @@ contract VaultModule is IVaultModule {
         // c-ratio must still be healthy (or no debt if removing all collateral)
         int256 debt = Pool.load(poolId).updateAccountDebt(collateralType, accountId);
 
+        uint256 minIssuanceRatioD18 = Pool
+            .loadExisting(poolId)
+            .collateralConfigurations[collateralType]
+            .issuanceRatioD18;
+
+        uint256 collateralPrice = CollateralConfiguration.load(collateralType).getCollateralPrice();
+
         // Minimum collateralization ratios are configured in the system per collateral type.abi
         // Ensure that the account's updated position satisfies this requirement.
         CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
             debt < 0 ? 0 : debt.toUint(),
-            epoch.getAccountCollateral(accountId)
+            epoch.getAccountCollateral(accountId).mulDecimal(collateralPrice),
+            minIssuanceRatioD18
         );
 
         amountReleased = lock.amountD18;

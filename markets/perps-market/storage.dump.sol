@@ -106,21 +106,6 @@ library FeatureFlag {
     }
 }
 
-// @custom:artifact @synthetixio/main/contracts/interfaces/external/FunctionsBillingRegistryInterface.sol:FunctionsBillingRegistryInterface
-interface FunctionsBillingRegistryInterface {
-    enum FulfillResult {
-        USER_SUCCESS,
-        USER_ERROR,
-        INVALID_REQUEST_ID
-    }
-    struct RequestBilling {
-        uint64 subscriptionId;
-        address client;
-        uint32 gasLimit;
-        uint256 gasPrice;
-    }
-}
-
 // @custom:artifact @synthetixio/main/contracts/storage/Account.sol:Account
 library Account {
     struct Data {
@@ -148,6 +133,7 @@ library AccountRBAC {
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     bytes32 internal constant _PERPS_MODIFY_COLLATERAL_PERMISSION = "PERPS_MODIFY_COLLATERAL";
     bytes32 internal constant _PERPS_COMMIT_ASYNC_ORDER_PERMISSION = "PERPS_COMMIT_ASYNC_ORDER";
+    bytes32 internal constant _BURN_PERMISSION = "BURN";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -204,25 +190,6 @@ library CollateralLock {
 library Config {
     struct Data {
         uint256 __unused;
-    }
-}
-
-// @custom:artifact @synthetixio/main/contracts/storage/CrossChain.sol:CrossChain
-library CrossChain {
-    bytes32 private constant _SLOT_CROSS_CHAIN = keccak256(abi.encode("io.synthetix.synthetix.CrossChain"));
-    struct Data {
-        address ccipRouter;
-        address chainlinkFunctionsOracle;
-        SetUtil.UintSet supportedNetworks;
-        mapping(uint64 => uint64) ccipChainIdToSelector;
-        mapping(uint64 => uint64) ccipSelectorToChainId;
-        mapping(bytes32 => bytes32) chainlinkFunctionsRequestInfo;
-    }
-    function load() internal pure returns (Data storage crossChain) {
-        bytes32 s = _SLOT_CROSS_CHAIN;
-        assembly {
-            crossChain.slot := s
-        }
     }
 }
 
@@ -324,6 +291,8 @@ library Pool {
         uint64 __reserved1;
         uint64 __reserved2;
         uint64 __reserved3;
+        mapping(address => PoolCollateralConfiguration.Data) collateralConfigurations;
+        bool collateralDisabledByDefault;
         int128 cumulativeDebtD18;
         mapping(uint256 => uint256) heldMarketConfigurationWeights;
         mapping(uint256 => PoolCrossChainInfo.Data) crossChain;
@@ -343,6 +312,15 @@ library Pool {
     }
 }
 
+// @custom:artifact @synthetixio/main/contracts/storage/PoolCollateralConfiguration.sol:PoolCollateralConfiguration
+library PoolCollateralConfiguration {
+    bytes32 private constant _SLOT = keccak256(abi.encode("io.synthetix.synthetix.PoolCollateralConfiguration"));
+    struct Data {
+        uint256 collateralLimitD18;
+        uint256 issuanceRatioD18;
+    }
+}
+
 // @custom:artifact @synthetixio/main/contracts/storage/PoolCrossChainInfo.sol:PoolCrossChainInfo
 library PoolCrossChainInfo {
     struct Data {
@@ -350,9 +328,10 @@ library PoolCrossChainInfo {
         uint128 latestTotalWeights;
         uint64[] pairedChains;
         mapping(uint64 => uint128) pairedPoolIds;
-        uint64 chainlinkSubscriptionId;
-        uint32 chainlinkSubscriptionInterval;
-        bytes32 latestRequestId;
+        bytes32 subscriptionId;
+        uint256 subscriptionInterval;
+        bytes4 broadcastSelector;
+        bytes4 offchainReadSelector;
     }
 }
 
@@ -445,33 +424,6 @@ library VaultEpoch {
     }
 }
 
-// @custom:artifact @synthetixio/main/contracts/utils/CcipClient.sol:CcipClient
-library CcipClient {
-    bytes4 public constant EVM_EXTRA_ARGS_V1_TAG = 0x97a657c9;
-    struct EVMTokenAmount {
-        address token;
-        uint256 amount;
-    }
-    struct Any2EVMMessage {
-        bytes32 messageId;
-        uint64 sourceChainSelector;
-        bytes sender;
-        bytes data;
-        EVMTokenAmount[] tokenAmounts;
-    }
-    struct EVM2AnyMessage {
-        bytes receiver;
-        bytes data;
-        EVMTokenAmount[] tokenAmounts;
-        address feeToken;
-        bytes extraArgs;
-    }
-    struct EVMExtraArgsV1 {
-        uint256 gasLimit;
-        bool strict;
-    }
-}
-
 // @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
 library NodeDefinition {
     enum NodeType {
@@ -535,7 +487,7 @@ interface IAsyncOrderSettlementModule {
         uint256 referralFees;
         uint256 feeCollectorFees;
         Position.Data newPosition;
-        PerpsMarket.MarketUpdateData updateData;
+        MarketUpdate.Data updateData;
     }
 }
 
@@ -657,6 +609,25 @@ library GlobalPerpsMarketConfiguration {
     }
 }
 
+// @custom:artifact contracts/storage/Liquidation.sol:Liquidation
+library Liquidation {
+    struct Data {
+        uint128 amount;
+        uint256 timestamp;
+    }
+}
+
+// @custom:artifact contracts/storage/MarketUpdate.sol:MarketUpdate
+library MarketUpdate {
+    struct Data {
+        uint128 marketId;
+        int256 skew;
+        uint256 size;
+        int256 currentFundingRate;
+        int256 currentFundingVelocity;
+    }
+}
+
 // @custom:artifact contracts/storage/OrderFee.sol:OrderFee
 library OrderFee {
     struct Data {
@@ -692,18 +663,12 @@ library PerpsMarket {
         int256 lastFundingRate;
         int256 lastFundingValue;
         uint256 lastFundingTime;
-        uint128 lastTimeLiquidationCapacityUpdated;
-        uint128 lastUtilizedLiquidationCapacity;
+        uint128 __unused_1;
+        uint128 __unused_2;
         int256 debtCorrectionAccumulator;
         mapping(uint => AsyncOrder.Data) asyncOrders;
         mapping(uint => Position.Data) positions;
-    }
-    struct MarketUpdateData {
-        uint128 marketId;
-        int256 skew;
-        uint256 size;
-        int256 currentFundingRate;
-        int256 currentFundingVelocity;
+        Liquidation.Data[] liquidationData;
     }
     function load(uint128 marketId) internal pure returns (Data storage market) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.PerpsMarket", marketId));

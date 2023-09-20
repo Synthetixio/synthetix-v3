@@ -9,6 +9,7 @@ import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {MarketUpdate} from "./MarketUpdate.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
@@ -45,7 +46,16 @@ library PerpsAccount {
         SetUtil.UintSet openPositionMarketIds;
     }
 
-    error InsufficientCollateralAvailableForWithdraw(uint available, uint required);
+    error InsufficientCollateralAvailableForWithdraw(
+        uint availableUsdDenominated,
+        uint requiredUsdDenominated
+    );
+
+    error InsufficientSynthCollateral(
+        uint128 synthMarketId,
+        uint collateralAmount,
+        uint withdrawAmount
+    );
 
     error InsufficientMarginError(uint leftover);
 
@@ -165,11 +175,19 @@ library PerpsAccount {
     /**
      * @notice This function validates you have enough margin to withdraw without being liquidated.
      * @dev    This is done by checking your collateral value against your initial maintenance value.
+     * @dev    It also checks the synth collateral for this account is enough to cover the withdrawal amount.
      */
     function validateWithdrawableAmount(
         Data storage self,
-        uint256 amountToWithdraw
+        uint128 synthMarketId,
+        uint256 amountToWithdraw,
+        ISpotMarketSystem spotMarket
     ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
+        uint collateralAmount = self.collateralAmounts[synthMarketId];
+        if (collateralAmount < amountToWithdraw) {
+            revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
+        }
+
         (
             bool isEligible,
             int256 availableMargin,
@@ -187,10 +205,17 @@ library PerpsAccount {
         // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
         availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
 
-        if (amountToWithdraw > availableWithdrawableCollateralUsd) {
+        uint amountToWithdrawUsd;
+        if (synthMarketId == SNX_USD_MARKET_ID) {
+            amountToWithdrawUsd = amountToWithdraw;
+        } else {
+            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(synthMarketId, amountToWithdraw);
+        }
+
+        if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
                 availableWithdrawableCollateralUsd,
-                amountToWithdraw
+                amountToWithdrawUsd
             );
         }
     }
@@ -408,7 +433,7 @@ library PerpsAccount {
             uint128 amountToLiquidate,
             int128 newPositionSize,
             int128 sizeDelta,
-            PerpsMarket.MarketUpdateData memory marketUpdateData
+            MarketUpdate.Data memory marketUpdateData
         )
     {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
@@ -417,7 +442,7 @@ library PerpsAccount {
         perpsMarket.recomputeFunding(price);
 
         int128 oldPositionSize = position.size;
-        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
+        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs128(oldPositionSize));
 
         if (amountToLiquidate == 0) {
             return (0, oldPositionSize, 0, marketUpdateData);
