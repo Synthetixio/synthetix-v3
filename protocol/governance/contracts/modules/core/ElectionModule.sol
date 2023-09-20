@@ -188,14 +188,19 @@ contract ElectionModule is
     function dismissMembers(address[] calldata membersToDismiss) external override {
         OwnableStorage.onlyOwner();
 
+        Council.Data storage council = Council.load();
+
         CrossChain.Data storage cc = CrossChain.load();
         cc.broadcast(
             cc.getSupportedNetworks(),
-            abi.encodeWithSelector(this._recvDismissMembers.selector, membersToDismiss),
+            abi.encodeWithSelector(
+                this._recvDismissMembers.selector,
+                membersToDismiss,
+                council.currentElectionId
+            ),
             _CROSSCHAIN_GAS_LIMIT
         );
 
-        Council.Data storage council = Council.load();
         CouncilMembers.Data storage membersStore = CouncilMembers.load();
         if (council.getCurrentPeriod() != Council.ElectionPeriod.Administration) return;
 

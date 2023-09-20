@@ -5,11 +5,9 @@ import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
 import {IElectionModuleSatellite} from "../../interfaces/IElectionModuleSatellite.sol";
 import {ElectionCredentials} from "../../submodules/election/ElectionCredentials.sol";
-import {Council} from "../../storage/Council.sol";
 
 contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredentials {
     using CrossChain for CrossChain.Data;
-    using Council for Council.Data;
 
     uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
 
@@ -34,16 +32,12 @@ contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredential
         );
     }
 
-    function _recvDismissMembers(address[] calldata membersToDismiss) external {
+    function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external {
         CrossChain.onlyCrossChain();
 
-        Council.Data storage store = Council.load();
+        _removeCouncilMembers(membersToDismiss, epochIndex);
 
-        uint electionId = store.currentElectionId;
-
-        _removeCouncilMembers(membersToDismiss, electionId);
-
-        emit CouncilMembersDismissed(membersToDismiss, electionId);
+        emit CouncilMembersDismissed(membersToDismiss, epochIndex);
     }
 
     function _recvResolve(
