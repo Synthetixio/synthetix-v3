@@ -718,7 +718,7 @@ describe('VaultModule', function () {
             const { issuanceRatioD18 } = await systems().Core.getCollateralConfiguration(
               collateralAddress()
             );
-            const price = await systems().Core.getCollateralPrice(collateralAddress(), 0);
+            const price = await systems().Core.getCollateralPrice(collateralAddress());
             const deposit = depositAmount.div(50);
             const debt = depositAmount.div(100);
 

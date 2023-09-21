@@ -50,11 +50,7 @@ interface ICollateralConfigurationModule {
     /**
      * @notice Returns the current value of a specified collateral type.
      * @param collateralType The address for the collateral whose price is being queried.
-     * @param collateralAmount The amount of collateral whose price is being queried.
      * @return priceD18 The price of the given collateral, denominated with 18 decimals of precision.
      */
-    function getCollateralPrice(
-        address collateralType,
-        uint256 collateralAmount
-    ) external view returns (uint256 priceD18);
+    function getCollateralPrice(address collateralType) external view returns (uint256 priceD18);
 }
