@@ -1,8 +1,7 @@
 name = "synthetix-governance"
 description = "On-chain voting for synthetix councils"
 version = "<%= package.version %>"
-include = ["./tomls/proxy-base.toml"]
-include = ["./tomls/council-token.toml"]
+include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
 [setting.salt]
 defaultValue = "governance"
@@ -79,3 +78,4 @@ args = [
     "<%= settings.voting_period_duration %>",
 ]
 from = "<%= settings.owner %>"
+depends = ["invoke.upgrade_core_proxy"]

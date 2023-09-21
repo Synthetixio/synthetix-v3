@@ -176,6 +176,11 @@ contract ElectionModule {
     uint8 private constant _MAX_BALLOT_SIZE = 1;
 }
 
+// @custom:artifact contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSatellite
+contract ElectionModuleSatellite {
+    uint256 private constant _CROSSCHAIN_GAS_LIMIT = 100000;
+}
+
 // @custom:artifact contracts/storage/Ballot.sol:Ballot
 library Ballot {
     struct Data {
@@ -202,13 +207,26 @@ library Council {
     }
     struct Data {
         bool initialized;
-        address councilToken;
-        SetUtil.AddressSet councilMembers;
-        mapping(address => uint) councilTokenIds;
         uint256 currentElectionId;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = _SLOT_COUNCIL_STORAGE;
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/CouncilMembers.sol:CouncilMembers
+library CouncilMembers {
+    bytes32 private constant _STORAGE_SLOT = keccak256(abi.encode("io.synthetix.governance.CouncilMembers"));
+    struct Data {
+        address councilToken;
+        SetUtil.AddressSet councilMembers;
+        mapping(address => uint) councilTokenIds;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = _STORAGE_SLOT;
         assembly {
             store.slot := s
         }

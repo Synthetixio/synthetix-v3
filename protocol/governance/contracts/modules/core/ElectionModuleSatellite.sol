@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {CrossChain} from "@synthetixio/core-modules/contracts/storage/CrossChain.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import {IElectionModule} from "../../interfaces/IElectionModule.sol";
@@ -9,6 +10,7 @@ import {ElectionCredentials} from "../../submodules/election/ElectionCredentials
 import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 
 contract ElectionModuleSatellite is IElectionModuleSatellite, ElectionCredentials {
+    using SetUtil for SetUtil.AddressSet;
     using CrossChain for CrossChain.Data;
     using CouncilMembers for CouncilMembers.Data;
 

@@ -28,3 +28,4 @@ args = [
 factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
 factory.CouncilToken.event = "AssociatedSystemSet"
 factory.CouncilToken.arg = 2
+depends = ["router.CouncilTokenRouter"]
