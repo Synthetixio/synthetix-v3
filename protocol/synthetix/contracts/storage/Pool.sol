@@ -463,7 +463,7 @@ library Pool {
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice(DecimalMath.UNIT);
+            .getCollateralPrice(collateralAmountD18);
 
         collateralAmountD18 = self.vaults[collateralType].currentCollateral();
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
@@ -477,11 +477,10 @@ library Pool {
         address collateralType,
         uint128 accountId
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
+        collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
-            .getCollateralPrice(DecimalMath.UNIT);
-
-        collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
+            .getCollateralPrice(collateralAmountD18);
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
     }
 
