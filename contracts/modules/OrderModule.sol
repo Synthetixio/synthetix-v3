@@ -27,19 +27,23 @@ contract OrderModule is IOrderModule {
     using Position for Position.Data;
     using PerpMarket for PerpMarket.Data;
 
-    // --- Runtime structs ---
+    // --- Runtime structs --- //
 
     struct Runtime_settleOrder {
         uint256 pythPrice;
         uint256 publishTime;
         int256 accruedFunding;
-        int256 pnl;
+        int256 unrealizedPnl;
         uint256 fillPrice;
         Position.ValidatedTrade trade;
         Position.TradeParams params;
     }
 
-    /** @dev Same implementation as `MarginModule.validateOrderAvailability`. */
+    // --- Helpers --- //
+
+    /**
+     * @dev Same implementation as `MarginModule.validateOrderAvailability`.
+     */
     function validateOrderAvailability(
         uint128 accountId,
         uint128 marketId,
@@ -58,51 +62,6 @@ contract OrderModule is IOrderModule {
                 revert ErrorUtil.OrderFound();
             }
         }
-    }
-
-    /**
-     * @inheritdoc IOrderModule
-     */
-    function commitOrder(
-        uint128 accountId,
-        uint128 marketId,
-        int128 sizeDelta,
-        uint256 limitPrice,
-        uint256 keeperFeeBufferUsd
-    ) external {
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
-
-        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        validateOrderAvailability(accountId, marketId, market, globalConfig);
-        uint256 oraclePrice = market.getOraclePrice();
-
-        // TODO: Consider removing and only recomputing funding at the settlement.
-        recomputeFunding(market, oraclePrice);
-
-        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
-
-        // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
-        //
-        // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
-        // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
-        // order will reach liquidation or insufficient margin for the desired leverage.
-        Position.ValidatedTrade memory trade = Position.validateTrade(
-            accountId,
-            market,
-            Position.TradeParams(
-                sizeDelta,
-                oraclePrice,
-                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
-                marketConfig.makerFee,
-                marketConfig.takerFee,
-                limitPrice,
-                keeperFeeBufferUsd
-            )
-        );
-
-        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
-        emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
     /**
@@ -161,7 +120,7 @@ contract OrderModule is IOrderModule {
     /**
      * @dev Upon successful settlement, update `market` and account margin with `newPosition` details.
      */
-    function postSettlementUpdates(
+    function stateUpdatePostSettlement(
         uint128 accountId,
         PerpMarket.Data storage market,
         Position.Data memory newPosition,
@@ -188,6 +147,53 @@ contract OrderModule is IOrderModule {
 
         // Wipe the order, successfully settled!
         delete market.orders[accountId];
+    }
+
+    // --- Mutative --- //
+
+    /**
+     * @inheritdoc IOrderModule
+     */
+    function commitOrder(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 limitPrice,
+        uint256 keeperFeeBufferUsd
+    ) external {
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
+
+        PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        validateOrderAvailability(accountId, marketId, market, globalConfig);
+        uint256 oraclePrice = market.getOraclePrice();
+
+        // TODO: Consider removing and only recomputing funding at the settlement.
+        recomputeFunding(market, oraclePrice);
+
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(marketId);
+
+        // Validates whether this order would lead to a valid 'next' next position (plethora of revert errors).
+        //
+        // NOTE: `fee` here does _not_ matter. We recompute the actual order fee on settlement. The same is true for
+        // the keeper fee. These fees provide an approximation on remaining margin and hence infer whether the subsequent
+        // order will reach liquidation or insufficient margin for the desired leverage.
+        Position.ValidatedTrade memory trade = Position.validateTrade(
+            accountId,
+            market,
+            Position.TradeParams(
+                sizeDelta,
+                oraclePrice,
+                Order.getFillPrice(market.skew, marketConfig.skewScale, sizeDelta, oraclePrice),
+                marketConfig.makerFee,
+                marketConfig.takerFee,
+                limitPrice,
+                keeperFeeBufferUsd
+            )
+        );
+
+        market.orders[accountId].update(Order.Data(sizeDelta, block.timestamp, limitPrice, keeperFeeBufferUsd));
+        emit OrderCommitted(accountId, marketId, block.timestamp, sizeDelta, trade.orderFee, trade.keeperFee);
     }
 
     /**
@@ -231,13 +237,13 @@ contract OrderModule is IOrderModule {
 
         runtime.trade = Position.validateTrade(accountId, market, runtime.params);
 
-        (, runtime.accruedFunding, runtime.pnl, ) = market.positions[accountId].getHealthData(
+        (, runtime.accruedFunding, runtime.unrealizedPnl, ) = market.positions[accountId].getHealthData(
             market,
             runtime.trade.newMarginUsd,
             runtime.pythPrice,
             marketConfig
         );
-        postSettlementUpdates(
+        stateUpdatePostSettlement(
             accountId,
             market,
             runtime.trade.newPosition,
@@ -256,7 +262,7 @@ contract OrderModule is IOrderModule {
             runtime.trade.orderFee,
             runtime.trade.keeperFee,
             runtime.accruedFunding,
-            runtime.pnl,
+            runtime.unrealizedPnl,
             runtime.fillPrice
         );
     }
@@ -283,6 +289,8 @@ contract OrderModule is IOrderModule {
     ) external view {
         // TODO: Implement me
     }
+
+    // --- Views --- //
 
     /**
      * @inheritdoc IOrderModule

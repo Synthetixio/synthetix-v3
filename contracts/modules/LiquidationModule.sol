@@ -21,7 +21,7 @@ contract LiquidationModule is ILiquidationModule {
     // --- Helpers --- //
 
     /**
-     * @dev Before liquidation (not flag) peform validation and market updates.
+     * @dev Before liquidation (not flag) to peform validation and market updates.
      */
     function updateMarketPreLiquidation(
         uint128 accountId,

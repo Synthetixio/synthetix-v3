@@ -44,7 +44,7 @@ library Position {
         uint256 newMarginUsd;
     }
 
-    // --- Runtime structs --- //
+    // --- Runtime Structs --- //
 
     struct Runtime_validateLiquidation {
         address flagger;
@@ -370,12 +370,16 @@ library Position {
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+    )
+        internal
+        view
+        returns (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd)
+    {
         int256 netFundingPerUnit = market.getNextFundingAccrued(price) - positionEntryFundingAccrued;
         accruedFunding = positionSize.mulDecimal(netFundingPerUnit);
 
         // Calculate this position's PnL
-        pnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
+        unrealizedPnl = positionSize.mulDecimal(price.toInt() - positionEntryPrice.toInt());
 
         // Ensure we also deduct the realized losses in fees to open trade.
         //
@@ -399,11 +403,18 @@ library Position {
         uint256 marginUsd,
         uint256 price,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint256 healthFactor, int256 accruedFunding, int256 pnl, uint256 remainingMarginUsd) {
+    )
+        internal
+        view
+        returns (uint256 healthFactor, int256 accruedFunding, int256 unrealizedPnl, uint256 remainingMarginUsd)
+    {
         return
             getHealthData(market, self.size, self.entryPrice, self.entryFundingAccrued, marginUsd, price, marketConfig);
     }
 
+    /**
+     * @dev Returns the health factor associated with this position.
+     */
     function getHealthFactor(
         Position.Data storage self,
         PerpMarket.Data storage market,

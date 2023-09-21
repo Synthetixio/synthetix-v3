@@ -11,55 +11,65 @@ interface IPerpMarketFactoryModule is IMarket {
     // --- Structs --- //
 
     struct CreatePerpMarketParameters {
+        // Name of the market to be created e.g, swstETHsUSDPERP.
         bytes32 name;
     }
 
     struct MarketDigest {
+        // Name of the market e.g, swstETHsUSDPERP.
         bytes32 name;
+        // Skew in native units on market (long - shorts).
         int128 skew;
+        // Market OI in native units.
         uint128 size;
+        // Current oracle price (not accounting for pd adjustments).
         uint256 oraclePrice;
+        // Current rate of funding velocity.
         int256 fundingVelocity;
+        // Current funding rate as a function of funding velocity.
         int256 fundingRate;
+        // Last block.timestamp a liquidation occurred.
         uint256 lastLiquidationTime;
+        // Amount of size remaining last recorded in current window relative to `lastLiquidationTime`.
         uint256 remainingLiquidatableSizeCapacity;
     }
 
     // --- Events --- //
 
+    // @notice Emitted when a market is created.
     event MarketCreated(uint128 id, bytes32 name);
 
     // --- Mutative --- //
 
     /**
-     * @dev Stores a reference to the Synthetix core system.
+     * @notice Stores a reference to the Synthetix core system.
      */
     function setSynthetix(ISynthetixSystem synthetix) external;
 
     /**
-     * @dev Stores a reference to the Synthetix spot market system.
+     * @notice Stores a reference to the Synthetix spot market system.
      */
     function setSpotMarket(ISpotMarketSystem spotMarket) external;
 
     /**
-     * @dev Stores a reference to the Pyth EVM contract.
+     * @notice Stores a reference to the Pyth EVM contract.
      */
     function setPyth(IPyth pyth) external;
 
     /**
-     * @dev Stores a reference to the ETH/USD oracle node.
+     * @notice Stores a reference to the ETH/USD oracle node.
      */
     function setEthOracleNodeId(bytes32 nodeId) external;
 
     /**
-     * @dev Registers a new PerpMarket with Synthetix and initializes storage.
+     * @notice Registers a new PerpMarket with Synthetix and initializes storage.
      */
     function createMarket(IPerpMarketFactoryModule.CreatePerpMarketParameters memory data) external returns (uint128);
 
     // --- Views --- //
 
     /**
-     * @dev Returns a digest of a market given the `marketId`.
+     * @notice Returns a digest of an existing market given the `marketId`.
      */
     function getMarketDigest(uint128 marketId) external view returns (IPerpMarketFactoryModule.MarketDigest memory);
 }

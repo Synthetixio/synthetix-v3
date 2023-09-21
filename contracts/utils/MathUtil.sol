@@ -9,6 +9,8 @@ pragma solidity 0.8.19;
  * see: https://github.com/Synthetixio/synthetix/blob/develop/contracts/PerpsV2MarketBase.sol
  */
 library MathUtil {
+    // @custom:ref https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol
+    // @custom:ref https://github.com/Kwenta/smart-margin-v3/blob/omniscia-audit-response/src/libraries/MathLib.sol
     function abs(int256 x) internal pure returns (uint256 z) {
         assembly {
             /// shr(255, x):

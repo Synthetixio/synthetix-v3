@@ -8,7 +8,7 @@ import {Order} from "../storage/Order.sol";
 interface IOrderModule is IBasePerpMarket {
     // --- Events --- //
 
-    // @dev Emitted when a new order is committed.
+    // @notice Emitted when an order is committed.
     event OrderCommitted(
         uint128 indexed accountId,
         uint128 indexed marketId,
@@ -18,9 +18,7 @@ interface IOrderModule is IBasePerpMarket {
         uint256 estimatedKeeperFee
     );
 
-    // @dev Emitted when a pending order was successfully settled/executed.
-    //
-    // TODO: Rename pnl to unrealizedPnl?
+    // @notice Emitted when a pending order was successfully settled.
     event OrderSettled(
         uint128 indexed accountId,
         uint128 indexed marketId,
@@ -29,14 +27,14 @@ interface IOrderModule is IBasePerpMarket {
         uint256 orderFee,
         uint256 keeperFee,
         int256 accruedFunding,
-        int256 pnl,
+        int256 unrealizedPnl,
         uint256 fillPrice
     );
 
     // --- Mutative --- //
 
     /**
-     * @dev Creates an order to be submitted for settlement.
+     * @notice Creates an order for `accountId` in `marketId` to be settled at a later time.
      */
     function commitOrder(
         uint128 accountId,
@@ -47,19 +45,19 @@ interface IOrderModule is IBasePerpMarket {
     ) external;
 
     /**
-     * @dev Given an accountId, find the associated market by `marketId` and settles the order.
+     * @notice Settles a previously committed order by `accountId` and `marketId`.
      */
     function settleOrder(uint128 accountId, uint128 marketId, bytes[] calldata priceUpdateData) external payable;
 
     // --- Views --- //
 
     /**
-     * @dev Returns the order belonging to `accountId` in `marketId`.
+     * @notice Returns an order belonging to `accountId` in `marketId`.
      */
     function getOrderDigest(uint128 accountId, uint128 marketId) external view returns (Order.Data memory);
 
     /**
-     * @dev Given details about a trader, simulate a what would happen if the order were to be committed.
+     * @notice Given details about a trader, simulate a what would happen if the order were to be committed.
      */
     function simulateOrder(
         uint128 accountId,
@@ -71,7 +69,7 @@ interface IOrderModule is IBasePerpMarket {
     ) external view;
 
     /**
-     * @dev Returns fee charged to open/close an order and keeperFee.
+     * @notice Returns fees charged to open/close an order (along with a dynamic keeper fee).
      *
      * This incorporates the scenario where a if a trade flips the skew, the proportion that reduces the skew
      * is charged a makerFee but the flipped side that expands skew is charged a takerFee.
@@ -88,7 +86,7 @@ interface IOrderModule is IBasePerpMarket {
     ) external view returns (uint256 orderFee, uint256 keeperFee);
 
     /**
-     * @dev Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.
+     * @notice Returns an oracle price adjusted by a premium/discount based on how the sizeDelta effects skew.
      *
      * 'Fill' can be attributed or when an order is 'filled'. The price is the oracle price + adjustment when
      * which an order is settled. Intuitively, the adjustment is a discount if the size reduces the skew (i.e. skew
@@ -99,7 +97,7 @@ interface IOrderModule is IBasePerpMarket {
     function getFillPrice(uint128 marketId, int128 size) external view returns (uint256);
 
     /**
-     * @dev Returns the oracle price given the `marketId`.
+     * @notice Returns the oracle price given the `marketId`.
      */
     function getOraclePrice(uint128 marketId) external view returns (uint256);
 }

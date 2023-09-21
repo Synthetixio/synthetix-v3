@@ -18,14 +18,18 @@ library Order {
     using SafeCastU256 for uint256;
 
     struct Data {
+        // Size in native units to reduce (negative) or increase (positive) by.
         int128 sizeDelta;
+        // The block.timestamp this order was committed on.
         uint256 commitmentTime;
+        // The maximum fillPrice (in USD) this order will accept during settlement.
         uint256 limitPrice;
+        // A further amount in USD to be taken away from margin to be paid to keepers (can be zero).
         uint256 keeperFeeBufferUsd;
     }
 
     /**
-     * @dev See IOrderModule.fillPrice
+     * @dev See IOrderModule.fillPrice for more details.
      */
     function getFillPrice(int128 skew, uint128 skewScale, int128 size, uint256 price) internal pure returns (uint256) {
         int256 ss = skewScale.toInt();
@@ -44,7 +48,7 @@ library Order {
     }
 
     /**
-     * @dev See IOrderModule.orderFee
+     * @dev See IOrderModule.orderFee for more details.
      */
     function getOrderFee(
         int128 sizeDelta,

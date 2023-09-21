@@ -120,7 +120,7 @@ library Margin {
                     deductionAmountUsd = MathUtil.min(amountToDeductUsd, available.mulDecimal(price));
                     deductionAmount = deductionAmountUsd.divDecimal(price);
 
-                    // If collateral isn't sUSD, withdraw, sell, deposit as USD. And then continue update accounting.
+                    // If collateral isn't sUSD, withdraw, sell, deposit as USD then continue update accounting.
                     if (synthMarketId != SYNTHETIX_USD_MARKET_ID) {
                         globalConfig.synthetix.withdrawMarketCollateral(
                             market.id,
@@ -137,9 +137,12 @@ library Margin {
 
                         globalConfig.synthetix.depositMarketUsd(market.id, address(this), amountUsd);
                     }
+
                     // At this point we can just update the accounting.
-                    // If non sUSD collateral was used, it's been sold too sUSD and depositied to CORE
-                    // The amountDeltaUsd will take order fees, keeper fees and funding into account.
+                    //
+                    // Non-sUSD collateral has been sold for sUSD and deposited to core system. The
+                    // `amountDeltaUsd` will take order fees, keeper fees and funding into account.
+                    //
                     // If sUSD is used we can just update the accounting directly.
                     accountMargin.collaterals[synthMarketId] -= deductionAmount;
                     amountToDeductUsd -= deductionAmountUsd;

@@ -21,8 +21,10 @@ contract MarginModule is IMarginModule {
     using PerpMarket for PerpMarket.Data;
     using Position for Position.Data;
 
+    // --- Helpers --- //
+
     /**
-     * @dev Validates whether the margin requirements are acceptable after withdrawing.
+     * @dev Post collateral withdraw validation to verify margin requirements are acceptable.
      */
     function validatePositionPostWithdraw(
         uint128 accountId,
@@ -45,7 +47,9 @@ contract MarginModule is IMarginModule {
         }
     }
 
-    /** @dev Validates whether an order exists and if that order can be cancelled before performing margin ops. */
+    /**
+     * @dev Validates whether an order exists and if that order can be cancelled before performing margin ops.
+     */
     function validateOrderAvailability(
         uint128 accountId,
         uint128 marketId,
@@ -67,6 +71,25 @@ contract MarginModule is IMarginModule {
     }
 
     /**
+     * @dev Performs an collateral withdraw from Synthetix, ERC20 transfer, and emits event.
+     */
+    function withdrawAndTransfer(
+        uint128 marketId,
+        uint256 amount,
+        uint128 synthMarketId,
+        PerpMarketConfiguration.GlobalData storage globalConfig
+    ) private {
+        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
+            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, amount);
+        } else {
+            ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
+            globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
+            synth.transferFrom(address(this), msg.sender, amount);
+        }
+        emit MarginWithdraw(address(this), msg.sender, amount, synthMarketId);
+    }
+
+    /**
      * @dev Performs an ERC20 transfer, deposits collateral to Synthetix, and emits event.
      */
     function transferAndDeposit(
@@ -85,24 +108,7 @@ contract MarginModule is IMarginModule {
         emit MarginDeposit(msg.sender, address(this), amount, synthMarketId);
     }
 
-    /**
-     * @dev Performs an collateral withdraw from Synthetix, ERC20 transfer, and emits event.
-     */
-    function withdrawAndTransfer(
-        uint128 marketId,
-        uint256 amount,
-        uint128 synthMarketId,
-        PerpMarketConfiguration.GlobalData storage globalConfig
-    ) private {
-        if (synthMarketId == SYNTHETIX_USD_MARKET_ID) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, amount);
-        } else {
-            ITokenModule synth = ITokenModule(globalConfig.spotMarket.getSynth(synthMarketId));
-            globalConfig.synthetix.withdrawMarketCollateral(marketId, address(synth), amount);
-            synth.transferFrom(address(this), msg.sender, amount);
-        }
-        emit MarginWithdraw(address(this), msg.sender, amount, synthMarketId);
-    }
+    // --- Mutative --- //
 
     /**
      * @inheritdoc IMarginModule

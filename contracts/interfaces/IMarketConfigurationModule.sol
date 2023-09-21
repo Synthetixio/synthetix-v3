@@ -9,7 +9,7 @@ import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 interface IMarketConfigurationModule {
     // --- Structs --- //
 
-    // @dev See PerpMarketConfiguration.GlobalData
+    // @notice See PerpMarketConfiguration.GlobalData for more details.
     struct ConfigureParameters {
         uint128 priceDivergencePercent;
         uint128 pythPublishTimeMin;
@@ -25,7 +25,7 @@ interface IMarketConfigurationModule {
         address keeperLiquidationEndorsed;
     }
 
-    // @dev See PerpMarketConfiguration.Data
+    // @notice See PerpMarketConfiguration.Data for more details.
     struct ConfigureByMarketParameters {
         bytes32 oracleNodeId;
         bytes32 pythPriceFeedId;
@@ -47,21 +47,21 @@ interface IMarketConfigurationModule {
 
     // --- Events --- //
 
-    // @dev Emitted when the global market config is updated.
+    // @notice Emitted when the global market config is updated.
     event ConfigurationUpdated(address from);
 
-    // @dev Emitted when parameters for a specific market is updated.
+    // @notice Emitted when parameters for a specific market is updated.
     event MarketConfigurationUpdated(uint128 marketId, address from);
 
     // --- Mutative --- //
 
     /**
-     * @dev Configures parameters applied globally.
+     * @notice Configures market parameters applied globally.
      */
     function setMarketConfiguration(IMarketConfigurationModule.ConfigureParameters memory data) external;
 
     /**
-     * @dev Configures a specific market by the `marketId`.
+     * @notice Configures a market specific parameters applied to the `marketId`.
      */
     function setMarketConfigurationById(
         uint128 marketId,
@@ -71,12 +71,12 @@ interface IMarketConfigurationModule {
     // --- Views --- //
 
     /**
-     * @dev Returns global market parameters.
+     * @notice Returns configured global market parameters.
      */
     function getMarketConfiguration() external pure returns (PerpMarketConfiguration.GlobalData memory);
 
     /**
-     * @dev Returns market specific parameters.
+     * @notice Returns configured market specific parameters.
      */
     function getMarketConfigurationById(uint128 marketId) external pure returns (PerpMarketConfiguration.Data memory);
 }

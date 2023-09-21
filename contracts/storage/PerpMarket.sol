@@ -119,7 +119,7 @@ library PerpMarket {
     }
 
     /**
-     * @dev Updates the debt given an oldPosition and newPosition.
+     * @dev Updates the debt given an `oldPosition` and `newPosition`.
      */
     function updateDebtCorrection(
         PerpMarket.Data storage self,
