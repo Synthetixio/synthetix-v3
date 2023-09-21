@@ -46,7 +46,7 @@
     "multimatch": "^6.0.0",
     "nyc": "^15.1.0",
     "sinon": "^16.0.0",
-    "solc": "0.8.17",
+    "solc": "0.8.21",
     "solidity-ast": "^0.4.52",
     "typescript": "^5.2.2"
   },

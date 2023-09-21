@@ -2841,7 +2841,7 @@ __metadata:
     prompts: ^2.4.2
     rfdc: ^1.3.0
     sinon: ^16.0.0
-    solc: 0.8.17
+    solc: 0.8.21
     solidity-ast: ^0.4.52
     typescript: ^5.2.2
   peerDependencies:
@@ -14520,9 +14520,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solc@npm:0.8.17":
-  version: 0.8.17
-  resolution: "solc@npm:0.8.17"
+"solc@npm:0.8.21":
+  version: 0.8.21
+  resolution: "solc@npm:0.8.21"
   dependencies:
     command-exists: ^1.2.8
     commander: ^8.1.0
@@ -14533,7 +14533,7 @@ __metadata:
     tmp: 0.0.33
   bin:
     solcjs: solc.js
-  checksum: 99deb834d249cc65d8874026a876bbc1f0a09c74d94c17bdf5fa94952889cde9c11246eb70e4313daf39efb234523f2b705e821ae9f78586d51ff7be8d889fe6
+  checksum: 0145d0e1f4ba7b1ec574a2ad7c4782357c4a27949c3bcc7bb4411a7b325a3ad186c18f93b1802a438ea9a527711dd56d2d7190bc8dd431dc194fb6098ab6ed01
   languageName: node
   linkType: hard
 
