@@ -145,9 +145,10 @@ library AsyncOrder {
             revert OrderNotValid();
         }
 
-        strategy = PerpsMarketConfiguration.load(order.request.marketId).settlementStrategies[
+        strategy = PerpsMarketConfiguration.loadValidSettlementStrategy(
+            order.request.marketId,
             order.request.settlementStrategyId
-        ];
+        );
         checkWithinSettlementWindow(order, strategy);
     }
 
