@@ -43,9 +43,6 @@ artifact = "contracts/modules/core/ElectionModule.sol:ElectionModule"
 [contract.SnapshotVotePowerModule]
 artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
 
-[contract.CouncilTokenModule]
-artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenModule"
-
 [router.CoreRouter]
 contracts = [
     "AssociatedSystemsModule",
@@ -54,6 +51,14 @@ contracts = [
     "ElectionModule",
     "SnapshotVotePowerModule",
     "InitialModuleBundle",
+]
+depends = [
+    "contract.AssociatedSystemsModule",
+    "contract.CrossChainModule",
+    "contract.ElectionInspectorModule",
+    "contract.ElectionModule",
+    "contract.SnapshotVotePowerModule",
+    "contract.InitialModuleBundle",
 ]
 
 [invoke.upgrade_core_proxy]
