@@ -711,7 +711,7 @@ workflows:
           name: "test-subgraph-perps-market"
           workspace: "@synthetixio/perps-market-subgraph"
 
-      #- simulate-release: TODO: enable when cannon has fixed RPC proxy
+      #- simulate-release:
       #    name: "simulate-release-main"
       #    workspace: "@synthetixio/main"
       #    cannonPackage: "synthetix"
