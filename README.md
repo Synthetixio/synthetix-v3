@@ -8,13 +8,13 @@ In addition to these features, it also introduces various enhancements, includin
 
 The primary use case of bfp-market is to create a hyper-stable perp derivative utilizing wstETH as collateral, allowing users to open a 1x wstETH short with minimal negative funding, completely on-chain.
 
-Please caution as this project is **_still under active development, not yet released, or audited_**.
+Please caution as this project is **_still under active development, not yet released, currently undergoing audit_**.
 
 <p align="center">
-  <img src="./docs/images/summary.png">
+  <img src="./docs/diagrams/overview/overview.png">
 </p>
 
-_You can find more details on the working model under [`docs/images`](./docs/images/)._
+_You can find more details on the working model under [`docs/images`](./docs/diagrams/)._
 
 ## Development
 
