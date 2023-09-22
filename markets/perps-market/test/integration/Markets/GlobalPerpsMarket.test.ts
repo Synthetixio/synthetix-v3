@@ -68,7 +68,7 @@ describe('GlobalPerpsMarket', () => {
   it('transaction should fail if min and max are inverted', async () => {
     await assertRevert(
       systems().PerpsMarket.connect(owner()).setLiquidationRewardGuards(500, 100),
-      'InvalidLiquidationRewardGuards("500", "100")'
+      'InvalidParameter("min/maxLiquidationRewardUSD", "min > max")'
     );
   });
 

@@ -50,6 +50,25 @@ library PerpsMarketFactory {
         }
     }
 
+    function initialize(
+        Data storage self,
+        ISynthetixSystem synthetix,
+        ISpotMarketSystem spotMarket,
+        string memory name
+    ) internal returns (uint128 perpsMarketId) {
+        onlyIfNotInitialized(self); // redundant check, but kept here in case this internal is called somewhere else
+
+        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
+        perpsMarketId = synthetix.registerMarket(address(this));
+
+        self.spotMarket = spotMarket;
+        self.synthetix = synthetix;
+        self.name = name;
+        self.usdToken = ITokenModule(usdTokenAddress);
+        self.oracle = synthetix.getOracleManager();
+        self.perpsMarketId = perpsMarketId;
+    }
+
     function depositMarketCollateral(
         Data storage self,
         ITokenModule collateral,

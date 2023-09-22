@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
@@ -63,9 +64,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .liquidatableAccounts
             .values();
 
-        uint numberOfAccountsToLiquidate = maxNumberOfAccounts > liquidatableAccounts.length
-            ? liquidatableAccounts.length
-            : maxNumberOfAccounts;
+        uint numberOfAccountsToLiquidate = MathUtil.min(
+            maxNumberOfAccounts,
+            liquidatableAccounts.length
+        );
 
         for (uint i = 0; i < numberOfAccountsToLiquidate; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();

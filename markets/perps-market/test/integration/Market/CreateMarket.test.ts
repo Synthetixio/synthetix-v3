@@ -11,7 +11,7 @@ describe('Create Market test', () => {
     token = 'snxETH',
     price = bn(1000);
 
-  const { systems, signers, owner, restore, trader1 } = bootstrapMarkets({
+  const { systems, signers, owner, restore, trader1, superMarketId } = bootstrapMarkets({
     synthMarkets: [],
     perpsMarkets: [], // don't create a market in bootstrap
     traderAccountIds: [2, 3],
@@ -250,6 +250,31 @@ describe('Create Market test', () => {
 
       it('can get market minimum credit', async () => {
         assertBn.equal(await systems().PerpsMarket.minimumCredit(marketId), bn(0));
+      });
+    });
+  });
+
+  describe('factory setup', async () => {
+    before(restore);
+
+    describe('attempt to do it with non-owner', () => {
+      it('reverts setting market name', async () => {
+        await assertRevert(
+          systems().PerpsMarket.connect(randomAccount).setPerpsMarketName('NewSuperMarket'),
+          'Unauthorized'
+        );
+      });
+    });
+
+    describe('from owner', () => {
+      before('set a new market name', async () => {
+        await systems().PerpsMarket.connect(owner()).setPerpsMarketName('NewSuperMarket');
+      });
+      it('market name was updated', async () => {
+        assert.equal(
+          await systems().PerpsMarket.name(superMarketId()),
+          'NewSuperMarket Perps Market'
+        );
       });
     });
   });

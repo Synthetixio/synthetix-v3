@@ -35,6 +35,12 @@ interface IPerpsMarketFactoryModule is IMarket {
     ) external returns (uint128);
 
     /**
+     * @notice Sets the perps market name.
+     * @param marketName the new perps market name.
+     */
+    function setPerpsMarketName(string memory marketName) external;
+
+    /**
      * @notice Creates a new market.
      * @param requestedMarketId id of the market to create.
      * @param marketName name of the market to create.

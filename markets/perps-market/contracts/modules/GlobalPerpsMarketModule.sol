@@ -10,6 +10,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -71,7 +72,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     ) external override {
         OwnableStorage.onlyOwner();
         if (minLiquidationRewardUsd > maxLiquidationRewardUsd) {
-            revert InvalidLiquidationRewardGuards(minLiquidationRewardUsd, maxLiquidationRewardUsd);
+            revert ParameterError.InvalidParameter("min/maxLiquidationRewardUSD", "min > max");
         }
 
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
