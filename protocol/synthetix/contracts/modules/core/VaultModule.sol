@@ -181,8 +181,8 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external view override returns (uint256 amount, uint256 value) {
-        (amount, value) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
+    ) external view override returns (uint256 amount) {
+        return Pool.load(poolId).vaults[collateralType].currentAccountCollateral(accountId);
     }
 
     /**

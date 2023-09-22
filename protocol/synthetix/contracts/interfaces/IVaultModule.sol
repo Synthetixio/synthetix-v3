@@ -95,21 +95,19 @@ interface IVaultModule {
     ) external returns (int256 debtD18);
 
     /**
-     * @notice Returns the amount and value of the collateral associated with the specified liquidity position.
+     * @notice Returns the amount of the collateral associated with the specified liquidity position.
      * @dev Call this function using `callStatic` to treat it as a view function.
      * @dev collateralAmount is represented as an integer with 18 decimals.
-     * @dev collateralValue is represented as an integer with the number of decimals specified by the collateralType.
      * @param accountId The id of the account being queried.
      * @param poolId The id of the pool in which the account's position is held.
      * @param collateralType The address of the collateral used in the queried position.
      * @return collateralAmountD18 The amount of collateral used in the position, denominated with 18 decimals of precision.
-     * @return collateralValueD18 The value of collateral used in the position, denominated with 18 decimals of precision.
      */
     function getPositionCollateral(
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external view returns (uint256 collateralAmountD18, uint256 collateralValueD18);
+    ) external view returns (uint256 collateralAmountD18);
 
     /**
      * @notice Returns all information pertaining to a specified liquidity position in the vault module.
