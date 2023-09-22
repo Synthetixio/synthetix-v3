@@ -9,6 +9,7 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -141,7 +142,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         }
 
         if (referrer == address(0)) {
-            revert InvalidReferrerAddress(referrer);
+            revert AddressError.ZeroAddress();
         }
 
         GlobalPerpsMarketConfiguration.load().referrerShare[referrer] = shareRatioD18;

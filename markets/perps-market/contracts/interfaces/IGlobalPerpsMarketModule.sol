@@ -59,11 +59,6 @@ interface IGlobalPerpsMarketModule {
     error InvalidReferrerShareRatio(uint256 shareRatioD18);
 
     /**
-     * @notice Thrown when a referrer address is invalid (0x)
-     */
-    error InvalidReferrerAddress(address referrer);
-
-    /**
      * @notice Thrown when a minLiquidationRewardUsd is greater than maxLiquidationRewardUsd
      */
     error InvalidLiquidationRewardGuards(
