@@ -21,7 +21,7 @@ contract LiquidationModule is ILiquidationModule {
     // --- Helpers --- //
 
     /**
-     * @dev Before liquidation (not flag) to peform validation and market updates.
+     * @dev Before liquidation (not flag) to perform pre-steps and validation.
      */
     function updateMarketPreLiquidation(
         uint128 accountId,
@@ -50,9 +50,10 @@ contract LiquidationModule is ILiquidationModule {
             oraclePrice
         );
 
-        // Update market to reflect a successful full or partial liquidation.
-        market.lastLiquidationTime = block.timestamp;
-        market.lastLiquidationUtilization += liqSize;
+        // Track the liqSize that is about to be liquidated.
+        market.updateAccumulatedLiquidation(liqSize);
+
+        // Update market to reflect state of liquidated position.
         market.skew -= oldPosition.size;
         market.size -= MathUtil.abs(oldPosition.size).to128();
 
@@ -202,7 +203,11 @@ contract LiquidationModule is ILiquidationModule {
      */
     function getRemainingLiquidatableSizeCapacity(
         uint128 marketId
-    ) external view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity) {
+    )
+        external
+        view
+        returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint64 lastLiquidationTimestamp)
+    {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
     }

@@ -51,6 +51,7 @@ library Position {
         uint128 oldPositionSize;
         uint128 maxLiquidatableCapacity;
         uint128 remainingCapacity;
+        uint64 lastLiquidationTimestamp;
     }
 
     // --- Storage --- //
@@ -253,9 +254,8 @@ library Position {
         }
 
         // Fetch the available capacity then alter iff zero AND the caller is a whitelisted endorsed liquidation keeper.
-        (runtime.maxLiquidatableCapacity, runtime.remainingCapacity) = market.getRemainingLiquidatableSizeCapacity(
-            marketConfig
-        );
+        (runtime.maxLiquidatableCapacity, runtime.remainingCapacity, runtime.lastLiquidationTimestamp) = market
+            .getRemainingLiquidatableSizeCapacity(marketConfig);
         if (msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0) {
             runtime.remainingCapacity = runtime.oldPositionSize;
         }
@@ -271,7 +271,7 @@ library Position {
             //  3. The current market premium/discount does not exceed a configurable maxPd.
             //  4. The current position size as skew does not exceed a configurable maxPd.
             if (
-                market.lastLiquidationTime != block.timestamp &&
+                runtime.lastLiquidationTimestamp != block.timestamp &&
                 MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd &&
                 runtime.oldPositionSize.divDecimal(skewScale) < liquidationMaxPd
             ) {
