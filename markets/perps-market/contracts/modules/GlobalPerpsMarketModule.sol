@@ -69,6 +69,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         uint256 maxLiquidationRewardUsd
     ) external override {
         OwnableStorage.onlyOwner();
+        if (minLiquidationRewardUsd > maxLiquidationRewardUsd) {
+            revert InvalidLiquidationRewardGuards(minLiquidationRewardUsd, maxLiquidationRewardUsd);
+        }
+
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minLiquidationRewardUsd = minLiquidationRewardUsd;
         store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
@@ -134,6 +138,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
 
         if (shareRatioD18 > DecimalMath.UNIT) {
             revert InvalidReferrerShareRatio(shareRatioD18);
+        }
+
+        if (referrer == address(0)) {
+            revert InvalidReferrerAddress(referrer);
         }
 
         GlobalPerpsMarketConfiguration.load().referrerShare[referrer] = shareRatioD18;

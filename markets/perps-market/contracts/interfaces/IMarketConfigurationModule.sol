@@ -100,6 +100,11 @@ interface IMarketConfigurationModule {
     event SettlementStrategyEnabled(uint128 indexed marketId, uint256 strategyId, bool enabled);
 
     /**
+     * @notice Thrown when the settlement window duration is set to zero
+     */
+    error InvalidSettlementWindowDuration(uint256 duration);
+
+    /**
      * @notice Add a new settlement strategy with this function.
      * @param marketId id of the market to add the settlement strategy.
      * @param strategy strategy details (see SettlementStrategy.Data struct).

@@ -59,6 +59,19 @@ interface IGlobalPerpsMarketModule {
     error InvalidReferrerShareRatio(uint256 shareRatioD18);
 
     /**
+     * @notice Thrown when a referrer address is invalid (0x)
+     */
+    error InvalidReferrerAddress(address referrer);
+
+    /**
+     * @notice Thrown when a minLiquidationRewardUsd is greater than maxLiquidationRewardUsd
+     */
+    error InvalidLiquidationRewardGuards(
+        uint256 minLiquidationRewardUsd,
+        uint256 maxLiquidationRewardUsd
+    );
+
+    /**
      * @notice Sets the max collateral amount for a specific synth market.
      * @param synthMarketId Synth market id, 0 for snxUSD.
      * @param collateralAmount Max collateral amount to set for the synth market id.
