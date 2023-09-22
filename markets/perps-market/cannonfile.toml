@@ -127,7 +127,10 @@ args = ["<%= formatBytes32String('createMarket') %>", "<%= settings.owner %>"]
 [invoke.initializeFactory]
 target = ["PerpsMarketProxy"]
 func = "initializeFactory"
-args = ["<%= imports.synthetix.contracts.CoreProxy.address %>", "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"]
+args = [
+    "<%= imports.synthetix.contracts.CoreProxy.address %>",
+    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"
+]
 from = "<%= settings.owner %>"
 extra.superMarketId.event = "FactoryInitialized"
 extra.superMarketId.arg = 0
