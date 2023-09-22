@@ -2,9 +2,10 @@ import { BigNumber } from 'ethers';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assert from 'assert';
 
-describe('GlobalPerpsMarket', () => {
-  const { systems, perpsMarkets, trader1 } = bootstrapMarkets({
+describe.only('GlobalPerpsMarket', () => {
+  const { systems, perpsMarkets, trader1, superMarketId } = bootstrapMarkets({
     synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
     perpsMarkets: [
       { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
@@ -21,6 +22,11 @@ describe('GlobalPerpsMarket', () => {
       await systems().PerpsMarket.setLiquidationRewardGuards(100, 500);
     }
   );
+
+  it('returns the supermarket name', async () => {
+    assert.equal(await systems().PerpsMarket.name(superMarketId()), 'SuperMarket Perps Market');
+    assert.equal(await systems().PerpsMarket.name(0), '');
+  });
 
   it('returns maxCollateralAmounts for synth market id', async () => {
     assertBn.equal(
