@@ -470,9 +470,9 @@ library PerpsAccount {
 
         // update market data
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
-        sizeDelta = position.size - oldPositionSize;
+        sizeDelta = newPositionSize - oldPositionSize;
 
-        return (amountToLiquidate, position.size, sizeDelta, marketUpdateData);
+        return (amountToLiquidate, newPositionSize, sizeDelta, marketUpdateData);
     }
 
     function _deductAllSynth(
