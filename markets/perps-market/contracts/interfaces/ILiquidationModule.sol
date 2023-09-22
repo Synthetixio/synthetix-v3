@@ -46,7 +46,7 @@ interface ILiquidationModule {
      * @param maxNumberOfAccounts max number of accounts to liquidate.
      * @return liquidationReward total reward sent to liquidator.
      */
-    function liquidateFlaggedAccounts(
+    function liquidateFlagged(
         uint256 maxNumberOfAccounts
     ) external returns (uint256 liquidationReward);
 

@@ -55,7 +55,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidateFlaggedAccounts(
+    function liquidateFlagged(
         uint256 maxNumberOfAccounts
     ) external override returns (uint256 liquidationReward) {
         uint256[] memory liquidatableAccounts = GlobalPerpsMarket
