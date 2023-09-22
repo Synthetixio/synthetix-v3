@@ -67,7 +67,6 @@ describe('Create Market test', () => {
   describe('market initialization with invalid parameters', async () => {
     before(restore);
     const marketId = BigNumber.from(25);
-    let oracleNodeId: string;
 
     before('create perps market', async () => {
       await systems().PerpsMarket.connect(owner()).createMarket(marketId, name, token);
