@@ -222,34 +222,4 @@ describe('Create Market test', () => {
       });
     });
   });
-
-  describe('factory setup', async () => {
-    before(restore);
-
-    describe('attempt to do it with non-owner', () => {
-      it('reverts setting synthetix', async () => {
-        await assertRevert(
-          systems().PerpsMarket.connect(randomAccount).setSynthetix(ethers.constants.AddressZero),
-          'Unauthorized'
-        );
-      });
-
-      it('reverts setting spot market', async () => {
-        await assertRevert(
-          systems().PerpsMarket.connect(randomAccount).setSpotMarket(ethers.constants.AddressZero),
-          'Unauthorized'
-        );
-      });
-    });
-
-    describe('from owner', () => {
-      it('can set synthetix', async () => {
-        await systems().PerpsMarket.connect(owner()).setSynthetix(systems().Core.address);
-      });
-
-      it('can set spot market', async () => {
-        await systems().PerpsMarket.connect(owner()).setSpotMarket(systems().SpotMarket.address);
-      });
-    });
-  });
 });

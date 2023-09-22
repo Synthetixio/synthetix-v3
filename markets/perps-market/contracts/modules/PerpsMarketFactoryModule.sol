@@ -41,29 +41,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
     /**
      * @inheritdoc IPerpsMarketFactoryModule
      */
-    function setSynthetix(ISynthetixSystem synthetix) external override {
-        OwnableStorage.onlyOwner();
-        PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
-
-        store.synthetix = synthetix;
-        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
-        store.usdToken = ITokenModule(usdTokenAddress);
-        store.oracle = synthetix.getOracleManager();
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function setSpotMarket(ISpotMarketSystem spotMarket) external override {
-        OwnableStorage.onlyOwner();
-
-        PerpsMarketFactory.load().spotMarket = spotMarket;
-    }
-
-    /**
-     * @inheritdoc IPerpsMarketFactoryModule
-     */
-    function initializeFactory() external override returns (uint128) {
+    function initializeFactory(
+        ISynthetixSystem synthetix,
+        ISpotMarketSystem spotMarket,
+        string memory marketName
+    ) external override returns (uint128) {
         FeatureFlag.ensureAccessToFeature(_CREATE_MARKET_FEATURE_FLAG);
         OwnableStorage.onlyOwner();
 
@@ -71,7 +53,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
-            perpsMarketId = factory.synthetix.registerMarket(address(this));
+            setSynthetix(synthetix);
+            setSpotMarket(spotMarket);
+            factory.name = marketName;
+
+            perpsMarketId = synthetix.registerMarket(address(this));
             factory.perpsMarketId = perpsMarketId;
         } else {
             perpsMarketId = factory.perpsMarketId;
@@ -80,6 +66,19 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         emit FactoryInitialized(perpsMarketId);
 
         return perpsMarketId;
+    }
+
+    function setSynthetix(ISynthetixSystem synthetix) internal {
+        PerpsMarketFactory.Data storage store = PerpsMarketFactory.load();
+
+        store.synthetix = synthetix;
+        (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
+        store.usdToken = ITokenModule(usdTokenAddress);
+        store.oracle = synthetix.getOracleManager();
+    }
+
+    function setSpotMarket(ISpotMarketSystem spotMarket) internal {
+        PerpsMarketFactory.load().spotMarket = spotMarket;
     }
 
     /**
@@ -110,9 +109,13 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
      */
     // solc-ignore-next-line func-mutability
     function name(uint128 perpsMarketId) external view override returns (string memory) {
-        // todo: set name on initialize?
-        perpsMarketId; // silence unused variable warning
-        return "Perps Market";
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+
+        if (factory.perpsMarketId == perpsMarketId) {
+            return string.concat(factory.name, " Perps Market");
+        }
+
+        return "";
     }
 
     /**

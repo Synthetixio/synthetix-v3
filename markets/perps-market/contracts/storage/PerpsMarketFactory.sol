@@ -28,8 +28,7 @@ library PerpsMarketFactory {
         ISynthetixSystem synthetix;
         ISpotMarketSystem spotMarket;
         uint128 perpsMarketId;
-        address owner;
-        address nominatedOwner;
+        string name;
     }
 
     function onlyIfInitialized(Data storage self) internal view {
