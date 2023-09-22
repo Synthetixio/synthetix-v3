@@ -64,6 +64,38 @@ describe('Create Market test', () => {
     });
   });
 
+  describe('market initialization with invalid parameters', async () => {
+    before(restore);
+    const marketId = BigNumber.from(25);
+    let oracleNodeId: string;
+
+    before('create perps market', async () => {
+      await systems().PerpsMarket.connect(owner()).createMarket(marketId, name, token);
+    });
+
+    describe('attempt to add a settlement strategy with 0 secs window duration', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          systems()
+            .PerpsMarket.connect(owner())
+            .addSettlementStrategy(marketId, {
+              strategyType: 0,
+              settlementDelay: 5,
+              settlementWindowDuration: 0,
+              priceWindowDuration: 120,
+              priceVerificationContract: ethers.constants.AddressZero,
+              feedId: ethers.constants.HashZero,
+              url: '',
+              disabled: false,
+              settlementReward: bn(5),
+              priceDeviationTolerance: bn(0.01),
+            }),
+          'InvalidSettlementWindowDuration("0")'
+        );
+      });
+    });
+  });
+
   describe('market operation and configuration', async () => {
     before(restore);
 
