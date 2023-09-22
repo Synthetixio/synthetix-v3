@@ -5,7 +5,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assert from 'assert';
 
 describe('GlobalPerpsMarket', () => {
-  const { systems, perpsMarkets, trader1, superMarketId } = bootstrapMarkets({
+  const { systems, perpsMarkets, trader1, superMarketId, owner } = bootstrapMarkets({
     synthMarkets: [{ name: 'Ether', token: 'snxETH', buyPrice: bn(1000), sellPrice: bn(1000) }],
     perpsMarkets: [
       { requestedMarketId: 25, name: 'Ether', token: 'snxETH', price: bn(1000) },
@@ -62,6 +62,13 @@ describe('GlobalPerpsMarket', () => {
     await assertRevert(
       systems().PerpsMarket.connect(trader1()).setSynthDeductionPriority([1, 2]),
       `Unauthorized("${await trader1().getAddress()}")`
+    );
+  });
+
+  it('transaction should fail if min and max are inverted', async () => {
+    await assertRevert(
+      systems().PerpsMarket.connect(owner()).setLiquidationRewardGuards(500, 100),
+      'InvalidLiquidationRewardGuards("500", "100")'
     );
   });
 
