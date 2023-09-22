@@ -85,18 +85,6 @@ factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
 
-[invoke.setSynthetix]
-target = ["PerpsMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "setSynthetix"
-args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
-
-[invoke.setSpotMarket]
-target = ["PerpsMarketProxy"]
-from = "<%= settings.coreProxyOwner %>"
-func = "setSpotMarket"
-args = ["<%= imports.spotMarket.contracts.SpotMarketProxy.address %>"]
-
 [invoke.init_account]
 target = ["PerpsMarketProxy"]
 from = "<%= settings.owner %>"

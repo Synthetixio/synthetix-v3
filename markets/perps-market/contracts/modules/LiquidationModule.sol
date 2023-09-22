@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {ILiquidationModule} from "../interfaces/ILiquidationModule.sol";
@@ -55,16 +56,50 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidateFlagged() external override returns (uint256 liquidationReward) {
+    function liquidateFlagged(
+        uint256 maxNumberOfAccounts
+    ) external override returns (uint256 liquidationReward) {
         uint256[] memory liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts
             .values();
 
-        for (uint i = 0; i < liquidatableAccounts.length; i++) {
+        uint numberOfAccountsToLiquidate = MathUtil.min(
+            maxNumberOfAccounts,
+            liquidatableAccounts.length
+        );
+
+        for (uint i = 0; i < numberOfAccountsToLiquidate; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();
             liquidationReward += _liquidateAccount(PerpsAccount.load(accountId));
         }
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidateFlaggedAccounts(
+        uint128[] calldata accountIds
+    ) external override returns (uint256 liquidationReward) {
+        SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
+            .load()
+            .liquidatableAccounts;
+
+        for (uint i = 0; i < accountIds.length; i++) {
+            uint128 accountId = accountIds[i];
+            if (!liquidatableAccounts.contains(accountId)) {
+                continue;
+            }
+
+            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId));
+        }
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function flaggedAccounts() external view override returns (uint256[] memory accountIds) {
+        return GlobalPerpsMarket.load().liquidatableAccounts.values();
     }
 
     /**

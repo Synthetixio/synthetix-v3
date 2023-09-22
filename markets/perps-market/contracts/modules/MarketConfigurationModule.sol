@@ -24,6 +24,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
     ) external override returns (uint256 strategyId) {
         OwnableStorage.onlyOwner();
 
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
+
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
 
         PerpsMarketConfiguration.Data storage config = PerpsMarketConfiguration.load(marketId);

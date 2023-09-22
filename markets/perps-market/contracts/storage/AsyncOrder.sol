@@ -215,7 +215,7 @@ library AsyncOrder {
             revert SettlementWindowNotOpen(block.timestamp, self.settlementTime);
         }
 
-        if (expired(self, settlementStrategy)) {
+        if (block.timestamp > settlementExpiration) {
             revert SettlementWindowExpired(
                 block.timestamp,
                 self.settlementTime,

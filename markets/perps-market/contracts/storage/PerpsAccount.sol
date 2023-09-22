@@ -353,29 +353,29 @@ library PerpsAccount {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         ISpotMarketSystem spotMarket = factory.spotMarket;
         for (uint i = 0; i < synthDeductionPriority.length; i++) {
-            uint128 marketId = synthDeductionPriority[i];
-            uint availableAmount = self.collateralAmounts[marketId];
+            uint128 synthMarketId = synthDeductionPriority[i];
+            uint availableAmount = self.collateralAmounts[synthMarketId];
             if (availableAmount == 0) {
                 continue;
             }
 
-            if (marketId == SNX_USD_MARKET_ID) {
+            if (synthMarketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
-                    updateCollateralAmount(self, marketId, -(leftoverAmount.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(leftoverAmount.toInt()));
                     leftoverAmount = 0;
                     break;
                 } else {
-                    updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
                     leftoverAmount -= availableAmount;
                 }
             } else {
                 (uint synthAmountRequired, ) = spotMarket.quoteSellExactOut(
-                    marketId,
+                    synthMarketId,
                     leftoverAmount
                 );
 
-                address synthToken = factory.spotMarket.getSynth(marketId);
+                address synthToken = factory.spotMarket.getSynth(synthMarketId);
 
                 if (availableAmount >= synthAmountRequired) {
                     factory.synthetix.withdrawMarketCollateral(
@@ -385,7 +385,7 @@ library PerpsAccount {
                     );
 
                     (uint amountToDeduct, ) = spotMarket.sellExactOut(
-                        marketId,
+                        synthMarketId,
                         leftoverAmount,
                         type(uint).max,
                         address(0)
@@ -393,7 +393,7 @@ library PerpsAccount {
 
                     factory.depositMarketUsd(leftoverAmount);
 
-                    updateCollateralAmount(self, marketId, -(amountToDeduct.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(amountToDeduct.toInt()));
                     leftoverAmount = 0;
                     break;
                 } else {
@@ -404,7 +404,7 @@ library PerpsAccount {
                     );
 
                     (uint amountToDeductUsd, ) = spotMarket.sellExactIn(
-                        marketId,
+                        synthMarketId,
                         availableAmount,
                         0,
                         address(0)
@@ -412,7 +412,7 @@ library PerpsAccount {
 
                     factory.depositMarketUsd(amountToDeductUsd);
 
-                    updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
                     leftoverAmount -= amountToDeductUsd;
                 }
             }

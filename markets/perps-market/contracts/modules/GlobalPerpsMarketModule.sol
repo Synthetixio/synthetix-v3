@@ -9,6 +9,8 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -69,6 +71,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         uint256 maxLiquidationRewardUsd
     ) external override {
         OwnableStorage.onlyOwner();
+        if (minLiquidationRewardUsd > maxLiquidationRewardUsd) {
+            revert ParameterError.InvalidParameter("min/maxLiquidationRewardUSD", "min > max");
+        }
+
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minLiquidationRewardUsd = minLiquidationRewardUsd;
         store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
@@ -134,6 +140,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
 
         if (shareRatioD18 > DecimalMath.UNIT) {
             revert InvalidReferrerShareRatio(shareRatioD18);
+        }
+
+        if (referrer == address(0)) {
+            revert AddressError.ZeroAddress();
         }
 
         GlobalPerpsMarketConfiguration.load().referrerShare[referrer] = shareRatioD18;
