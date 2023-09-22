@@ -55,16 +55,49 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function liquidateFlagged() external override returns (uint256 liquidationReward) {
+    function liquidateFlaggedAccounts(
+        uint256 maxNumberOfAccounts
+    ) external override returns (uint256 liquidationReward) {
         uint256[] memory liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts
             .values();
 
-        for (uint i = 0; i < liquidatableAccounts.length; i++) {
+        uint numberOfAccountsToLiquidate = maxNumberOfAccounts > liquidatableAccounts.length
+            ? liquidatableAccounts.length
+            : maxNumberOfAccounts;
+
+        for (uint i = 0; i < numberOfAccountsToLiquidate; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();
             liquidationReward += _liquidateAccount(PerpsAccount.load(accountId));
         }
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function liquidateFlaggedAccounts(
+        uint128[] calldata accountIds
+    ) external override returns (uint256 liquidationReward) {
+        SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
+            .load()
+            .liquidatableAccounts;
+
+        for (uint i = 0; i < accountIds.length; i++) {
+            uint128 accountId = accountIds[i];
+            if (!liquidatableAccounts.contains(accountId)) {
+                continue;
+            }
+
+            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId));
+        }
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
+    function flaggedAccounts() external view override returns (uint256[] memory accountIds) {
+        return GlobalPerpsMarket.load().liquidatableAccounts.values();
     }
 
     /**
