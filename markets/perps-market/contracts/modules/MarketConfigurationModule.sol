@@ -5,7 +5,6 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModule.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
-import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {PerpsPrice} from "../storage/PerpsPrice.sol";
 
 /**
@@ -23,6 +22,10 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         SettlementStrategy.Data memory strategy
     ) external override returns (uint256 strategyId) {
         OwnableStorage.onlyOwner();
+
+        if (strategy.settlementWindowDuration == 0) {
+            revert InvalidSettlementWindowDuration(strategy.settlementWindowDuration);
+        }
 
         strategy.settlementDelay = strategy.settlementDelay == 0 ? 1 : strategy.settlementDelay;
 

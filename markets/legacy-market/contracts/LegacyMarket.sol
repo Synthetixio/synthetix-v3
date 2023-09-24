@@ -34,6 +34,13 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
 
+    // redefine event so it can be catched by ethers
+    event MarketRegistered(
+        address indexed marketAddress,
+        uint128 indexed marketId,
+        address indexed sender
+    );
+
     error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);

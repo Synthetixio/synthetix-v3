@@ -37,8 +37,6 @@ salt = "<%= settings.salt %>"
 abiOf = ["InitialModuleBundle"]
 create2 = true
 
-depends = ["contract.InitialModuleBundle"]
-
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
@@ -56,17 +54,10 @@ artifact = "DebtShareMock"
 
 [router.CoreRouter]
 contracts = [
-  "AssociatedSystemsModule",
-  "ElectionModule",
-  "ElectionInspectorModule",
-  "InitialModuleBundle",
-]
-
-depends = [
-  "contract.AssociatedSystemsModule",
-  "contract.ElectionModule",
-  "contract.ElectionInspectorModule",
-  "contract.InitialModuleBundle",
+    "AssociatedSystemsModule",
+    "ElectionModule",
+    "ElectionInspectorModule",
+    "InitialModuleBundle",
 ]
 
 [invoke.upgrade_core_proxy]
@@ -77,34 +68,22 @@ args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
-depends = ["contract.InitialProxy", "router.CoreRouter"]
 
 [router.CouncilTokenRouter]
-contracts = [
-  "CouncilTokenModule",
-  "InitialModuleBundle",
-]
-
-depends = [
-  "contract.CouncilTokenModule",
-  "contract.InitialModuleBundle"
-]
+contracts = ["CouncilTokenModule", "InitialModuleBundle"]
 
 [invoke.init_council_token]
 target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
-  "<%= formatBytes32String('councilToken') %>",
-  "Synthetix Governance Token",
-  "SNXGOV",
-  "https://synthetix.io",
-  "<%= contracts.CouncilTokenRouter.address %>"
+    "<%= formatBytes32String('councilToken') %>",
+    "Synthetix Governance Token",
+    "SNXGOV",
+    "https://synthetix.io",
+    "<%= contracts.CouncilTokenRouter.address %>"
 ]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "router.CouncilTokenRouter"
-]
+depends = ["invoke.upgrade_core_proxy", "router.CouncilTokenRouter"]
 factory.AccountProxy.abiOf = ["CouncilTokenRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
@@ -113,15 +92,14 @@ factory.AccountProxy.arg = 2
 target = ["CoreProxy"]
 func = "initOrUpgradeElectionModule(address[],uint8,uint64,uint64,uint64,address)"
 args = [
-  ["<%= settings.init_council_member %>"],
-  "1",
-  "<%= settings.epoch_start %>",
-  "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",
-  "<%= settings.epoch_start + 86400 * settings.epoch_duration %>",
-  "<%= contracts.DebtShareMock.address %>",
+    ["<%= settings.init_council_member %>"],
+    "1",
+    "<%= settings.epoch_start %>",
+    "<%= settings.epoch_start + 86400 * settings.voting_period_duration %>",
+    "<%= settings.epoch_start + 86400 * settings.epoch_duration %>",
+    "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
-depends = ["invoke.init_council_token", "contract.DebtShareMock"]
 
 [provision.trusted_multicall_forwarder]
 source = "trusted-multicall-forwarder"

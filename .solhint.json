@@ -22,6 +22,7 @@
       }
     ],
     "meta-transactions/no-msg-sender": "error",
-    "meta-transactions/no-msg-data": "error"
+    "meta-transactions/no-msg-data": "error",
+    "numcast/safe-cast": "error"
   }
 }

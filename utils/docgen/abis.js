@@ -57,8 +57,8 @@ async function run() {
   await fs.mkdir(`${__dirname}/docs`, { recursive: true });
 
   const prettierOptions = JSON.parse(await fs.readFile(`${__dirname}/../../.prettierrc`, 'utf8'));
-  const prettyJson = (obj) =>
-    prettier.format(JSON.stringify(obj, null, 2), { parser: 'json', ...prettierOptions });
+  const prettyJson = async (obj) =>
+    await prettier.format(JSON.stringify(obj, null, 2), { parser: 'json', ...prettierOptions });
 
   await fs.writeFile(`./docs/${chainId}.md`, `## ${chainName(chainId)}\n\n`, 'utf8');
   await fs.appendFile(`./docs/${chainId}.md`, `Chain ID: ${chainId}\n\n`, 'utf8');
@@ -69,7 +69,7 @@ async function run() {
     console.log(`Writing ${chainId}-SynthetixCore.json`);
     await fs.writeFile(
       `./abis/${chainId}-SynthetixCore.json`,
-      prettyJson(system.contracts.CoreProxy),
+      await prettyJson(system.contracts.CoreProxy),
       'utf8'
     );
     await fs.appendFile(
@@ -84,7 +84,7 @@ async function run() {
     console.log(`Writing ${chainId}-snxAccountNFT.json`);
     await fs.writeFile(
       `./abis/${chainId}-snxAccountNFT.json`,
-      prettyJson(system.contracts.AccountProxy),
+      await prettyJson(system.contracts.AccountProxy),
       'utf8'
     );
     await fs.appendFile(
@@ -99,7 +99,7 @@ async function run() {
     console.log(`Writing ${chainId}-snxUSDToken.json`);
     await fs.writeFile(
       `./abis/${chainId}-snxUSDToken.json`,
-      prettyJson(system.contracts.USDProxy),
+      await prettyJson(system.contracts.USDProxy),
       'utf8'
     );
     await fs.appendFile(
@@ -116,7 +116,7 @@ async function run() {
       console.log(`Writing ${chainId}-OracleManager.json`);
       await fs.writeFile(
         `./abis/${chainId}-OracleManager.json`,
-        prettyJson(oracleManager.contracts.Proxy),
+        await prettyJson(oracleManager.contracts.Proxy),
         'utf8'
       );
       await fs.appendFile(
@@ -136,7 +136,7 @@ async function run() {
     console.log(`Writing ${chainId}-SpotMarket.json`);
     await fs.writeFile(
       `./abis/${chainId}-SpotMarket.json`,
-      prettyJson(spotFactory.contracts.SpotMarketProxy),
+      await prettyJson(spotFactory.contracts.SpotMarketProxy),
       'utf8'
     );
     await fs.appendFile(
@@ -155,7 +155,7 @@ async function run() {
     console.log(`Writing ${chainId}-PerpsMarket.json`);
     await fs.writeFile(
       `./abis/${chainId}-PerpsMarket.json`,
-      prettyJson(perpsFactory.contracts.PerpsMarketProxy),
+      await prettyJson(perpsFactory.contracts.PerpsMarketProxy),
       'utf8'
     );
     await fs.appendFile(
@@ -170,7 +170,7 @@ async function run() {
     console.log(`Writing ${chainId}-PerpsAccountNFT.json`);
     await fs.writeFile(
       `./abis/${chainId}-PerpsAccountNFT.json`,
-      prettyJson(perpsFactory.contracts.AccountProxy),
+      await prettyJson(perpsFactory.contracts.AccountProxy),
       'utf8'
     );
     await fs.appendFile(

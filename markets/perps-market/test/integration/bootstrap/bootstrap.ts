@@ -1,15 +1,15 @@
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
+import { CollateralMock } from '@synthetixio/main/typechain-types';
+import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
+import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
+import { bootstrapSynthMarkets, SynthArguments } from '@synthetixio/spot-market/test/common';
+import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
-import { FeeCollectorMock, PerpsMarketProxy, AccountProxy } from '../../generated/typechain';
-import { SpotMarketProxy, SynthRouter } from '@synthetixio/spot-market/test/generated/typechain';
-import { SynthArguments, bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
-import { PerpsMarketData, bootstrapPerpsMarkets, bootstrapTraders } from '.';
-import { MockPyth } from '@synthetixio/oracle-manager/typechain-types';
-import { CoreProxy, USDProxy } from '@synthetixio/main/test/generated/typechain';
-import { Proxy as OracleManagerProxy } from '@synthetixio/oracle-manager/test/generated/typechain';
-import { CollateralMock } from '@synthetixio/main/typechain-types';
-import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { AccountProxy, FeeCollectorMock, PerpsMarketProxy } from '../../generated/typechain';
+import { bootstrapPerpsMarkets, bootstrapTraders, PerpsMarketData } from './';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
