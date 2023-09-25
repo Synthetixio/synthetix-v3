@@ -93,6 +93,8 @@ dataSources:
             RewardsDistributorRegistered(indexed uint128,indexed address,indexed
             address)
           handler: handleRewardsDistributorRegistered
+        - event: RewardsDistributorRemoved(indexed uint128,indexed address,indexed address)
+          handler: handleRewardsDistributorRemoved
         - event: Liquidation(indexed uint128,indexed uint128,indexed
             address,(uint256,uint256,uint256),uint128,address)
           handler: handleLiquidation
