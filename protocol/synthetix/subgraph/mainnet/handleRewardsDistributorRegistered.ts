@@ -10,6 +10,7 @@ export function handleRewardsDistributorRegistered(event: RewardsDistributorRegi
   distributor.updated_at_block = event.block.timestamp;
   distributor.total_claimed = BigDecimal.fromString('0');
   distributor.total_distributed = BigDecimal.fromString('0');
+  distributor.isActive = true;
 
   const pool = Pool.load(event.params.poolId.toString());
 

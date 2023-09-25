@@ -178,8 +178,8 @@ describe('Market - size test', () => {
     });
 
     describe('reverts', () => {
-      beforeEach(restore);
-      beforeEach('add collateral to margin', async () => {
+      before(restore);
+      before('add collateral to margin', async () => {
         await depositCollateral({
           accountId: () => 2,
           collaterals: [
@@ -205,7 +205,7 @@ describe('Market - size test', () => {
           trader: () => trader2(),
         });
       });
-      beforeEach('open position that uses all of available market size', async () => {
+      before('open position that uses all of available market size', async () => {
         await openPosition({
           systems,
           provider,
@@ -224,8 +224,8 @@ describe('Market - size test', () => {
           openPosition({
             systems,
             provider,
-            trader: trader2(),
-            accountId: 3,
+            trader: trader1(),
+            accountId: 2,
             keeper: keeper(),
             marketId: ethMarket.marketId(),
             sizeDelta: bn(1),

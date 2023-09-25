@@ -342,6 +342,15 @@ describe('OffchainAsyncOrder - feeCollector - referrer', () => {
   });
 
   describe('update referrer share failures', () => {
+    it('reverts when referrer address is 0x', async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(owner())
+          .updateReferrerShare(ethers.constants.AddressZero, bn(0.1)),
+        'ZeroAddress'
+      );
+    });
+
     it('reverts when set above 100%', async () => {
       await assertRevert(
         systems()

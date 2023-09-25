@@ -145,9 +145,10 @@ library AsyncOrder {
             revert OrderNotValid();
         }
 
-        strategy = PerpsMarketConfiguration.load(order.request.marketId).settlementStrategies[
+        strategy = PerpsMarketConfiguration.loadValidSettlementStrategy(
+            order.request.marketId,
             order.request.settlementStrategyId
-        ];
+        );
         checkWithinSettlementWindow(order, strategy);
     }
 
@@ -214,7 +215,7 @@ library AsyncOrder {
             revert SettlementWindowNotOpen(block.timestamp, self.settlementTime);
         }
 
-        if (expired(self, settlementStrategy)) {
+        if (block.timestamp > settlementExpiration) {
             revert SettlementWindowExpired(
                 block.timestamp,
                 self.settlementTime,
@@ -334,15 +335,15 @@ library AsyncOrder {
         }
 
         oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
+        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
 
         PerpsMarket.validatePositionSize(
             perpsMarketData,
             marketConfig.maxMarketSize,
             oldPosition.size,
-            runtime.sizeDelta
+            runtime.newPositionSize
         );
 
-        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
         runtime.totalRequiredMargin =
             getRequiredMarginWithNewPosition(
                 marketConfig,

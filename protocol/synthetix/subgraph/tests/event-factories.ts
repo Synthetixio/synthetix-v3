@@ -21,6 +21,7 @@ import {
   RewardsClaimed,
   RewardsDistributed,
   RewardsDistributorRegistered,
+  RewardsDistributorRemoved,
   UsdBurned,
   UsdMinted,
   VaultLiquidation,
@@ -502,6 +503,32 @@ export function createRewardsDistributorRegisteredEvent(
   newRewardsDistributorRegisteredEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
   newRewardsDistributorRegisteredEvent.block.number = BigInt.fromI64(block['blockNumber']);
   return newRewardsDistributorRegisteredEvent;
+}
+
+export function createRewardsDistributorRemovedEvent(
+  poolId: BigInt,
+  collateralType: Address,
+  distributor: Address,
+  timestamp: i64,
+  blockNumber: i64
+): RewardsDistributorRemoved {
+  const newRewardsDistributorRemovedEvent = newTypedMockEvent<RewardsDistributorRemoved>();
+  const block = createBlock(timestamp, blockNumber);
+  newRewardsDistributorRemovedEvent.parameters = [];
+  newRewardsDistributorRemovedEvent.parameters.push(
+    new ethereum.EventParam('poolId', ethereum.Value.fromUnsignedBigInt(poolId))
+  );
+  newRewardsDistributorRemovedEvent.parameters.push(
+    new ethereum.EventParam('collateralType', ethereum.Value.fromAddress(collateralType))
+  );
+  newRewardsDistributorRemovedEvent.parameters.push(
+    new ethereum.EventParam('distributor', ethereum.Value.fromAddress(distributor))
+  );
+
+  newRewardsDistributorRemovedEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
+  newRewardsDistributorRemovedEvent.block.number = BigInt.fromI64(block['blockNumber']);
+
+  return newRewardsDistributorRemovedEvent;
 }
 
 export function createRewardsDistributedEvent(

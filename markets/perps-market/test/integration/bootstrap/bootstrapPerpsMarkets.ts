@@ -81,9 +81,16 @@ export const bootstrapPerpsMarkets = (
   });
 
   before('create super market', async () => {
-    superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory();
-    await contracts.PerpsMarket.initializeFactory();
-
+    superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory(
+      contracts.Core.address,
+      contracts.SpotMarket.address,
+      'SuperMarket'
+    );
+    await contracts.PerpsMarket.initializeFactory(
+      contracts.Core.address,
+      contracts.SpotMarket.address,
+      'SuperMarket'
+    );
     await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
       {
         marketId: superMarketId,

@@ -34,10 +34,12 @@ describe('Settle Offchain Async Order test', () => {
     traderAccountIds: [2, 3],
   });
   let ethMarketId: ethers.BigNumber;
+  let ethSettlementStrategyId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
+    ethSettlementStrategyId = perpsMarkets()[0].strategyId();
     btcSynth = synthMarkets()[0];
   });
 
@@ -319,6 +321,31 @@ describe('Settle Offchain Async Order test', () => {
             startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
             provider()
           );
+        });
+
+        describe('disable settlement strategy', () => {
+          before(async () => {
+            await systems().PerpsMarket.setSettlementStrategyEnabled(
+              ethMarketId,
+              ethSettlementStrategyId,
+              false
+            );
+          });
+
+          it('reverts with invalid settlement strategy', async () => {
+            await assertRevert(
+              systems().PerpsMarket.connect(trader1()).settle(2),
+              'InvalidSettlementStrategy'
+            );
+          });
+
+          after(async () => {
+            await systems().PerpsMarket.setSettlementStrategyEnabled(
+              ethMarketId,
+              ethSettlementStrategyId,
+              true
+            );
+          });
         });
 
         it('reverts with offchain info', async () => {
