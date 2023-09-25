@@ -156,7 +156,7 @@ contract LiquidationModule is ILiquidationModule {
         // - If flagger is the same as the liquidator, they receive both keeper/liqReward
         // - If flagger/liquidator are different, distribute fees separately
         //
-        // NOTE: The endorsed liquidator receives _zero_ liquidation rewards (but do receive a keeperFee for upkeep).
+        // NOTE: The endorsed liquidator receives _zero_ liquidation rewards (but does receive a keeperFee for upkeep).
         if (flagger == globalConfig.keeperLiquidationEndorsed) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
         } else {

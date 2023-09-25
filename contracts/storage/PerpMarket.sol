@@ -142,20 +142,22 @@ library PerpMarket {
     }
 
     /**
-     * @dev Update's the `pastLiquidations` array by either appending a new timestamp or
+     * @dev Updates the `pastLiquidations` array by either appending a new timestamp or
      */
     function updateAccumulatedLiquidation(PerpMarket.Data storage self, uint128 liqSize) internal {
         uint64 currentTime = block.timestamp.to64();
         uint256 length = self.pastLiquidations.length;
 
+        // No prior liquidations, push new liquidation chunk.
         if (length == 0) {
             self.pastLiquidations.push([currentTime, uint64(liqSize)]);
         } else {
-            uint256 index = length == 0 ? 0 : length - 1;
-            uint64[2] storage pastLiquidation = self.pastLiquidations[index];
+            // Most recent liquidation is the same timestamp (multi liquidation tx in same block), accumulate.
+            uint64[2] storage pastLiquidation = self.pastLiquidations[length - 1];
             if (pastLiquidation[0] == block.timestamp) {
-                self.pastLiquidations[index] = [currentTime, pastLiquidation[1] + uint64(liqSize)];
+                self.pastLiquidations[length - 1] = [currentTime, pastLiquidation[1] + uint64(liqSize)];
             } else {
+                // A new timestamp (block).
                 self.pastLiquidations.push([currentTime, uint64(liqSize)]);
             }
         }
