@@ -61,7 +61,7 @@ library PerpMarket {
         mapping(uint128 => Position.Data) positions;
         // {accountId: flaggerAddress}.
         mapping(uint128 => address) flaggedLiquidations;
-        // An infinitely growing array of tuples (timestamp, size) to track liquidations for liq caps.
+        // An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
         uint64[2][] pastLiquidations;
     }
 
@@ -336,25 +336,30 @@ library PerpMarket {
         //          = sum([25, 100])
         //          = 125
 
-        uint256 length = self.pastLiquidations.length;
-
-        if (self.pastLiquidations.length == 0) {
+        uint256 idx = self.pastLiquidations.length;
+        if (idx == 0) {
             return (maxLiquidatableCapacity, maxLiquidatableCapacity, 0);
         }
 
-        uint256 i = length - 1;
-        lastLiquidationTime = self.pastLiquidations[i][0];
+        // There has been at least one liquidation.
+        lastLiquidationTime = self.pastLiquidations[idx - 1][0];
 
+        // Accumulative sum over all prior liquidations within `windowStartTime` to now.
         uint256 capacityUtilized;
+
+        // Infer the _rolling_ window start time by reading the current block.timestamp.
         uint64 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to64();
 
         do {
-            capacityUtilized += self.pastLiquidations[i][1];
             unchecked {
-                --i;
+                --idx;
             }
-        } while (self.pastLiquidations[i][0] > windowStartTime || i == 0);
+            capacityUtilized += self.pastLiquidations[idx][1];
+        } while (idx > 0 && self.pastLiquidations[idx][0] > windowStartTime);
 
-        remainingCapacity = MathUtil.max((maxLiquidatableCapacity - capacityUtilized).toInt(), 0).toUint().to128();
+        remainingCapacity = MathUtil
+            .max((maxLiquidatableCapacity.toInt() - capacityUtilized.toInt()), 0)
+            .toUint()
+            .to128();
     }
 }
