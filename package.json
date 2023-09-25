@@ -57,7 +57,7 @@
     "@types/node": "^18.16.0",
     "@typescript-eslint/eslint-plugin": "^6.7.2",
     "@typescript-eslint/parser": "^6.7.2",
-    "@usecannon/cli": "^2.7.1",
+    "@usecannon/cli": "2.7.2-alpha.0",
     "eslint": "^8.49.0",
     "eslint-plugin-no-only-tests": "^3.1.0",
     "lint-staged": "^14.0.1",

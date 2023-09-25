@@ -2775,7 +2775,7 @@ __metadata:
     "@typechain/hardhat": ^9.0.0
     dotenv: ^16.3.1
     hardhat: ^2.17.3
-    hardhat-cannon: ^2.7.1
+    hardhat-cannon: 2.7.2-alpha.0
     hardhat-contract-sizer: ^2.10.0
     hardhat-gas-reporter: ^1.0.9
     hardhat-ignore-warnings: ^0.2.9
@@ -2815,7 +2815,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.58.0
     "@graphprotocol/graph-ts": ^0.31.0
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/cli": 2.7.2-alpha.0
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^3.0.3
@@ -2829,7 +2829,7 @@ __metadata:
     "@ethersproject/abi": ^5.7.0
     "@istanbuljs/nyc-config-typescript": ^1.0.2
     "@types/prompts": ^2.4.4
-    "@usecannon/builder": ^2.7.1
+    "@usecannon/builder": 2.7.2-alpha.0
     chalk: ^4.1.2
     ethereumjs-util: ^7.1.5
     ethers: ^5.7.2
@@ -2841,7 +2841,7 @@ __metadata:
     prompts: ^2.4.2
     rfdc: ^1.3.0
     sinon: ^16.0.0
-    solc: 0.8.17
+    solc: 0.8.21
     solidity-ast: ^0.4.52
     typescript: ^5.2.2
   peerDependencies:
@@ -2876,7 +2876,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/docgen@workspace:utils/docgen"
   dependencies:
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/cli": 2.7.2-alpha.0
     handlebars: ^4.7.8
     prettier: ^3.0.3
     solidity-ast: ^0.4.52
@@ -2975,7 +2975,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.58.0
     "@graphprotocol/graph-ts": ^0.31.0
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/cli": 2.7.2-alpha.0
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^3.0.3
@@ -2996,7 +2996,7 @@ __metadata:
     "@synthetixio/router": ^3.3.0
     "@synthetixio/spot-market": "workspace:*"
     "@synthetixio/wei": ^2.74.4
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/cli": 2.7.2-alpha.0
     ethers: ^5.7.2
     hardhat: ^2.17.3
     solidity-docgen: ^0.6.0-beta.36
@@ -3033,7 +3033,7 @@ __metadata:
     "@synthetixio/router": ^3.3.0
     ethers: ^5.7.2
     hardhat: ^2.17.3
-    hardhat-cannon: ^2.7.1
+    hardhat-cannon: 2.7.2-alpha.0
     solidity-coverage: ^0.8.4
   languageName: unknown
   linkType: soft
@@ -3044,7 +3044,7 @@ __metadata:
   dependencies:
     "@graphprotocol/graph-cli": ^0.58.0
     "@graphprotocol/graph-ts": ^0.31.0
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/cli": 2.7.2-alpha.0
     ethers: ^5.7.2
     matchstick-as: ^0.5.2
     prettier: ^3.0.3
@@ -3065,7 +3065,7 @@ __metadata:
     "@synthetixio/router": ^3.3.0
     "@synthetixio/wei": ^2.74.4
     "@types/node-fetch": ^2.6.5
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/cli": 2.7.2-alpha.0
     ethers: ^5.7.2
     hardhat: ^2.17.3
     node-fetch: ^2.7.0
@@ -3689,9 +3689,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/builder@npm:^2.7.1":
-  version: 2.7.1
-  resolution: "@usecannon/builder@npm:2.7.1"
+"@usecannon/builder@npm:2.7.2-alpha.0, @usecannon/builder@npm:^2.7.2-alpha.0":
+  version: 2.7.2-alpha.0
+  resolution: "@usecannon/builder@npm:2.7.2-alpha.0"
   dependencies:
     "@synthetixio/router": ^3.3.0
     axios: ^1.2.2
@@ -3705,17 +3705,17 @@ __metadata:
     zod: ^3.21.4
   peerDependencies:
     ethers: ">=5.6.0"
-  checksum: 547e76098e7ef1098c02fefb3e3771f8966799b709489779890d2ce1301d716cb65f14dc35ff82486cda2e638e6966560e14ab718859a74145d3f59cd2aef178
+  checksum: 19f3839ad5b6d5bfa8d12576e3393168ab5b03404144481eea92ea2cdc55263c98f65e5a61ace4c44ecea3363f9f857570cf3e99ded4dee228bbdc062435fbd6
   languageName: node
   linkType: hard
 
-"@usecannon/cli@npm:^2.7.1":
-  version: 2.7.1
-  resolution: "@usecannon/cli@npm:2.7.1"
+"@usecannon/cli@npm:2.7.2-alpha.0, @usecannon/cli@npm:^2.7.2-alpha.0":
+  version: 2.7.2-alpha.0
+  resolution: "@usecannon/cli@npm:2.7.2-alpha.0"
   dependencies:
     "@iarna/toml": ^3.0.0
     "@synthetixio/wei": ^2.74.1
-    "@usecannon/builder": ^2.7.1
+    "@usecannon/builder": ^2.7.2-alpha.0
     chalk: ^4.1.2
     commander: ^9.5.0
     debug: ^4.3.4
@@ -3731,7 +3731,7 @@ __metadata:
     untildify: ^4.0.0
   bin:
     cannon: dist/bin/cannon.js
-  checksum: c506e76581f6f96475c3f11b429d09085d37a1d8582874f1141e29d1d4d49398e031d6974a58fe03cfea343ae4cbbb457b491b1e005ee20ed0cd160717bdf4b1
+  checksum: ae4ada1b4a2373fe88dd02cc1358e03332a8583cb8f37276690171d4f70dd57d72d63744e36a1ded7972f46497d51a1f5c666591d84a4486690eb01cb24b7c04
   languageName: node
   linkType: hard
 
@@ -8488,13 +8488,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hardhat-cannon@npm:^2.7.1":
-  version: 2.7.1
-  resolution: "hardhat-cannon@npm:2.7.1"
+"hardhat-cannon@npm:2.7.2-alpha.0":
+  version: 2.7.2-alpha.0
+  resolution: "hardhat-cannon@npm:2.7.2-alpha.0"
   dependencies:
     "@iarna/toml": ^3.0.0
-    "@usecannon/builder": ^2.7.1
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/builder": ^2.7.2-alpha.0
+    "@usecannon/cli": ^2.7.2-alpha.0
     adm-zip: ^0.5.9
     chalk: ^4.1.2
     debug: ^4.3.3
@@ -8510,7 +8510,7 @@ __metadata:
     "@nomiclabs/hardhat-ethers": ">=2.0.0"
     "@nomiclabs/hardhat-etherscan": ">=3.0.0"
     hardhat: ">=2.0.0"
-  checksum: 1bf091eb6de901a6d7af12d144e43dd6a3a19c1dbb3ccb2c7a417ba95fc4f82358da1b49c542296f7f921a085b4651f3a606441d38bbb14b5cddd31ae76056b6
+  checksum: c0b04f3a101d476d6fa7c9774469345f7a15d5970906e9ecb9f379befa5321f298781a6ead5f5f9ba1d9937c07f92c3fa9e41b62927ea6f6564e62beca1df9ab
   languageName: node
   linkType: hard
 
@@ -14520,9 +14520,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solc@npm:0.8.17":
-  version: 0.8.17
-  resolution: "solc@npm:0.8.17"
+"solc@npm:0.8.21":
+  version: 0.8.21
+  resolution: "solc@npm:0.8.21"
   dependencies:
     command-exists: ^1.2.8
     commander: ^8.1.0
@@ -14533,7 +14533,7 @@ __metadata:
     tmp: 0.0.33
   bin:
     solcjs: solc.js
-  checksum: 99deb834d249cc65d8874026a876bbc1f0a09c74d94c17bdf5fa94952889cde9c11246eb70e4313daf39efb234523f2b705e821ae9f78586d51ff7be8d889fe6
+  checksum: 0145d0e1f4ba7b1ec574a2ad7c4782357c4a27949c3bcc7bb4411a7b325a3ad186c18f93b1802a438ea9a527711dd56d2d7190bc8dd431dc194fb6098ab6ed01
   languageName: node
   linkType: hard
 
@@ -15304,7 +15304,7 @@ __metadata:
     "@types/node": ^18.16.0
     "@typescript-eslint/eslint-plugin": ^6.7.2
     "@typescript-eslint/parser": ^6.7.2
-    "@usecannon/cli": ^2.7.1
+    "@usecannon/cli": 2.7.2-alpha.0
     eslint: ^8.49.0
     eslint-plugin-no-only-tests: ^3.1.0
     lint-staged: ^14.0.1
