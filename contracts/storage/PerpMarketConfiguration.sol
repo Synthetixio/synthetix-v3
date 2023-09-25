@@ -95,7 +95,7 @@ library PerpMarketConfiguration {
         uint256 liquidationRewardPercent;
         // An optional multiplier (1 to be optional) on top of maker+taker / skewScale.
         uint128 liquidationLimitScalar;
-        // Liquidation window duration in seconds.
+        // Liquidation window duration in seconds (e.g. 30s -> 30, <>30e18)
         uint128 liquidationWindowDuration;
         // If below, allows further liquidations of pd is below this maximum and caps are reached.
         uint128 liquidationMaxPd;

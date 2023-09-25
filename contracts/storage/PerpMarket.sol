@@ -62,7 +62,7 @@ library PerpMarket {
         // {accountId: flaggerAddress}.
         mapping(uint128 => address) flaggedLiquidations;
         // An infinitely growing array of tuples (timestamp, size) to track liquidations for liq caps.
-        uint64[][2] pastLiquidations;
+        uint64[2][] pastLiquidations;
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
@@ -145,15 +145,19 @@ library PerpMarket {
      * @dev Update's the `pastLiquidations` array by either appending a new timestamp or
      */
     function updateAccumulatedLiquidation(PerpMarket.Data storage self, uint128 liqSize) internal {
-        uint64 currentTimestamp = block.timestamp.to64();
+        uint64 currentTime = block.timestamp.to64();
         uint256 length = self.pastLiquidations.length;
-        uint256 index = length == 0 ? 0 : length - 1;
 
-        uint64[] storage pastLiquidation = self.pastLiquidations[index];
-        if (pastLiquidation[0] == block.timestamp) {
-            self.pastLiquidations[index] = [currentTimestamp, pastLiquidation[1] + uint64(liqSize)];
+        if (length == 0) {
+            self.pastLiquidations.push([currentTime, uint64(liqSize)]);
         } else {
-            self.pastLiquidations[length] = [currentTimestamp, uint64(liqSize)];
+            uint256 index = length == 0 ? 0 : length - 1;
+            uint64[2] storage pastLiquidation = self.pastLiquidations[index];
+            if (pastLiquidation[0] == block.timestamp) {
+                self.pastLiquidations[index] = [currentTime, pastLiquidation[1] + uint64(liqSize)];
+            } else {
+                self.pastLiquidations.push([currentTime, uint64(liqSize)]);
+            }
         }
     }
 
@@ -282,11 +286,7 @@ library PerpMarket {
     function getRemainingLiquidatableSizeCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
-    )
-        internal
-        view
-        returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint64 lastLiquidationTimestamp)
-    {
+    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint64 lastLiquidationTime) {
         // How do we calculcate `maxLiquidatableCapacity`?
         //
         // As an example, assume the following example parameters for a ETH/USD market.
@@ -335,7 +335,7 @@ library PerpMarket {
         //          = [(36, 25), (60, 100)]
         //          = sum([25, 100])
         //          = 125
-        uint64 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to64();
+
         uint256 length = self.pastLiquidations.length;
 
         if (self.pastLiquidations.length == 0) {
@@ -343,18 +343,17 @@ library PerpMarket {
         }
 
         uint256 i = length - 1;
-        uint256 capacityUtilized;
-        lastLiquidationTimestamp = self.pastLiquidations[i][0];
+        lastLiquidationTime = self.pastLiquidations[i][0];
 
-        while (self.pastLiquidations[i][0] > windowStartTime) {
+        uint256 capacityUtilized;
+        uint64 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to64();
+
+        do {
             capacityUtilized += self.pastLiquidations[i][1];
-            if (i == 0) {
-                break;
-            }
             unchecked {
                 --i;
             }
-        }
+        } while (self.pastLiquidations[i][0] > windowStartTime || i == 0);
 
         remainingCapacity = MathUtil.max((maxLiquidatableCapacity - capacityUtilized).toInt(), 0).toUint().to128();
     }

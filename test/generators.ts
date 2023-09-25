@@ -101,7 +101,7 @@ export const genMarket = () => ({
     maintenanceMarginScalar: bn(0.5), // MMS is half of IMR'
     liquidationRewardPercent: bn(genNumber(0.005, 0.0075)),
     liquidationLimitScalar: bn(genNumber(0.9, 1.2)),
-    liquidationWindowDuration: bn(genOneOf([36, 48, 60])),
+    liquidationWindowDuration: genOneOf([36, 48, 60]), // In seconds
     liquidationMaxPd: bn(genNumber(0.0001, 0.001)),
   },
 });

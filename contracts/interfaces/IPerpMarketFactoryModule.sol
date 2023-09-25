@@ -30,6 +30,8 @@ interface IPerpMarketFactoryModule is IMarket {
         int256 fundingRate;
         // Amount of size remaining last recorded in current window.
         uint256 remainingLiquidatableSizeCapacity;
+        // block.timestamp of when the last liqudation had occurred.
+        uint64 lastLiquidationTime;
     }
 
     // --- Events --- //
