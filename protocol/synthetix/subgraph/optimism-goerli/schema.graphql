@@ -203,6 +203,7 @@ type RewardsClaimed @entity {
   created_at_block: BigInt!
   updated_at: BigInt!
   updated_at_block: BigInt!
+  isActive: Boolean!
 }
 
 type Liquidation @entity {

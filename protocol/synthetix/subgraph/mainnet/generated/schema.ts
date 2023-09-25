@@ -1788,6 +1788,19 @@ export class RewardsDistributor extends Entity {
   set pool(value: string) {
     this.set('pool', Value.fromString(value));
   }
+
+  get isActive(): boolean {
+    let value = this.get('isActive');
+    if (!value || value.kind == ValueKind.NULL) {
+      return false;
+    } else {
+      return value.toBoolean();
+    }
+  }
+
+  set isActive(value: boolean) {
+    this.set('isActive', Value.fromBoolean(value));
+  }
 }
 
 export class RewardsDistribution extends Entity {
