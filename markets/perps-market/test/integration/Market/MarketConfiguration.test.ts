@@ -42,7 +42,7 @@ describe('MarketConfiguration', async () => {
     maxLiquidationLimitAccumulationMultiplier: bn(5),
     minimumPositionMargin: bn(50),
     liquidationRewardRatioD18: bn(10e9),
-    maxSecondsInLiquidationWindow: bn(10),
+    maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
     maxLiquidationPd: bn(0),
   };
 
@@ -287,9 +287,8 @@ describe('MarketConfiguration', async () => {
   });
 
   it('get fundingParameters', async () => {
-    const [skewScale, maxFundingVelocity] = await systems().PerpsMarket.getFundingParameters(
-      marketId
-    );
+    const [skewScale, maxFundingVelocity] =
+      await systems().PerpsMarket.getFundingParameters(marketId);
     assertBn.equal(maxFundingVelocity, fixture.maxFundingVelocity);
     assertBn.equal(skewScale, fixture.skewScale);
   });

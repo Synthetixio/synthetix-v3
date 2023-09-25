@@ -128,7 +128,7 @@ async function run() {
       console.log(`...FIXING ${fgYellow}${location}/package.json${fgReset}`);
       await fs.writeFile(
         `${location}/package.json`,
-        prettier.format(JSON.stringify(packageJson, null, '  '), {
+        await prettier.format(JSON.stringify(packageJson, null, '  '), {
           parser: 'json',
           ...prettierOptions,
         })

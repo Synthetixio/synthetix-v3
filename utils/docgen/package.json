@@ -12,11 +12,11 @@
     "docgen:contracts": "./docgen-contracts.sh"
   },
   "devDependencies": {
-    "@usecannon/cli": "^2.5.4",
-    "handlebars": "4.7.7",
-    "prettier": "^2.8.8",
-    "solidity-ast": "0.4.46",
-    "solidity-docgen": "0.6.0-beta.35"
+    "@usecannon/cli": "^2.7.1",
+    "handlebars": "^4.7.8",
+    "prettier": "^3.0.3",
+    "solidity-ast": "^0.4.52",
+    "solidity-docgen": "^0.6.0-beta.36"
   },
   "depcheck": {
     "ignoreMatches": [

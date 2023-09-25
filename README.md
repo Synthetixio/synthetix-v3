@@ -75,4 +75,4 @@ To prepare for system upgrades, this repository is used to release new versions 
 - Publish the release with `yarn publish:dev` for the pre-release (no git tag, version looks like `1.2.3-<GIT_SHA>.0`)> and `yarn publish:release` for the proper semver release.
   - If you aren't using [Frame](https://frame.sh/), prepend `CANNON_REGISTRY_PROVIDER_URL=<MAINNET_RPC> CANNON_PRIVATE_KEY=<PRIVATE_KEY>` to the commands above.
   - In case Cannon publish fails you can run `yarn publish-contracts` in the root to retry publishing all Cannon packages. Or run `yarn publish-contracts` in each failed package separately.
-- In all of the package.json files, revert dependencies' version changes back to "workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.
+- In all the package.json files, revert dependencies' version changes back to `"workspaces:*"` (leaving the change to `gitHead`, if applicable), commit, and push.

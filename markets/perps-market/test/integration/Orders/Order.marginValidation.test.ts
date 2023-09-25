@@ -45,7 +45,7 @@ describe('Orders - margin validation', () => {
           maintenanceMarginScalar: liqParams.btc.mmScalar.toBN(),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: liqParams.btc.liqRatio.toBN(),
-          maxSecondsInLiquidationWindow: bn(10),
+          maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
           minimumPositionMargin: bn(0),
         },
         settlementStrategy: {
@@ -64,7 +64,7 @@ describe('Orders - margin validation', () => {
           maintenanceMarginScalar: liqParams.eth.mmScalar.toBN(),
           maxLiquidationLimitAccumulationMultiplier: bn(1),
           liquidationRewardRatio: liqParams.eth.liqRatio.toBN(),
-          maxSecondsInLiquidationWindow: bn(10),
+          maxSecondsInLiquidationWindow: ethers.BigNumber.from(10),
           minimumPositionMargin: bn(0),
         },
         settlementStrategy: {

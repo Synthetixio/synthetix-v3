@@ -9,6 +9,7 @@ import {Position} from "./Position.sol";
 import {PerpsMarket} from "./PerpsMarket.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
 import {PerpsPrice} from "./PerpsPrice.sol";
+import {MarketUpdate} from "./MarketUpdate.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
@@ -352,29 +353,29 @@ library PerpsAccount {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         ISpotMarketSystem spotMarket = factory.spotMarket;
         for (uint i = 0; i < synthDeductionPriority.length; i++) {
-            uint128 marketId = synthDeductionPriority[i];
-            uint availableAmount = self.collateralAmounts[marketId];
+            uint128 synthMarketId = synthDeductionPriority[i];
+            uint availableAmount = self.collateralAmounts[synthMarketId];
             if (availableAmount == 0) {
                 continue;
             }
 
-            if (marketId == SNX_USD_MARKET_ID) {
+            if (synthMarketId == SNX_USD_MARKET_ID) {
                 // snxUSD
                 if (availableAmount >= leftoverAmount) {
-                    updateCollateralAmount(self, marketId, -(leftoverAmount.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(leftoverAmount.toInt()));
                     leftoverAmount = 0;
                     break;
                 } else {
-                    updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
                     leftoverAmount -= availableAmount;
                 }
             } else {
                 (uint synthAmountRequired, ) = spotMarket.quoteSellExactOut(
-                    marketId,
+                    synthMarketId,
                     leftoverAmount
                 );
 
-                address synthToken = factory.spotMarket.getSynth(marketId);
+                address synthToken = factory.spotMarket.getSynth(synthMarketId);
 
                 if (availableAmount >= synthAmountRequired) {
                     factory.synthetix.withdrawMarketCollateral(
@@ -384,7 +385,7 @@ library PerpsAccount {
                     );
 
                     (uint amountToDeduct, ) = spotMarket.sellExactOut(
-                        marketId,
+                        synthMarketId,
                         leftoverAmount,
                         type(uint).max,
                         address(0)
@@ -392,7 +393,7 @@ library PerpsAccount {
 
                     factory.depositMarketUsd(leftoverAmount);
 
-                    updateCollateralAmount(self, marketId, -(amountToDeduct.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(amountToDeduct.toInt()));
                     leftoverAmount = 0;
                     break;
                 } else {
@@ -403,7 +404,7 @@ library PerpsAccount {
                     );
 
                     (uint amountToDeductUsd, ) = spotMarket.sellExactIn(
-                        marketId,
+                        synthMarketId,
                         availableAmount,
                         0,
                         address(0)
@@ -411,7 +412,7 @@ library PerpsAccount {
 
                     factory.depositMarketUsd(amountToDeductUsd);
 
-                    updateCollateralAmount(self, marketId, -(availableAmount.toInt()));
+                    updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
                     leftoverAmount -= amountToDeductUsd;
                 }
             }
@@ -432,7 +433,7 @@ library PerpsAccount {
             uint128 amountToLiquidate,
             int128 newPositionSize,
             int128 sizeDelta,
-            PerpsMarket.MarketUpdateData memory marketUpdateData
+            MarketUpdate.Data memory marketUpdateData
         )
     {
         PerpsMarket.Data storage perpsMarket = PerpsMarket.load(marketId);
@@ -441,7 +442,7 @@ library PerpsAccount {
         perpsMarket.recomputeFunding(price);
 
         int128 oldPositionSize = position.size;
-        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs(oldPositionSize));
+        amountToLiquidate = perpsMarket.maxLiquidatableAmount(MathUtil.abs128(oldPositionSize));
 
         if (amountToLiquidate == 0) {
             return (0, oldPositionSize, 0, marketUpdateData);
@@ -469,9 +470,9 @@ library PerpsAccount {
 
         // update market data
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
-        sizeDelta = position.size - oldPositionSize;
+        sizeDelta = newPositionSize - oldPositionSize;
 
-        return (amountToLiquidate, position.size, sizeDelta, marketUpdateData);
+        return (amountToLiquidate, newPositionSize, sizeDelta, marketUpdateData);
     }
 
     function _deductAllSynth(

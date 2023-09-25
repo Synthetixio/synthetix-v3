@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/router/dist/utils/tests';
+import { coreBootstrap } from '@synthetixio/router/utils/tests';
 import {
   AssociatedSystemsModule,
   DecayTokenModule,
@@ -13,13 +13,13 @@ import {
   UpgradeModule,
 } from '../typechain-types';
 import {
-  TokenModuleRouter,
-  SampleRouter,
-  NftModuleRouter,
-  FeatureFlagModuleRouter,
-  DecayTokenModuleRouter,
-  CoreRouter,
   AssociatedSystemsModuleRouter,
+  CoreRouter,
+  DecayTokenModuleRouter,
+  FeatureFlagModuleRouter,
+  NftModuleRouter,
+  SampleRouter,
+  TokenModuleRouter,
 } from './generated/typechain';
 
 interface Contracts {

@@ -216,9 +216,8 @@ describe('AssociatedSystemsModule', function () {
         });
 
         it('works when reinitialized with the same impl', async function () {
-          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
-            registeredName
-          );
+          const [newProxyAddress] =
+            await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
           assert.equal(newProxyAddress, TokenModuleAssociated.address);
         });
@@ -355,9 +354,8 @@ describe('AssociatedSystemsModule', function () {
         });
 
         it('works when reinitialized with the same impl', async function () {
-          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
-            registeredName
-          );
+          const [newProxyAddress] =
+            await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
           assert.equal(newProxyAddress, NftModuleAssociated.address);
         });

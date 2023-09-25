@@ -13,12 +13,6 @@ import 'hardhat-cannon';
 import 'hardhat-ignore-warnings';
 import '@synthetixio/hardhat-storage';
 
-// Router generation cannon plugin
-import { registerAction } from '@usecannon/builder';
-import pluginRouter from 'cannon-plugin-router';
-
-registerAction(pluginRouter);
-
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
@@ -99,6 +93,9 @@ const config = {
   },
   cannon: {
     publicSourceCode: true,
+  },
+  typechain: {
+    target: 'ethers-v5',
   },
 };
 
