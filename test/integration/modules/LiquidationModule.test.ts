@@ -1,8 +1,11 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { wei } from '@synthetixio/wei';
+import assert from 'assert';
+import { BigNumber } from 'ethers';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genOneOf, genOrder, genSide, genTrader } from '../../generators';
+import { genBootstrap, genNonUsdCollateral, genOneOf, genOrder, genSide, genTrader } from '../../generators';
 import {
   depositMargin,
   commitAndSettle,
@@ -11,9 +14,8 @@ import {
   getBlockTimestamp,
   withExplicitEvmMine,
   findEventSafe,
+  SYNTHETIX_USD_MARKET_ID,
 } from '../../helpers';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { BigNumber } from 'ethers';
 
 describe('LiquidationModule', () => {
   const bs = bootstrap(genBootstrap());
@@ -89,7 +91,58 @@ describe('LiquidationModule', () => {
       await assertEvent(tx, `OrderCanceled(${trader.accountId}, ${marketId}, ${commitmentTime})`, PerpMarketProxy);
     });
 
-    it('should sell all available synth collateral for sUSD when flagging');
+    it('should sell all available synth collateral for sUSD when flagging', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const collateral = genNonUsdCollateral(bs);
+      const orderSide = genSide();
+      const marginUsd = genOneOf([1000, 5000]);
+
+      const { trader, market, marketId, collateralDepositAmount, marginUsdDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, { desiredCollateral: collateral, desiredMarginUsdDepositAmount: marginUsd })
+      );
+
+      const order1 = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredLeverage: 10,
+        desiredSide: orderSide,
+      });
+      await commitAndSettle(bs, marketId, trader, order1);
+
+      // Verify no USD but _some_ non-USD collateral was used as margin.
+      const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+      const collateralBalanceBefore = d1.collateral
+        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
+        .map((c) => c.available)[0];
+      const usdBalanceBefore = d1.collateral
+        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
+        .map((c) => c.available)[0];
+
+      assertBn.equal(collateralBalanceBefore, collateralDepositAmount);
+      assertBn.isZero(usdBalanceBefore);
+
+      // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
+      const newMarketOraclePrice = wei(order1.oraclePrice)
+        .mul(orderSide === 1 ? 0.9 : 1.1)
+        .toBN();
+      await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+      // Flag for liqudation, triggering the sale of collateral for sUSD.
+      await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+      // Assert the collateral has been sold and all that's left is sUSD (minus fees).
+      const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+
+      const collateralBalanceAfter = d2.collateral
+        .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
+        .map((c) => c.available)[0];
+      const usdBalanceAfter = d2.collateral
+        .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
+        .map((c) => c.available)[0];
+
+      assertBn.isZero(collateralBalanceAfter);
+      assertBn.near(usdBalanceAfter, marginUsdDepositAmount); // .near to account for spot-market skewFee.
+    });
 
     it('should not sell any synth collateral when all collateral is already sUSD');
 
@@ -728,18 +781,20 @@ describe('LiquidationModule', () => {
       );
     });
 
-    describe('liquidationCapacity', () => {
+    describe('{partialLiqudation,liqCaps}', () => {
       it('should partially liquidate if position hits liq window cap');
 
       it('should allow an endorsed keeper to fully liquidate a position even if above caps');
 
       it('should allow liquidations even if exceed caps if pd is below maxPd');
 
-      it('should partial liquidation even if pd is < maxPd and we reach cap');
+      it('should use up cap (partial) before exceeding if pd < maxPd');
 
-      it('should track and include endorsed keeper activity (cap + time)');
+      it('should track and include endorsed keeper activity (cap + time) on liquidations');
 
       it('should not remove flagger on partial liquidation');
+
+      it('should accumulate an existing liquidation if two tx in the same block');
 
       it('should revert when liq cap has been met and not endorsed');
 

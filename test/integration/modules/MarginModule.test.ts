@@ -1427,10 +1427,11 @@ describe('MarginModule', async () => {
 
       assertBn.near(await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId), marginUsdDepositAmount);
 
-      // Change price
+      // Change price.
       await collateral.aggregator().mockSetCurrentPrice(wei(2).mul(collateralPrice).toBN());
       const actual = await PerpMarketProxy.getCollateralUsd(trader.accountId, marketId);
-      // Fetch the price of the synth, this is our expected collateral value
+
+      // Fetch the price of the synth, this is our expected collateral value.
       const { returnAmount: expected } = await SpotMarket.quoteSellExactIn(
         collateral.synthMarket.marketId(),
         collateralDepositAmount

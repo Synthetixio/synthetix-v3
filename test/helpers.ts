@@ -180,12 +180,23 @@ export const commitAndSettle = async (
   const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime);
   const settlementKeeper = options?.desiredKeeper ?? keeper();
 
-  const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
-    value: updateFee,
-  });
+  const { tx, receipt } = await withExplicitEvmMine(
+    () =>
+      PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
+        value: updateFee,
+      }),
+    provider()
+  );
+  // TODO: Need to figure out if we can rely on wait (@joey).
+  //
+  // const tx = await PerpMarketProxy.connect(settlementKeeper).settleOrder(trader.accountId, marketId, [updateData], {
+  //   value: updateFee,
+  // });
+  // const receipt = await tx.wait();
+
   const lastBaseFeePerGas = (await provider().getFeeData()).lastBaseFeePerGas as BigNumber;
-  // TODO, need to figure out if we can rely on wait
-  return { tx, receipt: await tx.wait(), settlementTime, publishTime, lastBaseFeePerGas };
+
+  return { tx, receipt, settlementTime, publishTime, lastBaseFeePerGas };
 };
 
 /** Updates the provided `contract` with more ABI details. */

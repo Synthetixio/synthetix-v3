@@ -144,6 +144,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   const configureCollateral = async () => {
     const collaterals = getCollaterals();
 
+    // Amend sUSD as a collateral to configure.
     const synthMarkets = spotMarket.synthMarkets();
     const synthMarketIds = [SYNTHETIX_USD_MARKET_ID].concat(synthMarkets.map((market) => market.marketId()));
     const maxAllowances = [bn(10_000_000)].concat(collaterals.map(({ max }) => max));
@@ -151,6 +152,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
     // Allow this collateral to be depositable into the perp market.
     await systems.PerpMarketProxy.connect(getOwner()).setCollateralConfiguration(synthMarketIds, maxAllowances);
 
+    // TODO: This should be abstracted such that sUSD can be generated and used for all tests.
     return collaterals.map((collateral, idx) => {
       const synthMarket = synthMarkets[idx];
       return {

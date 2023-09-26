@@ -4,6 +4,7 @@ import { shuffle, isNil, random } from 'lodash';
 import { wei } from '@synthetixio/wei';
 import { MARKETS } from './data/markets.fixture';
 import { Bs, Market, Trader, Collateral } from './typed';
+import { SYNTHETIX_USD_MARKET_ID } from './helpers';
 
 // --- Utils --- //
 
@@ -160,6 +161,10 @@ export const genTrader = async (
     collateralPrice,
   };
 };
+
+/** Generate a non-USD collatearl */
+export const genNonUsdCollateral = ({ collaterals }: Bs) =>
+  genOneOf(collaterals().filter((x) => !x.synthMarket.marketId().eq(SYNTHETIX_USD_MARKET_ID)));
 
 /** Generates a side randomly, 1 for long, -1 for short. */
 export const genSide = (): 1 | -1 => genOneOf([1, -1]);
