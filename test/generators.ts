@@ -83,6 +83,8 @@ export const genBootstrap = () => ({
 
 /**
  * Generates a market with possibly unrealistic parms. Use `genOneOf(MARKETS)` for realistic values.
+ *
+ * NOTE: BE WARNED! THIS FUNCTION CAN RESULT IN UNEXPECTED BEHAVIOUR IN DOWNSTREAM TESTS.
  */
 export const genMarket = () => ({
   name: ethers.utils.formatBytes32String(genMarketName()),

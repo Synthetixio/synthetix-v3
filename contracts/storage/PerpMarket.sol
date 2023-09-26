@@ -298,7 +298,7 @@ library PerpMarket {
         // 1               scalar
         // 30s             window
         //
-        // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000
+        // maxLiquidatableCapacity = (0.0002 + 0.0006) * 100000 * 1
         //                         = 80
         maxLiquidatableCapacity = uint128(marketConfig.makerFee + marketConfig.takerFee)
             .mulDecimal(marketConfig.skewScale)
