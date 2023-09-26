@@ -24,11 +24,15 @@ library PerpsMarket {
     using Position for Position.Data;
     using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
+    /**
+     * @notice Thrown when attempting to create a market that already exists or invalid id was passed in
+     */
     error InvalidMarket(uint128 marketId);
 
+    /**
+     * @notice Thrown when attempting to load a market without a configured price feed
+     */
     error PriceFeedNotSet(uint128 marketId);
-
-    error MarketAlreadyExists(uint128 marketId);
 
     struct Data {
         string name;
