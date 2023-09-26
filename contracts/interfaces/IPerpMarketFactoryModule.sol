@@ -28,10 +28,10 @@ interface IPerpMarketFactoryModule is IMarket {
         int256 fundingVelocity;
         // Current funding rate as a function of funding velocity.
         int256 fundingRate;
-        // Last block.timestamp a liquidation occurred.
-        uint256 lastLiquidationTime;
-        // Amount of size remaining last recorded in current window relative to `lastLiquidationTime`.
+        // Amount of size remaining last recorded in current window.
         uint256 remainingLiquidatableSizeCapacity;
+        // block.timestamp of when the last liqudation had occurred.
+        uint64 lastLiquidationTime;
     }
 
     // --- Events --- //

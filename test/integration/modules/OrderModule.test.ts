@@ -830,6 +830,10 @@ describe('OrderModule', () => {
     it('should revert if pyth vaa merkle/blob is invalid');
 
     it('should revert when not enough wei is available to pay pyth fee');
+
+    it('should revert when placing an existing position into instant liquidation');
+
+    it('should revert when placing a new positin into instant liquidation');
   });
 
   describe('getOrderFees', () => {

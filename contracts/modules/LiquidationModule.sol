@@ -21,7 +21,7 @@ contract LiquidationModule is ILiquidationModule {
     // --- Helpers --- //
 
     /**
-     * @dev Before liquidation (not flag) to peform validation and market updates.
+     * @dev Before liquidation (not flag) to perform pre-steps and validation.
      */
     function updateMarketPreLiquidation(
         uint128 accountId,
@@ -50,9 +50,10 @@ contract LiquidationModule is ILiquidationModule {
             oraclePrice
         );
 
-        // Update market to reflect a successful full or partial liquidation.
-        market.lastLiquidationTime = block.timestamp;
-        market.lastLiquidationUtilization += liqSize;
+        // Track the liqSize that is about to be liquidated.
+        market.updateAccumulatedLiquidation(liqSize);
+
+        // Update market to reflect state of liquidated position.
         market.skew -= oldPosition.size;
         market.size -= MathUtil.abs(oldPosition.size).to128();
 
@@ -146,7 +147,7 @@ contract LiquidationModule is ILiquidationModule {
             market.positions[accountId].update(newPosition);
         }
 
-        // `flagPosition` has already (1) withdrew collateral (2) spot sold (3) deposited as usd
+        // `flagPosition` has already (1) withdrew collateral (2) spot sold (3) deposited as usd.
         //
         // By the time the liquidation occurs (partial or otherwise), we're essentially withdrawing a portion
         // of that deposited usd margin to pay keepers/liquidator.
@@ -154,11 +155,17 @@ contract LiquidationModule is ILiquidationModule {
         // Additionally,
         // - If flagger is the same as the liquidator, they receive both keeper/liqReward
         // - If flagger/liquidator are different, distribute fees separately
-        if (msg.sender == flagger) {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, liqReward + keeperFee);
-        } else {
-            globalConfig.synthetix.withdrawMarketUsd(marketId, flagger, liqReward);
+        //
+        // NOTE: The endorsed liquidator receives _zero_ liquidation rewards (but does receive a keeperFee for upkeep).
+        if (flagger == globalConfig.keeperLiquidationEndorsed) {
             globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+        } else {
+            if (msg.sender == flagger) {
+                globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee + liqReward);
+            } else {
+                globalConfig.synthetix.withdrawMarketUsd(marketId, flagger, liqReward);
+                globalConfig.synthetix.withdrawMarketUsd(marketId, msg.sender, keeperFee);
+            }
         }
 
         emit PositionLiquidated(
@@ -196,7 +203,11 @@ contract LiquidationModule is ILiquidationModule {
      */
     function getRemainingLiquidatableSizeCapacity(
         uint128 marketId
-    ) external view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity) {
+    )
+        external
+        view
+        returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint64 lastLiquidationTimestamp)
+    {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
     }

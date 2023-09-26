@@ -61,10 +61,8 @@ library PerpMarket {
         mapping(uint128 => Position.Data) positions;
         // {accountId: flaggerAddress}.
         mapping(uint128 => address) flaggedLiquidations;
-        // block.timestamp of when a liquidation last occurred.
-        uint256 lastLiquidationTime;
-        // Size of accumulated liquidations in window relative to lastLiquidationTime.
-        uint128 lastLiquidationUtilization;
+        // An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
+        uint64[2][] pastLiquidations;
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
@@ -106,7 +104,7 @@ library PerpMarket {
     // --- Member (mutative) --- //
 
     /**
-     * @dev Returns the relative debt correction for a single position.
+     * @dev Returns the relative debt correction for a single position (only used by `updateDebtCorrection`).
      */
     function getPositionDebtCorrection(
         uint256 marginUsd,
@@ -141,6 +139,28 @@ library PerpMarket {
             newPosition.entryFundingAccrued
         );
         self.debtCorrection = (self.debtCorrection + newCorrection - oldCorrection).to128();
+    }
+
+    /**
+     * @dev Updates the `pastLiquidations` array by either appending a new timestamp or
+     */
+    function updateAccumulatedLiquidation(PerpMarket.Data storage self, uint128 liqSize) internal {
+        uint64 currentTime = block.timestamp.to64();
+        uint256 length = self.pastLiquidations.length;
+
+        // No prior liquidations, push new liquidation chunk.
+        if (length == 0) {
+            self.pastLiquidations.push([currentTime, uint64(liqSize)]);
+        } else {
+            // Most recent liquidation is the same timestamp (multi liquidation tx in same block), accumulate.
+            uint64[2] storage pastLiquidation = self.pastLiquidations[length - 1];
+            if (pastLiquidation[0] == block.timestamp) {
+                self.pastLiquidations[length - 1] = [currentTime, pastLiquidation[1] + uint64(liqSize)];
+            } else {
+                // A new timestamp (block).
+                self.pastLiquidations.push([currentTime, uint64(liqSize)]);
+            }
+        }
     }
 
     /**
@@ -268,7 +288,9 @@ library PerpMarket {
     function getRemainingLiquidatableSizeCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity) {
+    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint64 lastLiquidationTime) {
+        // How do we calculcate `maxLiquidatableCapacity`?
+        //
         // As an example, assume the following example parameters for a ETH/USD market.
         //
         // 100,000         skewScale
@@ -282,8 +304,64 @@ library PerpMarket {
             .mulDecimal(marketConfig.skewScale)
             .mulDecimal(marketConfig.liquidationLimitScalar)
             .to128();
-        remainingCapacity = block.timestamp - self.lastLiquidationTime > marketConfig.liquidationWindowDuration
-            ? maxLiquidatableCapacity
-            : MathUtil.max((maxLiquidatableCapacity - self.lastLiquidationUtilization).toInt(), 0).toUint().to128();
+
+        // How is the liquidation cap inferred?
+        //
+        // Suppose we track an infinitely growing array of tuples in the form:
+        //
+        // [(timestamp, size), (timestamp, size), ... (timestamp, size)]
+        //
+        // Where timestamp is the `block.timestamp` at which a liqudation (partial or full) had occurred and
+        // `size` is the amount of native units that was liquidated at that time. Many liquidations can
+        // occur in a single block, so `size` is also the accumulation tokens liquidated by timestamp.
+        //
+        // Additionally, we also have the following information (1) current block.timestamp, (2) necessary details
+        // to calculcate `maxLiquidatableCapacity` (maximum size that can be liquidated within a single window), and
+        // (3) seconds per window.
+        //
+        // To calculate how much size has already been liquidated in the current window, sum over all `size` where
+        // `timestamp` is gt current `block.timestamp` - `secondsInWindow`. If the sum is larger than `maxLiquidatableCapacity`
+        // then we have reached cap, if not there is more size to utilize.
+        //
+        // As a concrete example,
+        //
+        // pastLiquidations      = [(12, 6), (24, 10), (36, 25), (60, 100)]
+        // secondsInWindow       = 48
+        // currentBlockTimestamp = 72
+        //
+        // windowStartTime = 72 - secondsInWindow
+        //                 = 72 - 48
+        //                 = 24
+        //
+        // capacity = [(12, 6), (24, 10), (36, 25), (60, 100)]
+        //          = [(36, 25), (60, 100)]
+        //          = sum([25, 100])
+        //          = 125
+
+        uint256 idx = self.pastLiquidations.length;
+        if (idx == 0) {
+            return (maxLiquidatableCapacity, maxLiquidatableCapacity, 0);
+        }
+
+        // There has been at least one liquidation.
+        lastLiquidationTime = self.pastLiquidations[idx - 1][0];
+
+        // Accumulative sum over all prior liquidations within `windowStartTime` to now.
+        uint256 capacityUtilized;
+
+        // Infer the _rolling_ window start time by reading the current block.timestamp.
+        uint64 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to64();
+
+        do {
+            unchecked {
+                --idx;
+            }
+            capacityUtilized += self.pastLiquidations[idx][1];
+        } while (idx > 0 && self.pastLiquidations[idx][0] > windowStartTime);
+
+        remainingCapacity = MathUtil
+            .max((maxLiquidatableCapacity.toInt() - capacityUtilized.toInt()), 0)
+            .toUint()
+            .to128();
     }
 }

@@ -37,6 +37,9 @@ const config = {
   cannon: {
     publicSourceCode: false, // Should publish contract sources along with bytecode?
   },
+  mocha: {
+    timeout: 10 * 1000, // 10s
+  },
 };
 
 export default config;
