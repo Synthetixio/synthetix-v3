@@ -2,13 +2,11 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { wei } from '@synthetixio/wei';
-import assert from 'assert';
 import { BigNumber } from 'ethers';
 import { bootstrap } from '../../bootstrap';
 import {
   bn,
   genBootstrap,
-  genMarket,
   genNonUsdCollateral,
   genNumber,
   genOneOf,
@@ -87,7 +85,7 @@ describe('LiquidationModule', () => {
       await commitOrder(bs, marketId, trader, order2);
       const commitmentTime = await getBlockTimestamp(provider());
 
-      // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
+      // Price moves 10% and results in a healthFactor of < 1.
       const newMarketOraclePrice = wei(order2.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
@@ -133,7 +131,7 @@ describe('LiquidationModule', () => {
       assertBn.equal(collateralBalanceBefore, collateralDepositAmount);
       assertBn.isZero(usdBalanceBefore);
 
-      // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
+      // Price moves 10% and results in a healthFactor of < 1.
       const newMarketOraclePrice = wei(order1.oraclePrice)
         .mul(orderSide === 1 ? 0.9 : 1.1)
         .toBN();
@@ -807,10 +805,10 @@ describe('LiquidationModule', () => {
           const market = genOneOf(markets());
           const marketId = market.marketId();
 
-          const liquidationLimitScalar = wei(1).toBN();
-          const makerFee = wei(0.0001).toBN();
-          const takerFee = wei(0.0001).toBN();
-          const skewScale = wei(1_000_000).toBN();
+          const liquidationLimitScalar = bn(1);
+          const makerFee = bn(0.0001);
+          const takerFee = bn(0.0001);
+          const skewScale = bn(1_000_000);
 
           await setMarketConfigurationById(bs, marketId, {
             liquidationLimitScalar,
@@ -861,16 +859,14 @@ describe('LiquidationModule', () => {
       it('should partially liquidate and exhaust cap if position hits liq window cap', async () => {
         const { PerpMarketProxy } = systems();
 
-        const orderSide = genSide();
-        const market = markets()[0]; // BTC
-        const marginUsdDepositAmount = 25_000;
-
         // Set a known price so downstream calculations ensure a partial liqudation.
+        const market = genOneOf(markets());
         await market.aggregator().mockSetCurrentPrice(wei(29_000).toBN());
+        const orderSide = genSide();
 
         const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
           bs,
-          genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: marginUsdDepositAmount })
+          genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: 25_000 })
         );
         const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
           desiredLeverage: 10,
@@ -879,17 +875,19 @@ describe('LiquidationModule', () => {
 
         await commitAndSettle(bs, marketId, trader, order);
 
-        // Lower liquidation cap such that the order.sizeDelta is above the cap (hence partial liquidations).
+        // Reconfigure market to lower the remainingCapacity such that it's < collateralDepositAmount but > 0.
         await setMarketConfigurationById(bs, marketId, {
-          liquidationLimitScalar: wei(0.01).toBN(),
-          makerFee: wei(0.0001).toBN(),
-          takerFee: wei(0.0001).toBN(),
+          liquidationLimitScalar: bn(0.01),
+          makerFee: bn(0.0001),
+          takerFee: bn(0.0001),
+          skewScale: bn(500_000),
         });
 
         const cap1 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
         assertBn.lt(cap1.remainingCapacity, collateralDepositAmount);
+        assertBn.gt(cap1.remainingCapacity, 0);
 
-        // Price falls between 15% and 8.25% should results in a healthFactor of < 1.
+        // Price moves 10% and results in a healthFactor of < 1.
         const newMarketOraclePrice = wei(order.oraclePrice)
           .mul(orderSide === 1 ? 0.9 : 1.1)
           .toBN();
@@ -928,7 +926,138 @@ describe('LiquidationModule', () => {
         assertBn.isZero(cap2.remainingCapacity);
       });
 
-      it('should allow an endorsed keeper to fully liquidate a position even if above caps');
+      it('should partially update market skew/size when partially liquidated', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Set a known price so downstream calculations ensure a partial liqudation.
+        const market = genOneOf(markets());
+        await market.aggregator().mockSetCurrentPrice(wei(29_000).toBN());
+        const orderSide = genSide();
+
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: 25_000 })
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredLeverage: 10,
+          desiredSide: orderSide,
+        });
+
+        await commitAndSettle(bs, marketId, trader, order);
+
+        // Reconfigure market to lower the remainingCapacity such that it's < collateralDepositAmount but > 0.
+        await setMarketConfigurationById(bs, marketId, {
+          liquidationLimitScalar: bn(0.01),
+          makerFee: bn(0.0001),
+          takerFee: bn(0.0001),
+          skewScale: bn(250_000),
+        });
+
+        const cap1 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.lt(cap1.remainingCapacity, collateralDepositAmount);
+        assertBn.gt(cap1.remainingCapacity, 0);
+
+        // Price moves 10% and results in a healthFactor of < 1.
+        const newMarketOraclePrice = wei(order.oraclePrice)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .toBN();
+        await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+        await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+
+        await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+          provider()
+        );
+
+        const expectedRemainingSize = order.sizeDelta.abs().sub(cap1.remainingCapacity).mul(orderSide);
+        const d1 = await PerpMarketProxy.getMarketDigest(marketId);
+        assertBn.equal(d1.size, expectedRemainingSize.abs());
+        assertBn.equal(d1.skew, expectedRemainingSize);
+      });
+
+      it('should allow an endorsed keeper to fully liquidate a position even if above caps', async () => {
+        const { PerpMarketProxy } = systems();
+
+        // Set a known price so downstream calculations ensure a partial liqudation.
+        const market = genOneOf(markets());
+        await market.aggregator().mockSetCurrentPrice(wei(29_000).toBN());
+        const orderSide = genSide();
+
+        const { trader, marketId, collateral, collateralDepositAmount } = await depositMargin(
+          bs,
+          genTrader(bs, { desiredMarket: market, desiredMarginUsdDepositAmount: 25_000 })
+        );
+        const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+          desiredLeverage: 10,
+          desiredSide: orderSide,
+        });
+
+        await commitAndSettle(bs, marketId, trader, order);
+
+        // Reconfigure market to lower the remainingCapacity such that it's < collateralDepositAmount but > 0.
+        await setMarketConfigurationById(bs, marketId, {
+          liquidationLimitScalar: bn(0.01),
+          makerFee: bn(0.0001),
+          takerFee: bn(0.0001),
+          skewScale: bn(250_000),
+        });
+
+        const cap1 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.lt(cap1.remainingCapacity, collateralDepositAmount);
+        assertBn.gt(cap1.remainingCapacity, 0);
+
+        // Price moves 10% and results in a healthFactor of < 1.
+        const newMarketOraclePrice = wei(order.oraclePrice)
+          .mul(orderSide === 1 ? 0.9 : 1.1)
+          .toBN();
+        await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice);
+
+        // Attempt the liquidate. This should complete successfully.
+        const { tx, receipt } = await withExplicitEvmMine(async () => {
+          await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
+          return PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
+        }, provider());
+
+        const keeperAddress = await keeper().getAddress();
+        const positionLiquidatedEvent = findEventSafe({
+          receipt,
+          eventName: 'PositionLiquidated',
+          contract: PerpMarketProxy,
+        });
+
+        const expectedRemainingSize = order.sizeDelta.abs().sub(cap1.remainingCapacity).mul(orderSide);
+        const positionLiquidatedEventProperties = [
+          trader.accountId,
+          marketId,
+          expectedRemainingSize,
+          `"${keeperAddress}"`, // keeper
+          `"${keeperAddress}"`, // flagger
+          positionLiquidatedEvent?.args.liqReward,
+          positionLiquidatedEvent?.args.keeperFee,
+          newMarketOraclePrice,
+        ].join(', ');
+
+        await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
+
+        const cap2 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap2.remainingCapacity);
+
+        // Endorsed liqudaitor to liquidate remaining capacity.
+        const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        assertBn.equal(d1.position.size, expectedRemainingSize);
+
+        await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(endorsedKeeper()).liquidatePosition(trader.accountId, marketId),
+          provider()
+        );
+
+        const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
+        assertBn.isZero(d2.position.size);
+
+        const cap3 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap3.remainingCapacity);
+      });
 
       it('should allow liquidations even if exceed caps if pd is below maxPd');
 

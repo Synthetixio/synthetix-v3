@@ -54,8 +54,8 @@ contract LiquidationModule is ILiquidationModule {
         market.updateAccumulatedLiquidation(liqSize);
 
         // Update market to reflect state of liquidated position.
-        market.skew -= oldPosition.size;
-        market.size -= MathUtil.abs(oldPosition.size).to128();
+        market.skew = market.skew - oldPosition.size + newPosition.size;
+        market.size -= liqSize;
 
         // Update market debt relative to the liqReward and keeperFee incurred.
         uint256 marginUsd = Margin.getMarginUsd(accountId, market, oraclePrice);
@@ -128,6 +128,7 @@ contract LiquidationModule is ILiquidationModule {
 
         uint256 oraclePrice = market.getOraclePrice();
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
         (, Position.Data memory newPosition, uint256 liqReward, uint256 keeperFee) = updateMarketPreLiquidation(
             accountId,
             marketId,
