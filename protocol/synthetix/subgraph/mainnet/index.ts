@@ -20,6 +20,7 @@ export * from './handlePoolOwnershipAccepted';
 export * from './handleRewardsClaimed';
 export * from './handleRewardsDistributed';
 export * from './handleRewardsDistributorRegistered';
+export * from './handleRewardsDistributorRemoved';
 export * from './handleUSDBurned';
 export * from './handleUSDMinted';
 export * from './handleVaultLiquidation';

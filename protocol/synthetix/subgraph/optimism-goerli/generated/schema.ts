@@ -2239,6 +2239,19 @@ export class RewardsClaimed extends Entity {
   set updated_at_block(value: BigInt) {
     this.set('updated_at_block', Value.fromBigInt(value));
   }
+
+  get isActive(): boolean {
+    let value = this.get('isActive');
+    if (!value || value.kind == ValueKind.NULL) {
+      return false;
+    } else {
+      return value.toBoolean();
+    }
+  }
+
+  set isActive(value: boolean) {
+    this.set('isActive', Value.fromBoolean(value));
+  }
 }
 
 export class Liquidation extends Entity {
