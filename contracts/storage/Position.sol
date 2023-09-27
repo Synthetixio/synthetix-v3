@@ -48,7 +48,7 @@ library Position {
 
     struct Runtime_validateLiquidation {
         address flagger;
-        uint128 oldPositionSize;
+        uint128 oldPositionSizeAbs;
         uint128 maxLiquidatableCapacity;
         uint128 remainingCapacity;
         uint64 lastLiquidationTime;
@@ -248,8 +248,8 @@ library Position {
 
         // Precautionary to ensure we're liquidating an open position.
         oldPosition = market.positions[accountId];
-        runtime.oldPositionSize = MathUtil.abs(oldPosition.size).to128();
-        if (runtime.oldPositionSize == 0) {
+        runtime.oldPositionSizeAbs = MathUtil.abs(oldPosition.size).to128();
+        if (runtime.oldPositionSizeAbs == 0) {
             revert ErrorUtil.PositionNotFound();
         }
 
@@ -258,7 +258,7 @@ library Position {
             .getRemainingLiquidatableSizeCapacity(marketConfig);
 
         if (msg.sender == globalConfig.keeperLiquidationEndorsed && runtime.remainingCapacity == 0) {
-            runtime.remainingCapacity = runtime.oldPositionSize;
+            runtime.remainingCapacity = runtime.oldPositionSizeAbs;
         }
 
         // At max capacity for current liquidation window.
@@ -274,11 +274,11 @@ library Position {
             if (
                 runtime.lastLiquidationTime != block.timestamp &&
                 MathUtil.abs(market.skew).divDecimal(skewScale) < liquidationMaxPd &&
-                runtime.oldPositionSize.divDecimal(skewScale) < liquidationMaxPd
+                runtime.oldPositionSizeAbs.divDecimal(skewScale) < liquidationMaxPd
             ) {
-                runtime.remainingCapacity = runtime.oldPositionSize > runtime.maxLiquidatableCapacity
+                runtime.remainingCapacity = runtime.oldPositionSizeAbs > runtime.maxLiquidatableCapacity
                     ? runtime.maxLiquidatableCapacity
-                    : runtime.oldPositionSize;
+                    : runtime.oldPositionSizeAbs;
             } else {
                 // No liquidation for you.
                 revert ErrorUtil.LiquidationZeroCapacity();
