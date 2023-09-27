@@ -391,6 +391,41 @@ describe('MarginModule', async () => {
         );
       });
 
+      it('should revert deposit that exceeds market-wide max cap', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const tradersGenerator = toRoundRobinGenerators(shuffle(traders()));
+        const trader1 = tradersGenerator.next().value;
+        const trader2 = tradersGenerator.next().value;
+
+        const market = genOneOf(markets());
+
+        const collateral = genOneOf(collaterals());
+        const depositAmountDelta1 = collateral.max; // Exactly at cap.
+        const depositAmountDelta2 = bn(2); // One unit above max cap.
+
+        await mintAndApprove(bs, collateral, depositAmountDelta1, trader1.signer);
+        await mintAndApprove(bs, collateral, depositAmountDelta2, trader2.signer);
+
+        await PerpMarketProxy.connect(trader1.signer).modifyCollateral(
+          trader1.accountId,
+          market.marketId(),
+          collateral.synthMarket.marketId(),
+          depositAmountDelta1
+        );
+
+        // Exceeded cap (across two accounts and hence market wide).
+        await assertRevert(
+          PerpMarketProxy.connect(trader2.signer).modifyCollateral(
+            trader2.accountId,
+            market.marketId(),
+            collateral.synthMarket.marketId(),
+            depositAmountDelta2
+          ),
+          `MaxCollateralExceeded("${depositAmountDelta2}", "${collateral.max}")`
+        );
+      });
+
       it('should revert when insufficient amount of collateral in msg.sender', async () => {
         const { PerpMarketProxy } = systems();
 
