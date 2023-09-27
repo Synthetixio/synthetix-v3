@@ -4,6 +4,7 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
 import { wei } from '@synthetixio/wei';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('GlobalPerpsMarket', () => {
   const { systems, perpsMarkets, signers, trader1, superMarketId, owner } = bootstrapMarkets({
@@ -27,6 +28,22 @@ describe('GlobalPerpsMarket', () => {
   it('returns the supermarket name', async () => {
     assert.equal(await systems().PerpsMarket.name(superMarketId()), 'SuperMarket Perps Market');
     assert.equal(await systems().PerpsMarket.name(0), '');
+  });
+
+  it('can call initialize again but will not change the config', async () => {
+    await assertEvent(
+      await systems()
+        .PerpsMarket.connect(owner())
+        .initializeFactory(
+          await trader1().getAddress(),
+          await trader1().getAddress(),
+          'other name'
+        ),
+      'FactoryInitialized(1)',
+      systems().PerpsMarket
+    );
+
+    assert.equal(await systems().PerpsMarket.name(superMarketId()), 'SuperMarket Perps Market');
   });
 
   it('returns maxCollateralAmounts for synth market id', async () => {
