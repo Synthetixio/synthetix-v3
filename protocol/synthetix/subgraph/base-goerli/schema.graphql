@@ -163,6 +163,7 @@ type RewardsDistributor @entity {
   updated_at: BigInt!
   updated_at_block: BigInt!
   pool: Pool!
+  isActive: Boolean!
 }
 
 type RewardsDistribution @entity {
