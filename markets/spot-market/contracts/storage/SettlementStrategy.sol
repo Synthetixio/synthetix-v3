@@ -9,7 +9,6 @@ library SettlementStrategy {
     using DecimalMath for uint256;
     using SafeCastU256 for uint256;
 
-    error PriceDeviationToleranceExceeded(uint256 deviation, uint256 tolerance);
     error InvalidCommitmentAmount(uint256 minimumAmount, uint256 amount);
 
     struct Data {
@@ -44,10 +43,6 @@ library SettlementStrategy {
          */
         uint256 settlementReward;
         /**
-         * @dev the % deviation from onchain price that is allowed for offchain settlement.
-         */
-        uint256 priceDeviationTolerance;
-        /**
          * @dev minimum amount of USD to be eligible for trade.
          * @dev this is to prevent inflation attacks where a user commits to selling a very small amount
          *      leading to shares divided by a very small number.
@@ -79,22 +74,6 @@ library SettlementStrategy {
         uint256 minimumAmount = strategy.minimumUsdExchangeAmount + strategy.settlementReward;
         if (amount <= minimumAmount) {
             revert InvalidCommitmentAmount(minimumAmount, amount);
-        }
-    }
-
-    function checkPriceDeviation(
-        Data storage strategy,
-        uint256 offchainPrice,
-        uint256 onchainPrice
-    ) internal view {
-        uint256 priceDeviation = MathUtil.abs(offchainPrice.toInt() - onchainPrice.toInt());
-        uint256 priceDeviationPercentage = priceDeviation.divDecimal(onchainPrice);
-
-        if (priceDeviationPercentage > strategy.priceDeviationTolerance) {
-            revert PriceDeviationToleranceExceeded(
-                priceDeviationPercentage,
-                strategy.priceDeviationTolerance
-            );
         }
     }
 }

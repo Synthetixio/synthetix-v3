@@ -16,7 +16,6 @@ export function createSettlementStrategyAddedEvent(
   feedId: string,
   url: string,
   settlementReward: i64,
-  priceDeviationTolerance: i64,
   disabled: boolean,
   // end of strategy struct
   strategyId: i32,
@@ -38,7 +37,6 @@ export function createSettlementStrategyAddedEvent(
     ethereum.Value.fromBytes(Bytes.fromHexString(feedId) as Bytes),
     ethereum.Value.fromString(url),
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementReward)),
-    ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(priceDeviationTolerance)),
     ethereum.Value.fromBoolean(disabled),
   ]);
   event.parameters.push(new ethereum.EventParam('strategy', ethereum.Value.fromTuple(strategy)));

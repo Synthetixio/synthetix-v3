@@ -13,6 +13,7 @@ import "./interfaces/ILegacyMarket.sol";
 import "./interfaces/external/ISynthetix.sol";
 import "./interfaces/external/IRewardEscrowV2.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
@@ -46,7 +47,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     error Paused();
 
     // solhint-disable-next-line no-empty-blocks
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(ERC2771Context._msgSender()) {}
 
     /**
      * @inheritdoc ILegacyMarket
@@ -137,7 +138,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
 
         // retrieve the sUSD from the user so we can burn it
-        oldUSD.transferFrom(msg.sender, address(this), amount);
+        oldUSD.transferFrom(ERC2771Context._msgSender(), address(this), amount);
 
         // now burn it
         uint beforeDebt = iss.debtBalanceOf(address(this), "sUSD");
@@ -147,9 +148,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
         }
 
         // now mint same amount of snxUSD (called a "withdraw" in v3 land)
-        v3System.withdrawMarketUsd(marketId, msg.sender, amount);
+        v3System.withdrawMarketUsd(marketId, ERC2771Context._msgSender(), amount);
 
-        emit ConvertedUSD(msg.sender, amount);
+        emit ConvertedUSD(ERC2771Context._msgSender(), amount);
     }
 
     /**
@@ -160,7 +161,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
             revert Paused();
         }
 
-        _migrate(msg.sender, accountId);
+        _migrate(ERC2771Context._msgSender(), accountId);
     }
 
     /**
@@ -289,7 +290,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     function setPauseStablecoinConversion(bool paused) external onlyOwner {
         pauseStablecoinConversion = paused;
 
-        emit PauseStablecoinConversionSet(msg.sender, paused);
+        emit PauseStablecoinConversionSet(ERC2771Context._msgSender(), paused);
     }
 
     /**
@@ -298,7 +299,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket {
     function setPauseMigration(bool paused) external onlyOwner {
         pauseMigration = paused;
 
-        emit PauseMigrationSet(msg.sender, paused);
+        emit PauseMigrationSet(ERC2771Context._msgSender(), paused);
     }
 
     /**

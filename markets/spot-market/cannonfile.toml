@@ -58,6 +58,7 @@ salt = "<%= settings.salt %>"
 # Core
 [router.SpotMarketRouter]
 contracts = [
+    "synthetix.MulticallModule",
     "CoreModule",
     "SpotMarketFactoryModule",
     "AtomicOrderModule",

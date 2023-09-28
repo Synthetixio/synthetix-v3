@@ -42,7 +42,7 @@ describe('PythNode', function () {
         1,
         timestamp
       );
-      const fee = await PythMock.getUpdateFee([resp]);
+      const fee = await PythMock['getUpdateFee(bytes[])']([resp]);
       await PythMock.updatePriceFeeds([resp], { value: fee });
     });
 
@@ -91,7 +91,7 @@ describe('PythNode', function () {
         1,
         timestamp
       );
-      updateFee = await PythMock.getUpdateFee([priceFeedData]);
+      updateFee = await PythMock['getUpdateFee(bytes[])']([priceFeedData]);
     });
 
     it('retrieves latest price', async () => {

@@ -160,7 +160,6 @@ describe('Create Market test', () => {
             url: '',
             disabled: false,
             settlementReward: bn(5),
-            priceDeviationTolerance: bn(0.01),
           });
       });
 

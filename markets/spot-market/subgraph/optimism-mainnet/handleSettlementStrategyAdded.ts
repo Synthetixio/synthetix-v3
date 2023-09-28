@@ -23,7 +23,6 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
   strategy.feedId = strategyInfo.feedId;
   strategy.url = strategyInfo.url;
   strategy.settlementReward = strategyInfo.settlementReward;
-  strategy.priceDeviationTolerance = strategyInfo.priceDeviationTolerance;
   strategy.minimumUsdExchangeAmount = strategyInfo.minimumUsdExchangeAmount;
   strategy.maxRoundingLoss = strategyInfo.maxRoundingLoss;
   strategy.disabled = strategyInfo.disabled;

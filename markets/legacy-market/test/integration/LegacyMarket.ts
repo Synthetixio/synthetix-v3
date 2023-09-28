@@ -140,15 +140,13 @@ describe('LegacyMarket', () => {
 
         // sanity
         console.log(
-          'coll',
+          'coll', // TODO, what does 'coll' mean here, I'm now changing getPositionCollateral to not return value but only the amount
           wei(
-            (
-              await v3System.getPositionCollateral(
-                migratedAccountId,
-                await v3System.getPreferredPool(),
-                snxToken.address
-              )
-            ).value
+            await v3System.getPositionCollateral(
+              migratedAccountId,
+              await v3System.getPreferredPool(),
+              snxToken.address
+            )
           ).toString()
         );
         assertBn.gte(
