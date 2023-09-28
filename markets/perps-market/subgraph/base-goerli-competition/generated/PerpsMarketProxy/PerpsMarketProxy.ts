@@ -1898,14 +1898,34 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  initializeFactory(): BigInt {
-    let result = super.call('initializeFactory', 'initializeFactory():(uint128)', []);
+  initializeFactory(synthetix: Address, spotMarket: Address, marketName: string): BigInt {
+    let result = super.call(
+      'initializeFactory',
+      'initializeFactory(address,address,string):(uint128)',
+      [
+        ethereum.Value.fromAddress(synthetix),
+        ethereum.Value.fromAddress(spotMarket),
+        ethereum.Value.fromString(marketName),
+      ]
+    );
 
     return result[0].toBigInt();
   }
 
-  try_initializeFactory(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('initializeFactory', 'initializeFactory():(uint128)', []);
+  try_initializeFactory(
+    synthetix: Address,
+    spotMarket: Address,
+    marketName: string
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'initializeFactory',
+      'initializeFactory(address,address,string):(uint128)',
+      [
+        ethereum.Value.fromAddress(synthetix),
+        ethereum.Value.fromAddress(spotMarket),
+        ethereum.Value.fromString(marketName),
+      ]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -2622,6 +2642,21 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
+  flaggedAccounts(): Array<BigInt> {
+    let result = super.call('flaggedAccounts', 'flaggedAccounts():(uint256[])', []);
+
+    return result[0].toBigIntArray();
+  }
+
+  try_flaggedAccounts(): ethereum.CallResult<Array<BigInt>> {
+    let result = super.tryCall('flaggedAccounts', 'flaggedAccounts():(uint256[])', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigIntArray());
+  }
+
   liquidate(accountId: BigInt): BigInt {
     let result = super.call('liquidate', 'liquidate(uint128):(uint256)', [
       ethereum.Value.fromUnsignedBigInt(accountId),
@@ -2641,14 +2676,41 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  liquidateFlagged(): BigInt {
-    let result = super.call('liquidateFlagged', 'liquidateFlagged():(uint256)', []);
+  liquidateFlagged(maxNumberOfAccounts: BigInt): BigInt {
+    let result = super.call('liquidateFlagged', 'liquidateFlagged(uint256):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(maxNumberOfAccounts),
+    ]);
 
     return result[0].toBigInt();
   }
 
-  try_liquidateFlagged(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('liquidateFlagged', 'liquidateFlagged():(uint256)', []);
+  try_liquidateFlagged(maxNumberOfAccounts: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('liquidateFlagged', 'liquidateFlagged(uint256):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(maxNumberOfAccounts),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  liquidateFlaggedAccounts(accountIds: Array<BigInt>): BigInt {
+    let result = super.call(
+      'liquidateFlaggedAccounts',
+      'liquidateFlaggedAccounts(uint128[]):(uint256)',
+      [ethereum.Value.fromUnsignedBigIntArray(accountIds)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_liquidateFlaggedAccounts(accountIds: Array<BigInt>): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'liquidateFlaggedAccounts',
+      'liquidateFlaggedAccounts(uint128[]):(uint256)',
+      [ethereum.Value.fromUnsignedBigIntArray(accountIds)]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -3654,6 +3716,18 @@ export class InitializeFactoryCall__Inputs {
   constructor(call: InitializeFactoryCall) {
     this._call = call;
   }
+
+  get synthetix(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get spotMarket(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+
+  get marketName(): string {
+    return this._call.inputValues[2].value.toString();
+  }
 }
 
 export class InitializeFactoryCall__Outputs {
@@ -3668,62 +3742,32 @@ export class InitializeFactoryCall__Outputs {
   }
 }
 
-export class SetSpotMarketCall extends ethereum.Call {
-  get inputs(): SetSpotMarketCall__Inputs {
-    return new SetSpotMarketCall__Inputs(this);
+export class SetPerpsMarketNameCall extends ethereum.Call {
+  get inputs(): SetPerpsMarketNameCall__Inputs {
+    return new SetPerpsMarketNameCall__Inputs(this);
   }
 
-  get outputs(): SetSpotMarketCall__Outputs {
-    return new SetSpotMarketCall__Outputs(this);
+  get outputs(): SetPerpsMarketNameCall__Outputs {
+    return new SetPerpsMarketNameCall__Outputs(this);
   }
 }
 
-export class SetSpotMarketCall__Inputs {
-  _call: SetSpotMarketCall;
+export class SetPerpsMarketNameCall__Inputs {
+  _call: SetPerpsMarketNameCall;
 
-  constructor(call: SetSpotMarketCall) {
+  constructor(call: SetPerpsMarketNameCall) {
     this._call = call;
   }
 
-  get spotMarket(): Address {
-    return this._call.inputValues[0].value.toAddress();
+  get marketName(): string {
+    return this._call.inputValues[0].value.toString();
   }
 }
 
-export class SetSpotMarketCall__Outputs {
-  _call: SetSpotMarketCall;
+export class SetPerpsMarketNameCall__Outputs {
+  _call: SetPerpsMarketNameCall;
 
-  constructor(call: SetSpotMarketCall) {
-    this._call = call;
-  }
-}
-
-export class SetSynthetixCall extends ethereum.Call {
-  get inputs(): SetSynthetixCall__Inputs {
-    return new SetSynthetixCall__Inputs(this);
-  }
-
-  get outputs(): SetSynthetixCall__Outputs {
-    return new SetSynthetixCall__Outputs(this);
-  }
-}
-
-export class SetSynthetixCall__Inputs {
-  _call: SetSynthetixCall;
-
-  constructor(call: SetSynthetixCall) {
-    this._call = call;
-  }
-
-  get synthetix(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-}
-
-export class SetSynthetixCall__Outputs {
-  _call: SetSynthetixCall;
-
-  constructor(call: SetSynthetixCall) {
+  constructor(call: SetPerpsMarketNameCall) {
     this._call = call;
   }
 }
@@ -4128,12 +4172,50 @@ export class LiquidateFlaggedCall__Inputs {
   constructor(call: LiquidateFlaggedCall) {
     this._call = call;
   }
+
+  get maxNumberOfAccounts(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
 }
 
 export class LiquidateFlaggedCall__Outputs {
   _call: LiquidateFlaggedCall;
 
   constructor(call: LiquidateFlaggedCall) {
+    this._call = call;
+  }
+
+  get liquidationReward(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
+export class LiquidateFlaggedAccountsCall extends ethereum.Call {
+  get inputs(): LiquidateFlaggedAccountsCall__Inputs {
+    return new LiquidateFlaggedAccountsCall__Inputs(this);
+  }
+
+  get outputs(): LiquidateFlaggedAccountsCall__Outputs {
+    return new LiquidateFlaggedAccountsCall__Outputs(this);
+  }
+}
+
+export class LiquidateFlaggedAccountsCall__Inputs {
+  _call: LiquidateFlaggedAccountsCall;
+
+  constructor(call: LiquidateFlaggedAccountsCall) {
+    this._call = call;
+  }
+
+  get accountIds(): Array<BigInt> {
+    return this._call.inputValues[0].value.toBigIntArray();
+  }
+}
+
+export class LiquidateFlaggedAccountsCall__Outputs {
+  _call: LiquidateFlaggedAccountsCall;
+
+  constructor(call: LiquidateFlaggedAccountsCall) {
     this._call = call;
   }
 

@@ -1793,31 +1793,6 @@ export class CoreProxy__getPositionResult {
   }
 }
 
-export class CoreProxy__getPositionCollateralResult {
-  value0: BigInt;
-  value1: BigInt;
-
-  constructor(value0: BigInt, value1: BigInt) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
-    return map;
-  }
-
-  getAmount(): BigInt {
-    return this.value0;
-  }
-
-  getValue(): BigInt {
-    return this.value1;
-  }
-}
-
 export class CoreProxy__getVaultCollateralResult {
   value0: BigInt;
   value1: BigInt;
@@ -2432,27 +2407,18 @@ export class CoreProxy extends ethereum.SmartContract {
     );
   }
 
-  getCollateralPrice(collateralType: Address, collateralAmount: BigInt): BigInt {
-    let result = super.call('getCollateralPrice', 'getCollateralPrice(address,uint256):(uint256)', [
+  getCollateralPrice(collateralType: Address): BigInt {
+    let result = super.call('getCollateralPrice', 'getCollateralPrice(address):(uint256)', [
       ethereum.Value.fromAddress(collateralType),
-      ethereum.Value.fromUnsignedBigInt(collateralAmount),
     ]);
 
     return result[0].toBigInt();
   }
 
-  try_getCollateralPrice(
-    collateralType: Address,
-    collateralAmount: BigInt
-  ): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      'getCollateralPrice',
-      'getCollateralPrice(address,uint256):(uint256)',
-      [
-        ethereum.Value.fromAddress(collateralType),
-        ethereum.Value.fromUnsignedBigInt(collateralAmount),
-      ]
-    );
+  try_getCollateralPrice(collateralType: Address): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getCollateralPrice', 'getCollateralPrice(address):(uint256)', [
+      ethereum.Value.fromAddress(collateralType),
+    ]);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -3585,14 +3551,10 @@ export class CoreProxy extends ethereum.SmartContract {
     );
   }
 
-  getPositionCollateral(
-    accountId: BigInt,
-    poolId: BigInt,
-    collateralType: Address
-  ): CoreProxy__getPositionCollateralResult {
+  getPositionCollateral(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
     let result = super.call(
       'getPositionCollateral',
-      'getPositionCollateral(uint128,uint128,address):(uint256,uint256)',
+      'getPositionCollateral(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -3600,17 +3562,17 @@ export class CoreProxy extends ethereum.SmartContract {
       ]
     );
 
-    return new CoreProxy__getPositionCollateralResult(result[0].toBigInt(), result[1].toBigInt());
+    return result[0].toBigInt();
   }
 
   try_getPositionCollateral(
     accountId: BigInt,
     poolId: BigInt,
     collateralType: Address
-  ): ethereum.CallResult<CoreProxy__getPositionCollateralResult> {
+  ): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
       'getPositionCollateral',
-      'getPositionCollateral(uint128,uint128,address):(uint256,uint256)',
+      'getPositionCollateral(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -3621,9 +3583,7 @@ export class CoreProxy extends ethereum.SmartContract {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new CoreProxy__getPositionCollateralResult(value[0].toBigInt(), value[1].toBigInt())
-    );
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getPositionCollateralRatio(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
