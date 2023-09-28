@@ -577,8 +577,6 @@ jobs:
       - DEBUG: "cannon:*"
     working_directory: ~/synthetix-v3
     steps:
-      #- add_ssh_keys:
-      #  fingerprints: "46:05:bf:bf:84:e8:af:09:35:05:89:09:62:45:84:7c"
       - run:
           working_directory: ~/
           name: "Checkout synthetix-v3"
@@ -644,6 +642,7 @@ workflows:
     unless:
       or:
         - equal: ["skip", << pipeline.git.branch >>]
+        - equal: ["check-deploys", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
@@ -759,33 +758,17 @@ workflows:
       #    proxy: "InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
 
-  docgen:
-    jobs:
-      - docgen:
-          name: "docgen-release"
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-      - docgen:
-          name: "docgen-dev"
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              only: /docgen/
-
-  scheduled-subgraphs-update:
+  check-deploys:
     when:
       and:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-        - equal: ["Subgraphs Update", << pipeline.schedule.name >>]
+        - equal: ["Check deploys", << pipeline.schedule.name >>]
     jobs:
       - update-subgraphs
+      - docgen
 
-  # temporary for dev
-  test-subgraphs-update:
+  # for dev
+  test-check-deploys:
     unless:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
@@ -793,4 +776,8 @@ workflows:
       - update-subgraphs:
           filters:
             branches:
-              only: /automatic-subgraphs-update/
+              only: /check-deploys/
+      - docgen:
+          filters:
+            branches:
+              only: /check-deploys/
