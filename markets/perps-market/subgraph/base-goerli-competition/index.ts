@@ -13,5 +13,5 @@ export * from '../optimism-goerli/handleOrderSettled';
 export * from '../optimism-goerli/handlePositionLiquidated';
 export * from '../optimism-goerli/handlePreviousOrderExpired';
 export * from '../optimism-goerli/handleReferrerShareUpdated';
-export * from '../optimism-goerli/handleSettlementStrategyAdded';
+export * from './handleSettlementStrategyAdded';
 export * from '../optimism-goerli/handleSettlementStrategyEnabled';
