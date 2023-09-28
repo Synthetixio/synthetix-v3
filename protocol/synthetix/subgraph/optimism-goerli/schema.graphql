@@ -163,6 +163,7 @@ type RewardsDistributor @entity {
   updated_at: BigInt!
   updated_at_block: BigInt!
   pool: Pool!
+  isActive: Boolean!
 }
 
 type RewardsDistribution @entity {
@@ -203,7 +204,6 @@ type RewardsClaimed @entity {
   created_at_block: BigInt!
   updated_at: BigInt!
   updated_at_block: BigInt!
-  isActive: Boolean!
 }
 
 type Liquidation @entity {
