@@ -149,7 +149,7 @@ commands:
     steps:
       - run:
           working_directory: << parameters.working_directory >>
-          name: "Push to << parameters.branch_head >> branch in << parameters.repo_slug >> and open a PR"
+          name: "Push to '<< parameters.branch_head >>' branch in '<< parameters.repo_slug >>' and open a PR"
           command: |
             STATUS=$(git status)
             if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
@@ -157,14 +157,14 @@ commands:
               exit 0
             fi
 
-            git branch << parameters.branch_head >>
-            git checkout << parameters.branch_head >>
+            git branch "<< parameters.branch_head >>"
+            git checkout "<< parameters.branch_head >>"
 
             git config --global user.email engineering@snxdao.io
             git config --global user.name synthetix-team
 
-            git commit -am << parameters.commit_message >>
-            git push --set-upstream --force origin << parameters.branch_head >>
+            git commit -am "<< parameters.commit_message >>"
+            git push --set-upstream --force origin "<< parameters.branch_head >>"
 
             curl -s -H "Authorization: token $GITHUB_TOKEN" \
               https://api.github.com/repos/<< parameters.repo_slug >>/pulls?state=open | tee /tmp/opened-pulls.txt
