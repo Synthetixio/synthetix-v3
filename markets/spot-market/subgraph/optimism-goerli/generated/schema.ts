@@ -283,23 +283,6 @@ export class SettlementStrategy extends Entity {
     }
   }
 
-  get priceDeviationTolerance(): BigInt | null {
-    let value = this.get('priceDeviationTolerance');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigInt();
-    }
-  }
-
-  set priceDeviationTolerance(value: BigInt | null) {
-    if (!value) {
-      this.unset('priceDeviationTolerance');
-    } else {
-      this.set('priceDeviationTolerance', Value.fromBigInt(<BigInt>value));
-    }
-  }
-
   get minimumUsdExchangeAmount(): BigInt | null {
     let value = this.get('minimumUsdExchangeAmount');
     if (!value || value.kind == ValueKind.NULL) {
