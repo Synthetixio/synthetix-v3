@@ -1,7 +1,7 @@
 import { bootstrap } from '../bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
-describe('Create Market test - failures', () => {
+describe('Create Market test - not initialized failure', () => {
   const name = 'Ether',
     token = 'snxETH';
 

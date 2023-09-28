@@ -312,6 +312,48 @@ describe('Settle Offchain Async Order test', () => {
         });
       });
 
+      describe('attempts to settle with not enough collateral', () => {
+        // Note: This tests is not valid for the "only snxUSD" case
+        before(restoreBeforeSettle);
+
+        before('fast forward to settlement time', async () => {
+          // fast forward to settlement
+          await fastForwardTo(
+            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
+            provider()
+          );
+        });
+
+        before('update collateral price', async () => {
+          await btcSynth.sellAggregator().mockSetCurrentPrice(bn(0.1));
+        });
+
+        it('reverts with invalid pyth price timestamp (after time)', async () => {
+          if (testCase.name === 'only snxUSD') {
+            return;
+          }
+
+          const availableCollateral = testCase.name === 'only snxBTC' ? bn(0.1) : bn(2.1);
+
+          const validPythPriceData = await systems().MockPyth.createPriceFeedUpdateData(
+            DEFAULT_SETTLEMENT_STRATEGY.feedId,
+            1000_0000,
+            1,
+            -4,
+            1000_0000,
+            1,
+            startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1
+          );
+          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          await assertRevert(
+            systems()
+              .PerpsMarket.connect(keeper())
+              .settlePythOrder(validPythPriceData, extraData, { value: updateFee }),
+            `InsufficientMargin("${availableCollateral.toString()}", "${bn(5).toString()}")`
+          );
+        });
+      });
+
       describe('settle order', () => {
         before(restoreBeforeSettle);
 

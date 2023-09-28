@@ -47,6 +47,13 @@ describe('Create Market test', () => {
         assert.equal(metadata.name, name);
         assert.equal(metadata.symbol, token);
       });
+
+      it('reverts attempting to create the same market again', async () => {
+        await assertRevert(
+          systems().PerpsMarket.createMarket(marketId, name, token),
+          `InvalidMarket("${marketId.toString()}")`
+        );
+      });
     });
 
     describe('after market is created', () => {

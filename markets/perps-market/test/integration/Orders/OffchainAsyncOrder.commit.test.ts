@@ -115,6 +115,23 @@ describe('Commit Offchain Async Order test', () => {
       );
     });
 
+    it(`reverts if size delta is zero`, async () => {
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarketId,
+            accountId: 2,
+            sizeDelta: bn(0),
+            settlementStrategyId: 0,
+            acceptablePrice: bn(1050), // 5% slippage
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        'ZeroSizeOrder()'
+      );
+    });
+
     it(`reverts if settlementStrategyId is not existent`, async () => {
       await assertRevert(
         systems()
