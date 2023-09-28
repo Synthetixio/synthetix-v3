@@ -402,7 +402,7 @@ describe('MarginModule', async () => {
 
         const collateral = genOneOf(collaterals());
         const depositAmountDelta1 = collateral.max; // Exactly at cap.
-        const depositAmountDelta2 = bn(2); // One unit above max cap.
+        const depositAmountDelta2 = bn(genNumber(1, 10)); // A few units above cap.
 
         await mintAndApprove(bs, collateral, depositAmountDelta1, trader1.signer);
         await mintAndApprove(bs, collateral, depositAmountDelta2, trader2.signer);
