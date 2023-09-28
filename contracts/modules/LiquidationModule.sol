@@ -110,7 +110,7 @@ contract LiquidationModule is ILiquidationModule {
         //
         // We sell the synth collateral here to ensure there's enough sUSD at this point in time to pay down any debt
         // incurred on this position and to also credit LPs with sUSD.
-        Margin.sellAllSynthCollateralForUsd(accountId, marketId);
+        Margin.sellAllSynthCollateralForUsd(accountId, marketId, market);
     }
 
     /**

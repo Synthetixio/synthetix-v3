@@ -1148,24 +1148,24 @@ describe('OrderModule', () => {
       const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
       // Creating a long skew for the market.
+      const orderSide = genSide();
       const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
         desiredLeverage: 10,
-        desiredSide: 1,
+        desiredSide: orderSide,
       });
       await commitAndSettle(bs, marketId, trader, order);
 
-      // Collect some data.
+      // Invert the size 1:1 and bring it back to neutral.
+      const fillPrice = await PerpMarketProxy.getFillPrice(marketId, order.sizeDelta.mul(-1));
       const oraclePrice = await PerpMarketProxy.getOraclePrice(marketId);
 
-      const prevPositionSizeNeg = wei(order.sizeDelta).mul(-1).toNumber();
-
-      // Using size to simulate short which will reduce the skew. The smallest negative size is the size of the current skew
-      const size = wei(genNumber(prevPositionSizeNeg, -1)).toBN();
-
-      const actualFillPrice = await PerpMarketProxy.getFillPrice(marketId, size);
-
-      // To get a "discount" to our short we expect the price to have a premium
-      assertBn.gt(actualFillPrice, oraclePrice);
+      // To get a discount, we expect longs (invert short) to receive a lower price and shorts
+      // (invert long) to receive a higher price.
+      if (orderSide === 1) {
+        assertBn.gt(fillPrice, oraclePrice);
+      } else {
+        assertBn.lt(fillPrice, oraclePrice);
+      }
     });
 
     it('should return mark price as fillPrice when size is 0', async () => {

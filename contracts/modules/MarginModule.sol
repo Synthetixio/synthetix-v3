@@ -152,10 +152,13 @@ contract MarginModule is IMarginModule {
 
             total += available;
             accountMargin.collaterals[synthMarketId] -= available;
+            market.depositedCollateral[synthMarketId] -= available;
 
             // Withdraw all available collateral for this `synthMarketId`.
             withdrawAndTransfer(marketId, available, synthMarketId, globalConfig);
         }
+
+        // No collateral has been withdrawn. Revert instead of noop.
         if (total == 0) {
             revert ErrorUtil.NilCollateral();
         }
@@ -186,7 +189,7 @@ contract MarginModule is IMarginModule {
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);
 
         uint256 absAmountDelta = MathUtil.abs(amountDelta);
-        uint256 availableAmount = accountMargin.collaterals[synthMarketId];
+        uint256 totalMarketAvailableAmount = market.depositedCollateral[synthMarketId];
 
         Margin.CollateralType storage collateral = globalMarginConfig.supported[synthMarketId];
         uint256 maxAllowable = collateral.maxAllowable;
@@ -207,18 +210,20 @@ contract MarginModule is IMarginModule {
         // > 0 is a deposit whilst < 0 is a withdrawal.
         if (amountDelta > 0) {
             // Verify whether this will exceed the maximum allowable collateral amount.
-            if (availableAmount + absAmountDelta > maxAllowable) {
+            if (totalMarketAvailableAmount + absAmountDelta > maxAllowable) {
                 revert ErrorUtil.MaxCollateralExceeded(absAmountDelta, maxAllowable);
             }
             accountMargin.collaterals[synthMarketId] += absAmountDelta;
+            market.depositedCollateral[synthMarketId] += absAmountDelta;
             transferAndDeposit(marketId, absAmountDelta, synthMarketId, globalConfig);
         } else {
             // Verify the collateral previously associated to this account is enough to cover withdrawals.
-            if (availableAmount < absAmountDelta) {
-                revert ErrorUtil.InsufficientCollateral(synthMarketId, availableAmount, absAmountDelta);
+            if (accountMargin.collaterals[synthMarketId] < absAmountDelta) {
+                revert ErrorUtil.InsufficientCollateral(synthMarketId, totalMarketAvailableAmount, absAmountDelta);
             }
 
             accountMargin.collaterals[synthMarketId] -= absAmountDelta;
+            market.depositedCollateral[synthMarketId] -= absAmountDelta;
 
             // If an open position exists, verify this does _not_ place them into instant liquidation.
             //

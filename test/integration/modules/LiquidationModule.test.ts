@@ -1070,6 +1070,8 @@ describe('LiquidationModule', () => {
         await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
       });
 
+      it('should reset caps after window timeframe has elapsed');
+
       it('should use up cap (partial) before exceeding if pd < maxPd');
 
       it('should track and include endorsed keeper activity (cap + time) on liquidations');
