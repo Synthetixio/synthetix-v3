@@ -519,12 +519,11 @@ jobs:
               fi
             done
 
-  docgen:
+  docgen-contracts:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     environment:
-      - CANNON_IPFS_URL: "http://127.0.0.1:5001"
-      - CANNON_PUBLISH_IPFS_URL: "http://127.0.0.1:5001"
+      - CANNON_IPFS_URL: "https://ipfs.synthetix.io"
       - GIT_PAGER: cat
     working_directory: ~/synthetix-v3
     steps:
@@ -539,11 +538,8 @@ jobs:
 
       - checkout
 
-      - install-ipfs
-      - run-ipfs-daemon
       - install-foundry
       - yarn-install
-      - wait-for-ipfs
 
       - run:
           name: "Build TS"
@@ -563,60 +559,20 @@ jobs:
       - run:
           name: "Generate combined smart-contracts.md"
           working_directory: ~/synthetix-v3/utils/docgen
-          command: ./docgen-contracts.sh
-
-      - run:
-          name: "Generate combined addresses-+-abis.md"
-          working_directory: ~/synthetix-v3/utils/docgen
-          command: ./docgen-abis.sh
+          command: |
+            ./docgen-contracts.sh
+            cp ~/synthetix-v3/docs/smart-contracts.md ~/synthetix-gitbook-v3/for-developers/smart-contracts.md
 
       - store_artifacts:
           path: "docs"
           destination: "."
 
-      - run:
-          working_directory: ~/synthetix-gitbook-v3
-          name: "Update docs and push to smart-contracts branch"
-          command: |
-            cp ~/synthetix-v3/docs/smart-contracts.md ./for-developers/smart-contracts.md
-            cp ~/synthetix-v3/docs/addresses-+-abis.md ./for-developers/addresses-+-abis.md
-            cp ~/synthetix-v3/docs/abis/*.json ./for-developers/abis/
-
-            STATUS=$(git status)
-            if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
-              echo "SKIP. Working tree is clean. No changes to Smart Contracts docs"
-              exit 0
-            fi
-
-            git branch smart-contracts
-            git checkout smart-contracts
-
-            git config --global user.email nikita@cc.snxdao.io
-            git config --global user.name Noisekit
-
-            git add ./for-developers/smart-contracts.md
-            git add ./for-developers/addresses-+-abis.md
-            git add ./for-developers/abis
-            git commit -m "Update Smart Contracts"
-            git push --set-upstream --force origin smart-contracts
-
-            PR_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              https://api.github.com/repos/Synthetixio/Synthetix-Gitbook-v3/pulls?state=open | \
-              jq -r '.[] | select(.head.ref=="smart-contracts") | .html_url')
-
-            # If no PR exists with the branch "smart-contracts", create one
-            # If PR already exists it would be updated with the most recent docs via forced push
-            if [ -z "$PR_URL" ]; then
-              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
-                https://api.github.com/repos/Synthetixio/Synthetix-Gitbook-v3/pulls \
-                -d '{
-                  "title": "Update Smart Contracts",
-                  "head": "smart-contracts", 
-                  "base": "en"
-                }'
-            else
-              echo "Pull Request already exists: $PR_URL"
-            fi
+      - github-pr:
+          working_directory: "~/synthetix-gitbook-v3"
+          repo_slug: "Synthetixio/Synthetix-Gitbook-v3"
+          branch_head: smart-contracts
+          branch_base: en
+          commit_message: "Update Smart Contracts"
 
   docgen-abis:
     docker:
@@ -637,27 +593,20 @@ jobs:
 
       - checkout
 
-      # - install-ipfs
-      # - run-ipfs-daemon
       - install-foundry
       - yarn-install
-      # - wait-for-ipfs
 
       - run:
           name: "Generate combined addresses-+-abis.md"
           working_directory: ~/synthetix-v3/utils/docgen
-          command: ./docgen-abis.sh
+          command: |
+            ./docgen-abis.sh
+            cp ~/synthetix-v3/docs/addresses-+-abis.md ~/synthetix-gitbook-v3/for-developers/addresses-+-abis.md
+            cp ~/synthetix-v3/docs/abis/*.json ~/synthetix-gitbook-v3/for-developers/abis/
 
       - store_artifacts:
           path: "docs"
           destination: "."
-
-      - run:
-          working_directory: ~/synthetix-gitbook-v3
-          name: "Update ABIs and addresses"
-          command: |
-            cp ~/synthetix-v3/docs/addresses-+-abis.md ./for-developers/addresses-+-abis.md
-            cp ~/synthetix-v3/docs/abis/*.json ./for-developers/abis/
 
       - github-pr:
           working_directory: "~/synthetix-gitbook-v3"
@@ -856,6 +805,26 @@ workflows:
       #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
       #    proxy: "InitialProxy"
       #    chains: "mainnet optimistic-mainnet goerli optimistic-goerli"
+
+  docgen-contracts:
+    unless:
+      or:
+        - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+    jobs:
+      - docgen-contracts:
+          name: "docgen-contracts"
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - docgen-contracts:
+          name: "docgen-contracts-dev"
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /check-deploys/
 
   check-deploys:
     when:
