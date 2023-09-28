@@ -61,6 +61,8 @@ library PerpMarket {
         mapping(uint128 => Position.Data) positions;
         // {accountId: flaggerAddress}.
         mapping(uint128 => address) flaggedLiquidations;
+        // {synthMarketId: collateralAmount} (# collateral deposited to market).
+        mapping(uint128 => uint256) depositedCollateral;
         // An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
         uint64[2][] pastLiquidations;
     }
