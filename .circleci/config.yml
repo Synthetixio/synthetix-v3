@@ -655,7 +655,6 @@ workflows:
     unless:
       or:
         - equal: ["skip", << pipeline.git.branch >>]
-        - equal: ["check-deploys", << pipeline.git.branch >>]
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
