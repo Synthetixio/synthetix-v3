@@ -7,6 +7,7 @@ export * from '../optimism-goerli/handleLockedOiRatioSet';
 export * from '../optimism-goerli/handleMarketCreated';
 export * from '../optimism-goerli/handleMarketPriceDataUpdated';
 export * from '../optimism-goerli/handleMarketUpdated';
+export * from '../optimism-goerli/handleMaxLiquidationParametersSet';
 export * from '../optimism-goerli/handleOrderCommitted';
 export * from '../optimism-goerli/handleOrderFeesSet';
 export * from '../optimism-goerli/handleOrderSettled';
