@@ -134,6 +134,57 @@ commands:
       - run: git log -1 -- protocol/synthetix/contracts > /tmp/version--testable-contracts.txt
       - run: cat /tmp/version--testable-contracts.txt
 
+  github-pr:
+    parameters:
+      working_directory:
+        type: string
+      repo_slug:
+        type: string
+      branch_head:
+        type: string
+      branch_base:
+        type: string
+      commit_message:
+        type: string
+    steps:
+      - run:
+          working_directory: << parameters.working_directory >>
+          name: "Push to << parameters.branch_head >> branch in << parameters.repo_slug >> and open a PR"
+          command: |
+            STATUS=$(git status)
+            if [[ $STATUS == *"nothing to commit, working tree clean"* ]]; then
+              echo "SKIP. Working tree is clean. No changes"
+              exit 0
+            fi
+
+            git branch << parameters.branch_head >>
+            git checkout << parameters.branch_head >>
+
+            git config --global user.email engineering@snxdao.io
+            git config --global user.name synthetix-team
+
+            git commit -am << parameters.commit_message >>
+            git push --set-upstream --force origin << parameters.branch_head >>
+
+            curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              https://api.github.com/repos/<< parameters.repo_slug >>/pulls?state=open | tee /tmp/opened-pulls.txt
+
+            PR_URL=$(cat /tmp/opened-pulls.txt | jq -r '.[] | select(.head.ref=="<< parameters.branch_head >>") | .html_url')
+            echo "Existing PR: $PR_URL"
+
+            # If no PR exists with the branch "<< parameters.branch_head >>", create one
+            # If PR already exists it would be updated with the most recent docs via forced push
+            if [ -z "$PR_URL" ]; then
+              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                https://api.github.com/repos/<< parameters.repo_slug >>/pulls \
+                -d '{
+                  "title": "<< parameters.commit_message >>",
+                  "head": "<< parameters.branch_head >>", 
+                  "base": "<< parameters.branch_base >>"
+                }'
+            else
+              echo "Pull Request already exists: $PR_URL"
+            fi
 jobs:
   build-testable:
     docker:
@@ -567,6 +618,54 @@ jobs:
               echo "Pull Request already exists: $PR_URL"
             fi
 
+  docgen-abis:
+    docker:
+      - image: cimg/node:<< pipeline.parameters.node-version >>
+    environment:
+      - CANNON_IPFS_URL: "https://ipfs.synthetix.io"
+      - GIT_PAGER: cat
+    working_directory: ~/synthetix-v3
+    steps:
+      - add_ssh_keys:
+          fingerprints: "4b:3a:c8:23:b8:4e:86:32:8e:d3:2d:17:0c:2b:63:b6"
+      - run:
+          working_directory: ~/
+          name: "Checkout docs"
+          command: |
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git clone git@github.com:Synthetixio/Synthetix-Gitbook-v3.git --verbose --depth 1 --no-tags --single-branch synthetix-gitbook-v3
+
+      - checkout
+
+      # - install-ipfs
+      # - run-ipfs-daemon
+      - install-foundry
+      - yarn-install
+      # - wait-for-ipfs
+
+      - run:
+          name: "Generate combined addresses-+-abis.md"
+          working_directory: ~/synthetix-v3/utils/docgen
+          command: ./docgen-abis.sh
+
+      - store_artifacts:
+          path: "docs"
+          destination: "."
+
+      - run:
+          working_directory: ~/synthetix-gitbook-v3
+          name: "Update ABIs and addresses"
+          command: |
+            cp ~/synthetix-v3/docs/addresses-+-abis.md ./for-developers/addresses-+-abis.md
+            cp ~/synthetix-v3/docs/abis/*.json ./for-developers/abis/
+
+      - github-pr:
+          working_directory: "~/synthetix-gitbook-v3"
+          repo_slug: "Synthetixio/Synthetix-Gitbook-v3"
+          branch_head: abis
+          branch_base: en
+          commit_message: "Update ABIs and addresses"
+
   update-subgraphs:
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
@@ -765,7 +864,7 @@ workflows:
         - equal: ["Check deploys", << pipeline.schedule.name >>]
     jobs:
       - update-subgraphs
-      - docgen
+      - docgen-abis
 
   # for dev
   test-check-deploys:
@@ -777,7 +876,7 @@ workflows:
           filters:
             branches:
               only: /check-deploys/
-      - docgen:
+      - docgen-abis:
           filters:
             branches:
               only: /check-deploys/
