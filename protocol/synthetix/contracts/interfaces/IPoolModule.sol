@@ -208,7 +208,7 @@ interface IPoolModule {
     function getPoolCollateralIssuanceRatio(
         uint128 poolId,
         address collateral
-    ) external returns (uint256 issuanceRatioD18);
+    ) external view returns (uint256 issuanceRatioD18);
 
     /**
      * @notice Retrieves the system-wide minimum liquidity ratio.

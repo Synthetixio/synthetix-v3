@@ -48,7 +48,6 @@ export type PerpsMarketData = Array<{
     feedId: string;
     url: string;
     settlementReward: ethers.BigNumber;
-    priceDeviationTolerance: ethers.BigNumber;
     disabled: boolean;
   }>;
 }>;
@@ -63,7 +62,6 @@ export const DEFAULT_SETTLEMENT_STRATEGY = {
   settlementWindowDuration: 120,
   priceWindowDuration: 110,
   settlementReward: bn(5),
-  priceDeviationTolerance: bn(0.01),
   disabled: false,
   url: 'https://fakeapi.pyth.synthetix.io/',
   feedId: ethers.utils.formatBytes32String('ETH/USD'),

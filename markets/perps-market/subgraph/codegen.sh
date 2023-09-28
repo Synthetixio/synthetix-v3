@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 codegen() {
   namespace=$1
   chainId=$2

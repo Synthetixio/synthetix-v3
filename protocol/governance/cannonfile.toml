@@ -100,3 +100,6 @@ args = [
     "<%= contracts.DebtShareMock.address %>",
 ]
 from = "<%= settings.owner %>"
+
+[provision.trusted_multicall_forwarder]
+source = "trusted-multicall-forwarder"

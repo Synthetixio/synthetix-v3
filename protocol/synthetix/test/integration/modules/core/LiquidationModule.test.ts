@@ -129,13 +129,11 @@ describe('LiquidationModule', function () {
 
         it('erases the liquidated account', async () => {
           assertBn.isZero(
-            (
-              await systems().Core.callStatic.getPositionCollateral(
-                accountId,
-                poolId,
-                collateralAddress()
-              )
-            )[0]
+            await systems().Core.callStatic.getPositionCollateral(
+              accountId,
+              poolId,
+              collateralAddress()
+            )
           );
           assertBn.isZero(
             await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress())

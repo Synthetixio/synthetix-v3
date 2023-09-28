@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {AssociatedSystemsModule, AssociatedSystem} from "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
@@ -196,13 +197,13 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         address nominee = spotMarketFactory.nominatedMarketOwners[synthMarketId];
 
-        if (nominee != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (nominee != ERC2771Context._msgSender()) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         spotMarketFactory.nominatedMarketOwners[synthMarketId] = address(0);
 
-        emit MarketNominationRenounced(synthMarketId, msg.sender);
+        emit MarketNominationRenounced(synthMarketId, ERC2771Context._msgSender());
     }
 
     /**
@@ -211,8 +212,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
     function acceptMarketOwnership(uint128 synthMarketId) public override {
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         address currentNominatedOwner = spotMarketFactory.nominatedMarketOwners[synthMarketId];
-        if (msg.sender != currentNominatedOwner) {
-            revert NotNominated(msg.sender);
+        if (ERC2771Context._msgSender() != currentNominatedOwner) {
+            revert NotNominated(ERC2771Context._msgSender());
         }
 
         emit MarketOwnerChanged(

@@ -122,9 +122,10 @@ describe('VaultModule', function () {
   ) {
     return async () => {
       assertBn.equal(
-        (await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress())).amount,
+        await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress()),
         collateralAmount
       );
+
       assertBn.equal(
         await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
         debt

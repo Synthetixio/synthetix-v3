@@ -11,6 +11,7 @@ import "../errors/ParameterError.sol";
 import "./ERC721Storage.sol";
 import "../utils/AddressUtil.sol";
 import "../utils/StringUtil.sol";
+import "../utils/ERC2771Context.sol";
 
 /*
  * @title ERC721 non-fungible token (NFT) contract.
@@ -85,6 +86,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
+
     function approve(address to, uint256 tokenId) public virtual override {
         ERC721Storage.Data storage store = ERC721Storage.load();
         address holder = store.ownerOf[tokenId];
@@ -93,8 +95,11 @@ contract ERC721 is IERC721, IERC721Metadata {
             revert CannotSelfApprove(to);
         }
 
-        if (msg.sender != holder && !isApprovedForAll(holder, msg.sender)) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (
+            ERC2771Context._msgSender() != holder &&
+            !isApprovedForAll(holder, ERC2771Context._msgSender())
+        ) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         _approve(to, tokenId);
@@ -114,14 +119,15 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
+
     function setApprovalForAll(address operator, bool approved) public virtual override {
-        if (msg.sender == operator) {
+        if (ERC2771Context._msgSender() == operator) {
             revert CannotSelfApprove(operator);
         }
 
-        ERC721Storage.load().operatorApprovals[msg.sender][operator] = approved;
+        ERC721Storage.load().operatorApprovals[ERC2771Context._msgSender()][operator] = approved;
 
-        emit ApprovalForAll(msg.sender, operator, approved);
+        emit ApprovalForAll(ERC2771Context._msgSender(), operator, approved);
     }
 
     /**
@@ -137,9 +143,10 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
+
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
-        if (!_isApprovedOrOwner(msg.sender, tokenId)) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (!_isApprovedOrOwner(ERC2771Context._msgSender(), tokenId)) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         _transfer(from, to, tokenId);
@@ -148,6 +155,7 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
+
     function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
@@ -155,14 +163,15 @@ contract ERC721 is IERC721, IERC721Metadata {
     /**
      * @inheritdoc IERC721
      */
+
     function safeTransferFrom(
         address from,
         address to,
         uint256 tokenId,
         bytes memory data
     ) public virtual override {
-        if (!_isApprovedOrOwner(msg.sender, tokenId)) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (!_isApprovedOrOwner(ERC2771Context._msgSender(), tokenId)) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         _transfer(from, to, tokenId);
@@ -265,9 +274,14 @@ contract ERC721 is IERC721, IERC721Metadata {
         bytes memory data
     ) internal returns (bool) {
         if (AddressUtil.isContract(to)) {
-            try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (
-                bytes4 retval
-            ) {
+            try
+                IERC721Receiver(to).onERC721Received(
+                    ERC2771Context._msgSender(),
+                    from,
+                    tokenId,
+                    data
+                )
+            returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch {
                 return false;

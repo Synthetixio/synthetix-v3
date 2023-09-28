@@ -3,13 +3,13 @@ import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'mat
 import handleAccountCreated from './handleAccountCreated';
 import handleAccountLiquidated from './handleAccountLiquidated';
 import handleCollateralModified from './handleCollateralModified';
-
 import handleFundingParametersSet from './handleFundingParametersSet';
 import handleLiquidationParametersSet from './handleLiquidationParametersSet';
 import handleLockedOiRatioSet from './handleLockedOiRatioSet';
 import handleMarketCreated from './handleMarketCreated';
 import handleMarketPriceDataUpdated from './handleMarketPriceDataUpdated';
 import handleMarketUpdated from './handleMarketUpdated';
+import handleMaxLiquidationParametersSet from './handleMaxLiquidationParametersSet';
 import handleOrderCommitted from './handleOrderCommitted';
 import handleOrderFeesSet from './handleOrderFeesSet';
 import handleOrderSettled from './handleOrderSettled';
@@ -37,6 +37,7 @@ describe('PerpsMarketProxy', () => {
   test('handleMarketCreated', handleMarketCreated);
   test('handleMarketPriceDataUpdated', handleMarketPriceDataUpdated);
   test('handleMarketUpdated', handleMarketUpdated);
+  test('handleMaxLiquidationParametersSet', handleMaxLiquidationParametersSet);
   test('handleOrderCommitted', handleOrderCommitted);
   test('handleOrderFeesSet', handleOrderFeesSet);
   test('handleOrderSettled', handleOrderSettled);
