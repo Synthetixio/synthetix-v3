@@ -7,8 +7,6 @@ export default function test(): void {
   assert.entityCount('Market', 0);
   assert.entityCount('MarketUpdated', 0);
 
-  log.info('Creating a new Market entity', []);
-
   const perpsMarketId = 1;
   const marketName = 'Test Market';
   const marketSymbol = 'TM';
@@ -30,7 +28,7 @@ export default function test(): void {
   assert.entityCount('Market', 1);
   assert.fieldEquals('Market', perpsMarketId.toString(), 'perpsMarketId', perpsMarketId.toString());
 
-  log.info('Updating the Market entity', []);
+  log.info('Should update existing Market record', []);
 
   const price = 100;
   const skew = 200;

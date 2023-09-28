@@ -50,13 +50,11 @@ export default function test(): void {
 
   log.info('Should disable the Settlement Strategy', []);
 
-  const enabled = false;
-
   handleSettlementStrategyEnabled(
     createSettlementStrategyEnabledEvent(
       marketId,
       strategyId,
-      enabled,
+      false,
       timestamp,
       blockNumber,
       logIndex
@@ -64,21 +62,14 @@ export default function test(): void {
   );
 
   assert.entityCount('SettlementStrategy', 1);
-  assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', enabled.toString());
+  assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', 'false');
 
   log.info(
     'Should skip even if Settlement Strategy does not exist and not add any more records',
     []
   );
   handleSettlementStrategyEnabled(
-    createSettlementStrategyEnabledEvent(
-      marketId,
-      123123,
-      enabled,
-      timestamp,
-      blockNumber,
-      logIndex
-    )
+    createSettlementStrategyEnabledEvent(marketId, 123123, false, timestamp, blockNumber, logIndex)
   );
   assert.entityCount('SettlementStrategy', 1);
 }

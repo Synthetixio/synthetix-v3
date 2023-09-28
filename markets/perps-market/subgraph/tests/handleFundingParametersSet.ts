@@ -6,8 +6,6 @@ import { createFundingParametersSetEvent } from './event-factories/createFunding
 export default function test(): void {
   assert.entityCount('Market', 0);
 
-  log.info('Creating a new Market entity', []);
-
   const perpsMarketId = 1;
   const marketName = 'Test Market';
   const marketSymbol = 'TM';

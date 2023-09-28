@@ -5,7 +5,7 @@ import { createSettlementStrategyAddedEvent } from './event-factories/createSett
 export default function test(): void {
   assert.entityCount('SettlementStrategy', 0);
 
-  log.info('Should create a new record for the Settlement Strategy', []);
+  log.info('Should create a new record for the SettlementStrategy', []);
 
   const marketId = 1;
   const strategyType = 1;
