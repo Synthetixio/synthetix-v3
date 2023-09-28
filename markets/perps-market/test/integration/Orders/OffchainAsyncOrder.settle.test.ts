@@ -344,7 +344,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(bytes[])']([validPythPriceData]);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -593,7 +593,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime + 6
           );
-          updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(bytes[])']([pythPriceData]);
         });
 
         before('settle', async () => {

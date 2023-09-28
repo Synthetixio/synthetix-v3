@@ -345,8 +345,6 @@ describe('MarketConfiguration', async () => {
         '", ' +
         settlementStrategy.settlementReward.toString() +
         ', ' +
-        settlementStrategy.priceDeviationTolerance.toString() +
-        ', ' +
         settlementStrategy.disabled.toString() +
         '], 0)',
       systems().PerpsMarket;
