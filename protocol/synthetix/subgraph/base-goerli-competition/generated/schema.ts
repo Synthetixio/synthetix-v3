@@ -174,13 +174,12 @@ export class Pool extends Entity {
     }
   }
 
-  get registered_distributors(): Array<string> | null {
-    let value = this.get('registered_distributors');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toStringArray();
-    }
+  get registered_distributors(): RewardsDistributorLoader {
+    return new RewardsDistributorLoader(
+      'Pool',
+      this.get('id')!.toString(),
+      'registered_distributors'
+    );
   }
 
   get market_ids(): Array<string> | null {
@@ -200,13 +199,8 @@ export class Pool extends Entity {
     }
   }
 
-  get configurations(): Array<string> | null {
-    let value = this.get('configurations');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toStringArray();
-    }
+  get configurations(): MarketConfigurationLoader {
+    return new MarketConfigurationLoader('Pool', this.get('id')!.toString(), 'configurations');
   }
 }
 
@@ -288,31 +282,24 @@ export class Market extends Entity {
     this.set('created_at_block', Value.fromBigInt(value));
   }
 
-  get configurations(): Array<string> | null {
-    let value = this.get('configurations');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toStringArray();
-    }
+  get configurations(): MarketConfigurationLoader {
+    return new MarketConfigurationLoader('Market', this.get('id')!.toString(), 'configurations');
   }
 
-  get market_snapshots_by_day(): Array<string> | null {
-    let value = this.get('market_snapshots_by_day');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toStringArray();
-    }
+  get market_snapshots_by_day(): MarketSnapshotByDayLoader {
+    return new MarketSnapshotByDayLoader(
+      'Market',
+      this.get('id')!.toString(),
+      'market_snapshots_by_day'
+    );
   }
 
-  get market_snapshots_by_week(): Array<string> | null {
-    let value = this.get('market_snapshots_by_week');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toStringArray();
-    }
+  get market_snapshots_by_week(): MarketSnapshotByWeekLoader {
+    return new MarketSnapshotByWeekLoader(
+      'Market',
+      this.get('id')!.toString(),
+      'market_snapshots_by_week'
+    );
   }
 
   get updated_at(): BigInt {
@@ -2617,5 +2604,77 @@ export class VaultLiquidation extends Entity {
 
   set updated_at_block(value: BigInt) {
     this.set('updated_at_block', Value.fromBigInt(value));
+  }
+}
+
+export class RewardsDistributorLoader extends Entity {
+  _entity: string;
+  _field: string;
+  _id: string;
+
+  constructor(entity: string, id: string, field: string) {
+    super();
+    this._entity = entity;
+    this._id = id;
+    this._field = field;
+  }
+
+  load(): RewardsDistributor[] {
+    let value = store.loadRelated(this._entity, this._id, this._field);
+    return changetype<RewardsDistributor[]>(value);
+  }
+}
+
+export class MarketConfigurationLoader extends Entity {
+  _entity: string;
+  _field: string;
+  _id: string;
+
+  constructor(entity: string, id: string, field: string) {
+    super();
+    this._entity = entity;
+    this._id = id;
+    this._field = field;
+  }
+
+  load(): MarketConfiguration[] {
+    let value = store.loadRelated(this._entity, this._id, this._field);
+    return changetype<MarketConfiguration[]>(value);
+  }
+}
+
+export class MarketSnapshotByDayLoader extends Entity {
+  _entity: string;
+  _field: string;
+  _id: string;
+
+  constructor(entity: string, id: string, field: string) {
+    super();
+    this._entity = entity;
+    this._id = id;
+    this._field = field;
+  }
+
+  load(): MarketSnapshotByDay[] {
+    let value = store.loadRelated(this._entity, this._id, this._field);
+    return changetype<MarketSnapshotByDay[]>(value);
+  }
+}
+
+export class MarketSnapshotByWeekLoader extends Entity {
+  _entity: string;
+  _field: string;
+  _id: string;
+
+  constructor(entity: string, id: string, field: string) {
+    super();
+    this._entity = entity;
+    this._id = id;
+    this._field = field;
+  }
+
+  load(): MarketSnapshotByWeek[] {
+    let value = store.loadRelated(this._entity, this._id, this._field);
+    return changetype<MarketSnapshotByWeek[]>(value);
   }
 }
