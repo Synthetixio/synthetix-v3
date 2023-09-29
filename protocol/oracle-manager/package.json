@@ -32,7 +32,7 @@
     "@synthetixio/wei": "^2.74.4",
     "@types/node": "^18.16.0",
     "ethers": "^5.7.2",
-    "hardhat": "^2.17.3",
+    "hardhat": "^2.17.4",
     "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
