@@ -27,6 +27,7 @@ import {
   withExplicitEvmMine,
   findEventSafe,
   SYNTHETIX_USD_MARKET_ID,
+  fastForwardBySec,
 } from '../../helpers';
 import { Trader } from '../../typed';
 
@@ -1070,7 +1071,46 @@ describe('LiquidationModule', () => {
         await assertEvent(tx, `PositionLiquidated(${positionLiquidatedEventProperties})`, PerpMarketProxy);
       });
 
-      it('should reset caps after window timeframe has elapsed');
+      it('should reset caps after window timeframe has elapsed', async () => {
+        const { PerpMarketProxy } = systems();
+
+        const { marketId } = await configurePartiallyLiquidatedPosition();
+
+        // NOTE: We make an assumption about the configured liquidationWindowDuration.
+        //
+        // We know that this value is defined as 30s. If this changes then this test will most likely
+        // break and this comment will be served as a notice.
+        const { liquidationWindowDuration } = await PerpMarketProxy.getMarketConfigurationById(marketId);
+
+        // Caps before moving time forward.
+        const cap1 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap1.remainingCapacity);
+
+        await fastForwardBySec(provider(), 15); // Half way into cap.
+
+        const cap2 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap2.remainingCapacity);
+
+        await fastForwardBySec(provider(), 14); // One second before end of cap.
+
+        const cap3 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.isZero(cap3.remainingCapacity);
+
+        await fastForwardBySec(provider(), 1); // Exact 30s.
+
+        const cap4 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.equal(cap4.remainingCapacity, cap4.maxLiquidatableCapacity);
+
+        await fastForwardBySec(provider(), 5); // 5s into new window.
+
+        const cap5 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.equal(cap5.remainingCapacity, cap5.maxLiquidatableCapacity);
+
+        await fastForwardBySec(provider(), liquidationWindowDuration.toNumber()); // > window over.
+
+        const cap6 = await PerpMarketProxy.getRemainingLiquidatableSizeCapacity(marketId);
+        assertBn.equal(cap6.remainingCapacity, cap6.maxLiquidatableCapacity);
+      });
 
       it('should use up cap (partial) before exceeding if pd < maxPd');
 
@@ -1089,6 +1129,7 @@ describe('LiquidationModule', () => {
         );
       });
 
+      // Use turn off autoMine.
       it('should accumulate an existing liquidation if two tx in the same block');
 
       it('should revert when liq cap has been met and not endorsed', async () => {

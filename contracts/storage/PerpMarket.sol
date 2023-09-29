@@ -340,13 +340,16 @@ library PerpMarket {
         //          = sum([25, 100])
         //          = 125
 
-        uint256 idx = self.pastLiquidations.length;
-        if (idx == 0) {
+        uint256 length = self.pastLiquidations.length;
+        if (length == 0) {
             return (maxLiquidatableCapacity, maxLiquidatableCapacity, 0);
         }
 
+        // Start from the end of the array and go backwards until we've hit timestamp > windowStartTimestamp.
+        uint256 idx = length - 1;
+
         // There has been at least one liquidation.
-        lastLiquidationTime = self.pastLiquidations[idx - 1][0];
+        lastLiquidationTime = self.pastLiquidations[idx][0];
 
         // Accumulative sum over all prior liquidations within `windowStartTime` to now.
         uint256 capacityUtilized;
@@ -354,12 +357,17 @@ library PerpMarket {
         // Infer the _rolling_ window start time by reading the current block.timestamp.
         uint64 windowStartTime = (block.timestamp - marketConfig.liquidationWindowDuration).to64();
 
-        do {
+        while (self.pastLiquidations[idx][0] > windowStartTime) {
+            capacityUtilized += self.pastLiquidations[idx][1];
+
+            if (idx == 0) {
+                break;
+            }
+
             unchecked {
                 --idx;
             }
-            capacityUtilized += self.pastLiquidations[idx][1];
-        } while (idx > 0 && self.pastLiquidations[idx][0] > windowStartTime);
+        }
 
         remainingCapacity = MathUtil
             .max((maxLiquidatableCapacity.toInt() - capacityUtilized.toInt()), 0)
