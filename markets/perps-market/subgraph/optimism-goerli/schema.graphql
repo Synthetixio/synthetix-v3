@@ -69,6 +69,7 @@ type SettlementStrategy @entity {
   feedId: Bytes
   url: String
   settlementReward: BigInt
+  priceDeviationTolerance: BigInt
   minimumUsdExchangeAmount: BigInt
   maxRoundingLoss: BigInt
 }
