@@ -131,7 +131,8 @@ library PerpsAccount {
             accumulatedLiquidationRewards,
             liquidationReward
         ) = getAccountRequiredMargins(self);
-        isEligible = (requiredMaintenanceMargin + liquidationReward).toInt() > availableMargin;
+        isEligible =
+            (requiredMaintenanceMargin + accumulatedLiquidationRewards).toInt() > availableMargin;
     }
 
     function flagForLiquidation(Data storage self) internal {

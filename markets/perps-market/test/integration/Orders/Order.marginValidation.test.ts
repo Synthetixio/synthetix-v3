@@ -1,12 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bn, bootstrapMarkets } from '../bootstrap';
-import {
-  calculateFillPrice,
-  getMaxLiquidationReward,
-  openPosition,
-  requiredMargins,
-} from '../helpers';
+import { calculateFillPrice, openPosition, requiredMargins } from '../helpers';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
@@ -98,9 +93,7 @@ describe('Orders - margin validation', () => {
         wei(10_000)
       );
 
-      const totalRequiredMargin = initialMargin
-        .add(getMaxLiquidationReward(liquidationMargin, wei(100), wei(500)))
-        .add(orderFees);
+      const totalRequiredMargin = initialMargin.add(liquidationMargin).add(orderFees);
 
       assertBn.equal(
         await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(3)),
@@ -185,7 +178,7 @@ describe('Orders - margin validation', () => {
         wei(1000)
       );
 
-      const liqReward = getMaxLiquidationReward(ethLiqMargin.add(btcLiqMargin), wei(100), wei(500));
+      const liqReward = ethLiqMargin.add(btcLiqMargin);
 
       const totalRequiredMargin = ethMaintMargin
         .add(btcInitialMargin)
@@ -274,7 +267,7 @@ describe('Orders - margin validation', () => {
         wei(1000)
       );
 
-      const liqReward = getMaxLiquidationReward(ethLiqMargin.add(btcLiqMargin), wei(100), wei(500));
+      const liqReward = ethLiqMargin.add(btcLiqMargin);
 
       const totalRequiredMargin = ethMaintMargin
         .add(btcInitialMargin)

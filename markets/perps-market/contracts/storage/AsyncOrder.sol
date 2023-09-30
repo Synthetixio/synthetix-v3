@@ -496,11 +496,9 @@ library AsyncOrder {
             oldRequiredMargin;
 
         // do same thing for liquidation rewards and compute against global configured min/max liq reward
-        uint256 requiredLiquidationRewardMargin = GlobalPerpsMarketConfiguration
-            .load()
-            .liquidationReward(
-                currentTotalLiquidationRewards + newLiquidationReward - oldLiquidationReward
-            );
+        uint256 requiredLiquidationRewardMargin = currentTotalLiquidationRewards +
+            newLiquidationReward -
+            oldLiquidationReward;
 
         // this is the required margin for the new position (minus any order fees)
         return requiredMarginForNewPosition + requiredLiquidationRewardMargin;

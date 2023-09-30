@@ -105,6 +105,8 @@ describe('Account margins test', () => {
       initialPnl: Wei,
       btcInitialMargin: Wei,
       ethInitialMargin: Wei,
+      ethLiqMargin: Wei,
+      btcLiqMargin: Wei,
       btcMaintenanceMargin: Wei,
       ethMaintenanceMargin: Wei,
       minimumPositionMargin: Wei;
@@ -124,6 +126,9 @@ describe('Account margins test', () => {
 
       btcInitialMargin = notionalBtcValue.mul(btcInitialMarginRatio);
       ethInitialMargin = notionalEthValue.mul(ethInitialMarginRatio);
+
+      ethLiqMargin = notionalBtcValue.mul(0.05);
+      btcLiqMargin = notionalEthValue.mul(0.05);
 
       // maintenance margin ratio == 1
       btcMaintenanceMargin = btcInitialMargin.mul(wei(0.5));
@@ -147,20 +152,22 @@ describe('Account margins test', () => {
           .add(initialPnl)
           .sub(btcInitialMargin)
           .sub(ethInitialMargin)
+          .sub(ethLiqMargin)
+          .sub(btcLiqMargin)
           .sub(minimumPositionMargin)
           .toBN()
       );
     });
 
     it('has correct initial and maintenance margin', async () => {
-      const [initialMargin, maintenanceMargin, , maxLiquidationReward] =
+      const [initialMargin, maintenanceMargin, liquidationRewards] =
         await systems().PerpsMarket.getRequiredMargins(accountId);
       assertBn.equal(
-        initialMargin.sub(maxLiquidationReward),
+        initialMargin.sub(liquidationRewards),
         btcInitialMargin.add(ethInitialMargin).add(minimumPositionMargin).toBN()
       );
       assertBn.equal(
-        maintenanceMargin.sub(maxLiquidationReward),
+        maintenanceMargin.sub(liquidationRewards),
         btcMaintenanceMargin.add(ethMaintenanceMargin).add(minimumPositionMargin).toBN()
       );
     });
