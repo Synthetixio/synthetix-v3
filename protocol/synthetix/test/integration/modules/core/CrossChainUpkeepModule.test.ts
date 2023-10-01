@@ -2,9 +2,11 @@ import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 describe('CrossChainUpkeepModule', function () {
-  const { signers, systems } = bootstrapWithMockMarketAndPool();
+  const { signers, systems, collateralAddress, marketId, owner } = bootstrapWithMockMarketAndPool();
 
   let user1: ethers.Signer;
 
@@ -12,45 +14,61 @@ describe('CrossChainUpkeepModule', function () {
     [, user1] = signers();
   });
 
-  describe('_recvPoolHeartbeat()', () => {
-    it('checks cross chain', async () => {});
-
-    describe('successful call', () => {
-      it('sets pool sync info', async () => {});
-
-      it('assigns specified debt to vaults', async () => {});
-
-      it('rebalances vault collaterals', async () => {});
-
-      it('emits event', async () => {});
-    });
-  });
-
-  describe('handleOracleFulfillment()', () => {
-    const requestId = ethers.utils.formatBytes32String('woot');
-
-    before('initiate fake functions call', async () => {});
-
-    it('checks that its chainlink functions only', async () => {
+  describe.only('_recvPoolHeartbeat()', () => {
+    it('checks cross chain', async () => {
       await assertRevert(
-        systems().Core.handleOracleFulfillment(requestId, '0x', '0x'),
-        `Unauthorized(${await owner.getAddress()})`,
+        systems().Core._recvPoolHeartbeat(
+          1,
+          {
+            liquidity: 0,
+            cumulativeMarketDebt: 0,
+            totalDebt: 0,
+            dataTimestamp: 0,
+            oldestDataTimestamp: 0,
+            oldestPoolConfigTimestamp: 0,
+          },
+          1
+        ),
+        'Unauthorized(',
         systems().Core
       );
     });
 
-    describe('chainlink call failure', async () => {
-      it('does nothing', async () => {
-        await systems().Core.connect(user1).handleOracleFulfillment(requestId, '0x', '0xfoobar');
-      });
-    });
+    describe('successful call', () => {
+      let txn: ethers.providers.TransactionResponse;
+      before('do the call', async () => {
+        const call = systems().Core.interface.encodeFunctionData('_recvPoolHeartbeat', [
+          1,
+          {
+            liquidity: 1,
+            cumulativeMarketDebt: 2,
+            totalDebt: 3,
+            dataTimestamp: 4,
+            oldestDataTimestamp: 5,
+            oldestPoolConfigTimestamp: 6,
+          },
+          1,
+        ]);
 
-    describe('successful call', async () => {
-      before('exec', async () => {
-        await systems().Core.connect(user1).handleOracleFulfillment(requestId, '0xfoobar', '0x');
+        txn = await systems().Core.callSelf(call);
+      });
+      it('sets pool sync info', async () => {});
+
+      it('assigns specified debt to vaults', async () => {
+        assertBn.equal(await systems().Core.callStatic.getVaultDebt(1, collateralAddress()), 1);
       });
 
-      it('triggers pool heartbeats', async () => {});
+      it('rebalances vault collaterals', async () => {
+        // check connected market's credit capacity, should have gone down. If so, that means that rebalance occured
+        assertBn.equal(
+          await systems().Core.getWithdrawableMarketUsd(marketId()),
+          ethers.utils.parseEther('1000')
+        );
+      });
+
+      it('emits event', async () => {
+        await assertEvent(txn, `PoolHeartbeat(1`, systems().Core);
+      });
     });
   });
 

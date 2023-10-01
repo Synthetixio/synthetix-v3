@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "./external/IWormholeRelayer.sol";
-import "./external/IWormholeCrossChainRead.sol";
+import "./external/IWormholeERC7412Receiver.sol";
 
 /**
  * @title Module with assorted utility functions.
@@ -18,12 +18,24 @@ interface IOffchainWormholeModule {
      * @param supportedNetworks The list of supported chain ids for the cross chain protocol
      * @param selectors Mapping of selectors used for wormhole related to the supportedNetworks
      */
-
     function configureWormholeCrossChain(
         IWormholeRelayerSend send,
         IWormholeRelayerDelivery recv,
-        IWormholeCrossChainRead read,
+        IWormholeERC7412Receiver read,
         uint64[] memory supportedNetworks,
         uint16[] memory selectors
     ) external;
+
+    function readCrossChainWormhole(
+        bytes32 /* subscriptionId */,
+        uint64[] memory chains,
+        bytes memory call,
+        uint256 /* gasLimit */
+    ) external returns (bytes[] memory responses);
+
+    function sendWormholeMessage(
+        uint64[] memory chainIds,
+        bytes memory message,
+        uint256 gasLimit
+    ) external returns (bytes32[] memory sequenceNumbers);
 }

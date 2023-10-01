@@ -3,7 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-import "../interfaces/external/IWormholeCrossChainRead.sol";
+import "../interfaces/external/IWormholeERC7412Receiver.sol";
 import "../interfaces/external/IWormholeRelayer.sol";
 import "../utils/CrossChain.sol";
 
@@ -17,10 +17,9 @@ library CrossChainWormhole {
         keccak256(abi.encode("io.synthetix.synthetix.CrossChainWormhole"));
 
     struct Data {
-        IWormholeCrossChainRead crossChainRead;
+        IWormholeERC7412Receiver crossChainRead;
         IWormholeRelayerSend sender;
         IWormholeRelayerDelivery recv;
-        SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint16) chainIdToSelector;
         mapping(uint16 => uint64) selectorToChainId;
     }
@@ -30,19 +29,6 @@ library CrossChainWormhole {
         assembly {
             crossChain.slot := s
         }
-    }
-
-    function getCrossChainData(
-        uint64 chainId,
-        bytes memory crossChainData
-    ) internal returns (bytes memory) {
-        // wormhole is ERC7412 compliant so all we need to do is call them foir the data and the standard will do the rest
-        return
-            load().crossChainRead.getCrossChainData(
-                load().chainIdToSelector[chainId],
-                address(this),
-                crossChainData
-            );
     }
 
     function transmit(

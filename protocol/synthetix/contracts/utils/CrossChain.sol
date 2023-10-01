@@ -17,14 +17,15 @@ library CrossChain {
     }
 
     function refundLeftoverGas(uint256 gasTokenUsed) internal returns (uint256 amountRefunded) {
-        amountRefunded = msg.value - gasTokenUsed;
+        amountRefunded = address(this).balance;
+        if (amountRefunded > 0) {
+            (bool success, bytes memory result) = msg.sender.call{value: amountRefunded}("");
 
-        (bool success, bytes memory result) = msg.sender.call{value: amountRefunded}("");
-
-        if (!success) {
-            uint256 len = result.length;
-            assembly {
-                revert(result, len)
+            if (!success) {
+                uint256 len = result.length;
+                assembly {
+                    revert(result, len)
+                }
             }
         }
     }

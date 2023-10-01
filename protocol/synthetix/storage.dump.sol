@@ -298,6 +298,16 @@ interface FunctionsBillingRegistryInterface {
     }
 }
 
+// @custom:artifact contracts/interfaces/external/IWormholeERC7412Receiver.sol:IWormholeERC7412Receiver
+interface IWormholeERC7412Receiver {
+    struct CrossChainRequest {
+        uint64 chainSelector;
+        uint256 timestamp;
+        address target;
+        bytes data;
+    }
+}
+
 // @custom:artifact contracts/interfaces/external/IWormholeRelayer.sol:IWormholeRelayerDelivery
 interface IWormholeRelayerDelivery {
     enum DeliveryStatus {
@@ -543,7 +553,6 @@ library CrossChainWormhole {
         address crossChainRead;
         address sender;
         address recv;
-        SetUtil.UintSet supportedNetworks;
         mapping(uint64 => uint16) chainIdToSelector;
         mapping(uint16 => uint64) selectorToChainId;
     }

@@ -19,6 +19,12 @@ interface ICrossChainPoolModule {
         uint128 thisChainPoolId
     );
 
+    function setCrossChainPoolSelectors(
+        uint128 poolId,
+        bytes4 readSelector,
+        bytes4 writeSelector
+    ) external;
+
     function createCrossChainPool(
         uint128 sourcePoolId,
         uint64 targetChainId

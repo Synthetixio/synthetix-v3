@@ -43,6 +43,7 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         PoolCrossChainSync.Data memory syncData,
         int256 assignedDebt
     ) external override {
+        CrossChain.onlyCrossChain();
         _receivePoolHeartbeat(poolId, syncData, assignedDebt);
     }
 
@@ -57,9 +58,11 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         pool.setCrossChainSyncData(syncData);
 
         // assign accumulated debt
+        console.log("assign debt");
         pool.assignDebt(assignedDebt);
 
         // make sure the markets limits are set as expect
+        console.log("recalculate all collaterals");
         pool.recalculateAllCollaterals();
 
         emit PoolHeartbeat(poolId, syncData);
@@ -110,15 +113,82 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
             );
         }
 
-        address(this).tryCall(
-            abi.encodeWithSelector(
-                pool.crossChain[0].offchainReadSelector,
-                pool.crossChain[0].subscriptionId,
-                pool.crossChain[0].pairedChains,
-                calls,
-                300000
-            )
+        bytes[] memory responses = abi.decode(
+            address(this).tryCall(
+                abi.encodeWithSelector(
+                    pool.crossChain[0].offchainReadSelector,
+                    pool.crossChain[0].subscriptionId,
+                    pool.crossChain[0].pairedChains,
+                    calls,
+                    300000
+                )
+            ),
+            (bytes[])
         );
+
+        // now that we have cross chain data, lets parse the result
+        uint256 chainsCount = pool.crossChain[0].pairedChains.length;
+
+        uint256[] memory liquidityAmounts = new uint256[](chainsCount);
+
+        PoolCrossChainSync.Data memory sync;
+
+        sync.dataTimestamp = uint64(block.timestamp);
+
+        for (uint i = 0; i < chainsCount; i++) {
+            bytes[] memory chainResponses = abi.decode(responses[i], (bytes[]));
+
+            uint256 chainLiquidity = abi.decode(chainResponses[0], (uint256));
+            int256 chainCumulativeMarketDebt = abi.decode(chainResponses[1], (int256));
+            int256 chainTotalDebt = abi.decode(chainResponses[2], (int256));
+            uint256 chainSyncTime = abi.decode(chainResponses[3], (uint256));
+            uint256 chainLastPoolConfigTime = abi.decode(chainResponses[4], (uint256));
+
+            liquidityAmounts[i] = chainLiquidity;
+            sync.liquidity += chainLiquidity.to128();
+            sync.cumulativeMarketDebt += chainCumulativeMarketDebt.to128();
+            sync.totalDebt += chainTotalDebt.to128();
+
+            sync.oldestDataTimestamp = sync.oldestDataTimestamp < chainSyncTime
+                ? sync.oldestDataTimestamp
+                : uint64(chainSyncTime);
+            sync.oldestPoolConfigTimestamp = sync.oldestPoolConfigTimestamp <
+                chainLastPoolConfigTime
+                ? sync.oldestPoolConfigTimestamp
+                : uint64(chainLastPoolConfigTime);
+        }
+
+        int256 marketDebtChange = sync.cumulativeMarketDebt -
+            pool.crossChain[0].latestSync.cumulativeMarketDebt;
+        int256 remainingDebt = marketDebtChange;
+
+        // send sync message
+        for (uint i = 1; i < chainsCount; i++) {
+            uint64[] memory targetChainIds = new uint64[](1);
+            targetChainIds[0] = pool.crossChain[0].pairedChains[i];
+
+            int256 chainAssignedDebt = (marketDebtChange * liquidityAmounts[i].toInt()) /
+                sync.liquidity.toInt();
+            remainingDebt -= chainAssignedDebt;
+
+            // TODO: gas limit should be based on number of markets assigned to pool
+            // TODO: broadcast will be paid in LINK
+            address(this).tryCall(
+                abi.encodeWithSelector(
+                    pool.crossChain[0].broadcastSelector,
+                    pool.crossChain[0].pairedChains,
+                    abi.encodeWithSelector(
+                        this._recvPoolHeartbeat.selector,
+                        pool.crossChain[0].pairedPoolIds[targetChainIds[0]],
+                        sync,
+                        chainAssignedDebt
+                    ),
+                    500000
+                )
+            );
+        }
+
+        _receivePoolHeartbeat(pool.id, sync, remainingDebt);
     }
 
     function _encodeCrossChainPoolCall(uint128 poolId) internal pure returns (bytes memory) {
@@ -145,42 +215,5 @@ contract CrossChainUpkeepModule is ICrossChainUpkeepModule {
         );
 
         return abi.encodeWithSelector(IMulticallModule.multicall.selector, abi.encode(calls));
-    }
-
-    /**
-     * loads the bytes deployed to the specified address
-     * used to get the inline execution code for chainlink
-     */
-    function _codeAt(address _addr) public view returns (bytes memory o_code) {
-        assembly {
-            // retrieve the size of the code, this needs assembly
-            let size := extcodesize(_addr)
-            // allocate output byte array - this could also be done without assembly
-            // by using o_code = new bytes(size)
-            o_code := mload(0x40)
-            // new "memory end" including padding
-            mstore(0x40, add(o_code, and(add(add(size, 0x20), 0x1f), not(0x1f))))
-            // store length in memory
-            mstore(o_code, size)
-            // actually retrieve the code, this needs assembly
-            extcodecopy(_addr, add(o_code, 0x20), 0, size)
-        }
-    }
-
-    /**
-     * This is basically required to send binary data to chainlink functions
-     */
-    function _bytesToHexString(bytes memory buffer) public pure returns (string memory) {
-        // Fixed buffer size for hexadecimal convertion
-        bytes memory converted = new bytes(buffer.length * 2);
-
-        bytes memory _base = "0123456789abcdef";
-
-        for (uint256 i = 0; i < buffer.length; i++) {
-            converted[i * 2] = _base[uint8(buffer[i]) / _base.length];
-            converted[i * 2 + 1] = _base[uint8(buffer[i]) % _base.length];
-        }
-
-        return string(abi.encodePacked("0x", converted));
     }
 }

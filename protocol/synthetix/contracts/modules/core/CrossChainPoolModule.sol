@@ -30,10 +30,25 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     event OCRResponse(bytes32 indexed requestId, bytes result, bytes err);
 
     bytes32 internal constant _CREATE_CROSS_CHAIN_POOL_FEATURE_FLAG = "createCrossChainPool";
+    bytes32 internal constant _SET_CROSS_CHAIN_SELECTORS = "setCrossChainPoolSelectors";
     bytes32 internal constant _SET_CROSS_CHAIN_POOL_CONFIGURATION_FEATURE_FLAG =
         "setCrossChainPoolConfiguration";
 
     string internal constant _CONFIG_CHAINLINK_FUNCTIONS_ADDRESS = "chainlinkFunctionsAddr";
+
+    function setCrossChainPoolSelectors(
+        uint128 poolId,
+        bytes4 readSelector,
+        bytes4 writeSelector
+    ) external override {
+        FeatureFlag.ensureAccessToFeature(_SET_CROSS_CHAIN_SELECTORS);
+
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        pool.crossChain[0].offchainReadSelector = readSelector;
+        pool.crossChain[0].broadcastSelector = writeSelector;
+    }
 
     function createCrossChainPool(
         uint128 sourcePoolId,
@@ -94,6 +109,7 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
 
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
+        Pool.onlyCrossChainConfigured(poolId);
 
         if (newMarketConfigurations.length != pool.crossChain[0].pairedChains.length + 1) {
             revert ParameterError.InvalidParameter(

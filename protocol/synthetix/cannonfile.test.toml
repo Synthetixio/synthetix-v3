@@ -64,6 +64,12 @@ artifact = "contracts/generated/test/TestableVaultEpochStorage.sol:TestableVault
 [contract.TestableVaultStorage]
 artifact = "contracts/generated/test/TestableVaultStorage.sol:TestableVaultStorage"
 
+[contract.CallSelfModule]
+artifact = "contracts/mocks/CallSelfModule.sol:CallSelfModule"
+
+[contract.FakeSendCrossChainModule]
+artifact = "contracts/mocks/FakeSendCrossChainModule.sol:FakeSendCrossChainModule"
+
 # Core
 [router.CoreRouter]
 contracts = [
@@ -89,6 +95,8 @@ contracts = [
     "RewardsManagerModule",
     "UtilsModule",
     "VaultModule",
+    "CallSelfModule",
+    "FakeSendCrossChainModule",
     "TestableAccountStorage",
     "TestableAccountRBACStorage",
     "TestableCollateralStorage",
@@ -132,4 +140,20 @@ args = [
         "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('registerMarket'), true]).slice(2) %>",
         "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createPool'), true]).slice(2) %>",
     ]
+]
+
+# cross chain wormhole
+[import.wormhole]
+source = "erc7412-wormhole:latest"
+
+[invoke.configureWormholeCrossChain]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "configureWormholeCrossChain"
+args = [
+    "<%= imports.wormhole.imports.wormhole.contracts.Wormhole.address %>",
+    "<%= imports.wormhole.imports.wormhole.contracts.Wormhole.address %>",
+    "<%= imports.wormhole.contracts.WormholeERC7412Receiver.address %>",
+    [1, 13370],
+    [1, 13370]
 ]

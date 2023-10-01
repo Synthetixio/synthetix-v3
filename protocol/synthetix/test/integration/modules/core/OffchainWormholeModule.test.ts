@@ -1,40 +1,38 @@
+import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bn, bootstrapWithStakedPool } from '../../bootstrap';
+import { bn, bootstrapWithMockMarketAndPool } from '../../bootstrap';
 
-describe('CcipReceiverModule', function () {
-  const { owner, signers, systems, staker, accountId, poolId, collateralAddress } =
-    bootstrapWithStakedPool();
+describe.only('OffchainWormholeModule', function () {
+  const { owner, signers, systems, staker, accountId, poolId, collateralAddress, MockMarket } =
+    bootstrapWithMockMarketAndPool();
 
-  let FakeCcip: ethers.Signer;
+  let FakeWormholeSend: ethers.Signer, FakeWormholeReceive: ethers.Signer;
+  let FakeCcr: ethers.Contract;
   const fiftyUSD = bn(50);
   const twoHundredUSD = bn(200);
 
-  let proxyBalanceBefore: ethers.BigNumber, stakerBalanceBefore: ethers.BigNumber;
-
-  const abiCoder = new ethers.utils.AbiCoder();
-
   before('identify signers', async () => {
-    [FakeCcip] = signers();
+    [FakeWormholeSend, FakeWormholeReceive] = signers();
+
+    const factory = await hre.ethers.getContractFactory('FakeWormholeCrossChainRead');
+
+    FakeCcr = await factory.connect(owner()).deploy();
   });
 
-  before('set ccip settings', async () => {
+  before('set wormhole settings', async () => {
     await systems()
       .Core.connect(owner())
-      .configureChainlinkCrossChain(
-        await FakeCcip.getAddress(),
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-        [],
-        []
+      .configureWormholeCrossChain(
+        await FakeWormholeSend.getAddress(),
+        await FakeWormholeReceive.getAddress(),
+        FakeCcr.address,
+        [1, 2, 3, 4, 13370],
+        [10, 20, 30, 40, 13370]
       );
-
-    await systems()
-      .Core.connect(owner())
-      .setSupportedCrossChainNetworks([1234, 2192], [1234, 2192]);
   });
 
   before('get some snxUSD', async () => {
@@ -45,133 +43,89 @@ describe('CcipReceiverModule', function () {
     await systems().Core.connect(staker()).withdraw(accountId, collateralAddress(), fiftyUSD);
   });
 
-  before('record balances', async () => {
-    stakerBalanceBefore = await systems()
-      .USD.connect(staker())
-      .balanceOf(await staker().getAddress());
-    proxyBalanceBefore = await systems().USD.connect(staker()).balanceOf(systems().Core.address);
+  describe('readCrossChainWormhole()', () => {
+    before('set cross chain data', async () => {
+      await FakeCcr.setCrossChainData(10, systems().Core.address, '0x12345678', '0x01');
+      await FakeCcr.setCrossChainData(20, systems().Core.address, '0x12345678', '0x0202');
+      await FakeCcr.setCrossChainData(30, systems().Core.address, '0x12345678', '0x03');
+      await FakeCcr.setCrossChainData(40, systems().Core.address, '0x12345678', '0x04');
+      await FakeCcr.setCrossChainData(13370, systems().Core.address, '0x12345678', '0x1337');
+    });
+
+    it('returns whatever cross chain data from the contract', async () => {
+      const responses = await systems().Core.callStatic.readCrossChainWormhole(
+        ethers.constants.HashZero, // unused
+        [1, 2, 3, 4, 13370],
+        '0x12345678',
+        0 // unused
+      );
+
+      assert(responses.length == 5);
+      assert(responses[0] == '0x01');
+      assert(responses[1] == '0x0202');
+      assert(responses[2] == '0x03');
+      assert(responses[3] == '0x04');
+      assert(responses[4] == '0x1337');
+    });
   });
 
-  describe('ccipReceive()', () => {
-    it('fails if caller is not CCIP router', async () => {
+  describe('sendWormholeMessage()', async () => {
+    it('only callable by the core system', async () => {
       await assertRevert(
-        systems()
-          .Core.connect(staker())
-          .ccipReceive({
-            messageId: ethers.constants.HashZero,
-            sourceChainSelector: 1234,
-            sender: ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
-            data: '0x',
-            tokenAmounts: [],
-          }),
-        `NotCcipRouter("${await staker().getAddress()}")`,
+        systems().Core.sendWormholeMessage([1, 2, 3], '0x12345678', 1234567),
+        'Unauthorized(',
         systems().Core
       );
     });
+  });
 
-    it('fails if chain is not supported', async () => {
+  describe('receiveWormholeMessages()', async () => {
+    it('fails if not wormhole sender', async () => {
       await assertRevert(
         systems()
-          .Core.connect(FakeCcip)
-          .ccipReceive({
-            messageId: ethers.constants.HashZero,
-            sourceChainSelector: 1111,
-            sender: ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
-            data: '0x',
-            tokenAmounts: [],
-          }),
-        `UnsupportedNetwork("0")`,
-        systems().Core
-      );
-    });
-
-    it('fails if message sender on other chain is not self', async () => {
-      await assertRevert(
-        systems()
-          .Core.connect(FakeCcip)
-          .ccipReceive({
-            messageId: ethers.constants.HashZero,
-            sourceChainSelector: 1234,
-            sender: ethers.utils.defaultAbiCoder.encode(['address'], [await FakeCcip.getAddress()]),
-            data: '0x',
-            tokenAmounts: [],
-          }),
+          .Core.connect(FakeWormholeSend)
+          .receiveWormholeMessages(
+            systems().Core.interface.encodeFunctionData('createAccount()'),
+            [],
+            ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
+            10,
+            ethers.constants.HashZero
+          ),
         'Unauthorized(',
         systems().Core
       );
     });
 
-    it('fails if token amount data is invalid', async () => {
+    it('fails if the cross chain sender is not self', async () => {
       await assertRevert(
         systems()
-          .Core.connect(FakeCcip)
-          .ccipReceive({
-            messageId: ethers.constants.HashZero,
-            sourceChainSelector: 1234,
-            sender: ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
-            data: abiCoder.encode(['address'], [await staker().getAddress()]),
-            tokenAmounts: [
-              {
-                token: systems().USD.address,
-                amount: fiftyUSD,
-              },
-              {
-                token: systems().USD.address,
-                amount: fiftyUSD,
-              },
-            ],
-          }),
-        'InvalidMessage()',
+          .Core.connect(FakeWormholeReceive)
+          .receiveWormholeMessages(
+            systems().Core.interface.encodeFunctionData('createAccount()'),
+            [],
+            ethers.utils.defaultAbiCoder.encode(['address'], [await FakeWormholeSend.getAddress()]),
+            10,
+            ethers.constants.HashZero
+          ),
+        'Unauthorized(',
         systems().Core
       );
     });
 
-    describe('receives a token amount message', () => {
-      let receivedTxn: ethers.providers.TransactionResponse;
-      let receipt: ethers.providers.TransactionReceipt;
-
-      before('calls ccip receive', async () => {
-        receivedTxn = await systems()
-          .Core.connect(FakeCcip)
-          .ccipReceive({
-            messageId: ethers.constants.HashZero,
-            sourceChainSelector: 1234,
-            sender: abiCoder.encode(['address'], [systems().Core.address]),
-            data: abiCoder.encode(['address'], [await staker().getAddress()]),
-            tokenAmounts: [
-              {
-                token: systems().USD.address,
-                amount: fiftyUSD,
-              },
-            ],
-          });
-
-        receipt = await (receivedTxn as ethers.providers.TransactionResponse).wait();
-      });
-
-      it('should transfer the snxUSD from the core proxy', async () => {
-        const proxyBalanceAfter = await systems()
-          .USD.connect(owner())
-          .balanceOf(systems().Core.address);
-        assertBn.equal(proxyBalanceAfter, proxyBalanceBefore.sub(fiftyUSD));
-      });
-
-      it('should increase the stakers balance by the expected amount', async () => {
-        const stakerBalanceAfter = await systems()
-          .USD.connect(staker())
-          .balanceOf(await staker().getAddress());
-        assertBn.equal(stakerBalanceAfter, stakerBalanceBefore.add(fiftyUSD));
-      });
-
-      describe('emits expected events', () => {
-        it('emits a Transfer event', async () => {
-          await assertEvent(
-            receipt,
-            `Transfer("${systems().Core.address}", "${await staker().getAddress()}", ${fiftyUSD})`,
-            systems().USD
-          );
-        });
-      });
+    it('can call a function from cross chain receiver', async () => {
+      await assertEvent(
+        await systems()
+          .Core.connect(FakeWormholeReceive)
+          .receiveWormholeMessages(
+            systems().Core.interface.encodeFunctionData('registerMarket', [MockMarket().address]),
+            [],
+            ethers.utils.defaultAbiCoder.encode(['address'], [systems().Core.address]),
+            10,
+            ethers.constants.HashZero
+          ),
+        'MarketRegistered(',
+        systems().Core
+      );
     });
   });
 });

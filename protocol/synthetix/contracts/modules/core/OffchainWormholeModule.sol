@@ -20,11 +20,12 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
  */
 contract OffchainWormholeModule is IWormholeReceiver, IOffchainWormholeModule {
     using SetUtil for SetUtil.UintSet;
+    using CrossChainWormhole for CrossChainWormhole.Data;
 
     function configureWormholeCrossChain(
         IWormholeRelayerSend send,
         IWormholeRelayerDelivery recv,
-        IWormholeCrossChainRead read,
+        IWormholeERC7412Receiver read,
         uint64[] memory supportedNetworks,
         uint16[] memory selectors
     ) external {
@@ -43,10 +44,47 @@ contract OffchainWormholeModule is IWormholeReceiver, IOffchainWormholeModule {
         wcc.recv = recv;
 
         for (uint i = 0; i < supportedNetworks.length; i++) {
-            wcc.supportedNetworks.add(supportedNetworks[i]);
             wcc.chainIdToSelector[supportedNetworks[i]] = selectors[i];
             wcc.selectorToChainId[selectors[i]] = supportedNetworks[i];
         }
+    }
+
+    function readCrossChainWormhole(
+        bytes32 /* subscriptionId */,
+        uint64[] memory chains,
+        bytes memory call,
+        uint256 /* gasLimit */
+    ) external returns (bytes[] memory responses) {
+        CrossChainWormhole.Data storage wcc = CrossChainWormhole.load();
+
+        IWormholeERC7412Receiver.CrossChainRequest[]
+            memory reqs = new IWormholeERC7412Receiver.CrossChainRequest[](chains.length);
+
+        // TODO: this function simulates getting the latest data reasonably possible by choosing a timestamp just a hardcoded bit in the past. However, we could probably do better.
+        uint256 curTime = block.timestamp - 30;
+
+        for (uint i = 0; i < chains.length; i++) {
+            reqs[i] = IWormholeERC7412Receiver.CrossChainRequest({
+                chainSelector: wcc.chainIdToSelector[chains[i]],
+                timestamp: curTime,
+                target: address(this),
+                data: call
+            });
+        }
+
+        return wcc.crossChainRead.getCrossChainData(reqs, 0);
+    }
+
+    function sendWormholeMessage(
+        uint64[] memory chainIds,
+        bytes memory message,
+        uint256 gasLimit
+    ) external override returns (bytes32[] memory sequenceNumbers) {
+        if (msg.sender != address(this)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+        CrossChainWormhole.Data storage wcc = CrossChainWormhole.load();
+        wcc.broadcast(chainIds, message, gasLimit);
     }
 
     function receiveWormholeMessages(
@@ -67,7 +105,7 @@ contract OffchainWormholeModule is IWormholeReceiver, IOffchainWormholeModule {
             revert AccessError.Unauthorized(sourceAddr);
         }
 
-        if (wcc.supportedNetworks.contains(sourceChain)) {
+        if (wcc.selectorToChainId[sourceChain] == 0) {
             revert CrossChain.UnsupportedNetwork(sourceChain);
         }
 

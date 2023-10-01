@@ -13,6 +13,8 @@ import "./PoolCollateralConfiguration.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
  *
@@ -50,6 +52,8 @@ library Pool {
      * @dev Thrown when trying to create a cross chain pool from a non-primary pool (aka a pool that wasn't itself created by another pool)
      */
     error PoolIsNotPrimary(uint128 poolId);
+
+    error PoolNotCrossChain(uint128 poolId);
 
     /**
      * @dev Thrown when min delegation time for a market connected to the pool has not elapsed
@@ -347,7 +351,8 @@ library Pool {
         int256 totalDebtD18;
 
         for (uint i = 0; i < availableCollaterals.length(); i++) {
-            address collateralType = availableCollaterals.valueAt(i);
+            console.log("accessing available collateral", i);
+            address collateralType = availableCollaterals.valueAt(i + 1);
 
             // Transfer the debt change from the pool into the vault.
             bytes32 actorId = collateralType.toBytes32();
@@ -370,6 +375,8 @@ library Pool {
 
             totalDebtD18 += debtD18;
         }
+
+        console.log("finished with collaterals");
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
         self.totalVaultDebtsD18 = totalDebtD18.to128();
@@ -648,6 +655,12 @@ library Pool {
     function onlyPoolOwner(uint128 poolId, address caller) internal view {
         if (Pool.load(poolId).owner != caller) {
             revert AccessError.Unauthorized(caller);
+        }
+    }
+
+    function onlyCrossChainConfigured(uint128 poolId) internal view {
+        if (!Pool.isCrossChainEnabled(load(poolId))) {
+            revert PoolNotCrossChain(poolId);
         }
     }
 
