@@ -142,6 +142,17 @@ args = [
     ]
 ]
 
+[invoke.set_cross_chain_selectors_dummy]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "multicall"
+args = [
+    [
+        # for all the below functions, the selector is for "setConfig(bytes32,bytes32)"
+        "0xd1fd27b3<%= defaultAbiCoder.encode(['bytes32', 'bytes32'], [keccak256(defaultAbiCoder.encode(['bytes32', 'bytes4'], [formatBytes32String('crossChainWriteSelector'), '0xea7a2248'])), formatBytes32String('TRUE')]).slice(2) %>",
+    ]
+]
+
 # cross chain wormhole
 [import.wormhole]
 source = "erc7412-wormhole:latest"

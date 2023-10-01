@@ -43,6 +43,25 @@ contract CrossChainPoolModule is ICrossChainPoolModule {
     ) external override {
         FeatureFlag.ensureAccessToFeature(_SET_CROSS_CHAIN_SELECTORS);
 
+        // selectors must be valid
+        if (
+            Config.readUint(
+                keccak256(abi.encode(bytes32("crossChainReadSelector"), readSelector)),
+                0
+            ) == 0
+        ) {
+            revert ParameterError.InvalidParameter("readSelector", "must be permitted");
+        }
+
+        if (
+            Config.readUint(
+                keccak256(abi.encode(bytes32("crossChainWriteSelector"), writeSelector)),
+                0
+            ) == 0
+        ) {
+            revert ParameterError.InvalidParameter("writeSelector", "must be permitted");
+        }
+
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 

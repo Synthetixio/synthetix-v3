@@ -214,6 +214,24 @@ args = [
     ]
 ]
 
+[invoke.set_cross_chain_selectors]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "multicall"
+args = [
+    [
+        # for all the below functions, the selector is for "setConfig(bytes32,bytes32)"
+        # wormhole
+        "0xd1fd27b3<%= defaultAbiCoder.encode(['bytes32', 'bytes32'], [keccak256(defaultAbiCoder.encode(['bytes32', 'bytes4'], [formatBytes32String('crossChainReadSelector'), '0x2a5f0c62'])), formatBytes32String('TRUE')]).slice(2) %>",
+        # chainlink
+        "0xd1fd27b3<%= defaultAbiCoder.encode(['bytes32', 'bytes32'], [keccak256(defaultAbiCoder.encode(['bytes32', 'bytes4'], [formatBytes32String('crossChainReadSelector'), '0x00000000'])), formatBytes32String('TRUE')]).slice(2) %>",
+        # wormhole
+        "0xd1fd27b3<%= defaultAbiCoder.encode(['bytes32', 'bytes32'], [keccak256(defaultAbiCoder.encode(['bytes32', 'bytes4'], [formatBytes32String('crossChainWriteSelector'), '0x46948b9b'])), formatBytes32String('TRUE')]).slice(2) %>",
+        # chainlink
+        "0xd1fd27b3<%= defaultAbiCoder.encode(['bytes32', 'bytes32'], [keccak256(defaultAbiCoder.encode(['bytes32', 'bytes4'], [formatBytes32String('crossChainWriteSelector'), '0x00000000'])), formatBytes32String('TRUE')]).slice(2) %>",
+    ]
+]
+
 [invoke.register_const_one_oracle]
 target = ["oracle_manager.Proxy"]
 func = "registerNode"
