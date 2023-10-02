@@ -70,6 +70,13 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 43113,
     },
+    sepolina: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 11155111,
+    },
   },
   gasReporter: {
     enabled: !!process.env.REPORT_GAS,
