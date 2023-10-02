@@ -12,7 +12,7 @@ export default function test(): void {
   const blockNumber = 10;
   const logIndex = 1;
 
-  log.error('Should create a new Market record', []);
+  log.info('Should create a new Market record', []);
 
   handleMarketCreated(
     createMarketRegisteredEvent(market, marketId, sender, timestamp, blockNumber, logIndex)
@@ -23,9 +23,9 @@ export default function test(): void {
   assert.fieldEquals('Market', '1', 'id', marketId.toString());
   assert.fieldEquals('Market', '1', 'address', market);
   assert.fieldEquals('Market', '1', 'created_at', timestamp.toString());
-  assert.fieldEquals('Market', '1', 'created_at_block', timestamp.toString());
+  assert.fieldEquals('Market', '1', 'created_at_block', blockNumber.toString());
   assert.fieldEquals('Market', '1', 'updated_at', timestamp.toString());
-  assert.fieldEquals('Market', '1', 'updated_at_block', timestamp.toString());
+  assert.fieldEquals('Market', '1', 'updated_at_block', blockNumber.toString());
   assert.fieldEquals('Market', '1', 'usd_deposited', '0');
   assert.fieldEquals('Market', '1', 'usd_withdrawn', '0');
   assert.fieldEquals('Market', '1', 'net_issuance', '0');
