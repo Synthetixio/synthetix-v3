@@ -4,7 +4,6 @@ import {
   handleMarketUsdDeposited,
   handleMarketUsdWithdrawn,
 } from '../mainnet';
-import { getMarketReportedDebtMock } from './mocks/getMarketReportedDebtMock';
 import { createMarketRegisteredEvent } from './event-factories/createMarketRegisteredEvent';
 import { createMarketUsdDepositedEvent } from './event-factories/createMarketUsdDepositedEvent';
 import { createMarketUsdWithdrawnEvent } from './event-factories/createMarketUsdWithdrawnEvent';
@@ -20,9 +19,6 @@ export default function test(): void {
   const timestamp = 10_000;
   const blockNumber = 10;
   const logIndex = 1;
-  const reportedDebt = 42;
-
-  getMarketReportedDebtMock(marketId, reportedDebt);
 
   handleMarketCreated(
     createMarketRegisteredEvent(market, marketId, sender, timestamp, blockNumber, logIndex)
@@ -74,7 +70,6 @@ export default function test(): void {
   assert.fieldEquals('Market', '1', 'updated_at', `${timestamp + 1_000}`);
   assert.fieldEquals('Market', '1', 'updated_at_block', `${blockNumber + 1}`);
 
-  assert.fieldEquals('Market', '1', 'reported_debt', `${reportedDebt}`);
   assert.fieldEquals('Market', '1', 'usd_deposited', '400');
   assert.fieldEquals('Market', '1', 'usd_withdrawn', '300');
   assert.fieldEquals('Market', '1', 'net_issuance', '-100');
@@ -94,7 +89,6 @@ export default function test(): void {
   );
 
   assert.entityCount('Market', 1);
-  assert.fieldEquals('Market', '1', 'reported_debt', `${reportedDebt}`);
   assert.fieldEquals('Market', '1', 'usd_deposited', '400');
   assert.fieldEquals('Market', '1', 'usd_withdrawn', '400');
   assert.fieldEquals('Market', '1', 'net_issuance', '0');

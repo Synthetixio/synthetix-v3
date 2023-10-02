@@ -4,7 +4,6 @@ import {
   handleMarketUsdDeposited,
   handleMarketUsdWithdrawn,
 } from '../mainnet';
-import { getMarketReportedDebtMock } from './mocks/getMarketReportedDebtMock';
 import { createMarketRegisteredEvent } from './event-factories/createMarketRegisteredEvent';
 import { createMarketUsdDepositedEvent } from './event-factories/createMarketUsdDepositedEvent';
 import { createMarketUsdWithdrawnEvent } from './event-factories/createMarketUsdWithdrawnEvent';
@@ -19,11 +18,7 @@ export default function test(): void {
   const market = '0x6900000000000000000000000000000000000000';
   const blockNumber = 10;
   const logIndex = 1;
-  const reportedDebt = 42;
 
-  getMarketReportedDebtMock(marketId, reportedDebt);
-
-  // @ts-ignore
   const timestamp = 1640998800; // 2022-01-01T00:00:00.000Z;
   const oneHour = 60 * 60;
   const oneDay = 24 * oneHour;
