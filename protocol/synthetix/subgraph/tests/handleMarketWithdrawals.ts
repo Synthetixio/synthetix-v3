@@ -1,68 +1,82 @@
-import { assert, createMockedFunction } from 'matchstick-as';
+import { assert, createMockedFunction, log } from 'matchstick-as';
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { address, address2, defaultGraphContractAddress } from './constants';
+import { defaultGraphContractAddress } from './constants';
 import {
   handleMarketCreated,
   handleMarketUsdDeposited,
   handleMarketUsdWithdrawn,
 } from '../mainnet';
-import {
-  createMarketCreatedEvent,
-  createMarketUsdDepositedEvent,
-  createMarketUsdWithdrawnEvent,
-} from './event-factories';
+import { createMarketRegisteredEvent } from './event-factories/createMarketRegisteredEvent';
+import { createMarketUsdDepositedEvent } from './event-factories/createMarketUsdDepositedEvent';
+import { createMarketUsdWithdrawnEvent } from './event-factories/createMarketUsdWithdrawnEvent';
 
 export default function test(): void {
-  // Needs to be here because of Closures
-  const now = 1;
-  const newMarketRegisteredEvent = createMarketCreatedEvent(1, address, now, now - 1000);
-  const arg = ethereum.Value.fromUnsignedBigInt(BigInt.fromU64(1));
+  assert.entityCount('Market', 0);
+
+  const sender = '0x6942000000000000000000000000000000000000';
+  const marketId = 1;
+  const target = '0x4200000000000000000000000000000000000000';
+  const amount = 200;
+  const market = '0x6900000000000000000000000000000000000000';
+  const timestamp = 10_000;
+  const blockNumber = 10;
+  const logIndex = 1;
+
   createMockedFunction(
     Address.fromString(defaultGraphContractAddress),
     'getMarketReportedDebt',
     'getMarketReportedDebt(uint128):(uint256)'
   )
-    // @ts-ignore
-    .withArgs([arg])
-    // @ts-ignore
-    .returns([ethereum.Value.fromI32(23)]);
-  const newUsdDepositedEvent = createMarketUsdDepositedEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(200),
-    now + 1000,
-    now
-  );
-  const newUsdDepositedEvent1 = createMarketUsdDepositedEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(200),
-    now + 1000,
-    now
-  );
-  const newUsdWithdrawnEvent = createMarketUsdWithdrawnEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(300),
-    now + 2000,
-    now + 1000
-  );
-  const newUsdWithdrawnEvent1 = createMarketUsdWithdrawnEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(100),
-    now + 2000,
-    now + 1000
-  );
-  // Trigger market creation and a deposit event
-  handleMarketCreated(newMarketRegisteredEvent);
-  handleMarketUsdDeposited(newUsdDepositedEvent);
-  handleMarketUsdDeposited(newUsdDepositedEvent1);
+    .withArgs([ethereum.Value.fromUnsignedBigInt(BigInt.fromU64(marketId))])
+    .returns([ethereum.Value.fromI32(42)]);
 
-  // Trigger a withdrawal event
-  handleMarketUsdWithdrawn(newUsdWithdrawnEvent);
+  handleMarketCreated(
+    createMarketRegisteredEvent(market, marketId, sender, timestamp, blockNumber, logIndex)
+  );
 
-  // Assert Market snapshot is created for the withdrawal event
+  log.error('Should create a new Market record', []);
+
+  handleMarketUsdDeposited(
+    createMarketUsdDepositedEvent(
+      marketId,
+      target,
+      amount,
+      market,
+      timestamp,
+      blockNumber,
+      logIndex
+    )
+  );
+
+  handleMarketUsdDeposited(
+    createMarketUsdDepositedEvent(
+      marketId,
+      target,
+      amount,
+      market,
+      timestamp,
+      blockNumber,
+      logIndex
+    )
+  );
+
+  log.error('Should update Market record after withdrawal event', []);
+
+  handleMarketUsdWithdrawn(
+    createMarketUsdWithdrawnEvent(
+      marketId,
+      target,
+      300,
+      market,
+      timestamp + 1_000,
+      blockNumber + 1,
+      logIndex
+    )
+  );
+
+  assert.entityCount('Market', 1);
+
+  assert.fieldEquals('Market', '1', 'address', market);
   assert.fieldEquals('Market', '1', 'reported_debt', '23');
   assert.fieldEquals('Market', '1', 'usd_deposited', '400');
   assert.fieldEquals('Market', '1', 'usd_withdrawn', '300');
@@ -70,11 +84,23 @@ export default function test(): void {
   assert.fieldEquals('Market', '1', 'updated_at_block', '1001');
   assert.fieldEquals('Market', '1', 'updated_at', '2001');
 
-  // Trigger another withdrawal in the same block
-  handleMarketUsdWithdrawn(newUsdWithdrawnEvent1);
+  log.error('Should update Market record after second withdrawal event', []);
 
-  /* Assert that the market has the most recent values */
-  assert.fieldEquals('Market', '1', 'address', address);
+  handleMarketUsdWithdrawn(
+    createMarketUsdWithdrawnEvent(
+      marketId,
+      target,
+      100,
+      market,
+      timestamp + 1_000,
+      blockNumber + 1,
+      logIndex
+    )
+  );
+
+  assert.entityCount('Market', 1);
+
+  assert.fieldEquals('Market', '1', 'address', market);
   assert.fieldEquals('Market', '1', 'reported_debt', '23');
   assert.fieldEquals('Market', '1', 'usd_deposited', '400');
   assert.fieldEquals('Market', '1', 'usd_withdrawn', '400');
@@ -82,6 +108,4 @@ export default function test(): void {
   assert.fieldEquals('Market', '1', 'created_at', '1');
   assert.fieldEquals('Market', '1', 'created_at_block', '-999');
   assert.fieldEquals('Market', '1', 'updated_at', '2001');
-
-  assert.notInStore('Market', '2');
 }
