@@ -40,7 +40,7 @@ contract CrossChainModule is ICrossChainModule {
         cc.ccipRouter = ICcipRouterClient(ccipRouter);
 
         IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
-            AssociatedSystem.load(_USD_TOKEN).proxy
+            AssociatedSystem.load(_USD_TOKEN).getAddress()
         );
 
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipRouter);
