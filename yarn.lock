@@ -2817,7 +2817,7 @@ __metadata:
     "@graphprotocol/graph-ts": ^0.31.0
     "@usecannon/cli": 2.8.1
     ethers: ^5.7.2
-    matchstick-as: ^0.5.2
+    matchstick-as: 0.6.0-beta.2
     prettier: ^3.0.3
   languageName: unknown
   linkType: soft
@@ -2977,7 +2977,7 @@ __metadata:
     "@graphprotocol/graph-ts": ^0.31.0
     "@usecannon/cli": 2.8.1
     ethers: ^5.7.2
-    matchstick-as: ^0.5.2
+    matchstick-as: 0.6.0-beta.2
     prettier: ^3.0.3
   languageName: unknown
   linkType: soft
@@ -3046,7 +3046,7 @@ __metadata:
     "@graphprotocol/graph-ts": ^0.31.0
     "@usecannon/cli": 2.8.1
     ethers: ^5.7.2
-    matchstick-as: ^0.5.2
+    matchstick-as: 0.6.0-beta.2
     prettier: ^3.0.3
   languageName: unknown
   linkType: soft
@@ -11350,12 +11350,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matchstick-as@npm:^0.5.2":
-  version: 0.5.2
-  resolution: "matchstick-as@npm:0.5.2"
+"matchstick-as@npm:0.6.0-beta.2":
+  version: 0.6.0-beta.2
+  resolution: "matchstick-as@npm:0.6.0-beta.2"
   dependencies:
     wabt: 1.0.24
-  checksum: 6493b2c27e4e2d47397e111dd188ba637b76a46674b2165350f7f1571728acfae3bdb3e12c440ad0793853140aff4dca5bcd322eebe259074cc1fc508e2da926
+  checksum: d3a72d9c35efd0388eabe24ed4726cf3d522769ba7beca3696baa8e0eaebd05b28d27a07ee8687eec543862a12b796982ec8d44d7cb5a15484d99bb94413f4cd
   languageName: node
   linkType: hard
 
