@@ -31,8 +31,8 @@ codegen() {
 releaseVersion=$(yarn workspace "@synthetixio/main" node -p 'require(`./package.json`).version')
 
 codegen mainnet 1 "synthetix:$releaseVersion" main
-#codegen goerli 5 "synthetix:$releaseVersion" main
-#codegen optimism-mainnet 10 "synthetix:$releaseVersion" main
-#codegen optimism-goerli 420 "synthetix:$releaseVersion" main
-#codegen base-goerli 84531 "synthetix:$releaseVersion" main
-#codegen base-goerli-competition 84531 "synthetix:latest" competition
+codegen goerli 5 "synthetix:$releaseVersion" main
+codegen optimism-mainnet 10 "synthetix:$releaseVersion" main
+codegen optimism-goerli 420 "synthetix:$releaseVersion" main
+codegen base-goerli 84531 "synthetix:$releaseVersion" main
+codegen base-goerli-competition 84531 "synthetix:latest" competition
