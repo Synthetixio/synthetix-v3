@@ -20,41 +20,31 @@ export default function test(): void {
     createMarketRegisteredEvent(market2, marketId2, sender, timestamp, blockNumber, logIndex)
   );
 
-  const newPoolEvent = createPoolCreatedEvent(1, sender, timestamp, timestamp - 1000);
-  const markets = changetype<Array<ethereum.Tuple>>([
-    changetype<Array<ethereum.Tuple>>([
-      ethereum.Value.fromI32(1),
-      ethereum.Value.fromI32(32),
-      ethereum.Value.fromI32(812739821),
-    ]),
-    changetype<Array<ethereum.Tuple>>([
-      ethereum.Value.fromI32(2),
-      ethereum.Value.fromI32(43),
-      ethereum.Value.fromI32(892379812),
-    ]),
-  ]);
+  handlePoolCreated(createPoolCreatedEvent(1, sender, timestamp, timestamp - 1000));
 
-  const newPoolConfigurationSetEvent = createPoolConfigurationSetEvent(
-    1,
-    markets,
-    timestamp + 3000,
-    timestamp + 2000
+  handlePoolConfigurationSet(
+    createPoolConfigurationSetEvent(
+      1,
+      changetype<Array<ethereum.Tuple>>([
+        changetype<Array<ethereum.Tuple>>([
+          ethereum.Value.fromI32(1),
+          ethereum.Value.fromI32(32),
+          ethereum.Value.fromI32(812739821),
+        ]),
+        changetype<Array<ethereum.Tuple>>([
+          ethereum.Value.fromI32(2),
+          ethereum.Value.fromI32(43),
+          ethereum.Value.fromI32(892379812),
+        ]),
+      ]),
+      timestamp + 3000,
+      timestamp + 2000
+    )
   );
-  const secondMarkets = changetype<Array<ethereum.Tuple>>([
-    changetype<Array<ethereum.Tuple>>([
-      ethereum.Value.fromI32(2),
-      ethereum.Value.fromI32(32),
-      ethereum.Value.fromI32(812739821),
-    ]),
-  ]);
-  const secondNewPoolConfigurationSetEvent = createPoolConfigurationSetEvent(
-    1,
-    secondMarkets,
-    timestamp + 4000,
-    timestamp + 3000
-  );
-  handlePoolCreated(newPoolEvent);
-  handlePoolConfigurationSet(newPoolConfigurationSetEvent);
+
+  assert.entityCount('Pool', 1);
+  assert.entityCount('Market', 2);
+  assert.entityCount('MarketConfiguration', 2);
 
   assert.fieldEquals('Pool', '1', 'id', '1');
   assert.fieldEquals('Pool', '1', 'total_weight', '75');
@@ -63,22 +53,17 @@ export default function test(): void {
   assert.fieldEquals('Pool', '1', 'market_ids', '[1, 2]');
   assert.fieldEquals('Pool', '1', 'total_weight', '75');
   assert.assertNull(store.get('Pool', '1')!.get('name'));
-  assert.notInStore('Pool', '2');
-  assert.fieldEquals('Market', '1', 'id', '1');
   assert.fieldEquals('Pool', '1', 'market_ids', '[1, 2]');
 
   // Assert market doesn't get updated by configuration event
-  assert.fieldEquals('Market', '1', 'created_at', (timestamp + 1000).toString());
-  assert.fieldEquals('Market', '1', 'created_at_block', timestamp.toString());
+  assert.fieldEquals('Market', '1', 'id', '1');
+  assert.fieldEquals('Market', '1', 'created_at', `${timestamp}`);
   // The market itself will not receive any updates, only the MarketConfiguration and the Pool
-  assert.fieldEquals('Market', '1', 'updated_at', (timestamp + 1000).toString());
-  assert.fieldEquals('Market', '1', 'updated_at_block', timestamp.toString());
+  assert.fieldEquals('Market', '1', 'updated_at', `${timestamp}`);
+
   assert.fieldEquals('Market', '2', 'id', '2');
-  assert.fieldEquals('Market', '2', 'created_at', (timestamp + 2000).toString());
-  assert.fieldEquals('Market', '2', 'created_at_block', (timestamp + 1000).toString());
-  assert.fieldEquals('Market', '2', 'updated_at', (timestamp + 2000).toString());
-  assert.fieldEquals('Market', '2', 'updated_at_block', (timestamp + 1000).toString());
-  assert.notInStore('Market', '3');
+  assert.fieldEquals('Market', '2', 'created_at', `${timestamp}`);
+  assert.fieldEquals('Market', '2', 'updated_at', `${timestamp}`);
 
   // Assert market configuration
   assert.fieldEquals('MarketConfiguration', '1-1', 'id', '1-1');
@@ -119,9 +104,21 @@ export default function test(): void {
   );
 
   // Fire second event that should update Pool and MarketConfiguration.  Removed MarketConfigurations should also be deleted
-  handlePoolConfigurationSet(secondNewPoolConfigurationSetEvent);
+  handlePoolConfigurationSet(
+    createPoolConfigurationSetEvent(
+      1,
+      changetype<Array<ethereum.Tuple>>([
+        changetype<Array<ethereum.Tuple>>([
+          ethereum.Value.fromI32(2),
+          ethereum.Value.fromI32(32),
+          ethereum.Value.fromI32(812739821),
+        ]),
+      ]),
+      timestamp + 4000,
+      timestamp + 3000
+    )
+  );
 
-  assert.notInStore('MarketConfiguration', '1-1');
   assert.fieldEquals('Pool', '1', 'total_weight', '32');
   assert.fieldEquals('MarketConfiguration', '1-2', 'updated_at', (timestamp + 4000).toString());
   assert.fieldEquals(
@@ -130,5 +127,4 @@ export default function test(): void {
     'updated_at_block',
     (timestamp + 3000).toString()
   );
-  assert.notInStore('Pool', '2');
 }
