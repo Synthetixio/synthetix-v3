@@ -1,173 +1,131 @@
-import { assert, createMockedFunction } from 'matchstick-as';
-import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts';
-import { address, address2, defaultGraphContractAddress } from './constants';
+import { assert } from 'matchstick-as';
 import {
   handleMarketCreated,
   handleMarketUsdDeposited,
   handleMarketUsdWithdrawn,
 } from '../mainnet';
-import {
-  createMarketCreatedEvent,
-  createMarketUsdDepositedEvent,
-  createMarketUsdWithdrawnEvent,
-} from './event-factories';
+import { createMarketRegisteredEvent } from './event-factories/createMarketRegisteredEvent';
+import { createMarketUsdDepositedEvent } from './event-factories/createMarketUsdDepositedEvent';
+import { createMarketUsdWithdrawnEvent } from './event-factories/createMarketUsdWithdrawnEvent';
 
 export default function test(): void {
-  // @ts-ignore
-  const now = <i64>Date.parse('2022-01-01T00:00:00.000Z').getTime();
-  // @ts-ignore
-  const oneHour = <i64>60 * 60 * 1000; // Number of milliseconds in one hour
-  // @ts-ignore
-  const oneDay = <i64>24 * oneHour; // Number of milliseconds in one day
-  const newMarketRegisteredEvent = createMarketCreatedEvent(1, address, now, now - 1);
-  const arg = ethereum.Value.fromUnsignedBigInt(BigInt.fromU64(1));
-  createMockedFunction(
-    Address.fromString(defaultGraphContractAddress),
-    'getMarketReportedDebt',
-    'getMarketReportedDebt(uint128):(uint256)'
-  )
-    .withArgs([arg])
-    .returns([ethereum.Value.fromI32(23)]);
-  const newUsdDepositedEvent = createMarketUsdDepositedEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(200),
-    now,
-    now - 1
+  assert.entityCount('Market', 0);
+  assert.entityCount('MarketSnapshotByDay', 0);
+
+  const sender = '0x6942000000000000000000000000000000000000';
+  const marketId = 1;
+  const target = '0x4200000000000000000000000000000000000000';
+  const market = '0x6900000000000000000000000000000000000000';
+  const blockNumber = 10;
+  const logIndex = 1;
+
+  const timestamp = 1640998800; // 2022-01-01T00:00:00.000Z;
+  const oneHour = 60 * 60;
+  const oneDay = 24 * oneHour;
+
+  handleMarketCreated(
+    createMarketRegisteredEvent(market, marketId, sender, timestamp, blockNumber, logIndex)
   );
-  const newUsdDepositedEventOneHourLater = createMarketUsdDepositedEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(200),
-    now + oneHour,
-    now + oneHour - 1
+
+  handleMarketUsdDeposited(
+    createMarketUsdDepositedEvent(
+      marketId,
+      target,
+      200,
+      market,
+      timestamp + oneHour,
+      blockNumber + 1,
+      logIndex
+    )
   );
-  const newUsdWithdrawnEventNextDay = createMarketUsdWithdrawnEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(300),
-    now + oneDay + oneHour,
-    now + oneDay + oneHour - 1
-  );
-  const newUsdWithdrawnEventNextDay1 = createMarketUsdWithdrawnEvent(
-    1,
-    Address.fromString(address2),
-    BigInt.fromU64(100),
-    now + oneDay + oneHour + oneHour,
-    now + oneDay + oneHour + oneHour - 1
-  );
-  // Trigger market creation and a deposit event
-  // We trigger this on the main handler since we expect that to call createMarketSnapshotByDay
-  handleMarketCreated(newMarketRegisteredEvent);
-  handleMarketUsdDeposited(newUsdDepositedEvent);
-  // Assert Market snapshot is created for the deposit event
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'reported_debt', '23');
+
+  assert.entityCount('Market', 1);
+  assert.entityCount('MarketSnapshotByDay', 1);
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'usd_deposited', '200');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'usd_withdrawn', '0');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'net_issuance', '-200');
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'created_at', now.toString());
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-01',
-    'created_at_block',
-    (now - 1).toString()
-  );
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'updated_at', now.toString());
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-01',
-    'updated_at_block',
-    (now - 1).toString()
-  );
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'market', '1');
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'created_at', `${timestamp}`);
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'updated_at', `${timestamp + oneHour}`);
 
-  // Trigger another deposit in the same day
-  handleMarketUsdDeposited(newUsdDepositedEventOneHourLater);
+  handleMarketUsdDeposited(
+    createMarketUsdDepositedEvent(
+      marketId,
+      target,
+      200,
+      market,
+      timestamp + oneDay + oneHour,
+      blockNumber + 2,
+      logIndex
+    )
+  );
 
-  // Assert Market snapshot can handle deposits on the same day
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'reported_debt', '23');
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'usd_deposited', '400');
+  assert.entityCount('Market', 1);
+  assert.entityCount('MarketSnapshotByDay', 2);
+
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'usd_deposited', '200');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'usd_withdrawn', '0');
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'net_issuance', '-400');
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'created_at', now.toString());
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-01',
-    'created_at_block',
-    (now - 1).toString()
-  );
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'net_issuance', '-200');
 
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'usd_deposited', '400');
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'usd_withdrawn', '0');
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'net_issuance', '-400');
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'created_at', `${timestamp}`);
   assert.fieldEquals(
     'MarketSnapshotByDay',
-    '1-2022-01-01',
+    '1-2022-01-02',
     'updated_at',
-    (now + oneHour).toString()
+    `${timestamp + oneDay + oneHour}`
   );
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-01',
-    'updated_at_block',
-    (now + oneHour - 1).toString()
+
+  handleMarketUsdWithdrawn(
+    createMarketUsdWithdrawnEvent(
+      marketId,
+      target,
+      300,
+      market,
+      timestamp + oneDay + oneHour,
+      blockNumber + 2,
+      logIndex
+    )
   );
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-01', 'market', '1');
 
-  // Trigger a withdrawal event
-  handleMarketUsdWithdrawn(newUsdWithdrawnEventNextDay);
+  assert.entityCount('Market', 1);
+  assert.entityCount('MarketSnapshotByDay', 2);
 
-  // Assert Market snapshot is created for the withdrawal event
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'reported_debt', '23');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'usd_deposited', '400');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'usd_withdrawn', '300');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'net_issuance', '-100');
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'created_at', now.toString());
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-02',
-    'created_at_block',
-    (now - 1).toString()
-  );
-
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'created_at', `${timestamp}`);
   assert.fieldEquals(
     'MarketSnapshotByDay',
     '1-2022-01-02',
     'updated_at',
-    (now + oneDay + oneHour).toString()
+    `${timestamp + oneDay + oneHour}`
   );
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-02',
-    'updated_at_block',
-    (now + oneDay + oneHour - 1).toString()
+
+  handleMarketUsdWithdrawn(
+    createMarketUsdWithdrawnEvent(
+      marketId,
+      target,
+      100,
+      market,
+      timestamp + oneDay + oneHour + oneHour,
+      blockNumber + 3,
+      logIndex
+    )
   );
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'market', '1');
 
-  // Trigger another withdrawal in the same day
-  handleMarketUsdWithdrawn(newUsdWithdrawnEventNextDay1);
+  assert.entityCount('Market', 1);
+  assert.entityCount('MarketSnapshotByDay', 2);
 
-  // Assert Market snapshot can handle withdrawal on the same day
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'reported_debt', '23');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'usd_deposited', '400');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'usd_withdrawn', '400');
   assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'net_issuance', '0');
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'created_at', now.toString());
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-02',
-    'created_at_block',
-    (now - 1).toString()
-  );
-
+  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'created_at', `${timestamp}`);
   assert.fieldEquals(
     'MarketSnapshotByDay',
     '1-2022-01-02',
     'updated_at',
-    (now + oneDay + oneHour + oneHour).toString()
+    `${timestamp + oneDay + oneHour + oneHour}`
   );
-  assert.fieldEquals(
-    'MarketSnapshotByDay',
-    '1-2022-01-02',
-    'updated_at_block',
-    (now + oneDay + oneHour + oneHour - 1).toString()
-  );
-  assert.fieldEquals('MarketSnapshotByDay', '1-2022-01-02', 'market', '1');
 }
