@@ -65,17 +65,10 @@ contract OrderModule is IOrderModule {
     }
 
     /**
-     * @dev Generic helper for funding recomputation during order management.
-     */
-    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int256 fundingRate, ) = market.recomputeFunding(price);
-        emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
-    }
-
-    /**
      * @dev Validates that an order can only be settled iff time and price is acceptable.
      */
     function validateOrderPriceReadiness(
+        PerpMarket.Data storage market,
         PerpMarketConfiguration.GlobalData storage globalConfig,
         uint256 commitmentTime,
         uint256 publishTime,
@@ -115,6 +108,30 @@ contract OrderModule is IOrderModule {
         ) {
             revert ErrorUtil.PriceToleranceExceeded(params.sizeDelta, params.fillPrice, params.limitPrice);
         }
+
+        // Ensure Pyth price does not diverge too far from on-chain price from CL.
+        //
+        // e.g. A maximum of 3% price divergence with the following prices:
+        //
+        // (1800, 1700) ~ 5.882353% divergence => PriceDivergenceExceeded
+        // (1800, 1750) ~ 2.857143% divergence => Ok
+        // (1854, 1800) ~ 3%        divergence => Ok
+        // (1855, 1800) ~ 3.055556% divergence => PriceDivergenceExceeded
+        uint256 onchainPrice = market.getOraclePrice();
+        uint256 priceDelta = onchainPrice > params.oraclePrice
+            ? onchainPrice.divDecimal(params.oraclePrice) - DecimalMath.UNIT
+            : params.oraclePrice.divDecimal(onchainPrice) - DecimalMath.UNIT;
+        if (priceDelta > globalConfig.priceDivergencePercent) {
+            revert ErrorUtil.PriceDivergenceExceeded(params.oraclePrice, onchainPrice);
+        }
+    }
+
+    /**
+     * @dev Generic helper for funding recomputation during order management.
+     */
+    function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
+        (int256 fundingRate, ) = market.recomputeFunding(price);
+        emit FundingRecomputed(market.id, market.skew, fundingRate, market.getCurrentFundingVelocity());
     }
 
     /**
@@ -231,7 +248,7 @@ contract OrderModule is IOrderModule {
             order.keeperFeeBufferUsd
         );
 
-        validateOrderPriceReadiness(globalConfig, order.commitmentTime, runtime.publishTime, runtime.params);
+        validateOrderPriceReadiness(market, globalConfig, order.commitmentTime, runtime.publishTime, runtime.params);
 
         recomputeFunding(market, runtime.pythPrice);
 
