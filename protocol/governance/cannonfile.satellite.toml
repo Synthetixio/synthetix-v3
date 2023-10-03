@@ -11,10 +11,6 @@ defaultValue = "0x1b791d05E437C78039424749243F5A79E747525e"
 [setting.ccip_router]
 defaultValue = "0xd0daae2231e9cb96b94c8512223533293c3693bf"
 
-# Override this value in the CLI, default value is for Sepolia
-[setting.ccip_token_pool]
-defaultValue = "0x9b65749b38278060c5787cce0391ac7f1094c8e8"
-
 # Deployment Owner, defaults to first hardhat account
 [setting.owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
@@ -96,21 +92,9 @@ args = [
 ]
 depends = ["invoke.init_election_module_satellite"]
 
-[invoke.init_or_upgrade_token]
-target = ["CoreProxy"]
-func = "initOrUpgradeToken"
-from = "<%= settings.owner %>"
-args = [
-    "<%= formatBytes32String('USDToken') %>",
-    "<%= settings.sUSD_name %>",
-    "<%= settings.sUSD_symbol %>",
-    "<%= settings.sUSD_decimals %>",
-    "<%= settings.sUSD_address %>",
-]
-depends = ["invoke.set_supported_cross_chain_networks"]
-
 [invoke.configure_chainlink_cross_chain]
 target = ["CoreProxy"]
 func = "configureChainlinkCrossChain"
 from = "<%= settings.owner %>"
 args = ["<%= settings.ccip_router %>"]
+depends = ["invoke.set_supported_cross_chain_networks"]

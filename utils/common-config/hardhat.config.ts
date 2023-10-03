@@ -70,7 +70,7 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 43113,
     },
-    sepolina: {
+    sepolia: {
       url:
         process.env.NETWORK_ENDPOINT ||
         `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
