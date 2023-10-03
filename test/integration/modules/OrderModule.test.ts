@@ -7,7 +7,7 @@ import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import forEach from 'mocha-each';
 import { bootstrap } from '../../bootstrap';
-import { genBootstrap, genNumber, genOneOf, genOrder, genSide, genTrader } from '../../generators';
+import { bn, genBootstrap, genNumber, genOneOf, genOrder, genSide, genTrader } from '../../generators';
 import {
   SYNTHETIX_USD_MARKET_ID,
   commitAndSettle,
@@ -818,8 +818,51 @@ describe('OrderModule', () => {
 
     it('should revert if collateral price slips into maxMarketSize between commit and settle');
 
-    // TODO: This may not be necessary.
-    it('should revert when price deviations exceed threshold');
+    it('should revert when price divergence exceed threshold', async () => {
+      const { PerpMarketProxy } = systems();
+
+      const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+
+      await PerpMarketProxy.connect(trader.signer).commitOrder(
+        trader.accountId,
+        marketId,
+        order.sizeDelta,
+        order.limitPrice,
+        order.keeperFeeBufferUsd
+      );
+      const pendingOrder = await PerpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.equal(pendingOrder.sizeDelta, order.sizeDelta);
+
+      // Retrieve on-chain configuration to generate a Pyth price that's above the divergence.
+      const priceDivergencePercent = wei(
+        (await PerpMarketProxy.getMarketConfiguration()).priceDivergencePercent
+      ).toNumber();
+      const oraclePrice = wei(await PerpMarketProxy.getOraclePrice(marketId)).toNumber();
+
+      // Create a Pyth price that is > the oraclePrice +/- 0.001%. Randomly below or above the oracle price.
+      //
+      // We `parseFloat(xxx.toFixed(3))` to avoid really ugly numbers like 1864.7999999999997 during testing.
+      const pythPrice = parseFloat(
+        genOneOf([
+          oraclePrice * (1.001 + priceDivergencePercent),
+          oraclePrice * (0.999 - priceDivergencePercent),
+        ]).toFixed(3)
+      );
+
+      const { settlementTime, publishTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      const { updateData, updateFee } = await getPythPriceData(bs, marketId, publishTime, pythPrice);
+
+      await fastForwardTo(settlementTime, provider());
+
+      await assertRevert(
+        PerpMarketProxy.connect(bs.keeper()).settleOrder(trader.accountId, marketId, [updateData], {
+          value: updateFee,
+        }),
+        `PriceDivergenceExceeded("${bn(pythPrice)}", "${bn(oraclePrice)}")`,
+        PerpMarketProxy
+      );
+    });
 
     it('should revert when price is zero (i.e. invalid)');
 
