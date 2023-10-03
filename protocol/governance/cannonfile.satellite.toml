@@ -4,25 +4,12 @@ version = "<%= package.version %>"
 include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
 
 # Override this value in the CLI, default value is for Sepolia
-[setting.sUSD_address]
-defaultValue = "0x1b791d05E437C78039424749243F5A79E747525e"
-
-# Override this value in the CLI, default value is for Sepolia
 [setting.ccip_router]
 defaultValue = "0xd0daae2231e9cb96b94c8512223533293c3693bf"
 
 # Deployment Owner, defaults to first hardhat account
 [setting.owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
-
-[setting.sUSD_name]
-defaultValue = "USDToken"
-
-[setting.sUSD_symbol]
-defaultValue = "symbol"
-
-[setting.sUSD_decimals]
-defaultValue = "18"
 
 [setting.initial_epoch_index]
 defaultValue = "0"
