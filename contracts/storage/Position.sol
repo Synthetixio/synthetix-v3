@@ -51,7 +51,7 @@ library Position {
         uint128 oldPositionSizeAbs;
         uint128 maxLiquidatableCapacity;
         uint128 remainingCapacity;
-        uint64 lastLiquidationTime;
+        uint128 lastLiquidationTime;
     }
 
     // --- Storage --- //

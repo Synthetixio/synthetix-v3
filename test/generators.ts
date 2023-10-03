@@ -78,7 +78,7 @@ export const genBootstrap = () => ({
     keeperLiquidationFeeUsd: bn(genNumber(1, 5)),
     keeperLiquidationEndorsed: genAddress(), // Dummy address to be replaced later.
   },
-  markets: shuffle(MARKETS),
+  markets: MARKETS,
 });
 
 /**

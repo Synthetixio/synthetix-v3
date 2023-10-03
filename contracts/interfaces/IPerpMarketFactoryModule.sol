@@ -31,7 +31,7 @@ interface IPerpMarketFactoryModule is IMarket {
         // Amount of size remaining last recorded in current window.
         uint256 remainingLiquidatableSizeCapacity;
         // block.timestamp of when the last liqudation had occurred.
-        uint64 lastLiquidationTime;
+        uint128 lastLiquidationTime;
     }
 
     // --- Events --- //

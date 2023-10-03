@@ -64,7 +64,7 @@ library PerpMarket {
         // {synthMarketId: collateralAmount} (# collateral deposited to market).
         mapping(uint128 => uint256) depositedCollateral;
         // An infinitely growing array of tuples [(timestamp, size), ...] to track liq caps.
-        uint64[2][] pastLiquidations;
+        uint128[2][] pastLiquidations;
     }
 
     function load(uint128 id) internal pure returns (Data storage d) {
@@ -152,15 +152,16 @@ library PerpMarket {
 
         // No prior liquidations, push new liquidation chunk.
         if (length == 0) {
-            self.pastLiquidations.push([currentTime, uint64(liqSize)]);
+            self.pastLiquidations.push([currentTime, uint128(liqSize)]);
         } else {
             // Most recent liquidation is the same timestamp (multi liquidation tx in same block), accumulate.
-            uint64[2] storage pastLiquidation = self.pastLiquidations[length - 1];
+            uint128[2] storage pastLiquidation = self.pastLiquidations[length - 1];
             if (pastLiquidation[0] == block.timestamp) {
-                self.pastLiquidations[length - 1] = [currentTime, pastLiquidation[1] + uint64(liqSize)];
+                // Add the liqSize to the same chunk.
+                self.pastLiquidations[length - 1][1] += liqSize;
             } else {
-                // A new timestamp (block).
-                self.pastLiquidations.push([currentTime, uint64(liqSize)]);
+                // A new timestamp (block) to be chunked.
+                self.pastLiquidations.push([currentTime, liqSize]);
             }
         }
     }
@@ -290,7 +291,7 @@ library PerpMarket {
     function getRemainingLiquidatableSizeCapacity(
         PerpMarket.Data storage self,
         PerpMarketConfiguration.Data storage marketConfig
-    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint64 lastLiquidationTime) {
+    ) internal view returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint128 lastLiquidationTime) {
         // How do we calculcate `maxLiquidatableCapacity`?
         //
         // As an example, assume the following example parameters for a ETH/USD market.

@@ -207,7 +207,7 @@ contract LiquidationModule is ILiquidationModule {
     )
         external
         view
-        returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint64 lastLiquidationTimestamp)
+        returns (uint128 maxLiquidatableCapacity, uint128 remainingCapacity, uint128 lastLiquidationTimestamp)
     {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
         return market.getRemainingLiquidatableSizeCapacity(PerpMarketConfiguration.load(marketId));
