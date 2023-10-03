@@ -64,7 +64,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
             marketId,
             collateralType,
             tokenAmount,
-            ERC2771Context._msgSender()
+            ERC2771Context._msgSender(),
+            marketData.getReportedDebt()
         );
     }
 
@@ -117,7 +118,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
             marketId,
             collateralType,
             tokenAmount,
-            ERC2771Context._msgSender()
+            ERC2771Context._msgSender(),
+            marketData.getReportedDebt()
         );
     }
 

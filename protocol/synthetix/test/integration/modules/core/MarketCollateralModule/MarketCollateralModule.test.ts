@@ -150,11 +150,12 @@ describe('MarketCollateralModule', function () {
         });
 
         it('emits event', async () => {
+          const reportedDebt = 0;
           await assertEvent(
             tx,
             `MarketCollateralDeposited(${marketId()}, "${collateralAddress()}", ${configuredMaxAmount.toString()}, "${
               MockMarket().address
-            }")`,
+            }", ${reportedDebt})`,
             systems().Core
           );
         });
@@ -267,12 +268,13 @@ describe('MarketCollateralModule', function () {
         });
 
         it('emits event', async () => {
+          const reportedDebt = 0;
           await assertEvent(
             tx,
             `MarketCollateralWithdrawn(${marketId()}, "${collateralAddress()}", ${configuredMaxAmount
               .div(2)
               .div(4)
-              .toString()}, "${MockMarket().address}")`,
+              .toString()}, "${MockMarket().address}", ${reportedDebt})`,
             systems().Core
           );
         });

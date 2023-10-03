@@ -29,12 +29,14 @@ interface IMarketCollateralModule {
      * @param collateralType The address of the collateral that was directly deposited in the market.
      * @param tokenAmount The amount of tokens that were deposited, denominated in the token's native decimal representation.
      * @param sender The address that triggered the deposit.
+     * @param reportedDebt Updated reported debt of the market after depositing
      */
     event MarketCollateralDeposited(
         uint128 indexed marketId,
         address indexed collateralType,
         uint256 tokenAmount,
-        address indexed sender
+        address indexed sender,
+        uint256 reportedDebt
     );
 
     /**
@@ -43,12 +45,14 @@ interface IMarketCollateralModule {
      * @param collateralType The address of the collateral that was withdrawn from the market.
      * @param tokenAmount The amount of tokens that were withdrawn, denominated in the token's native decimal representation.
      * @param sender The address that triggered the withdrawal.
+     * @param reportedDebt Updated reported debt of the market after withdrawing.
      */
     event MarketCollateralWithdrawn(
         uint128 indexed marketId,
         address indexed collateralType,
         uint256 tokenAmount,
-        address indexed sender
+        address indexed sender,
+        uint256 reportedDebt
     );
 
     /**
