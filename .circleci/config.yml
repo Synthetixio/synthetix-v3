@@ -300,12 +300,8 @@ jobs:
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
             cd $_dir
-            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
-            echo "Tests:"
-            for _test in $_tests; do
-              echo $_test
-            done
-            mocha --retries 3 --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 30000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -334,12 +330,8 @@ jobs:
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
             cd $_dir
-            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
-            echo "Tests:"
-            for _test in $_tests; do
-              echo $_test
-            done
-            mocha --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 10000 --require ts-node/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -375,12 +367,8 @@ jobs:
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
             cd $_dir
-            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
-            echo "Tests:"
-            for _test in $_tests; do
-              echo $_test
-            done
-            mocha --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 10000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
@@ -417,12 +405,8 @@ jobs:
             _dir=$(yarn workspace "<< parameters.workspace >>" exec pwd)
             echo "Workspace: $_dir"
             cd $_dir
-            _tests=$(circleci tests glob 'test/**/*.test.ts' | circleci tests split --split-by=timings)
-            echo "Tests:"
-            for _test in $_tests; do
-              echo $_test
-            done
-            mocha --retries 3 --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit $_tests
+            TEST_FILES=$(circleci tests glob 'test/**/*.test.ts')
+            echo "$TEST_FILES" | circleci tests run --verbose --split-by=timings --command="xargs mocha --retries 3 --timeout 20000 --require hardhat/register --reporter mocha-junit-reporter --reporter-options mochaFile=/tmp/junit/report.xml --exit"
 
       - store_test_results:
           path: "/tmp/junit"
