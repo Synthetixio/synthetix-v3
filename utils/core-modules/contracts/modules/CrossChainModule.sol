@@ -21,31 +21,15 @@ contract CrossChainModule is ICrossChainModule {
     using SetUtil for SetUtil.UintSet;
     using SafeCastU256 for uint256;
 
-    bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
-    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
-    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
-
     /**
      * @inheritdoc ICrossChainModule
      */
-    function configureChainlinkCrossChain(
-        address ccipRouter,
-        address ccipTokenPool
-    ) external override {
+    function configureChainlinkCrossChain(address ccipRouter) external override {
         OwnableStorage.onlyOwner();
 
         CrossChain.Data storage cc = CrossChain.load();
 
         cc.ccipRouter = ICcipRouterClient(ccipRouter);
-
-        IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
-            AssociatedSystem.load(_USD_TOKEN).getAddress()
-        );
-
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipRouter);
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_RECV, ccipRouter);
-        usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_TOKEN_POOL, ccipTokenPool);
     }
 
     /**

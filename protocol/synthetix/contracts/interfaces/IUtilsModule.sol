@@ -40,4 +40,11 @@ interface IUtilsModule is IERC165 {
      * @return v the value set on the specified k
      */
     function getConfigAddress(bytes32 k) external view returns (address v);
+
+    /**
+     * @notice Configure CCIP addresses on the stablecoin.
+     * @param ccipRouter The address on this chain to which CCIP messages will be sent or received.
+     * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.
+     */
+    function configureUsdTokenChainlink(address ccipRouter, address ccipTokenPool) external;
 }

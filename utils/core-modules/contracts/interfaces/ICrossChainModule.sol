@@ -11,11 +11,10 @@ interface ICrossChainModule {
     event NewSupportedCrossChainNetwork(uint64 newChainId);
 
     /**
-     * @notice Configure CCIP addresses on the stablecoin.
+     * @notice Configure CCIP addresses router.
      * @param ccipRouter The address on this chain to which CCIP messages will be sent or received.
-     * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.
      */
-    function configureChainlinkCrossChain(address ccipRouter, address ccipTokenPool) external;
+    function configureChainlinkCrossChain(address ccipRouter) external;
 
     /**
      * @notice Used to add new cross chain networks to the protocol

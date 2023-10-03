@@ -113,5 +113,4 @@ depends = ["invoke.set_supported_cross_chain_networks"]
 target = ["CoreProxy"]
 func = "configureChainlinkCrossChain"
 from = "<%= settings.owner %>"
-args = [["<%= settings.ccip_router %>"], ["<%= settings.ccip_token_pool %>"]]
-depends = ["invoke.init_or_upgrade_token"]
+args = ["<%= settings.ccip_router %>"]

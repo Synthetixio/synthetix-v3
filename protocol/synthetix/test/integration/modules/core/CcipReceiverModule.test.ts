@@ -2,7 +2,6 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
 
 describe('CcipReceiverModule', function () {
@@ -24,7 +23,11 @@ describe('CcipReceiverModule', function () {
   before('set ccip settings', async () => {
     await systems()
       .Core.connect(owner())
-      .configureChainlinkCrossChain(await FakeCcip.getAddress(), ethers.constants.AddressZero);
+      .configureChainlinkCrossChain(await FakeCcip.getAddress());
+
+    await systems()
+      .Core.connect(owner())
+      .configureUsdTokenChainlink(await FakeCcip.getAddress(), ethers.constants.AddressZero);
 
     await systems()
       .Core.connect(owner())

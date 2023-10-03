@@ -1,10 +1,10 @@
 import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { verifyUsesFeatureFlag } from '../../verifications';
+import hre from 'hardhat';
 import { bn, bootstrapWithStakedPool } from '../../bootstrap';
+import { verifyUsesFeatureFlag } from '../../verifications';
 
 describe('CrossChainUSDModule', function () {
   const { owner, systems, staker, accountId, poolId, collateralAddress } =
@@ -27,9 +27,11 @@ describe('CrossChainUSDModule', function () {
   });
 
   before('configure CCIP', async () => {
+    await systems().Core.connect(owner()).configureChainlinkCrossChain(CcipRouterMock.address);
+
     await systems()
       .Core.connect(owner())
-      .configureChainlinkCrossChain(CcipRouterMock.address, ethers.constants.AddressZero);
+      .configureUsdTokenChainlink(CcipRouterMock.address, ethers.constants.AddressZero);
   });
 
   before('mint some sUSD', async () => {
