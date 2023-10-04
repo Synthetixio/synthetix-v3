@@ -28,7 +28,6 @@ describe('MarketConfiguration', async () => {
       feedId: utils.formatBytes32String('feedId'),
       url: 'url',
       settlementReward: 100,
-      priceDeviationTolerance: 200,
       disabled: true,
     },
 
@@ -78,8 +77,6 @@ describe('MarketConfiguration', async () => {
         fixture.settlementStrategy.url.toString() +
         '", ' +
         fixture.settlementStrategy.settlementReward.toString() +
-        ', ' +
-        fixture.settlementStrategy.priceDeviationTolerance.toString() +
         ', ' +
         fixture.settlementStrategy.disabled.toString() +
         '], 0)',
@@ -267,10 +264,6 @@ describe('MarketConfiguration', async () => {
       settlementStrategy.settlementReward,
       fixture.settlementStrategy.settlementReward
     );
-    assertBn.equal(
-      settlementStrategy.priceDeviationTolerance,
-      fixture.settlementStrategy.priceDeviationTolerance
-    );
     assert.equal(settlementStrategy.disabled, !fixture.settlementStrategy.disabled);
     assert.equal(settlementStrategy.url, fixture.settlementStrategy.url);
     assert.equal(settlementStrategy.feedId, fixture.settlementStrategy.feedId);
@@ -287,9 +280,8 @@ describe('MarketConfiguration', async () => {
   });
 
   it('get fundingParameters', async () => {
-    const [skewScale, maxFundingVelocity] = await systems().PerpsMarket.getFundingParameters(
-      marketId
-    );
+    const [skewScale, maxFundingVelocity] =
+      await systems().PerpsMarket.getFundingParameters(marketId);
     assertBn.equal(maxFundingVelocity, fixture.maxFundingVelocity);
     assertBn.equal(skewScale, fixture.skewScale);
   });

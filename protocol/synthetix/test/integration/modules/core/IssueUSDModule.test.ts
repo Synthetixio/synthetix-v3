@@ -86,7 +86,7 @@ describe('IssueUSDModule', function () {
   ) {
     return async () => {
       assertBn.equal(
-        (await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress())).amount,
+        await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress()),
         collateralAmount
       );
       assertBn.equal(

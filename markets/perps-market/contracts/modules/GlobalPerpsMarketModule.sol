@@ -9,6 +9,8 @@ import {GlobalPerpsMarketConfiguration} from "../storage/GlobalPerpsMarketConfig
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {IGlobalPerpsMarketModule} from "../interfaces/IGlobalPerpsMarketModule.sol";
 import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -24,7 +26,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
      */
     function setMaxCollateralAmount(
         uint128 synthMarketId,
-        uint collateralAmount
+        uint256 collateralAmount
     ) external override {
         OwnableStorage.onlyOwner();
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
@@ -36,7 +38,9 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     /**
      * @inheritdoc IGlobalPerpsMarketModule
      */
-    function getMaxCollateralAmount(uint128 synthMarketId) external view override returns (uint) {
+    function getMaxCollateralAmount(
+        uint128 synthMarketId
+    ) external view override returns (uint256) {
         return GlobalPerpsMarketConfiguration.load().maxCollateralAmounts[synthMarketId];
     }
 
@@ -69,6 +73,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         uint256 maxLiquidationRewardUsd
     ) external override {
         OwnableStorage.onlyOwner();
+        if (minLiquidationRewardUsd > maxLiquidationRewardUsd) {
+            revert ParameterError.InvalidParameter("min/maxLiquidationRewardUSD", "min > max");
+        }
+
         GlobalPerpsMarketConfiguration.Data storage store = GlobalPerpsMarketConfiguration.load();
         store.minLiquidationRewardUsd = minLiquidationRewardUsd;
         store.maxLiquidationRewardUsd = maxLiquidationRewardUsd;
@@ -134,6 +142,10 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
 
         if (shareRatioD18 > DecimalMath.UNIT) {
             revert InvalidReferrerShareRatio(shareRatioD18);
+        }
+
+        if (referrer == address(0)) {
+            revert AddressError.ZeroAddress();
         }
 
         GlobalPerpsMarketConfiguration.load().referrerShare[referrer] = shareRatioD18;

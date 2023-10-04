@@ -22,7 +22,7 @@ interface IDecayTokenModule is ITokenModule {
     /**
      * @notice get decay rate for a year
      */
-    function decayRate() external returns (uint256);
+    function decayRate() external view returns (uint256);
 
     /**
      * @notice advance epoch manually in order to avoid precision loss

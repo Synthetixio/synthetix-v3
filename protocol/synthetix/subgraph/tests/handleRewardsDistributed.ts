@@ -5,11 +5,13 @@ import {
   handleRewardsDistributed,
   handleRewardsDistributorRegistered,
   handlePoolCreated,
+  handleRewardsDistributorRemoved,
 } from '../mainnet';
 import {
   createRewardsDistributedEvent,
   createRewardsDistributorRegisteredEvent,
   createPoolCreatedEvent,
+  createRewardsDistributorRemovedEvent,
 } from './event-factories';
 
 export default function test(): void {
@@ -127,6 +129,7 @@ export default function test(): void {
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at', now.toString());
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at_block', (now - 1000).toString());
   assert.fieldEquals('RewardsDistributor', address2, 'pool', '1');
+  assert.fieldEquals('RewardsDistributor', address2, 'isActive', 'true');
 
   assert.assertNull(
     store.get('AccountRewardsDistributor', `1-${address}-${address2}`)!.get('total_claimed')
@@ -251,4 +254,15 @@ export default function test(): void {
   assert.fieldEquals('RewardsDistributor', address2, 'total_distributed', '700');
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at', (now + 1000).toString());
   assert.fieldEquals('RewardsDistributor', address2, 'updated_at_block', now.toString());
+
+  const rewardsDistributedEvent3 = createRewardsDistributorRemovedEvent(
+    BigInt.fromI32(1),
+    Address.fromString(address),
+    Address.fromString(address2),
+    now + 1000,
+    now
+  );
+
+  handleRewardsDistributorRemoved(rewardsDistributedEvent3);
+  assert.fieldEquals('RewardsDistributor', address2, 'isActive', 'false');
 }

@@ -9,9 +9,7 @@ export function handleLiquidationParametersSet(event: LiquidationParametersSet):
     market.initialMarginRatioD18 = event.params.initialMarginRatioD18;
     market.liquidationRewardRatioD18 = event.params.liquidationRewardRatioD18;
     market.maintenanceMarginRatioD18 = event.params.maintenanceMarginRatioD18;
-    // market.maxSecondsInLiquidationWindow = event.params.maxSecondsInLiquidationWindow;
     market.minimumPositionMargin = event.params.minimumPositionMargin;
-    // market.maxLiquidationLimitAccumulationMultiplier = event.params.maxLiquidationLimitAccumulationMultiplier;
     market.save();
   }
 }

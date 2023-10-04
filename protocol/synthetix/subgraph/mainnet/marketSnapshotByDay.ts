@@ -2,12 +2,12 @@ import { Market, MarketSnapshotByDay } from './generated/schema';
 import { BigInt, log } from '@graphprotocol/graph-ts';
 
 export function createMarketSnapshotByDay(marketWithLatestValues: Market): void {
-  const day = new Date(<i64>parseInt(marketWithLatestValues.updated_at.toString()));
+  const date = new Date(<i64>parseInt(marketWithLatestValues.updated_at.toString()) * 1000);
 
   const marketSnapshotId = marketWithLatestValues.id
     .toString()
     .concat('-')
-    .concat(day.toISOString().slice(0, 10));
+    .concat(date.toISOString().slice(0, 10));
   let marketSnapshotByDay = MarketSnapshotByDay.load(marketSnapshotId);
 
   if (!marketSnapshotByDay) {

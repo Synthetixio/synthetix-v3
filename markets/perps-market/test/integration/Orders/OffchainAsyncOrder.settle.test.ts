@@ -34,10 +34,12 @@ describe('Settle Offchain Async Order test', () => {
     traderAccountIds: [2, 3],
   });
   let ethMarketId: ethers.BigNumber;
+  let ethSettlementStrategyId: ethers.BigNumber;
   let btcSynth: SynthMarkets[number];
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
+    ethSettlementStrategyId = perpsMarkets()[0].strategyId();
     btcSynth = synthMarkets()[0];
   });
 
@@ -70,7 +72,7 @@ describe('Settle Offchain Async Order test', () => {
           1,
           startTime + 6
         );
-        updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
+        updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
       });
 
       it('reverts if account id is incorrect (not valid order)', async () => {
@@ -206,7 +208,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime + 6
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -247,7 +249,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime + 6
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -278,7 +280,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -300,7 +302,7 @@ describe('Settle Offchain Async Order test', () => {
               DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
               1
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -319,6 +321,31 @@ describe('Settle Offchain Async Order test', () => {
             startTime + DEFAULT_SETTLEMENT_STRATEGY.settlementDelay + 1,
             provider()
           );
+        });
+
+        describe('disable settlement strategy', () => {
+          before(async () => {
+            await systems().PerpsMarket.setSettlementStrategyEnabled(
+              ethMarketId,
+              ethSettlementStrategyId,
+              false
+            );
+          });
+
+          it('reverts with invalid settlement strategy', async () => {
+            await assertRevert(
+              systems().PerpsMarket.connect(trader1()).settle(2),
+              'InvalidSettlementStrategy'
+            );
+          });
+
+          after(async () => {
+            await systems().PerpsMarket.setSettlementStrategyEnabled(
+              ethMarketId,
+              ethSettlementStrategyId,
+              true
+            );
+          });
         });
 
         it('reverts with offchain info', async () => {
@@ -352,7 +379,7 @@ describe('Settle Offchain Async Order test', () => {
               1,
               startTime + 6
             );
-            updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
+            updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           });
 
           before('settle', async () => {

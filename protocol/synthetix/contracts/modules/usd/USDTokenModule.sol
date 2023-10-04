@@ -4,6 +4,7 @@ pragma solidity ^0.8.7;
 import "../../interfaces/IUSDTokenModule.sol";
 import "../../storage/CrossChain.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
@@ -50,10 +51,10 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
      */
     function mint(address target, uint256 amount) external override {
         if (
-            msg.sender != OwnableStorage.getOwner() &&
-            msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
+            ERC2771Context._msgSender() != OwnableStorage.getOwner() &&
+            ERC2771Context._msgSender() != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
         ) {
-            revert AccessError.Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         _mint(target, amount);
@@ -64,10 +65,10 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
      */
     function burn(address target, uint256 amount) external override {
         if (
-            msg.sender != OwnableStorage.getOwner() &&
-            msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
+            ERC2771Context._msgSender() != OwnableStorage.getOwner() &&
+            ERC2771Context._msgSender() != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
         ) {
-            revert AccessError.Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
         _burn(target, amount);
@@ -78,13 +79,13 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
      */
     function burn(uint256 amount) external {
         if (
-            msg.sender != OwnableStorage.getOwner() &&
-            msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
+            ERC2771Context._msgSender() != OwnableStorage.getOwner() &&
+            ERC2771Context._msgSender() != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
         ) {
-            revert AccessError.Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        _burn(msg.sender, amount);
+        _burn(ERC2771Context._msgSender(), amount);
     }
 
     /**
