@@ -29,6 +29,7 @@ contract ERC20Permit is ERC20, IERC20Permit {
     /**
      * @inheritdoc IERC20Permit
      */
+
     function permit(
         address owner,
         address spender,

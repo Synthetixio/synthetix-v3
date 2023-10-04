@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
@@ -148,7 +149,7 @@ contract VaultModule is IVaultModule {
             collateralType,
             newCollateralAmountD18,
             leverage,
-            msg.sender
+            ERC2771Context._msgSender()
         );
     }
 
@@ -180,8 +181,8 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external view override returns (uint256 amount, uint256 value) {
-        (amount, value) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
+    ) external view override returns (uint256 amount) {
+        return Pool.load(poolId).vaults[collateralType].currentAccountCollateral(accountId);
     }
 
     /**

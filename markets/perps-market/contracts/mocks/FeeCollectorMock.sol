@@ -13,7 +13,6 @@ contract FeeCollectorMock is IFeeCollector {
         feeRatioD18 = _feeRatio;
     }
 
-    // solc-ignore-next-line func-mutability
     function quoteFees(
         uint128 marketId,
         uint256 feeAmount,

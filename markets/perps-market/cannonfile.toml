@@ -16,6 +16,9 @@ defaultValue = "synthetix:<%= package.version %>"
 [setting.synthetixPreset]
 defaultValue = "main"
 
+[setting.spotMarketPreset]
+defaultValue = "main"
+
 [setting.spotMarketPackage]
 defaultValue = "synthetix-spot-market:<%= package.version %>"
 
@@ -28,6 +31,7 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.spotMarket]
 source = "<%= settings.spotMarketPackage %>"
+preset = "<%= settings.spotMarketPreset %>"
 
 [contract.PerpsMarketFactoryModule]
 artifact = "PerpsMarketFactoryModule"
@@ -134,3 +138,15 @@ args = [
 from = "<%= settings.owner %>"
 extra.superMarketId.event = "FactoryInitialized"
 extra.superMarketId.arg = 0
+
+[invoke.enableBasicFeatures]
+target = ["PerpsMarketProxy"]
+fromCall.func = "owner"
+func = "multicall"
+args = [
+    [
+        # for all the below functions, "0x7d632bd2" is the selector for "setFeatureFlagAllowAll(bytes32,bool)"
+        "0x7d632bd2<%= defaultAbiCoder.encode(['bytes32', 'bool'], [formatBytes32String('createAccount'), true]).slice(2) %>",
+    ]
+]
+depends = ["invoke.upgrade_proxy"]

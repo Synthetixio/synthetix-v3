@@ -72,7 +72,7 @@ describe('Settle Offchain Async Order test', () => {
           1,
           startTime + 6
         );
-        updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
+        updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
       });
 
       it('reverts if account id is incorrect (not valid order)', async () => {
@@ -208,7 +208,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime + 6
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -249,7 +249,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime + 6
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -280,7 +280,7 @@ describe('Settle Offchain Async Order test', () => {
             1,
             startTime
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -302,7 +302,7 @@ describe('Settle Offchain Async Order test', () => {
               DEFAULT_SETTLEMENT_STRATEGY.settlementWindowDuration +
               1
           );
-          updateFee = await systems().MockPyth.getUpdateFee([validPythPriceData]);
+          updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           await assertRevert(
             systems()
               .PerpsMarket.connect(keeper())
@@ -379,7 +379,7 @@ describe('Settle Offchain Async Order test', () => {
               1,
               startTime + 6
             );
-            updateFee = await systems().MockPyth.getUpdateFee([pythPriceData]);
+            updateFee = await systems().MockPyth['getUpdateFee(uint256)'](1);
           });
 
           before('settle', async () => {

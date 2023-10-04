@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/ICcipRouterClient.sol";
 
@@ -38,8 +39,11 @@ library CrossChain {
     }
 
     function processCcipReceive(Data storage self, CcipClient.Any2EVMMessage memory data) internal {
-        if (address(self.ccipRouter) == address(0) || msg.sender != address(self.ccipRouter)) {
-            revert NotCcipRouter(msg.sender);
+        if (
+            address(self.ccipRouter) == address(0) ||
+            ERC2771Context._msgSender() != address(self.ccipRouter)
+        ) {
+            revert NotCcipRouter(ERC2771Context._msgSender());
         }
 
         uint64 sourceChainId = self.ccipSelectorToChainId[data.sourceChainSelector];
@@ -84,8 +88,8 @@ library CrossChain {
     }
 
     function onlyCrossChain() internal view {
-        if (msg.sender != address(this)) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (ERC2771Context._msgSender() != address(this)) {
+            revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
     }
 
@@ -104,7 +108,7 @@ library CrossChain {
         CcipClient.EVMTokenAmount[] memory tokenAmounts = new CcipClient.EVMTokenAmount[](1);
         tokenAmounts[0] = CcipClient.EVMTokenAmount(token, amount);
 
-        bytes memory data = abi.encode(msg.sender);
+        bytes memory data = abi.encode(ERC2771Context._msgSender());
         CcipClient.EVM2AnyMessage memory sentMsg = CcipClient.EVM2AnyMessage(
             abi.encode(address(this)), // abi.encode(receiver address) for dest EVM chains
             data,
@@ -129,7 +133,9 @@ library CrossChain {
     function refundLeftoverGas(uint256 gasTokenUsed) internal returns (uint256 amountRefunded) {
         amountRefunded = msg.value - gasTokenUsed;
 
-        (bool success, bytes memory result) = msg.sender.call{value: amountRefunded}("");
+        (bool success, bytes memory result) = ERC2771Context._msgSender().call{
+            value: amountRefunded
+        }("");
 
         if (!success) {
             uint256 len = result.length;

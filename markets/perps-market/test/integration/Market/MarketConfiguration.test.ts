@@ -28,7 +28,6 @@ describe('MarketConfiguration', async () => {
       feedId: utils.formatBytes32String('feedId'),
       url: 'url',
       settlementReward: 100,
-      priceDeviationTolerance: 200,
       disabled: true,
     },
 
@@ -78,8 +77,6 @@ describe('MarketConfiguration', async () => {
         fixture.settlementStrategy.url.toString() +
         '", ' +
         fixture.settlementStrategy.settlementReward.toString() +
-        ', ' +
-        fixture.settlementStrategy.priceDeviationTolerance.toString() +
         ', ' +
         fixture.settlementStrategy.disabled.toString() +
         '], 0)',
@@ -266,10 +263,6 @@ describe('MarketConfiguration', async () => {
     assertBn.equal(
       settlementStrategy.settlementReward,
       fixture.settlementStrategy.settlementReward
-    );
-    assertBn.equal(
-      settlementStrategy.priceDeviationTolerance,
-      fixture.settlementStrategy.priceDeviationTolerance
     );
     assert.equal(settlementStrategy.disabled, !fixture.settlementStrategy.disabled);
     assert.equal(settlementStrategy.url, fixture.settlementStrategy.url);

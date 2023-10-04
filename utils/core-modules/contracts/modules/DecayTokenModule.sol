@@ -127,13 +127,13 @@ contract DecayTokenModule is IDecayTokenModule, TokenModule {
     ) external virtual override(ERC20, IERC20) returns (bool) {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
-        uint256 currentAllowance = store.allowance[from][msg.sender];
+        uint256 currentAllowance = store.allowance[from][ERC2771Context._msgSender()];
         if (currentAllowance < amount) {
             revert InsufficientAllowance(amount, currentAllowance);
         }
 
         unchecked {
-            store.allowance[from][msg.sender] -= amount;
+            store.allowance[from][ERC2771Context._msgSender()] -= amount;
         }
 
         super._transfer(from, to, _tokenToShare(amount));

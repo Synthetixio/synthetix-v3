@@ -16,7 +16,7 @@ contract ERC721OwnedMock is ERC721Owned {
     }
 
     function mint(uint256 tokenId) external {
-        _mint(msg.sender, tokenId);
+        _mint(ERC2771Context._msgSender(), tokenId);
     }
 
     function mintTo(address to, uint256 tokenId) external {

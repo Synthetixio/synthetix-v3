@@ -2,7 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../../interfaces/ICollateralConfigurationModule.sol";
 import "../../storage/CollateralConfiguration.sol";
 
@@ -71,7 +71,8 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     function getCollateralPrice(address collateralType) external view override returns (uint256) {
         return
             CollateralConfiguration.getCollateralPrice(
-                CollateralConfiguration.load(collateralType)
+                CollateralConfiguration.load(collateralType),
+                DecimalMath.UNIT
             );
     }
 }

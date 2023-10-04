@@ -6,6 +6,7 @@ import "./Collateral.sol";
 import "./Pool.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 /**
  * @title Object for tracking accounts with access control and collateral tracking.
@@ -162,8 +163,8 @@ library Account {
     ) internal returns (Data storage account) {
         account = Account.load(accountId);
 
-        if (!account.rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
+        if (!account.rbac.authorized(permission, ERC2771Context._msgSender())) {
+            revert PermissionDenied(accountId, permission, ERC2771Context._msgSender());
         }
 
         recordInteraction(account);
@@ -184,8 +185,8 @@ library Account {
     ) internal view returns (Data storage account) {
         account = Account.load(accountId);
 
-        if (!account.rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
+        if (!account.rbac.authorized(permission, ERC2771Context._msgSender())) {
+            revert PermissionDenied(accountId, permission, ERC2771Context._msgSender());
         }
 
         uint256 endWaitingPeriod = account.lastInteraction + timeout;

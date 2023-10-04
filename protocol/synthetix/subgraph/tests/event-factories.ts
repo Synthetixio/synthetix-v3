@@ -153,26 +153,6 @@ export function createPoolOwnershipRenouncedEvent(
   return newPoolOwnerNominationRenouncedEvent;
 }
 
-export function createMarketCreatedEvent(
-  id: i32,
-  market: string,
-  timestamp: i64,
-  blockNumber: i64
-): MarketRegistered {
-  const newMarketRegisteredEvent = newTypedMockEvent<MarketRegistered>();
-  const block = createBlock(timestamp, blockNumber);
-  newMarketRegisteredEvent.parameters = [];
-  newMarketRegisteredEvent.parameters.push(
-    new ethereum.EventParam('market', ethereum.Value.fromAddress(Address.fromString(market)))
-  );
-  newMarketRegisteredEvent.parameters.push(
-    new ethereum.EventParam('marketId', ethereum.Value.fromI32(id))
-  );
-  newMarketRegisteredEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
-  newMarketRegisteredEvent.block.number = BigInt.fromI64(block['blockNumber']);
-  return newMarketRegisteredEvent;
-}
-
 export function createAccountCreatedEvent(
   id: i32,
   owner: string,
@@ -213,54 +193,6 @@ export function createPoolConfigurationSetEvent(
   newMarketRegisteredEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
   newMarketRegisteredEvent.block.number = BigInt.fromI64(block['blockNumber']);
   return newMarketRegisteredEvent;
-}
-
-export function createMarketUsdDepositedEvent(
-  marketId: i32,
-  target: Address,
-  amount: BigInt,
-  timestamp: i64,
-  blockNumber: i64
-): MarketUsdDeposited {
-  const newUsdMintedEvent = newTypedMockEvent<MarketUsdDeposited>();
-  const block = createBlock(timestamp, blockNumber);
-  newUsdMintedEvent.parameters = [];
-  newUsdMintedEvent.parameters.push(
-    new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId))
-  );
-  newUsdMintedEvent.parameters.push(
-    new ethereum.EventParam('target', ethereum.Value.fromAddress(target))
-  );
-  newUsdMintedEvent.parameters.push(
-    new ethereum.EventParam('amount', ethereum.Value.fromUnsignedBigInt(amount))
-  );
-  newUsdMintedEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
-  newUsdMintedEvent.block.number = BigInt.fromI64(block['blockNumber']);
-  return newUsdMintedEvent;
-}
-
-export function createMarketUsdWithdrawnEvent(
-  marketId: i32,
-  target: Address,
-  amount: BigInt,
-  timestamp: i64,
-  blockNumber: i64
-): MarketUsdWithdrawn {
-  const newUsdWithdrawnEvent = newTypedMockEvent<MarketUsdWithdrawn>();
-  const block = createBlock(timestamp, blockNumber);
-  newUsdWithdrawnEvent.parameters = [];
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId))
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('target', ethereum.Value.fromAddress(target))
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('amount', ethereum.Value.fromUnsignedBigInt(amount))
-  );
-  newUsdWithdrawnEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
-  newUsdWithdrawnEvent.block.number = BigInt.fromI64(block['blockNumber']);
-  return newUsdWithdrawnEvent;
 }
 
 export function createCollateralConfiguredEvent(

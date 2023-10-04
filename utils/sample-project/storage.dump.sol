@@ -31,6 +31,11 @@ contract ProxyStorage {
     }
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/ERC2771Context.sol:ERC2771Context
+library ERC2771Context {
+    address private constant TRUSTED_FORWARDER = 0xAE788aaf52780741E12BF79Ad684B91Bb0EF4D92;
+}
+
 // @custom:artifact contracts/modules/AnotherModule.sol:AnotherModule
 contract AnotherModule {
     uint private constant _SIXTY_FOUR = 64;

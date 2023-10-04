@@ -11,7 +11,7 @@ interface INftModule is IERC721Enumerable {
      * @notice Returns whether the token has been initialized.
      * @return A boolean with the result of the query.
      */
-    function isInitialized() external returns (bool);
+    function isInitialized() external view returns (bool);
 
     /**
      * @notice Initializes the token with name, symbol, and uri.

@@ -8,7 +8,7 @@ interface IRewardDistributor is IERC165 {
     /// @notice Returns a human-readable name for the reward distributor
     function name() external returns (string memory);
 
-    /// @notice This function should revert if msg.sender is not the Synthetix CoreProxy address.
+    /// @notice This function should revert if ERC2771Context._msgSender() is not the Synthetix CoreProxy address.
     /// @return whether or not the payout was executed
     function payout(
         uint128 accountId,
