@@ -252,26 +252,25 @@ contract MarginModule is IMarginModule {
         PerpMarketConfiguration.GlobalData storage globalMarketConfig = PerpMarketConfiguration.load();
         Margin.GlobalData storage globalMarginConfig = Margin.load();
 
+        uint256 MAX_UINT256 = type(uint256).max;
+
         // Clear existing collateral configuration to be replaced with new.
         uint256 length0 = globalMarginConfig.supportedSynthMarketIds.length;
         for (uint256 i = 0; i < length0; ) {
             uint128 synthMarketId = globalMarginConfig.supportedSynthMarketIds[i];
             delete globalMarginConfig.supported[synthMarketId];
 
-            ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
-                ? ITokenModule(globalMarketConfig.usdToken)
-                : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
+            // ITokenModule synth = synthMarketId == SYNTHETIX_USD_MARKET_ID
+            //     ? ITokenModule(globalMarketConfig.usdToken)
+            //     : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
 
             // Revoke access after wiping collateral from supported market collateral.
-            synth.decreaseAllowance(
-                address(globalMarketConfig.synthetix),
-                synth.allowance(msg.sender, address(globalMarketConfig.synthetix))
-            );
-            synth.decreaseAllowance(
-                address(globalMarketConfig.spotMarket),
-                synth.allowance(msg.sender, address(globalMarketConfig.spotMarket))
-            );
-            synth.decreaseAllowance(address(this), synth.allowance(msg.sender, address(this)));
+            //
+            // TODO: Uncomment and use this after we upgrade past synthetix-v3.2.0.
+            //
+            // synth.decreaseAllowance(address(globalMarketConfig.synthetix), MAX_UINT256);
+            // synth.decreaseAllowance(address(globalMarketConfig.spotMarket), MAX_UINT256);
+            // synth.decreaseAllowance(address(this), MAX_UINT256);
 
             unchecked {
                 ++i;
@@ -289,13 +288,11 @@ contract MarginModule is IMarginModule {
                 : ITokenModule(globalMarketConfig.spotMarket.getSynth(synthMarketId));
 
             // Perform approve _once_ when this collateral is added as a supported collateral.
-            uint128 maxAllowable = maxAllowables[i];
-            uint256 maxUint = type(uint256).max;
+            synth.approve(address(globalMarketConfig.synthetix), MAX_UINT256);
+            synth.approve(address(globalMarketConfig.spotMarket), MAX_UINT256);
+            synth.approve(address(this), MAX_UINT256);
 
-            synth.approve(address(globalMarketConfig.synthetix), maxUint);
-            synth.approve(address(globalMarketConfig.spotMarket), maxUint);
-            synth.approve(address(this), maxUint);
-            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowable);
+            globalMarginConfig.supported[synthMarketId] = Margin.CollateralType(maxAllowables[i]);
             newSupportedSynthMarketIds[i] = synthMarketId;
 
             unchecked {
