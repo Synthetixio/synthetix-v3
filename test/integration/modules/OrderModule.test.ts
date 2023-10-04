@@ -543,9 +543,9 @@ describe('OrderModule', () => {
       const { trader, market, marketId, collateral, collateralDepositAmount } = await depositMargin(bs, genTrader(bs));
 
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
-      const { tx } = await commitAndSettle(bs, marketId, trader, order);
+      const { receipt } = await commitAndSettle(bs, marketId, trader, order);
 
-      assertEvent(tx, 'FundingRecomputed', PerpMarketProxy);
+      assertEvent(receipt, 'FundingRecomputed', PerpMarketProxy);
     });
 
     it('should realize non-zero sUSD to trader when closing a profitable trade', async () => {
@@ -563,7 +563,7 @@ describe('OrderModule', () => {
       // No prior orders or deposits. Must be zero.
       const d0 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(
-        d0.collateral.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available
+        d0.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available
       );
 
       // Open then close order after making a profit.
@@ -592,13 +592,14 @@ describe('OrderModule', () => {
 
       // sUSD must be gt 0.
       assertBn.gt(
-        d1.collateral.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available,
+        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available,
         BigNumber.from(0)
       );
 
       // Value of original collateral should also stay the same.
       assertBn.equal(
-        d1.collateral.filter(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarket.marketId()))[0].available,
+        d1.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarket.marketId()))[0]
+          .available,
         collateralDepositAmount
       );
     });
@@ -618,7 +619,7 @@ describe('OrderModule', () => {
       // No prior orders or deposits. Must be zero.
       const d0 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(
-        d0.collateral.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available
+        d0.depositedCollaterals.filter(({ synthMarketId }) => synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))[0].available
       );
 
       // Open then close order after making a profit.

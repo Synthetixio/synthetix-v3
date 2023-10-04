@@ -24,7 +24,7 @@ interface IPerpMarketFactoryModule is IMarket {
 
     struct MarketDigest {
         // Array of supported collaterals and amounts.
-        IPerpMarketFactoryModule.DepositedCollateral[] collateral;
+        IPerpMarketFactoryModule.DepositedCollateral[] depositedCollaterals;
         // Name of the market e.g, swstETHsUSDPERP.
         bytes32 name;
         // Skew in native units on market (long - shorts).

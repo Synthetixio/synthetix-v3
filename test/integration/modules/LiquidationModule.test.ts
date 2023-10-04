@@ -126,10 +126,10 @@ describe('LiquidationModule', () => {
 
       // Verify no USD but _some_ non-USD collateral was used as margin.
       const d1 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
-      const collateralBalanceBefore = d1.collateral
+      const collateralBalanceBefore = d1.depositedCollaterals
         .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
         .map((c) => c.available)[0];
-      const usdBalanceBefore = d1.collateral
+      const usdBalanceBefore = d1.depositedCollaterals
         .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
         .map((c) => c.available)[0];
 
@@ -148,10 +148,10 @@ describe('LiquidationModule', () => {
       // Assert the collateral has been sold and all that's left is sUSD (minus fees).
       const d2 = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
-      const collateralBalanceAfter = d2.collateral
+      const collateralBalanceAfter = d2.depositedCollaterals
         .filter((c) => c.synthMarketId.eq(collateral.synthMarket.marketId()))
         .map((c) => c.available)[0];
-      const usdBalanceAfter = d2.collateral
+      const usdBalanceAfter = d2.depositedCollaterals
         .filter((c) => c.synthMarketId.eq(SYNTHETIX_USD_MARKET_ID))
         .map((c) => c.available)[0];
 
@@ -727,7 +727,7 @@ describe('LiquidationModule', () => {
 
       // Expecting ZERO collateral deposited into the market.
       const d1 = await PerpMarketProxy.getMarketDigest(marketId);
-      d1.collateral.map((c) => assertBn.isZero(c.available));
+      d1.depositedCollaterals.map((c) => assertBn.isZero(c.available));
     });
 
     it('shuold remove all account margin collateral after full liquidation', async () => {
@@ -738,7 +738,7 @@ describe('LiquidationModule', () => {
       // Expecting ZERO collateral left associated with the account.
       const d = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
       assertBn.isZero(d.collateralUsd);
-      d.collateral.forEach((c) => assertBn.isZero(c.available));
+      d.depositedCollaterals.forEach((c) => assertBn.isZero(c.available));
     });
 
     it('should emit all events in correct order');
@@ -765,8 +765,12 @@ describe('LiquidationModule', () => {
       );
 
       await PerpMarketProxy.connect(keeper()).flagPosition(trader.accountId, marketId);
-      const tx = await PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId);
-      await assertEvent(tx, `FundingRecomputed`, PerpMarketProxy);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => PerpMarketProxy.connect(keeper()).liquidatePosition(trader.accountId, marketId),
+        provider()
+      );
+      await assertEvent(receipt, `FundingRecomputed`, PerpMarketProxy);
     });
 
     it('should revert when position is not flagged', async () => {

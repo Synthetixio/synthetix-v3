@@ -17,8 +17,8 @@ interface IPerpAccountModule {
     }
 
     struct AccountDigest {
-        // Array of data pertaining to deposited collateral.
-        IPerpAccountModule.DepositedCollateral[] collateral;
+        // Array of collateral deposited into account as margin.
+        IPerpAccountModule.DepositedCollateral[] depositedCollaterals;
         // USD value of deposited collateral.
         uint256 collateralUsd;
         // Struct of order if one is pending, default values if none.

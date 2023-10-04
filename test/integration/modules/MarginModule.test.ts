@@ -26,6 +26,7 @@ import {
   findEventSafe,
   mintAndApprove,
   BURN_ADDRESS,
+  withExplicitEvmMine,
 } from '../../helpers';
 import { calcPnl } from '../../calculations';
 import { assertEvents } from '../../assert';
@@ -112,13 +113,17 @@ describe('MarginModule', async () => {
       );
 
       // Perform the deposit.
-      const tx = await PerpMarketProxy.connect(trader.signer).modifyCollateral(
-        trader.accountId,
-        market.marketId(),
-        collateral.synthMarket.marketId(),
-        collateralDepositAmount2
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          PerpMarketProxy.connect(trader.signer).modifyCollateral(
+            trader.accountId,
+            market.marketId(),
+            collateral.synthMarket.marketId(),
+            collateralDepositAmount2
+          ),
+        provider()
       );
-      await assertEvent(tx, `FundingRecomputed`, PerpMarketProxy);
+      await assertEvent(receipt, `FundingRecomputed`, PerpMarketProxy);
     });
 
     it('should revert on modify when an order is pending', async () => {
@@ -863,11 +868,13 @@ describe('MarginModule', async () => {
         const accountDigest = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
 
         const { available: collateralBalance = bn(0) } =
-          accountDigest.collateral.find(({ synthMarketId }) => synthMarketId.eq(collateral.synthMarket.marketId())) ||
-          {};
+          accountDigest.depositedCollaterals.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral.synthMarket.marketId())
+          ) || {};
         const { available: collateral2Balance = bn(0) } =
-          accountDigest.collateral.find(({ synthMarketId }) => synthMarketId.eq(collateral2.synthMarket.marketId())) ||
-          {};
+          accountDigest.depositedCollaterals.find(({ synthMarketId }) =>
+            synthMarketId.eq(collateral2.synthMarket.marketId())
+          ) || {};
 
         assertBn.equal(collateralBalance, collateralDepositAmount);
         assertBn.equal(collateral2Balance, collateralDepositAmount2);
@@ -898,11 +905,11 @@ describe('MarginModule', async () => {
         // Assert that no collateral is left the market
         const accountDigestAfter = await PerpMarketProxy.getAccountDigest(trader.accountId, marketId);
         const { available: collateralBalanceAfter = bn(0) } =
-          accountDigestAfter.collateral.find(({ synthMarketId }) =>
+          accountDigestAfter.depositedCollaterals.find(({ synthMarketId }) =>
             synthMarketId.eq(collateral.synthMarket.marketId())
           ) || {};
         const { available: collateral2BalanceAfter = bn(0) } =
-          accountDigestAfter.collateral.find(({ synthMarketId }) =>
+          accountDigestAfter.depositedCollaterals.find(({ synthMarketId }) =>
             synthMarketId.eq(collateral2.synthMarket.marketId())
           ) || {};
 
@@ -927,11 +934,11 @@ describe('MarginModule', async () => {
         const { trader, market } = await depositMargin(bs, genTrader(bs));
 
         // Perform the deposit.
-        const tx = await PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(
-          trader.accountId,
-          market.marketId()
+        const { receipt } = await withExplicitEvmMine(
+          () => PerpMarketProxy.connect(trader.signer).withdrawAllCollateral(trader.accountId, market.marketId()),
+          provider()
         );
-        await assertEvent(tx, `FundingRecomputed()`, PerpMarketProxy);
+        await assertEvent(receipt, `FundingRecomputed()`, PerpMarketProxy);
       });
 
       it('should withdraw with fees and funding removed when no price changes', async () => {
